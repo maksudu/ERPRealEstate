@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     DB_POOL_RECYCLE: int = 1800
     
     # Redis Cache & Locking
-    REDIS_URL: str = "redis://:erp_redis_pass@localhost:6379/0"
+    REDIS_URL: str = "redis://localhost:6379/0"
     LOOKUP_CACHE_TTL: int = 86400  # 24 hours
     
     # Security

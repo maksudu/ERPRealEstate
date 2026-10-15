@@ -1,10 +1,13 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.core.database import engine, Base
+from app.core.database import engine, Base, get_db
 from app.modules.lookups.router import router as lookups_router
+
+from app.core.redis import close_redis_pool, get_redis_client
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -13,6 +16,7 @@ async def lifespan(app: FastAPI):
         await conn.run_sync(Base.metadata.create_all)
     yield
     await engine.dispose()
+    await close_redis_pool()
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -38,6 +42,45 @@ async def liveness():
 @app.get("/health/readiness", tags=["Health"])
 async def readiness():
     return {"status": "READY", "database": "CONNECTED", "scale_target": "10M_RECORDS"}
+
+@app.get("/health/db", tags=["Health"])
+async def db_health(db: AsyncSession = Depends(get_db)):
+    """Verifies live native MySQL 8.0 connectivity and engine status"""
+    from sqlalchemy import text
+    try:
+        result = await db.execute(text("SELECT 1 AS alive, CURRENT_USER() AS user, DATABASE() AS db_name"))
+        row = result.mappings().one()
+        return {
+            "status": "HEALTHY",
+            "database_connection": "ESTABLISHED",
+            "database_name": row["db_name"],
+            "connected_user": row["user"],
+            "query_result": row["alive"]
+        }
+    except Exception as e:
+        return {
+            "status": "UNHEALTHY",
+            "database_connection": "FAILED",
+            "error": str(e)
+        }
+
+@app.get("/health/redis", tags=["Health"])
+async def redis_health():
+    """Verifies live native Redis connectivity and latency"""
+    try:
+        redis_client = get_redis_client()
+        pong = await redis_client.ping()
+        return {
+            "status": "HEALTHY",
+            "redis_connection": "ESTABLISHED",
+            "ping": pong
+        }
+    except Exception as e:
+        return {
+            "status": "UNHEALTHY",
+            "redis_connection": "FAILED",
+            "error": str(e)
+        }
 
 # Register Modular Routers
 app.include_router(lookups_router, prefix=settings.API_V1_PREFIX)

@@ -1,15 +1,22 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict, AliasChoices
 from typing import Optional, List, Any, Dict
 from datetime import datetime
 
 class LookupItemBase(BaseModel):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
     item_code: str = Field(..., max_length=64)
     item_name_en: str = Field(..., max_length=191)
     item_name_bn: str = Field(..., max_length=191)
     parent_id: Optional[int] = None
     color_badge: Optional[str] = None
     sort_order: int = 0
-    metadata: Optional[Dict[str, Any]] = None
+    metadata_json: Optional[Dict[str, Any]] = Field(
+        default=None, 
+        alias="metadata", 
+        serialization_alias="metadata",
+        validation_alias=AliasChoices("metadata_json", "metadata")
+    )
     is_default: bool = False
     is_active: bool = True
 
@@ -28,8 +35,6 @@ class LookupItemResponse(LookupItemBase):
     category_id: int
     created_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
 
 class LookupCategoryBase(BaseModel):
     category_code: str = Field(..., max_length=64)
