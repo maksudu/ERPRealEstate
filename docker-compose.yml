@@ -1,0 +1,111 @@
+version: '3.8'
+
+services:
+  # 1. MySQL 8.0 Master Database (Configured for High-Scale 1 Crore+ Data)
+  mysql-master:
+    image: mysql:8.0
+    container_name: erp_mysql_master
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: erp_realestate_db
+      MYSQL_USER: erp_user
+      MYSQL_PASSWORD: erp_secure_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_master_data:/var/lib/mysql
+      - ./infra/mysql/my.cnf:/etc/mysql/conf.d/my.cnf:ro
+      - ./infra/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    command:
+      - --default-authentication-plugin=mysql_native_password
+      - --innodb-buffer-pool-size=2G
+      - --innodb-log-file-size=512M
+      - --max-connections=1000
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    networks:
+      - erp_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 2. Redis 7.0 (Caching, Dynamic Lookups & Distributed Mutex Unit Locking)
+  redis:
+    image: redis:7-alpine
+    container_name: erp_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --requirepass erp_redis_pass
+    networks:
+      - erp_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "erp_redis_pass", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 3. RabbitMQ Message Broker (Asynchronous Event Bus for Microservices)
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: erp_rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: erp_rabbit
+      RABBITMQ_DEFAULT_PASS: erp_rabbit_pass
+    ports:
+      - "5672:5672"   # AMQP
+      - "15672:15672" # Management UI
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - erp_network
+
+  # 4. MinIO S3 Object Storage (Deeds, AutoCAD Drawings & NID Scans)
+  minio:
+    image: minio/minio:latest
+    container_name: erp_minio
+    environment:
+      MINIO_ROOT_USER: erp_minio_admin
+      MINIO_ROOT_PASSWORD: erp_minio_secret_key
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - erp_network
+
+  # 5. Core API Gateway & Dynamic Lookup Microservice (FastAPI)
+  core-api-service:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: erp_core_api
+    environment:
+      DATABASE_URL: mysql+asyncmy://erp_user:erp_secure_password@mysql-master:3306/erp_realestate_db
+      REDIS_URL: redis://:erp_redis_pass@redis:6379/0
+      RABBITMQ_URL: amqp://erp_rabbit:erp_rabbit_pass@rabbitmq:5672/
+      JWT_SECRET: super_secret_production_key_bangladesh_realestate_2026
+    ports:
+      - "8000:8000"
+    depends_on:
+      mysql-master:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - erp_network
+
+networks:
+  erp_network:
+    driver: bridge
+
+volumes:
+  mysql_master_data:
+  redis_data:
+  rabbitmq_data:
+  minio_data:
