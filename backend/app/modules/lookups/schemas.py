@@ -45,11 +45,25 @@ class LookupCategoryBase(BaseModel):
 class LookupCategoryCreate(LookupCategoryBase):
     pass
 
+class LookupCategoryUpdate(BaseModel):
+    category_name: Optional[str] = Field(None, max_length=128)
+    description: Optional[str] = None
+    is_active: Optional[bool] = None
+
+class LookupItemUpdate(BaseModel):
+    item_name_en: Optional[str] = Field(None, max_length=191)
+    item_name_bn: Optional[str] = Field(None, max_length=191)
+    color_badge: Optional[str] = None
+    sort_order: Optional[int] = None
+    metadata_json: Optional[Dict[str, Any]] = Field(default=None, alias="metadata")
+    is_default: Optional[bool] = None
+    is_active: Optional[bool] = None
+
 class LookupCategoryResponse(LookupCategoryBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     is_system_locked: bool
     is_active: bool
     items: List[LookupItemResponse] = []
 
-    class Config:
-        from_attributes = True

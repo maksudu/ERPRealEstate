@@ -1,0 +1,165 @@
+<div class="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col font-sans transition-colors duration-200">
+  <!-- Top Navigation Header -->
+  <header class="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40 px-6 flex items-center justify-between shadow-xs">
+    <!-- Left: Brand & Sidebar Toggle -->
+    <div class="flex items-center gap-4">
+      <button 
+        type="button" 
+        (click)="toggleSidebar()"
+        class="p-2 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors focus:outline-none"
+        title="Toggle Sidebar"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+      </button>
+
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-lg bg-emerald-600 flex items-center justify-center text-white font-bold shadow-sm">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+          </svg>
+        </div>
+        <div>
+          <span class="text-sm font-bold text-slate-900 dark:text-slate-100 tracking-tight">BD Real Estate ERP</span>
+          <span class="hidden sm:inline-block ml-2 text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+            Enterprise 2026
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Center: Active Project Context Switcher -->
+    <div class="hidden md:flex items-center gap-2 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs">
+      <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+      <span class="text-slate-500 dark:text-slate-400 font-medium">Project Scope:</span>
+      <span class="font-semibold text-slate-900 dark:text-slate-100 truncate max-w-xs">{{ activeProject() }}</span>
+    </div>
+
+    <!-- Right: Theme Toggle & User Info -->
+    <div class="flex items-center gap-3">
+      <!-- Dark Mode Toggle -->
+      <button 
+        type="button" 
+        (click)="toggleDarkMode()" 
+        class="p-2 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors focus:outline-none"
+        [title]="isDarkMode() ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
+      >
+        @if (isDarkMode()) {
+          <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+          </svg>
+        } @else {
+          <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+          </svg>
+        }
+      </button>
+
+      <!-- User Profile Badge -->
+      <div class="flex items-center gap-2 pl-3 border-l border-slate-200 dark:border-slate-800">
+        <div class="w-8 h-8 rounded-full bg-emerald-600/10 text-emerald-700 dark:text-emerald-400 flex items-center justify-center font-bold text-xs ring-1 ring-emerald-500/20">
+          AD
+        </div>
+        <div class="hidden lg:block text-left">
+          <div class="text-xs font-semibold text-slate-900 dark:text-slate-100 leading-tight">Admin User</div>
+          <div class="text-[10px] text-slate-500 dark:text-slate-400">Head Office, Dhaka</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Body Wrapper with Proportional Gap -->
+  <div class="flex-1 flex p-6 gap-6 max-w-[1700px] w-full mx-auto">
+    <!-- Multi-Level Sidebar Navigation -->
+    @if (isSidebarOpen()) {
+      <aside class="w-64 shrink-0 erp-card p-4 space-y-6 self-start sticky top-22 hidden md:block">
+        <div>
+          <p class="text-[11px] font-bold uppercase text-slate-400 tracking-wider mb-2 px-2">Core ERP Modules</p>
+          <nav class="space-y-1">
+            <a 
+              href="javascript:void(0)" 
+              class="flex items-center gap-3 px-3 py-2 text-xs font-medium rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+              </svg>
+              <span>Executive Dashboard</span>
+            </a>
+
+            <a 
+              href="javascript:void(0)" 
+              class="flex items-center gap-3 px-3 py-2 text-xs font-medium rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+              </svg>
+              <span>Land & Property Acquisition</span>
+            </a>
+
+            <a 
+              href="javascript:void(0)" 
+              class="flex items-center gap-3 px-3 py-2 text-xs font-medium rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+              <span>Approvals (RAJUK / CDA)</span>
+            </a>
+
+            <a 
+              href="javascript:void(0)" 
+              class="flex items-center gap-3 px-3 py-2 text-xs font-medium rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+              </svg>
+              <span>Apartment & Flat Inventory</span>
+            </a>
+
+            <a 
+              href="javascript:void(0)" 
+              class="flex items-center gap-3 px-3 py-2 text-xs font-medium rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+              </svg>
+              <span>Installment & Accounting</span>
+            </a>
+          </nav>
+        </div>
+
+        <div>
+          <p class="text-[11px] font-bold uppercase text-slate-400 tracking-wider mb-2 px-2">System Settings</p>
+          <nav class="space-y-1">
+            <a 
+              routerLink="/settings/lookups"
+              routerLinkActive="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 font-semibold"
+              class="flex items-center gap-3 px-3 py-2 text-xs rounded-lg transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
+            >
+              <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+              </svg>
+              <span>Dynamic Lookups (PROMPT 02)</span>
+            </a>
+
+            <a 
+              href="javascript:void(0)" 
+              class="flex items-center gap-3 px-3 py-2 text-xs font-medium rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+              </svg>
+              <span>RBAC & Permissions</span>
+            </a>
+          </nav>
+        </div>
+      </aside>
+    }
+
+    <!-- Center/Right Unified Card Container Area -->
+    <main class="flex-1 min-w-0">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

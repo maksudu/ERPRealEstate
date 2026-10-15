@@ -1,0 +1,276 @@
+<div class="relative w-full">
+  <!-- Component Label -->
+  @if (label) {
+    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 tracking-wide">
+      {{ label }}
+      @if (required) {
+        <span class="text-rose-500 font-bold">*</span>
+      }
+    </label>
+  }
+
+  <!-- Dropdown Trigger Button -->
+  <button
+    type="button"
+    (click)="toggleDropdown()"
+    [disabled]="disabled"
+    [class.opacity-50]="disabled"
+    [class.cursor-not-allowed]="disabled"
+    [class.border-emerald-600]="isOpen()"
+    [class.ring-2]="isOpen()"
+    class="w-full flex items-center justify-between px-3.5 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 shadow-sm transition-all focus:outline-none hover:border-slate-400 dark:hover:border-slate-600 ring-emerald-500/20"
+    [attr.aria-expanded]="isOpen()"
+  >
+    <div class="flex items-center gap-2 truncate pr-2">
+      @if (selectedItem(); as item) {
+        @if (item.color_badge) {
+          <span 
+            class="w-2.5 h-2.5 rounded-full shrink-0 ring-2 ring-white dark:ring-slate-900" 
+            [style.backgroundColor]="item.color_badge"
+          ></span>
+        }
+        <span class="truncate font-medium text-slate-900 dark:text-slate-100">{{ item.item_name_en }}</span>
+        @if (item.item_name_bn && item.item_name_bn !== item.item_name_en) {
+          <span class="text-xs text-slate-400 dark:text-slate-500 truncate">({{ item.item_name_bn }})</span>
+        }
+      } @else {
+        <span class="text-slate-400 dark:text-slate-500 truncate">{{ placeholder }}</span>
+      }
+    </div>
+
+    <!-- Action Icons -->
+    <div class="flex items-center gap-1.5 shrink-0 text-slate-400">
+      @if (isLoading()) {
+        <svg class="animate-spin h-4 w-4 text-emerald-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+        </svg>
+      } @else {
+        @if (selectedValue() && !disabled) {
+          <span 
+            (click)="clearSelection($event)"
+            title="Clear selection"
+            class="p-0.5 hover:text-slate-600 dark:hover:text-slate-300 rounded cursor-pointer transition-colors"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </span>
+        }
+        <svg 
+          class="w-4 h-4 transition-transform duration-200"
+          [class.rotate-180]="isOpen()"
+          fill="none" 
+          stroke="currentColor" 
+          viewBox="0 0 24 24"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+        </svg>
+      }
+    </div>
+  </button>
+
+  @if (hint) {
+    <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ hint }}</p>
+  }
+
+  <!-- Floating Dropdown Menu -->
+  @if (isOpen()) {
+    <div 
+      class="absolute z-50 w-full mt-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden animate-fadeIn"
+    >
+      <!-- Search Filter Input -->
+      <div class="p-2 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850">
+        <div class="relative">
+          <svg class="absolute left-2.5 top-2.5 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+          <input
+            type="text"
+            [(ngModel)]="searchTerm"
+            placeholder="Type to filter..."
+            class="w-full pl-8 pr-3 py-1.5 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
+            (click)="$event.stopPropagation()"
+            autofocus
+          />
+        </div>
+      </div>
+
+      <!-- Items List -->
+      <div class="max-h-56 overflow-y-auto py-1">
+        @if (filteredItems().length > 0) {
+          @for (item of filteredItems(); track item.id) {
+            <button
+              type="button"
+              (click)="selectOption(item)"
+              class="w-full flex items-center justify-between px-3 py-2 text-xs text-left hover:bg-emerald-50 dark:hover:bg-slate-800 transition-colors group"
+              [class.bg-emerald-50]="selectedValue() === item.item_code"
+              [class.font-semibold]="selectedValue() === item.item_code"
+            >
+              <div class="flex items-center gap-2 truncate">
+                @if (item.color_badge) {
+                  <span 
+                    class="w-2.5 h-2.5 rounded-full shrink-0 shadow-sm"
+                    [style.backgroundColor]="item.color_badge"
+                  ></span>
+                }
+                <div class="truncate">
+                  <span class="font-medium text-slate-800 dark:text-slate-200 group-hover:text-emerald-700 dark:group-hover:text-emerald-400">
+                    {{ item.item_name_en }}
+                  </span>
+                  @if (item.item_name_bn && item.item_name_bn !== item.item_name_en) {
+                    <span class="ml-1 text-slate-400 dark:text-slate-500">({{ item.item_name_bn }})</span>
+                  }
+                </div>
+              </div>
+
+              @if (selectedValue() === item.item_code) {
+                <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                </svg>
+              }
+            </button>
+          }
+        } @else {
+          <div class="px-4 py-4 text-center">
+            <p class="text-xs text-slate-400 dark:text-slate-500">No options found matching "{{ searchTerm() }}"</p>
+          </div>
+        }
+      </div>
+
+      <!-- Inline Quick-Create Dashed Action Button (Bottom) -->
+      @if (allowCreateNew) {
+        <div class="p-2 border-t border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-850">
+          <button
+            type="button"
+            (click)="openQuickCreateModal($event)"
+            class="erp-button-dashed"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            <span>+ Add New {{ label || 'Option' }}</span>
+          </button>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- In-Place Quick-Create Modal -->
+  @if (isModalOpen()) {
+    <div 
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn"
+      (click)="closeQuickCreateModal()"
+    >
+      <div 
+        class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-scaleUp"
+        (click)="$event.stopPropagation()"
+      >
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100">
+              Quick Add: {{ label || categoryCode }}
+            </h3>
+          </div>
+          <button 
+            type="button" 
+            (click)="closeQuickCreateModal()"
+            class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg p-1 transition-colors"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="p-5 space-y-4">
+          @if (quickCreateError()) {
+            <div class="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-lg text-xs text-rose-600 dark:text-rose-400">
+              {{ quickCreateError() }}
+            </div>
+          }
+
+          <!-- English Name (Required) -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              Option Name (English) <span class="text-rose-500">*</span>
+            </label>
+            <input
+              type="text"
+              [(ngModel)]="newEnglishName"
+              placeholder="e.g. Corner Facing Flat"
+              class="erp-input text-xs"
+              (keydown.enter)="submitQuickCreate()"
+              autofocus
+            />
+          </div>
+
+          <!-- Bangla Name (Optional) -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              Option Name (Bangla / বাংলা)
+            </label>
+            <input
+              type="text"
+              [(ngModel)]="newBanglaName"
+              placeholder="e.g. কর্নার ফেসিং ফ্ল্যাট"
+              class="erp-input text-xs"
+              (keydown.enter)="submitQuickCreate()"
+            />
+          </div>
+
+          <!-- Color Badge Preset -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">
+              Color Badge (Visual Tag)
+            </label>
+            <div class="flex items-center gap-2">
+              @for (color of colorPresets; track color) {
+                <button
+                  type="button"
+                  (click)="newColorBadge.set(color)"
+                  class="w-6 h-6 rounded-full transition-transform hover:scale-110 focus:outline-none"
+                  [style.backgroundColor]="color"
+                  [class.ring-2]="newColorBadge() === color"
+                  [class.ring-offset-2]="newColorBadge() === color"
+                  [class.ring-slate-900]="newColorBadge() === color"
+                  [class.dark:ring-white]="newColorBadge() === color"
+                ></button>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="flex items-center justify-end gap-2 px-5 py-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850">
+          <button
+            type="button"
+            (click)="closeQuickCreateModal()"
+            class="erp-button-secondary text-xs"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            (click)="submitQuickCreate()"
+            [disabled]="isCreating() || !newEnglishName().trim()"
+            class="erp-button-primary text-xs"
+          >
+            @if (isCreating()) {
+              <svg class="animate-spin -ml-1 mr-1.5 h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+              </svg>
+              <span>Saving...</span>
+            } @else {
+              <span>Save & Select</span>
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>
