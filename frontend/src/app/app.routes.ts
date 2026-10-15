@@ -17,6 +17,11 @@ export const routes: Routes = [
     title: 'Auth & Project-Scoped RBAC - Bangladesh Real Estate ERP'
   },
   {
+    path: 'settings/components',
+    loadComponent: () => import('./features/settings/components-gallery/components-gallery.component').then(m => m.ComponentsGalleryComponent),
+    title: 'Enterprise Reusable Components - Bangladesh Real Estate ERP'
+  },
+  {
     path: '**',
     redirectTo: 'settings/lookups'
   }

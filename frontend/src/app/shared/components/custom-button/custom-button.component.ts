@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'dashed';
 
 @Component({
-  selector: 'app-custom-button',
+  selector: 'app-button, app-custom-button',
   standalone: true,
   imports: [CommonModule],
   template: `

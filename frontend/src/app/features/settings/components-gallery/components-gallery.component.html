@@ -1,0 +1,186 @@
+<div class="space-y-6">
+  <!-- Page Header inside Unified Card Container -->
+  <app-card-container 
+    title="Enterprise Reusable Component Suite" 
+    subtitle="Standardized controls, strict border-slate-200 / rounded-xl layout, and multi-tenant theme compliance"
+    badge="PROMPT 04 READY"
+  >
+    <div card-actions>
+      <app-button variant="secondary" size="sm" (btnClick)="isDrawerOpen.set(true)">
+        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"/>
+        </svg>
+        Open Slide Drawer
+      </app-button>
+      <app-button variant="primary" size="sm" (btnClick)="isModalOpen.set(true)">
+        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        Open Modal Dialog
+      </app-button>
+    </div>
+  </app-card-container>
+
+  <!-- Row 1: Form Inputs & Status Badges (2 Columns) -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Form Controls Showcase -->
+    <app-card-container title="Form Input Controls" subtitle="<app-input> & <app-textarea> with icons, validation & units">
+      <div class="space-y-4">
+        <app-input
+          [(ngModel)]="demoText"
+          label="Property / Project Name"
+          placeholder="Enter project name..."
+          [required]="true"
+          hint="Uniform control radius: rounded-lg (8px)"
+        ></app-input>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <app-input
+            [(ngModel)]="demoNumber"
+            type="number"
+            label="Total Land Area"
+            placeholder="Area value..."
+            suffixText="Katha"
+            [required]="true"
+          ></app-input>
+
+          <app-searchable-select
+            categoryCode="LAND_MEASUREMENT_UNIT"
+            label="Measurement Unit"
+            placeholder="Select unit..."
+            [required]="true"
+          ></app-searchable-select>
+        </div>
+
+        <app-textarea
+          [(ngModel)]="demoNotes"
+          label="Internal Executive Remarks"
+          placeholder="Add detailed transaction or approval notes..."
+          [rows]="3"
+          [maxLength]="300"
+        ></app-textarea>
+
+        <!-- Button Variants -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">Button Variants</label>
+          <div class="flex flex-wrap items-center gap-2">
+            <app-button variant="primary" size="sm" [loading]="isBtnLoading()" (btnClick)="triggerLoadingDemo()">
+              Primary (Loading Demo)
+            </app-button>
+            <app-button variant="secondary" size="sm">
+              Secondary
+            </app-button>
+            <app-button variant="danger" size="sm">
+              Danger Action
+            </app-button>
+            <app-button variant="dashed" size="sm">
+              + Dashed Action
+            </app-button>
+          </div>
+        </div>
+      </div>
+    </app-card-container>
+
+    <!-- Status Badges & Theme Showcase -->
+    <app-card-container title="Status Badges & Tokens" subtitle="<app-status-badge> with localized labels and dot indicators">
+      <div class="space-y-5">
+        <div>
+          <p class="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">System Standard Variants</p>
+          <div class="flex flex-wrap items-center gap-2">
+            <app-status-badge labelEn="Approved" labelBn="অনুমোদিত" variant="success" [pulse]="true"></app-status-badge>
+            <app-status-badge labelEn="Pending RAJUK" labelBn="অপেক্ষমাণ" variant="warning"></app-status-badge>
+            <app-status-badge labelEn="Overdue Notice" labelBn="বকেয়া" variant="danger"></app-status-badge>
+            <app-status-badge labelEn="In Review" labelBn="পর্যালোচনা" variant="info"></app-status-badge>
+            <app-status-badge labelEn="Landowner Share" labelBn="মালিকের অংশ" variant="purple"></app-status-badge>
+            <app-status-badge labelEn="On-Hold" labelBn="হোল্ড" variant="amber"></app-status-badge>
+            <app-status-badge labelEn="Draft Khatian" labelBn="খসড়া" variant="neutral"></app-status-badge>
+          </div>
+        </div>
+
+        <div class="pt-4 border-t border-slate-200 dark:border-slate-800 space-y-2">
+          <p class="text-xs font-semibold text-slate-700 dark:text-slate-300">Design Standard Audit Rules</p>
+          <div class="text-xs text-slate-600 dark:text-slate-400 space-y-1">
+            <div class="flex items-center gap-2">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              <span>Container Border: <code class="font-mono bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded text-[11px]">border border-slate-200 dark:border-slate-800</code></span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              <span>Container Radius: <code class="font-mono bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded text-[11px]">rounded-xl (12px)</code></span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              <span>Control/Input Radius: <code class="font-mono bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded text-[11px]">rounded-lg (8px)</code></span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              <span>Proportional Equal Gap: <code class="font-mono bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded text-[11px]">p-6 / gap-6</code> between Topbar, Sidebar & Central Card</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </app-card-container>
+  </div>
+
+  <!-- Row 2: Advanced Enterprise Data Table (<app-data-table>) -->
+  <app-card-container 
+    title="Advanced Enterprise Data Table (<app-data-table>)" 
+    subtitle="Features multi-column live search, sorting, column visibility toggle popover, row checkboxes, and CSV export"
+  >
+    <app-data-table
+      [columns]="sampleColumns"
+      [data]="sampleData"
+      [selectable]="true"
+      exportFileName="bd_realestate_inventory"
+    ></app-data-table>
+  </app-card-container>
+
+  <!-- Reusable Modal Component Showcase -->
+  <app-modal
+    [isOpen]="isModalOpen()"
+    title="Unit Booking Confirmation"
+    subtitle="Sample reusable modal dialog with header, body, and action footer"
+    badge="DEMO DIALOG"
+    size="md"
+    (closed)="isModalOpen.set(false)"
+  >
+    <div class="space-y-4 text-xs text-slate-600 dark:text-slate-300">
+      <div class="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-lg text-emerald-800 dark:text-emerald-300">
+        Unit #12-A in Grand Emerald Tower is eligible for allotment issuance.
+      </div>
+      <app-input label="Buyer Full Name" placeholder="e.g. Al-Haj Mohammad Ali" [required]="true"></app-input>
+      <app-input label="National ID (NID)" placeholder="10 or 17 digit NID number..." [required]="true"></app-input>
+      <app-searchable-select categoryCode="PAYMENT_MODE" label="Booking Payment Mode" [required]="true"></app-searchable-select>
+    </div>
+
+    <div modal-footer class="flex items-center justify-end gap-2">
+      <app-button variant="secondary" size="sm" (btnClick)="isModalOpen.set(false)">Cancel</app-button>
+      <app-button variant="primary" size="sm" (btnClick)="isModalOpen.set(false)">Confirm Allotment</app-button>
+    </div>
+  </app-modal>
+
+  <!-- Reusable Drawer Component Showcase -->
+  <app-drawer
+    [isOpen]="isDrawerOpen()"
+    title="Property Due Diligence Drawer"
+    subtitle="Slide-over drawer panel for deep-dive inspection"
+    badge="INSPECTION"
+    size="lg"
+    (closed)="isDrawerOpen.set(false)"
+  >
+    <div class="space-y-4 text-xs text-slate-600 dark:text-slate-300">
+      <div class="p-3 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-lg text-blue-800 dark:text-blue-300">
+        Reviewing Land Mutation and Khatian chain records for CS 104, SA 88, RS 204.
+      </div>
+      <app-input label="Mouza Name" placeholder="e.g. Gulshan Mouza" [required]="true"></app-input>
+      <app-input label="JL Number" placeholder="e.g. 142" [required]="true"></app-input>
+      <app-searchable-select categoryCode="LAND_SURVEY_TYPE" label="Primary Survey Khatian Type"></app-searchable-select>
+      <app-textarea label="Sub-Registrar Observations" [rows]="4" placeholder="Enter findings regarding encumbrances..."></app-textarea>
+    </div>
+
+    <div drawer-footer class="flex items-center justify-end gap-2">
+      <app-button variant="secondary" size="sm" (btnClick)="isDrawerOpen.set(false)">Close Drawer</app-button>
+      <app-button variant="primary" size="sm" (btnClick)="isDrawerOpen.set(false)">Save Observations</app-button>
+    </div>
+  </app-drawer>
+</div>

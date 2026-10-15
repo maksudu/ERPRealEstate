@@ -1,0 +1,115 @@
+import { Component, Input, Output, EventEmitter, HostListener } from '@angular/core';
+import { CommonModule } from '@angular/common';
+
+@Component({
+  selector: 'app-drawer',
+  standalone: true,
+  imports: [CommonModule],
+  template: `
+    @if (isOpen) {
+      <div 
+        class="fixed inset-0 z-50 overflow-hidden bg-slate-900/60 backdrop-blur-xs animate-fadeIn"
+        (click)="onBackdropClick()"
+      >
+        <div class="fixed inset-y-0 right-0 max-w-full flex pl-10">
+          <div 
+            class="w-screen bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col animate-slideLeft"
+            [ngClass]="maxWidthClass"
+            (click)="$event.stopPropagation()"
+          >
+            <!-- Header -->
+            <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850 flex items-center justify-between shrink-0">
+              <div>
+                <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                  @if (badge) {
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                      {{ badge }}
+                    </span>
+                  }
+                  {{ title }}
+                </h3>
+                @if (subtitle) {
+                  <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ subtitle }}</p>
+                }
+              </div>
+
+              <button 
+                type="button" 
+                (click)="close()"
+                class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors focus:outline-none"
+                title="Close Drawer"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
+
+            <!-- Body -->
+            <div class="p-6 overflow-y-auto flex-1">
+              <ng-content></ng-content>
+            </div>
+
+            <!-- Footer (Optional) -->
+            @if (showFooter) {
+              <div class="px-6 py-3.5 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850 flex items-center justify-end gap-2 shrink-0">
+                <ng-content select="[drawer-footer]"></ng-content>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    }
+  `,
+  styles: [`
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes slideLeft {
+      from { transform: translateX(100%); }
+      to { transform: translateX(0); }
+    }
+    .animate-fadeIn { animation: fadeIn 0.15s ease-out forwards; }
+    .animate-slideLeft { animation: slideLeft 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+  `]
+})
+export class DrawerComponent {
+  @Input() isOpen: boolean = false;
+  @Input() title: string = '';
+  @Input() subtitle: string = '';
+  @Input() badge: string = '';
+  @Input() size: 'sm' | 'md' | 'lg' | 'xl' = 'md';
+  @Input() closeOnBackdrop: boolean = true;
+  @Input() showFooter: boolean = true;
+
+  @Output() closed = new EventEmitter<void>();
+
+  get maxWidthClass(): string {
+    const map = {
+      sm: 'max-w-md',
+      md: 'max-w-lg',
+      lg: 'max-w-2xl',
+      xl: 'max-w-3xl'
+    };
+    return map[this.size] || map.md;
+  }
+
+  close(): void {
+    this.isOpen = false;
+    this.closed.emit();
+  }
+
+  onBackdropClick(): void {
+    if (this.closeOnBackdrop) {
+      this.close();
+    }
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    if (this.isOpen) {
+      this.close();
+    }
+  }
+}

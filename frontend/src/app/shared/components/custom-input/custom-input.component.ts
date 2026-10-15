@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 @Component({
-  selector: 'app-custom-input',
+  selector: 'app-input, app-custom-input',
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `

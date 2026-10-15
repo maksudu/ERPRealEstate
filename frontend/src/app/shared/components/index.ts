@@ -5,3 +5,7 @@ export * from './custom-textarea/custom-textarea.component';
 export * from './custom-button/custom-button.component';
 export * from './custom-tabs/custom-tabs.component';
 export * from './custom-table/custom-table.component';
+export * from './status-badge/status-badge.component';
+export * from './modal/modal.component';
+export * from './drawer/drawer.component';
+export * from './data-table/data-table.component';
