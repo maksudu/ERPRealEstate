@@ -1,0 +1,224 @@
+<div class="space-y-6">
+  <!-- Page Header -->
+  <app-card-container 
+    title="Multi-Tenant Auth & Project-Scoped RBAC" 
+    subtitle="Company Hierarchy, JWT Refresh Token Rotation, and Strict 'X-Project-Id' Access Control"
+    badge="PROMPT 03 READY"
+  ></app-card-container>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Left Column (2 Cols): Interactive Scope Testing & Identity -->
+    <div class="lg:col-span-2 space-y-6">
+      <!-- Active Identity & Fast Account Switcher -->
+      <app-card-container title="Current Authenticated Identity" subtitle="Switch personas to verify RBAC access boundaries">
+        @if (authService.currentUser(); as user) {
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl">
+            <div class="flex items-center gap-3">
+              <div 
+                class="w-11 h-11 rounded-full flex items-center justify-center font-bold text-sm text-white shadow-sm"
+                [class.bg-emerald-600]="user.is_group_admin"
+                [class.bg-blue-600]="!user.is_group_admin"
+              >
+                {{ user.is_group_admin ? 'GA' : 'SE' }}
+              </div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="text-sm font-bold text-slate-900 dark:text-slate-100">{{ user.full_name_en }}</span>
+                  <span class="text-xs text-slate-500 font-normal">({{ user.full_name_bn }})</span>
+                  @if (user.is_group_admin) {
+                    <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                      Group Admin
+                    </span>
+                  } @else {
+                    <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300">
+                      Standard User
+                    </span>
+                  }
+                </div>
+                <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  <span class="font-mono">{{ user.username }}</span> | {{ user.email }} | Org: <span class="font-medium text-slate-700 dark:text-slate-300">{{ user.organization?.legal_name_en }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Persona Switcher Buttons -->
+            <div class="flex items-center gap-2 shrink-0">
+              <app-custom-button 
+                variant="secondary" 
+                size="sm"
+                (btnClick)="loginAsAdmin()"
+                [disabled]="user.is_group_admin"
+              >
+                Login Admin
+              </app-custom-button>
+
+              <app-custom-button 
+                variant="secondary" 
+                size="sm"
+                (btnClick)="loginAsEngineer()"
+                [disabled]="!user.is_group_admin"
+              >
+                Login Engineer
+              </app-custom-button>
+            </div>
+          </div>
+        }
+
+        <!-- Assigned Projects Summary -->
+        <div class="mt-4">
+          <p class="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-2 uppercase tracking-wider">
+            Assigned Project Permissions
+          </p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            @for (p of authService.availableProjects(); track p.id) {
+              <div 
+                class="p-3 border rounded-lg flex items-center justify-between"
+                [class.border-emerald-500]="authService.activeProjectId() === p.id"
+                [class.bg-emerald-50]="authService.activeProjectId() === p.id"
+                [class.dark:bg-emerald-950]="authService.activeProjectId() === p.id"
+                [class.border-slate-200]="authService.activeProjectId() !== p.id"
+                [class.dark:border-slate-800]="authService.activeProjectId() !== p.id"
+              >
+                <div>
+                  <div class="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                    <span>{{ p.name }}</span>
+                    <span class="font-mono text-[10px] text-slate-400">#{{ p.id }}</span>
+                  </div>
+                  <div class="text-[11px] text-slate-500">{{ p.location }}</div>
+                </div>
+
+                <div class="text-right">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                    {{ p.role }}
+                  </span>
+                  <div class="text-[10px] mt-1" [class.text-emerald-600]="p.canViewFinancials" [class.text-slate-400]="!p.canViewFinancials">
+                    Financials: {{ p.canViewFinancials ? 'Allowed' : 'Restricted' }}
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </app-card-container>
+
+      <!-- Interactive Project-Scoped RBAC Testing Sandbox -->
+      <app-card-container 
+        title="Interactive 'X-Project-Id' Security Enforcer" 
+        subtitle="Tests backend `require_project_scope` dependency against assigned vs unassigned projects"
+      >
+        <div class="p-4 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+            <div class="sm:col-span-2">
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                Target Project Scope (X-Project-Id Header)
+              </label>
+              <select 
+                [(ngModel)]="targetProjectId" 
+                class="erp-input text-xs"
+              >
+                <option [ngValue]="101">Project #101: Grand Emerald Tower (Both Assigned)</option>
+                <option [ngValue]="102">Project #102: Blue Ocean Horizon (Admin Assigned, Engineer NOT)</option>
+                <option [ngValue]="999">Project #999: External Project (Unassigned To All)</option>
+              </select>
+            </div>
+
+            <div>
+              <app-custom-button 
+                variant="primary" 
+                size="md"
+                class="w-full"
+                [loading]="isLoadingTest()"
+                (btnClick)="executeScopeTest()"
+              >
+                Execute Scope Check
+              </app-custom-button>
+            </div>
+          </div>
+
+          <!-- Live Result Display -->
+          @if (testResponse(); as res) {
+            <div class="p-4 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-300 dark:border-emerald-800 rounded-xl animate-fadeIn">
+              <div class="flex items-center gap-2 text-emerald-800 dark:text-emerald-200 font-bold text-xs">
+                <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                </svg>
+                <span>HTTP 200 OK — ACCESS GRANTED</span>
+              </div>
+              <p class="text-xs text-emerald-700 dark:text-emerald-300 mt-1">
+                User <span class="font-mono font-bold">{{ res.username }}</span> authorized for Project <span class="font-mono font-bold">#{{ res.project_id }}</span> as <span class="font-bold font-mono">{{ res.role_code }}</span> (Financials: {{ res.can_view_financials ? 'Full Access' : 'No Access' }}).
+              </p>
+              @if (res.is_group_admin) {
+                <p class="text-[11px] text-emerald-600 dark:text-emerald-400 mt-0.5">
+                  * Group Admin privilege active: Automatically bypassed individual project assignment table.
+                </p>
+              }
+            </div>
+          }
+
+          @if (testError(); as err) {
+            <div class="p-4 bg-rose-50 dark:bg-rose-950/50 border border-rose-300 dark:border-rose-800 rounded-xl animate-fadeIn">
+              <div class="flex items-center gap-2 text-rose-800 dark:text-rose-200 font-bold text-xs">
+                <svg class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+                <span>HTTP 403 FORBIDDEN — ACCESS REJECTED</span>
+              </div>
+              <p class="text-xs text-rose-700 dark:text-rose-300 mt-1">
+                {{ err.detail || 'Access Denied: You do not have permissions for this project scope.' }}
+              </p>
+              <p class="text-[11px] text-rose-600 dark:text-rose-400 mt-0.5">
+                Site Engineer Kamal is strictly bound to Project 101 and cannot view or mutate Project 102.
+              </p>
+            </div>
+          }
+        </div>
+      </app-card-container>
+    </div>
+
+    <!-- Right Column (1 Col): Organization Hierarchy & Partitioning -->
+    <div class="lg:col-span-1 space-y-6">
+      <app-card-container title="Multi-Company Hierarchy" subtitle="Holding consortium & subsidiaries">
+        <div class="space-y-3">
+          <!-- Parent Holding -->
+          <div class="p-3 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-lg">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+              <span class="text-xs font-bold text-slate-900 dark:text-slate-100">Navana & Bay Consortium Ltd.</span>
+            </div>
+            <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 space-y-0.5">
+              <div>TIN: <span class="font-mono">123456789012</span></div>
+              <div>BIN / VAT: <span class="font-mono">9876543210123</span></div>
+              <div>REHAB Reg: <span class="font-mono font-semibold text-emerald-600">REHAB-DHK-2011</span></div>
+            </div>
+          </div>
+
+          <!-- Subsidiary -->
+          <div class="ml-4 pl-3 border-l-2 border-emerald-500 p-3 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-lg">
+            <div class="flex items-center gap-2">
+              <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+              <span class="text-xs font-bold text-slate-900 dark:text-slate-100">Bay Development & Const.</span>
+            </div>
+            <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 space-y-0.5">
+              <div>Code: <span class="font-mono">BAY_DEV</span></div>
+              <div>REHAB Reg: <span class="font-mono">REHAB-CTG-1044</span></div>
+            </div>
+          </div>
+        </div>
+      </app-card-container>
+
+      <app-card-container title="High-Scale Audit Trails" subtitle="Partitioned for 2 Crore+ (20M+) records">
+        <div class="p-3 bg-slate-900 rounded-lg text-emerald-400 font-mono text-[11px] space-y-1">
+          <div class="text-slate-400 font-sans font-semibold">MySQL 8.0 Partitions:</div>
+          <div>PARTITION p_2024 (< 2025)</div>
+          <div>PARTITION p_2025 (< 2026)</div>
+          <div>PARTITION p_2026 (< 2027) [ACTIVE]</div>
+          <div>PARTITION p_2027 (< 2028)</div>
+          <div>PARTITION p_future (< MAX)</div>
+        </div>
+        <p class="mt-3 text-xs text-slate-500 dark:text-slate-400">
+          Mutations across all microservices are intercepted by <code>AuditLoggingMiddleware</code> and logged into partitioned tables asynchronously.
+        </p>
+      </app-card-container>
+    </div>
+  </div>
+</div>

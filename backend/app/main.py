@@ -5,9 +5,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.database import engine, Base, get_db
-from app.modules.lookups.router import router as lookups_router
-
 from app.core.redis import close_redis_pool, get_redis_client
+from app.core.middleware import AuditLoggingMiddleware
+
+import app.modules.lookups.models
+import app.modules.auth.models
+
+from app.modules.lookups.router import router as lookups_router
+from app.modules.auth.router import router as auth_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -25,7 +30,10 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# CORS Middleware for Angular Web and Flutter Mobile Apps
+# 1. Audit Logging Middleware (Records all mutating operations into partitioned sys_audit_trails)
+app.add_middleware(AuditLoggingMiddleware)
+
+# 2. CORS Middleware for Angular Web and Flutter Mobile Apps
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -84,6 +92,7 @@ async def redis_health():
 
 # Register Modular Routers
 app.include_router(lookups_router, prefix=settings.API_V1_PREFIX)
+app.include_router(auth_router, prefix=settings.API_V1_PREFIX)
 
 if __name__ == "__main__":
     import uvicorn

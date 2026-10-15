@@ -12,6 +12,11 @@ export const routes: Routes = [
     title: 'Dynamic Lookups & Dropdowns - Bangladesh Real Estate ERP'
   },
   {
+    path: 'settings/rbac',
+    loadComponent: () => import('./features/settings/rbac/rbac-management.component').then(m => m.RbacManagementComponent),
+    title: 'Auth & Project-Scoped RBAC - Bangladesh Real Estate ERP'
+  },
+  {
     path: '**',
     redirectTo: 'settings/lookups'
   }

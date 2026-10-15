@@ -1,20 +1,31 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { AuthService } from './core/services/auth.service';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [CommonModule, FormsModule, RouterOutlet, RouterLink, RouterLinkActive],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
+  authService = inject(AuthService);
+
   isDarkMode = signal<boolean>(false);
   isSidebarOpen = signal<boolean>(true);
 
-  // Active Project Context (Bangladesh Project Scoped)
-  activeProject = signal<string>('Grand Emerald Tower, Gulshan-2');
+  ngOnInit(): void {
+    if (!this.authService.isAuthenticated()) {
+      // Auto login as admin for smooth development showcase
+      this.authService.login({
+        username: 'admin',
+        password: 'AdminPassword123!'
+      }).subscribe({ error: () => {} });
+    }
+  }
 
   toggleDarkMode(): void {
     this.isDarkMode.update(dark => !dark);
