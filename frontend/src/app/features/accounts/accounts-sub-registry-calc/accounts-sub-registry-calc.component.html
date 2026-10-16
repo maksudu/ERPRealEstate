@@ -67,7 +67,7 @@
             placeholder="e.g. 12000000"
           ></app-custom-input>
 
-          <app-custom-button variant="primary" [fullWidth]="true" [disabled]="calcForm.invalid || isCalculating()">
+          <app-custom-button variant="primary" type="submit" [fullWidth]="true" [disabled]="calcForm.invalid || isCalculating()" (buttonClick)="compute()">
             @if (isCalculating()) {
               <span>Computing Rates...</span>
             } @else {

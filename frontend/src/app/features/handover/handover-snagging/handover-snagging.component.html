@@ -191,7 +191,7 @@
 
           <div class="flex justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
             <app-custom-button variant="secondary" (buttonClick)="closeCreateModal()">Cancel</app-custom-button>
-            <app-custom-button variant="primary" [disabled]="createForm.invalid || isSubmitting()">Log Ticket</app-custom-button>
+            <app-custom-button variant="primary" type="submit" [disabled]="createForm.invalid || isSubmitting()" (buttonClick)="submitTicket()">Log Ticket</app-custom-button>
           </div>
         </form>
       </div>
@@ -226,7 +226,7 @@
 
           <div class="flex justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
             <app-custom-button variant="secondary" (buttonClick)="closeUpdateModal()">Cancel</app-custom-button>
-            <app-custom-button variant="primary" [disabled]="updateForm.invalid || isSubmitting()">Update Ticket</app-custom-button>
+            <app-custom-button variant="primary" type="submit" [disabled]="updateForm.invalid || isSubmitting()" (buttonClick)="submitUpdate()">Update Ticket</app-custom-button>
           </div>
         </form>
       </div>

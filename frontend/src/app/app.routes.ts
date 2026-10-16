@@ -18,8 +18,8 @@ export const routes: Routes = [
   },
   {
     path: 'settings/components',
-    loadComponent: () => import('./features/settings/components-gallery/components-gallery.component').then(m => m.ComponentsGalleryComponent),
-    title: 'Enterprise Reusable Components - Bangladesh Real Estate ERP'
+    redirectTo: 'settings/lookups',
+    pathMatch: 'full'
   },
   {
     path: 'land/proposals',

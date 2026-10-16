@@ -172,7 +172,7 @@
 
           <div class="flex justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
             <app-custom-button variant="secondary" (buttonClick)="closeCreateModal()">Cancel</app-custom-button>
-            <app-custom-button variant="primary" [disabled]="createForm.invalid || isSubmitting()">Save Inspection</app-custom-button>
+            <app-custom-button variant="primary" type="submit" [disabled]="createForm.invalid || isSubmitting()" (buttonClick)="submitInspection()">Save Inspection</app-custom-button>
           </div>
         </form>
       </div>
@@ -208,7 +208,7 @@
 
           <div class="flex justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
             <app-custom-button variant="secondary" (buttonClick)="closeExecuteModal()">Cancel</app-custom-button>
-            <app-custom-button variant="primary" [disabled]="executeForm.invalid || isSubmitting()">Confirm Key Handover</app-custom-button>
+            <app-custom-button variant="primary" type="submit" [disabled]="executeForm.invalid || isSubmitting()" (buttonClick)="submitExecution()">Confirm Key Handover</app-custom-button>
           </div>
         </form>
       </div>

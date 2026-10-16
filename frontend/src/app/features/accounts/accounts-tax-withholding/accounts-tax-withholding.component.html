@@ -193,7 +193,7 @@
 
           <div class="flex justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
             <app-custom-button variant="secondary" (buttonClick)="closeCreateModal()">Cancel</app-custom-button>
-            <app-custom-button variant="primary" [disabled]="createForm.invalid || isSubmitting()">Record TDS</app-custom-button>
+            <app-custom-button variant="primary" type="submit" [disabled]="createForm.invalid || isSubmitting()" (buttonClick)="submitDeduction()">Record TDS</app-custom-button>
           </div>
         </form>
       </div>
@@ -220,7 +220,7 @@
 
           <div class="flex justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
             <app-custom-button variant="secondary" (buttonClick)="closeChallanModal()">Cancel</app-custom-button>
-            <app-custom-button variant="primary" [disabled]="challanForm.invalid || isSubmitting()">Save & Confirm Deposit</app-custom-button>
+            <app-custom-button variant="primary" type="submit" [disabled]="challanForm.invalid || isSubmitting()" (buttonClick)="submitChallanDeposit()">Save & Confirm Deposit</app-custom-button>
           </div>
         </form>
       </div>

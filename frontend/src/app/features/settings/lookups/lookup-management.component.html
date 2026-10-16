@@ -17,137 +17,9 @@
       </app-custom-button>
     </div>
 
-    <!-- Tab Bar -->
-    <app-custom-tabs
-      [tabs]="tabs"
-      [activeTabId]="activeTab()"
-      (tabChange)="activeTab.set($event)"
-    ></app-custom-tabs>
   </app-card-container>
 
-  <!-- TAB 1: INTERACTIVE FORM SHOWCASE (ZERO HARDCODING DEMO) -->
-  @if (activeTab() === 'showcase') {
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <!-- Main Form (Left 2 cols) -->
-      <div class="lg:col-span-2">
-        <app-card-container 
-          title="Preview: How Dropdowns Look in Forms" 
-          subtitle="Type to search any dropdown. If an option is missing, click '+ Add New' inside the dropdown to create it here."
-        >
-          <form [formGroup]="demoForm" (ngSubmit)="onFormSubmit()" class="space-y-5">
-            <!-- Row 1: Authority & Survey Type -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <app-searchable-select
-                formControlName="project_authority"
-                categoryCode="DEV_AUTHORITY"
-                label="City Development Authority"
-                placeholder="Choose RAJUK, CDA, KDA..."
-                [required]="true"
-                hint="Auto-populates required statutory clearance workflows"
-              ></app-searchable-select>
-
-              <app-searchable-select
-                formControlName="land_survey_type"
-                categoryCode="LAND_SURVEY_TYPE"
-                label="Historical Survey / Khatian Type"
-                placeholder="CS, SA, RS, BS..."
-                [required]="true"
-                hint="Ensures Bangladesh CS-SA-RS chain due diligence"
-              ></app-searchable-select>
-            </div>
-
-            <!-- Row 2: Land Class & Unit Facing -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <app-searchable-select
-                formControlName="land_class"
-                categoryCode="LAND_CLASS"
-                label="Land Class (জমি শ্রেণি)"
-                placeholder="নাল, ভিটি, বাণিজ্যিক..."
-                [required]="true"
-                hint="Calculates Sub-Registry Section 53FF AIT rates"
-              ></app-searchable-select>
-
-              <app-searchable-select
-                formControlName="unit_facing"
-                categoryCode="UNIT_FACING"
-                label="Apartment / Flat Facing"
-                placeholder="South-Facing, Lake-View..."
-                [required]="true"
-                hint="Used for premium facing unit price adjustments"
-              ></app-searchable-select>
-            </div>
-
-            <!-- Row 3: Unit Status & Payment Mode -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <app-searchable-select
-                formControlName="unit_status"
-                categoryCode="UNIT_STATUS"
-                label="Inventory Availability Status"
-                placeholder="Available, On-Hold, Sold..."
-                [required]="true"
-                hint="Controls locking preventing double booking"
-              ></app-searchable-select>
-
-              <app-searchable-select
-                formControlName="payment_mode"
-                categoryCode="PAYMENT_MODE"
-                label="Primary Payment Channel"
-                placeholder="Pay Order, Cheque, bKash..."
-                [required]="true"
-                hint="Determines clearing and money receipt issuance"
-              ></app-searchable-select>
-            </div>
-
-            <!-- Row 4: Custom Textarea -->
-            <app-custom-textarea
-              formControlName="notes"
-              label="Transaction Notes & Special Approvals"
-              placeholder="Enter any special remarks, RAJUK approval memo references..."
-              [rows]="3"
-              [maxLength]="500"
-            ></app-custom-textarea>
-
-            <!-- Form Actions -->
-            <div class="pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-3">
-              <app-custom-button variant="secondary" (btnClick)="demoForm.reset()">
-                Reset Form
-              </app-custom-button>
-              <app-custom-button variant="primary" type="submit">
-                Save Property Record
-              </app-custom-button>
-            </div>
-          </form>
-        </app-card-container>
-      </div>
-
-      <!-- Reactive Form Live Inspector (Right 1 col) -->
-      <div class="lg:col-span-1 space-y-6">
-        <app-card-container title="How This Works" subtitle="Quick guide">
-          <ol class="space-y-4 text-sm text-slate-700 dark:text-slate-300">
-            <li class="flex gap-3">
-              <span class="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 text-xs font-semibold flex items-center justify-center">1</span>
-              <span><b class="text-slate-900 dark:text-slate-100">Category</b> = one dropdown (e.g. "Land Class").</span>
-            </li>
-            <li class="flex gap-3">
-              <span class="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 text-xs font-semibold flex items-center justify-center">2</span>
-              <span><b class="text-slate-900 dark:text-slate-100">Options</b> = the choices inside it (e.g. Nal, Bhiti, Commercial).</span>
-            </li>
-            <li class="flex gap-3">
-              <span class="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 text-xs font-semibold flex items-center justify-center">3</span>
-              <span>Add, edit or disable options in <b class="text-slate-900 dark:text-slate-100">Manage Dropdown Options</b> — changes appear in every form instantly.</span>
-            </li>
-            <li class="flex gap-3">
-              <span class="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 text-xs font-semibold flex items-center justify-center">4</span>
-              <span>While filling any form, use <b class="text-slate-900 dark:text-slate-100">+ Add New</b> inside a dropdown to create a missing option on the spot.</span>
-            </li>
-          </ol>
-        </app-card-container>
-      </div>
-    </div>
-  }
-
-  <!-- TAB 2: SETTINGS & CATEGORY MANAGER -->
-  @if (activeTab() === 'management') {
+  <!-- SETTINGS & CATEGORY MANAGER -->
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
       <!-- Left Column: Categories List -->
       <div class="lg:col-span-1">
@@ -224,7 +96,6 @@
         }
       </div>
     </div>
-  }
 
   <!-- Modal: Create New Category -->
   @if (isNewCatModalOpen()) {

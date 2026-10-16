@@ -196,7 +196,7 @@
 
           <div class="flex justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
             <app-custom-button variant="secondary" (buttonClick)="closeCreateModal()">Cancel</app-custom-button>
-            <app-custom-button variant="primary" [disabled]="createForm.invalid || isSubmitting()">
+            <app-custom-button variant="primary" type="submit" [disabled]="createForm.invalid || isSubmitting()" (buttonClick)="submitMushak()">
               @if (isSubmitting()) {
                 <span>Generating...</span>
               } @else {

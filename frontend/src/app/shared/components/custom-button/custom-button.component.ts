@@ -34,6 +34,7 @@ export class CustomButtonComponent {
 
   @Output() btnClick = new EventEmitter<MouseEvent>();
   @Output() clicked = new EventEmitter<MouseEvent>();
+  @Output() buttonClick = new EventEmitter<MouseEvent>();
 
   get buttonClasses(): string {
     const baseClasses = 'inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium rounded-lg transition-all focus:outline-none focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed select-none';
@@ -63,6 +64,22 @@ export class CustomButtonComponent {
     if (!this.disabled && !this.loading) {
       this.btnClick.emit(event);
       this.clicked.emit(event);
+      this.buttonClick.emit(event);
+
+      const hasCustomListener = this.btnClick.observed || this.clicked.observed || this.buttonClick.observed;
+      if (this.type === 'submit' || !hasCustomListener) {
+        const target = (event.currentTarget as HTMLElement) || (event.target as HTMLElement);
+        const form = target?.closest('form');
+        if (form && this.type !== 'reset') {
+          // Native <button type="submit"> will submit automatically; if type is 'button' and no custom listener was attached, requestSubmit
+          if (this.type !== 'submit') {
+            form.requestSubmit();
+          }
+        }
+      }
+    } else {
+      event.preventDefault();
+      event.stopPropagation();
     }
   }
 }

@@ -127,8 +127,7 @@ export class CommandPaletteComponent {
     { id: 'equipment', title: 'Plant & Machinery', category: 'Settings', route: '/settings/equipment' },
     { id: 'import', title: 'Data Import (Excel)', category: 'Settings', route: '/settings/data-import' },
     { id: 'lookups', title: 'Dropdown Master Settings', category: 'Settings', route: '/settings/lookups' },
-    { id: 'rbac', title: 'Users, Roles & Project Access', category: 'Settings', route: '/settings/rbac' },
-    { id: 'components', title: 'UI Components', category: 'Settings', route: '/settings/components' }
+    { id: 'rbac', title: 'Users, Roles & Project Access', category: 'Settings', route: '/settings/rbac' }
   ];
 
   filteredCommands = computed(() => {

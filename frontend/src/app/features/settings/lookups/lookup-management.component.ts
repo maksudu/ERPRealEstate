@@ -1,18 +1,13 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 import { LookupService } from '../../../core/services/lookup.service';
 import { LookupCategory, LookupItem } from '../../../core/models/lookup.model';
 import { 
-  SearchableSelectComponent, 
   CardContainerComponent, 
-  CustomInputComponent, 
-  CustomTextareaComponent,
   CustomButtonComponent,
-  CustomTabsComponent,
   CustomTableComponent,
-  TableColumn,
-  TabItem
+  TableColumn
 } from '../../../shared/components';
 
 @Component({
@@ -21,37 +16,14 @@ import {
   imports: [
     CommonModule,
     FormsModule,
-    ReactiveFormsModule,
-    SearchableSelectComponent,
     CardContainerComponent,
-    CustomTextareaComponent,
     CustomButtonComponent,
-    CustomTabsComponent,
     CustomTableComponent
   ],
   templateUrl: './lookup-management.component.html'
 })
 export class LookupManagementComponent implements OnInit {
   private lookupService = inject(LookupService);
-  private fb = inject(FormBuilder);
-
-  // Active Tab: 'showcase' (Live Dynamic Dropdown Sandbox) | 'management' (Settings Matrix)
-  activeTab = signal<string>('management');
-  tabs: TabItem[] = [
-    { id: 'management', label: 'Manage Dropdown Options' },
-    { id: 'showcase', label: 'Preview in a Form' }
-  ];
-
-  // Demo Reactive Form utilizing <app-searchable-select>
-  demoForm: FormGroup = this.fb.group({
-    project_authority: ['RAJUK', Validators.required],
-    land_survey_type: ['RS', Validators.required],
-    land_class: ['BHITI', Validators.required],
-    unit_facing: ['SOUTH_FACING', Validators.required],
-    unit_status: ['AVAILABLE', Validators.required],
-    payment_mode: ['PAY_ORDER', Validators.required],
-    notes: ['']
-  });
 
   // Settings State
   categories = signal<LookupCategory[]>([]);
@@ -149,9 +121,5 @@ export class LookupManagementComponent implements OnInit {
         this.isSavingCat.set(false);
       }
     });
-  }
-
-  onFormSubmit(): void {
-    console.log('Submitted Demo Form Values:', this.demoForm.value);
   }
 }

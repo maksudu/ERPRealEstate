@@ -42,7 +42,6 @@ export class SidebarComponent implements OnInit {
       items: [
         { id: 'lookups', label: 'Dynamic Dropdowns', route: '/settings/lookups' },
         { id: 'rbac', label: 'RBAC & Project Security', route: '/settings/rbac' },
-        { id: 'components', label: 'Component Gallery', route: '/settings/components' },
         { id: 'legal', label: 'Legal & Court Litigation', route: '/settings/legal-cases' },
         { id: 'equipment', label: 'Machinery & Equipment Fleet', route: '/settings/equipment' },
         { id: 'migration', label: 'Legacy Data Migration', route: '/settings/data-import' }
