@@ -1,7 +1,6 @@
 <app-card-container 
-  title="Real-Time Property Matrix & Distributed Locking" 
-  subtitle="Dynamic rate card formula, floor escalation & live 15-minute Redis mutex countdown (Modules 3 & 32)"
-  badge="PROMPT 07"
+  title="Flat & Unit Inventory" 
+  subtitle="Dynamic rate card formula, floor escalation & 15-minute unit hold timer"
 >
   <!-- Card Header Filters & Project Selector -->
   <div card-actions class="flex flex-wrap items-center gap-3">
@@ -259,7 +258,7 @@
               <div class="flex items-center justify-between">
                 <span class="font-bold flex items-center gap-1.5">
                   <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
-                  Active 15-Minute Redis Mutex Lock
+                  Unit on Hold (15 min)
                 </span>
                 <span class="font-mono font-bold text-sm text-amber-600 dark:text-amber-400">
                   {{ formatTime(u.lock_remaining_seconds) }}
