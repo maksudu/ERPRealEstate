@@ -111,3 +111,12 @@
 .dark ::-webkit-scrollbar-thumb {
   background: #334155;
 }
+
+/* Global: any projected [card-actions] wrapper lays out its buttons in a row with consistent gap */
+[card-actions] {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
