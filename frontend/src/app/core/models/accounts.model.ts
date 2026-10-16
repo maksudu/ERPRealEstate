@@ -99,3 +99,70 @@ export interface BalanceSheetReport {
   liability_breakdown: TrialBalanceItem[];
   equity_breakdown: TrialBalanceItem[];
 }
+
+export interface MushakTaxInvoice {
+  id: number;
+  booking_id: number;
+  booking_reference_no?: string | null;
+  customer_name?: string | null;
+  project_name?: string | null;
+  unit_number?: string | null;
+  mushak_challan_number: string;
+  invoice_date: string;
+  developer_bin_number: string;
+  customer_tin_nid: string;
+  apartment_sqft: number;
+  taxable_amount: number;
+  vat_rate_percent: number;
+  vat_amount: number;
+  total_amount_collected: number;
+  pdf_url?: string | null;
+  status: string;
+  created_at?: string;
+}
+
+export interface TDSDeduction {
+  id: number;
+  voucher_id?: number | null;
+  voucher_number?: string | null;
+  vendor_id?: number | null;
+  vendor_name?: string | null;
+  contractor_id?: number | null;
+  contractor_name?: string | null;
+  deduction_section: string;
+  gross_amount: number;
+  tax_rate_percent: number;
+  withheld_amount: number;
+  challan_number?: string | null;
+  challan_deposit_date?: string | null;
+  status: 'WITHHELD' | 'DEPOSITED_TO_TREASURY';
+  created_at?: string;
+}
+
+export interface SubRegistryCalculationRequest {
+  deed_value_bdt: number;
+  apartment_sqft: number;
+  zone_category: string;
+  property_type?: string;
+}
+
+export interface SubRegistryCalculationResponse {
+  deed_value_bdt: number;
+  apartment_sqft: number;
+  apartment_sqm: number;
+  zone_category: string;
+  property_type: string;
+  stamp_duty_rate_percent: number;
+  stamp_duty_amount: number;
+  registration_fee_rate_percent: number;
+  registration_fee_amount: number;
+  local_govt_tax_rate_percent: number;
+  local_govt_tax_amount: number;
+  ait_rate_per_sqm_bdt: number;
+  ait_section_53ff_amount: number;
+  vat_rate_percent: number;
+  vat_amount: number;
+  total_statutory_fees_bdt: number;
+  total_transfer_cost_bdt: number;
+}
+

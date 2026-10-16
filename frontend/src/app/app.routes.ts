@@ -152,6 +152,21 @@ export const routes: Routes = [
     title: 'Financial Reports & Bank Reconciliation - Bangladesh Real Estate ERP'
   },
   {
+    path: 'accounts/vat-mushak',
+    loadComponent: () => import('./features/accounts/accounts-vat-mushak/accounts-vat-mushak.component').then(m => m.AccountsVatMushakComponent),
+    title: 'Mushak 6.3 VAT Tax Invoices - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'accounts/tax-withholding',
+    loadComponent: () => import('./features/accounts/accounts-tax-withholding/accounts-tax-withholding.component').then(m => m.AccountsTaxWithholdingComponent),
+    title: 'TDS & VDS Withholding Tax Register - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'accounts/sub-registry-calc',
+    loadComponent: () => import('./features/accounts/accounts-sub-registry-calc/accounts-sub-registry-calc.component').then(m => m.AccountsSubRegistryCalcComponent),
+    title: 'Sub-Registry & Sec 53FF AIT Fee Calculator - Bangladesh Real Estate ERP'
+  },
+  {
     path: '**',
     redirectTo: 'settings/lookups'
   }

@@ -8,7 +8,11 @@ import {
   BankReconciliation,
   TrialBalanceReport,
   ProfitLossReport,
-  BalanceSheetReport
+  BalanceSheetReport,
+  MushakTaxInvoice,
+  TDSDeduction,
+  SubRegistryCalculationRequest,
+  SubRegistryCalculationResponse
 } from '../models/accounts.model';
 
 @Injectable({
@@ -75,4 +79,37 @@ export class AccountsService {
     if (asOfDate) params = params.set('as_of_date', asOfDate);
     return this.http.get<BalanceSheetReport>(`${this.baseUrl}/reports/balance-sheet`, { params });
   }
+
+  // 5. Bangladesh VAT & Mushak 6.3 Tax Invoices
+  getMushakInvoices(bookingId?: number): Observable<MushakTaxInvoice[]> {
+    let params = new HttpParams();
+    if (bookingId) params = params.set('booking_id', bookingId);
+    return this.http.get<MushakTaxInvoice[]>(`${this.baseUrl}/vat-mushak`, { params });
+  }
+
+  generateMushakInvoice(payload: any): Observable<MushakTaxInvoice> {
+    return this.http.post<MushakTaxInvoice>(`${this.baseUrl}/vat-mushak`, payload);
+  }
+
+  // 6. TDS & VDS Tax Withholding
+  getTDSDeductions(filters?: { section_filter?: string; status_filter?: string }): Observable<TDSDeduction[]> {
+    let params = new HttpParams();
+    if (filters?.section_filter) params = params.set('section_filter', filters.section_filter);
+    if (filters?.status_filter) params = params.set('status_filter', filters.status_filter);
+    return this.http.get<TDSDeduction[]>(`${this.baseUrl}/tax-withholding`, { params });
+  }
+
+  createTDSDeduction(payload: any): Observable<TDSDeduction> {
+    return this.http.post<TDSDeduction>(`${this.baseUrl}/tax-withholding`, payload);
+  }
+
+  depositTDSToTreasury(tdsId: number, payload: any): Observable<TDSDeduction> {
+    return this.http.patch<TDSDeduction>(`${this.baseUrl}/tax-withholding/${tdsId}/deposit`, payload);
+  }
+
+  // 7. Sub-Registry & Section 53FF AIT Calculator
+  calculateSubRegistryFees(payload: SubRegistryCalculationRequest): Observable<SubRegistryCalculationResponse> {
+    return this.http.post<SubRegistryCalculationResponse>(`${this.baseUrl}/sub-registry-calc`, payload);
+  }
 }
+

@@ -109,8 +109,9 @@ export class SidebarComponent {
         { id: 'coa', label: 'Chart of Accounts (P14)', route: '/accounts/coa', badge: 'Active' },
         { id: 'vouchers', label: 'Vouchers & GL (P14)', route: '/accounts/vouchers', badge: 'Active' },
         { id: 'reports', label: 'Financial Reports & Recon', route: '/accounts/financial-reports', badge: 'Active' },
-        { id: 'mushak-63', label: 'Mushak 6.3 VAT (P15)', route: '/accounts/vat-mushak' },
-        { id: 'ait-53ff', label: 'Sub-Registry AIT (P15)', route: '/accounts/sub-registry-calc' }
+        { id: 'mushak-63', label: 'Mushak 6.3 VAT (P15)', route: '/accounts/vat-mushak', badge: 'Active' },
+        { id: 'tds-vds', label: 'TDS & VDS Withholding (P15)', route: '/accounts/tax-withholding', badge: 'Active' },
+        { id: 'ait-53ff', label: 'Sub-Registry AIT (P15)', route: '/accounts/sub-registry-calc', badge: 'Active' }
       ]
     },
 

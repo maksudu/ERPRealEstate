@@ -5,6 +5,10 @@ from sqlalchemy.orm import relationship
 from app.core.database import Base
 from app.modules.projects.models import Project
 from app.modules.auth.models import Organization, User
+from app.modules.sales.models import Booking
+from app.modules.procurement.models import Vendor
+from app.modules.construction.models import Subcontractor
+
 
 class ChartOfAccount(Base):
     """
@@ -110,3 +114,64 @@ class BankReconciliation(Base):
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
 
     bank_account = relationship("ChartOfAccount")
+
+
+class MushakTaxInvoice(Base):
+    """
+    Statutory Mushak 6.3 Tax Invoice under Bangladesh VAT Act 2012.
+    - Residential <= 1,600 sq ft: 2.0% VAT
+    - Residential > 1,600 sq ft: 4.5% VAT
+    - Commercial properties: 7.5% - 15.0% VAT
+    """
+    __tablename__ = "acc_mushak_tax_invoices"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    booking_id = Column(BigInteger, ForeignKey("sls_bookings.id", ondelete="RESTRICT"), nullable=False, index=True)
+    mushak_challan_number = Column(String(64), unique=True, nullable=False, index=True) # e.g. MUSHAK-6.3-2026-0001
+    invoice_date = Column(Date, nullable=False, default=func.current_date())
+    developer_bin_number = Column(String(32), nullable=False, default="001234567-0101")
+    customer_tin_nid = Column(String(64), nullable=False)
+    apartment_sqft = Column(Numeric(10, 2), nullable=False)
+    taxable_amount = Column(Numeric(14, 2), nullable=False)
+    vat_rate_percent = Column(Numeric(5, 2), nullable=False) # 2.0, 4.5, 7.5, 15.0
+    vat_amount = Column(Numeric(14, 2), nullable=False)
+    total_amount_collected = Column(Numeric(14, 2), nullable=False)
+    pdf_url = Column(String(255), nullable=True)
+    status = Column(String(32), nullable=False, default="ISSUED") # ISSUED, CANCELLED
+
+    created_at = Column(TIMESTAMP, server_default=func.now())
+    updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
+
+    booking = relationship("Booking")
+
+
+class TDSDeduction(Base):
+    """
+    Tax Deduction at Source (TDS/VDS) under Income Tax Act 2023 & VAT Act 2012.
+    Deduction sections:
+    - Sec 52: Goods & Contract Execution (5%-7%)
+    - Sec 52C: Advance against compensation (2%)
+    - Sec 53: Commission, broker fees, discounts (10%)
+    - Sec 53FF: Real estate developers / land transfer AIT
+    """
+    __tablename__ = "acc_tds_deductions"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    voucher_id = Column(BigInteger, ForeignKey("acc_vouchers.id", ondelete="SET NULL"), nullable=True, index=True)
+    vendor_id = Column(BigInteger, ForeignKey("scm_vendors.id", ondelete="SET NULL"), nullable=True, index=True)
+    contractor_id = Column(BigInteger, ForeignKey("con_contractors.id", ondelete="SET NULL"), nullable=True, index=True)
+    deduction_section = Column(String(64), nullable=False, index=True) # Sec 52, Sec 52C, Sec 53, Sec 53FF, VDS
+    gross_amount = Column(Numeric(14, 2), nullable=False)
+    tax_rate_percent = Column(Numeric(5, 2), nullable=False)
+    withheld_amount = Column(Numeric(14, 2), nullable=False)
+    challan_number = Column(String(64), nullable=True) # Treasury Challan Number e.g. TR-CHAL-99120
+    challan_deposit_date = Column(Date, nullable=True)
+    status = Column(String(32), nullable=False, default="WITHHELD") # WITHHELD, DEPOSITED_TO_TREASURY
+
+    created_at = Column(TIMESTAMP, server_default=func.now())
+    updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
+
+    voucher = relationship("Voucher")
+    vendor = relationship("Vendor")
+    contractor = relationship("Subcontractor")
+
