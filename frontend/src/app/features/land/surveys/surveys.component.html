@@ -9,7 +9,7 @@
       <span class="text-xs text-slate-500 font-medium">Filter Parcel:</span>
       <select 
         (change)="filterByParcel($event)" 
-        class="erp-input text-xs py-1 px-2.5 w-48"
+        class="erp-input text-xs py-1.5 px-3 w-48 sm:w-56 max-w-[240px] truncate font-medium bg-white dark:bg-slate-900 shadow-sm"
       >
         <option value="">All Land Parcels</option>
         @for (p of proposals(); track p.id) {
@@ -29,7 +29,7 @@
   <!-- Surveys Table -->
   <div class="overflow-x-auto">
     <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800 text-left text-xs">
-      <thead class="bg-slate-50 dark:bg-slate-850 text-slate-600 dark:text-slate-400 font-semibold uppercase tracking-wider">
+      <thead class="bg-slate-50 dark:bg-slate-850 text-slate-600 dark:text-slate-400 font-semibold uppercase tracking-wider whitespace-nowrap">
         <tr>
           <th class="px-4 py-3">Parcel Code</th>
           <th class="px-4 py-3">Survey Type</th>

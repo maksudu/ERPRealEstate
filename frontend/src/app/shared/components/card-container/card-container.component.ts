@@ -9,23 +9,25 @@ import { CommonModule } from '@angular/common';
     <div class="erp-card overflow-hidden">
       <!-- Card Header (Optional) -->
       @if (title || subtitle) {
-        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-slate-50/70 dark:bg-slate-850/80">
-          <div>
+        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 bg-slate-50/70 dark:bg-slate-850/80">
+          <div class="min-w-0 flex-1">
             @if (title) {
-              <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              <div class="flex items-center flex-wrap gap-2">
                 @if (badge) {
-                  <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300 shrink-0">
                     {{ badge }}
                   </span>
                 }
-                {{ title }}
-              </h2>
+                <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100 leading-normal">
+                  {{ title }}
+                </h2>
+              </div>
             }
             @if (subtitle) {
-              <p class="text-xs text-slate-600 dark:text-slate-300 mt-0.5">{{ subtitle }}</p>
+              <p class="text-xs text-slate-600 dark:text-slate-300 mt-1">{{ subtitle }}</p>
             }
           </div>
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-2 shrink-0 max-w-full">
             <ng-content select="[card-actions]"></ng-content>
           </div>
         </div>

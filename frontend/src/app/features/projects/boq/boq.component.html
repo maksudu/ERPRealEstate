@@ -9,8 +9,11 @@
       <span class="text-xs text-slate-500 font-medium">Select Project:</span>
       <select 
         (change)="onProjectChange($event)" 
-        class="erp-input text-xs py-1 px-2.5 w-56"
+        class="erp-input text-xs py-1.5 px-3 w-56 sm:w-64 max-w-[260px] truncate font-medium bg-white dark:bg-slate-900 shadow-sm"
       >
+        @if (projects().length === 0) {
+          <option value="" disabled selected>Loading Projects...</option>
+        }
         @for (p of projects(); track p.id) {
           <option [value]="p.id" [selected]="p.id === selectedProjectId()">
             {{ p.project_code }} - {{ p.project_name }}

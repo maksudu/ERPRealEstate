@@ -91,6 +91,29 @@ export class InventoryMatrixComponent implements OnInit, OnDestroy {
   bookedCount = computed(() => this.units().filter(u => u.status_id === 'BOOKED' || u.status_id === 'SOLD').length);
   landownerCount = computed(() => this.units().filter(u => u.is_landowner_share).length);
 
+  filteredUnitCount = computed(() => {
+    let count = 0;
+    for (const row of this.floorRows()) {
+      count += row.units.length;
+    }
+    return count;
+  });
+
+  onFacingChange(event: Event): void {
+    const val = (event.target as HTMLSelectElement).value;
+    this.filterFacing.set(val);
+  }
+
+  onStatusChange(event: Event): void {
+    const val = (event.target as HTMLSelectElement).value;
+    this.filterStatus.set(val);
+  }
+
+  clearFilters(): void {
+    this.filterFacing.set('');
+    this.filterStatus.set('');
+  }
+
   ngOnInit(): void {
     this.loadProjects();
     this.initWebSocket();
