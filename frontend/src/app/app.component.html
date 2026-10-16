@@ -3,14 +3,14 @@
 } @else {
   <div class="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col font-sans transition-colors duration-200">
     <!-- Enterprise Top Navigation Bar Component -->
-    <app-topbar (toggleSidebar)="toggleSidebar()"></app-topbar>
+    <app-topbar (toggleSidebar)="toggleSidebar()" class="sticky top-0 z-40 block w-full bg-white dark:bg-slate-900 shadow-xs"></app-topbar>
 
     <!-- Main Body Layout with Proportional Equal Gap (p-6 gap-6) -->
     <div class="flex-1 flex p-4 sm:p-6 gap-6 max-w-[1700px] w-full mx-auto items-start">
       <!-- Multi-Level Collapsible Sidebar with Nested Sub-menus & Real-Time Filter -->
       @if (isSidebarOpen()) {
         <!-- Desktop in-flow sticky full-height sidebar -->
-        <app-sidebar class="shrink-0 sticky top-[5.5rem] self-start hidden md:block"></app-sidebar>
+        <app-sidebar class="shrink-0 sticky top-20 self-start hidden md:block"></app-sidebar>
 
         <!-- Mobile drawer overlay -->
         <div class="fixed inset-0 z-50 md:hidden bg-slate-900/60 backdrop-blur-xs flex" (click)="toggleSidebar()">
@@ -21,7 +21,7 @@
       }
 
       <!-- Central Workspace: Renders completely inside unified Card Container -->
-      <main class="flex-1 min-w-0">
+      <main class="flex-1 min-w-0 relative z-10">
         <router-outlet></router-outlet>
       </main>
     </div>

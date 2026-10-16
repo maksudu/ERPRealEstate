@@ -18,7 +18,10 @@ export interface NotificationItem {
   selector: 'app-topbar',
   standalone: true,
   imports: [CommonModule, FormsModule, CommandPaletteComponent],
-  templateUrl: './topbar.component.html'
+  templateUrl: './topbar.component.html',
+  host: {
+    class: 'sticky top-0 z-40 block w-full bg-white dark:bg-slate-900'
+  }
 })
 export class TopbarComponent {
   authService = inject(AuthService);

@@ -30,8 +30,8 @@ export class SidebarComponent implements OnInit {
   // In-Sidebar Quick Filter Query
   filterQuery = signal<string>('');
 
-  // Expanded menu groups state (persisted as Set of IDs)
-  expandedGroupIds = signal<Set<string>>(new Set(['settings', 'land', 'approvals']));
+  // Expanded menu groups state (persisted as Set of IDs, auto-expands active route)
+  expandedGroupIds = signal<Set<string>>(new Set());
 
   // Clean, Deduplicated Module Structure (Every menu item maps to a distinct, unique page)
   menuGroups: MenuGroup[] = [
