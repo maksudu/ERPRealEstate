@@ -36,10 +36,10 @@ export class LookupManagementComponent implements OnInit {
   private fb = inject(FormBuilder);
 
   // Active Tab: 'showcase' (Live Dynamic Dropdown Sandbox) | 'management' (Settings Matrix)
-  activeTab = signal<string>('showcase');
+  activeTab = signal<string>('management');
   tabs: TabItem[] = [
-    { id: 'showcase', label: 'Interactive Form Demo (Zero Hardcoding)' },
-    { id: 'management', label: 'Dropdown Settings & Category Manager' }
+    { id: 'management', label: 'Manage Dropdown Options' },
+    { id: 'showcase', label: 'Preview in a Form' }
   ];
 
   // Demo Reactive Form utilizing <app-searchable-select>
