@@ -61,9 +61,12 @@ def test_landowner_unit_sales_barrier():
     """
     landowner_unit = Unit(
         id=77,
+        project_id=1,
+        tower_id=1,
+        floor_number=12,
         unit_number="Tower-B-1204",
-        is_landowner_unit=True,
-        status_id="AVAILABLE"
+        is_landowner_share=True,
+        status_id="LANDOWNER_SHARE"
     )
-    assert landowner_unit.is_landowner_unit is True
-    # Business rule: if unit.is_landowner_unit is True, lock is rejected with 403 Forbidden.
+    assert landowner_unit.is_landowner_share is True
+    # Business rule: if unit.is_landowner_share is True, lock is rejected with 403 Forbidden.

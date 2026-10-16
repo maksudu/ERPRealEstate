@@ -10,7 +10,7 @@ async def test_x_project_id_missing_header_rejected(async_client, admin_token):
     Project-scoped endpoints must return 400 Bad Request if X-Project-Id header is missing.
     """
     headers = {"Authorization": f"Bearer {admin_token}"}
-    response = await async_client.get("/api/v1/auth/project-scope", headers=headers)
+    response = await async_client.get("/api/v1/auth/test-project-scope", headers=headers)
     assert response.status_code == 400
     assert "X-Project-Id" in response.json()["detail"]
 
@@ -24,7 +24,7 @@ async def test_x_project_id_invalid_integer_rejected(async_client, admin_token):
         "Authorization": f"Bearer {admin_token}",
         "X-Project-Id": "invalid_project_string"
     }
-    response = await async_client.get("/api/v1/auth/project-scope", headers=headers)
+    response = await async_client.get("/api/v1/auth/test-project-scope", headers=headers)
     assert response.status_code == 400
     assert "valid integer ID" in response.json()["detail"]
 
@@ -38,7 +38,7 @@ async def test_group_admin_bypasses_project_restriction(async_client, admin_toke
         "Authorization": f"Bearer {admin_token}",
         "X-Project-Id": "9999" # An arbitrary project ID
     }
-    response = await async_client.get("/api/v1/auth/project-scope", headers=headers)
+    response = await async_client.get("/api/v1/auth/test-project-scope", headers=headers)
     assert response.status_code == 200
     data = response.json()
     assert data["is_group_admin"] is True

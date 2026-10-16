@@ -1,5 +1,6 @@
 import pytest
 import json
+import uuid
 from app.core.redis import get_redis_client
 from app.core.config import settings
 
@@ -9,7 +10,7 @@ async def test_lookups_redis_caching_and_quick_create(async_client, admin_header
     Validates 24-hour Redis caching (LOOKUP_CACHE_TTL = 86400s) and dynamic quick-create cache flushing.
     """
     redis = get_redis_client()
-    cat_code = "TEST_TRADE_CATEGORIES"
+    cat_code = f"TEST_CAT_{uuid.uuid4().hex[:8].upper()}"
     cache_key = f"lookup:{cat_code}"
 
     # 1. Clean previous test key

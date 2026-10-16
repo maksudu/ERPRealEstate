@@ -79,9 +79,14 @@ async def create_category(
     )
     db.add(category)
     await db.commit()
-    await db.refresh(category)
-    category.items = []
-    return category
+    from sqlalchemy.orm import selectinload
+    stmt = (
+        select(LookupCategory)
+        .options(selectinload(LookupCategory.items))
+        .where(LookupCategory.id == category.id)
+    )
+    res = await db.execute(stmt)
+    return res.scalar_one()
 
 
 @router.get("/{category_code}", response_model=List[LookupItemResponse])
@@ -164,7 +169,8 @@ async def quick_create_lookup_item(
 
     # Auto-generate a clean item_code if not supplied
     if not payload.item_code:
-        generated_code = re.sub(r'[^A-Z0-9_]', '', payload.item_name_en.upper().replace(' ', '_'))
+        raw_code = re.sub(r'[^A-Z0-9_]', '', payload.item_name_en.upper().replace(' ', '_'))
+        generated_code = re.sub(r'_+', '_', raw_code).strip('_')
         item_code = generated_code or f"ITEM_{category.id}_{payload.item_name_en[:6].upper()}"
     else:
         item_code = payload.item_code.strip().upper()

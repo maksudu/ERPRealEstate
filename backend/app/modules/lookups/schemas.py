@@ -25,7 +25,7 @@ class LookupItemCreate(LookupItemBase):
 
 class LookupQuickCreate(BaseModel):
     """Used by the frontend '+ Add New' button inside any searchable dropdown"""
-    item_name_en: str = Field(..., min_length=1, max_length=191)
+    item_name_en: str = Field(..., min_length=1, max_length=191, validation_alias=AliasChoices("item_name_en", "item_name"))
     item_name_bn: Optional[str] = None
     item_code: Optional[str] = None
     color_badge: Optional[str] = None
