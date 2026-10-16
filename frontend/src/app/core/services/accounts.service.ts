@@ -34,11 +34,12 @@ export class AccountsService {
   }
 
   // 2. Vouchers & Double-Entry Journal
-  getVouchers(filters?: { voucher_type?: string; project_id?: number; status_filter?: string }): Observable<Voucher[]> {
+  getVouchers(filters?: { voucher_type?: string; project_id?: number; status_filter?: string; search?: string }): Observable<Voucher[]> {
     let params = new HttpParams();
     if (filters?.voucher_type) params = params.set('voucher_type', filters.voucher_type);
     if (filters?.project_id) params = params.set('project_id', filters.project_id);
     if (filters?.status_filter) params = params.set('status_filter', filters.status_filter);
+    if (filters?.search) params = params.set('search', filters.search);
     return this.http.get<Voucher[]>(`${this.baseUrl}/vouchers`, { params });
   }
 

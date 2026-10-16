@@ -35,6 +35,12 @@ class InstallmentScheduleGenerateRequest(BaseModel):
     start_date: Optional[date] = None
     down_payment_percentage: Optional[float] = 20.00
 
+class InstallmentPaymentRequest(BaseModel):
+    payment_amount: float
+    payment_mode: str = "Cash" # 'Cash', 'Cheque', 'bKash', 'Nagad', 'Bank_Transfer'
+    money_receipt_no: Optional[str] = None
+    remarks: Optional[str] = None
+
 class CustomerInstallmentResponse(CustomerInstallmentBase):
     id: int
     booking_reference_no: Optional[str] = None

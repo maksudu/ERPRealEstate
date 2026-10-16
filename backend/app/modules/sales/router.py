@@ -20,6 +20,7 @@ from app.modules.sales.schemas import (
     SalesMetrics
 )
 from app.modules.sales.deed_generator import generate_bilingual_deed_pdf
+from app.modules.accounts.services import post_customer_collection_voucher
 
 logger = logging.getLogger(__name__)
 
@@ -158,6 +159,18 @@ async def create_booking(
         notes=payload.notes
     )
     db.add(booking)
+    await db.flush()
+
+    # Post Double-Entry Cash/Bank Receipt Voucher for Earnest Money in General Ledger
+    if float(booking.earnest_money_received or 0) > 0:
+        await post_customer_collection_voucher(
+            db=db,
+            booking_id=booking.id,
+            amount=float(booking.earnest_money_received),
+            title=f"Earnest Money Allotment Deposit ({booking.booking_reference_no})",
+            payment_mode="Bank/PayOrder",
+            project_id=booking.project_id
+        )
 
     # Update unit status to BOOKED
     unit.status_id = "BOOKED"

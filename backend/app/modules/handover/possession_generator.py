@@ -1,5 +1,5 @@
 import logging
-from weasyprint import HTML
+from io import BytesIO
 
 logger = logging.getLogger(__name__)
 
@@ -222,4 +222,22 @@ def generate_possession_letter_pdf(data: dict) -> bytes:
     </body>
     </html>
     """
-    return HTML(string=html_content).write_pdf()
+    try:
+        from weasyprint import HTML
+        return HTML(string=html_content).write_pdf()
+    except Exception as e:
+        logger.warning(f"WeasyPrint unavailable ({e}), using ReportLab fallback.")
+        from reportlab.lib.pagesizes import letter
+        from reportlab.pdfgen import canvas
+        pdf_buffer = BytesIO()
+        c = canvas.Canvas(pdf_buffer, pagesize=letter)
+        c.setFont("Helvetica-Bold", 14)
+        c.drawString(50, 750, "Apartment Possession & Key Handover Certificate")
+        c.setFont("Helvetica", 10)
+        c.drawString(50, 720, f"Certificate No: {data.get('possession_letter_number', '')}")
+        c.drawString(50, 700, f"Customer: {data.get('customer_name', '')}")
+        c.drawString(50, 680, f"Project: {data.get('project_name', '')}")
+        c.drawString(50, 660, f"Unit: {data.get('unit_number', '')}")
+        c.drawString(50, 630, "Official key possession cleared via ERP Real Estate Engine.")
+        c.save()
+        return pdf_buffer.getvalue()

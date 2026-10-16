@@ -73,4 +73,8 @@ export class InstallmentService {
   triggerPdcSmsReminders(): Observable<any> {
     return this.http.post<any>(`${this.baseUrl}/cron/trigger-pdc-sms-reminders`, {});
   }
+
+  triggerNi138Deadlines(): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/cron/trigger-ni138-deadlines`, {});
+  }
 }

@@ -71,17 +71,19 @@ class Voucher(Base):
 class JournalEntry(Base):
     """
     Double-entry line item.
-    `acc_journal_entries`: id, voucher_id, project_id, account_id, voucher_date,
+    `acc_journal_entries`: id, voucher_date, voucher_id, company_id, project_id, account_id,
     debit_amount, credit_amount, narration.
     Financial Safeguard: Sum(Debit) == Sum(Credit).
+    Partitioned by RANGE (YEAR(voucher_date)) for 1 Crore (10M+) records.
     """
     __tablename__ = "acc_journal_entries"
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
+    voucher_date = Column(Date, primary_key=True, nullable=False, index=True)
     voucher_id = Column(BigInteger, ForeignKey("acc_vouchers.id", ondelete="CASCADE"), nullable=False, index=True)
+    company_id = Column(BigInteger, nullable=True, index=True, default=1)
     project_id = Column(BigInteger, ForeignKey("prj_projects.id", ondelete="SET NULL"), nullable=True, index=True)
     account_id = Column(BigInteger, ForeignKey("acc_chart_of_accounts.id", ondelete="RESTRICT"), nullable=False, index=True)
-    voucher_date = Column(Date, nullable=False, index=True)
     debit_amount = Column(Numeric(16, 2), nullable=False, default=0.00)
     credit_amount = Column(Numeric(16, 2), nullable=False, default=0.00)
     narration = Column(String(255), nullable=True)

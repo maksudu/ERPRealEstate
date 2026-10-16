@@ -126,7 +126,13 @@
                     {{ getMatchBadge(grn.three_way_match_status).text }}
                   </span>
                   @if (grn.accounts_voucher_ref) {
-                    <div class="text-xs text-muted-foreground font-mono mt-1">{{ grn.accounts_voucher_ref }}</div>
+                    <div class="mt-1">
+                      <a [routerLink]="['/accounts/vouchers']" [queryParams]="{ search: grn.accounts_voucher_ref }"
+                         class="text-xs text-primary hover:underline font-mono inline-flex items-center gap-1 font-semibold"
+                         title="View General Ledger Voucher">
+                        {{ grn.accounts_voucher_ref }} ↗
+                      </a>
+                    </div>
                   }
                 </td>
                 <td class="px-4 py-3.5 text-right">
@@ -138,7 +144,16 @@
                       Audit 3-Way Match &rarr;
                     </app-custom-button>
                   } @else {
-                    <span class="text-xs text-emerald-600 dark:text-emerald-400 font-bold">✓ Accounts Cleared</span>
+                    <div class="flex items-center justify-end gap-2">
+                      <span class="text-xs text-emerald-600 dark:text-emerald-400 font-bold">✓ Accounts Cleared</span>
+                      @if (grn.accounts_voucher_ref) {
+                        <a [routerLink]="['/accounts/vouchers']" [queryParams]="{ search: grn.accounts_voucher_ref }"
+                           class="px-2.5 py-1 text-xs rounded-lg border border-primary/30 text-primary hover:bg-primary/10 font-medium transition-colors inline-flex items-center gap-1"
+                           title="View General Ledger Voucher">
+                          View JV ↗
+                        </a>
+                      }
+                    </div>
                   }
                 </td>
               </tr>

@@ -30,6 +30,7 @@ from app.modules.accounts.schemas import (
     SubRegistryCalculationRequest, SubRegistryCalculationResponse
 )
 from app.modules.accounts.mushak_generator import generate_mushak_63_pdf
+from app.modules.accounts.services import post_vat_mushak_revenue_voucher
 
 logger = logging.getLogger(__name__)
 
@@ -120,10 +121,11 @@ async def list_vouchers(
     voucher_type: Optional[str] = Query(None),
     project_id: Optional[int] = Query(None),
     status_filter: Optional[str] = Query(None),
+    search: Optional[str] = Query(None),
     db: AsyncSession = Depends(get_db)
 ):
     """
-    List Double-Entry Vouchers with journal entry rows.
+    List Double-Entry Vouchers with journal entry rows. Supports search by voucher number or narration.
     """
     stmt = (
         select(Voucher)
@@ -140,6 +142,14 @@ async def list_vouchers(
         stmt = stmt.where(Voucher.project_id == project_id)
     if status_filter:
         stmt = stmt.where(Voucher.status == status_filter)
+    if search:
+        search_pattern = f"%{search.strip()}%"
+        stmt = stmt.where(
+            or_(
+                Voucher.voucher_number.ilike(search_pattern),
+                Voucher.narration.ilike(search_pattern)
+            )
+        )
 
     result = await db.execute(stmt)
     vouchers = result.scalars().all()
@@ -753,11 +763,22 @@ async def generate_mushak_invoice(
         status="ISSUED"
     )
     db.add(inv)
+    await db.flush()
+
+    # Post automated VAT liability & revenue recognition journal voucher
+    # Debit: Advance from Customer | Credit: Revenue & Output VAT Payable
+    await post_vat_mushak_revenue_voucher(
+        db=db,
+        booking_id=booking.id,
+        mushak_challan_number=challan_no,
+        taxable_amount=float(taxable),
+        vat_amount=float(vat_amt),
+        total_collected=float(tot_collected),
+        project_id=booking.project_id if booking else None
+    )
+
     await db.commit()
     await db.refresh(inv)
-
-    # Post automated VAT liability journal entry
-    # Debit Bank / Cash (Collected), Credit Output VAT Payable (2040), Credit Sales Advance / Revenue
     resp = MushakTaxInvoiceResponse.model_validate(inv)
     resp.booking_reference_no = booking.booking_reference_no
     resp.customer_name = booking.primary_customer.full_name_en if booking.primary_customer else None

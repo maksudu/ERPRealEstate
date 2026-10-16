@@ -23,6 +23,10 @@ for /f "tokens=5" %%a in ('netstat -aon ^| findstr :4200') do (
     )
 )
 
+:: Kill Celery Worker and Beat
+echo Stopping Celery processes...
+taskkill /F /IM celery.exe >nul 2>nul
+
 echo.
 echo ===================================================================
 echo    ALL ERP SERVICES STOPPED!

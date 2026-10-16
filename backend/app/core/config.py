@@ -16,6 +16,18 @@ class Settings(BaseSettings):
     REDIS_URL: str = "redis://localhost:6379/0"
     LOOKUP_CACHE_TTL: int = 86400  # 24 hours
     
+    # Celery Background Tasks & Distributed Scheduler
+    CELERY_BROKER_URL: str = "redis://localhost:6379/0"
+    CELERY_RESULT_BACKEND: str = "redis://localhost:6379/0"
+    CELERY_TIMEZONE: str = "Asia/Dhaka"
+
+    # Bangladesh SMS Gateway (e.g. SSL Wireless / Greenweb / Mock)
+    SMS_GATEWAY_URL: str = "https://api.smsnetbd.com/v1/send"
+    SMS_API_KEY: str = "mock_bd_sms_key_2026"
+    SMS_SENDER_ID: str = "BengalRE"
+    SMS_MOCK_MODE: bool = True
+    LEGAL_TEAM_ALERT_PHONE: str = "+8801700000138"
+    
     # Security
     JWT_SECRET: str = "super_secret_production_key_bangladesh_realestate_2026"
     ALGORITHM: str = "HS256"

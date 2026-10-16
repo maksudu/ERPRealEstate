@@ -13,12 +13,13 @@ from app.modules.crm.models import Customer
 from app.modules.installments.models import CustomerInstallment, PDCVault, NI138LegalAction
 from app.modules.installments.schemas import (
     CustomerInstallmentCreate, CustomerInstallmentResponse,
-    InstallmentScheduleGenerateRequest,
+    InstallmentScheduleGenerateRequest, InstallmentPaymentRequest,
     PDCVaultCreate, PDCVaultResponse, PDCStatusUpdateRequest,
     NI138LegalActionResponse, NI138ServeNoticeRequest, NI138FileCaseRequest,
     InstallmentMetrics
 )
 from app.modules.installments.legal_notice_generator import generate_section138_legal_notice_pdf
+from app.modules.accounts.services import post_customer_collection_voucher
 
 logger = logging.getLogger(__name__)
 
@@ -202,6 +203,61 @@ async def generate_installment_schedule(
         r.unit_number = booking.unit.unit_number if booking.unit else None
         out.append(r)
     return out
+
+
+@router.post("/schedules/{installment_id}/pay", response_model=CustomerInstallmentResponse)
+async def pay_installment(
+    installment_id: int,
+    payload: InstallmentPaymentRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Records customer installment payment and automatically posts Double-Entry Cash/Bank/MFS
+    collection voucher to General Ledger:
+      Debit: Cash/Bank/MFS Vault (Asset)
+      Credit: Advance from Allottee / Customer Account (Liability)
+    """
+    stmt = (
+        select(CustomerInstallment)
+        .options(
+            selectinload(CustomerInstallment.booking).selectinload(Booking.customer),
+            selectinload(CustomerInstallment.booking).selectinload(Booking.unit)
+        )
+        .where(CustomerInstallment.id == installment_id)
+    )
+    result = await db.execute(stmt)
+    inst = result.scalars().first()
+    if not inst:
+        raise HTTPException(status_code=404, detail="Installment record not found.")
+
+    paid_now = float(payload.payment_amount)
+    inst.paid_amount = float(inst.paid_amount or 0.0) + paid_now
+    if inst.paid_amount >= float(inst.payable_amount):
+        inst.status = "PAID"
+    else:
+        inst.status = "PARTIALLY_PAID"
+
+    # Post Double-Entry Cash/Bank/MFS Receipt Voucher in General Ledger
+    await post_customer_collection_voucher(
+        db=db,
+        booking_id=inst.booking_id,
+        amount=paid_now,
+        title=f"Installment #{inst.installment_no}: {inst.title}",
+        payment_mode=payload.payment_mode,
+        project_id=inst.booking.project_id if inst.booking else None
+    )
+
+    await db.commit()
+    await db.refresh(inst)
+
+    resp = CustomerInstallmentResponse.model_validate(inst)
+    if inst.booking:
+        resp.booking_reference_no = inst.booking.booking_reference_no
+        if inst.booking.customer:
+            resp.customer_name = inst.booking.customer.full_name_en
+        if inst.booking.unit:
+            resp.unit_number = inst.booking.unit.unit_number
+    return resp
 
 
 # --------------------------------------------------------------------------
@@ -600,32 +656,31 @@ async def get_installment_metrics(db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/cron/trigger-pdc-sms-reminders")
-async def trigger_pdc_sms_reminders(db: AsyncSession = Depends(get_db)):
+async def trigger_pdc_sms_reminders(enqueue_celery: bool = False):
     """
-    Daily cron task: Finds PDC cheques maturing in exactly 3 days and dispatches SMS alerts.
+    Daily cron task: Finds PDC cheques maturing in exactly 3 days and dispatches statutory SMS alerts.
+    Can be run directly or enqueued via Celery background worker.
     """
-    target_date = date.today() + timedelta(days=3)
-    stmt = (
-        select(PDCVault)
-        .options(selectinload(PDCVault.customer))
-        .where(PDCVault.maturity_date == target_date)
-        .where(PDCVault.status == "IN_VAULT")
-        .where(PDCVault.sms_reminder_sent == False)
-    )
-    result = await db.execute(stmt)
-    maturing_cheques = result.scalars().all()
+    from app.modules.installments.tasks import execute_check_upcoming_pdc_cheques, check_upcoming_pdc_cheques_task
+    if enqueue_celery:
+        async_result = check_upcoming_pdc_cheques_task.delay()
+        return {"status": "enqueued", "task_id": async_result.id}
+    
+    result = await execute_check_upcoming_pdc_cheques()
+    return result
 
-    dispatched = []
-    for c in maturing_cheques:
-        phone = c.customer.primary_phone if c.customer else "N/A"
-        msg = f"Reminder: Your PDC Cheque #{c.cheque_number} for BDT {c.cheque_amount:,.2f} matures on {c.maturity_date}. Please ensure sufficient bank balance."
-        logger.info(f"SMS Dispatched to {phone}: {msg}")
-        c.sms_reminder_sent = True
-        dispatched.append({"cheque_number": c.cheque_number, "phone": phone, "amount": float(c.cheque_amount)})
 
-    await db.commit()
-    return {
-        "status": "success",
-        "reminders_dispatched": len(dispatched),
-        "details": dispatched
-    }
+@router.post("/cron/trigger-ni138-deadlines")
+async def trigger_ni138_deadlines(enqueue_celery: bool = False):
+    """
+    Daily cron task: Scans open Section 138 legal notices where the 30-day statutory settlement
+    window has expired, prompts legal counsel, and dispatches litigation alerts.
+    Can be run directly or enqueued via Celery background worker.
+    """
+    from app.modules.installments.tasks import execute_check_statutory_ni138_deadlines, check_statutory_ni138_deadlines_task
+    if enqueue_celery:
+        async_result = check_statutory_ni138_deadlines_task.delay()
+        return {"status": "enqueued", "task_id": async_result.id}
+    
+    result = await execute_check_statutory_ni138_deadlines()
+    return result

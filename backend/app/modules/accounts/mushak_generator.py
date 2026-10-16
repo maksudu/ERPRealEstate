@@ -1,6 +1,5 @@
 import logging
 from io import BytesIO
-from weasyprint import HTML, CSS
 
 logger = logging.getLogger(__name__)
 
@@ -198,6 +197,23 @@ def generate_mushak_63_pdf(invoice_data: dict) -> bytes:
     </html>
     """
 
-    pdf_buffer = BytesIO()
-    HTML(string=html_content).write_pdf(pdf_buffer)
-    return pdf_buffer.getvalue()
+    try:
+        from weasyprint import HTML
+        pdf_buffer = BytesIO()
+        HTML(string=html_content).write_pdf(pdf_buffer)
+        return pdf_buffer.getvalue()
+    except Exception as e:
+        logger.warning(f"WeasyPrint unavailable ({e}), using ReportLab fallback.")
+        from reportlab.lib.pagesizes import letter
+        from reportlab.pdfgen import canvas
+        pdf_buffer = BytesIO()
+        c = canvas.Canvas(pdf_buffer, pagesize=letter)
+        c.setFont("Helvetica-Bold", 14)
+        c.drawString(50, 750, f"Mushak 6.3 Tax Invoice: {invoice_data.get('mushak_challan_number', '')}")
+        c.setFont("Helvetica", 10)
+        c.drawString(50, 720, f"Customer: {invoice_data.get('customer_name', '')}")
+        c.drawString(50, 700, f"VAT Amount: BDT {invoice_data.get('vat_amount', 0):,.2f}")
+        c.drawString(50, 680, f"Total Amount: BDT {invoice_data.get('total_amount_collected', 0):,.2f}")
+        c.drawString(50, 650, "Statutory Mushak 6.3 generated via ERP Real Estate Engine.")
+        c.save()
+        return pdf_buffer.getvalue()

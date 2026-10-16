@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { ConstructionService } from '../../../core/services/construction.service';
 import { ProjectService } from '../../../core/services/project.service';
 import { RABill, WorkOrder, Subcontractor } from '../../../core/models/construction.model';
@@ -20,6 +21,7 @@ import {
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
+    RouterLink,
     CardContainerComponent,
     CustomInputComponent,
     CustomTextareaComponent,

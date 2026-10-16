@@ -25,6 +25,7 @@ from app.modules.procurement.schemas import (
     GoodsReceiptCreate, GoodsReceiptResponse, GoodsReceipt3WayMatchRequest,
     ProcurementMetrics
 )
+from app.modules.accounts.services import post_grn_voucher
 
 logger = logging.getLogger(__name__)
 
@@ -816,8 +817,10 @@ async def execute_three_way_match(
         else:
             grn.three_way_match_status = "ACCOUNTS_APPROVED"
             grn.status = "POSTED_ACCOUNTS"
-            grn.accounts_voucher_ref = f"JV-PROC-{date.today().year}-{grn.id:04d}"
-            logger.info("3-Way Match Passed for GRN %s. Emitted Accounts Journal Voucher: %s", grn.grn_number, grn.accounts_voucher_ref)
+            # Atomically post raw materials inventory and vendor payable voucher in General Ledger
+            voucher_ref = await post_grn_voucher(db=db, grn=grn)
+            grn.accounts_voucher_ref = voucher_ref
+            logger.info("3-Way Match Passed for GRN %s. Posted Accounts Journal Voucher: %s", grn.grn_number, grn.accounts_voucher_ref)
     else:
         grn.three_way_match_status = "VARIANCE_FLAGGED"
 

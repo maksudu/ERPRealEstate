@@ -34,7 +34,14 @@
   </div>
 
   <!-- Filters Row -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 my-5 p-4 rounded-xl bg-card border border-border">
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4 my-5 p-4 rounded-xl bg-card border border-border">
+    <app-custom-input
+      label="Search Voucher / Narration"
+      placeholder="e.g. JV-CONT, GRN, Cheque..."
+      [ngModel]="searchQuery()"
+      (ngModelChange)="searchQuery.set($event); onFilterChange()">
+    </app-custom-input>
+
     <app-searchable-select
       label="Filter by Voucher Type"
       placeholder="All Voucher Types"
@@ -54,7 +61,7 @@
     <div class="flex items-end">
       <app-custom-button
         variant="secondary"
-        (btnClick)="filterType.set(''); filterStatus.set(''); onFilterChange()">
+        (btnClick)="searchQuery.set(''); filterType.set(''); filterStatus.set(''); onFilterChange()">
         Clear Filters
       </app-custom-button>
     </div>

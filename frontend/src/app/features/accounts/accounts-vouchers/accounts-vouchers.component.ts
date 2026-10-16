@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { AccountsService } from '../../../core/services/accounts.service';
 import { ProjectService } from '../../../core/services/project.service';
 import { Voucher, ChartOfAccount } from '../../../core/models/accounts.model';
@@ -31,6 +32,7 @@ import {
 export class AccountsVouchersComponent implements OnInit {
   private accountsService = inject(AccountsService);
   private projectService = inject(ProjectService);
+  private route = inject(ActivatedRoute);
   private fb = inject(FormBuilder);
 
   vouchers = signal<Voucher[]>([]);
@@ -44,6 +46,7 @@ export class AccountsVouchersComponent implements OnInit {
   // Filters
   filterType = signal<string>('');
   filterStatus = signal<string>('');
+  searchQuery = signal<string>('');
 
   createForm: FormGroup = this.fb.group({
     voucher_type: ['Journal', Validators.required],
@@ -110,7 +113,12 @@ export class AccountsVouchersComponent implements OnInit {
   ngOnInit(): void {
     this.loadProjects();
     this.loadCOA();
-    this.loadVouchers();
+    this.route.queryParams.subscribe(params => {
+      if (params['search']) {
+        this.searchQuery.set(params['search']);
+      }
+      this.loadVouchers();
+    });
   }
 
   loadProjects(): void {
@@ -132,6 +140,7 @@ export class AccountsVouchersComponent implements OnInit {
     const filter: any = {};
     if (this.filterType()) filter.voucher_type = this.filterType();
     if (this.filterStatus()) filter.status_filter = this.filterStatus();
+    if (this.searchQuery()) filter.search = this.searchQuery();
 
     this.accountsService.getVouchers(filter).subscribe({
       next: (res) => {

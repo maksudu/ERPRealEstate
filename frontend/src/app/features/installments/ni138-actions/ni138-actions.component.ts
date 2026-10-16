@@ -150,4 +150,15 @@ export class NI138ActionsComponent implements OnInit {
       }
     });
   }
+
+  // Trigger NI 138 Statutory Deadlines Audit
+  triggerNi138Audit(): void {
+    this.installmentService.triggerNi138Deadlines().subscribe({
+      next: (res) => {
+        alert(`Section 138 Statutory Litigation Audit Completed!\n${res.total_expired_notices} expired notice(s) identified. Legal alerts dispatched.`);
+        this.loadData();
+      },
+      error: () => alert('Failed to execute NI 138 statutory litigation audit')
+    });
+  }
 }

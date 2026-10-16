@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterModule, RouterLink } from '@angular/router';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ProcurementService } from '../../../core/services/procurement.service';
 import { GoodsReceipt, PurchaseOrder } from '../../../core/models/procurement.model';
@@ -16,6 +17,8 @@ import {
   standalone: true,
   imports: [
     CommonModule,
+    RouterModule,
+    RouterLink,
     FormsModule,
     ReactiveFormsModule,
     CardContainerComponent,

@@ -80,6 +80,7 @@ async def create_category(
     db.add(category)
     await db.commit()
     await db.refresh(category)
+    category.items = []
     return category
 
 

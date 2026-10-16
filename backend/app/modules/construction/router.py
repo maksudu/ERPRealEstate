@@ -21,6 +21,7 @@ from app.modules.construction.schemas import (
     ConcreteCubeTestCreate, ConcreteCubeTestResponse, ConcreteCubeTestRecordUpdate, CubeTestNotificationAlert,
     SafetyNCRCreate, SafetyNCRResponse, SafetyNCRRectify, SafetyNCRVerifyClose
 )
+from app.modules.accounts.services import post_ra_bill_voucher
 
 logger = logging.getLogger(__name__)
 
@@ -383,11 +384,11 @@ async def approve_ra_bill(
     action = payload.action.upper()
     if action == "APPROVE":
         bill.status = "ACCOUNTS_VOUCHER_POSTED"
-        # Emits event to Accounts service creating Contractor Liability Journal Voucher
-        voucher_ref = f"JV-CONT-{bill.id:04d}-{date.today().year}"
+        # Atomically creates balanced double-entry Journal Voucher in acc_vouchers & acc_journal_entries
+        voucher_ref = await post_ra_bill_voucher(db=db, bill=bill)
         bill.accounts_journal_voucher_ref = voucher_ref
         logger.info(
-            f"Event EMITTED -> Accounts Module: Auto-created Liability Journal Voucher {voucher_ref} "
+            f"Accounts Voucher POSTED: {voucher_ref} "
             f"for Contractor {bill.work_order.contractor.company_name} | Net Payable: BDT {bill.net_payable_amount:,.2f}"
         )
     else:
