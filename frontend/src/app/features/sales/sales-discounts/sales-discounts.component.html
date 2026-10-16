@@ -79,17 +79,17 @@
                   </span>
                 }
               </td>
-              <td class="px-4 py-3.5 text-right">
-                <div class="flex items-center justify-end gap-2">
+              <td class="px-4 py-3.5 text-right whitespace-nowrap">
+                <div class="flex items-center justify-end gap-2 whitespace-nowrap flex-nowrap">
                   <button 
                     (click)="openActionModal(b, 'REJECTED')"
-                    class="px-2.5 py-1 text-xs rounded-lg bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 border border-rose-500/20 font-medium transition-colors"
+                    class="h-8 px-3 text-xs rounded-lg bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 border border-rose-500/20 font-medium whitespace-nowrap inline-flex items-center justify-center flex-shrink-0 transition-colors"
                   >
                     Reject
                   </button>
                   <button 
                     (click)="openActionModal(b, 'APPROVED')"
-                    class="px-3 py-1 text-xs rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-sm transition-colors"
+                    class="h-8 px-3 text-xs rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-sm whitespace-nowrap inline-flex items-center justify-center flex-shrink-0 transition-colors"
                   >
                     Authorize
                   </button>
