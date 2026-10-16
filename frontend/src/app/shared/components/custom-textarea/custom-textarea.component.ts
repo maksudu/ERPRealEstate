@@ -10,14 +10,14 @@ import { FormsModule, ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/f
     <div class="w-full">
       @if (label) {
         <div class="flex items-center justify-between mb-1.5">
-          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 tracking-wide">
+          <label class="block text-xs font-semibold text-slate-800 dark:text-slate-200 tracking-wide">
             {{ label }}
             @if (required) {
               <span class="text-rose-500 font-bold">*</span>
             }
           </label>
           @if (maxLength) {
-            <span class="text-[10px] text-slate-400">
+            <span class="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
               {{ value().length }} / {{ maxLength }}
             </span>
           }
@@ -39,7 +39,7 @@ import { FormsModule, ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/f
       @if (errorMessage) {
         <p class="mt-1 text-xs text-rose-500 font-medium">{{ errorMessage }}</p>
       } @else if (hint) {
-        <p class="mt-1 text-xs text-slate-400 dark:text-slate-500">{{ hint }}</p>
+        <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">{{ hint }}</p>
       }
     </div>
   `,

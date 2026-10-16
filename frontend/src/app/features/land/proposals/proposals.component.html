@@ -67,14 +67,7 @@
               <td class="px-4 py-3.5">
                 <span 
                   class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium"
-                  [class.bg-emerald-100]="item.status === 'JV_SIGNED' || item.status === 'ACQUIRED'"
-                  [class.text-emerald-800]="item.status === 'JV_SIGNED' || item.status === 'ACQUIRED'"
-                  [class.dark:bg-emerald-950]="item.status === 'JV_SIGNED' || item.status === 'ACQUIRED'"
-                  [class.dark:text-emerald-300]="item.status === 'JV_SIGNED' || item.status === 'ACQUIRED'"
-                  [class.bg-amber-100]="item.status === 'DRAFT_PROPOSAL' || item.status === 'LEGAL_VETTING'"
-                  [class.text-amber-800]="item.status === 'DRAFT_PROPOSAL' || item.status === 'LEGAL_VETTING'"
-                  [class.dark:bg-amber-950]="item.status === 'DRAFT_PROPOSAL' || item.status === 'LEGAL_VETTING'"
-                  [class.dark:text-amber-300]="item.status === 'DRAFT_PROPOSAL' || item.status === 'LEGAL_VETTING'"
+                  [ngClass]="(item.status === 'JV_SIGNED' || item.status === 'ACQUIRED') ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'"
                 >
                   {{ item.status }}
                 </span>

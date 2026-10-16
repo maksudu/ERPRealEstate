@@ -9,7 +9,7 @@ import { FormsModule, ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/f
   template: `
     <div class="w-full">
       @if (label) {
-        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 tracking-wide">
+        <label class="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1.5 tracking-wide">
           {{ label }}
           @if (required) {
             <span class="text-rose-500 font-bold">*</span>
@@ -38,7 +38,7 @@ import { FormsModule, ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/f
         />
 
         @if (suffixText) {
-          <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-xs font-medium text-slate-400 dark:text-slate-500">
+          <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-xs font-medium text-slate-600 dark:text-slate-400">
             {{ suffixText }}
           </div>
         }
@@ -47,7 +47,7 @@ import { FormsModule, ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/f
       @if (errorMessage) {
         <p class="mt-1 text-xs text-rose-500 font-medium">{{ errorMessage }}</p>
       } @else if (hint) {
-        <p class="mt-1 text-xs text-slate-400 dark:text-slate-500">{{ hint }}</p>
+        <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">{{ hint }}</p>
       }
     </div>
   `,

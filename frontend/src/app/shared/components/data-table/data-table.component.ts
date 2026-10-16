@@ -97,7 +97,7 @@ export interface DataTableColumn {
       <div class="overflow-hidden border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 shadow-xs">
         <div class="overflow-x-auto">
           <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800 text-left text-xs">
-            <thead class="bg-slate-50/80 dark:bg-slate-850 text-slate-600 dark:text-slate-400 font-semibold uppercase tracking-wider select-none">
+            <thead class="bg-slate-100/80 dark:bg-slate-850 text-slate-800 dark:text-slate-200 font-semibold uppercase tracking-wider select-none">
               <tr>
                 @if (selectable) {
                   <th scope="col" class="w-10 px-4 py-3 text-center">
@@ -134,7 +134,7 @@ export interface DataTableColumn {
               </tr>
             </thead>
 
-            <tbody class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300">
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">
               @if (paginatedData().length > 0) {
                 @for (row of paginatedData(); track row.id || $index) {
                   <tr 

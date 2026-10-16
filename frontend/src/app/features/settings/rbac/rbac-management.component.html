@@ -73,11 +73,7 @@
             @for (p of authService.availableProjects(); track p.id) {
               <div 
                 class="p-3 border rounded-lg flex items-center justify-between"
-                [class.border-emerald-500]="authService.activeProjectId() === p.id"
-                [class.bg-emerald-50]="authService.activeProjectId() === p.id"
-                [class.dark:bg-emerald-950]="authService.activeProjectId() === p.id"
-                [class.border-slate-200]="authService.activeProjectId() !== p.id"
-                [class.dark:border-slate-800]="authService.activeProjectId() !== p.id"
+                [ngClass]="authService.activeProjectId() === p.id ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/60' : 'border-slate-200 dark:border-slate-800'"
               >
                 <div>
                   <div class="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">

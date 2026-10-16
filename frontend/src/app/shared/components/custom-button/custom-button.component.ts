@@ -33,7 +33,7 @@ export class CustomButtonComponent {
   @Input() fullWidth: boolean = false;
 
   @Output() btnClick = new EventEmitter<MouseEvent>();
-
+  @Output() clicked = new EventEmitter<MouseEvent>();
 
   get buttonClasses(): string {
     const baseClasses = 'inline-flex items-center justify-center font-medium rounded-lg transition-all focus:outline-none focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed';
@@ -47,22 +47,22 @@ export class CustomButtonComponent {
 
     // Variant tokens
     const variantMap: Record<ButtonVariant, string> = {
-      primary: 'text-white bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 focus:ring-emerald-500/30 shadow-sm',
-      secondary: 'text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 focus:ring-slate-400/20',
-      outline: 'text-slate-700 dark:text-slate-200 bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-700 focus:ring-slate-400/20',
-      ghost: 'text-slate-700 dark:text-slate-200 bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800 focus:ring-slate-400/20',
-      danger: 'text-white bg-rose-600 hover:bg-rose-700 active:bg-rose-800 focus:ring-rose-500/30 shadow-sm',
-      dashed: 'text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 bg-emerald-50/60 dark:bg-emerald-950/40 hover:bg-emerald-100/70 border border-dashed border-emerald-300 dark:border-emerald-700'
+      primary: 'text-white bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 focus:ring-emerald-500/30 shadow-xs',
+      secondary: 'text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 focus:ring-slate-400/20 shadow-2xs',
+      outline: 'text-slate-800 dark:text-slate-200 bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-700 focus:ring-slate-400/20',
+      ghost: 'text-slate-800 dark:text-slate-200 bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800 focus:ring-slate-400/20',
+      danger: 'text-white bg-rose-600 hover:bg-rose-700 active:bg-rose-800 focus:ring-rose-500/30 shadow-xs',
+      dashed: 'text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 bg-emerald-50/70 dark:bg-emerald-950/40 hover:bg-emerald-100/80 border border-dashed border-emerald-300 dark:border-emerald-700'
     };
 
     const widthClass = this.fullWidth ? 'w-full' : '';
     return `${baseClasses} ${sizeMap[this.size]} ${variantMap[this.variant]} ${widthClass}`.trim();
   }
 
-
   onClick(event: MouseEvent): void {
     if (!this.disabled && !this.loading) {
       this.btnClick.emit(event);
+      this.clicked.emit(event);
     }
   }
 }

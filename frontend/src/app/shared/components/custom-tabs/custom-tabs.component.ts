@@ -20,27 +20,13 @@ export interface TabItem {
             type="button"
             (click)="selectTab(tab.id)"
             class="py-3 px-3 text-xs sm:text-sm font-medium border-b-2 transition-all flex items-center gap-2"
-            [class.border-emerald-600]="activeTabId === tab.id"
-            [class.text-emerald-600]="activeTabId === tab.id"
-            [class.dark:text-emerald-400]="activeTabId === tab.id"
-            [class.dark:border-emerald-400]="activeTabId === tab.id"
-            [class.border-transparent]="activeTabId !== tab.id"
-            [class.text-slate-500]="activeTabId !== tab.id"
-            [class.hover:text-slate-700]="activeTabId !== tab.id"
-            [class.dark:hover:text-slate-300]="activeTabId !== tab.id"
+            [ngClass]="activeTabId === tab.id ? 'border-emerald-600 text-emerald-700 font-semibold dark:text-emerald-400 dark:border-emerald-400' : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'"
           >
             <span>{{ tab.label }}</span>
             @if (tab.count !== undefined) {
               <span 
                 class="px-2 py-0.5 text-[10px] rounded-full font-semibold"
-                [class.bg-emerald-100]="activeTabId === tab.id"
-                [class.text-emerald-800]="activeTabId === tab.id"
-                [class.dark:bg-emerald-950]="activeTabId === tab.id"
-                [class.dark:text-emerald-300]="activeTabId === tab.id"
-                [class.bg-slate-100]="activeTabId !== tab.id"
-                [class.text-slate-600]="activeTabId !== tab.id"
-                [class.dark:bg-slate-800]="activeTabId !== tab.id"
-                [class.dark:text-slate-400]="activeTabId !== tab.id"
+                [ngClass]="activeTabId === tab.id ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'"
               >
                 {{ tab.count }}
               </span>

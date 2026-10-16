@@ -11,19 +11,24 @@ export class ThemeService {
   theme = signal<ThemeMode>('light');
 
   constructor() {
-    // 1. Initialize from localStorage or OS prefers-color-scheme
+    // 1. Force light mode default as per user explicit instruction
+    const isExplicitlySet = localStorage.getItem('erp_theme_v2_set');
     const savedTheme = localStorage.getItem(this.THEME_STORAGE_KEY) as ThemeMode | null;
-    if (savedTheme === 'dark' || savedTheme === 'light') {
+    
+    if (isExplicitlySet && (savedTheme === 'dark' || savedTheme === 'light')) {
       this.theme.set(savedTheme);
     } else {
-      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-      this.theme.set(prefersDark ? 'dark' : 'light');
+      // Default to crisp light mode
+      this.theme.set('light');
+      localStorage.setItem(this.THEME_STORAGE_KEY, 'light');
+      localStorage.setItem('erp_theme_v2_set', 'true');
     }
 
     // 2. Sync DOM class with reactive signal
     effect(() => {
       const current = this.theme();
       localStorage.setItem(this.THEME_STORAGE_KEY, current);
+      localStorage.setItem('erp_theme_v2_set', 'true');
       if (current === 'dark') {
         document.documentElement.classList.add('dark');
       } else {

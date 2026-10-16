@@ -18,7 +18,7 @@ import { CommonModule } from '@angular/common';
             (click)="$event.stopPropagation()"
           >
             <!-- Header -->
-            <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850 flex items-center justify-between shrink-0">
+            <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-850/80 flex items-center justify-between shrink-0">
               <div>
                 <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                   @if (badge) {
@@ -29,7 +29,7 @@ import { CommonModule } from '@angular/common';
                   {{ title }}
                 </h3>
                 @if (subtitle) {
-                  <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ subtitle }}</p>
+                  <p class="text-xs text-slate-600 dark:text-slate-300 mt-0.5">{{ subtitle }}</p>
                 }
               </div>
 
