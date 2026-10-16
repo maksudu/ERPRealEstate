@@ -19,6 +19,8 @@ import app.modules.installments.models
 import app.modules.construction.models
 import app.modules.procurement.models
 import app.modules.accounts.models
+import app.modules.handover.models
+import app.modules.operations.models
 
 from app.modules.lookups.router import router as lookups_router
 from app.modules.auth.router import router as auth_router
@@ -32,6 +34,7 @@ from app.modules.construction.router import router as construction_router
 from app.modules.procurement.router import router as procurement_router
 from app.modules.accounts.router import router as accounts_router
 from app.modules.handover.router import router as handover_router
+from app.modules.operations.router import router as operations_router
 
 
 
@@ -124,6 +127,7 @@ app.include_router(construction_router, prefix=settings.API_V1_PREFIX)
 app.include_router(procurement_router, prefix=settings.API_V1_PREFIX)
 app.include_router(accounts_router, prefix=settings.API_V1_PREFIX)
 app.include_router(handover_router, prefix=settings.API_V1_PREFIX)
+app.include_router(operations_router, prefix=settings.API_V1_PREFIX)
 
 if __name__ == "__main__":
 

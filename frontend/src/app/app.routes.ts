@@ -182,6 +182,26 @@ export const routes: Routes = [
     title: 'Building Owners Association & Leasing - Bangladesh Real Estate ERP'
   },
   {
+    path: 'brokers/commissions',
+    loadComponent: () => import('./features/sales/broker-commissions/broker-commissions.component').then(m => m.BrokerCommissionsComponent),
+    title: 'Broker Commissions & Section 53 TDS - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'settings/legal-cases',
+    loadComponent: () => import('./features/settings/legal-cases/legal-cases.component').then(m => m.LegalCasesComponent),
+    title: 'Legal Litigation & Court Cases Register - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'settings/equipment',
+    loadComponent: () => import('./features/settings/equipment/equipment.component').then(m => m.EquipmentComponent),
+    title: 'Heavy Equipment & Machinery Fleet - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'settings/data-import',
+    loadComponent: () => import('./features/settings/data-import/data-import.component').then(m => m.DataImportComponent),
+    title: 'Legacy Excel Data Import & Migration - Bangladesh Real Estate ERP'
+  },
+  {
     path: '**',
     redirectTo: 'settings/lookups'
   }

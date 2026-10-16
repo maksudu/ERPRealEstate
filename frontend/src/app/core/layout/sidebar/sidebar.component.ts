@@ -41,7 +41,10 @@ export class SidebarComponent {
         { id: 'lookups', label: 'Dynamic Lookups (PROMPT 02)', route: '/settings/lookups', badge: 'Active' },
         { id: 'rbac', label: 'RBAC & Scope Security (PROMPT 03)', route: '/settings/rbac', badge: 'Active' },
         { id: 'components', label: 'Reusable Components (PROMPT 04)', route: '/settings/components', badge: 'Active' },
-        { id: 'audit', label: 'Partitioned Audit Trails (20M+)', route: '/settings/rbac' }
+        { id: 'audit', label: 'Partitioned Audit Trails (20M+)', route: '/settings/rbac' },
+        { id: 'legal', label: 'Legal Court Cases (P23)', route: '/settings/legal-cases', badge: 'Active' },
+        { id: 'equipment', label: 'Equipment Fleet (P23)', route: '/settings/equipment', badge: 'Active' },
+        { id: 'migration', label: 'Legacy Data Migration (P23)', route: '/settings/data-import', badge: 'Active' }
       ]
     },
     {
@@ -86,6 +89,7 @@ export class SidebarComponent {
         { id: 'bookings', label: 'Apartment Bookings (PROMPT 09)', route: '/sales/bookings', badge: 'Active' },
         { id: 'discounts', label: 'Multi-Level Discount Approvals', route: '/sales/discounts', badge: 'Active' },
         { id: 'cancellations', label: 'REHAB Allotment Cancellations', route: '/sales/cancellations', badge: 'Active' },
+        { id: 'brokers', label: 'Broker Commissions & TDS (P23)', route: '/brokers/commissions', badge: 'Active' },
         { id: 'leads', label: 'CRM Leads & Kanban', route: '/crm/leads' },
         { id: 'customers', label: 'Customer KYC & Nominees', route: '/crm/customers' }
       ]

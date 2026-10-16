@@ -1,0 +1,336 @@
+<div class="space-y-6">
+  <!-- Header with Page Title and Actions -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight text-slate-900">Broker Commissions & Channel Partners</h1>
+      <p class="text-sm text-slate-500 mt-1">
+        Module 22: Staged commission releases (40% Down Payment, 40% Ground Slab, 20% Registration Deed) with Section 53 TDS withholding.
+      </p>
+    </div>
+    <div class="flex items-center gap-3">
+      <button
+        (click)="showBrokerModal.set(true)"
+        class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 text-white font-medium text-sm hover:bg-indigo-700 transition shadow-sm">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+        </svg>
+        Register Broker
+      </button>
+    </div>
+  </div>
+
+  <!-- Success / Error Alerts -->
+  <div *ngIf="successMessage()" class="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm flex items-center justify-between">
+    <span>{{ successMessage() }}</span>
+    <button (click)="successMessage.set(null)" class="text-emerald-600 font-bold ml-2">&times;</button>
+  </div>
+  <div *ngIf="errorMessage()" class="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm flex items-center justify-between">
+    <span>{{ errorMessage() }}</span>
+    <button (click)="errorMessage.set(null)" class="text-rose-600 font-bold ml-2">&times;</button>
+  </div>
+
+  <!-- Key Metrics Row -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <app-card-container [variant]="'default'">
+      <div class="p-4">
+        <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Accrued Commission</p>
+        <p class="text-2xl font-bold text-slate-900 mt-1">৳ {{ totalCommissionAccrued | number:'1.0-0' }}</p>
+        <p class="text-xs text-slate-500 mt-1">Calculated across active bookings</p>
+      </div>
+    </app-card-container>
+
+    <app-card-container [variant]="'default'">
+      <div class="p-4">
+        <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Disbursed Net Amount</p>
+        <p class="text-2xl font-bold text-emerald-600 mt-1">৳ {{ totalDisbursed | number:'1.0-0' }}</p>
+        <p class="text-xs text-emerald-600 mt-1">Transferred via bank clearing</p>
+      </div>
+    </app-card-container>
+
+    <app-card-container [variant]="'default'">
+      <div class="p-4">
+        <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">TDS Withheld (Sec 53 - 10%)</p>
+        <p class="text-2xl font-bold text-indigo-600 mt-1">৳ {{ totalTdsWithheld | number:'1.0-0' }}</p>
+        <p class="text-xs text-slate-500 mt-1">Statutory Bangladesh tax deposit</p>
+      </div>
+    </app-card-container>
+
+    <app-card-container [variant]="'default'">
+      <div class="p-4">
+        <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Active Brokers</p>
+        <p class="text-2xl font-bold text-slate-900 mt-1">{{ brokers().length }} Agencies</p>
+        <p class="text-xs text-slate-500 mt-1">Channel partners in Dhaka/Ctg</p>
+      </div>
+    </app-card-container>
+  </div>
+
+  <!-- Tab Buttons -->
+  <div class="flex items-center gap-2 border-b border-slate-200">
+    <button
+      (click)="activeTab.set('commissions')"
+      [ngClass]="activeTab() === 'commissions' ? 'border-indigo-600 text-indigo-600 font-semibold' : 'border-transparent text-slate-500 hover:text-slate-700'"
+      class="py-3 px-4 border-b-2 text-sm transition">
+      Commission Ledger & Staged Releases
+    </button>
+    <button
+      (click)="activeTab.set('brokers')"
+      [ngClass]="activeTab() === 'brokers' ? 'border-indigo-600 text-indigo-600 font-semibold' : 'border-transparent text-slate-500 hover:text-slate-700'"
+      class="py-3 px-4 border-b-2 text-sm transition">
+      Registered Brokers & Channel Partners
+    </button>
+  </div>
+
+  <!-- Tab 1: Commission Ledger -->
+  <div *ngIf="activeTab() === 'commissions'">
+    <app-card-container [variant]="'default'">
+      <div class="p-5">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm text-slate-700">
+            <thead class="bg-slate-50 text-xs font-semibold uppercase text-slate-500 border-b border-slate-200">
+              <tr>
+                <th class="py-3.5 px-4">Broker / Agency</th>
+                <th class="py-3.5 px-4">Booking</th>
+                <th class="py-3.5 px-4">Unit Value</th>
+                <th class="py-3.5 px-4">Rate</th>
+                <th class="py-3.5 px-4">Total Commission</th>
+                <th class="py-3.5 px-4">Staged Tranche Milestones</th>
+                <th class="py-3.5 px-4">Disbursed & TDS</th>
+                <th class="py-3.5 px-4 text-center">Status</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              <tr *ngFor="let comm of commissions()" class="hover:bg-slate-50/70 transition">
+                <td class="py-4 px-4">
+                  <div class="font-bold text-slate-900">Broker #{{ comm.broker_id }}</div>
+                  <div class="text-xs text-slate-500">Apex Prime Properties</div>
+                </td>
+                <td class="py-4 px-4 font-semibold text-slate-900">
+                  #BK-{{ comm.booking_id }}
+                </td>
+                <td class="py-4 px-4 font-medium text-slate-900">
+                  ৳ {{ comm.total_unit_value | number:'1.0-0' }}
+                </td>
+                <td class="py-4 px-4">
+                  <span class="inline-flex px-2 py-0.5 rounded text-xs font-bold bg-indigo-50 text-indigo-700">
+                    {{ comm.commission_percent }}%
+                  </span>
+                </td>
+                <td class="py-4 px-4 font-bold text-slate-900">
+                  ৳ {{ comm.total_commission_amount | number:'1.0-0' }}
+                </td>
+                <td class="py-4 px-4">
+                  <div class="space-y-1.5 text-xs">
+                    <!-- Tranche 1: 40% Down Payment -->
+                    <div class="flex items-center justify-between gap-3">
+                      <span [ngClass]="comm.down_payment_disbursed ? 'text-emerald-700 font-bold' : 'text-slate-600'">
+                        1. Down Payment (40%):
+                      </span>
+                      <button
+                        *ngIf="!comm.down_payment_disbursed"
+                        (click)="openReleaseModal(comm, 'DOWN_PAYMENT')"
+                        class="px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 font-semibold hover:bg-indigo-100 transition">
+                        Release 40%
+                      </button>
+                      <span *ngIf="comm.down_payment_disbursed" class="text-emerald-600 font-bold">✓ Released</span>
+                    </div>
+
+                    <!-- Tranche 2: 40% Ground Slab -->
+                    <div class="flex items-center justify-between gap-3">
+                      <span [ngClass]="comm.ground_slab_disbursed ? 'text-emerald-700 font-bold' : 'text-slate-600'">
+                        2. Ground Slab (40%):
+                      </span>
+                      <button
+                        *ngIf="comm.down_payment_disbursed && !comm.ground_slab_disbursed"
+                        (click)="openReleaseModal(comm, 'GROUND_SLAB')"
+                        class="px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 font-semibold hover:bg-indigo-100 transition">
+                        Release 40%
+                      </button>
+                      <span *ngIf="!comm.down_payment_disbursed" class="text-slate-400">Locked</span>
+                      <span *ngIf="comm.ground_slab_disbursed" class="text-emerald-600 font-bold">✓ Released</span>
+                    </div>
+
+                    <!-- Tranche 3: 20% Registration Deed -->
+                    <div class="flex items-center justify-between gap-3">
+                      <span [ngClass]="comm.registration_deed_disbursed ? 'text-emerald-700 font-bold' : 'text-slate-600'">
+                        3. Reg. Deed (20%):
+                      </span>
+                      <button
+                        *ngIf="comm.ground_slab_disbursed && !comm.registration_deed_disbursed"
+                        (click)="openReleaseModal(comm, 'REGISTRATION_DEED')"
+                        class="px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 font-semibold hover:bg-indigo-100 transition">
+                        Release 20%
+                      </button>
+                      <span *ngIf="!comm.ground_slab_disbursed" class="text-slate-400">Locked</span>
+                      <span *ngIf="comm.registration_deed_disbursed" class="text-emerald-600 font-bold">✓ Released</span>
+                    </div>
+                  </div>
+                </td>
+                <td class="py-4 px-4">
+                  <div class="font-bold text-emerald-600">৳ {{ comm.disbursed_amount | number:'1.0-0' }} (Net)</div>
+                  <div class="text-xs text-slate-500">TDS: ৳ {{ comm.tds_withheld_amount | number:'1.0-0' }}</div>
+                </td>
+                <td class="py-4 px-4 text-center">
+                  <span
+                    [ngClass]="{
+                      'bg-emerald-50 text-emerald-700 border-emerald-200': comm.status === 'FULLY_DISBURSED',
+                      'bg-indigo-50 text-indigo-700 border-indigo-200': comm.status === 'PARTIALLY_DISBURSED',
+                      'bg-slate-100 text-slate-700 border-slate-200': comm.status === 'CALCULATED'
+                    }"
+                    class="inline-flex px-2.5 py-1 rounded-full text-xs font-bold border">
+                    {{ comm.status }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </app-card-container>
+  </div>
+
+  <!-- Tab 2: Registered Brokers -->
+  <div *ngIf="activeTab() === 'brokers'">
+    <app-card-container [variant]="'default'">
+      <div class="p-5">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm text-slate-700">
+            <thead class="bg-slate-50 text-xs font-semibold uppercase text-slate-500 border-b border-slate-200">
+              <tr>
+                <th class="py-3.5 px-4">Broker Code</th>
+                <th class="py-3.5 px-4">Agency Name</th>
+                <th class="py-3.5 px-4">Contact Person & Phone</th>
+                <th class="py-3.5 px-4">NID / TIN</th>
+                <th class="py-3.5 px-4">Slab %</th>
+                <th class="py-3.5 px-4">Bank Settlement Account</th>
+                <th class="py-3.5 px-4 text-center">Status</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              <tr *ngFor="let b of brokers()" class="hover:bg-slate-50/70 transition">
+                <td class="py-4 px-4 font-mono font-bold text-indigo-600">{{ b.broker_code }}</td>
+                <td class="py-4 px-4 font-bold text-slate-900">{{ b.agency_name }}</td>
+                <td class="py-4 px-4">
+                  <div class="font-medium text-slate-900">{{ b.contact_person }}</div>
+                  <div class="text-xs text-slate-500">{{ b.phone_number }}</div>
+                </td>
+                <td class="py-4 px-4 text-xs text-slate-600">
+                  <div>NID: {{ b.nid_number || 'N/A' }}</div>
+                  <div>TIN: {{ b.tin_number || 'N/A' }}</div>
+                </td>
+                <td class="py-4 px-4 font-bold text-slate-900">{{ b.commission_slab_percent }}%</td>
+                <td class="py-4 px-4 text-xs text-slate-600">{{ b.bank_details || 'Cheque / Pay Order' }}</td>
+                <td class="py-4 px-4 text-center">
+                  <span class="inline-flex px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    {{ b.status }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </app-card-container>
+  </div>
+
+  <!-- Release Commission Tranche Modal -->
+  <div *ngIf="showReleaseModal()" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+        <h3 class="font-bold text-slate-900 text-lg">Disburse Commission Tranche</h3>
+        <button (click)="showReleaseModal.set(false)" class="text-slate-400 hover:text-slate-600 font-bold text-xl">&times;</button>
+      </div>
+
+      <form [formGroup]="releaseForm" (ngSubmit)="submitRelease()" class="mt-4 space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Tranche Stage</label>
+          <select formControlName="tranche_stage" class="w-full px-3 py-2 border rounded-xl text-sm bg-white">
+            <option value="DOWN_PAYMENT">Down Payment Cleared (40% Tranche)</option>
+            <option value="GROUND_SLAB">Ground Slab Casting (40% Tranche)</option>
+            <option value="REGISTRATION_DEED">Registration Deed Executed (20% Tranche)</option>
+          </select>
+        </div>
+
+        <div class="p-3 bg-slate-50 rounded-xl text-xs space-y-1">
+          <div class="flex justify-between text-slate-600">
+            <span>Commission Total:</span>
+            <span class="font-bold">৳ {{ selectedCommission()?.total_commission_amount | number:'1.0-0' }}</span>
+          </div>
+          <div class="flex justify-between text-slate-600">
+            <span>Statutory Tax Withholding:</span>
+            <span class="font-bold text-indigo-600">10% TDS (Income Tax Act Sec 53)</span>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Disbursement Remarks / Voucher Ref</label>
+          <textarea formControlName="notes" rows="2" class="w-full px-3 py-2 border rounded-xl text-sm" placeholder="e.g. Bank Transfer Ref: FT-88910492"></textarea>
+        </div>
+
+        <div class="flex justify-end gap-3 pt-3">
+          <button type="button" (click)="showReleaseModal.set(false)" class="px-4 py-2 border rounded-xl text-sm font-semibold text-slate-600">Cancel</button>
+          <button type="submit" class="px-5 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700">Confirm Tranche Release</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Register Broker Modal -->
+  <div *ngIf="showBrokerModal()" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+        <h3 class="font-bold text-slate-900 text-lg">Register Broker / Channel Partner</h3>
+        <button (click)="showBrokerModal.set(false)" class="text-slate-400 hover:text-slate-600 font-bold text-xl">&times;</button>
+      </div>
+
+      <form [formGroup]="brokerForm" (ngSubmit)="submitBroker()" class="mt-4 space-y-4">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Broker Code</label>
+            <input formControlName="broker_code" type="text" class="w-full px-3 py-2 border rounded-xl text-sm" placeholder="BRK-003">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Commission Slab %</label>
+            <input formControlName="commission_slab_percent" type="number" step="0.1" class="w-full px-3 py-2 border rounded-xl text-sm" placeholder="2.0">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Agency Name</label>
+          <input formControlName="agency_name" type="text" class="w-full px-3 py-2 border rounded-xl text-sm" placeholder="e.g. Navana Real Estate Brokers Ltd">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Contact Person</label>
+            <input formControlName="contact_person" type="text" class="w-full px-3 py-2 border rounded-xl text-sm" placeholder="Full Name">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Phone Number</label>
+            <input formControlName="phone_number" type="text" class="w-full px-3 py-2 border rounded-xl text-sm" placeholder="+880 1700-000000">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">NID Number</label>
+            <input formControlName="nid_number" type="text" class="w-full px-3 py-2 border rounded-xl text-sm" placeholder="10 / 17 digit NID">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">TIN Number</label>
+            <input formControlName="tin_number" type="text" class="w-full px-3 py-2 border rounded-xl text-sm" placeholder="12 digit e-TIN">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Bank Settlement Details</label>
+          <textarea formControlName="bank_details" rows="2" class="w-full px-3 py-2 border rounded-xl text-sm" placeholder="Bank Name, Branch, Account No & Routing No"></textarea>
+        </div>
+
+        <div class="flex justify-end gap-3 pt-3">
+          <button type="button" (click)="showBrokerModal.set(false)" class="px-4 py-2 border rounded-xl text-sm font-semibold text-slate-600">Cancel</button>
+          <button type="submit" class="px-5 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700">Save Broker Profile</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

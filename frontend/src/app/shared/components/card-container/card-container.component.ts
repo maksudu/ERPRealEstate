@@ -46,4 +46,5 @@ export class CardContainerComponent {
   @Input() subtitle: string = '';
   @Input() badge: string = '';
   @Input() paddingClass: string = 'p-6';
+  @Input() variant: string = 'default';
 }

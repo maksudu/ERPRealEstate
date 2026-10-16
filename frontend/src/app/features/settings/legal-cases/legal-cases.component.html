@@ -1,0 +1,201 @@
+<div class="space-y-6">
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight text-slate-900">Legal Litigation & Court Cases</h1>
+      <p class="text-sm text-slate-500 mt-1">
+        Module 46: Tracking Title Suits, Injunctions, NI Act 138 Dishonored Cheque complaints & Land Disputes.
+      </p>
+    </div>
+    <div class="flex items-center gap-3">
+      <button
+        (click)="showAddModal.set(true)"
+        class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 text-white font-medium text-sm hover:bg-indigo-700 transition shadow-sm">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+        </svg>
+        File / Register Legal Case
+      </button>
+    </div>
+  </div>
+
+  <!-- Type Filter Bar -->
+  <div class="flex flex-wrap items-center gap-2">
+    <button
+      *ngFor="let t of ['ALL', 'Title Suit', 'Injunction', 'NI Act 138', 'Land Dispute']"
+      (click)="selectedTypeFilter.set(t)"
+      [ngClass]="selectedTypeFilter() === t ? 'bg-indigo-600 text-white font-bold' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'"
+      class="px-3.5 py-1.5 rounded-xl text-xs transition">
+      {{ t }}
+    </button>
+  </div>
+
+  <!-- Cases Table Card -->
+  <app-card-container [variant]="'default'">
+    <div class="p-5">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm text-slate-700">
+          <thead class="bg-slate-50 text-xs font-semibold uppercase text-slate-500 border-b border-slate-200">
+            <tr>
+              <th class="py-3.5 px-4">Case Type & Number</th>
+              <th class="py-3.5 px-4">Concerned Court</th>
+              <th class="py-3.5 px-4">Parties (Plaintiff vs Defendant)</th>
+              <th class="py-3.5 px-4">Appointed Advocate</th>
+              <th class="py-3.5 px-4">Next Hearing Date</th>
+              <th class="py-3.5 px-4">Status</th>
+              <th class="py-3.5 px-4 text-center">Action</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            <tr *ngFor="let c of filteredCases" class="hover:bg-slate-50/70 transition">
+              <td class="py-4 px-4">
+                <span
+                  [ngClass]="{
+                    'bg-indigo-50 text-indigo-700 border-indigo-200': c.case_type === 'Title Suit',
+                    'bg-rose-50 text-rose-700 border-rose-200': c.case_type === 'NI Act 138',
+                    'bg-amber-50 text-amber-700 border-amber-200': c.case_type === 'Injunction',
+                    'bg-purple-50 text-purple-700 border-purple-200': c.case_type === 'Land Dispute'
+                  }"
+                  class="inline-flex px-2 py-0.5 rounded text-xs font-bold border mb-1">
+                  {{ c.case_type }}
+                </span>
+                <div class="font-mono font-bold text-slate-900">{{ c.case_number }}</div>
+              </td>
+              <td class="py-4 px-4 text-xs text-slate-800 font-medium max-w-xs">
+                {{ c.concerned_court }}
+              </td>
+              <td class="py-4 px-4 text-xs">
+                <div class="font-bold text-slate-900">P: {{ c.plaintiff }}</div>
+                <div class="text-slate-500">vs</div>
+                <div class="font-bold text-slate-700">D: {{ c.defendant }}</div>
+              </td>
+              <td class="py-4 px-4 text-xs font-semibold text-slate-900">
+                {{ c.appointed_advocate }}
+              </td>
+              <td class="py-4 px-4 font-bold text-indigo-600 text-xs">
+                {{ c.next_hearing_date ? (c.next_hearing_date | date:'dd MMM yyyy') : 'Awaiting Date' }}
+              </td>
+              <td class="py-4 px-4">
+                <span
+                  [ngClass]="{
+                    'bg-amber-50 text-amber-700 border-amber-200': c.status === 'HEARING_ONGOING',
+                    'bg-rose-50 text-rose-700 border-rose-200': c.status === 'STAY_ORDER_GRANTED',
+                    'bg-emerald-50 text-emerald-700 border-emerald-200': c.status === 'DECREE_FAVORABLE',
+                    'bg-slate-100 text-slate-700 border-slate-200': c.status === 'FILED' || c.status === 'DISPOSED'
+                  }"
+                  class="inline-flex px-2.5 py-0.5 rounded-full text-xs font-bold border">
+                  {{ c.status }}
+                </span>
+              </td>
+              <td class="py-4 px-4 text-center">
+                <button
+                  (click)="openStatusModal(c)"
+                  class="px-2.5 py-1 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition">
+                  Update
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </app-card-container>
+
+  <!-- Add Court Case Modal -->
+  <div *ngIf="showAddModal()" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+        <h3 class="font-bold text-slate-900 text-lg">File / Register Legal Litigation Case</h3>
+        <button (click)="showAddModal.set(false)" class="text-slate-400 hover:text-slate-600 font-bold text-xl">&times;</button>
+      </div>
+
+      <form [formGroup]="caseForm" (ngSubmit)="submitCase()" class="mt-4 space-y-4">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Case Type</label>
+            <select formControlName="case_type" class="w-full px-3 py-2 border rounded-xl text-sm bg-white">
+              <option value="Title Suit">Title Suit</option>
+              <option value="Injunction">Injunction (Order 39)</option>
+              <option value="NI Act 138">NI Act 138 (Cheque Bounce)</option>
+              <option value="Land Dispute">Land Boundary Dispute</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Case Number</label>
+            <input formControlName="case_number" type="text" class="w-full px-3 py-2 border rounded-xl text-sm" placeholder="TS 104/2026">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Concerned Court</label>
+          <input formControlName="concerned_court" type="text" class="w-full px-3 py-2 border rounded-xl text-sm" placeholder="e.g. Joint District Judge 1st Court, Dhaka">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Plaintiff</label>
+            <input formControlName="plaintiff" type="text" class="w-full px-3 py-2 border rounded-xl text-sm" placeholder="Plaintiff Name">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Defendant</label>
+            <input formControlName="defendant" type="text" class="w-full px-3 py-2 border rounded-xl text-sm" placeholder="Defendant Name">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Appointed Advocate</label>
+            <input formControlName="appointed_advocate" type="text" class="w-full px-3 py-2 border rounded-xl text-sm" placeholder="Advocate Name">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Next Hearing Date</label>
+            <input formControlName="next_hearing_date" type="date" class="w-full px-3 py-2 border rounded-xl text-sm">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Case Brief / Background Summary</label>
+          <textarea formControlName="case_summary" rows="3" class="w-full px-3 py-2 border rounded-xl text-sm" placeholder="Details of claim, dag number, or dishonored cheque memo..."></textarea>
+        </div>
+
+        <div class="flex justify-end gap-3 pt-3">
+          <button type="button" (click)="showAddModal.set(false)" class="px-4 py-2 border rounded-xl text-sm font-semibold text-slate-600">Cancel</button>
+          <button type="submit" class="px-5 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700">Save Court Case</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Update Status Modal -->
+  <div *ngIf="showStatusModal()" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+        <h3 class="font-bold text-slate-900 text-lg">Update Case Status</h3>
+        <button (click)="showStatusModal.set(false)" class="text-slate-400 hover:text-slate-600 font-bold text-xl">&times;</button>
+      </div>
+
+      <form [formGroup]="statusForm" (ngSubmit)="submitStatusUpdate()" class="mt-4 space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Hearing Outcome / Status</label>
+          <select formControlName="new_status" class="w-full px-3 py-2 border rounded-xl text-sm bg-white">
+            <option value="FILED">FILED</option>
+            <option value="HEARING_ONGOING">HEARING_ONGOING</option>
+            <option value="STAY_ORDER_GRANTED">STAY_ORDER_GRANTED</option>
+            <option value="DECREE_FAVORABLE">DECREE_FAVORABLE</option>
+            <option value="DISPOSED">DISPOSED</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Hearing Notes / Order Summary</label>
+          <textarea formControlName="summary_update" rows="3" class="w-full px-3 py-2 border rounded-xl text-sm" placeholder="Order sheets, injunction extension, or witness cross-examination outcome..."></textarea>
+        </div>
+
+        <div class="flex justify-end gap-3 pt-3">
+          <button type="button" (click)="showStatusModal.set(false)" class="px-4 py-2 border rounded-xl text-sm font-semibold text-slate-600">Cancel</button>
+          <button type="submit" class="px-5 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700">Update Status</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
