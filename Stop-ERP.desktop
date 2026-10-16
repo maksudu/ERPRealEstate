@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Stop Real Estate ERP
+Comment=1-Click Stop Bangladesh Real Estate Enterprise ERP
+Exec=x-terminal-emulator -e "bash -c 'cd \"/home/wadi/Project/Angular/ERPRealEstate\" && ./stop.sh; echo; read -p \"Press Enter to exit...\"'"
+Icon=process-stop
+Path=/home/wadi/Project/Angular/ERPRealEstate
+Terminal=false
+Categories=Development;
+StartupNotify=true

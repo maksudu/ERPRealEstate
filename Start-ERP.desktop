@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Start Real Estate ERP
+Comment=1-Click Start Bangladesh Real Estate Enterprise ERP
+Exec=x-terminal-emulator -e "bash -c 'cd \"/home/wadi/Project/Angular/ERPRealEstate\" && ./run.sh'"
+Icon=system-run
+Path=/home/wadi/Project/Angular/ERPRealEstate
+Terminal=false
+Categories=Development;
+StartupNotify=true
