@@ -31,6 +31,7 @@ from app.modules.installments.router import router as installments_router
 from app.modules.construction.router import router as construction_router
 from app.modules.procurement.router import router as procurement_router
 from app.modules.accounts.router import router as accounts_router
+from app.modules.handover.router import router as handover_router
 
 
 
@@ -122,6 +123,7 @@ app.include_router(installments_router, prefix=settings.API_V1_PREFIX)
 app.include_router(construction_router, prefix=settings.API_V1_PREFIX)
 app.include_router(procurement_router, prefix=settings.API_V1_PREFIX)
 app.include_router(accounts_router, prefix=settings.API_V1_PREFIX)
+app.include_router(handover_router, prefix=settings.API_V1_PREFIX)
 
 if __name__ == "__main__":
 

@@ -167,6 +167,21 @@ export const routes: Routes = [
     title: 'Sub-Registry & Sec 53FF AIT Fee Calculator - Bangladesh Real Estate ERP'
   },
   {
+    path: 'handover/snagging',
+    loadComponent: () => import('./features/handover/handover-snagging/handover-snagging.component').then(m => m.HandoverSnaggingComponent),
+    title: 'Pre-Handover Snagging & DLP Warranty - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'handover/possession',
+    loadComponent: () => import('./features/handover/handover-possession/handover-possession.component').then(m => m.HandoverPossessionComponent),
+    title: 'Key Handover & Possession Clearance - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'handover/association',
+    loadComponent: () => import('./features/handover/handover-association/handover-association.component').then(m => m.HandoverAssociationComponent),
+    title: 'Building Owners Association & Leasing - Bangladesh Real Estate ERP'
+  },
+  {
     path: '**',
     redirectTo: 'settings/lookups'
   }

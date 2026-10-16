@@ -144,9 +144,9 @@ export class SidebarComponent {
       title: 'Handover & Warranty',
       iconSvg: 'M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z',
       items: [
-        { id: 'snagging', label: 'Pre-Handover Snagging List', route: '/settings/lookups' },
-        { id: 'sub-registry', label: 'Sub-Registry Deed Execution', route: '/settings/lookups' },
-        { id: 'keys', label: 'Key Handover & Certificate', route: '/settings/lookups' }
+        { id: 'snagging', label: 'Snagging & DLP Warranty (P16)', route: '/handover/snagging', badge: 'Active' },
+        { id: 'possession', label: 'Key Handover & Possession (P16)', route: '/handover/possession', badge: 'Active' },
+        { id: 'association', label: 'Building Association & Leasing (P16)', route: '/handover/association', badge: 'Active' }
       ]
     }
   ];
