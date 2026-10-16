@@ -1,6 +1,7 @@
 import { Component, signal, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterOutlet } from '@angular/router';
+import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs';
 import { AuthService } from './core/services/auth.service';
 import { TopbarComponent } from './core/layout/topbar/topbar.component';
 import { SidebarComponent } from './core/layout/sidebar/sidebar.component';
@@ -14,16 +15,22 @@ import { SidebarComponent } from './core/layout/sidebar/sidebar.component';
 })
 export class AppComponent implements OnInit {
   authService = inject(AuthService);
+  router = inject(Router);
   isSidebarOpen = signal<boolean>(true);
+  isAuthPage = signal<boolean>(false);
 
   ngOnInit(): void {
-    if (!this.authService.isAuthenticated()) {
-      // Auto login as admin for immediate development & testing showcase
-      this.authService.login({
-        username: 'admin',
-        password: 'AdminPassword123!'
-      }).subscribe({ error: () => {} });
-    }
+    this.updateAuthPageState(this.router.url);
+
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe((event: any) => {
+      this.updateAuthPageState(event.urlAfterRedirects || event.url);
+    });
+  }
+
+  private updateAuthPageState(url: string): void {
+    this.isAuthPage.set(url.includes('/login'));
   }
 
   toggleSidebar(): void {

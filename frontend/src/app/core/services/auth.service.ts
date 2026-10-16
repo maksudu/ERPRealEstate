@@ -188,6 +188,7 @@ export class AuthService {
     localStorage.removeItem('erp_refresh_token');
     localStorage.removeItem('erp_user_profile');
     localStorage.removeItem('erp_active_project_id');
+    this.router.navigate(['/login']);
   }
 
   testProjectScope(): Observable<any> {

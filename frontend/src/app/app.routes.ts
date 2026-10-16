@@ -1,11 +1,22 @@
 import { Routes } from '@angular/router';
+import { authGuard, loginGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   {
-    path: '',
-    redirectTo: 'settings/lookups',
-    pathMatch: 'full'
+    path: 'login',
+    loadComponent: () => import('./features/auth/login/login.component').then(m => m.LoginComponent),
+    canActivate: [loginGuard],
+    title: 'Sign In - Bangladesh Real Estate ERP Enterprise'
   },
+  {
+    path: '',
+    canActivate: [authGuard],
+    children: [
+      {
+        path: '',
+        redirectTo: 'settings/lookups',
+        pathMatch: 'full'
+      },
   {
     path: 'settings/lookups',
     loadComponent: () => import('./features/settings/lookups/lookup-management.component').then(m => m.LookupManagementComponent),
@@ -200,6 +211,8 @@ export const routes: Routes = [
     path: 'settings/data-import',
     loadComponent: () => import('./features/settings/data-import/data-import.component').then(m => m.DataImportComponent),
     title: 'Legacy Excel Data Import & Migration - Bangladesh Real Estate ERP'
+  }
+    ]
   },
   {
     path: '**',

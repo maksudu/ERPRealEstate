@@ -1,25 +1,30 @@
-<div class="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col font-sans transition-colors duration-200">
-  <!-- Enterprise Top Navigation Bar Component -->
-  <app-topbar (toggleSidebar)="toggleSidebar()"></app-topbar>
+@if (isAuthPage()) {
+  <router-outlet></router-outlet>
+} @else {
+  <div class="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col font-sans transition-colors duration-200">
+    <!-- Enterprise Top Navigation Bar Component -->
+    <app-topbar (toggleSidebar)="toggleSidebar()"></app-topbar>
 
-  <!-- Main Body Layout with Proportional Equal Gap (p-6 gap-6) -->
-  <div class="flex-1 flex p-4 sm:p-6 gap-6 max-w-[1700px] w-full mx-auto items-start">
-    <!-- Multi-Level Collapsible Sidebar with Nested Sub-menus & Real-Time Filter -->
-    @if (isSidebarOpen()) {
-      <!-- Desktop in-flow sticky full-height sidebar -->
-      <app-sidebar class="shrink-0 sticky top-[5.5rem] self-start hidden md:block"></app-sidebar>
+    <!-- Main Body Layout with Proportional Equal Gap (p-6 gap-6) -->
+    <div class="flex-1 flex p-4 sm:p-6 gap-6 max-w-[1700px] w-full mx-auto items-start">
+      <!-- Multi-Level Collapsible Sidebar with Nested Sub-menus & Real-Time Filter -->
+      @if (isSidebarOpen()) {
+        <!-- Desktop in-flow sticky full-height sidebar -->
+        <app-sidebar class="shrink-0 sticky top-[5.5rem] self-start hidden md:block"></app-sidebar>
 
-      <!-- Mobile drawer overlay -->
-      <div class="fixed inset-0 z-50 md:hidden bg-slate-900/60 backdrop-blur-xs flex" (click)="toggleSidebar()">
-        <div class="p-4 w-80 max-w-[85vw] h-full" (click)="$event.stopPropagation()">
-          <app-sidebar class="block h-full"></app-sidebar>
+        <!-- Mobile drawer overlay -->
+        <div class="fixed inset-0 z-50 md:hidden bg-slate-900/60 backdrop-blur-xs flex" (click)="toggleSidebar()">
+          <div class="p-4 w-80 max-w-[85vw] h-full" (click)="$event.stopPropagation()">
+            <app-sidebar class="block h-full"></app-sidebar>
+          </div>
         </div>
-      </div>
-    }
+      }
 
-    <!-- Central Workspace: Renders completely inside unified Card Container -->
-    <main class="flex-1 min-w-0">
-      <router-outlet></router-outlet>
-    </main>
+      <!-- Central Workspace: Renders completely inside unified Card Container -->
+      <main class="flex-1 min-w-0">
+        <router-outlet></router-outlet>
+      </main>
+    </div>
   </div>
-</div>
+}
+
