@@ -1,7 +1,8 @@
-import { Component, signal, computed, inject } from '@angular/core';
+import { Component, signal, computed, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs/operators';
 
 export interface SubMenuItem {
   id: string;
@@ -24,7 +25,8 @@ export interface MenuGroup {
   imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive],
   templateUrl: './sidebar.component.html'
 })
-export class SidebarComponent {
+export class SidebarComponent implements OnInit {
+  private router = inject(Router);
   // In-Sidebar Quick Filter Query
   filterQuery = signal<string>('');
 
@@ -173,6 +175,27 @@ export class SidebarComponent {
       })
       .filter((g): g is MenuGroup => g !== null);
   });
+
+  ngOnInit(): void {
+    this.autoExpandActiveRoute();
+    this.router.events.pipe(
+      filter(e => e instanceof NavigationEnd)
+    ).subscribe(() => this.autoExpandActiveRoute());
+  }
+
+  private autoExpandActiveRoute(): void {
+    const currentUrl = this.router.url;
+    for (const group of this.menuGroups) {
+      if (group.items.some(item => currentUrl.startsWith(item.route))) {
+        this.expandedGroupIds.update(set => {
+          const newSet = new Set(set);
+          newSet.add(group.id);
+          return newSet;
+        });
+        break;
+      }
+    }
+  }
 
   isGroupExpanded(groupId: string): boolean {
     // If user is actively searching, auto-expand all matching groups!
