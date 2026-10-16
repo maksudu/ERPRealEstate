@@ -1,0 +1,336 @@
+<div class="flex flex-col gap-6">
+  <!-- Sales KPI Summary Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div class="bg-card border border-border rounded-xl p-4 flex items-center justify-between shadow-sm">
+      <div>
+        <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total Units Booked</p>
+        <h3 class="text-2xl font-bold text-foreground mt-1">{{ metrics()?.total_bookings || 0 }}</h3>
+      </div>
+      <div class="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+        </svg>
+      </div>
+    </div>
+
+    <div class="bg-card border border-border rounded-xl p-4 flex items-center justify-between shadow-sm">
+      <div>
+        <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Gross Contract Value</p>
+        <h3 class="text-xl font-bold text-primary mt-1">BDT {{ (metrics()?.gross_contract_value || 0) | number:'1.0-0' }}</h3>
+      </div>
+      <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+    </div>
+
+    <div class="bg-card border border-border rounded-xl p-4 flex items-center justify-between shadow-sm">
+      <div>
+        <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Earnest Money Collected</p>
+        <h3 class="text-xl font-bold text-foreground mt-1">BDT {{ (metrics()?.total_earnest_collected || 0) | number:'1.0-0' }}</h3>
+      </div>
+      <div class="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+        </svg>
+      </div>
+    </div>
+
+    <div class="bg-card border border-border rounded-xl p-4 flex items-center justify-between shadow-sm">
+      <div>
+        <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Pending Discount Approvals</p>
+        <h3 class="text-2xl font-bold text-amber-500 mt-1">{{ metrics()?.pending_discount_approvals || 0 }}</h3>
+      </div>
+      <div class="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-500">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Unified Main Card Container -->
+  <app-card-container
+    title="Apartment Bookings & Deed Generator Master"
+    subtitle="Module 5 & 33: Sales Execution, Sub-Registry Statutory Bilingual Deed of Agreement & Allotment"
+  >
+    <!-- Action Bar & Search -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div class="relative flex-1 max-w-md">
+        <input 
+          type="text" 
+          [ngModel]="searchQuery()" 
+          (ngModelChange)="searchQuery.set($event)"
+          placeholder="Search by Booking Ref, Buyer, Unit, or Project..." 
+          class="w-full pl-10 pr-4 py-2 text-sm rounded-lg bg-secondary/50 border border-border focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-foreground placeholder-muted-foreground"
+        />
+        <svg class="w-4 h-4 text-muted-foreground absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <app-custom-button variant="primary" (clicked)="openCreateModal()">
+          <span class="flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            + Create Booking
+          </span>
+        </app-custom-button>
+      </div>
+    </div>
+
+    <!-- Bookings Table -->
+    <div class="overflow-x-auto border border-border rounded-xl">
+      <table class="w-full text-left text-sm text-foreground">
+        <thead class="bg-secondary/40 text-xs font-semibold uppercase text-muted-foreground border-b border-border">
+          <tr>
+            <th class="px-4 py-3">Booking Ref</th>
+            <th class="px-4 py-3">Buyer / Allottee</th>
+            <th class="px-4 py-3">Project & Unit</th>
+            <th class="px-4 py-3 text-right">Contract Value</th>
+            <th class="px-4 py-3 text-center">Discount Tier</th>
+            <th class="px-4 py-3 text-center">Status</th>
+            <th class="px-4 py-3 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border/60">
+          @for (b of filteredBookings(); track b.id) {
+            <tr class="hover:bg-secondary/20 transition-colors">
+              <td class="px-4 py-3.5 font-mono font-bold text-primary">
+                {{ b.booking_reference_no }}
+                <span class="block text-[11px] text-muted-foreground font-normal">{{ b.booking_date }}</span>
+              </td>
+              <td class="px-4 py-3.5">
+                <div class="font-semibold text-foreground">{{ b.customer_name }}</div>
+                <div class="text-xs text-muted-foreground">📞 {{ b.customer_phone }}</div>
+              </td>
+              <td class="px-4 py-3.5">
+                <div class="font-medium text-foreground">Unit {{ b.unit_number }}</div>
+                <div class="text-xs text-muted-foreground truncate max-w-[180px]">{{ b.project_name }}</div>
+              </td>
+              <td class="px-4 py-3.5 text-right font-mono font-semibold">
+                BDT {{ b.final_contract_value | number:'1.0-0' }}
+                @if (b.discount_amount > 0) {
+                  <span class="block text-[11px] text-emerald-500 font-normal">
+                    Disc: -{{ b.discount_percentage }}% (BDT {{ b.discount_amount | number:'1.0-0' }})
+                  </span>
+                }
+              </td>
+              <td class="px-4 py-3.5 text-center">
+                @if (b.discount_approval_status === 'APPROVED') {
+                  <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                    ✓ {{ b.required_approval_tier.replace('_', ' ') }}
+                  </span>
+                } @else if (b.discount_approval_status === 'PENDING_APPROVAL') {
+                  <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20 animate-pulse">
+                    ⏳ Req. {{ b.required_approval_tier.replace('_', ' ') }}
+                  </span>
+                } @else {
+                  <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-500 border border-rose-500/20">
+                    ✕ Rejected
+                  </span>
+                }
+              </td>
+              <td class="px-4 py-3.5 text-center">
+                <span 
+                  class="text-xs font-semibold px-2.5 py-1 rounded-full uppercase"
+                  [ngClass]="{
+                    'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20': b.status === 'AGREEMENT_SIGNED',
+                    'bg-blue-500/10 text-blue-500 border border-blue-500/20': b.status === 'PROVISIONAL',
+                    'bg-purple-500/10 text-purple-500 border border-purple-500/20': b.status === 'TRANSFERRED',
+                    'bg-rose-500/10 text-rose-500 border border-rose-500/20': b.status === 'CANCELLED'
+                  }"
+                >
+                  {{ b.status.replace('_', ' ') }}
+                </span>
+              </td>
+              <td class="px-4 py-3.5 text-right">
+                <div class="flex items-center justify-end gap-2">
+                  <!-- WeasyPrint Bilingual PDF Generator Download -->
+                  <button 
+                    (click)="downloadDeed(b)"
+                    title="Download Bilingual Deed of Agreement (WeasyPrint PDF)"
+                    class="px-2.5 py-1 text-xs rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20 font-medium inline-flex items-center gap-1.5 transition-colors"
+                  >
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    Deed PDF
+                  </button>
+
+                  <!-- Transfer Allotment -->
+                  @if (b.status !== 'CANCELLED') {
+                    <button 
+                      (click)="openTransferModal(b)"
+                      title="Transfer Unit Mutation to another Buyer"
+                      class="px-2 py-1 text-xs rounded-lg bg-secondary hover:bg-secondary/80 text-foreground border border-border font-medium transition-colors"
+                    >
+                      Transfer
+                    </button>
+                  }
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="7" class="px-4 py-12 text-center text-muted-foreground">
+                No property bookings found matching the query.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </app-card-container>
+
+  <!-- Modal 1: Create Sales Booking -->
+  @if (isCreateModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+      <div class="bg-card border border-border rounded-2xl w-full max-w-xl shadow-2xl p-6 flex flex-col gap-5 my-8">
+        <div class="flex items-center justify-between border-b border-border pb-3">
+          <div>
+            <h3 class="text-lg font-bold text-foreground">Execute Apartment Booking</h3>
+            <p class="text-xs text-muted-foreground">Automatic Multi-Level Discount Approval Matrix Assignment</p>
+          </div>
+          <button (click)="closeCreateModal()" class="text-muted-foreground hover:text-foreground">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
+        <form [formGroup]="bookingForm" (ngSubmit)="submitBooking()" class="flex flex-col gap-4">
+          <app-searchable-select
+            label="Project Name *"
+            [options]="projectOptions"
+            [formGroup]="bookingForm"
+            controlName="project_id"
+          />
+
+          <app-searchable-select
+            label="Allotted Unit / Apartment *"
+            [options]="unitOptions"
+            [formGroup]="bookingForm"
+            controlName="unit_id"
+          />
+
+          <app-searchable-select
+            label="Primary Buyer KYC Profile *"
+            [options]="customerOptions"
+            [formGroup]="bookingForm"
+            controlName="primary_customer_id"
+          />
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <app-custom-input
+              label="Promotional Discount Amount (BDT)"
+              type="number"
+              placeholder="0"
+              [formGroup]="bookingForm"
+              controlName="discount_amount"
+            />
+            <app-custom-input
+              label="Earnest Booking Money (BDT) *"
+              type="number"
+              placeholder="500000"
+              [formGroup]="bookingForm"
+              controlName="earnest_money_received"
+            />
+          </div>
+
+          <!-- Multi-Level Discount Policy Hint -->
+          <div class="text-[11px] bg-secondary/50 p-3 rounded-xl border border-border space-y-1">
+            <span class="font-bold text-foreground block">Governance Policy: Multi-Level Discount Approval Matrix</span>
+            <div class="text-muted-foreground">
+              • <strong>Discount &le; 1.0%:</strong> Sales Manager Approval (auto-approved).<br>
+              • <strong>1.0% &lt; Discount &le; 3.0%:</strong> Director Approval required.<br>
+              • <strong>Discount &gt; 3.0%:</strong> Managing Director (MD) 1-Tap Biometric Approval required.
+            </div>
+          </div>
+
+          <app-custom-textarea
+            label="Special Conditions / Terms"
+            placeholder="Special handover conditions, milestone payment customization..."
+            [formGroup]="bookingForm"
+            controlName="notes"
+          />
+
+          <div class="flex justify-end gap-3 pt-3 border-t border-border">
+            <app-custom-button variant="outline" type="button" (clicked)="closeCreateModal()">
+              Cancel
+            </app-custom-button>
+            <app-custom-button variant="primary" type="submit" [disabled]="bookingForm.invalid || isSubmitting()">
+              {{ isSubmitting() ? 'Executing...' : 'Execute Booking' }}
+            </app-custom-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- Modal 2: Unit Mutation & Ownership Transfer -->
+  @if (isTransferModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div class="bg-card border border-border rounded-2xl w-full max-w-md shadow-2xl p-6 flex flex-col gap-5">
+        <div class="flex items-center justify-between border-b border-border pb-3">
+          <div>
+            <h3 class="text-base font-bold text-foreground">Unit Mutation & Transfer</h3>
+            <p class="text-xs text-muted-foreground">{{ selectedBookingForTransfer()?.booking_reference_no }} (Unit {{ selectedBookingForTransfer()?.unit_number }})</p>
+          </div>
+          <button (click)="closeTransferModal()" class="text-muted-foreground hover:text-foreground">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
+        <form [formGroup]="transferForm" (ngSubmit)="submitTransfer()" class="flex flex-col gap-4">
+          <div class="text-xs bg-secondary/50 p-2.5 rounded-lg border border-border">
+            Current Owner: <strong>{{ selectedBookingForTransfer()?.customer_name }}</strong>
+          </div>
+
+          <app-searchable-select
+            label="New Transferee Buyer KYC *"
+            [options]="customerOptions"
+            [formGroup]="transferForm"
+            controlName="to_customer_id"
+          />
+
+          <app-custom-input
+            label="Developer Transfer NOC Fee (BDT) *"
+            type="number"
+            placeholder="50000"
+            [formGroup]="transferForm"
+            controlName="transfer_fee_bdt"
+          />
+
+          <app-custom-input
+            label="Transfer Memo / Sub-Registry Ref"
+            placeholder="TRF-2026-XXXX"
+            [formGroup]="transferForm"
+            controlName="transfer_memo_no"
+          />
+
+          <app-custom-textarea
+            label="Transfer Remarks"
+            placeholder="Mutation deed endorsement details..."
+            [formGroup]="transferForm"
+            controlName="remarks"
+          />
+
+          <div class="flex justify-end gap-3 pt-3 border-t border-border">
+            <app-custom-button variant="outline" type="button" (clicked)="closeTransferModal()">
+              Cancel
+            </app-custom-button>
+            <app-custom-button variant="primary" type="submit" [disabled]="transferForm.invalid || isSubmitting()">
+              {{ isSubmitting() ? 'Transferring...' : 'Execute Mutation Transfer' }}
+            </app-custom-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>

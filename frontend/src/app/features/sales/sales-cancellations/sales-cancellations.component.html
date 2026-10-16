@@ -1,0 +1,156 @@
+<div class="flex flex-col gap-6">
+  <!-- REHAB Statutory Cancellation Guidance Banner -->
+  <div class="bg-card border border-border rounded-xl p-5 shadow-sm">
+    <div class="flex items-start gap-4">
+      <div class="w-10 h-10 rounded-full bg-rose-500/10 flex items-center justify-center text-rose-500 shrink-0">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+      </div>
+      <div>
+        <h3 class="font-bold text-base text-foreground">Real Estate Act & REHAB Statutory Allotment Cancellation Rules</h3>
+        <p class="text-xs text-muted-foreground mt-1 leading-relaxed">
+          Under Section 14 of the Real Estate Development and Management Act 2010 and REHAB statutory bylaws, upon unilateral cancellation by the allottee, the developer is entitled to deduct a maximum of <strong>10% (Ten Percent)</strong> of the total amount deposited as administrative forfeiture charge. The net balance is refunded via account payee cheque within the statutory period, and the allocated unit is automatically restored to <strong>AVAILABLE</strong> inventory status.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Unified Main Card Container -->
+  <app-card-container
+    title="Apartment Allotment Cancellations & Forfeiture Ledger"
+    subtitle="Module 33: Forfeiture Deductions, Net Refund Audits & Re-allotment Processing"
+  >
+    <div class="flex items-center justify-between gap-4 mb-6">
+      <div>
+        <span class="text-xs text-muted-foreground font-mono">
+          Total Cancellation Settlements: {{ cancellations().length }}
+        </span>
+      </div>
+
+      <app-custom-button variant="danger" (clicked)="openCancelModal()">
+        <span class="flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+          + Process Booking Cancellation
+        </span>
+      </app-custom-button>
+    </div>
+
+    <!-- Cancellations Table -->
+    <div class="overflow-x-auto border border-border rounded-xl">
+      <table class="w-full text-left text-sm text-foreground">
+        <thead class="bg-secondary/40 text-xs font-semibold uppercase text-muted-foreground border-b border-border">
+          <tr>
+            <th class="px-4 py-3">Booking Reference</th>
+            <th class="px-4 py-3">Customer & Unit</th>
+            <th class="px-4 py-3 text-right">Total Deposited</th>
+            <th class="px-4 py-3 text-right">Forfeiture Deduction (10%)</th>
+            <th class="px-4 py-3 text-right">Net Refund Due</th>
+            <th class="px-4 py-3 text-center">Settlement Status</th>
+            <th class="px-4 py-3">Refund Instrument / Cheque</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border/60">
+          @for (c of cancellations(); track c.id) {
+            <tr class="hover:bg-secondary/20 transition-colors">
+              <td class="px-4 py-3.5 font-mono font-bold text-primary">
+                {{ c.booking_reference_no }}
+                <span class="block text-[11px] text-muted-foreground font-normal">{{ c.cancellation_date }}</span>
+              </td>
+              <td class="px-4 py-3.5">
+                <div class="font-semibold text-foreground">{{ c.customer_name }}</div>
+                <div class="text-xs text-muted-foreground">Unit {{ c.unit_number }}</div>
+              </td>
+              <td class="px-4 py-3.5 text-right font-mono font-medium">
+                BDT {{ c.total_paid | number:'1.0-0' }}
+              </td>
+              <td class="px-4 py-3.5 text-right font-mono font-bold text-rose-500">
+                -BDT {{ c.forfeiture_deduction_amount | number:'1.0-0' }}
+                <span class="block text-[11px] font-normal text-muted-foreground">({{ c.forfeiture_deduction_percentage }}%)</span>
+              </td>
+              <td class="px-4 py-3.5 text-right font-mono font-bold text-emerald-500 text-base">
+                BDT {{ c.net_refund_amount | number:'1.0-0' }}
+              </td>
+              <td class="px-4 py-3.5 text-center">
+                <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                  ✓ {{ c.status }}
+                </span>
+              </td>
+              <td class="px-4 py-3.5">
+                <span class="font-mono text-xs text-foreground font-medium block">{{ c.refund_cheque_no || 'Pending Issuance' }}</span>
+                <span class="text-[11px] text-muted-foreground line-clamp-1">{{ c.settlement_notes }}</span>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="7" class="px-4 py-12 text-center text-muted-foreground">
+                No allotment cancellations recorded.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </app-card-container>
+
+  <!-- Process Cancellation Modal -->
+  @if (isCancelModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div class="bg-card border border-border rounded-2xl w-full max-w-lg shadow-2xl p-6 flex flex-col gap-5">
+        <div class="flex items-center justify-between border-b border-border pb-3">
+          <div>
+            <h3 class="text-base font-bold text-foreground">Process Booking Cancellation</h3>
+            <p class="text-xs text-muted-foreground">Applies statutory 10% forfeiture and restores unit to available</p>
+          </div>
+          <button (click)="closeCancelModal()" class="text-muted-foreground hover:text-foreground">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
+        <form [formGroup]="cancelForm" (ngSubmit)="submitCancellation()" class="flex flex-col gap-4">
+          <app-searchable-select
+            label="Select Active Booking to Cancel *"
+            [options]="bookingOptions"
+            [formGroup]="cancelForm"
+            controlName="booking_id"
+          />
+
+          <app-custom-input
+            label="Forfeiture Deduction Percentage (%) *"
+            type="number"
+            placeholder="10"
+            [formGroup]="cancelForm"
+            controlName="forfeiture_deduction_percentage"
+          />
+
+          <app-custom-input
+            label="Refund Pay Order / Cheque No."
+            placeholder="CHQ-SCB-XXXXXXXX"
+            [formGroup]="cancelForm"
+            controlName="refund_cheque_no"
+          />
+
+          <app-custom-textarea
+            label="Cancellation Reason & Notes *"
+            placeholder="Formal cancellation letter received from customer..."
+            [formGroup]="cancelForm"
+            controlName="cancellation_reason"
+          />
+
+          <div class="flex justify-end gap-3 pt-3 border-t border-border">
+            <app-custom-button variant="outline" type="button" (clicked)="closeCancelModal()">
+              Cancel
+            </app-custom-button>
+            <app-custom-button variant="danger" type="submit" [disabled]="cancelForm.invalid || isSubmitting()">
+              {{ isSubmitting() ? 'Cancelling...' : 'Confirm Cancellation' }}
+            </app-custom-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>

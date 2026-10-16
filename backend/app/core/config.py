@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     API_V1_PREFIX: str = "/api/v1"
     
     # Database (MySQL 8.0 Async)
-    DATABASE_URL: str = "mysql+asyncmy://erp_user:erp_secure_password@localhost:3306/erp_realestate_db"
+    DATABASE_URL: str = "mysql+aiomysql://erp_user:erp_secure_password@localhost:3306/ERPRealEstate"
     DB_POOL_SIZE: int = 25
     DB_MAX_OVERFLOW: int = 50
     DB_POOL_RECYCLE: int = 1800

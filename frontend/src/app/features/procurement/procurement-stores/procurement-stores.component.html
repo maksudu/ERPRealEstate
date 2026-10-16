@@ -1,0 +1,279 @@
+<app-card-container>
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-5">
+    <div>
+      <div class="flex items-center gap-2">
+        <h1 class="text-2xl font-bold tracking-tight text-foreground">Central & Site Store Stock Inventory</h1>
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+          Module 38 Material Stores
+        </span>
+      </div>
+      <p class="text-sm text-muted-foreground mt-1">
+        Real-time multi-project store registers, bin cards, physical stock balances, and automated reorder threshold triggers.
+      </p>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <app-custom-button
+        variant="outline"
+        (btnClick)="loadStores(); loadMetrics()">
+        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        Refresh
+      </app-custom-button>
+      <app-custom-button
+        variant="primary"
+        (btnClick)="openCreateStoreModal()">
+        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        + New Site Store
+      </app-custom-button>
+    </div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 my-5">
+    <div class="p-4 rounded-xl bg-card border border-border shadow-xs">
+      <div class="text-xs font-medium text-muted-foreground">Active Site Stores</div>
+      <div class="text-2xl font-bold text-foreground mt-1">{{ metrics()?.total_active_stores || stores().length }}</div>
+      <div class="text-xs text-muted-foreground mt-1">Across active projects</div>
+    </div>
+    <div class="p-4 rounded-xl bg-card border border-border shadow-xs">
+      <div class="text-xs font-medium text-muted-foreground">Low Stock Warnings</div>
+      <div class="text-2xl font-bold" [ngClass]="(metrics()?.low_stock_items_count || 0) > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600'">
+        {{ metrics()?.low_stock_items_count || 0 }}
+      </div>
+      <div class="text-xs text-muted-foreground mt-1">Below safety reorder level</div>
+    </div>
+    <div class="p-4 rounded-xl bg-card border border-border shadow-xs">
+      <div class="text-xs font-medium text-muted-foreground">Active Purchase Orders</div>
+      <div class="text-2xl font-bold text-foreground mt-1">{{ metrics()?.active_po_count || 0 }}</div>
+      <div class="text-xs text-muted-foreground mt-1">Awaiting delivery</div>
+    </div>
+    <div class="p-4 rounded-xl bg-card border border-border shadow-xs">
+      <div class="text-xs font-medium text-muted-foreground">Total PO Value (BDT)</div>
+      <div class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">
+        ৳{{ (metrics()?.total_po_value || 0) | number:'1.0-0' }}
+      </div>
+      <div class="text-xs text-muted-foreground mt-1">Committed spend</div>
+    </div>
+  </div>
+
+  <!-- Main Stores Layout (Left: Store Selector Cards, Right: Store Stock Details) -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <!-- Left Store Cards List -->
+    <div class="lg:col-span-4 space-y-3">
+      <div class="text-sm font-bold text-foreground mb-2 flex items-center justify-between">
+        <span>Site Store Locations</span>
+        <span class="text-xs text-muted-foreground">{{ stores().length }} registered</span>
+      </div>
+
+      @if (isLoading()) {
+        <div class="p-6 text-center text-sm text-muted-foreground">Loading stores...</div>
+      } @else if (stores().length === 0) {
+        <div class="p-6 text-center text-sm text-muted-foreground bg-muted/20 rounded-xl border border-dashed border-border">
+          No stores logged. Create one above.
+        </div>
+      } @else {
+        @for (store of stores(); track store.id) {
+          <div
+            (click)="selectStore(store)"
+            class="p-4 rounded-xl border transition-all cursor-pointer"
+            [ngClass]="selectedStore()?.id === store.id ? 'border-primary bg-primary/5 shadow-xs' : 'border-border bg-card hover:border-primary/40'">
+            <div class="flex items-start justify-between">
+              <div>
+                <h3 class="font-bold text-foreground text-sm">{{ store.store_name }}</h3>
+                <div class="text-xs font-medium text-muted-foreground mt-0.5">{{ store.project_name || 'Project' }}</div>
+              </div>
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-muted text-muted-foreground">
+                #{{ store.id }}
+              </span>
+            </div>
+            <div class="mt-3 pt-2 border-t border-border flex items-center justify-between text-xs text-muted-foreground">
+              <span>In-Charge: {{ store.store_in_charge_name || 'Store Keeper' }}</span>
+              <span>{{ store.stocks.length }} materials</span>
+            </div>
+          </div>
+        }
+      }
+    </div>
+
+    <!-- Right Store Stock Bin Cards -->
+    <div class="lg:col-span-8">
+      @if (selectedStore(); as current) {
+        <div class="rounded-xl border border-border bg-card p-5">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-4 border-b border-border">
+            <div>
+              <h2 class="text-lg font-bold text-foreground">{{ current.store_name }}</h2>
+              <div class="text-xs text-muted-foreground">
+                Project: <span class="font-semibold text-foreground">{{ current.project_name }}</span> • Location: {{ current.location_details || 'Site Yard' }}
+              </div>
+            </div>
+            <app-custom-button
+              variant="outline"
+              size="sm"
+              (btnClick)="openAdjustStockModal()">
+              Adjust / Add Stock
+            </app-custom-button>
+          </div>
+
+          <!-- Stock Table -->
+          <div class="overflow-x-auto mt-4">
+            <table class="w-full text-left text-sm">
+              <thead class="bg-muted/50 text-muted-foreground text-xs uppercase font-semibold border-b border-border">
+                <tr>
+                  <th class="px-3.5 py-3">Material Code & Item</th>
+                  <th class="px-3.5 py-3">Unit</th>
+                  <th class="px-3.5 py-3 text-right">Current Stock</th>
+                  <th class="px-3.5 py-3 text-right">Reorder Level</th>
+                  <th class="px-3.5 py-3 text-center">Stock Health</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-border">
+                @if (current.stocks.length === 0) {
+                  <tr>
+                    <td colspan="5" class="text-center py-8 text-muted-foreground text-sm">
+                      No stock logged for this store. Click "Adjust / Add Stock" to enter inventory.
+                    </td>
+                  </tr>
+                } @else {
+                  @for (stk of current.stocks; track stk.id) {
+                    <tr class="hover:bg-muted/30 transition-colors">
+                      <td class="px-3.5 py-3 font-medium text-foreground">
+                        <div class="font-bold text-foreground">{{ stk.material_name }}</div>
+                        <div class="text-xs text-muted-foreground">{{ stk.material_code }}</div>
+                      </td>
+                      <td class="px-3.5 py-3 text-xs text-muted-foreground">{{ stk.unit_of_measure }}</td>
+                      <td class="px-3.5 py-3 text-right font-bold" [ngClass]="stk.is_low_stock ? 'text-amber-600 dark:text-amber-400' : 'text-foreground'">
+                        {{ stk.current_stock_quantity | number:'1.2-2' }}
+                      </td>
+                      <td class="px-3.5 py-3 text-right text-xs text-muted-foreground">
+                        {{ stk.reorder_level | number:'1.2-2' }}
+                      </td>
+                      <td class="px-3.5 py-3 text-center">
+                        @if (stk.is_low_stock) {
+                          <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300 animate-pulse">
+                            LOW STOCK (REORDER)
+                          </span>
+                        } @else {
+                          <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+                            Adequate
+                          </span>
+                        }
+                      </td>
+                    </tr>
+                  }
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      } @else {
+        <div class="p-12 text-center text-muted-foreground bg-card rounded-xl border border-border">
+          Select a site store from the left list to view stock levels.
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Create Store Modal -->
+  @if (isCreateStoreModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+      <div class="bg-card border border-border w-full max-w-md rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+        <div class="px-6 py-4 border-b border-border flex items-center justify-between bg-muted/40">
+          <div>
+            <h2 class="text-lg font-bold text-foreground">Create New Site Store</h2>
+            <p class="text-xs text-muted-foreground">Initialize warehouse / site material storage yard.</p>
+          </div>
+          <button type="button" (click)="closeCreateStoreModal()" class="text-muted-foreground hover:text-foreground">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <form [formGroup]="createStoreForm" (ngSubmit)="submitCreateStore()" class="p-6 space-y-4">
+          <app-searchable-select
+            label="Project Name *"
+            placeholder="Select Project"
+            [options]="projectOptions()"
+            [ngModel]="createStoreForm.get('project_id')?.value"
+            (ngModelChange)="createStoreForm.get('project_id')?.setValue($event)"
+            [required]="true">
+          </app-searchable-select>
+
+          <app-custom-input
+            label="Store Name *"
+            placeholder="e.g. Central Site Store - South Yard"
+            formControlName="store_name"
+            [required]="true">
+          </app-custom-input>
+
+          <app-custom-input
+            label="Location Details"
+            placeholder="e.g. Basement 1 Bay 12-16"
+            formControlName="location_details">
+          </app-custom-input>
+
+          <div class="pt-4 border-t border-border flex items-center justify-end gap-3">
+            <app-custom-button variant="outline" (btnClick)="closeCreateStoreModal()">Cancel</app-custom-button>
+            <app-custom-button variant="primary" type="submit" [disabled]="isSubmitting()">
+              {{ isSubmitting() ? 'Creating...' : 'Create Site Store' }}
+            </app-custom-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- Adjust Stock Modal -->
+  @if (isAdjustStockModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+      <div class="bg-card border border-border w-full max-w-md rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+        <div class="px-6 py-4 border-b border-border flex items-center justify-between bg-muted/40">
+          <div>
+            <h2 class="text-lg font-bold text-foreground">Adjust Material Stock</h2>
+            <p class="text-xs text-muted-foreground">{{ selectedStore()?.store_name }}</p>
+          </div>
+          <button type="button" (click)="closeAdjustStockModal()" class="text-muted-foreground hover:text-foreground">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <form [formGroup]="adjustStockForm" (ngSubmit)="submitAdjustStock()" class="p-6 space-y-4">
+          <app-searchable-select
+            label="Material Item *"
+            placeholder="Select Material"
+            [options]="materialOptions()"
+            [ngModel]="adjustStockForm.get('material_id')?.value"
+            (ngModelChange)="adjustStockForm.get('material_id')?.setValue($event)"
+            [required]="true">
+          </app-searchable-select>
+
+          <app-custom-input
+            label="Quantity Delta (+/-) *"
+            type="number"
+            placeholder="e.g. 500 or -20"
+            formControlName="quantity_delta"
+            [required]="true">
+          </app-custom-input>
+
+          <app-searchable-select
+            label="Adjustment Reason *"
+            placeholder="Select Reason"
+            [options]="adjustmentReasons"
+            [ngModel]="adjustStockForm.get('adjustment_reason')?.value"
+            (ngModelChange)="adjustStockForm.get('adjustment_reason')?.setValue($event)">
+          </app-searchable-select>
+
+          <div class="pt-4 border-t border-border flex items-center justify-end gap-3">
+            <app-custom-button variant="outline" (btnClick)="closeAdjustStockModal()">Cancel</app-custom-button>
+            <app-custom-button variant="primary" type="submit" [disabled]="isSubmitting()">
+              {{ isSubmitting() ? 'Updating...' : 'Post Stock Delta' }}
+            </app-custom-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</app-card-container>

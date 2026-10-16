@@ -1,0 +1,190 @@
+<app-card-container 
+  title="Historic Land Surveys (CS, SA, RS, BS / City Survey)" 
+  subtitle="Khatian lineage, dag mutation records, and AC Land recorded tenant ledger (Modules 25 & 26)"
+  badge="LEGAL SURVEYS"
+>
+  <!-- Header Actions -->
+  <div card-actions class="flex items-center gap-3">
+    <div class="flex items-center gap-2">
+      <span class="text-xs text-slate-500 font-medium">Filter Parcel:</span>
+      <select 
+        (change)="filterByParcel($event)" 
+        class="erp-input text-xs py-1 px-2.5 w-48"
+      >
+        <option value="">All Land Parcels</option>
+        @for (p of proposals(); track p.id) {
+          <option [value]="p.id">{{ p.project_code }} - {{ p.mouza_name }}</option>
+        }
+      </select>
+    </div>
+
+    <app-custom-button variant="primary" (btnClick)="openCreateModal()">
+      <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+      </svg>
+      Log Survey Record
+    </app-custom-button>
+  </div>
+
+  <!-- Surveys Table -->
+  <div class="overflow-x-auto">
+    <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800 text-left text-xs">
+      <thead class="bg-slate-50 dark:bg-slate-850 text-slate-600 dark:text-slate-400 font-semibold uppercase tracking-wider">
+        <tr>
+          <th class="px-4 py-3">Parcel Code</th>
+          <th class="px-4 py-3">Survey Type</th>
+          <th class="px-4 py-3">Khatian Number</th>
+          <th class="px-4 py-3">Dag Number</th>
+          <th class="px-4 py-3">Recorded Tenant</th>
+          <th class="px-4 py-3">Recorded Area</th>
+          <th class="px-4 py-3">Historical Remarks</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300">
+        @if (isLoading()) {
+          <tr>
+            <td colspan="7" class="px-4 py-8 text-center text-slate-400">
+              <div class="inline-flex items-center gap-2">
+                <svg class="animate-spin h-4 w-4 text-emerald-600" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                </svg>
+                Loading survey records...
+              </div>
+            </td>
+          </tr>
+        } @else if (surveys().length === 0) {
+          <tr>
+            <td colspan="7" class="px-4 py-12 text-center text-slate-400">
+              No historical survey records logged yet. Click "+ Log Survey Record" to add CS/SA/RS/BS khatian.
+            </td>
+          </tr>
+        } @else {
+          @for (s of surveys(); track s.id) {
+            <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+              <td class="px-4 py-3.5 font-mono font-semibold text-slate-900 dark:text-slate-100">
+                {{ getParcelCode(s.land_bank_id) }}
+              </td>
+              <td class="px-4 py-3.5">
+                <span 
+                  class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold"
+                  [class.bg-sky-100]="s.survey_type_id === 'CS'"
+                  [class.text-sky-800]="s.survey_type_id === 'CS'"
+                  [class.bg-purple-100]="s.survey_type_id === 'SA'"
+                  [class.text-purple-800]="s.survey_type_id === 'SA'"
+                  [class.bg-emerald-100]="s.survey_type_id === 'RS'"
+                  [class.text-emerald-800]="s.survey_type_id === 'RS'"
+                  [class.bg-indigo-100]="s.survey_type_id === 'BS_CITY' || s.survey_type_id === 'BS'"
+                  [class.text-indigo-800]="s.survey_type_id === 'BS_CITY' || s.survey_type_id === 'BS'"
+                >
+                  {{ s.survey_type_id }}
+                </span>
+              </td>
+              <td class="px-4 py-3.5 font-mono font-medium text-slate-900 dark:text-slate-100">
+                {{ s.khatian_number }}
+              </td>
+              <td class="px-4 py-3.5 font-mono text-slate-700 dark:text-slate-300">
+                {{ s.dag_number }}
+              </td>
+              <td class="px-4 py-3.5 font-medium text-slate-800 dark:text-slate-200">
+                {{ s.recorded_tenant_name }}
+              </td>
+              <td class="px-4 py-3.5">
+                <span class="font-semibold text-emerald-600 dark:text-emerald-400">{{ s.recorded_area_katha }} Katha</span>
+                <span class="text-[11px] text-slate-400 ml-1">({{ s.recorded_area_decimal }} Dec)</span>
+              </td>
+              <td class="px-4 py-3.5 text-xs text-slate-500 max-w-xs truncate">
+                {{ s.remarks || '-' }}
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+</app-card-container>
+
+<!-- LOG SURVEY MODAL -->
+@if (isModalOpen()) {
+  <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="erp-card w-full max-w-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-850">
+        <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100">
+          Log Historic Survey / Khatian Record
+        </h3>
+        <button (click)="closeModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <form [formGroup]="surveyForm" (ngSubmit)="submitSurvey()" class="p-6 space-y-4">
+        @if (errorMessage()) {
+          <div class="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-lg text-xs text-rose-600 dark:text-rose-400">
+            {{ errorMessage() }}
+          </div>
+        }
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Associated Land Parcel *</label>
+          <select formControlName="land_bank_id" class="erp-input text-xs">
+            <option [ngValue]="null" disabled>Select land parcel...</option>
+            @for (p of proposals(); track p.id) {
+              <option [value]="p.id">{{ p.project_code }} - {{ p.proposal_title }} ({{ p.mouza_name }})</option>
+            }
+          </select>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Dynamic Category Searchable Select with In-Place Add New! -->
+          <app-searchable-select
+            categoryCode="LAND_SURVEY_TYPE"
+            label="Historic Survey Type *"
+            formControlName="survey_type_id"
+            placeholder="Select survey type..."
+          ></app-searchable-select>
+
+          <app-custom-input
+            formControlName="khatian_number"
+            label="Khatian Number *"
+            placeholder="e.g. RS-1402 / SA-489"
+          ></app-custom-input>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <app-custom-input
+            formControlName="dag_number"
+            label="Dag (Plot) Number *"
+            placeholder="e.g. RS-2201 / CS-504"
+          ></app-custom-input>
+
+          <app-custom-input
+            formControlName="recorded_area_decimal"
+            type="number"
+            label="Recorded Area (Decimal) *"
+            placeholder="e.g. 30.55"
+            hint="Auto-converts to Katha in registry"
+          ></app-custom-input>
+        </div>
+
+        <app-custom-input
+          formControlName="recorded_tenant_name"
+          label="Recorded Tenant Name (দখলদার/প্রজা) *"
+          placeholder="e.g. Alhaj Rafiqul Islam Chowdhury"
+        ></app-custom-input>
+
+        <app-custom-input
+          formControlName="remarks"
+          label="Archival Remarks & Reference"
+          placeholder="e.g. Settlement volume page # 142, registered sub-registry deed link"
+        ></app-custom-input>
+
+        <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+          <app-custom-button type="button" variant="secondary" (btnClick)="closeModal()">Cancel</app-custom-button>
+          <app-custom-button type="submit" variant="primary" [loading]="isSubmitting()">Save Survey Record</app-custom-button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

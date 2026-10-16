@@ -1,0 +1,177 @@
+<app-card-container 
+  title="Statutory Clearances & Authority Permits" 
+  subtitle="RAJUK / CDA building permits, Civil Aviation height NOC, Fire safety & Environmental clearances (Modules 29 & 30)"
+  badge="PERMITS & NOC"
+>
+  <!-- Header Filter -->
+  <div card-actions class="flex items-center gap-2">
+    <span class="text-xs text-slate-500 font-medium">Select Project:</span>
+    <select 
+      (change)="onProjectFilterChange($event)" 
+      class="erp-input text-xs py-1 px-2.5 w-60"
+    >
+      @for (p of projects(); track p.id) {
+        <option [value]="p.id" [selected]="p.id === selectedProjectId()">
+          {{ p.project_code }} - {{ p.project_name }}
+        </option>
+      }
+    </select>
+  </div>
+
+  <!-- Clearances Grid / Table -->
+  <div class="overflow-x-auto">
+    <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800 text-left text-xs">
+      <thead class="bg-slate-50 dark:bg-slate-850 text-slate-600 dark:text-slate-400 font-semibold uppercase tracking-wider">
+        <tr>
+          <th class="px-4 py-3">Statutory Clearance</th>
+          <th class="px-4 py-3">Status</th>
+          <th class="px-4 py-3">Approved Memo No</th>
+          <th class="px-4 py-3">Approval Date</th>
+          <th class="px-4 py-3">Expiry Date</th>
+          <th class="px-4 py-3">Remarks & Conditions</th>
+          <th class="px-4 py-3 text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300">
+        @if (isLoading()) {
+          <tr>
+            <td colspan="7" class="px-4 py-8 text-center text-slate-400">
+              <div class="inline-flex items-center gap-2">
+                <svg class="animate-spin h-4 w-4 text-emerald-600" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                </svg>
+                Loading statutory clearances...
+              </div>
+            </td>
+          </tr>
+        } @else if (clearances().length === 0) {
+          <tr>
+            <td colspan="7" class="px-4 py-12 text-center text-slate-400">
+              No clearances records found for this project.
+            </td>
+          </tr>
+        } @else {
+          @for (c of clearances(); track c.id) {
+            <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+              <td class="px-4 py-3.5">
+                <div class="font-bold text-slate-900 dark:text-slate-100">{{ getClearanceLabel(c.clearance_type_id) }}</div>
+                <div class="text-[11px] font-mono text-slate-400">Code: {{ c.clearance_type_id }}</div>
+              </td>
+              <td class="px-4 py-3.5">
+                <span 
+                  class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold"
+                  [class.bg-emerald-100]="c.status === 'APPROVED'"
+                  [class.text-emerald-800]="c.status === 'APPROVED'"
+                  [class.dark:bg-emerald-950]="c.status === 'APPROVED'"
+                  [class.dark:text-emerald-300]="c.status === 'APPROVED'"
+                  [class.bg-amber-100]="c.status === 'SUBMITTED' || c.status === 'IN_REVIEW'"
+                  [class.text-amber-800]="c.status === 'SUBMITTED' || c.status === 'IN_REVIEW'"
+                  [class.dark:bg-amber-950]="c.status === 'SUBMITTED' || c.status === 'IN_REVIEW'"
+                  [class.dark:text-amber-300]="c.status === 'SUBMITTED' || c.status === 'IN_REVIEW'"
+                  [class.bg-slate-100]="c.status === 'NOT_APPLIED'"
+                  [class.text-slate-600]="c.status === 'NOT_APPLIED'"
+                  [class.dark:bg-slate-800]="c.status === 'NOT_APPLIED'"
+                  [class.dark:text-slate-400]="c.status === 'NOT_APPLIED'"
+                >
+                  {{ c.status }}
+                </span>
+              </td>
+              <td class="px-4 py-3.5 font-mono text-slate-800 dark:text-slate-200">
+                {{ c.approved_memo_no || c.application_memo_no || '-' }}
+              </td>
+              <td class="px-4 py-3.5 text-slate-600 dark:text-slate-400">
+                {{ c.approval_date || '-' }}
+              </td>
+              <td class="px-4 py-3.5 text-slate-600 dark:text-slate-400">
+                {{ c.expiry_date || '-' }}
+              </td>
+              <td class="px-4 py-3.5 text-slate-500 max-w-xs truncate">
+                {{ c.remarks || '-' }}
+              </td>
+              <td class="px-4 py-3.5 text-right">
+                <app-custom-button variant="secondary" size="sm" (btnClick)="openEditModal(c)">
+                  Update
+                </app-custom-button>
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+</app-card-container>
+
+<!-- UPDATE CLEARANCE MODAL -->
+@if (isEditModalOpen()) {
+  <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="erp-card w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-850">
+        <div>
+          <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100">
+            Update Clearance Status
+          </h3>
+          <p class="text-xs text-slate-400">{{ getClearanceLabel(selectedClearance()?.clearance_type_id || '') }}</p>
+        </div>
+        <button (click)="closeEditModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <form [formGroup]="editForm" (ngSubmit)="submitUpdate()" class="p-6 space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Permit Status *</label>
+          <select formControlName="status" class="erp-input text-xs">
+            <option value="NOT_APPLIED">Not Applied</option>
+            <option value="SUBMITTED">Submitted to Authority</option>
+            <option value="IN_REVIEW">Under Technical Review</option>
+            <option value="APPROVED">Approved & Issued</option>
+            <option value="REJECTED">Rejected / Objections Raised</option>
+            <option value="EXPIRED">Expired (Renewal Required)</option>
+          </select>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <app-custom-input
+            formControlName="application_memo_no"
+            label="Application Memo No"
+            placeholder="e.g. RAJUK/2026/..."
+          ></app-custom-input>
+
+          <app-custom-input
+            formControlName="approved_memo_no"
+            label="Approved Memo / Order No"
+            placeholder="e.g. RAJUK/APPR/..."
+          ></app-custom-input>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <app-custom-input
+            formControlName="approval_date"
+            type="date"
+            label="Approval Date"
+          ></app-custom-input>
+
+          <app-custom-input
+            formControlName="expiry_date"
+            type="date"
+            label="Expiry / Renewal Date"
+          ></app-custom-input>
+        </div>
+
+        <app-custom-input
+          formControlName="remarks"
+          label="Remarks / Technical Conditions"
+          placeholder="e.g. Approved for maximum 18 storeys with 2 basement setbacks"
+        ></app-custom-input>
+
+        <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+          <app-custom-button type="button" variant="secondary" (btnClick)="closeEditModal()">Cancel</app-custom-button>
+          <app-custom-button type="submit" variant="primary" [loading]="isSubmitting()">Save Changes</app-custom-button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

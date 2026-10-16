@@ -1,0 +1,342 @@
+<app-card-container>
+  <!-- Page Header -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-5">
+    <div>
+      <div class="flex items-center gap-2">
+        <h1 class="text-2xl font-bold tracking-tight text-foreground">Site Safety & Non-Conformance Reports (NCR)</h1>
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+          Module 40 QA/Safety
+        </span>
+      </div>
+      <p class="text-sm text-muted-foreground mt-1">
+        Registry for structural defects, honeycombing, cover block missing, and contractor safety violations with statutory remediation deadlines.
+      </p>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <app-custom-button
+        variant="outline"
+        (btnClick)="loadNCRs()">
+        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        Refresh
+      </app-custom-button>
+      <app-custom-button
+        variant="primary"
+        (btnClick)="openCreateModal()">
+        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+        + Issue Safety NCR
+      </app-custom-button>
+    </div>
+  </div>
+
+  <!-- Filters Row -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4 my-5 p-4 rounded-xl bg-card border border-border">
+    <app-searchable-select
+      label="Filter by Project"
+      placeholder="All Projects"
+      [options]="projectOptions()"
+      [ngModel]="filterProjectId()"
+      (ngModelChange)="filterProjectId.set($event); onFilterChange()">
+    </app-searchable-select>
+
+    <app-searchable-select
+      label="Filter by Status"
+      placeholder="All Statuses"
+      [options]="statusFilterOptions"
+      [ngModel]="filterStatus()"
+      (ngModelChange)="filterStatus.set($event); onFilterChange()">
+    </app-searchable-select>
+
+    <app-searchable-select
+      label="Filter by Category"
+      placeholder="All Categories"
+      [options]="categoryOptions"
+      [ngModel]="filterCategory()"
+      (ngModelChange)="filterCategory.set($event); onFilterChange()">
+    </app-searchable-select>
+
+    <div class="flex items-end">
+      <app-custom-button
+        variant="secondary"
+        [fullWidth]="true"
+        (btnClick)="filterProjectId.set(null); filterStatus.set(''); filterCategory.set(''); onFilterChange()">
+        Clear Filters
+      </app-custom-button>
+    </div>
+  </div>
+
+  <!-- NCR Cards Grid / Table -->
+  <div class="rounded-xl border border-border overflow-hidden bg-card">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-sm">
+        <thead class="bg-muted/50 text-muted-foreground text-xs uppercase font-semibold border-b border-border">
+          <tr>
+            <th class="px-4 py-3.5">NCR Number & Severity</th>
+            <th class="px-4 py-3.5">Category & Location</th>
+            <th class="px-4 py-3.5">Project & Contractor</th>
+            <th class="px-4 py-3.5">Rectification Deadline</th>
+            <th class="px-4 py-3.5 text-center">Status</th>
+            <th class="px-4 py-3.5 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border">
+          @if (isLoading()) {
+            <tr>
+              <td colspan="6" class="text-center py-10 text-muted-foreground">
+                <div class="inline-flex items-center gap-2">
+                  <div class="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                  Loading Non-Conformance Reports...
+                </div>
+              </td>
+            </tr>
+          } @else if (ncrs().length === 0) {
+            <tr>
+              <td colspan="6" class="text-center py-12 text-muted-foreground">
+                No safety non-conformance records found matching criteria.
+              </td>
+            </tr>
+          } @else {
+            @for (ncr of ncrs(); track ncr.id) {
+              <tr class="hover:bg-muted/30 transition-colors">
+                <td class="px-4 py-3.5 font-medium text-foreground">
+                  <div class="font-bold text-foreground">{{ ncr.ncr_number }}</div>
+                  <span class="inline-flex items-center px-2 py-0.5 mt-1 rounded text-xs font-bold border"
+                    [ngClass]="[getSeverityBadge(ncr.severity).bg, getSeverityBadge(ncr.severity).textCol, getSeverityBadge(ncr.severity).border]">
+                    {{ ncr.severity }} Severity
+                  </span>
+                </td>
+                <td class="px-4 py-3.5">
+                  <div class="font-semibold text-foreground">{{ ncr.category }}</div>
+                  <div class="text-xs text-muted-foreground">{{ ncr.location_details || 'Site Location' }}</div>
+                  @if (ncr.description) {
+                    <div class="text-xs text-muted-foreground mt-1 line-clamp-1 italic">"{{ ncr.description }}"</div>
+                  }
+                </td>
+                <td class="px-4 py-3.5">
+                  <div class="font-medium text-foreground">{{ ncr.project_name || 'Project' }}</div>
+                  <div class="text-xs text-muted-foreground">{{ ncr.contractor_name || 'Unassigned / Direct' }}</div>
+                </td>
+                <td class="px-4 py-3.5">
+                  <div class="font-medium" [ngClass]="ncr.is_overdue ? 'text-rose-600 dark:text-rose-400 font-bold' : 'text-foreground'">
+                    {{ ncr.rectification_deadline }}
+                  </div>
+                  @if (ncr.is_overdue) {
+                    <div class="text-xs text-rose-600 dark:text-rose-400 font-semibold">Rectification Overdue!</div>
+                  }
+                </td>
+                <td class="px-4 py-3.5 text-center">
+                  <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border"
+                    [ngClass]="[getStatusBadge(ncr.status, ncr.is_overdue).bg, getStatusBadge(ncr.status, ncr.is_overdue).textCol, getStatusBadge(ncr.status, ncr.is_overdue).border]">
+                    {{ getStatusBadge(ncr.status, ncr.is_overdue).text }}
+                  </span>
+                </td>
+                <td class="px-4 py-3.5 text-right space-x-2">
+                  @if (ncr.status === 'Open') {
+                    <app-custom-button
+                      variant="outline"
+                      size="sm"
+                      (btnClick)="openRectifyModal(ncr)">
+                      Submit Fix
+                    </app-custom-button>
+                  } @else if (ncr.status === 'Rectified') {
+                    <app-custom-button
+                      variant="primary"
+                      size="sm"
+                      (btnClick)="openVerifyModal(ncr)">
+                      QA Verify & Close
+                    </app-custom-button>
+                  } @else {
+                    <span class="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Closed {{ ncr.closed_date }}</span>
+                  }
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Create Safety NCR Modal -->
+  @if (isCreateModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+      <div class="bg-card border border-border w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        <div class="px-6 py-4 border-b border-border flex items-center justify-between bg-muted/40">
+          <div>
+            <h2 class="text-lg font-bold text-foreground">Issue Non-Conformance Report (NCR)</h2>
+            <p class="text-xs text-muted-foreground">Log site defect or safety breach with mandatory contractor remediation date.</p>
+          </div>
+          <button type="button" (click)="closeCreateModal()" class="text-muted-foreground hover:text-foreground">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <form [formGroup]="createForm" (ngSubmit)="submitCreate()" class="p-6 space-y-4 overflow-y-auto flex-1">
+          <app-searchable-select
+            label="Project Name *"
+            placeholder="Select Project"
+            [options]="projectOptions()"
+            [ngModel]="createForm.get('project_id')?.value"
+            (ngModelChange)="createForm.get('project_id')?.setValue($event)"
+            [required]="true">
+          </app-searchable-select>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <app-searchable-select
+              label="NCR Category *"
+              placeholder="Select Category"
+              [options]="categoryOptions"
+              [ngModel]="createForm.get('category')?.value"
+              (ngModelChange)="createForm.get('category')?.setValue($event)">
+            </app-searchable-select>
+
+            <app-searchable-select
+              label="Severity Level *"
+              placeholder="Select Severity"
+              [options]="severityOptions"
+              [ngModel]="createForm.get('severity')?.value"
+              (ngModelChange)="createForm.get('severity')?.setValue($event)">
+            </app-searchable-select>
+          </div>
+
+          <app-custom-input
+            label="Site Location / Grid Reference *"
+            placeholder="e.g. Tower B - Level 3 Transfer Girder TG-04, Core Wall Lift 1"
+            formControlName="location_details"
+            [required]="true">
+          </app-custom-input>
+
+          <app-searchable-select
+            label="Responsible Contractor *"
+            placeholder="Select Trade Contractor"
+            [options]="contractorOptions()"
+            [ngModel]="createForm.get('assigned_contractor_id')?.value"
+            (ngModelChange)="createForm.get('assigned_contractor_id')?.setValue($event)">
+          </app-searchable-select>
+
+          <app-custom-input
+            label="Rectification Deadline *"
+            type="date"
+            formControlName="rectification_deadline"
+            [required]="true">
+          </app-custom-input>
+
+          <app-custom-textarea
+            label="Defect Description & Non-Conformance Evidence *"
+            placeholder="Specify observation, BNBC code violation, dimension errors, or PPE non-compliance..."
+            formControlName="description"
+            [rows]="3"
+            [required]="true">
+          </app-custom-textarea>
+
+          <app-custom-input
+            label="Photo URL / Evidence Attachment"
+            placeholder="assets/images/common/honeycombing.jpg"
+            formControlName="photo_url">
+          </app-custom-input>
+
+          <div class="pt-4 border-t border-border flex items-center justify-end gap-3">
+            <app-custom-button variant="outline" (btnClick)="closeCreateModal()">Cancel</app-custom-button>
+            <app-custom-button variant="primary" type="submit" [disabled]="isSubmitting()">
+              {{ isSubmitting() ? 'Issuing NCR...' : 'Issue Statutory NCR' }}
+            </app-custom-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- Rectify NCR Modal -->
+  @if (isRectifyModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+      <div class="bg-card border border-border w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+        <div class="px-6 py-4 border-b border-border flex items-center justify-between bg-muted/40">
+          <div>
+            <h2 class="text-lg font-bold text-foreground">Submit Remediation Work</h2>
+            <p class="text-xs text-muted-foreground">{{ selectedNCR()?.ncr_number }} • {{ selectedNCR()?.location_details }}</p>
+          </div>
+          <button type="button" (click)="closeRectifyModal()" class="text-muted-foreground hover:text-foreground">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <form [formGroup]="rectifyForm" (ngSubmit)="submitRectify()" class="p-6 space-y-4">
+          <div class="p-3 rounded-lg bg-muted/50 border border-border text-xs text-muted-foreground">
+            <span class="font-bold text-foreground">Original Issue:</span> {{ selectedNCR()?.description }}
+          </div>
+
+          <app-custom-textarea
+            label="Contractor Rectification Notes *"
+            placeholder="Describe chipping, pressure grouting, polymer mortar plastering, or safety harness deployment..."
+            formControlName="rectification_notes"
+            [rows]="3"
+            [required]="true">
+          </app-custom-textarea>
+
+          <app-custom-input
+            label="After Rectification Photo URL"
+            placeholder="assets/images/common/rectified_beam.jpg"
+            formControlName="rectification_photo_url">
+          </app-custom-input>
+
+          <div class="pt-4 border-t border-border flex items-center justify-end gap-3">
+            <app-custom-button variant="outline" (btnClick)="closeRectifyModal()">Cancel</app-custom-button>
+            <app-custom-button variant="primary" type="submit" [disabled]="isSubmitting()">
+              {{ isSubmitting() ? 'Submitting...' : 'Submit for QA Review' }}
+            </app-custom-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- QA Verify & Close Modal -->
+  @if (isVerifyModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+      <div class="bg-card border border-border w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+        <div class="px-6 py-4 border-b border-border flex items-center justify-between bg-muted/40">
+          <div>
+            <h2 class="text-lg font-bold text-foreground">QA Inspection & NCR Closure</h2>
+            <p class="text-xs text-muted-foreground">{{ selectedNCR()?.ncr_number }} • Verification Inspection</p>
+          </div>
+          <button type="button" (click)="closeVerifyModal()" class="text-muted-foreground hover:text-foreground">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <form [formGroup]="verifyForm" (ngSubmit)="submitVerify()" class="p-6 space-y-4">
+          <div class="p-3 rounded-lg bg-muted/50 border border-border text-xs text-muted-foreground space-y-1">
+            <div><span class="font-bold text-foreground">Location:</span> {{ selectedNCR()?.location_details }}</div>
+            <div><span class="font-bold text-foreground">Contractor Fix:</span> {{ selectedNCR()?.rectification_notes }}</div>
+          </div>
+
+          <app-searchable-select
+            label="QA Engineer Verdict *"
+            placeholder="Select Final Verdict"
+            [options]="verdictOptions"
+            [ngModel]="verifyForm.get('verdict')?.value"
+            (ngModelChange)="verifyForm.get('verdict')?.setValue($event)">
+          </app-searchable-select>
+
+          <app-custom-textarea
+            label="Verification Inspection Notes"
+            placeholder="Confirmed structural integrity, non-destructive testing, or safety compliance..."
+            formControlName="verification_notes"
+            [rows]="2">
+          </app-custom-textarea>
+
+          <div class="pt-4 border-t border-border flex items-center justify-end gap-3">
+            <app-custom-button variant="outline" (btnClick)="closeVerifyModal()">Cancel</app-custom-button>
+            <app-custom-button variant="primary" type="submit" [disabled]="isSubmitting()">
+              {{ isSubmitting() ? 'Processing...' : 'Confirm QA Verdict' }}
+            </app-custom-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</app-card-container>

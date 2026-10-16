@@ -1,0 +1,386 @@
+<app-card-container>
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-5">
+    <div>
+      <div class="flex items-center gap-2">
+        <h1 class="text-2xl font-bold tracking-tight text-foreground">Comparative Statements (CS) & Vendor Bidding</h1>
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+          Module 45 Procurement
+        </span>
+      </div>
+      <p class="text-sm text-muted-foreground mt-1">
+        Commercial evaluation matrix comparing minimum 2 vendor quotes, credit terms, lead times, and automated Purchase Order (PO) award.
+      </p>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <app-custom-button
+        variant="outline"
+        (btnClick)="openCreatePrModal()">
+        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        + Requisition (PR)
+      </app-custom-button>
+      <app-custom-button
+        variant="primary"
+        (btnClick)="openCreateCsModal()">
+        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        + New Comparative Statement
+      </app-custom-button>
+    </div>
+  </div>
+
+  <!-- Requisitions Queue Banner -->
+  @if (pendingPrOptions().length > 0) {
+    <div class="my-5 p-4 rounded-xl border border-blue-200 bg-blue-50/60 dark:bg-blue-950/30 dark:border-blue-900 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-xs">
+          {{ pendingPrOptions().length }}
+        </div>
+        <div>
+          <div class="text-sm font-bold text-blue-950 dark:text-blue-100">
+            {{ pendingPrOptions().length }} Purchase Requisition(s) Pending Comparative Statement
+          </div>
+          <div class="text-xs text-blue-800/80 dark:text-blue-300">
+            Site engineers have submitted material indents awaiting multi-vendor quotation comparison.
+          </div>
+        </div>
+      </div>
+      <app-custom-button variant="primary" size="sm" (btnClick)="openCreateCsModal()">
+        Prepare CS Now
+      </app-custom-button>
+    </div>
+  }
+
+  <!-- Comparative Statements List -->
+  <div class="space-y-6 my-6">
+    @if (isLoading()) {
+      <div class="p-12 text-center text-sm text-muted-foreground">Loading comparative statements...</div>
+    } @else if (csList().length === 0) {
+      <div class="p-12 text-center text-muted-foreground bg-card rounded-xl border border-border">
+        No comparative statements generated yet. Click "+ New Comparative Statement" to compare vendor bids.
+      </div>
+    } @else {
+      @for (cs of csList(); track cs.id) {
+        <div class="rounded-xl border border-border bg-card shadow-xs overflow-hidden">
+          <!-- CS Header Bar -->
+          <div class="px-5 py-4 bg-muted/30 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="font-bold text-foreground text-base">{{ cs.cs_number }}</span>
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold"
+                  [ngClass]="cs.status === 'PO_GENERATED' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300' : 'bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300'">
+                  {{ cs.status }}
+                </span>
+                <span class="text-xs text-muted-foreground">Date: {{ cs.cs_date }}</span>
+              </div>
+              <div class="text-xs text-muted-foreground mt-1">
+                Ref: <span class="font-semibold text-foreground">{{ cs.pr_number }}</span> • Project: {{ cs.project_name }} • Material: <span class="font-semibold text-foreground">{{ cs.material_name }}</span> ({{ cs.requested_quantity | number:'1.2-2' }} {{ cs.unit_of_measure }})
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+              @if (cs.status !== 'PO_GENERATED') {
+                <app-custom-button
+                  variant="primary"
+                  size="sm"
+                  (btnClick)="openGeneratePoModal(cs)">
+                  Issue Official PO &rarr;
+                </app-custom-button>
+              } @else {
+                <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-300">
+                  ✓ Purchase Order Awarded
+                </span>
+              }
+            </div>
+          </div>
+
+          <!-- Quotations Matrix Table -->
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+              <thead class="bg-muted/60 text-muted-foreground text-xs uppercase font-semibold border-b border-border">
+                <tr>
+                  <th class="px-4 py-3">Vendor / Supplier</th>
+                  <th class="px-4 py-3 text-right">Quoted Rate</th>
+                  <th class="px-4 py-3 text-right">Quoted Qty</th>
+                  <th class="px-4 py-3 text-right">Total Bid (BDT)</th>
+                  <th class="px-4 py-3 text-center">Credit Days</th>
+                  <th class="px-4 py-3 text-center">Lead Time</th>
+                  <th class="px-4 py-3 text-center">Evaluation</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-border">
+                @for (q of cs.quotations; track q.id) {
+                  <tr [ngClass]="q.is_recommended ? 'bg-emerald-50/40 dark:bg-emerald-950/20' : 'hover:bg-muted/30'">
+                    <td class="px-4 py-3 font-medium text-foreground">
+                      <div class="font-bold flex items-center gap-1.5">
+                        {{ q.vendor_name }}
+                        @if (q.is_recommended) {
+                          <span class="text-xs bg-emerald-600 text-white px-1.5 py-0.2 rounded font-bold">L1 Lowest</span>
+                        }
+                      </div>
+                      <div class="text-xs text-muted-foreground">{{ q.vendor_code }} • {{ q.remarks || 'Standard Quotation' }}</div>
+                    </td>
+                    <td class="px-4 py-3 text-right font-semibold text-foreground">
+                      ৳{{ q.quoted_unit_rate | number:'1.2-2' }}
+                    </td>
+                    <td class="px-4 py-3 text-right text-xs text-muted-foreground">
+                      {{ q.quoted_quantity | number:'1.2-2' }}
+                    </td>
+                    <td class="px-4 py-3 text-right font-bold text-foreground">
+                      ৳{{ q.total_quoted_amount | number:'1.2-2' }}
+                    </td>
+                    <td class="px-4 py-3 text-center text-xs text-muted-foreground">
+                      {{ q.credit_days_offered }} days
+                    </td>
+                    <td class="px-4 py-3 text-center text-xs text-muted-foreground">
+                      {{ q.lead_time_days }} days
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                      @if (q.is_recommended) {
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold text-emerald-700 dark:text-emerald-300">
+                          Recommended Winner
+                        </span>
+                      } @else {
+                        <span class="text-xs text-muted-foreground">Unselected</span>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Bottom Summary -->
+          @if (cs.justification_summary) {
+            <div class="px-4 py-2.5 bg-muted/20 border-t border-border text-xs text-muted-foreground italic">
+              <span class="font-bold text-foreground">Audit Justification:</span> {{ cs.justification_summary }}
+            </div>
+          }
+        </div>
+      }
+    }
+  </div>
+
+  <!-- Create Requisition (PR) Modal -->
+  @if (isCreatePrModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+      <div class="bg-card border border-border w-full max-w-md rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+        <div class="px-6 py-4 border-b border-border flex items-center justify-between bg-muted/40">
+          <div>
+            <h2 class="text-lg font-bold text-foreground">Submit Purchase Requisition (PR)</h2>
+            <p class="text-xs text-muted-foreground">Site material indent request.</p>
+          </div>
+          <button type="button" (click)="closeCreatePrModal()" class="text-muted-foreground hover:text-foreground">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <form [formGroup]="createPrForm" (ngSubmit)="submitCreatePr()" class="p-6 space-y-4">
+          <app-searchable-select
+            label="Project Name *"
+            placeholder="Select Project"
+            [options]="projectOptions()"
+            [ngModel]="createPrForm.get('project_id')?.value"
+            (ngModelChange)="createPrForm.get('project_id')?.setValue($event)"
+            [required]="true">
+          </app-searchable-select>
+
+          <app-searchable-select
+            label="Material Item *"
+            placeholder="Select Material"
+            [options]="materialOptions()"
+            [ngModel]="createPrForm.get('material_id')?.value"
+            (ngModelChange)="createPrForm.get('material_id')?.setValue($event)"
+            [required]="true">
+          </app-searchable-select>
+
+          <app-custom-input
+            label="Requested Quantity *"
+            type="number"
+            placeholder="e.g. 1000"
+            formControlName="requested_quantity"
+            [required]="true">
+          </app-custom-input>
+
+          <app-custom-input
+            label="Required by Date"
+            type="date"
+            formControlName="required_by_date">
+          </app-custom-input>
+
+          <app-custom-textarea
+            label="Purpose & Structural Location"
+            placeholder="e.g. Casting for Level 5 Floor Slab Zone B..."
+            formControlName="purpose_notes"
+            [rows]="2">
+          </app-custom-textarea>
+
+          <div class="pt-4 border-t border-border flex items-center justify-end gap-3">
+            <app-custom-button variant="outline" (btnClick)="closeCreatePrModal()">Cancel</app-custom-button>
+            <app-custom-button variant="primary" type="submit" [disabled]="isSubmitting()">
+              {{ isSubmitting() ? 'Submitting...' : 'Submit Indent (PR)' }}
+            </app-custom-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- Create Comparative Statement (CS) Modal -->
+  @if (isCreateCsModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+      <div class="bg-card border border-border w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        <div class="px-6 py-4 border-b border-border flex items-center justify-between bg-muted/40">
+          <div>
+            <h2 class="text-lg font-bold text-foreground">Prepare Comparative Statement (CS)</h2>
+            <p class="text-xs text-muted-foreground">Compare vendor quotes to ensure transparent commercial bidding.</p>
+          </div>
+          <button type="button" (click)="closeCreateCsModal()" class="text-muted-foreground hover:text-foreground">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <form [formGroup]="createCsForm" (ngSubmit)="submitCreateCs()" class="p-6 space-y-4 overflow-y-auto flex-1">
+          <app-searchable-select
+            label="Pending Requisition (PR) *"
+            placeholder="Select PR"
+            [options]="pendingPrOptions()"
+            [ngModel]="createCsForm.get('pr_id')?.value"
+            (ngModelChange)="createCsForm.get('pr_id')?.setValue($event)"
+            [required]="true">
+          </app-searchable-select>
+
+          <!-- Quotations Form Array -->
+          <div class="space-y-3 pt-2">
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-bold text-foreground">Vendor Bids (Minimum 2 Required)</span>
+              <app-custom-button variant="outline" size="sm" (btnClick)="addQuotationRow()">
+                + Add Vendor Bid
+              </app-custom-button>
+            </div>
+
+            <div formArrayName="quotations" class="space-y-3">
+              @for (qGroup of quotationsArray.controls; track $index) {
+                <div [formGroupName]="$index" class="p-3.5 rounded-xl border border-border bg-muted/30 space-y-3">
+                  <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-primary">Bidder #{{ $index + 1 }}</span>
+                    @if (quotationsArray.length > 2) {
+                      <button type="button" (click)="removeQuotationRow($index)" class="text-xs text-rose-600 hover:underline">
+                        Remove
+                      </button>
+                    }
+                  </div>
+
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <app-searchable-select
+                      label="Supplier / Vendor *"
+                      placeholder="Select Vendor"
+                      [options]="vendorOptions()"
+                      [ngModel]="qGroup.get('vendor_id')?.value"
+                      (ngModelChange)="qGroup.get('vendor_id')?.setValue($event)"
+                      [required]="true">
+                    </app-searchable-select>
+
+                    <app-custom-input
+                      label="Quoted Unit Rate (BDT) *"
+                      type="number"
+                      placeholder="e.g. 560.00"
+                      formControlName="quoted_unit_rate"
+                      [required]="true">
+                    </app-custom-input>
+
+                    <app-custom-input
+                      label="Credit Days"
+                      type="number"
+                      placeholder="30"
+                      formControlName="credit_days_offered">
+                    </app-custom-input>
+                  </div>
+
+                  <app-custom-input
+                    label="Commercial Notes / Delivery Terms"
+                    placeholder="e.g. Delivery at project gate within 48h, freight included"
+                    formControlName="remarks">
+                  </app-custom-input>
+                </div>
+              }
+            </div>
+          </div>
+
+          <app-custom-textarea
+            label="Procurement Committee Remarks / Justification"
+            placeholder="Commercial justification for selection..."
+            formControlName="justification_summary"
+            [rows]="2">
+          </app-custom-textarea>
+
+          <div class="pt-4 border-t border-border flex items-center justify-end gap-3">
+            <app-custom-button variant="outline" (btnClick)="closeCreateCsModal()">Cancel</app-custom-button>
+            <app-custom-button variant="primary" type="submit" [disabled]="isSubmitting()">
+              {{ isSubmitting() ? 'Submitting...' : 'Approve & Save CS' }}
+            </app-custom-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- Generate PO Modal -->
+  @if (isGeneratePoModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+      <div class="bg-card border border-border w-full max-w-md rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+        <div class="px-6 py-4 border-b border-border flex items-center justify-between bg-muted/40">
+          <div>
+            <h2 class="text-lg font-bold text-foreground">Award Official Purchase Order (PO)</h2>
+            <p class="text-xs text-muted-foreground">{{ selectedCsForPo()?.cs_number }}</p>
+          </div>
+          <button type="button" (click)="closeGeneratePoModal()" class="text-muted-foreground hover:text-foreground">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <form [formGroup]="generatePoForm" (ngSubmit)="submitGeneratePo()" class="p-6 space-y-4">
+          <div class="p-3 rounded-lg bg-muted/50 border border-border text-xs text-muted-foreground space-y-1">
+            <div><span class="font-bold text-foreground">Winning Vendor:</span> {{ selectedCsForPo()?.recommended_vendor_name }}</div>
+            <div><span class="font-bold text-foreground">Material:</span> {{ selectedCsForPo()?.material_name }}</div>
+            <div><span class="font-bold text-foreground">Quantity:</span> {{ selectedCsForPo()?.requested_quantity }} {{ selectedCsForPo()?.unit_of_measure }}</div>
+          </div>
+
+          <app-searchable-select
+            label="Destination Site Store *"
+            placeholder="Select Store"
+            [options]="storeOptions()"
+            [ngModel]="generatePoForm.get('destination_store_id')?.value"
+            (ngModelChange)="generatePoForm.get('destination_store_id')?.setValue($event)"
+            [required]="true">
+          </app-searchable-select>
+
+          <app-custom-input
+            label="Delivery Deadline *"
+            type="date"
+            formControlName="delivery_deadline"
+            [required]="true">
+          </app-custom-input>
+
+          <app-custom-textarea
+            label="PO Terms & Conditions"
+            placeholder="Standard payment terms..."
+            formControlName="terms_and_conditions"
+            [rows]="2">
+          </app-custom-textarea>
+
+          <div class="pt-4 border-t border-border flex items-center justify-end gap-3">
+            <app-custom-button variant="outline" (btnClick)="closeGeneratePoModal()">Cancel</app-custom-button>
+            <app-custom-button variant="primary" type="submit" [disabled]="isSubmitting()">
+              {{ isSubmitting() ? 'Generating...' : 'Issue Purchase Order' }}
+            </app-custom-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</app-card-container>

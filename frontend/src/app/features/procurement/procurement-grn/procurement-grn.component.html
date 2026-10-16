@@ -1,0 +1,305 @@
+<app-card-container>
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-5">
+    <div>
+      <div class="flex items-center gap-2">
+        <h1 class="text-2xl font-bold tracking-tight text-foreground">Goods Receipt Note (GRN) & 3-Way Invoice Matching</h1>
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+          Module 38/47 Accounts Audit
+        </span>
+      </div>
+      <p class="text-sm text-muted-foreground mt-1">
+        Consignment physical receiving against Delivery Challan, quality inspection, and 3-Way Matching audit formula:
+        <span class="font-mono text-xs font-bold text-foreground">PO Price/Qty vs. GRN Accepted vs. Vendor Invoice</span>.
+      </p>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <app-custom-button
+        variant="outline"
+        (btnClick)="loadGRNs()">
+        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        Refresh
+      </app-custom-button>
+      <app-custom-button
+        variant="primary"
+        (btnClick)="openCreateGrnModal()">
+        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        + Receive Consignment (GRN)
+      </app-custom-button>
+    </div>
+  </div>
+
+  <!-- Filters Row -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 my-5 p-4 rounded-xl bg-card border border-border">
+    <app-searchable-select
+      label="Filter by 3-Way Match Status"
+      placeholder="All Statuses"
+      [options]="matchFilterOptions"
+      [ngModel]="filterMatchStatus()"
+      (ngModelChange)="filterMatchStatus.set($event); onFilterChange()">
+    </app-searchable-select>
+
+    <div class="flex items-end md:col-span-2">
+      <app-custom-button
+        variant="secondary"
+        (btnClick)="filterMatchStatus.set(''); onFilterChange()">
+        Clear Filters
+      </app-custom-button>
+    </div>
+  </div>
+
+  <!-- GRN Register Table -->
+  <div class="rounded-xl border border-border overflow-hidden bg-card">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-sm">
+        <thead class="bg-muted/50 text-muted-foreground text-xs uppercase font-semibold border-b border-border">
+          <tr>
+            <th class="px-4 py-3.5">GRN & Challan No.</th>
+            <th class="px-4 py-3.5">PO & Vendor</th>
+            <th class="px-4 py-3.5">Material & Quantities</th>
+            <th class="px-4 py-3.5 text-right">Expected vs. Invoice Amount</th>
+            <th class="px-4 py-3.5 text-center">3-Way Match Audit</th>
+            <th class="px-4 py-3.5 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border">
+          @if (isLoading()) {
+            <tr>
+              <td colspan="6" class="text-center py-10 text-muted-foreground">
+                <div class="inline-flex items-center gap-2">
+                  <div class="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                  Loading Goods Receipt Notes...
+                </div>
+              </td>
+            </tr>
+          } @else if (grnList().length === 0) {
+            <tr>
+              <td colspan="6" class="text-center py-12 text-muted-foreground">
+                No Goods Receipt Notes logged yet. Click "+ Receive Consignment (GRN)" to log deliveries.
+              </td>
+            </tr>
+          } @else {
+            @for (grn of grnList(); track grn.id) {
+              <tr class="hover:bg-muted/30 transition-colors">
+                <td class="px-4 py-3.5 font-medium text-foreground">
+                  <div class="font-bold text-foreground">{{ grn.grn_number }}</div>
+                  <div class="text-xs text-muted-foreground">Challan: {{ grn.delivery_challan_number }}</div>
+                  <div class="text-xs text-muted-foreground mt-0.5">{{ grn.receipt_date }}</div>
+                </td>
+                <td class="px-4 py-3.5">
+                  <div class="font-semibold text-foreground">{{ grn.po_number }}</div>
+                  <div class="text-xs text-muted-foreground">{{ grn.vendor_name }}</div>
+                  <div class="text-xs text-muted-foreground">{{ grn.project_name }}</div>
+                </td>
+                <td class="px-4 py-3.5">
+                  <div class="font-medium text-foreground">{{ grn.material_name }}</div>
+                  <div class="text-xs text-muted-foreground">
+                    Received: <span class="font-semibold text-foreground">{{ grn.received_quantity }}</span> • Accepted: <span class="font-semibold text-emerald-600">{{ grn.accepted_quantity }}</span> {{ grn.unit_of_measure }}
+                  </div>
+                  @if (grn.rejected_quantity > 0) {
+                    <div class="text-xs text-rose-600 font-semibold">Rejected: {{ grn.rejected_quantity }} {{ grn.unit_of_measure }}</div>
+                  }
+                </td>
+                <td class="px-4 py-3.5 text-right font-medium">
+                  <div class="text-xs text-muted-foreground">
+                    Expected (Cert Qty × Rate): <span class="font-semibold text-foreground">৳{{ grn.calculated_expected_amount | number:'1.2-2' }}</span>
+                  </div>
+                  @if (grn.supplier_invoice_amount !== null && grn.supplier_invoice_amount !== undefined) {
+                    <div class="text-xs text-muted-foreground mt-0.5">
+                      Vendor Invoice: <span class="font-semibold text-foreground">৳{{ grn.supplier_invoice_amount | number:'1.2-2' }}</span>
+                    </div>
+                    <div class="text-xs font-bold mt-0.5" [ngClass]="grn.variance_amount === 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
+                      Variance: ৳{{ grn.variance_amount | number:'1.2-2' }}
+                    </div>
+                  } @else {
+                    <div class="text-xs text-amber-600 font-medium mt-0.5">Invoice Not Entered</div>
+                  }
+                </td>
+                <td class="px-4 py-3.5 text-center">
+                  <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border"
+                    [ngClass]="[getMatchBadge(grn.three_way_match_status).bg, getMatchBadge(grn.three_way_match_status).textCol, getMatchBadge(grn.three_way_match_status).border]">
+                    {{ getMatchBadge(grn.three_way_match_status).text }}
+                  </span>
+                  @if (grn.accounts_voucher_ref) {
+                    <div class="text-xs text-muted-foreground font-mono mt-1">{{ grn.accounts_voucher_ref }}</div>
+                  }
+                </td>
+                <td class="px-4 py-3.5 text-right">
+                  @if (grn.three_way_match_status !== 'ACCOUNTS_APPROVED') {
+                    <app-custom-button
+                      variant="primary"
+                      size="sm"
+                      (btnClick)="openThreeWayMatchModal(grn)">
+                      Audit 3-Way Match &rarr;
+                    </app-custom-button>
+                  } @else {
+                    <span class="text-xs text-emerald-600 dark:text-emerald-400 font-bold">✓ Accounts Cleared</span>
+                  }
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Create GRN Modal -->
+  @if (isCreateGrnModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+      <div class="bg-card border border-border w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        <div class="px-6 py-4 border-b border-border flex items-center justify-between bg-muted/40">
+          <div>
+            <h2 class="text-lg font-bold text-foreground">Receive Consignment (GRN)</h2>
+            <p class="text-xs text-muted-foreground">Inspect shipment and post accepted physical quantity to store bin card.</p>
+          </div>
+          <button type="button" (click)="closeCreateGrnModal()" class="text-muted-foreground hover:text-foreground">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <form [formGroup]="createGrnForm" (ngSubmit)="submitCreateGrn()" class="p-6 space-y-4 overflow-y-auto flex-1">
+          <app-searchable-select
+            label="Active Purchase Order (PO) *"
+            placeholder="Select PO"
+            [options]="activePoOptions()"
+            [ngModel]="createGrnForm.get('po_id')?.value"
+            (ngModelChange)="createGrnForm.get('po_id')?.setValue($event)"
+            [required]="true">
+          </app-searchable-select>
+
+          <app-custom-input
+            label="Delivery Challan Number *"
+            placeholder="e.g. CHAL-BSRM-12845"
+            formControlName="delivery_challan_number"
+            [required]="true">
+          </app-custom-input>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <app-custom-input
+              label="Received Quantity *"
+              type="number"
+              placeholder="e.g. 500"
+              formControlName="received_quantity"
+              [required]="true">
+            </app-custom-input>
+
+            <app-custom-input
+              label="Rejected / Damaged Qty"
+              type="number"
+              placeholder="0"
+              formControlName="rejected_quantity">
+            </app-custom-input>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <app-custom-input
+              label="Supplier Invoice Number"
+              placeholder="e.g. INV-BSRM-991"
+              formControlName="supplier_invoice_number">
+            </app-custom-input>
+
+            <app-custom-input
+              label="Supplier Invoice Total (BDT)"
+              type="number"
+              placeholder="e.g. 275000"
+              formControlName="supplier_invoice_amount">
+            </app-custom-input>
+          </div>
+
+          <app-custom-textarea
+            label="Inspection Remarks / QC Quality Observation"
+            placeholder="Visual check satisfactory, test certificate verified, no moisture or packaging defects..."
+            formControlName="inspection_remarks"
+            [rows]="2">
+          </app-custom-textarea>
+
+          <div class="pt-4 border-t border-border flex items-center justify-end gap-3">
+            <app-custom-button variant="outline" (btnClick)="closeCreateGrnModal()">Cancel</app-custom-button>
+            <app-custom-button variant="primary" type="submit" [disabled]="isSubmitting()">
+              {{ isSubmitting() ? 'Receiving...' : 'Confirm Delivery & Update Stock' }}
+            </app-custom-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- 3-Way Match Verification Modal -->
+  @if (isThreeWayMatchModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+      <div class="bg-card border border-border w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+        <div class="px-6 py-4 border-b border-border flex items-center justify-between bg-muted/40">
+          <div>
+            <h2 class="text-lg font-bold text-foreground">Accounts 3-Way Invoice Matching Audit</h2>
+            <p class="text-xs text-muted-foreground">{{ selectedGrnForMatch()?.grn_number }} • {{ selectedGrnForMatch()?.vendor_name }}</p>
+          </div>
+          <button type="button" (click)="closeThreeWayMatchModal()" class="text-muted-foreground hover:text-foreground">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <form [formGroup]="threeWayMatchForm" (ngSubmit)="submitThreeWayMatch()" class="p-6 space-y-4">
+          <!-- 3-Way Matching Computation Summary Card -->
+          <div class="p-4 rounded-xl bg-muted/50 border border-border text-xs space-y-2">
+            <div class="font-bold text-sm text-foreground mb-1">3-Way Match Verification Formula</div>
+            <div class="flex justify-between">
+              <span class="text-muted-foreground">1. PO Contract Rate:</span>
+              <span class="font-semibold text-foreground">৳{{ selectedGrnForMatch()?.po_unit_price | number:'1.2-2' }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-muted-foreground">2. GRN Accepted Quantity:</span>
+              <span class="font-semibold text-foreground">{{ selectedGrnForMatch()?.accepted_quantity | number:'1.2-2' }} {{ selectedGrnForMatch()?.unit_of_measure }}</span>
+            </div>
+            <div class="flex justify-between pt-1 border-t border-border">
+              <span class="font-bold text-foreground">Expected Commercial Value:</span>
+              <span class="font-bold text-primary">৳{{ selectedGrnForMatch()?.calculated_expected_amount | number:'1.2-2' }}</span>
+            </div>
+          </div>
+
+          <app-custom-input
+            label="Supplier Invoice Number *"
+            placeholder="e.g. INV-2026-9910"
+            formControlName="supplier_invoice_number"
+            [required]="true">
+          </app-custom-input>
+
+          <app-custom-input
+            label="Supplier Invoice Amount (BDT) *"
+            type="number"
+            placeholder="Enter billed total"
+            formControlName="supplier_invoice_amount"
+            [required]="true">
+          </app-custom-input>
+
+          <app-searchable-select
+            label="Accounts Audit Action *"
+            placeholder="Select Action"
+            [options]="matchActionOptions"
+            [ngModel]="threeWayMatchForm.get('approval_action')?.value"
+            (ngModelChange)="threeWayMatchForm.get('approval_action')?.setValue($event)">
+          </app-searchable-select>
+
+          <app-custom-textarea
+            label="Accounts Journal Voucher Notes"
+            placeholder="Verified against commercial invoice, tax deduction applied, accounts payable approved..."
+            formControlName="accounts_notes"
+            [rows]="2">
+          </app-custom-textarea>
+
+          <div class="pt-4 border-t border-border flex items-center justify-end gap-3">
+            <app-custom-button variant="outline" (btnClick)="closeThreeWayMatchModal()">Cancel</app-custom-button>
+            <app-custom-button variant="primary" type="submit" [disabled]="isSubmitting()">
+              {{ isSubmitting() ? 'Verifying...' : 'Post 3-Way Match & JV' }}
+            </app-custom-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</app-card-container>

@@ -2,6 +2,7 @@ import { Component, Output, EventEmitter, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
+import { ThemeService } from '../../services/theme.service';
 import { CommandPaletteComponent } from '../command-palette/command-palette.component';
 
 export interface NotificationItem {
@@ -21,10 +22,11 @@ export interface NotificationItem {
 })
 export class TopbarComponent {
   authService = inject(AuthService);
+  themeService = inject(ThemeService);
 
   @Output() toggleSidebar = new EventEmitter<void>();
 
-  isDarkMode = signal<boolean>(false);
+  isDarkMode = () => this.themeService.isDark();
   isNotificationOpen = signal<boolean>(false);
   isProfileMenuOpen = signal<boolean>(false);
 
@@ -59,12 +61,7 @@ export class TopbarComponent {
   unreadCount = () => this.notifications().filter(n => n.unread).length;
 
   toggleTheme(): void {
-    this.isDarkMode.update(d => !d);
-    if (this.isDarkMode()) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    this.themeService.toggleTheme();
   }
 
   toggleNotification(): void {

@@ -49,11 +49,11 @@ export class SidebarComponent {
       title: 'Land & Acquisition',
       iconSvg: 'M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7',
       items: [
-        { id: 'landowners', label: 'Landowners & Proposals', route: '/settings/lookups' },
-        { id: 'khatian', label: 'CS, SA, RS, BS & Dag Records', route: '/settings/lookups' },
-        { id: 'land-math', label: 'Land Area Math (Katha/Decimal)', route: '/settings/lookups' },
-        { id: 'mutation', label: 'Mutation, Namjari & Deeds', route: '/settings/lookups' },
-        { id: 'joint-venture', label: 'Joint Ownership & Land Sharing', route: '/settings/lookups' }
+        { id: 'landowners', label: 'Land Bank Proposals (PROMPT 05)', route: '/land/proposals', badge: 'Active' },
+        { id: 'khatian', label: 'Historic Surveys (CS/SA/RS/BS)', route: '/land/surveys', badge: 'Active' },
+        { id: 'joint-venture', label: 'JV Agreements & Allocation', route: '/land/jv-agreements', badge: 'Active' },
+        { id: 'land-math', label: 'Land Area Math (Katha/Dec)', route: '/land/proposals' },
+        { id: 'mutation', label: 'Deed Chain & AC Land Audit', route: '/land/proposals' }
       ]
     },
     {
@@ -61,9 +61,10 @@ export class SidebarComponent {
       title: 'RAJUK & Approvals',
       iconSvg: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
       items: [
-        { id: 'statutory', label: 'RAJUK / CDA / KDA Clearances', route: '/settings/lookups' },
-        { id: 'far', label: 'FAR, MGC & Setback Calculations', route: '/settings/lookups' },
-        { id: 'fire-aviation', label: 'Fire Service & Civil Aviation NOC', route: '/settings/lookups' }
+        { id: 'projects-master', label: 'Spatial Projects (PROMPT 06)', route: '/projects/list', badge: 'Active' },
+        { id: 'statutory', label: 'RAJUK & Statutory Permits', route: '/projects/clearances', badge: 'Active' },
+        { id: 'far', label: 'Dhaka 2008 FAR Engine', route: '/projects/list' },
+        { id: 'fire-aviation', label: 'Fire NOC & Aviation NOC', route: '/projects/clearances' }
       ]
     },
     {
@@ -71,10 +72,10 @@ export class SidebarComponent {
       title: 'Apartment & Inventory',
       iconSvg: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10',
       items: [
-        { id: 'units-list', label: 'Units, Blocks & Floor Plans', route: '/settings/lookups' },
-        { id: 'facing', label: 'Orientation & Facing Adjustments', route: '/settings/lookups' },
-        { id: 'pricing', label: 'Price Calculator (SqFt / Katha)', route: '/settings/lookups' },
-        { id: 'parking', label: 'Car Parking Slot Allocation', route: '/settings/lookups' }
+        { id: 'units-matrix', label: '15-Min Lock Matrix (PROMPT 07)', route: '/inventory/matrix', badge: 'Active' },
+        { id: 'units-list', label: 'Units & Floor Plans', route: '/inventory/matrix' },
+        { id: 'facing', label: 'Rate Cards & Facing Premiums', route: '/inventory/matrix' },
+        { id: 'parking', label: 'Basement Parking Bays', route: '/inventory/matrix' }
       ]
     },
     {
@@ -82,10 +83,11 @@ export class SidebarComponent {
       title: 'Sales & Customer CRM',
       iconSvg: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z',
       items: [
-        { id: 'leads', label: 'Leads & Tele-Sales CRM', route: '/settings/lookups' },
-        { id: 'site-visits', label: 'Site Visits & Feedback', route: '/settings/lookups' },
-        { id: 'booking', label: 'Unit Booking & Allotment Deed', route: '/settings/lookups' },
-        { id: 'schedule', label: 'Installment Schedule Generator', route: '/settings/lookups' }
+        { id: 'bookings', label: 'Apartment Bookings (PROMPT 09)', route: '/sales/bookings', badge: 'Active' },
+        { id: 'discounts', label: 'Multi-Level Discount Approvals', route: '/sales/discounts', badge: 'Active' },
+        { id: 'cancellations', label: 'REHAB Allotment Cancellations', route: '/sales/cancellations', badge: 'Active' },
+        { id: 'leads', label: 'CRM Leads & Kanban', route: '/crm/leads' },
+        { id: 'customers', label: 'Customer KYC & Nominees', route: '/crm/customers' }
       ]
     },
     {
@@ -93,36 +95,51 @@ export class SidebarComponent {
       title: 'Collections & PDC Vault',
       iconSvg: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z',
       items: [
-        { id: 'mr', label: 'Money Receipts (MR) & Clearing', route: '/settings/lookups' },
-        { id: 'pdc', label: 'PDC Cheque Vault & Safe', route: '/settings/lookups' },
-        { id: 'bank-noc', label: 'Bank Loan Tripartite NOC', route: '/settings/lookups' },
-        { id: 'legal-notice', label: 'Overdue Reminders & NI Act 138', route: '/settings/lookups' }
+        { id: 'schedules', label: 'Installments (PROMPT 10)', route: '/installments/schedules', badge: 'Active' },
+        { id: 'pdc', label: 'PDC Cheque Vault & Safe', route: '/installments/pdc-vault', badge: 'Active' },
+        { id: 'ni138', label: 'NI Act 138 Dishonour Engine', route: '/installments/ni138-actions', badge: 'Active' },
+        { id: 'mr', label: 'Money Receipts (MR) & Clearing', route: '/installments/schedules' }
       ]
     },
     {
       id: 'accounts',
-      title: 'Accounts & Tax (NBR)',
+      title: 'Accounts & General Ledger',
       iconSvg: 'M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z',
       items: [
-        { id: 'ait-53ff', label: 'Sub-Registry Section 53FF AIT', route: '/settings/rbac' },
-        { id: 'mushak-63', label: 'Mushak 6.3 VAT Invoices', route: '/settings/rbac' },
-        { id: 'vouchers', label: 'Vouchers & General Ledger', route: '/settings/rbac' },
-        { id: 'pl', label: 'Project Costing & Balance Sheet', route: '/settings/rbac' }
+        { id: 'coa', label: 'Chart of Accounts (P14)', route: '/accounts/coa', badge: 'Active' },
+        { id: 'vouchers', label: 'Vouchers & GL (P14)', route: '/accounts/vouchers', badge: 'Active' },
+        { id: 'reports', label: 'Financial Reports & Recon', route: '/accounts/financial-reports', badge: 'Active' },
+        { id: 'mushak-63', label: 'Mushak 6.3 VAT (P15)', route: '/accounts/vat-mushak' },
+        { id: 'ait-53ff', label: 'Sub-Registry AIT (P15)', route: '/accounts/sub-registry-calc' }
       ]
     },
+
     {
       id: 'construction',
       title: 'Construction & Civil',
       iconSvg: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4',
       items: [
-        { id: 'boq', label: 'BOQ / BOM Material Specifications', route: '/settings/lookups' },
-        { id: 'indents', label: 'Site Indents & Requisitions', route: '/settings/lookups' },
-        { id: 'grn', label: 'Goods Received (GRN) & Stock', route: '/settings/lookups' },
-        { id: 'site-progress', label: 'Work Progress & Measurements', route: '/settings/lookups' }
+        { id: 'dpr', label: 'Site Diary (DPR) (PROMPT 11)', route: '/construction/dpr', badge: 'Active' },
+        { id: 'labor-muster', label: 'Labor Muster Roll', route: '/construction/labor-muster', badge: 'Active' },
+        { id: 'ra-bills', label: 'Contractor RA Billing', route: '/construction/ra-bills', badge: 'Active' },
+        { id: 'cube-tests', label: 'Concrete Cube Tests (P12)', route: '/construction/cube-tests', badge: 'Active' },
+        { id: 'safety-ncr', label: 'Site Safety NCR (P12)', route: '/construction/safety-ncr', badge: 'Active' },
+        { id: 'boq', label: 'BOQ Estimation & IFC', route: '/projects/boq' }
+      ]
+    },
+    {
+      id: 'procurement',
+      title: 'Procurement & Stores',
+      iconSvg: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4',
+      items: [
+        { id: 'stores', label: 'Site Store Stock (P13)', route: '/procurement/stores', badge: 'Active' },
+        { id: 'cs', label: 'Comparative Statements (CS)', route: '/procurement/comparative-statements', badge: 'Active' },
+        { id: 'grn', label: 'GRN & 3-Way Match', route: '/procurement/grn', badge: 'Active' }
       ]
     },
     {
       id: 'handover',
+
       title: 'Handover & Warranty',
       iconSvg: 'M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z',
       items: [

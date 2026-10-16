@@ -43,7 +43,8 @@ async def list_categories(
     Lists all dynamic dropdown categories available in the ERP system.
     Used by the System Settings -> Dropdowns & Dynamic Fields configuration module.
     """
-    stmt = select(LookupCategory)
+    from sqlalchemy.orm import selectinload
+    stmt = select(LookupCategory).options(selectinload(LookupCategory.items))
     if not include_inactive:
         stmt = stmt.where(LookupCategory.is_active == True)
     stmt = stmt.order_by(LookupCategory.category_name.asc())

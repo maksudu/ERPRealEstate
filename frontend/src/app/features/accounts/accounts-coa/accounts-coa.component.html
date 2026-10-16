@@ -1,0 +1,167 @@
+<app-card-container>
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-5">
+    <div>
+      <div class="flex items-center gap-2">
+        <h1 class="text-2xl font-bold tracking-tight text-foreground">Chart of Accounts (COA) Master</h1>
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+          Module 41 Double-Entry
+        </span>
+      </div>
+      <p class="text-sm text-muted-foreground mt-1">
+        General Ledger accounting tree: Assets (1000s), Liabilities (2000s), Equity (3000s), Revenue (4000s), and Expenses (5000s).
+      </p>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <app-custom-button
+        variant="outline"
+        (btnClick)="loadCOA()">
+        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        Refresh
+      </app-custom-button>
+      <app-custom-button
+        variant="primary"
+        (btnClick)="openCreateModal()">
+        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        + New Head of Account
+      </app-custom-button>
+    </div>
+  </div>
+
+  <!-- Filters Row -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 my-5 p-4 rounded-xl bg-card border border-border">
+    <app-searchable-select
+      label="Filter by Account Type"
+      placeholder="All Account Types"
+      [options]="accountTypeOptions"
+      [ngModel]="filterType()"
+      (ngModelChange)="filterType.set($event); onFilterChange()">
+    </app-searchable-select>
+
+    <div class="flex items-end">
+      <app-custom-button
+        variant="secondary"
+        (btnClick)="filterType.set(''); onFilterChange()">
+        Clear Filter
+      </app-custom-button>
+    </div>
+  </div>
+
+  <!-- COA Table -->
+  <div class="rounded-xl border border-border overflow-hidden bg-card">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-sm">
+        <thead class="bg-muted/50 text-muted-foreground text-xs uppercase font-semibold border-b border-border">
+          <tr>
+            <th class="px-4 py-3.5">Account Code</th>
+            <th class="px-4 py-3.5">English Head of Account</th>
+            <th class="px-4 py-3.5">বাংলা হিসাবের নাম</th>
+            <th class="px-4 py-3.5 text-center">Classification Type</th>
+            <th class="px-4 py-3.5 text-right">Current Ledger Balance (BDT)</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border">
+          @if (isLoading()) {
+            <tr>
+              <td colspan="5" class="text-center py-10 text-muted-foreground">
+                <div class="inline-flex items-center gap-2">
+                  <div class="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                  Loading Chart of Accounts...
+                </div>
+              </td>
+            </tr>
+          } @else if (coaList().length === 0) {
+            <tr>
+              <td colspan="5" class="text-center py-12 text-muted-foreground">
+                No accounts found. Click "+ New Head of Account" to configure General Ledger structure.
+              </td>
+            </tr>
+          } @else {
+            @for (acc of coaList(); track acc.id) {
+              <tr class="hover:bg-muted/30 transition-colors">
+                <td class="px-4 py-3.5 font-mono font-bold text-foreground">
+                  {{ acc.account_code }}
+                </td>
+                <td class="px-4 py-3.5 font-medium text-foreground">
+                  {{ acc.account_name_en }}
+                </td>
+                <td class="px-4 py-3.5 text-muted-foreground">
+                  {{ acc.account_name_bn || '—' }}
+                </td>
+                <td class="px-4 py-3.5 text-center">
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border"
+                    [ngClass]="[getTypeBadge(acc.account_type).bg, getTypeBadge(acc.account_type).textCol, getTypeBadge(acc.account_type).border]">
+                    {{ acc.account_type }}
+                  </span>
+                </td>
+                <td class="px-4 py-3.5 text-right font-bold" [ngClass]="acc.current_balance >= 0 ? 'text-foreground' : 'text-rose-600'">
+                  ৳{{ acc.current_balance | number:'1.2-2' }}
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Create Account Modal -->
+  @if (isCreateModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+      <div class="bg-card border border-border w-full max-w-md rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+        <div class="px-6 py-4 border-b border-border flex items-center justify-between bg-muted/40">
+          <div>
+            <h2 class="text-lg font-bold text-foreground">Add New Head of Account</h2>
+            <p class="text-xs text-muted-foreground">Double-entry General Ledger registry.</p>
+          </div>
+          <button type="button" (click)="closeCreateModal()" class="text-muted-foreground hover:text-foreground">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <form [formGroup]="createForm" (ngSubmit)="submitCreate()" class="p-6 space-y-4">
+          <app-custom-input
+            label="Account Code (Numeric) *"
+            placeholder="e.g. 1040, 2050, 5060"
+            formControlName="account_code"
+            [required]="true">
+          </app-custom-input>
+
+          <app-searchable-select
+            label="Account Type *"
+            placeholder="Select Type"
+            [options]="typeSelectOptions"
+            [ngModel]="createForm.get('account_type')?.value"
+            (ngModelChange)="createForm.get('account_type')?.setValue($event)"
+            [required]="true">
+          </app-searchable-select>
+
+          <app-custom-input
+            label="Account Name (English) *"
+            placeholder="e.g. Prime Bank Principal Escrow A/C"
+            formControlName="account_name_en"
+            [required]="true">
+          </app-custom-input>
+
+          <app-custom-input
+            label="Account Name (বাংলা)"
+            placeholder="e.g. প্রাইম ব্যাংক এস্ক্রো হিসাব"
+            formControlName="account_name_bn">
+          </app-custom-input>
+
+          <div class="pt-4 border-t border-border flex items-center justify-end gap-3">
+            <app-custom-button variant="outline" (btnClick)="closeCreateModal()">Cancel</app-custom-button>
+            <app-custom-button variant="primary" type="submit" [disabled]="isSubmitting()">
+              {{ isSubmitting() ? 'Saving...' : 'Add Account Head' }}
+            </app-custom-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</app-card-container>

@@ -1,0 +1,267 @@
+<div class="flex flex-col gap-6">
+  <!-- Unified Main Card Container -->
+  <app-card-container
+    title="Post-Dated Cheque (PDC) Vault & Safe Deposit System"
+    subtitle="Module 35: Physical Barcode Pouch Tracking, Bank Clearing Pipeline & Automated Dishonour Routing"
+  >
+    <!-- Action Bar & Search -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div class="relative flex-1 max-w-md">
+        <input 
+          type="text" 
+          [ngModel]="searchQuery()" 
+          (ngModelChange)="searchQuery.set($event)"
+          placeholder="Search by Cheque No, Barcode, Bank, or Buyer..." 
+          class="w-full pl-10 pr-4 py-2 text-sm rounded-lg bg-secondary/50 border border-border focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-foreground placeholder-muted-foreground"
+        />
+        <svg class="w-4 h-4 text-muted-foreground absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <!-- Trigger 3-Day SMS Reminder Cron -->
+        <app-custom-button variant="outline" (clicked)="triggerSmsCron()">
+          <span class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+            </svg>
+            Trigger 3-Day SMS Cron
+          </span>
+        </app-custom-button>
+
+        <!-- Deposit Cheque -->
+        <app-custom-button variant="primary" (clicked)="openDepositModal()">
+          <span class="flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            + Safe Deposit PDC
+          </span>
+        </app-custom-button>
+      </div>
+    </div>
+
+    <!-- Vault Table -->
+    <div class="overflow-x-auto border border-border rounded-xl">
+      <table class="w-full text-left text-sm text-foreground">
+        <thead class="bg-secondary/40 text-xs font-semibold uppercase text-muted-foreground border-b border-border">
+          <tr>
+            <th class="px-4 py-3">Pouch Barcode</th>
+            <th class="px-4 py-3">Cheque Details</th>
+            <th class="px-4 py-3">Buyer & Allotment</th>
+            <th class="px-4 py-3">Maturity Date</th>
+            <th class="px-4 py-3 text-right">Cheque Amount</th>
+            <th class="px-4 py-3 text-center">Vault Status</th>
+            <th class="px-4 py-3 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border/60">
+          @for (c of filteredCheques(); track c.id) {
+            <tr class="hover:bg-secondary/20 transition-colors">
+              <td class="px-4 py-3.5">
+                <span class="font-mono text-xs font-bold px-2 py-0.5 rounded bg-secondary text-primary border border-border">
+                  {{ c.pouch_barcode }}
+                </span>
+                @if (c.sms_reminder_sent) {
+                  <span class="block text-[10px] text-emerald-500 mt-1">✓ 3-Day SMS Sent</span>
+                }
+              </td>
+              <td class="px-4 py-3.5">
+                <div class="font-bold text-foreground font-mono">{{ c.cheque_number }}</div>
+                <div class="text-xs text-muted-foreground">{{ c.bank_name }} ({{ c.branch_name }})</div>
+              </td>
+              <td class="px-4 py-3.5">
+                <div class="font-semibold text-foreground">{{ c.customer_name }}</div>
+                <div class="text-xs text-muted-foreground">{{ c.booking_reference_no }}</div>
+              </td>
+              <td class="px-4 py-3.5 font-mono text-xs text-foreground font-medium">
+                {{ c.maturity_date }}
+              </td>
+              <td class="px-4 py-3.5 text-right font-mono font-bold text-foreground">
+                BDT {{ c.cheque_amount | number:'1.0-0' }}
+              </td>
+              <td class="px-4 py-3.5 text-center">
+                <span 
+                  class="text-xs font-semibold px-2.5 py-1 rounded-full uppercase"
+                  [ngClass]="{
+                    'bg-blue-500/10 text-blue-500 border border-blue-500/20': c.status === 'IN_VAULT',
+                    'bg-amber-500/10 text-amber-500 border border-amber-500/20': c.status === 'SENT_TO_BANK',
+                    'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20': c.status === 'HONOURED',
+                    'bg-rose-500/10 text-rose-500 border border-rose-500/20 animate-pulse': c.status === 'DISHONOURED_BOUNCED'
+                  }"
+                >
+                  {{ c.status.replace('_', ' ') }}
+                </span>
+                @if (c.dishonour_reason) {
+                  <span class="block text-[10px] text-rose-500 mt-0.5 font-medium">{{ c.dishonour_reason }}</span>
+                }
+              </td>
+              <td class="px-4 py-3.5 text-right">
+                <button 
+                  (click)="openStatusModal(c)"
+                  class="px-2.5 py-1 text-xs rounded-lg bg-secondary hover:bg-secondary/80 text-foreground border border-border font-medium transition-colors"
+                >
+                  Update Lifecycle
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="7" class="px-4 py-12 text-center text-muted-foreground">
+                No PDC cheques stored in safe vault matching the query.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </app-card-container>
+
+  <!-- Modal 1: Safe Deposit New Cheque -->
+  @if (isDepositModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div class="bg-card border border-border rounded-2xl w-full max-w-lg shadow-2xl p-6 flex flex-col gap-5">
+        <div class="flex items-center justify-between border-b border-border pb-3">
+          <div>
+            <h3 class="text-base font-bold text-foreground">Safe Deposit Post-Dated Cheque</h3>
+            <p class="text-xs text-muted-foreground">Assigns unique physical vault pouch barcode</p>
+          </div>
+          <button (click)="closeDepositModal()" class="text-muted-foreground hover:text-foreground">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
+        <form [formGroup]="depositForm" (ngSubmit)="submitDeposit()" class="flex flex-col gap-4">
+          <app-searchable-select
+            label="Apartment Allotment Booking *"
+            [options]="bookingOptions"
+            [formGroup]="depositForm"
+            controlName="booking_id"
+          />
+
+          <app-searchable-select
+            label="Customer Drawer *"
+            [options]="customerOptions"
+            [formGroup]="depositForm"
+            controlName="customer_id"
+          />
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <app-custom-input
+              label="Cheque Number *"
+              placeholder="e.g. 9948210"
+              [formGroup]="depositForm"
+              controlName="cheque_number"
+            />
+            <app-custom-input
+              label="Cheque Amount (BDT) *"
+              type="number"
+              placeholder="5000000"
+              [formGroup]="depositForm"
+              controlName="cheque_amount"
+            />
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <app-custom-input
+              label="Bank Name *"
+              placeholder="e.g. Eastern Bank PLC"
+              [formGroup]="depositForm"
+              controlName="bank_name"
+            />
+            <app-custom-input
+              label="Branch Name *"
+              placeholder="e.g. Gulshan Branch"
+              [formGroup]="depositForm"
+              controlName="branch_name"
+            />
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <app-custom-input
+              label="Maturity Date *"
+              type="date"
+              [formGroup]="depositForm"
+              controlName="maturity_date"
+            />
+            <app-custom-input
+              label="Bank Routing Number"
+              placeholder="095261120"
+              [formGroup]="depositForm"
+              controlName="routing_number"
+            />
+          </div>
+
+          <div class="flex justify-end gap-3 pt-3 border-t border-border">
+            <app-custom-button variant="outline" type="button" (clicked)="closeDepositModal()">
+              Cancel
+            </app-custom-button>
+            <app-custom-button variant="primary" type="submit" [disabled]="depositForm.invalid || isSubmitting()">
+              {{ isSubmitting() ? 'Depositing...' : 'Deposit to Vault' }}
+            </app-custom-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- Modal 2: Lifecycle Status Update -->
+  @if (isStatusModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div class="bg-card border border-border rounded-2xl w-full max-w-md shadow-2xl p-6 flex flex-col gap-5">
+        <div class="flex items-center justify-between border-b border-border pb-3">
+          <div>
+            <h3 class="text-base font-bold text-foreground">Update Cheque Clearing Status</h3>
+            <p class="text-xs text-muted-foreground">Cheque #{{ selectedCheque()?.cheque_number }} ({{ selectedCheque()?.pouch_barcode }})</p>
+          </div>
+          <button (click)="closeStatusModal()" class="text-muted-foreground hover:text-foreground">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
+        <form [formGroup]="statusForm" (ngSubmit)="submitStatusUpdate()" class="flex flex-col gap-4">
+          <app-searchable-select
+            label="Lifecycle Stage *"
+            [options]="statusOptions"
+            [formGroup]="statusForm"
+            controlName="status"
+          />
+
+          @if (statusForm.value.status === 'DISHONOURED_BOUNCED') {
+            <app-searchable-select
+              label="Bank Dishonour Reason *"
+              [options]="dishonourReasonOptions"
+              [formGroup]="statusForm"
+              controlName="dishonour_reason"
+            />
+
+            <app-custom-input
+              label="Dishonour Return Memo Date *"
+              type="date"
+              [formGroup]="statusForm"
+              controlName="dishonour_memo_date"
+            />
+
+            <p class="text-[11px] text-rose-500 bg-rose-500/10 p-2.5 rounded-lg border border-rose-500/20">
+              ⚠️ Marking as <strong>Dishonoured</strong> will automatically initialize Section 138 NI Act litigation workflow and compute the 30-day statutory notice deadline.
+            </p>
+          }
+
+          <div class="flex justify-end gap-3 pt-3 border-t border-border">
+            <app-custom-button variant="outline" type="button" (clicked)="closeStatusModal()">
+              Cancel
+            </app-custom-button>
+            <app-custom-button variant="primary" type="submit" [disabled]="isSubmitting()">
+              {{ isSubmitting() ? 'Updating...' : 'Save Status' }}
+            </app-custom-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>

@@ -10,9 +10,29 @@ from app.core.middleware import AuditLoggingMiddleware
 
 import app.modules.lookups.models
 import app.modules.auth.models
+import app.modules.land.models
+import app.modules.projects.models
+import app.modules.inventory.models
+import app.modules.crm.models
+import app.modules.sales.models
+import app.modules.installments.models
+import app.modules.construction.models
+import app.modules.procurement.models
+import app.modules.accounts.models
 
 from app.modules.lookups.router import router as lookups_router
 from app.modules.auth.router import router as auth_router
+from app.modules.land.router import router as land_router
+from app.modules.projects.router import router as projects_router
+from app.modules.inventory.router import router as inventory_router
+from app.modules.crm.router import router as crm_router
+from app.modules.sales.router import router as sales_router
+from app.modules.installments.router import router as installments_router
+from app.modules.construction.router import router as construction_router
+from app.modules.procurement.router import router as procurement_router
+from app.modules.accounts.router import router as accounts_router
+
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -93,7 +113,18 @@ async def redis_health():
 # Register Modular Routers
 app.include_router(lookups_router, prefix=settings.API_V1_PREFIX)
 app.include_router(auth_router, prefix=settings.API_V1_PREFIX)
+app.include_router(land_router, prefix=settings.API_V1_PREFIX)
+app.include_router(projects_router, prefix=settings.API_V1_PREFIX)
+app.include_router(inventory_router, prefix=settings.API_V1_PREFIX)
+app.include_router(crm_router, prefix=settings.API_V1_PREFIX)
+app.include_router(sales_router, prefix=settings.API_V1_PREFIX)
+app.include_router(installments_router, prefix=settings.API_V1_PREFIX)
+app.include_router(construction_router, prefix=settings.API_V1_PREFIX)
+app.include_router(procurement_router, prefix=settings.API_V1_PREFIX)
+app.include_router(accounts_router, prefix=settings.API_V1_PREFIX)
 
 if __name__ == "__main__":
+
+
     import uvicorn
     uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)

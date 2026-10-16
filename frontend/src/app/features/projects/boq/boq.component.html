@@ -1,0 +1,365 @@
+<app-card-container 
+  title="Bill of Quantities (BOQ) & IFC Drawing Revisions" 
+  subtitle="Civil engineering material quantities, rates, and automated IFC drawing approval revocation (Modules 31 & 36)"
+  badge="ENGINEERING & BOQ"
+>
+  <!-- Card Header Actions -->
+  <div card-actions class="flex items-center gap-3">
+    <div class="flex items-center gap-2">
+      <span class="text-xs text-slate-500 font-medium">Select Project:</span>
+      <select 
+        (change)="onProjectChange($event)" 
+        class="erp-input text-xs py-1 px-2.5 w-56"
+      >
+        @for (p of projects(); track p.id) {
+          <option [value]="p.id" [selected]="p.id === selectedProjectId()">
+            {{ p.project_code }} - {{ p.project_name }}
+          </option>
+        }
+      </select>
+    </div>
+
+    @if (activeTab() === 'boq') {
+      <app-custom-button variant="primary" (btnClick)="openCreateBOQ()">
+        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        Add BOQ Item
+      </app-custom-button>
+    } @else {
+      <app-custom-button variant="primary" (btnClick)="openCreateDrawing()">
+        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        New Drawing Revision
+      </app-custom-button>
+    }
+  </div>
+
+  <!-- Reusable Tabs Navigation -->
+  <div class="mb-4">
+    <app-custom-tabs 
+      [tabs]="tabs" 
+      [activeTabId]="activeTab()" 
+      (tabChange)="onTabChange($event)"
+    ></app-custom-tabs>
+  </div>
+
+  @if (ifcNoticeMessage()) {
+    <div class="p-3 mb-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-lg text-xs text-emerald-800 dark:text-emerald-300 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <span>{{ ifcNoticeMessage() }}</span>
+      </div>
+      <button (click)="ifcNoticeMessage.set(null)" class="text-slate-400 hover:text-slate-600">×</button>
+    </div>
+  }
+
+  <!-- TAB 1: BOQ ESTIMATION MATRIX -->
+  @if (activeTab() === 'boq') {
+    <div class="space-y-4">
+      <!-- Total Budget Counter -->
+      <div class="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-850 rounded-xl border border-slate-200 dark:border-slate-800">
+        <div class="text-xs text-slate-500">
+          Showing BOQ specifications for structural and civil construction phases
+        </div>
+        <div class="text-right">
+          <span class="text-xs text-slate-400 mr-2">Estimated Civil Budget:</span>
+          <span class="text-sm font-bold text-emerald-600 dark:text-emerald-400">
+            ৳ {{ calculateTotalBOQCost() | number:'1.2-2' }}
+          </span>
+        </div>
+      </div>
+
+      <!-- BOQ Table -->
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800 text-left text-xs">
+          <thead class="bg-slate-50 dark:bg-slate-850 text-slate-600 dark:text-slate-400 font-semibold uppercase tracking-wider">
+            <tr>
+              <th class="px-4 py-3">WBS Phase</th>
+              <th class="px-4 py-3">Material Category</th>
+              <th class="px-4 py-3">Item Specification</th>
+              <th class="px-4 py-3">Estimated Quantity</th>
+              <th class="px-4 py-3">Unit Rate</th>
+              <th class="px-4 py-3">Total Estimated Cost</th>
+              <th class="px-4 py-3">Consumed So Far</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300">
+            @if (isLoading()) {
+              <tr>
+                <td colspan="7" class="px-4 py-8 text-center text-slate-400">
+                  <div class="inline-flex items-center gap-2">
+                    <svg class="animate-spin h-4 w-4 text-emerald-600" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                    </svg>
+                    Loading BOQ items...
+                  </div>
+                </td>
+              </tr>
+            } @else if (boqItems().length === 0) {
+              <tr>
+                <td colspan="7" class="px-4 py-12 text-center text-slate-400">
+                  No BOQ items added for this project yet.
+                </td>
+              </tr>
+            } @else {
+              @for (item of boqItems(); track item.id) {
+                <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                  <td class="px-4 py-3.5">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                      {{ item.wbs_phase_id }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3.5 font-bold text-slate-900 dark:text-slate-100">
+                    {{ item.material_category_id }}
+                  </td>
+                  <td class="px-4 py-3.5 max-w-xs text-slate-600 dark:text-slate-300">
+                    {{ item.item_description }}
+                  </td>
+                  <td class="px-4 py-3.5 font-semibold text-slate-900 dark:text-slate-100">
+                    {{ item.estimated_quantity | number:'1.2-2' }} {{ item.unit_of_measure_id }}
+                  </td>
+                  <td class="px-4 py-3.5 text-slate-600 dark:text-slate-400">
+                    ৳ {{ item.estimated_unit_rate | number:'1.2-2' }}
+                  </td>
+                  <td class="px-4 py-3.5 font-bold text-emerald-600 dark:text-emerald-400">
+                    ৳ {{ item.total_estimated_cost | number:'1.2-2' }}
+                  </td>
+                  <td class="px-4 py-3.5">
+                    <span class="font-medium text-slate-700 dark:text-slate-300">{{ item.actual_consumed_quantity | number:'1.2-2' }} {{ item.unit_of_measure_id }}</span>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+
+  <!-- TAB 2: IFC DRAWING REVISIONS & AUTO-REVOCATION -->
+  @if (activeTab() === 'drawings') {
+    <div class="space-y-4">
+      <div class="p-3 bg-amber-50/60 dark:bg-amber-950/30 rounded-xl border border-amber-200 dark:border-amber-800 text-xs text-amber-900 dark:text-amber-200">
+        <span class="font-bold">IFC Revision Engine Rule:</span> Marking a new drawing revision as <em>"Issued for Construction (IFC)"</em> automatically revokes the approval of all superseded prior revisions to prevent on-site construction errors.
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800 text-left text-xs">
+          <thead class="bg-slate-50 dark:bg-slate-850 text-slate-600 dark:text-slate-400 font-semibold uppercase tracking-wider">
+            <tr>
+              <th class="px-4 py-3">Category</th>
+              <th class="px-4 py-3">Drawing Number</th>
+              <th class="px-4 py-3">Revision</th>
+              <th class="px-4 py-3">Drawing Title</th>
+              <th class="px-4 py-3">IFC Status</th>
+              <th class="px-4 py-3">Approved By</th>
+              <th class="px-4 py-3">Revision Notes</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300">
+            @for (d of drawings(); track d.id) {
+              <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                <td class="px-4 py-3.5 font-bold text-slate-700 dark:text-slate-300">
+                  {{ d.drawing_category_id }}
+                </td>
+                <td class="px-4 py-3.5 font-mono font-bold text-slate-900 dark:text-slate-100">
+                  {{ d.drawing_number }}
+                </td>
+                <td class="px-4 py-3.5 font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                  {{ d.revision_number }}
+                </td>
+                <td class="px-4 py-3.5 font-medium text-slate-800 dark:text-slate-200">
+                  {{ d.drawing_title }}
+                </td>
+                <td class="px-4 py-3.5">
+                  @if (d.is_approved_for_construction) {
+                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                      <svg class="w-3 h-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                      </svg>
+                      ACTIVE IFC (APPROVED)
+                    </span>
+                  } @else {
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 line-through">
+                      SUPERSEDED / REVOKED
+                    </span>
+                  }
+                </td>
+                <td class="px-4 py-3.5 text-slate-600 dark:text-slate-400">
+                  {{ d.approved_by || '-' }}
+                </td>
+                <td class="px-4 py-3.5 text-slate-500 max-w-xs truncate">
+                  {{ d.revision_notes || '-' }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+</app-card-container>
+
+<!-- 1. CREATE BOQ ITEM MODAL -->
+@if (isBOQModalOpen()) {
+  <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="erp-card w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-850">
+        <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100">
+          Add BOQ Material Estimation
+        </h3>
+        <button (click)="closeBOQModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <form [formGroup]="boqForm" (ngSubmit)="submitBOQ()" class="p-6 space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">WBS Work Phase *</label>
+            <select formControlName="wbs_phase_id" class="erp-input text-xs">
+              <option value="SUB_STRUCTURE">Sub-Structure & Piling</option>
+              <option value="SUPER_STRUCTURE">Super-Structure (Column/Beam/Slab)</option>
+              <option value="BRICK_WORK">Brick Masonry & Plaster</option>
+              <option value="FINISHING">Tiles, Sanitary & Paint</option>
+              <option value="MEP">Mechanical, Electrical & Plumbing</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Material Category *</label>
+            <select formControlName="material_category_id" class="erp-input text-xs">
+              <option value="REBAR_500W">Rebar 500W (BSRM / AKS)</option>
+              <option value="CEMENT_OPC">Cement (Portland OPC)</option>
+              <option value="SAND_FM_2_5">Coarse Sand FM 2.5</option>
+              <option value="STONE_CHIPS">Black Stone Chips 3/4"</option>
+              <option value="BRICKS_AUTO">1st Class Auto Bricks</option>
+              <option value="CERAMIC_TILES">Floor & Wall Tiles</option>
+            </select>
+          </div>
+        </div>
+
+        <app-custom-input
+          formControlName="item_description"
+          label="Item Specification *"
+          placeholder="e.g. 500W 20mm & 25mm deformed steel bars for foundation mat"
+        ></app-custom-input>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Unit of Measure *</label>
+            <select formControlName="unit_of_measure_id" class="erp-input text-xs">
+              <option value="TON">Ton (টাকা/টন)</option>
+              <option value="BAG">Bag (ব্যাগ)</option>
+              <option value="CFT">CFT (ঘনফুট)</option>
+              <option value="THOUSAND_NOS">Thousand Nos (হাজার)</option>
+              <option value="SQFT">Sq Ft (বর্গফুট)</option>
+            </select>
+          </div>
+
+          <app-custom-input
+            formControlName="estimated_quantity"
+            type="number"
+            label="Estimated Qty *"
+            placeholder="e.g. 250"
+          ></app-custom-input>
+
+          <app-custom-input
+            formControlName="estimated_unit_rate"
+            type="number"
+            label="Unit Rate (BDT) *"
+            placeholder="e.g. 98500"
+          ></app-custom-input>
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+          <app-custom-button type="button" variant="secondary" (btnClick)="closeBOQModal()">Cancel</app-custom-button>
+          <app-custom-button type="submit" variant="primary" [loading]="isSubmitting()">Add Item</app-custom-button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- 2. CREATE DRAWING REVISION MODAL (IFC AUTO-REVOCATION) -->
+@if (isDrawingModalOpen()) {
+  <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="erp-card w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-850">
+        <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100">
+          Issue New Drawing Revision (IFC Engine)
+        </h3>
+        <button (click)="closeDrawingModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <form [formGroup]="drawingForm" (ngSubmit)="submitDrawing()" class="p-6 space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Category *</label>
+            <select formControlName="drawing_category_id" class="erp-input text-xs">
+              <option value="STRUCTURAL">Structural (STR)</option>
+              <option value="ARCHITECTURAL">Architectural (ARC)</option>
+              <option value="PLUMBING">Plumbing & Sanitary (SAN)</option>
+              <option value="ELECTRICAL">Electrical (ELE)</option>
+            </select>
+          </div>
+
+          <app-custom-input
+            formControlName="drawing_number"
+            label="Drawing Number *"
+            placeholder="e.g. STR-COL-001"
+          ></app-custom-input>
+        </div>
+
+        <app-custom-input
+          formControlName="drawing_title"
+          label="Drawing Title *"
+          placeholder="e.g. Column Schedule & Section Details"
+        ></app-custom-input>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <app-custom-input
+            formControlName="revision_number"
+            label="Revision Code *"
+            placeholder="e.g. R2 / R3"
+          ></app-custom-input>
+
+          <app-custom-input
+            formControlName="approved_by"
+            label="Approved By (Lead Consultant) *"
+            placeholder="e.g. Engr. Shamsul Haque"
+          ></app-custom-input>
+        </div>
+
+        <div class="p-3 bg-emerald-50/70 dark:bg-emerald-950/40 rounded-lg border border-emerald-200 dark:border-emerald-800 flex items-center gap-2">
+          <input type="checkbox" formControlName="is_approved_for_construction" id="ifc_check" class="rounded text-emerald-600" />
+          <label for="ifc_check" class="text-xs font-bold text-slate-800 dark:text-slate-200 cursor-pointer">
+            Mark as Issued for Construction (IFC) - Auto-Revokes Prior Revisions
+          </label>
+        </div>
+
+        <app-custom-input
+          formControlName="revision_notes"
+          label="Revision Modification Notes"
+          placeholder="e.g. Increased stirrup spacing at beam-column junctions"
+        ></app-custom-input>
+
+        <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+          <app-custom-button type="button" variant="secondary" (btnClick)="closeDrawingModal()">Cancel</app-custom-button>
+          <app-custom-button type="submit" variant="primary" [loading]="isSubmitting()">Issue Revision</app-custom-button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

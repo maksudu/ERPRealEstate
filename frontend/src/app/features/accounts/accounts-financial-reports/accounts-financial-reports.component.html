@@ -1,0 +1,372 @@
+<app-card-container>
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-5">
+    <div>
+      <div class="flex items-center gap-2">
+        <h1 class="text-2xl font-bold tracking-tight text-foreground">Real-Time Financial Reports & Bank Reconciliation</h1>
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+          Module 7/44 CA Audit
+        </span>
+      </div>
+      <p class="text-sm text-muted-foreground mt-1">
+        Executive financial statements: Trial Balance, Project-wise P&L, Balance Sheet, and Bank/MFS statement reconciliation.
+      </p>
+    </div>
+
+    <!-- Tab Selector -->
+    <div class="flex items-center gap-1 bg-muted/60 p-1 rounded-xl border border-border">
+      <button
+        type="button"
+        (click)="activeTab.set('trial-balance')"
+        class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+        [ngClass]="activeTab() === 'trial-balance' ? 'bg-card text-foreground shadow-xs font-bold' : 'text-muted-foreground hover:text-foreground'">
+        Trial Balance
+      </button>
+      <button
+        type="button"
+        (click)="activeTab.set('profit-loss')"
+        class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+        [ngClass]="activeTab() === 'profit-loss' ? 'bg-card text-foreground shadow-xs font-bold' : 'text-muted-foreground hover:text-foreground'">
+        Profit & Loss (P&L)
+      </button>
+      <button
+        type="button"
+        (click)="activeTab.set('balance-sheet')"
+        class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+        [ngClass]="activeTab() === 'balance-sheet' ? 'bg-card text-foreground shadow-xs font-bold' : 'text-muted-foreground hover:text-foreground'">
+        Balance Sheet
+      </button>
+      <button
+        type="button"
+        (click)="activeTab.set('bank-reconciliation')"
+        class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+        [ngClass]="activeTab() === 'bank-reconciliation' ? 'bg-card text-foreground shadow-xs font-bold' : 'text-muted-foreground hover:text-foreground'">
+        Bank/MFS Recon
+      </button>
+    </div>
+  </div>
+
+  <!-- TAB 1: TRIAL BALANCE -->
+  @if (activeTab() === 'trial-balance') {
+    <div class="my-5 space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl bg-card border border-border">
+        <div class="flex items-center gap-3">
+          <label class="text-xs font-bold text-foreground">As of Date:</label>
+          <input
+            type="date"
+            [ngModel]="reportAsOfDate()"
+            (ngModelChange)="reportAsOfDate.set($event); loadTrialBalance()"
+            class="px-3 py-1.5 rounded-lg border border-border bg-background text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary" />
+        </div>
+
+        <div>
+          @if (trialBalance()?.is_balanced) {
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+              ✓ Perfectly Balanced (Σ Dr = Σ Cr)
+            </span>
+          } @else {
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 animate-pulse">
+              Out of Balance
+            </span>
+          }
+        </div>
+      </div>
+
+      <!-- Trial Balance Table -->
+      <div class="rounded-xl border border-border overflow-hidden bg-card">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-muted/50 text-muted-foreground text-xs uppercase font-semibold border-b border-border">
+              <tr>
+                <th class="px-4 py-3">Code & Account Name</th>
+                <th class="px-4 py-3 text-center">Type</th>
+                <th class="px-4 py-3 text-right">Debit (Dr) BDT</th>
+                <th class="px-4 py-3 text-right">Credit (Cr) BDT</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border">
+              @for (item of trialBalance()?.items; track item.account_id) {
+                <tr class="hover:bg-muted/20">
+                  <td class="px-4 py-2.5 font-medium text-foreground">
+                    <span class="font-mono text-muted-foreground mr-1">{{ item.account_code }}</span> {{ item.account_name_en }}
+                  </td>
+                  <td class="px-4 py-2.5 text-center text-xs text-muted-foreground">{{ item.account_type }}</td>
+                  <td class="px-4 py-2.5 text-right font-medium" [ngClass]="item.net_debit > 0 ? 'text-foreground' : 'text-muted-foreground/30'">
+                    {{ item.net_debit > 0 ? (item.net_debit | number:'1.2-2') : '—' }}
+                  </td>
+                  <td class="px-4 py-2.5 text-right font-medium" [ngClass]="item.net_credit > 0 ? 'text-foreground' : 'text-muted-foreground/30'">
+                    {{ item.net_credit > 0 ? (item.net_credit | number:'1.2-2') : '—' }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+            <tfoot class="bg-muted/40 font-bold border-t-2 border-border text-foreground">
+              <tr>
+                <td colspan="2" class="px-4 py-3 text-right uppercase text-xs">Grand Totals:</td>
+                <td class="px-4 py-3 text-right text-primary">৳{{ trialBalance()?.grand_total_debit | number:'1.2-2' }}</td>
+                <td class="px-4 py-3 text-right text-primary">৳{{ trialBalance()?.grand_total_credit | number:'1.2-2' }}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- TAB 2: PROFIT & LOSS -->
+  @if (activeTab() === 'profit-loss') {
+    <div class="my-5 space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 rounded-xl bg-card border border-border">
+        <app-searchable-select
+          label="Project Cost Center"
+          placeholder="All Projects"
+          [options]="projectOptions()"
+          [ngModel]="plProjectId()"
+          (ngModelChange)="plProjectId.set($event); loadProfitLoss()">
+        </app-searchable-select>
+
+        <div>
+          <label class="text-xs font-bold text-foreground">From Date</label>
+          <input
+            type="date"
+            [ngModel]="plFromDate()"
+            (ngModelChange)="plFromDate.set($event); loadProfitLoss()"
+            class="mt-1 w-full px-3 py-2 rounded-lg border border-border bg-background text-sm text-foreground focus:outline-none" />
+        </div>
+
+        <div>
+          <label class="text-xs font-bold text-foreground">To Date</label>
+          <input
+            type="date"
+            [ngModel]="plToDate()"
+            (ngModelChange)="plToDate.set($event); loadProfitLoss()"
+            class="mt-1 w-full px-3 py-2 rounded-lg border border-border bg-background text-sm text-foreground focus:outline-none" />
+        </div>
+      </div>
+
+      <!-- P&L KPI Result -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="p-4 rounded-xl bg-card border border-border">
+          <div class="text-xs text-muted-foreground">Total Revenue</div>
+          <div class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">
+            ৳{{ profitLoss()?.total_revenue | number:'1.2-2' }}
+          </div>
+        </div>
+        <div class="p-4 rounded-xl bg-card border border-border">
+          <div class="text-xs text-muted-foreground">Total Expenses</div>
+          <div class="text-2xl font-bold text-rose-600 dark:text-rose-400 mt-1">
+            ৳{{ profitLoss()?.total_expense | number:'1.2-2' }}
+          </div>
+        </div>
+        <div class="p-4 rounded-xl bg-card border border-border">
+          <div class="text-xs text-muted-foreground">Net Profit / (Loss)</div>
+          <div class="text-2xl font-bold mt-1" [ngClass]="(profitLoss()?.net_profit_or_loss || 0) >= 0 ? 'text-primary' : 'text-rose-600'">
+            ৳{{ profitLoss()?.net_profit_or_loss | number:'1.2-2' }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Breakdown Tables -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Revenue Breakdown -->
+        <div class="rounded-xl border border-border bg-card p-4">
+          <h3 class="font-bold text-foreground text-sm border-b border-border pb-2 mb-3">Revenues & Sales Income</h3>
+          <div class="space-y-2">
+            @for (r of profitLoss()?.revenue_breakdown; track r.account_id) {
+              <div class="flex justify-between text-xs py-1 border-b border-border/50">
+                <span class="text-muted-foreground">{{ r.account_code }} - {{ r.account_name_en }}</span>
+                <span class="font-bold text-foreground">৳{{ r.net_credit | number:'1.2-2' }}</span>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Expense Breakdown -->
+        <div class="rounded-xl border border-border bg-card p-4">
+          <h3 class="font-bold text-foreground text-sm border-b border-border pb-2 mb-3">Construction & Operating Expenses</h3>
+          <div class="space-y-2">
+            @for (e of profitLoss()?.expense_breakdown; track e.account_id) {
+              <div class="flex justify-between text-xs py-1 border-b border-border/50">
+                <span class="text-muted-foreground">{{ e.account_code }} - {{ e.account_name_en }}</span>
+                <span class="font-bold text-foreground">৳{{ e.net_debit | number:'1.2-2' }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- TAB 3: BALANCE SHEET -->
+  @if (activeTab() === 'balance-sheet') {
+    <div class="my-5 space-y-4">
+      <!-- Balance Sheet Totals -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="p-4 rounded-xl bg-card border border-border">
+          <div class="text-xs text-muted-foreground">Total Assets (1000s)</div>
+          <div class="text-2xl font-bold text-foreground mt-1">৳{{ balanceSheet()?.total_assets | number:'1.2-2' }}</div>
+        </div>
+        <div class="p-4 rounded-xl bg-card border border-border">
+          <div class="text-xs text-muted-foreground">Total Liabilities (2000s)</div>
+          <div class="text-2xl font-bold text-foreground mt-1">৳{{ balanceSheet()?.total_liabilities | number:'1.2-2' }}</div>
+        </div>
+        <div class="p-4 rounded-xl bg-card border border-border">
+          <div class="text-xs text-muted-foreground">Total Equity (3000s)</div>
+          <div class="text-2xl font-bold text-foreground mt-1">৳{{ balanceSheet()?.total_equity | number:'1.2-2' }}</div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Assets -->
+        <div class="rounded-xl border border-border bg-card p-4">
+          <h3 class="font-bold text-foreground text-sm border-b border-border pb-2 mb-3">Assets (Resources)</h3>
+          <div class="space-y-2">
+            @for (a of balanceSheet()?.asset_breakdown; track a.account_id) {
+              <div class="flex justify-between text-xs py-1 border-b border-border/50">
+                <span class="text-muted-foreground">{{ a.account_code }} - {{ a.account_name_en }}</span>
+                <span class="font-semibold text-foreground">৳{{ a.net_debit | number:'1.2-2' }}</span>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Liabilities -->
+        <div class="rounded-xl border border-border bg-card p-4">
+          <h3 class="font-bold text-foreground text-sm border-b border-border pb-2 mb-3">Liabilities (Obligations)</h3>
+          <div class="space-y-2">
+            @for (l of balanceSheet()?.liability_breakdown; track l.account_id) {
+              <div class="flex justify-between text-xs py-1 border-b border-border/50">
+                <span class="text-muted-foreground">{{ l.account_code }} - {{ l.account_name_en }}</span>
+                <span class="font-semibold text-foreground">৳{{ l.net_credit | number:'1.2-2' }}</span>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Equity -->
+        <div class="rounded-xl border border-border bg-card p-4">
+          <h3 class="font-bold text-foreground text-sm border-b border-border pb-2 mb-3">Shareholder Equity</h3>
+          <div class="space-y-2">
+            @for (eq of balanceSheet()?.equity_breakdown; track eq.account_id) {
+              <div class="flex justify-between text-xs py-1 border-b border-border/50">
+                <span class="text-muted-foreground">{{ eq.account_code }} - {{ eq.account_name_en }}</span>
+                <span class="font-semibold text-foreground">৳{{ eq.net_credit | number:'1.2-2' }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- TAB 4: BANK RECONCILIATION -->
+  @if (activeTab() === 'bank-reconciliation') {
+    <div class="my-5 space-y-4">
+      <div class="flex justify-between items-center">
+        <h3 class="font-bold text-foreground text-base">Bank & MFS Escrow Reconciliation Audits</h3>
+        <app-custom-button variant="primary" (btnClick)="openReconModal()">
+          + Reconcile Statement
+        </app-custom-button>
+      </div>
+
+      <div class="rounded-xl border border-border overflow-hidden bg-card">
+        <table class="w-full text-left text-sm">
+          <thead class="bg-muted/50 text-muted-foreground text-xs uppercase font-semibold border-b border-border">
+            <tr>
+              <th class="px-4 py-3">Bank / Account</th>
+              <th class="px-4 py-3">Statement Date</th>
+              <th class="px-4 py-3 text-right">Bank Statement Balance</th>
+              <th class="px-4 py-3 text-right">Book Ledger Balance</th>
+              <th class="px-4 py-3 text-right">Variance</th>
+              <th class="px-4 py-3 text-center">Status</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border">
+            @for (rec of reconciliations(); track rec.id) {
+              <tr class="hover:bg-muted/20">
+                <td class="px-4 py-3 font-medium text-foreground">
+                  {{ rec.bank_account_name }}
+                  <div class="text-xs text-muted-foreground">{{ rec.bank_account_code }}</div>
+                </td>
+                <td class="px-4 py-3 text-xs text-muted-foreground">{{ rec.statement_date }}</td>
+                <td class="px-4 py-3 text-right font-bold text-foreground">৳{{ rec.statement_balance | number:'1.2-2' }}</td>
+                <td class="px-4 py-3 text-right text-foreground">৳{{ rec.book_balance | number:'1.2-2' }}</td>
+                <td class="px-4 py-3 text-right font-bold" [ngClass]="rec.difference_amount === 0 ? 'text-emerald-600' : 'text-rose-600'">
+                  ৳{{ rec.difference_amount | number:'1.2-2' }}
+                </td>
+                <td class="px-4 py-3 text-center">
+                  @if (rec.is_reconciled) {
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+                      ✓ Reconciled
+                    </span>
+                  } @else {
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
+                      Discrepancy Pending
+                    </span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+
+  <!-- Reconcile Modal -->
+  @if (isReconModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+      <div class="bg-card border border-border w-full max-w-md rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+        <div class="px-6 py-4 border-b border-border flex items-center justify-between bg-muted/40">
+          <div>
+            <h2 class="text-lg font-bold text-foreground">Bank Statement Audit</h2>
+            <p class="text-xs text-muted-foreground">Compare statement closing balance with book ledger.</p>
+          </div>
+          <button type="button" (click)="closeReconModal()" class="text-muted-foreground hover:text-foreground">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <form [formGroup]="reconForm" (ngSubmit)="submitRecon()" class="p-6 space-y-4">
+          <app-searchable-select
+            label="Bank / MFS Account *"
+            placeholder="Select Bank Account"
+            [options]="bankAccountOptions()"
+            [ngModel]="reconForm.get('bank_account_id')?.value"
+            (ngModelChange)="reconForm.get('bank_account_id')?.setValue($event)"
+            [required]="true">
+          </app-searchable-select>
+
+          <app-custom-input
+            label="Statement Date *"
+            type="date"
+            formControlName="statement_date"
+            [required]="true">
+          </app-custom-input>
+
+          <app-custom-input
+            label="Bank Statement Closing Balance (BDT) *"
+            type="number"
+            placeholder="e.g. 1500000.00"
+            formControlName="statement_balance"
+            [required]="true">
+          </app-custom-input>
+
+          <app-custom-textarea
+            label="Reconciliation Observations"
+            placeholder="e.g. Cheques issued but not yet presented for payment..."
+            formControlName="reconciliation_notes"
+            [rows]="2">
+          </app-custom-textarea>
+
+          <div class="pt-4 border-t border-border flex items-center justify-end gap-3">
+            <app-custom-button variant="outline" (btnClick)="closeReconModal()">Cancel</app-custom-button>
+            <app-custom-button variant="primary" type="submit" [disabled]="isSubmitting()">
+              {{ isSubmitting() ? 'Auditing...' : 'Perform Reconciliation' }}
+            </app-custom-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</app-card-container>

@@ -1,0 +1,281 @@
+<app-card-container>
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-5">
+    <div>
+      <div class="flex items-center gap-2">
+        <h1 class="text-2xl font-bold tracking-tight text-foreground">General Ledger Vouchers & Journal Register</h1>
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+          Double-Entry Balanced
+        </span>
+      </div>
+      <p class="text-sm text-muted-foreground mt-1">
+        Enforces statutory rule: <span class="font-mono text-xs font-bold text-foreground">Σ Debit = Σ Credit</span> with zero hard deletions (audit correction via Reversal Vouchers only).
+      </p>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <app-custom-button
+        variant="outline"
+        (btnClick)="loadVouchers()">
+        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        Refresh
+      </app-custom-button>
+      <app-custom-button
+        variant="primary"
+        (btnClick)="openCreateModal()">
+        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        + Post New Voucher
+      </app-custom-button>
+    </div>
+  </div>
+
+  <!-- Filters Row -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 my-5 p-4 rounded-xl bg-card border border-border">
+    <app-searchable-select
+      label="Filter by Voucher Type"
+      placeholder="All Voucher Types"
+      [options]="voucherTypeOptions"
+      [ngModel]="filterType()"
+      (ngModelChange)="filterType.set($event); onFilterChange()">
+    </app-searchable-select>
+
+    <app-searchable-select
+      label="Filter by Status"
+      placeholder="All Statuses"
+      [options]="statusFilterOptions"
+      [ngModel]="filterStatus()"
+      (ngModelChange)="filterStatus.set($event); onFilterChange()">
+    </app-searchable-select>
+
+    <div class="flex items-end">
+      <app-custom-button
+        variant="secondary"
+        (btnClick)="filterType.set(''); filterStatus.set(''); onFilterChange()">
+        Clear Filters
+      </app-custom-button>
+    </div>
+  </div>
+
+  <!-- Vouchers List -->
+  <div class="space-y-4">
+    @if (isLoading()) {
+      <div class="p-12 text-center text-sm text-muted-foreground">Loading General Ledger vouchers...</div>
+    } @else if (vouchers().length === 0) {
+      <div class="p-12 text-center text-muted-foreground bg-card rounded-xl border border-border">
+        No vouchers found matching criteria. Click "+ Post New Voucher" to create double-entry transactions.
+      </div>
+    } @else {
+      @for (v of vouchers(); track v.id) {
+        <div class="rounded-xl border border-border bg-card shadow-xs overflow-hidden">
+          <!-- Voucher Header -->
+          <div class="px-5 py-3.5 bg-muted/40 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="font-mono font-bold text-foreground text-sm">{{ v.voucher_number }}</span>
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-muted text-muted-foreground">
+                  {{ v.voucher_type }}
+                </span>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold border"
+                  [ngClass]="[getStatusBadge(v.status).bg, getStatusBadge(v.status).textCol, getStatusBadge(v.status).border]">
+                  {{ v.status }}
+                </span>
+                <span class="text-xs text-muted-foreground">{{ v.voucher_date }}</span>
+              </div>
+              <div class="text-xs text-muted-foreground mt-1">
+                Project: <span class="font-semibold text-foreground">{{ v.project_name }}</span> • Narration: <span class="italic text-foreground">"{{ v.narration }}"</span>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <div class="text-right">
+                <div class="text-xs text-muted-foreground">Total Voucher Amount</div>
+                <div class="text-sm font-bold text-foreground">৳{{ v.total_debit_amount | number:'1.2-2' }}</div>
+              </div>
+
+              @if (v.status === 'Posted') {
+                <app-custom-button
+                  variant="outline"
+                  size="sm"
+                  (btnClick)="reverseVoucher(v)">
+                  Reverse Voucher
+                </app-custom-button>
+              }
+            </div>
+          </div>
+
+          <!-- Line Entries Table -->
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-muted/20 text-muted-foreground font-semibold border-b border-border">
+                <tr>
+                  <th class="px-4 py-2.5">Account Code & Title</th>
+                  <th class="px-4 py-2.5">Line Narration</th>
+                  <th class="px-4 py-2.5 text-right">Debit (Dr) BDT</th>
+                  <th class="px-4 py-2.5 text-right">Credit (Cr) BDT</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-border">
+                @for (e of v.entries; track e.id) {
+                  <tr class="hover:bg-muted/20">
+                    <td class="px-4 py-2 font-medium text-foreground">
+                      <span class="font-mono text-muted-foreground">{{ e.account_code }}</span> - {{ e.account_name_en }}
+                    </td>
+                    <td class="px-4 py-2 text-muted-foreground">{{ e.narration }}</td>
+                    <td class="px-4 py-2 text-right font-semibold" [ngClass]="e.debit_amount > 0 ? 'text-foreground' : 'text-muted-foreground/40'">
+                      {{ e.debit_amount > 0 ? (e.debit_amount | number:'1.2-2') : '—' }}
+                    </td>
+                    <td class="px-4 py-2 text-right font-semibold" [ngClass]="e.credit_amount > 0 ? 'text-foreground' : 'text-muted-foreground/40'">
+                      {{ e.credit_amount > 0 ? (e.credit_amount | number:'1.2-2') : '—' }}
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+    }
+  </div>
+
+  <!-- Create Voucher Modal -->
+  @if (isCreateModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+      <div class="bg-card border border-border w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+        <div class="px-6 py-4 border-b border-border flex items-center justify-between bg-muted/40">
+          <div>
+            <h2 class="text-lg font-bold text-foreground">Post Double-Entry Voucher</h2>
+            <p class="text-xs text-muted-foreground">Every transaction must satisfy Σ Debit = Σ Credit.</p>
+          </div>
+          <button type="button" (click)="closeCreateModal()" class="text-muted-foreground hover:text-foreground">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <form [formGroup]="createForm" (ngSubmit)="submitCreate()" class="p-6 space-y-4 overflow-y-auto flex-1">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <app-searchable-select
+              label="Voucher Type *"
+              placeholder="Select Type"
+              [options]="typeCreateOptions"
+              [ngModel]="createForm.get('voucher_type')?.value"
+              (ngModelChange)="createForm.get('voucher_type')?.setValue($event)"
+              [required]="true">
+            </app-searchable-select>
+
+            <app-searchable-select
+              label="Project Cost Center"
+              placeholder="General / Corporate"
+              [options]="projectOptions()"
+              [ngModel]="createForm.get('project_id')?.value"
+              (ngModelChange)="createForm.get('project_id')?.setValue($event)">
+            </app-searchable-select>
+
+            <app-custom-input
+              label="Voucher Date *"
+              type="date"
+              formControlName="voucher_date"
+              [required]="true">
+            </app-custom-input>
+          </div>
+
+          <app-custom-textarea
+            label="Voucher Narration / Transaction Particulars *"
+            placeholder="e.g. Being payment released to Shah Cement for Batch 01 supply against PO-2026-0001..."
+            formControlName="narration"
+            [rows]="2"
+            [required]="true">
+          </app-custom-textarea>
+
+          <!-- Entries Dynamic Table -->
+          <div class="space-y-3 pt-2">
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-bold text-foreground">Double-Entry Ledger Lines (Minimum 2)</span>
+              <app-custom-button variant="outline" size="sm" (btnClick)="addEntryLine()">
+                + Add Entry Line
+              </app-custom-button>
+            </div>
+
+            <div formArrayName="entries" class="space-y-3">
+              @for (entryGroup of entriesArray.controls; track $index) {
+                <div [formGroupName]="$index" class="p-3.5 rounded-xl border border-border bg-muted/20 space-y-2">
+                  <div class="flex items-center justify-between text-xs text-muted-foreground">
+                    <span class="font-bold text-foreground">Line #{{ $index + 1 }}</span>
+                    @if (entriesArray.length > 2) {
+                      <button type="button" (click)="removeEntryLine($index)" class="text-rose-600 hover:underline">
+                        Remove Line
+                      </button>
+                    }
+                  </div>
+
+                  <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
+                    <div class="md:col-span-6">
+                      <app-searchable-select
+                        label="Account Head *"
+                        placeholder="Select Account"
+                        [options]="accountOptions()"
+                        [ngModel]="entryGroup.get('account_id')?.value"
+                        (ngModelChange)="entryGroup.get('account_id')?.setValue($event)"
+                        [required]="true">
+                      </app-searchable-select>
+                    </div>
+
+                    <div class="md:col-span-3">
+                      <app-custom-input
+                        label="Debit (Dr) BDT"
+                        type="number"
+                        placeholder="0.00"
+                        formControlName="debit_amount">
+                      </app-custom-input>
+                    </div>
+
+                    <div class="md:col-span-3">
+                      <app-custom-input
+                        label="Credit (Cr) BDT"
+                        type="number"
+                        placeholder="0.00"
+                        formControlName="credit_amount">
+                      </app-custom-input>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Dynamic Double-Entry Safeguard Counter -->
+          <div class="p-4 rounded-xl bg-card border border-border flex items-center justify-between text-sm">
+            <div class="space-y-1">
+              <div class="text-xs text-muted-foreground">Double-Entry Balance Verification</div>
+              <div class="font-bold">
+                Σ Dr: ৳{{ computedTotalDebit() | number:'1.2-2' }} • Σ Cr: ৳{{ computedTotalCredit() | number:'1.2-2' }}
+              </div>
+            </div>
+
+            <div>
+              @if (computedTotalDebit() > 0 && computedTotalDebit() === computedTotalCredit()) {
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+                  ✓ Perfectly Balanced
+                </span>
+              } @else {
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 animate-pulse">
+                  Diff: ৳{{ (computedTotalDebit() - computedTotalCredit()) | number:'1.2-2' }}
+                </span>
+              }
+            </div>
+          </div>
+
+          <div class="pt-4 border-t border-border flex items-center justify-end gap-3">
+            <app-custom-button variant="outline" (btnClick)="closeCreateModal()">Cancel</app-custom-button>
+            <app-custom-button variant="primary" type="submit" [disabled]="isSubmitting()">
+              {{ isSubmitting() ? 'Posting...' : 'Post Balanced Voucher' }}
+            </app-custom-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</app-card-container>

@@ -1,0 +1,167 @@
+<div class="flex flex-col gap-6">
+  <!-- Governance Matrix Card Banner -->
+  <div class="bg-card border border-border rounded-xl p-5 shadow-sm">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div>
+        <h3 class="font-bold text-base text-foreground">Multi-Level Discount Approval Matrix</h3>
+        <p class="text-xs text-muted-foreground mt-0.5">
+          Statutory executive threshold limits governing commercial deductions under Board Resolution 2026.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div class="p-3 bg-secondary/50 rounded-lg border border-border">
+          <span class="text-[11px] font-semibold text-muted-foreground uppercase block">Tier 1 (&le; 1.0%)</span>
+          <span class="text-xs font-bold text-emerald-500">Sales Manager Authority</span>
+        </div>
+        <div class="p-3 bg-secondary/50 rounded-lg border border-border">
+          <span class="text-[11px] font-semibold text-muted-foreground uppercase block">Tier 2 (1.0% - 3.0%)</span>
+          <span class="text-xs font-bold text-amber-500">Director Sign-Off Required</span>
+        </div>
+        <div class="p-3 bg-secondary/50 rounded-lg border border-border">
+          <span class="text-[11px] font-semibold text-muted-foreground uppercase block">Tier 3 (&gt; 3.0%)</span>
+          <span class="text-xs font-bold text-purple-500">MD Biometric 1-Tap Mobile</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Unified Main Card Container -->
+  <app-card-container
+    title="Pending Discount Authorizations Queue"
+    subtitle="Module 34: Real-time Authorizations for Executive Commercial Deductions"
+  >
+    <div class="overflow-x-auto border border-border rounded-xl">
+      <table class="w-full text-left text-sm text-foreground">
+        <thead class="bg-secondary/40 text-xs font-semibold uppercase text-muted-foreground border-b border-border">
+          <tr>
+            <th class="px-4 py-3">Booking Ref</th>
+            <th class="px-4 py-3">Buyer & Project</th>
+            <th class="px-4 py-3 text-right">Base Price</th>
+            <th class="px-4 py-3 text-right">Discount Requested</th>
+            <th class="px-4 py-3 text-right">Final Value</th>
+            <th class="px-4 py-3 text-center">Required Tier</th>
+            <th class="px-4 py-3 text-right">Decision Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border/60">
+          @for (b of pendingBookings(); track b.id) {
+            <tr class="hover:bg-secondary/20 transition-colors">
+              <td class="px-4 py-3.5 font-mono font-bold text-primary">
+                {{ b.booking_reference_no }}
+                <span class="block text-[11px] text-muted-foreground font-normal">{{ b.booking_date }}</span>
+              </td>
+              <td class="px-4 py-3.5">
+                <div class="font-semibold text-foreground">{{ b.customer_name }}</div>
+                <div class="text-xs text-muted-foreground">{{ b.project_name }} (Unit {{ b.unit_number }})</div>
+              </td>
+              <td class="px-4 py-3.5 text-right font-mono">
+                BDT {{ b.base_unit_price | number:'1.0-0' }}
+              </td>
+              <td class="px-4 py-3.5 text-right font-mono font-bold text-amber-500">
+                -{{ b.discount_percentage }}%
+                <span class="block text-[11px] font-normal text-muted-foreground">BDT {{ b.discount_amount | number:'1.0-0' }}</span>
+              </td>
+              <td class="px-4 py-3.5 text-right font-mono font-bold text-foreground">
+                BDT {{ b.final_contract_value | number:'1.0-0' }}
+              </td>
+              <td class="px-4 py-3.5 text-center">
+                @if (b.required_approval_tier === 'MANAGING_DIRECTOR') {
+                  <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-purple-500/10 text-purple-500 border border-purple-500/20 inline-flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 004 11m0 0a8 8 0 008 8m0 0a8 8 0 008-8"/>
+                    </svg>
+                    MD Biometric (1-Tap)
+                  </span>
+                } @else {
+                  <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                    Director Sign-off
+                  </span>
+                }
+              </td>
+              <td class="px-4 py-3.5 text-right">
+                <div class="flex items-center justify-end gap-2">
+                  <button 
+                    (click)="openActionModal(b, 'REJECTED')"
+                    class="px-2.5 py-1 text-xs rounded-lg bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 border border-rose-500/20 font-medium transition-colors"
+                  >
+                    Reject
+                  </button>
+                  <button 
+                    (click)="openActionModal(b, 'APPROVED')"
+                    class="px-3 py-1 text-xs rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-sm transition-colors"
+                  >
+                    Authorize
+                  </button>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="7" class="px-4 py-12 text-center text-muted-foreground">
+                🎉 No discount authorizations pending. All bookings comply with standard pricing rules.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </app-card-container>
+
+  <!-- Authorization Action Modal -->
+  @if (isActionModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div class="bg-card border border-border rounded-2xl w-full max-w-md shadow-2xl p-6 flex flex-col gap-5">
+        <div class="flex items-center justify-between border-b border-border pb-3">
+          <div>
+            <h3 class="text-base font-bold text-foreground">
+              {{ modalDecision() === 'APPROVED' ? 'Confirm Discount Authorization' : 'Reject Discount Request' }}
+            </h3>
+            <p class="text-xs text-muted-foreground">{{ selectedBooking()?.booking_reference_no }} (-{{ selectedBooking()?.discount_percentage }}% Discount)</p>
+          </div>
+          <button (click)="closeActionModal()" class="text-muted-foreground hover:text-foreground">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
+        <form [formGroup]="actionForm" (ngSubmit)="submitAction()" class="flex flex-col gap-4">
+          @if (selectedBooking()?.required_approval_tier === 'MANAGING_DIRECTOR' && modalDecision() === 'APPROVED') {
+            <div class="p-3 bg-purple-500/10 border border-purple-500/20 rounded-xl flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-500 shrink-0">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 004 11m0 0a8 8 0 008 8m0 0a8 8 0 008-8"/>
+                </svg>
+              </div>
+              <div class="text-xs">
+                <span class="font-bold text-purple-500 block">MD Biometric 1-Tap Authorization</span>
+                <span class="text-muted-foreground">Mobile biometric signature hardware key cryptographically verified.</span>
+              </div>
+            </div>
+          }
+
+          <app-custom-textarea
+            label="Executive Approval Remarks *"
+            placeholder="Commercial justification or feedback..."
+            [formGroup]="actionForm"
+            controlName="approval_notes"
+          />
+
+          <div class="flex justify-end gap-3 pt-3 border-t border-border">
+            <app-custom-button variant="outline" type="button" (clicked)="closeActionModal()">
+              Cancel
+            </app-custom-button>
+            <app-custom-button 
+              [variant]="modalDecision() === 'APPROVED' ? 'primary' : 'danger'" 
+              type="submit" 
+              [disabled]="isSubmitting()"
+            >
+              {{ isSubmitting() ? 'Processing...' : (modalDecision() === 'APPROVED' ? 'Confirm Approval' : 'Confirm Rejection') }}
+            </app-custom-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>

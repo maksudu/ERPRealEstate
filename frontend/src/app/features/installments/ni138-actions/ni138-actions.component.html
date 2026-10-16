@@ -1,0 +1,242 @@
+<div class="flex flex-col gap-6">
+  <!-- NI Act 1881 Statutory Litigation Protocol Banner -->
+  <div class="bg-card border border-border rounded-xl p-5 shadow-sm">
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div>
+        <h3 class="font-bold text-base text-foreground">Section 138 Dishonour Litigation Protocol</h3>
+        <p class="text-xs text-muted-foreground mt-0.5">
+          Negotiable Instruments Act 1881 (Act XXVI of 1881) Statutory Timeline Enforcement
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div class="p-3 bg-secondary/50 rounded-lg border border-border">
+          <span class="text-[11px] font-semibold text-muted-foreground uppercase block">Stage 1: 30-Day Memo</span>
+          <span class="text-xs font-bold text-amber-500">Notice Must Be Dispatched</span>
+        </div>
+        <div class="p-3 bg-secondary/50 rounded-lg border border-border">
+          <span class="text-[11px] font-semibold text-muted-foreground uppercase block">Stage 2: 30-Day Receipt</span>
+          <span class="text-xs font-bold text-blue-500">Client Settlement Window</span>
+        </div>
+        <div class="p-3 bg-secondary/50 rounded-lg border border-border">
+          <span class="text-[11px] font-semibold text-muted-foreground uppercase block">Stage 3: Court Filing</span>
+          <span class="text-xs font-bold text-rose-500">CMM Criminal Complaint</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Unified Main Card Container -->
+  <app-card-container
+    title="Section 138 Statutory Legal Actions & Litigation Tracker"
+    subtitle="Module 35: Formal 30-Day Demand Notices, Registered Post with A/D Tracking & Court Filings"
+  >
+    <div class="overflow-x-auto border border-border rounded-xl">
+      <table class="w-full text-left text-sm text-foreground">
+        <thead class="bg-secondary/40 text-xs font-semibold uppercase text-muted-foreground border-b border-border">
+          <tr>
+            <th class="px-4 py-3">Legal Ref</th>
+            <th class="px-4 py-3">Customer & Booking</th>
+            <th class="px-4 py-3">Dishonoured Cheque</th>
+            <th class="px-4 py-3">Notice Deadline</th>
+            <th class="px-4 py-3">Settlement Deadline</th>
+            <th class="px-4 py-3 text-center">Litigation Status</th>
+            <th class="px-4 py-3 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border/60">
+          @for (a of actions(); track a.id) {
+            <tr class="hover:bg-secondary/20 transition-colors">
+              <td class="px-4 py-3.5 font-mono font-bold text-primary">
+                LEGAL-{{ a.id }}
+                @if (a.court_case_no) {
+                  <span class="block text-[11px] text-purple-500 font-normal font-mono">{{ a.court_case_no }}</span>
+                }
+              </td>
+              <td class="px-4 py-3.5">
+                <div class="font-semibold text-foreground">{{ a.customer_name }}</div>
+                <div class="text-xs text-muted-foreground">{{ a.booking_reference_no }}</div>
+              </td>
+              <td class="px-4 py-3.5">
+                <div class="font-mono font-bold text-rose-500">BDT {{ a.cheque_amount | number:'1.0-0' }}</div>
+                <div class="text-xs text-muted-foreground font-mono">Cheque #{{ a.cheque_number }} ({{ a.bank_name }})</div>
+              </td>
+              <td class="px-4 py-3.5">
+                <span class="font-mono text-xs text-foreground font-medium">{{ a.statutory_notice_deadline_date }}</span>
+                <span class="block text-[11px] text-muted-foreground">From Memo: {{ a.dishonour_memo_received_date }}</span>
+              </td>
+              <td class="px-4 py-3.5">
+                @if (a.client_30day_settlement_deadline) {
+                  <span class="font-mono text-xs font-bold text-amber-500">{{ a.client_30day_settlement_deadline }}</span>
+                  <span class="block text-[10px] text-muted-foreground font-mono">Postal A/D: {{ a.registered_post_ad_no }}</span>
+                } @else {
+                  <span class="text-xs text-muted-foreground italic">Notice not served yet</span>
+                }
+              </td>
+              <td class="px-4 py-3.5 text-center">
+                <span 
+                  class="text-xs font-semibold px-2.5 py-1 rounded-full uppercase"
+                  [ngClass]="{
+                    'bg-amber-500/10 text-amber-500 border border-amber-500/20 animate-pulse': a.status === 'NOTICE_PENDING',
+                    'bg-blue-500/10 text-blue-500 border border-blue-500/20': a.status === 'NOTICE_SERVED',
+                    'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20': a.status === 'SETTLED',
+                    'bg-rose-500/10 text-rose-500 border border-rose-500/20': a.status === 'COURT_CASE_FILED'
+                  }"
+                >
+                  {{ a.status.replace('_', ' ') }}
+                </span>
+              </td>
+              <td class="px-4 py-3.5 text-right">
+                <div class="flex items-center justify-end gap-2">
+                  <!-- Download Section 138 Notice PDF -->
+                  <button 
+                    (click)="downloadNotice(a)"
+                    title="Download Statutory Section 138 Demand Notice PDF"
+                    class="px-2.5 py-1 text-xs rounded-lg bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 border border-rose-500/20 font-medium inline-flex items-center gap-1.5 transition-colors"
+                  >
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    Notice PDF
+                  </button>
+
+                  <!-- Stage Progression: Serve Notice or File Case -->
+                  @if (a.status === 'NOTICE_PENDING') {
+                    <button 
+                      (click)="openServeModal(a)"
+                      class="px-2.5 py-1 text-xs rounded-lg bg-secondary hover:bg-secondary/80 text-foreground border border-border font-medium transition-colors"
+                    >
+                      Record Dispatch
+                    </button>
+                  } @else if (a.status === 'NOTICE_SERVED') {
+                    <button 
+                      (click)="openFileCaseModal(a)"
+                      class="px-2.5 py-1 text-xs rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-medium shadow-sm transition-colors"
+                    >
+                      File CMM Case
+                    </button>
+                  }
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="7" class="px-4 py-12 text-center text-muted-foreground">
+                🎉 No active Section 138 dishonour proceedings recorded.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </app-card-container>
+
+  <!-- Modal 1: Record Notice Dispatch (Registered Post with A/D) -->
+  @if (isServeModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div class="bg-card border border-border rounded-2xl w-full max-w-md shadow-2xl p-6 flex flex-col gap-5">
+        <div class="flex items-center justify-between border-b border-border pb-3">
+          <div>
+            <h3 class="text-base font-bold text-foreground">Record Legal Notice Dispatch</h3>
+            <p class="text-xs text-muted-foreground">Cheque #{{ selectedAction()?.cheque_number }} (BDT {{ selectedAction()?.cheque_amount | number:'1.0-0' }})</p>
+          </div>
+          <button (click)="closeServeModal()" class="text-muted-foreground hover:text-foreground">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
+        <form [formGroup]="serveForm" (ngSubmit)="submitServeNotice()" class="flex flex-col gap-4">
+          <app-custom-input
+            label="Notice Dispatch Date *"
+            type="date"
+            [formGroup]="serveForm"
+            controlName="notice_served_to_client_date"
+          />
+
+          <app-custom-input
+            label="Postal Tracking / Registered Post A/D No. *"
+            placeholder="REG-AD-DHAKA-GPO-XXXXX"
+            [formGroup]="serveForm"
+            controlName="registered_post_ad_no"
+          />
+
+          <app-custom-input
+            label="Retained Supreme Court Legal Counsel *"
+            placeholder="Barrister Name & Associates"
+            [formGroup]="serveForm"
+            controlName="legal_counsel_name"
+          />
+
+          <app-custom-textarea
+            label="Service Remarks"
+            placeholder="Postal receipt voucher details..."
+            [formGroup]="serveForm"
+            controlName="remarks"
+          />
+
+          <div class="flex justify-end gap-3 pt-3 border-t border-border">
+            <app-custom-button variant="outline" type="button" (click)="closeServeModal()">
+              Cancel
+            </app-custom-button>
+            <app-custom-button variant="primary" type="submit" [disabled]="serveForm.invalid || isSubmitting()">
+              {{ isSubmitting() ? 'Recording...' : 'Record Dispatch' }}
+            </app-custom-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- Modal 2: File Court Case (CMM Court) -->
+  @if (isFileCaseModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div class="bg-card border border-border rounded-2xl w-full max-w-md shadow-2xl p-6 flex flex-col gap-5">
+        <div class="flex items-center justify-between border-b border-border pb-3">
+          <div>
+            <h3 class="text-base font-bold text-foreground">File Criminal Complaint (CMM Court)</h3>
+            <p class="text-xs text-muted-foreground">Statutory 30-day notice period expired without payment</p>
+          </div>
+          <button (click)="closeFileCaseModal()" class="text-muted-foreground hover:text-foreground">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
+        <form [formGroup]="fileCaseForm" (ngSubmit)="submitFileCase()" class="flex flex-col gap-4">
+          <app-custom-input
+            label="Court Case Number (CR Case) *"
+            placeholder="CR Case No. 892/2026 (CMM Court, Dhaka)"
+            [formGroup]="fileCaseForm"
+            controlName="court_case_no"
+          />
+
+          <app-custom-input
+            label="Appearing Legal Counsel *"
+            placeholder="Barrister Name"
+            [formGroup]="fileCaseForm"
+            controlName="legal_counsel_name"
+          />
+
+          <app-custom-textarea
+            label="Case Filing Notes"
+            placeholder="Complaint petition filed before Metropolitan Magistrate..."
+            [formGroup]="fileCaseForm"
+            controlName="remarks"
+          />
+
+          <div class="flex justify-end gap-3 pt-3 border-t border-border">
+            <app-custom-button variant="outline" type="button" (click)="closeFileCaseModal()">
+              Cancel
+            </app-custom-button>
+            <app-custom-button variant="danger" type="submit" [disabled]="fileCaseForm.invalid || isSubmitting()">
+              {{ isSubmitting() ? 'Filing...' : 'Confirm Court Filing' }}
+            </app-custom-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>

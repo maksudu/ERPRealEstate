@@ -1,0 +1,185 @@
+<div class="flex flex-col gap-6">
+  <!-- Unified Main Card Container -->
+  <app-card-container
+    title="Subcontractor Master Registry & Daily Labor Muster Roll"
+    subtitle="Module 37: Multi-trade Labor Headcounts, Wage Ledgers & Civil Subcontractor Verification"
+  >
+    <div class="flex items-center justify-between gap-4 mb-6">
+      <div>
+        <span class="text-xs text-muted-foreground font-mono">
+          Enlisted Contractors: {{ contractors().length }} | Today's Muster Records: {{ getAllLaborEntries().length }}
+        </span>
+      </div>
+
+      <app-custom-button variant="primary" (clicked)="openContractorModal()">
+        <span class="flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+          </svg>
+          + Enlist Subcontractor
+        </span>
+      </app-custom-button>
+    </div>
+
+    <!-- Subcontractors Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+      @for (c of contractors(); track c.id) {
+        <div class="bg-card border border-border rounded-xl p-4 shadow-sm flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-secondary text-primary border border-border">
+                {{ c.contractor_code }}
+              </span>
+              <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                Active Enlistment
+              </span>
+            </div>
+
+            <h4 class="font-bold text-sm text-foreground mb-1">{{ c.company_name }}</h4>
+            <div class="text-xs text-primary font-medium mb-3">
+              Trade: {{ c.trade_specialization.replace('_', ' ') }}
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 text-xs bg-secondary/30 p-2.5 rounded-lg border border-border">
+              <div>
+                <span class="text-muted-foreground block text-[10px]">Contact Person:</span>
+                <span class="font-medium text-foreground">{{ c.contact_person }}</span>
+              </div>
+              <div>
+                <span class="text-muted-foreground block text-[10px]">Primary Mobile:</span>
+                <span class="font-mono text-foreground">{{ c.primary_phone }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Labor Muster Ledger -->
+    <div class="border-t border-border pt-4">
+      <h4 class="text-sm font-bold text-foreground mb-3">Recent Daily Labor Muster Ledger</h4>
+
+      <div class="overflow-x-auto border border-border rounded-xl">
+        <table class="w-full text-left text-sm text-foreground">
+          <thead class="bg-secondary/40 text-xs font-semibold uppercase text-muted-foreground border-b border-border">
+            <tr>
+              <th class="px-4 py-3">Report Date</th>
+              <th class="px-4 py-3">Project & Subcontractor</th>
+              <th class="px-4 py-3">Trade Category</th>
+              <th class="px-4 py-3 text-center">Headcount</th>
+              <th class="px-4 py-3 text-right">Daily Rate</th>
+              <th class="px-4 py-3 text-right">Total Wage</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border/60">
+            @for (lab of getAllLaborEntries(); track lab.id) {
+              <tr class="hover:bg-secondary/20 transition-colors">
+                <td class="px-4 py-3.5 font-mono text-xs font-bold text-primary">
+                  {{ lab.report_date }}
+                </td>
+                <td class="px-4 py-3.5">
+                  <div class="font-semibold text-foreground">{{ lab.contractor_name || 'Direct Site Labor' }}</div>
+                  <div class="text-xs text-muted-foreground">{{ lab.project_name }}</div>
+                </td>
+                <td class="px-4 py-3.5">
+                  <span class="font-medium text-xs px-2 py-0.5 rounded bg-secondary text-foreground border border-border">
+                    {{ lab.trade_category }}
+                  </span>
+                </td>
+                <td class="px-4 py-3.5 text-center font-mono font-bold text-foreground">
+                  {{ lab.worker_count }}
+                </td>
+                <td class="px-4 py-3.5 text-right font-mono text-muted-foreground">
+                  BDT {{ lab.daily_wage_rate | number:'1.0-0' }}
+                </td>
+                <td class="px-4 py-3.5 text-right font-mono font-bold text-emerald-500">
+                  BDT {{ lab.total_wage | number:'1.0-0' }}
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="6" class="px-4 py-10 text-center text-muted-foreground">
+                  No labor muster entries recorded in recent DPR reports.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </app-card-container>
+
+  <!-- Modal: Enlist Subcontractor -->
+  @if (isContractorModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div class="bg-card border border-border rounded-2xl w-full max-w-lg shadow-2xl p-6 flex flex-col gap-5">
+        <div class="flex items-center justify-between border-b border-border pb-3">
+          <div>
+            <h3 class="text-base font-bold text-foreground">Enlist Subcontractor Partner</h3>
+            <p class="text-xs text-muted-foreground">Master record for work orders, muster rolls & RA billing</p>
+          </div>
+          <button (click)="closeContractorModal()" class="text-muted-foreground hover:text-foreground">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
+        <form [formGroup]="contractorForm" (ngSubmit)="submitContractor()" class="flex flex-col gap-4">
+          <app-custom-input
+            label="Contractor / Firm Name *"
+            placeholder="e.g. M/S Standard Civil Builders"
+            [formGroup]="contractorForm"
+            controlName="company_name"
+          />
+
+          <app-searchable-select
+            label="Trade Specialization *"
+            [options]="tradeOptions"
+            [formGroup]="contractorForm"
+            controlName="trade_specialization"
+          />
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <app-custom-input
+              label="Contact Person Name *"
+              placeholder="e.g. Mokbul Hossain"
+              [formGroup]="contractorForm"
+              controlName="contact_person"
+            />
+            <app-custom-input
+              label="Primary Phone Number *"
+              placeholder="+88017XXXXXXXX"
+              [formGroup]="contractorForm"
+              controlName="primary_phone"
+            />
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <app-custom-input
+              label="e-TIN Number"
+              placeholder="12 digit TIN"
+              [formGroup]="contractorForm"
+              controlName="tin_number"
+            />
+            <app-custom-input
+              label="BIN / VAT Reg Number"
+              placeholder="BIN Number"
+              [formGroup]="contractorForm"
+              controlName="bin_number"
+            />
+          </div>
+
+          <div class="flex justify-end gap-3 pt-3 border-t border-border">
+            <app-custom-button variant="outline" type="button" (clicked)="closeContractorModal()">
+              Cancel
+            </app-custom-button>
+            <app-custom-button variant="primary" type="submit" [disabled]="contractorForm.invalid || isSubmitting()">
+              {{ isSubmitting() ? 'Enlisting...' : 'Enlist Subcontractor' }}
+            </app-custom-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>

@@ -4,6 +4,7 @@ import {
   Output, 
   EventEmitter, 
   OnInit, 
+  OnChanges,
   ElementRef, 
   HostListener, 
   forwardRef, 
@@ -34,7 +35,8 @@ export class SearchableSelectComponent implements OnInit, ControlValueAccessor {
   private lookupService = inject(LookupService);
   private elementRef = inject(ElementRef);
 
-  @Input({ required: true }) categoryCode!: string;
+  @Input() categoryCode: string = '';
+  @Input() options: { value: any; label: string; subLabel?: string }[] = [];
   @Input() label: string = '';
   @Input() placeholder: string = 'Select an option...';
   @Input() allowCreateNew: boolean = true;
@@ -42,7 +44,7 @@ export class SearchableSelectComponent implements OnInit, ControlValueAccessor {
   @Input() disabled: boolean = false;
   @Input() hint: string = '';
 
-  @Output() selectionChange = new EventEmitter<LookupItem | null>();
+  @Output() selectionChange = new EventEmitter<any>();
 
   // State Signals
   items = signal<LookupItem[]>([]);
@@ -78,15 +80,15 @@ export class SearchableSelectComponent implements OnInit, ControlValueAccessor {
     return this.items().filter(item => 
       item.item_name_en.toLowerCase().includes(term) ||
       (item.item_name_bn && item.item_name_bn.toLowerCase().includes(term)) ||
-      item.item_code.toLowerCase().includes(term)
+      String(item.item_code).toLowerCase().includes(term)
     );
   });
 
   // Selected Item Computed Signal
   selectedItem = computed(() => {
     const val = this.selectedValue();
-    if (!val) return null;
-    return this.items().find(i => i.item_code === val) || null;
+    if (val === null || val === undefined) return null;
+    return this.items().find(i => String(i.item_code) === String(val)) || null;
   });
 
   // ControlValueAccessor Callbacks
@@ -96,7 +98,29 @@ export class SearchableSelectComponent implements OnInit, ControlValueAccessor {
   ngOnInit(): void {
     if (this.categoryCode) {
       this.loadItems();
+    } else if (this.options && this.options.length > 0) {
+      this.syncOptionsToItems();
     }
+  }
+
+  ngOnChanges(): void {
+    if (!this.categoryCode && this.options) {
+      this.syncOptionsToItems();
+    }
+  }
+
+  private syncOptionsToItems(): void {
+    const mapped: LookupItem[] = this.options.map((opt, idx) => ({
+      id: idx + 1,
+      category_id: 0,
+      item_code: String(opt.value),
+      item_name_en: opt.label,
+      item_name_bn: opt.subLabel || opt.label,
+      sort_order: idx + 1,
+      is_default: false,
+      is_active: true
+    }));
+    this.items.set(mapped);
   }
 
   loadItems(): void {

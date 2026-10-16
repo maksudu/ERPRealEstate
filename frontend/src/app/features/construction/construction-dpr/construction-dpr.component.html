@@ -1,0 +1,296 @@
+<div class="flex flex-col gap-6">
+  <!-- Operations KPI Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div class="bg-card border border-border rounded-xl p-4 flex items-center justify-between shadow-sm">
+      <div>
+        <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total DPR Diaries Logged</p>
+        <h3 class="text-2xl font-bold text-foreground mt-1">{{ metrics()?.total_dpr_logged || 0 }}</h3>
+      </div>
+      <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+        </svg>
+      </div>
+    </div>
+
+    <div class="bg-card border border-border rounded-xl p-4 flex items-center justify-between shadow-sm">
+      <div>
+        <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Cumulative Concrete Poured</p>
+        <h3 class="text-xl font-bold text-emerald-500 mt-1">{{ (metrics()?.cumulative_concrete_cft || 0) | number:'1.0-1' }} <span class="text-xs font-normal">CFT</span></h3>
+      </div>
+      <div class="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+        </svg>
+      </div>
+    </div>
+
+    <div class="bg-card border border-border rounded-xl p-4 flex items-center justify-between shadow-sm">
+      <div>
+        <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Cumulative Rebar Consumed</p>
+        <h3 class="text-xl font-bold text-foreground mt-1">{{ (metrics()?.cumulative_rebar_mt || 0) | number:'1.1-2' }} <span class="text-xs font-normal">MT</span></h3>
+      </div>
+      <div class="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+      </div>
+    </div>
+
+    <div class="bg-card border border-border rounded-xl p-4 flex items-center justify-between shadow-sm">
+      <div>
+        <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Active Civil Work Orders</p>
+        <h3 class="text-2xl font-bold text-purple-500 mt-1">{{ metrics()?.total_active_work_orders || 0 }}</h3>
+      </div>
+      <div class="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-500">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Unified Main Card Container -->
+  <app-card-container
+    title="Construction Site Diary & Daily Progress Reports (DPR)"
+    subtitle="Module 6 & 37: Real-time Concreting, Rebar, Cement Logs & Multi-trade Onsite Labor Muster"
+  >
+    <div class="flex items-center justify-between gap-4 mb-6">
+      <span class="text-xs text-muted-foreground font-mono">
+        Total Diary Entries: {{ dprReports().length }}
+      </span>
+
+      <app-custom-button variant="primary" (clicked)="openCreateModal()">
+        <span class="flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+          </svg>
+          + Log Site DPR Diary
+        </span>
+      </app-custom-button>
+    </div>
+
+    <!-- DPR Table -->
+    <div class="overflow-x-auto border border-border rounded-xl">
+      <table class="w-full text-left text-sm text-foreground">
+        <thead class="bg-secondary/40 text-xs font-semibold uppercase text-muted-foreground border-b border-border">
+          <tr>
+            <th class="px-4 py-3">Report Date</th>
+            <th class="px-4 py-3">Project & Tower</th>
+            <th class="px-4 py-3">Structural Activities</th>
+            <th class="px-4 py-3 text-right">Concrete Poured</th>
+            <th class="px-4 py-3 text-right">Steel Rebar</th>
+            <th class="px-4 py-3 text-center">Onsite Labor</th>
+            <th class="px-4 py-3 text-center">Status</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border/60">
+          @for (d of dprReports(); track d.id) {
+            <tr class="hover:bg-secondary/20 transition-colors">
+              <td class="px-4 py-3.5 font-mono text-xs font-bold text-primary">
+                {{ d.report_date }}
+                <span class="block text-[10px] text-muted-foreground font-normal">
+                  {{ d.weather_condition_id.replace('_', ' ') }}
+                </span>
+              </td>
+              <td class="px-4 py-3.5">
+                <div class="font-semibold text-foreground">{{ d.project_name }}</div>
+                <div class="text-xs text-muted-foreground">{{ d.tower_name || 'Tower 1' }}</div>
+              </td>
+              <td class="px-4 py-3.5 max-w-xs">
+                <p class="text-xs text-foreground line-clamp-2">{{ d.structural_activity_summary }}</p>
+                <span class="text-[10px] text-muted-foreground block mt-0.5">Engr: {{ d.site_engineer_name || 'Site In-Charge' }}</span>
+              </td>
+              <td class="px-4 py-3.5 text-right font-mono font-semibold text-foreground">
+                {{ d.concrete_casting_cft | number:'1.0-1' }} <span class="text-xs text-muted-foreground font-normal">CFT</span>
+                <span class="block text-[11px] text-muted-foreground font-normal">Cement: {{ d.cement_consumed_bags }} bags</span>
+              </td>
+              <td class="px-4 py-3.5 text-right font-mono font-semibold text-emerald-500">
+                {{ d.steel_rod_consumed_mt | number:'1.2-3' }} <span class="text-xs font-normal">MT</span>
+              </td>
+              <td class="px-4 py-3.5 text-center">
+                <span class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-secondary text-foreground border border-border">
+                  {{ d.total_workers_onsite }} Workers
+                </span>
+              </td>
+              <td class="px-4 py-3.5 text-center">
+                <span 
+                  class="text-xs font-semibold px-2.5 py-1 rounded-full uppercase"
+                  [ngClass]="{
+                    'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20': d.status === 'APPROVED_BY_PM',
+                    'bg-blue-500/10 text-blue-500 border border-blue-500/20': d.status === 'SUBMITTED',
+                    'bg-secondary text-muted-foreground border border-border': d.status === 'DRAFT'
+                  }"
+                >
+                  {{ d.status.replace('_', ' ') }}
+                </span>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="7" class="px-4 py-12 text-center text-muted-foreground">
+                No Daily Progress Reports (DPR) logged yet.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </app-card-container>
+
+  <!-- Modal: Log DPR Report -->
+  @if (isCreateModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+      <div class="bg-card border border-border rounded-2xl w-full max-w-2xl shadow-2xl p-6 flex flex-col gap-5 my-8 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between border-b border-border pb-3">
+          <div>
+            <h3 class="text-base font-bold text-foreground">Log Daily Progress Report (DPR)</h3>
+            <p class="text-xs text-muted-foreground">Structural activity summary, material logs & labor muster</p>
+          </div>
+          <button (click)="closeCreateModal()" class="text-muted-foreground hover:text-foreground">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
+        <form [formGroup]="dprForm" (ngSubmit)="submitDPR()" class="flex flex-col gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="sm:col-span-2">
+              <app-searchable-select
+                label="Construction Project *"
+                [options]="projectOptions"
+                [formGroup]="dprForm"
+                controlName="project_id"
+              />
+            </div>
+            <app-searchable-select
+              label="Weather Condition *"
+              [options]="weatherOptions"
+              [formGroup]="dprForm"
+              controlName="weather_condition_id"
+            />
+          </div>
+
+          <app-custom-textarea
+            label="Structural & Civil Activities Completed Today *"
+            placeholder="e.g. 5th Floor slab casting, beam reinforcement checking, de-shuttering..."
+            [formGroup]="dprForm"
+            controlName="structural_activity_summary"
+          />
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <app-custom-input
+              label="Concrete Poured (CFT) *"
+              type="number"
+              placeholder="0"
+              [formGroup]="dprForm"
+              controlName="concrete_casting_cft"
+            />
+            <app-custom-input
+              label="Steel Rebar Consumed (MT) *"
+              type="number"
+              placeholder="0"
+              [formGroup]="dprForm"
+              controlName="steel_rod_consumed_mt"
+            />
+            <app-custom-input
+              label="Cement Consumed (Bags) *"
+              type="number"
+              placeholder="0"
+              [formGroup]="dprForm"
+              controlName="cement_consumed_bags"
+            />
+          </div>
+
+          <!-- Labor Muster Roll Section -->
+          <div class="border-t border-border pt-3 mt-2">
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <h4 class="text-sm font-bold text-foreground">Subcontractor Labor Muster Roll</h4>
+                <p class="text-[11px] text-muted-foreground">Trade category, headcount and daily wage rates</p>
+              </div>
+              <button 
+                type="button" 
+                (click)="addLaborRow()" 
+                class="text-xs text-primary font-medium hover:underline"
+              >
+                + Add Trade Line
+              </button>
+            </div>
+
+            <div formArrayName="labor_entries" class="space-y-3">
+              @for (lab of laborArray.controls; track $index) {
+                <div [formGroupName]="$index" class="p-3 bg-secondary/40 border border-border rounded-xl grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+                  <div class="sm:col-span-4">
+                    <label class="block text-[11px] text-muted-foreground mb-1">Contractor</label>
+                    <select 
+                      formControlName="contractor_id"
+                      class="w-full px-2 py-1.5 text-xs rounded-lg bg-card border border-border text-foreground"
+                    >
+                      @for (c of contractorOptions; track c.value) {
+                        <option [value]="c.value">{{ c.label }}</option>
+                      }
+                    </select>
+                  </div>
+
+                  <div class="sm:col-span-3">
+                    <label class="block text-[11px] text-muted-foreground mb-1">Trade *</label>
+                    <select 
+                      formControlName="trade_category"
+                      class="w-full px-2 py-1.5 text-xs rounded-lg bg-card border border-border text-foreground"
+                    >
+                      @for (t of tradeCategoryOptions; track t.value) {
+                        <option [value]="t.value">{{ t.label }}</option>
+                      }
+                    </select>
+                  </div>
+
+                  <div class="sm:col-span-2">
+                    <label class="block text-[11px] text-muted-foreground mb-1">Workers *</label>
+                    <input 
+                      type="number" 
+                      formControlName="worker_count" 
+                      placeholder="10"
+                      class="w-full px-2 py-1.5 text-xs rounded-lg bg-card border border-border text-foreground"
+                    />
+                  </div>
+
+                  <div class="sm:col-span-2">
+                    <label class="block text-[11px] text-muted-foreground mb-1">Wage Rate *</label>
+                    <input 
+                      type="number" 
+                      formControlName="daily_wage_rate" 
+                      placeholder="900"
+                      class="w-full px-2 py-1.5 text-xs rounded-lg bg-card border border-border text-foreground"
+                    />
+                  </div>
+
+                  <div class="sm:col-span-1 flex justify-end">
+                    <button 
+                      type="button" 
+                      (click)="removeLaborRow($index)" 
+                      class="text-rose-500 hover:text-rose-600 text-xs mt-4"
+                      [disabled]="laborArray.length === 1"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <div class="flex justify-end gap-3 pt-3 border-t border-border">
+            <app-custom-button variant="outline" type="button" (clicked)="closeCreateModal()">
+              Cancel
+            </app-custom-button>
+            <app-custom-button variant="primary" type="submit" [disabled]="dprForm.invalid || isSubmitting()">
+              {{ isSubmitting() ? 'Logging...' : 'Submit Daily Progress Diary' }}
+            </app-custom-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>
