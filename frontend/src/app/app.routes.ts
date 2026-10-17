@@ -14,14 +14,24 @@ export const routes: Routes = [
     children: [
       {
         path: '',
-        redirectTo: 'settings/lookups',
+        redirectTo: 'dashboard/executive',
         pathMatch: 'full'
       },
-  {
-    path: 'settings/lookups',
-    loadComponent: () => import('./features/settings/lookups/lookup-management.component').then(m => m.LookupManagementComponent),
-    title: 'Dynamic Lookups & Dropdowns - Bangladesh Real Estate ERP'
-  },
+      {
+        path: 'dashboard/executive',
+        loadComponent: () => import('./features/dashboard/executive-dashboard/executive-dashboard.component').then(m => m.ExecutiveDashboardComponent),
+        title: 'Executive Dashboard & BI Overview - Bangladesh Real Estate ERP'
+      },
+      {
+        path: 'dashboard/:tab',
+        loadComponent: () => import('./features/dashboard/executive-dashboard/executive-dashboard.component').then(m => m.ExecutiveDashboardComponent),
+        title: 'Management Dashboard & BI - Bangladesh Real Estate ERP'
+      },
+      {
+        path: 'settings/lookups',
+        loadComponent: () => import('./features/settings/lookups/lookup-management.component').then(m => m.LookupManagementComponent),
+        title: 'Dynamic Lookups & Dropdowns - Bangladesh Real Estate ERP'
+      },
   {
     path: 'settings/rbac',
     loadComponent: () => import('./features/settings/rbac/rbac-management.component').then(m => m.RbacManagementComponent),

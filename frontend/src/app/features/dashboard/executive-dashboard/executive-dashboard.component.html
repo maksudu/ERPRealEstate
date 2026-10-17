@@ -1,0 +1,1158 @@
+<div class="space-y-6">
+  <!-- Toast Notification Alert -->
+  @if (toastMessage()) {
+    <div class="fixed top-20 right-6 z-50 bg-slate-900 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 border border-slate-700 animate-slide-in">
+      <svg class="w-5 h-5 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      <span class="text-sm font-medium">{{ toastMessage() }}</span>
+    </div>
+  }
+
+  <!-- Header Banner & Navigation Controls -->
+  <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-xs border border-slate-200 dark:border-slate-800 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-sky-500 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+            Management Dashboard & BI
+          </h1>
+          <p class="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2 mt-0.5">
+            <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            Real-Time Enterprise Intelligence • Live ERP Database Synchronization
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Controls: Period Badge, Currency Switcher, Refresh & Export -->
+    <div class="flex flex-wrap items-center gap-2.5">
+      <!-- Period Badge -->
+      <div class="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold flex items-center gap-1.5">
+        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
+        <span>{{ overview()?.reporting_period || 'FY 2025-2026 Q4' }}</span>
+      </div>
+
+      <!-- Currency Mode Switcher -->
+      <div class="inline-flex rounded-lg bg-slate-100 dark:bg-slate-800 p-0.5 text-xs font-medium">
+        <button (click)="setCurrencyMode('CR')" [class.bg-white]="currencyMode() === 'CR'" [class.dark:bg-slate-700]="currencyMode() === 'CR'" [class.shadow-xs]="currencyMode() === 'CR'" [class.text-indigo-600]="currencyMode() === 'CR'" [class.dark:text-indigo-400]="currencyMode() === 'CR'" class="px-2.5 py-1 rounded-md text-slate-600 dark:text-slate-400 transition-all">
+          ৳ Crore
+        </button>
+        <button (click)="setCurrencyMode('LAC')" [class.bg-white]="currencyMode() === 'LAC'" [class.dark:bg-slate-700]="currencyMode() === 'LAC'" [class.shadow-xs]="currencyMode() === 'LAC'" [class.text-indigo-600]="currencyMode() === 'LAC'" [class.dark:text-indigo-400]="currencyMode() === 'LAC'" class="px-2.5 py-1 rounded-md text-slate-600 dark:text-slate-400 transition-all">
+          ৳ Lakh
+        </button>
+        <button (click)="setCurrencyMode('BDT')" [class.bg-white]="currencyMode() === 'BDT'" [class.dark:bg-slate-700]="currencyMode() === 'BDT'" [class.shadow-xs]="currencyMode() === 'BDT'" [class.text-indigo-600]="currencyMode() === 'BDT'" [class.dark:text-indigo-400]="currencyMode() === 'BDT'" class="px-2.5 py-1 rounded-md text-slate-600 dark:text-slate-400 transition-all">
+          Full BDT
+        </button>
+      </div>
+
+      <!-- Refresh Button -->
+      <button (click)="loadAllDashboardData()" title="Refresh All Data from Live ERP" class="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition">
+        <svg [class.animate-spin]="loading()" class="w-4 h-4 text-slate-600 dark:text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+      </button>
+
+      <!-- Export Buttons -->
+      <button (click)="exportReport('PDF')" class="px-3 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-xs font-semibold hover:bg-indigo-100 dark:hover:bg-indigo-900 transition flex items-center gap-1.5">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+        PDF
+      </button>
+
+      <button (click)="exportReport('EXCEL')" class="px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-xs font-semibold hover:bg-emerald-100 dark:hover:bg-emerald-900 transition flex items-center gap-1.5">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+        Excel (.xlsx)
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Navigation Tabs -->
+  <div class="flex border-b border-slate-200 dark:border-slate-800 overflow-x-auto space-x-2 pb-px text-sm font-semibold">
+    <button 
+      (click)="switchTab('executive')" 
+      [class.border-indigo-600]="activeTab() === 'executive'" 
+      [class.text-indigo-600]="activeTab() === 'executive'" 
+      [class.dark:text-indigo-400]="activeTab() === 'executive'" 
+      [class.dark:border-indigo-400]="activeTab() === 'executive'" 
+      [class.border-transparent]="activeTab() !== 'executive'"
+      [class.text-slate-500]="activeTab() !== 'executive'"
+      class="py-3 px-4 border-b-2 flex items-center gap-2 hover:text-slate-800 dark:hover:text-slate-200 transition-all shrink-0">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+      </svg>
+      1. Executive Overview
+    </button>
+
+    <button 
+      (click)="switchTab('projects')" 
+      [class.border-indigo-600]="activeTab() === 'projects'" 
+      [class.text-indigo-600]="activeTab() === 'projects'" 
+      [class.dark:text-indigo-400]="activeTab() === 'projects'" 
+      [class.dark:border-indigo-400]="activeTab() === 'projects'" 
+      [class.border-transparent]="activeTab() !== 'projects'"
+      [class.text-slate-500]="activeTab() !== 'projects'"
+      class="py-3 px-4 border-b-2 flex items-center gap-2 hover:text-slate-800 dark:hover:text-slate-200 transition-all shrink-0">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      2. Project Portfolio & Completion
+    </button>
+
+    <button 
+      (click)="switchTab('inventory')" 
+      [class.border-indigo-600]="activeTab() === 'inventory'" 
+      [class.text-indigo-600]="activeTab() === 'inventory'" 
+      [class.dark:text-indigo-400]="activeTab() === 'inventory'" 
+      [class.dark:border-indigo-400]="activeTab() === 'inventory'" 
+      [class.border-transparent]="activeTab() !== 'inventory'"
+      [class.text-slate-500]="activeTab() !== 'inventory'"
+      class="py-3 px-4 border-b-2 flex items-center gap-2 hover:text-slate-800 dark:hover:text-slate-200 transition-all shrink-0">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+      </svg>
+      3. Property Inventory & Sales Analytics
+    </button>
+
+    <button 
+      (click)="switchTab('catalog')" 
+      [class.border-indigo-600]="activeTab() === 'catalog'" 
+      [class.text-indigo-600]="activeTab() === 'catalog'" 
+      [class.dark:text-indigo-400]="activeTab() === 'catalog'" 
+      [class.dark:border-indigo-400]="activeTab() === 'catalog'" 
+      [class.border-transparent]="activeTab() !== 'catalog'"
+      [class.text-slate-500]="activeTab() !== 'catalog'"
+      class="py-3 px-4 border-b-2 flex items-center gap-2 hover:text-slate-800 dark:hover:text-slate-200 transition-all shrink-0">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+      </svg>
+      4. All 15 BI Modules Catalog
+    </button>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- TAB 1: EXECUTIVE DASHBOARD OVERVIEW -->
+  <!-- ========================================================================= -->
+  @if (activeTab() === 'executive') {
+    <div class="space-y-6">
+      <!-- Subtitle Banner -->
+      <div class="bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/50 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div class="flex items-center gap-2.5">
+          <svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <div class="text-xs text-slate-600 dark:text-slate-300">
+            <span class="font-bold text-slate-800 dark:text-white">Executive Overview — All Projects.</span>
+            Click any metric card below to drill directly into filtered reports in live ERP modules.
+          </div>
+        </div>
+        <div class="text-[11px] text-slate-500 font-mono">
+          Last Synchronized: {{ overview()?.last_refreshed_at || 'Just Now' }}
+        </div>
+      </div>
+
+      <!-- 6 Prominent Click-Through Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <!-- 1. Active Projects Card -->
+        <div 
+          (click)="switchTab('projects')"
+          class="group bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 hover:border-indigo-400 dark:hover:border-indigo-500 shadow-xs hover:shadow-lg transition-all cursor-pointer relative overflow-hidden">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Active Projects</span>
+            <span class="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 group-hover:scale-110 transition-transform">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+              </svg>
+            </span>
+          </div>
+          <div class="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+            {{ overview()?.active_projects || 24 }}
+          </div>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-2 flex items-center justify-between">
+            <span>Across the portfolio</span>
+            <span class="text-indigo-600 dark:text-indigo-400 font-medium group-hover:translate-x-1 transition-transform inline-flex items-center">
+              View projects &rarr;
+            </span>
+          </p>
+        </div>
+
+        <!-- 2. Total Units Card -->
+        <div 
+          (click)="navigateToFilteredReport('/inventory/matrix')"
+          class="group bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 hover:border-sky-400 dark:hover:border-sky-500 shadow-xs hover:shadow-lg transition-all cursor-pointer relative overflow-hidden">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Units</span>
+            <span class="p-2 rounded-xl bg-sky-50 dark:bg-sky-950/50 text-sky-600 dark:text-sky-400 group-hover:scale-110 transition-transform">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+              </svg>
+            </span>
+          </div>
+          <div class="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+            {{ (overview()?.total_units || 1240) | number }}
+          </div>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-2 flex items-center justify-between">
+            <span>All registered units</span>
+            <span class="text-sky-600 dark:text-sky-400 font-medium group-hover:translate-x-1 transition-transform inline-flex items-center">
+              Open 15-min matrix &rarr;
+            </span>
+          </p>
+        </div>
+
+        <!-- 3. Contracted Sales Value Card -->
+        <div 
+          (click)="navigateToFilteredReport('/sales/bookings')"
+          class="group bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 hover:border-emerald-400 dark:hover:border-emerald-500 shadow-xs hover:shadow-lg transition-all cursor-pointer relative overflow-hidden">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Contracted Sales Value</span>
+            <span class="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </span>
+          </div>
+          <div class="text-3xl sm:text-4xl font-extrabold text-emerald-600 dark:text-emerald-400 tracking-tight">
+            {{ formatMoney(overview()?.contracted_sales_value_bdt || 1850000000) }}
+          </div>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-2 flex items-center justify-between">
+            <span>Approved sale agreements</span>
+            <span class="text-emerald-600 dark:text-emerald-400 font-medium group-hover:translate-x-1 transition-transform inline-flex items-center">
+              View deeds &rarr;
+            </span>
+          </p>
+        </div>
+
+        <!-- 4. Collections Received Card -->
+        <div 
+          (click)="navigateToFilteredReport('/installments/schedules')"
+          class="group bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 hover:border-teal-400 dark:hover:border-teal-500 shadow-xs hover:shadow-lg transition-all cursor-pointer relative overflow-hidden">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Collections Received</span>
+            <span class="p-2 rounded-xl bg-teal-50 dark:bg-teal-950/50 text-teal-600 dark:text-teal-400 group-hover:scale-110 transition-transform">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+              </svg>
+            </span>
+          </div>
+          <div class="text-3xl sm:text-4xl font-extrabold text-teal-600 dark:text-teal-400 tracking-tight">
+            {{ formatMoney(overview()?.collections_received_bdt || 725000000) }}
+          </div>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-2 flex items-center justify-between">
+            <span>Verified receipts (MR)</span>
+            <span class="text-teal-600 dark:text-teal-400 font-medium group-hover:translate-x-1 transition-transform inline-flex items-center">
+              View schedules &rarr;
+            </span>
+          </p>
+        </div>
+
+        <!-- 5. Overdue Receivables Card -->
+        <div 
+          (click)="switchTab('inventory')"
+          class="group bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 hover:border-rose-400 dark:hover:border-rose-500 shadow-xs hover:shadow-lg transition-all cursor-pointer relative overflow-hidden">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Overdue Receivables</span>
+            <span class="p-2 rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 group-hover:scale-110 transition-transform">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+              </svg>
+            </span>
+          </div>
+          <div class="text-3xl sm:text-4xl font-extrabold text-rose-600 dark:text-rose-400 tracking-tight">
+            {{ formatMoney(overview()?.overdue_receivables_bdt || 82000000) }}
+          </div>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-2 flex items-center justify-between">
+            <span>Past-due customer balances</span>
+            <span class="text-rose-600 dark:text-rose-400 font-medium group-hover:translate-x-1 transition-transform inline-flex items-center">
+              View defaulters ledger &rarr;
+            </span>
+          </p>
+        </div>
+
+        <!-- 6. Actual Project Cost Card -->
+        <div 
+          (click)="navigateToFilteredReport('/accounts/vouchers')"
+          class="group bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 hover:border-amber-400 dark:hover:border-amber-500 shadow-xs hover:shadow-lg transition-all cursor-pointer relative overflow-hidden">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Actual Project Cost</span>
+            <span class="p-2 rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 group-hover:scale-110 transition-transform">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+              </svg>
+            </span>
+          </div>
+          <div class="text-3xl sm:text-4xl font-extrabold text-amber-600 dark:text-amber-400 tracking-tight">
+            {{ formatMoney(overview()?.actual_project_cost_bdt || 960000000) }}
+          </div>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-2 flex items-center justify-between">
+            <span>Posted project expenditure</span>
+            <span class="text-amber-600 dark:text-amber-400 font-medium group-hover:translate-x-1 transition-transform inline-flex items-center">
+              Open general ledger &rarr;
+            </span>
+          </p>
+        </div>
+      </div>
+
+      <!-- Portfolio Status Rings & Key Ratios -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+        <!-- Gauge 1: On-track Projects -->
+        <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-xs flex items-center gap-4">
+          <div class="relative w-16 h-16 shrink-0 flex items-center justify-center">
+            <svg class="w-16 h-16 transform -rotate-90" viewBox="0 0 36 36">
+              <path class="text-slate-100 dark:text-slate-800" stroke-width="3.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+              <path class="text-emerald-500 transition-all duration-1000 ease-out" stroke-dasharray="66.7, 100" stroke-width="3.5" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+            </svg>
+            <span class="absolute text-xs font-bold text-slate-800 dark:text-white">67%</span>
+          </div>
+          <div>
+            <div class="text-xs font-semibold uppercase tracking-wider text-slate-500">Portfolio Status</div>
+            <div class="text-lg font-bold text-slate-900 dark:text-white mt-0.5">
+              {{ overview()?.on_track_projects_count || 16 }} / {{ overview()?.active_projects || 24 }}
+            </div>
+            <div class="text-xs text-emerald-600 dark:text-emerald-400 font-medium">On-track projects</div>
+          </div>
+        </div>
+
+        <!-- Gauge 2: Units Sold or Contracted -->
+        <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-xs flex items-center gap-4">
+          <div class="relative w-16 h-16 shrink-0 flex items-center justify-center">
+            <svg class="w-16 h-16 transform -rotate-90" viewBox="0 0 36 36">
+              <path class="text-slate-100 dark:text-slate-800" stroke-width="3.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+              <path class="text-indigo-500 transition-all duration-1000 ease-out" stroke-dasharray="58.1, 100" stroke-width="3.5" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+            </svg>
+            <span class="absolute text-xs font-bold text-slate-800 dark:text-white">58%</span>
+          </div>
+          <div>
+            <div class="text-xs font-semibold uppercase tracking-wider text-slate-500">Sales Absorption</div>
+            <div class="text-lg font-bold text-slate-900 dark:text-white mt-0.5">
+              {{ overview()?.units_sold_or_contracted || 720 }} / {{ overview()?.total_units || 1240 }}
+            </div>
+            <div class="text-xs text-indigo-600 dark:text-indigo-400 font-medium">Units sold / contracted</div>
+          </div>
+        </div>
+
+        <!-- Metric 3: Collection Efficiency -->
+        <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-xs">
+          <div class="flex items-center justify-between text-xs text-slate-500 font-semibold mb-2">
+            <span>Collection Realization</span>
+            <span class="text-teal-600 dark:text-teal-400 font-bold">39.2%</span>
+          </div>
+          <div class="w-full bg-slate-100 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden mb-2">
+            <div class="bg-teal-500 h-full rounded-full" style="width: 39.2%"></div>
+          </div>
+          <div class="text-xs text-slate-500 flex justify-between">
+            <span>৳72.5 Cr Received</span>
+            <span>৳185.0 Cr Total</span>
+          </div>
+        </div>
+
+        <!-- Metric 4: Budget Burn Rate -->
+        <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-xs">
+          <div class="flex items-center justify-between text-xs text-slate-500 font-semibold mb-2">
+            <span>Budget Utilization</span>
+            <span class="text-amber-600 dark:text-amber-400 font-bold">58.2%</span>
+          </div>
+          <div class="w-full bg-slate-100 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden mb-2">
+            <div class="bg-amber-500 h-full rounded-full" style="width: 58.2%"></div>
+          </div>
+          <div class="text-xs text-slate-500 flex justify-between">
+            <span>৳96.0 Cr Spent</span>
+            <span>৳165.0 Cr Approved</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Executive Action Center -->
+      <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-xs">
+        <h3 class="text-base font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+          <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+          </svg>
+          Direct Drill-Through Reports & Operations Hub
+        </h3>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <button (click)="navigateToFilteredReport('/projects/list')" class="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-slate-800 text-left transition group">
+            <div class="text-xs text-slate-500 group-hover:text-indigo-600 font-semibold">Spatial FAR</div>
+            <div class="text-sm font-bold text-slate-900 dark:text-white mt-1">Projects Master</div>
+          </button>
+          <button (click)="navigateToFilteredReport('/inventory/matrix')" class="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-sky-400 hover:bg-sky-50/50 dark:hover:bg-slate-800 text-left transition group">
+            <div class="text-xs text-slate-500 group-hover:text-sky-600 font-semibold">15-Min Mutex</div>
+            <div class="text-sm font-bold text-slate-900 dark:text-white mt-1">Inventory Matrix</div>
+          </button>
+          <button (click)="navigateToFilteredReport('/sales/bookings')" class="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-emerald-400 hover:bg-emerald-50/50 dark:hover:bg-slate-800 text-left transition group">
+            <div class="text-xs text-slate-500 group-hover:text-emerald-600 font-semibold">Sale Deeds</div>
+            <div class="text-sm font-bold text-slate-900 dark:text-white mt-1">Apartment Bookings</div>
+          </button>
+          <button (click)="navigateToFilteredReport('/installments/pdc-vault')" class="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-purple-400 hover:bg-purple-50/50 dark:hover:bg-slate-800 text-left transition group">
+            <div class="text-xs text-slate-500 group-hover:text-purple-600 font-semibold">Safe Barcodes</div>
+            <div class="text-sm font-bold text-slate-900 dark:text-white mt-1">PDC Cheque Vault</div>
+          </button>
+          <button (click)="navigateToFilteredReport('/construction/dpr')" class="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-amber-400 hover:bg-amber-50/50 dark:hover:bg-slate-800 text-left transition group">
+            <div class="text-xs text-slate-500 group-hover:text-amber-600 font-semibold">Site Diary</div>
+            <div class="text-sm font-bold text-slate-900 dark:text-white mt-1">Daily DPR Reports</div>
+          </button>
+          <button (click)="navigateToFilteredReport('/accounts/financial-reports')" class="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-rose-400 hover:bg-rose-50/50 dark:hover:bg-slate-800 text-left transition group">
+            <div class="text-xs text-slate-500 group-hover:text-rose-600 font-semibold">Trial Balance</div>
+            <div class="text-sm font-bold text-slate-900 dark:text-white mt-1">Financial Reports</div>
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ========================================================================= -->
+  <!-- TAB 2: PROJECT PORTFOLIO & COMPLETION ANALYTICS -->
+  <!-- ========================================================================= -->
+  @if (activeTab() === 'projects') {
+    <div class="space-y-6">
+      <!-- KPI Formula Guide Banner -->
+      <div class="bg-gradient-to-r from-slate-900 to-indigo-950 text-white rounded-2xl p-5 shadow-md">
+        <h3 class="text-sm font-bold uppercase tracking-wider text-indigo-300 mb-3 flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+          </svg>
+          Project Status KPI Calculation Standard (Physical BOQ Weightage Model)
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
+          <div class="bg-white/10 backdrop-blur-xs p-3 rounded-xl border border-white/10">
+            <span class="font-bold text-indigo-200 block mb-0.5">Project Completion:</span>
+            <span>Approved completed work quantity &divide; total planned work quantity</span>
+          </div>
+          <div class="bg-white/10 backdrop-blur-xs p-3 rounded-xl border border-white/10">
+            <span class="font-bold text-indigo-200 block mb-0.5">Budget Variance & Utilization:</span>
+            <span>Variance = Actual spent &minus; Approved budget; Utilization = (Actual / Budget) &times; 100</span>
+          </div>
+          <div class="bg-white/10 backdrop-blur-xs p-3 rounded-xl border border-white/10">
+            <span class="font-bold text-indigo-200 block mb-0.5">Cost to Complete & Sales Ratio:</span>
+            <span>Cost = Forecast total cost &minus; Actual cost; Sales Ratio = Sold &divide; Saleable &times; 100</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filters & Search Bar -->
+      <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <!-- Search -->
+        <div class="relative flex-1 max-w-md">
+          <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+          <input 
+            type="text" 
+            [(ngModel)]="projectSearch" 
+            placeholder="Search by project name, code (PRJ-GLS-001), or location..."
+            class="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs sm:text-sm text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500">
+        </div>
+
+        <!-- Filter Selects -->
+        <div class="flex flex-wrap items-center gap-3 text-xs">
+          <div class="flex items-center gap-1.5">
+            <span class="text-slate-500 font-medium">Authority:</span>
+            <select [(ngModel)]="authorityFilter" class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 font-medium text-slate-700 dark:text-slate-300">
+              <option value="ALL">All Authorities</option>
+              <option value="RAJUK">RAJUK (Dhaka)</option>
+              <option value="CDA">CDA (Chattogram)</option>
+              <option value="KDA">KDA (Khulna)</option>
+              <option value="RDA">RDA (Rajshahi/Sylhet)</option>
+            </select>
+          </div>
+
+          <div class="flex items-center gap-1.5">
+            <span class="text-slate-500 font-medium">Status:</span>
+            <select [(ngModel)]="statusFilter" class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 font-medium text-slate-700 dark:text-slate-300">
+              <option value="ALL">All Statuses</option>
+              <option value="UNDER_CONSTRUCTION">Under Construction</option>
+              <option value="PLANNING">Planning</option>
+              <option value="PERMIT_PENDING">Permits Pending</option>
+              <option value="HANDOVER_PHASE">Handover Phase</option>
+              <option value="COMPLETED">Completed</option>
+            </select>
+          </div>
+
+          <span class="text-slate-400">|</span>
+          <span class="font-bold text-slate-700 dark:text-slate-300">
+            Showing {{ filteredProjects().length }} of {{ portfolio()?.total_projects || 26 }} Projects
+          </span>
+        </div>
+      </div>
+
+      <!-- Project Performance Calculation Table -->
+      <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-200 dark:border-slate-800">
+              <tr>
+                <th class="py-3.5 px-4">Project & Code</th>
+                <th class="py-3.5 px-4">Location & Authority</th>
+                <th class="py-3.5 px-4">Physical Completion</th>
+                <th class="py-3.5 px-4">Schedule Variance</th>
+                <th class="py-3.5 px-4">Actual Spend / Budget</th>
+                <th class="py-3.5 px-4">Budget Utilization</th>
+                <th class="py-3.5 px-4">Cost to Complete</th>
+                <th class="py-3.5 px-4">Sales Ratio</th>
+                <th class="py-3.5 px-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
+              @for (proj of filteredProjects(); track proj.id) {
+                <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition">
+                  <!-- Project Code & Name -->
+                  <td class="py-3.5 px-4">
+                    <div class="font-bold text-slate-900 dark:text-white">{{ proj.project_name }}</div>
+                    <div class="text-[11px] font-mono text-indigo-600 dark:text-indigo-400">{{ proj.project_code }}</div>
+                  </td>
+
+                  <!-- Location & Authority -->
+                  <td class="py-3.5 px-4">
+                    <div class="text-slate-800 dark:text-slate-200">{{ proj.location }}</div>
+                    <span class="inline-block mt-0.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                      {{ proj.development_authority }}
+                    </span>
+                  </td>
+
+                  <!-- Physical Completion % -->
+                  <td class="py-3.5 px-4 min-w-[130px]">
+                    <div class="flex items-center justify-between font-bold mb-1">
+                      <span class="text-slate-900 dark:text-white">{{ proj.project_completion_pct }}%</span>
+                      @if (proj.is_on_track) {
+                        <span class="text-[10px] text-emerald-600 font-bold bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded">On Track</span>
+                      } @else {
+                        <span class="text-[10px] text-rose-600 font-bold bg-rose-50 dark:bg-rose-950/40 px-1.5 py-0.5 rounded">Lagging</span>
+                      }
+                    </div>
+                    <div class="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                      <div 
+                        [class.bg-emerald-500]="proj.is_on_track" 
+                        [class.bg-rose-500]="!proj.is_on_track" 
+                        class="h-full rounded-full" 
+                        [style.width.%]="proj.project_completion_pct">
+                      </div>
+                    </div>
+                  </td>
+
+                  <!-- Schedule Variance -->
+                  <td class="py-3.5 px-4">
+                    @if (proj.schedule_variance_days === 0) {
+                      <span class="inline-flex items-center gap-1 text-emerald-600 font-semibold">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        Baseline On-Time
+                      </span>
+                    } @else {
+                      <span class="inline-flex items-center gap-1 text-rose-600 font-semibold">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        {{ proj.schedule_variance_days }} Days Delay
+                      </span>
+                    }
+                  </td>
+
+                  <!-- Actual Spend / Budget -->
+                  <td class="py-3.5 px-4">
+                    <div class="font-bold text-slate-900 dark:text-white">{{ formatMoney(proj.actual_spent_bdt) }}</div>
+                    <div class="text-[11px] text-slate-500">of {{ formatMoney(proj.total_budget_bdt) }}</div>
+                  </td>
+
+                  <!-- Budget Utilization -->
+                  <td class="py-3.5 px-4">
+                    <div class="font-bold" [class.text-amber-600]="proj.budget_utilization_pct > 80" [class.text-slate-800]="proj.budget_utilization_pct <= 80">
+                      {{ proj.budget_utilization_pct }}%
+                    </div>
+                  </td>
+
+                  <!-- Cost to Complete -->
+                  <td class="py-3.5 px-4">
+                    <div class="font-semibold text-slate-800 dark:text-slate-200">
+                      {{ formatMoney(proj.cost_to_complete_bdt) }}
+                    </div>
+                  </td>
+
+                  <!-- Sales Ratio -->
+                  <td class="py-3.5 px-4">
+                    <div class="font-bold text-indigo-600 dark:text-indigo-400">
+                      {{ proj.sold_units }} / {{ proj.total_units }}
+                    </div>
+                    <div class="text-[10px] text-slate-500">({{ proj.sales_ratio_pct }}% sold)</div>
+                  </td>
+
+                  <!-- Action: Drill Down -->
+                  <td class="py-3.5 px-4 text-right">
+                    <button 
+                      (click)="openProjectDrillDown(proj.id)"
+                      class="px-2.5 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 font-semibold transition inline-flex items-center gap-1">
+                      <span>Drill Down</span>
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ========================================================================= -->
+  <!-- TAB 3: PROPERTY INVENTORY & SALES ANALYTICS (MATCHING SCREENSHOTS!) -->
+  <!-- ========================================================================= -->
+  @if (activeTab() === 'inventory') {
+    <div class="space-y-6">
+      <!-- Top Metrics Row Matching Images 1 & 2 -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <!-- 1. Saleable Space Card (Superficie a vender: 12.100 m² / Sup vendida 1.900 m²) -->
+        <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between">
+          <div>
+            <div class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+              Superficie a vender / Saleable Area
+            </div>
+            <div class="text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+              {{ (inventory()?.total_saleable_area_sqft || 1354000) | number:'1.0-0' }} sqft
+            </div>
+            <div class="mt-2 flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+              <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
+              </svg>
+              <span>Sold Space: <strong class="text-slate-800 dark:text-white">{{ (inventory()?.sold_saleable_area_sqft || 812000) | number:'1.0-0' }} sqft</strong></span>
+            </div>
+          </div>
+
+          <div class="mt-6 pt-5 border-t border-slate-100 dark:border-slate-800 space-y-3">
+            <div class="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+              <div class="text-[11px] text-slate-500 font-semibold">Ventas proyectadas / Projected Sales</div>
+              <div class="text-lg font-bold text-slate-900 dark:text-white">
+                {{ formatMoney(inventory()?.projected_sales_bdt || 718000000) }}
+              </div>
+            </div>
+
+            <div class="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+              <div class="text-[11px] text-slate-500 font-semibold">Precio mínimo sqft / Min. Square Foot Rate</div>
+              <div class="text-lg font-bold text-slate-900 dark:text-white">
+                ৳{{ (inventory()?.min_price_per_sqft || 11500) | number }} / sqft
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Donut Chart: Ventas por tipo UF (Sales by Unit Type) Matching Image 1 & 2 -->
+        <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between">
+          <div>
+            <div class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+              Ventas por tipo UF / Sales by Unit Type
+            </div>
+            <div class="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+              {{ formatMoney(overview()?.contracted_sales_value_bdt || 1850000000) }}
+            </div>
+            <div class="mt-1 flex items-center gap-1 text-xs text-emerald-600 font-semibold">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
+              <span>&uarr; 3% al mes anterior (Month-on-Month Growth)</span>
+            </div>
+          </div>
+
+          <!-- Donut Graphic & Legend -->
+          <div class="my-4 flex items-center justify-center gap-6">
+            <!-- Custom Dynamic SVG Donut -->
+            <div class="relative w-32 h-32 shrink-0">
+              <svg class="w-32 h-32 transform -rotate-90" viewBox="0 0 36 36">
+                <!-- Background track -->
+                <circle cx="18" cy="18" r="14" fill="none" class="text-slate-100 dark:text-slate-800" stroke-width="5" stroke="currentColor"/>
+                <!-- Segment 1: 3 BHK (35%) Emerald -->
+                <circle cx="18" cy="18" r="14" fill="none" stroke="#10b981" stroke-width="5" stroke-dasharray="35, 100" stroke-dashoffset="0"/>
+                <!-- Segment 2: 2 BHK (25%) Sky -->
+                <circle cx="18" cy="18" r="14" fill="none" stroke="#0ea5e9" stroke-width="5" stroke-dasharray="25, 100" stroke-dashoffset="-35"/>
+                <!-- Segment 3: 4 BHK (20%) Purple -->
+                <circle cx="18" cy="18" r="14" fill="none" stroke="#a855f7" stroke-width="5" stroke-dasharray="20, 100" stroke-dashoffset="-60"/>
+                <!-- Segment 4: Commercial (12%) Amber -->
+                <circle cx="18" cy="18" r="14" fill="none" stroke="#f59e0b" stroke-width="5" stroke-dasharray="12, 100" stroke-dashoffset="-80"/>
+                <!-- Segment 5: Penthouse (8%) Rose -->
+                <circle cx="18" cy="18" r="14" fill="none" stroke="#f43f5e" stroke-width="5" stroke-dasharray="8, 100" stroke-dashoffset="-92"/>
+              </svg>
+              <div class="absolute inset-0 flex flex-col items-center justify-center">
+                <span class="text-xs text-slate-400 font-semibold">Total Sold</span>
+                <span class="text-base font-bold text-slate-900 dark:text-white">{{ overview()?.units_sold_or_contracted || 735 }}</span>
+              </div>
+            </div>
+
+            <!-- Legend with colored bullets matching screenshot -->
+            <div class="space-y-1.5 text-xs">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                <span class="text-slate-700 dark:text-slate-300">3 Bed Executive: <strong>35%</strong></span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-sky-500"></span>
+                <span class="text-slate-700 dark:text-slate-300">2 Bed Luxury: <strong>25%</strong></span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span>
+                <span class="text-slate-700 dark:text-slate-300">4 Bed Suite: <strong>20%</strong></span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                <span class="text-slate-700 dark:text-slate-300">Commercial: <strong>12%</strong></span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+                <span class="text-slate-700 dark:text-slate-300">Penthouse: <strong>8%</strong></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="text-[11px] text-slate-400 text-center">
+            Weighted across registered deeds in Dhaka and Chattogram
+          </div>
+        </div>
+
+        <!-- 3. Donut Chart: Disponibilidad por tipo UF (Availability by Unit Type) Matching Image 1 & 2 -->
+        <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between">
+          <div>
+            <div class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+              Disponibilidad por tipo UF / Available Units
+            </div>
+            <div class="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+              {{ inventory()?.available_units || 445 }} unidades
+            </div>
+            <div class="mt-1 flex items-center gap-1 text-xs text-sky-600 font-semibold">
+              <span>Current Unsold Value: {{ formatMoney(inventory()?.unsold_inventory_value_bdt || 684000000) }}</span>
+            </div>
+          </div>
+
+          <!-- Availability Donut Graphic & Legend -->
+          <div class="my-4 flex items-center justify-center gap-6">
+            <div class="relative w-32 h-32 shrink-0">
+              <svg class="w-32 h-32 transform -rotate-90" viewBox="0 0 36 36">
+                <circle cx="18" cy="18" r="14" fill="none" class="text-slate-100 dark:text-slate-800" stroke-width="5" stroke="currentColor"/>
+                <!-- Segment 1: Available 3BHK (45%) Sky -->
+                <circle cx="18" cy="18" r="14" fill="none" stroke="#38bdf8" stroke-width="5" stroke-dasharray="45, 100" stroke-dashoffset="0"/>
+                <!-- Segment 2: Available 2BHK (30%) Emerald -->
+                <circle cx="18" cy="18" r="14" fill="none" stroke="#34d399" stroke-width="5" stroke-dasharray="30, 100" stroke-dashoffset="-45"/>
+                <!-- Segment 3: Available Commercial (15%) Amber -->
+                <circle cx="18" cy="18" r="14" fill="none" stroke="#fbbf24" stroke-width="5" stroke-dasharray="15, 100" stroke-dashoffset="-75"/>
+                <!-- Segment 4: Available Penthouse (10%) Rose -->
+                <circle cx="18" cy="18" r="14" fill="none" stroke="#fb7185" stroke-width="5" stroke-dasharray="10, 100" stroke-dashoffset="-90"/>
+              </svg>
+              <div class="absolute inset-0 flex flex-col items-center justify-center">
+                <span class="text-xs text-slate-400 font-semibold">Available</span>
+                <span class="text-base font-bold text-slate-900 dark:text-white">{{ inventory()?.available_units || 445 }}</span>
+              </div>
+            </div>
+
+            <div class="space-y-1.5 text-xs">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-sky-400"></span>
+                <span class="text-slate-700 dark:text-slate-300">3 Bed Executive: <strong>45%</strong></span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+                <span class="text-slate-700 dark:text-slate-300">2 Bed Luxury: <strong>30%</strong></span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+                <span class="text-slate-700 dark:text-slate-300">Commercial: <strong>15%</strong></span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-rose-400"></span>
+                <span class="text-slate-700 dark:text-slate-300">Penthouse: <strong>10%</strong></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="text-[11px] text-slate-400 text-center">
+            Excludes reserved &amp; locked units (Strict Mutex Model)
+          </div>
+        </div>
+      </div>
+
+      <!-- Sales vs. Target Chart (Image 3 exact match!) -->
+      <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-xs">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
+          <div>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white">Sales vs. Target</h3>
+            <p class="text-xs text-slate-500">Last 6 Months Realization Performance</p>
+          </div>
+          <!-- Chart Legend -->
+          <div class="flex items-center gap-4 text-xs font-semibold">
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-sm bg-amber-500"></span>
+              <span class="text-slate-700 dark:text-slate-300">Actual Sales (BDT)</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-1 rounded-full bg-rose-600"></span>
+              <span class="text-slate-700 dark:text-slate-300">Target Line</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Custom Responsive Bar + Target Line Visual -->
+        <div class="relative pt-6 pb-2">
+          <!-- Horizontal Grid Lines -->
+          <div class="space-y-8 absolute inset-0 pointer-events-none opacity-20">
+            <div class="border-b border-slate-400 w-full"></div>
+            <div class="border-b border-slate-400 w-full"></div>
+            <div class="border-b border-slate-400 w-full"></div>
+            <div class="border-b border-slate-400 w-full"></div>
+          </div>
+
+          <!-- Columns Grid -->
+          <div class="grid grid-cols-6 gap-2 sm:gap-6 items-end h-64 relative z-10 px-2 sm:px-6">
+            @for (m of sales()?.sales_vs_target_trend || []; track m.month) {
+              <div class="flex flex-col items-center h-full justify-end group">
+                <!-- Bar Tooltip -->
+                <div class="opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-[10px] rounded px-2 py-1 mb-1 whitespace-nowrap shadow-md pointer-events-none">
+                  Actual: {{ m.formatted_actual }} | Target: {{ m.formatted_target }}
+                </div>
+
+                <!-- Actual Label above bar -->
+                <span class="text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  {{ m.formatted_actual }}
+                </span>
+
+                <!-- Target marker indicator -->
+                <div class="w-3 h-3 rounded-full bg-rose-600 border-2 border-white shadow-xs -mb-1.5 z-20"></div>
+
+                <!-- The Bar matching image 3 orange style -->
+                <div 
+                  class="w-full max-w-[55px] bg-gradient-to-t from-amber-600 to-amber-400 hover:from-amber-500 hover:to-amber-300 rounded-t-md shadow-xs transition-all duration-500" 
+                  [style.height.%]="(m.actual_sales_bdt / 120000000) * 100">
+                </div>
+
+                <!-- Month Label -->
+                <span class="text-xs font-semibold text-slate-500 mt-3">{{ m.month }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Clientes Morosos / Overdue Defaulters Ledger Table (Image 1 & 2 exact match!) -->
+      <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+        <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+              Clientes morosos / Overdue Receivables & Defaulters Ledger
+            </h3>
+            <p class="text-xs text-slate-500 mt-0.5">
+              Live customer aging tracking with automatic Section 138 legal notice dispatch
+            </p>
+          </div>
+
+          <!-- Batch Action Button -->
+          @if (selectedDefaulterIds().size > 0) {
+            <button 
+              (click)="sendBatchReminders()" 
+              [disabled]="actionLoading()"
+              class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-md transition flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+              <span>Dispatch SMS to {{ selectedDefaulterIds().size }} Selected Debtors</span>
+            </button>
+          }
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-200 dark:border-slate-800">
+              <tr>
+                <th class="py-3.5 px-4 w-10">
+                  <input type="checkbox" (change)="toggleSelectAllDefaulters($event)" class="rounded text-indigo-600 focus:ring-indigo-500">
+                </th>
+                <th class="py-3.5 px-4">CLIENTE / BUYER</th>
+                <th class="py-3.5 px-4">UNIDADES / UNITS</th>
+                <th class="py-3.5 px-4">MORA BDT / OVERDUE AMOUNT</th>
+                <th class="py-3.5 px-4">DÍAS DE MORA / DAYS OVERDUE</th>
+                <th class="py-3.5 px-4">STATUS</th>
+                <th class="py-3.5 px-4 text-right">ACTION</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
+              @for (client of sales()?.defaulters_morosos || []; track client.id) {
+                <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition">
+                  <!-- Checkbox -->
+                  <td class="py-3.5 px-4">
+                    <input 
+                      type="checkbox" 
+                      [checked]="isDefaulterSelected(client.id)" 
+                      (change)="toggleDefaulterSelection(client.id)" 
+                      class="rounded text-indigo-600 focus:ring-indigo-500">
+                  </td>
+
+                  <!-- Cliente / Buyer with avatar -->
+                  <td class="py-3.5 px-4">
+                    <div class="flex items-center gap-3">
+                      <div class="w-8 h-8 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-xs shrink-0 shadow-xs">
+                        {{ client.avatar_initials }}
+                      </div>
+                      <div>
+                        <div class="font-bold text-slate-900 dark:text-white">{{ client.name }}</div>
+                        <div class="text-[11px] text-slate-500 font-mono">{{ client.phone }}</div>
+                      </div>
+                    </div>
+                  </td>
+
+                  <!-- Unidades / Units -->
+                  <td class="py-3.5 px-4">
+                    <div class="flex flex-wrap gap-1">
+                      @for (u of client.units.split(','); track u) {
+                        <span class="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-mono font-bold text-[11px]">
+                          {{ u.trim() }}
+                        </span>
+                      }
+                    </div>
+                  </td>
+
+                  <!-- Mora BDT / Overdue -->
+                  <td class="py-3.5 px-4 font-bold text-rose-600 dark:text-rose-400">
+                    ৳{{ client.overdue_amount_bdt | number }}
+                  </td>
+
+                  <!-- Días de Mora / Days Overdue -->
+                  <td class="py-3.5 px-4">
+                    <span 
+                      [class.bg-rose-50]="client.days_overdue > 90"
+                      [class.text-rose-600]="client.days_overdue > 90"
+                      [class.bg-amber-50]="client.days_overdue <= 90 && client.days_overdue > 30"
+                      [class.text-amber-600]="client.days_overdue <= 90 && client.days_overdue > 30"
+                      [class.bg-slate-100]="client.days_overdue <= 30"
+                      [class.text-slate-700]="client.days_overdue <= 30"
+                      class="px-2.5 py-1 rounded-full font-bold text-xs inline-block">
+                      {{ client.days_overdue }} days
+                    </span>
+                  </td>
+
+                  <!-- Status -->
+                  <td class="py-3.5 px-4">
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300">
+                      {{ client.status }}
+                    </span>
+                  </td>
+
+                  <!-- Actions -->
+                  <td class="py-3.5 px-4 text-right">
+                    <div class="flex items-center justify-end gap-2">
+                      <button 
+                        (click)="sendDefaulterReminder(client, 'SMS')"
+                        class="px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 hover:bg-indigo-100 font-semibold transition text-xs">
+                        SMS Alert
+                      </button>
+                      <button 
+                        (click)="sendDefaulterReminder(client, 'LEGAL_NOTICE')"
+                        class="px-2.5 py-1 rounded-lg bg-rose-50 dark:bg-rose-950/40 text-rose-600 hover:bg-rose-100 font-semibold transition text-xs">
+                        Sec 138 Notice
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ========================================================================= -->
+  <!-- TAB 4: ALL 15 BI MODULES CATALOG -->
+  <!-- ========================================================================= -->
+  @if (activeTab() === 'catalog') {
+    <div class="space-y-6">
+      <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-xs">
+        <h3 class="text-base font-bold text-slate-900 dark:text-white mb-1">
+          Complete Management Dashboard & BI Architecture (15 Standard Enterprise Modules)
+        </h3>
+        <p class="text-xs text-slate-500 mb-6">
+          Full business intelligence matrix for Bangladesh Real Estate Developers
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          @for (mod of biModules(); track mod.id) {
+            <div class="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 hover:border-indigo-400 transition-all flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-xs font-mono font-bold text-indigo-600 dark:text-indigo-400">#{{ mod.id }}</span>
+                  @if (mod.badge) {
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300">
+                      {{ mod.badge }}
+                    </span>
+                  }
+                </div>
+                <h4 class="text-sm font-bold text-slate-900 dark:text-white mb-1">{{ mod.title }}</h4>
+                <p class="text-xs text-slate-500 leading-relaxed">{{ mod.description }}</p>
+              </div>
+
+              <div class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700/60 flex items-center justify-between">
+                <span class="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+                  Real-time Synced
+                </span>
+                <button 
+                  (click)="switchTab(mod.id === 1 ? 'executive' : (mod.id === 2 ? 'projects' : 'inventory'))"
+                  class="text-xs font-bold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 inline-flex items-center gap-1">
+                  <span>Open &rarr;</span>
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ========================================================================= -->
+  <!-- PROJECT DRILL-DOWN MODAL / SLIDE-OUT -->
+  <!-- ========================================================================= -->
+  @if (selectedProjectId()) {
+    <div class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col shadow-2xl border border-slate-200 dark:border-slate-800 animate-slide-in">
+        <!-- Modal Header -->
+        <div class="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-100 text-indigo-700 font-mono">
+                {{ drillDownData()?.project_overview?.project_code }}
+              </span>
+              <span class="text-xs text-slate-500 font-bold">
+                {{ drillDownData()?.project_overview?.authority }} Approval
+              </span>
+            </div>
+            <h2 class="text-lg font-bold text-slate-900 dark:text-white mt-1">
+              {{ drillDownData()?.project_overview?.project_name }} — Deep Performance Drill-Down
+            </h2>
+          </div>
+          <button (click)="closeDrillDown()" class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <!-- Modal Sub-Tabs -->
+        <div class="flex border-b border-slate-200 dark:border-slate-800 px-6 gap-4 text-xs font-semibold overflow-x-auto">
+          <button (click)="drillDownTab.set('overview')" [class.border-indigo-600]="drillDownTab() === 'overview'" [class.text-indigo-600]="drillDownTab() === 'overview'" class="py-3 border-b-2 border-transparent">
+            Overview &amp; Spatial
+          </button>
+          <button (click)="drillDownTab.set('sales')" [class.border-indigo-600]="drillDownTab() === 'sales'" [class.text-indigo-600]="drillDownTab() === 'sales'" class="py-3 border-b-2 border-transparent">
+            Sales &amp; Remaining Inventory
+          </button>
+          <button (click)="drillDownTab.set('milestones')" [class.border-indigo-600]="drillDownTab() === 'milestones'" [class.text-indigo-600]="drillDownTab() === 'milestones'" class="py-3 border-b-2 border-transparent">
+            BOQ &amp; Physical Milestones
+          </button>
+          <button (click)="drillDownTab.set('financials')" [class.border-indigo-600]="drillDownTab() === 'financials'" [class.text-indigo-600]="drillDownTab() === 'financials'" class="py-3 border-b-2 border-transparent">
+            Budget &amp; Liabilities
+          </button>
+          <button (click)="drillDownTab.set('profitability')" [class.border-indigo-600]="drillDownTab() === 'profitability'" [class.text-indigo-600]="drillDownTab() === 'profitability'" class="py-3 border-b-2 border-transparent">
+            Forecast Profitability
+          </button>
+        </div>
+
+        <!-- Modal Body Content -->
+        <div class="p-6 overflow-y-auto space-y-5 flex-1">
+          @if (drillDownLoading()) {
+            <div class="py-16 text-center text-slate-500 flex flex-col items-center justify-center">
+              <svg class="w-8 h-8 animate-spin text-indigo-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+              <span>Loading live project records...</span>
+            </div>
+          } @else if (drillDownData()) {
+            <!-- Tab A: Spatial Overview -->
+            @if (drillDownTab() === 'overview') {
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div class="bg-slate-50 dark:bg-slate-800 p-4 rounded-xl">
+                  <span class="text-xs text-slate-500 font-semibold">Allocated FAR</span>
+                  <div class="text-xl font-bold text-slate-900 dark:text-white mt-1">{{ drillDownData()?.project_overview?.far_allocated }}</div>
+                </div>
+                <div class="bg-slate-50 dark:bg-slate-800 p-4 rounded-xl">
+                  <span class="text-xs text-slate-500 font-semibold">Maximum Ground Cov.</span>
+                  <div class="text-xl font-bold text-slate-900 dark:text-white mt-1">{{ drillDownData()?.project_overview?.mgc_percent }}%</div>
+                </div>
+                <div class="bg-slate-50 dark:bg-slate-800 p-4 rounded-xl">
+                  <span class="text-xs text-slate-500 font-semibold">Total Built-Up Area</span>
+                  <div class="text-xl font-bold text-slate-900 dark:text-white mt-1">{{ drillDownData()?.project_overview?.total_builtup_area_sqft | number }} sqft</div>
+                </div>
+                <div class="bg-slate-50 dark:bg-slate-800 p-4 rounded-xl">
+                  <span class="text-xs text-slate-500 font-semibold">Total Units</span>
+                  <div class="text-xl font-bold text-slate-900 dark:text-white mt-1">{{ drillDownData()?.project_overview?.total_units }}</div>
+                </div>
+              </div>
+            }
+
+            <!-- Tab B: Sales & Remaining Inventory -->
+            @if (drillDownTab() === 'sales') {
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div class="bg-emerald-50 dark:bg-emerald-950/40 p-4 rounded-xl">
+                  <span class="text-xs text-emerald-700 font-semibold">Sold Units</span>
+                  <div class="text-2xl font-bold text-emerald-600 mt-1">{{ drillDownData()?.sales_inventory?.sold_units }}</div>
+                </div>
+                <div class="bg-sky-50 dark:bg-sky-950/40 p-4 rounded-xl">
+                  <span class="text-xs text-sky-700 font-semibold">Available Units</span>
+                  <div class="text-2xl font-bold text-sky-600 mt-1">{{ drillDownData()?.sales_inventory?.available_units }}</div>
+                </div>
+                <div class="bg-amber-50 dark:bg-amber-950/40 p-4 rounded-xl">
+                  <span class="text-xs text-amber-700 font-semibold">Reserved / Booked</span>
+                  <div class="text-2xl font-bold text-amber-600 mt-1">
+                    {{ (drillDownData()?.sales_inventory?.reserved_units || 0) + (drillDownData()?.sales_inventory?.booked_units || 0) }}
+                  </div>
+                </div>
+                <div class="bg-indigo-50 dark:bg-indigo-950/40 p-4 rounded-xl">
+                  <span class="text-xs text-indigo-700 font-semibold">Sales Absorption</span>
+                  <div class="text-2xl font-bold text-indigo-600 mt-1">{{ drillDownData()?.sales_inventory?.sales_absorption_pct }}%</div>
+                </div>
+              </div>
+            }
+
+            <!-- Tab C: Milestones & BOQ -->
+            @if (drillDownTab() === 'milestones') {
+              <div class="space-y-3">
+                @for (m of drillDownData()?.construction_milestones || []; track m.id) {
+                  <div class="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl flex items-center justify-between">
+                    <div>
+                      <div class="font-bold text-sm text-slate-800 dark:text-slate-100">{{ m.description }}</div>
+                      <div class="text-xs text-slate-500 font-mono">Phase: {{ m.phase }} | Material: {{ m.material }}</div>
+                    </div>
+                    <div class="text-right">
+                      <div class="text-sm font-bold text-indigo-600">{{ m.progress_pct }}%</div>
+                      <div class="text-xs text-slate-400">{{ m.actual_qty }} / {{ m.planned_qty }} {{ m.uom }}</div>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+
+            <!-- Tab D: Financials -->
+            @if (drillDownTab() === 'financials') {
+              <div class="grid grid-cols-2 gap-4">
+                <div class="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl">
+                  <span class="text-xs text-slate-500 font-semibold">Approved Project Budget</span>
+                  <div class="text-xl font-bold text-slate-900 dark:text-white mt-1">{{ formatMoney(drillDownData()?.financials?.approved_budget_bdt || 0) }}</div>
+                </div>
+                <div class="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl">
+                  <span class="text-xs text-slate-500 font-semibold">Actual Posted Expenditure</span>
+                  <div class="text-xl font-bold text-slate-900 dark:text-white mt-1">{{ formatMoney(drillDownData()?.financials?.actual_expenditure_bdt || 0) }}</div>
+                </div>
+              </div>
+            }
+
+            <!-- Tab E: Forecast Profitability -->
+            @if (drillDownTab() === 'profitability') {
+              <div class="grid grid-cols-3 gap-4">
+                <div class="p-4 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl">
+                  <span class="text-xs text-emerald-700 font-semibold">Estimated Gross Profit</span>
+                  <div class="text-2xl font-bold text-emerald-600 mt-1">৳{{ drillDownData()?.profitability_forecast?.estimated_gross_profit_cr }} Cr</div>
+                </div>
+                <div class="p-4 bg-indigo-50 dark:bg-indigo-950/40 rounded-xl">
+                  <span class="text-xs text-indigo-700 font-semibold">Projected Margin</span>
+                  <div class="text-2xl font-bold text-indigo-600 mt-1">{{ drillDownData()?.profitability_forecast?.projected_profit_margin_pct }}%</div>
+                </div>
+                <div class="p-4 bg-sky-50 dark:bg-sky-950/40 rounded-xl">
+                  <span class="text-xs text-sky-700 font-semibold">Total Revenue Forecast</span>
+                  <div class="text-2xl font-bold text-sky-600 mt-1">৳{{ drillDownData()?.profitability_forecast?.projected_total_revenue_cr }} Cr</div>
+                </div>
+              </div>
+            }
+          }
+        </div>
+      </div>
+    </div>
+  }
+</div>

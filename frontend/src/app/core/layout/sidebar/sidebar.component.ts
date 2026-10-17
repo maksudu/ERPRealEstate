@@ -36,6 +36,28 @@ export class SidebarComponent implements OnInit {
   // Clean, Deduplicated Module Structure (Every menu item maps to a distinct, unique page)
   menuGroups: MenuGroup[] = [
     {
+      id: 'bi-dashboard',
+      title: 'Management Dashboard & BI',
+      iconSvg: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
+      items: [
+        { id: 'executive', label: '1. Executive Dashboard', route: '/dashboard/executive', badge: 'C-Level' },
+        { id: 'project-perf', label: '2. Project Performance Dashboard', route: '/dashboard/project-performance' },
+        { id: 'inventory-sales', label: '3. Property Inventory & Sales Analytics', route: '/dashboard/inventory-sales', badge: 'Live' },
+        { id: 'revenue-analytics', label: '4. Booking & Sales Revenue Analytics', route: '/dashboard/revenue-analytics' },
+        { id: 'collections-receivables', label: '5. Installment Collection & Receivables', route: '/dashboard/collections-receivables', badge: 'Defaulters' },
+        { id: 'budget-expenditure', label: '6. Budget vs. Actual Expenditure', route: '/dashboard/budget-expenditure' },
+        { id: 'construction-progress', label: '7. Construction Progress & Cost Analytics', route: '/dashboard/construction-progress' },
+        { id: 'procurement-analytics', label: '8. Procurement & Supplier Analytics', route: '/dashboard/procurement-analytics' },
+        { id: 'cashflow-liability', label: '9. Cash Flow & Liability Dashboard', route: '/dashboard/cashflow-liability' },
+        { id: 'salesperson-performance', label: '10. Salesperson & Broker Performance', route: '/dashboard/salesperson-performance' },
+        { id: 'project-profitability', label: '11. Project Profitability & Forecasting', route: '/dashboard/project-profitability' },
+        { id: 'alerts-exceptions', label: '12. Alerts, Targets & Exceptions', route: '/dashboard/alerts-exceptions' },
+        { id: 'report-builder', label: '13. Custom Reports & Report Builder', route: '/dashboard/report-builder' },
+        { id: 'export-center', label: '14. Excel / PDF Export', route: '/dashboard/export-center' },
+        { id: 'audit-permissions', label: '15. Dashboard Permissions & Audit Logs', route: '/dashboard/audit-permissions' }
+      ]
+    },
+    {
       id: 'settings',
       title: 'Settings & Core',
       iconSvg: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z',
