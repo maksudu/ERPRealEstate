@@ -6,6 +6,7 @@ import {
   Booking,
   BookingCancellation,
   UnitTransfer,
+  BookingJointBuyer,
   SalesMetrics
 } from '../models/sales.model';
 
@@ -28,6 +29,10 @@ export class SalesService {
 
   createBooking(payload: any): Observable<Booking> {
     return this.http.post<Booking>(`${this.baseUrl}/bookings`, payload);
+  }
+
+  addJointBuyer(bookingId: number, payload: BookingJointBuyer): Observable<BookingJointBuyer> {
+    return this.http.post<BookingJointBuyer>(`${this.baseUrl}/bookings/${bookingId}/joint-buyers`, payload);
   }
 
   // 2. Multi-Level Discount Approvals

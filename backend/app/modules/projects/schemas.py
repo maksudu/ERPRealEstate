@@ -140,6 +140,8 @@ class AuthorityClearanceResponse(AuthorityClearanceBase):
 class BOQItemBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
+    item_code: Optional[str] = None
+    wbs_node_id: Optional[int] = None
     wbs_phase_id: str
     material_category_id: str
     item_description: str
@@ -148,10 +150,16 @@ class BOQItemBase(BaseModel):
     estimated_unit_rate: float
     total_estimated_cost: float
     actual_consumed_quantity: float = 0.0
+    requisitioned_quantity: float = 0.0
+    variation_order_quantity: float = 0.0
+    hard_lock_percentage: float = 105.00
+    is_locked: bool = False
 
 class BOQItemCreate(BaseModel):
     project_id: int
     tower_id: Optional[int] = None
+    wbs_node_id: Optional[int] = None
+    item_code: Optional[str] = None
     wbs_phase_id: str
     material_category_id: str
     item_description: str
@@ -159,11 +167,16 @@ class BOQItemCreate(BaseModel):
     estimated_quantity: float
     estimated_unit_rate: float
     actual_consumed_quantity: Optional[float] = 0.0
+    requisitioned_quantity: Optional[float] = 0.0
+    variation_order_quantity: Optional[float] = 0.0
+    hard_lock_percentage: Optional[float] = 105.00
 
 class BOQItemResponse(BOQItemBase):
     id: int
     project_id: int
     tower_id: Optional[int] = None
+    allowable_quantity: Optional[float] = None
+    variance_percentage: Optional[float] = None
     created_at: Optional[datetime] = None
 
 

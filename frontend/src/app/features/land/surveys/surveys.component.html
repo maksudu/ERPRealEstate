@@ -1,188 +1,676 @@
 <app-card-container 
-  title="Historic Land Surveys (CS, SA, RS, BS / City Survey)" 
-  subtitle="Khatian lineage, dag mutation records, and AC Land recorded tenant ledger"
-  badge="LEGAL SURVEYS"
+  title="Land Record Hierarchy & Legal Documents Cockpit" 
+  subtitle="CS/SA/RS/BS Survey lineage, Dag plot tracking with multi-unit conversion, and annual Khajna tax expiry monitoring"
+  badge="STATUTORY LAND ENGINE"
 >
-  <!-- Header Actions -->
-  <div card-actions class="flex items-center gap-3">
-    <div class="flex items-center gap-2">
-      <span class="text-xs text-slate-500 font-medium">Filter Parcel:</span>
-      <select 
-        (change)="filterByParcel($event)" 
-        class="erp-input text-xs py-1.5 px-3 w-48 sm:w-56 max-w-[240px] truncate font-medium bg-white dark:bg-slate-900 shadow-sm"
-      >
-        <option value="">All Land Parcels</option>
-        @for (p of proposals(); track p.id) {
-          <option [value]="p.id">{{ p.project_code }} - {{ p.mouza_name }}</option>
-        }
-      </select>
+  <!-- Card Header Actions -->
+  <div card-actions class="flex flex-wrap items-center gap-2.5">
+    <div class="w-64">
+      <app-searchable-select
+        [options]="parcelOptions()"
+        [ngModel]="selectedLandBankId()"
+        (selectionChange)="onParcelFilterChange($event)"
+        placeholder="Filter by Land Parcel..."
+        [allowCreateNew]="false"
+      />
     </div>
 
-    <app-custom-button variant="primary" (btnClick)="openCreateModal()">
-      <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-      </svg>
-      Log Survey Record
-    </app-custom-button>
+    @if (activeTab() === 'khatians') {
+      <app-custom-button variant="primary" (btnClick)="openKhatianModal()">
+        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        New Khatian Survey
+      </app-custom-button>
+    } @else if (activeTab() === 'dags') {
+      <app-custom-button variant="primary" (btnClick)="openDagModal()">
+        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        Add Dag Plot
+      </app-custom-button>
+    } @else if (activeTab() === 'documents') {
+      <app-custom-button variant="primary" (btnClick)="openDocModal()">
+        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        Register Deed / Khajna
+      </app-custom-button>
+    }
   </div>
 
-  <!-- Surveys Table -->
-  <div class="overflow-x-auto">
-    <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800 text-left text-xs">
-      <thead class="bg-slate-50 dark:bg-slate-850 text-slate-600 dark:text-slate-400 font-semibold uppercase tracking-wider whitespace-nowrap">
-        <tr>
-          <th class="px-4 py-3">Parcel Code</th>
-          <th class="px-4 py-3">Survey Type</th>
-          <th class="px-4 py-3">Khatian Number</th>
-          <th class="px-4 py-3">Dag Number</th>
-          <th class="px-4 py-3">Recorded Tenant</th>
-          <th class="px-4 py-3">Recorded Area</th>
-          <th class="px-4 py-3">Historical Remarks</th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300">
-        @if (isLoading()) {
+  <!-- Tab Navigation -->
+  <div class="flex items-center gap-2 mb-6 border-b border-slate-200 dark:border-slate-800 pb-3">
+    <button 
+      type="button"
+      (click)="activeTab.set('khatians')"
+      class="px-4 py-2 rounded-xl text-xs font-bold transition-all duration-150 flex items-center gap-2"
+      [ngClass]="activeTab() === 'khatians' 
+        ? 'bg-emerald-600 text-white shadow-sm' 
+        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'"
+    >
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+      </svg>
+      <span>Khatian Lineage ({{ khatians().length }})</span>
+    </button>
+
+    <button 
+      type="button"
+      (click)="activeTab.set('dags')"
+      class="px-4 py-2 rounded-xl text-xs font-bold transition-all duration-150 flex items-center gap-2"
+      [ngClass]="activeTab() === 'dags' 
+        ? 'bg-emerald-600 text-white shadow-sm' 
+        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'"
+    >
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+      </svg>
+      <span>Dag / Plot Matrix ({{ dags().length }})</span>
+    </button>
+
+    <button 
+      type="button"
+      (click)="activeTab.set('documents')"
+      class="px-4 py-2 rounded-xl text-xs font-bold transition-all duration-150 flex items-center gap-2"
+      [ngClass]="activeTab() === 'documents' 
+        ? 'bg-emerald-600 text-white shadow-sm' 
+        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'"
+    >
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+      </svg>
+      <span>Legal Deeds & Expiry ({{ documents().length }})</span>
+      @if (expiryAlerts().length > 0) {
+        <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
+      }
+    </button>
+
+    <button 
+      type="button"
+      (click)="activeTab.set('converter')"
+      class="px-4 py-2 rounded-xl text-xs font-bold transition-all duration-150 flex items-center gap-2"
+      [ngClass]="activeTab() === 'converter' 
+        ? 'bg-emerald-600 text-white shadow-sm' 
+        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'"
+    >
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+      </svg>
+      <span>Multi-Unit Area Converter</span>
+    </button>
+  </div>
+
+  <!-- TAB 1: KHATIAN HIERARCHY -->
+  @if (activeTab() === 'khatians') {
+    <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+      <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800 text-left text-xs">
+        <thead class="bg-slate-50 dark:bg-slate-850 text-slate-600 dark:text-slate-400 font-semibold uppercase tracking-wider whitespace-nowrap">
           <tr>
-            <td colspan="7" class="px-4 py-8 text-center text-slate-400">
-              <div class="inline-flex items-center gap-2">
-                <svg class="animate-spin h-4 w-4 text-emerald-600" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-                </svg>
-                Loading survey records...
-              </div>
-            </td>
+            <th class="px-4 py-3">Land Parcel</th>
+            <th class="px-4 py-3">Survey Type</th>
+            <th class="px-4 py-3">Khatian Number</th>
+            <th class="px-4 py-3">Recorded Tenant / Owner</th>
+            <th class="px-4 py-3">Jote / Case No.</th>
+            <th class="px-4 py-3">Remarks / Legal Notes</th>
           </tr>
-        } @else if (surveys().length === 0) {
-          <tr>
-            <td colspan="7" class="px-4 py-12 text-center text-slate-400">
-              No historical survey records logged yet. Click "+ Log Survey Record" to add CS/SA/RS/BS khatian.
-            </td>
-          </tr>
-        } @else {
-          @for (s of surveys(); track s.id) {
-            <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
-              <td class="px-4 py-3.5 font-mono font-semibold text-slate-900 dark:text-slate-100">
-                {{ getParcelCode(s.land_bank_id) }}
-              </td>
-              <td class="px-4 py-3.5">
-                <span 
-                  class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold"
-                  [class.bg-sky-100]="s.survey_type_id === 'CS'"
-                  [class.text-sky-800]="s.survey_type_id === 'CS'"
-                  [class.bg-purple-100]="s.survey_type_id === 'SA'"
-                  [class.text-purple-800]="s.survey_type_id === 'SA'"
-                  [class.bg-emerald-100]="s.survey_type_id === 'RS'"
-                  [class.text-emerald-800]="s.survey_type_id === 'RS'"
-                  [class.bg-indigo-100]="s.survey_type_id === 'BS_CITY' || s.survey_type_id === 'BS'"
-                  [class.text-indigo-800]="s.survey_type_id === 'BS_CITY' || s.survey_type_id === 'BS'"
-                >
-                  {{ s.survey_type_id }}
-                </span>
-              </td>
-              <td class="px-4 py-3.5 font-mono font-medium text-slate-900 dark:text-slate-100">
-                {{ s.khatian_number }}
-              </td>
-              <td class="px-4 py-3.5 font-mono text-slate-700 dark:text-slate-300">
-                {{ s.dag_number }}
-              </td>
-              <td class="px-4 py-3.5 font-medium text-slate-800 dark:text-slate-200">
-                {{ s.recorded_tenant_name }}
-              </td>
-              <td class="px-4 py-3.5">
-                <span class="font-semibold text-emerald-600 dark:text-emerald-400">{{ s.recorded_area_katha }} Katha</span>
-                <span class="text-[11px] text-slate-400 ml-1">({{ s.recorded_area_decimal }} Dec)</span>
-              </td>
-              <td class="px-4 py-3.5 text-xs text-slate-500 max-w-xs truncate">
-                {{ s.remarks || '-' }}
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300">
+          @if (khatians().length === 0) {
+            <tr>
+              <td colspan="6" class="px-4 py-12 text-center text-slate-400">
+                No Khatian survey records found. Click "+ New Khatian Survey" to record CS, SA, RS, or BS title.
               </td>
             </tr>
+          } @else {
+            @for (kh of khatians(); track kh.id) {
+              <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                <td class="px-4 py-3.5">
+                  <div class="font-medium text-slate-900 dark:text-slate-100">{{ getParcelTitle(kh.land_bank_id) }}</div>
+                </td>
+                <td class="px-4 py-3.5">
+                  <span 
+                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold"
+                    [ngClass]="{
+                      'bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300': kh.khatian_type === 'CS',
+                      'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300': kh.khatian_type === 'SA',
+                      'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300': kh.khatian_type === 'RS',
+                      'bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300': kh.khatian_type === 'BS',
+                      'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300': kh.khatian_type === 'MUTATION'
+                    }"
+                  >
+                    {{ kh.khatian_type }}
+                  </span>
+                </td>
+                <td class="px-4 py-3.5 font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                  {{ kh.khatian_number }}
+                </td>
+                <td class="px-4 py-3.5 font-medium text-slate-800 dark:text-slate-200">
+                  {{ kh.recorded_tenant_name }}
+                </td>
+                <td class="px-4 py-3.5 font-mono text-slate-600 dark:text-slate-400">
+                  {{ kh.case_or_jote_no || '-' }}
+                </td>
+                <td class="px-4 py-3.5 text-slate-500 max-w-xs truncate">
+                  {{ kh.remarks || '-' }}
+                </td>
+              </tr>
+            }
           }
-        }
-      </tbody>
-    </table>
-  </div>
+        </tbody>
+      </table>
+    </div>
+  }
+
+  <!-- TAB 2: DAG / PLOT MATRIX -->
+  @if (activeTab() === 'dags') {
+    <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+      <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800 text-left text-xs">
+        <thead class="bg-slate-50 dark:bg-slate-850 text-slate-600 dark:text-slate-400 font-semibold uppercase tracking-wider whitespace-nowrap">
+          <tr>
+            <th class="px-4 py-3">Dag / Plot No.</th>
+            <th class="px-4 py-3">Land Parcel</th>
+            <th class="px-4 py-3">Land Classification</th>
+            <th class="px-4 py-3">Area (Katha)</th>
+            <th class="px-4 py-3">Area (Decimal)</th>
+            <th class="px-4 py-3">Area (Bigha)</th>
+            <th class="px-4 py-3">Area (Sq Ft)</th>
+            <th class="px-4 py-3">Physical Possession</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300">
+          @if (dags().length === 0) {
+            <tr>
+              <td colspan="8" class="px-4 py-12 text-center text-slate-400">
+                No Dag/Plot plots recorded yet. Click "+ Add Dag Plot" to map boundary plots.
+              </td>
+            </tr>
+          } @else {
+            @for (dag of dags(); track dag.id) {
+              <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                <td class="px-4 py-3.5 font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                  {{ dag.dag_number }}
+                </td>
+                <td class="px-4 py-3.5 font-medium text-slate-900 dark:text-slate-100">
+                  {{ getParcelTitle(dag.land_bank_id) }}
+                </td>
+                <td class="px-4 py-3.5">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                    {{ dag.land_class }}
+                  </span>
+                </td>
+                <td class="px-4 py-3.5 font-bold text-emerald-600 dark:text-emerald-400">
+                  {{ dag.area_katha | number:'1.2-2' }} Katha
+                </td>
+                <td class="px-4 py-3.5 font-medium text-slate-700 dark:text-slate-300">
+                  {{ dag.area_decimal | number:'1.2-2' }} Dec
+                </td>
+                <td class="px-4 py-3.5 font-medium text-slate-700 dark:text-slate-300">
+                  {{ dag.area_bigha | number:'1.3-3' }} Bigha
+                </td>
+                <td class="px-4 py-3.5 font-mono text-slate-600 dark:text-slate-400">
+                  {{ dag.area_sqft | number:'1.0-0' }} Sq Ft
+                </td>
+                <td class="px-4 py-3.5">
+                  <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold"
+                    [ngClass]="dag.possession_status === 'FULL_POSSESSION' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'">
+                    {{ dag.possession_status === 'FULL_POSSESSION' ? 'Full Possession' : 'Dispute/Encroachment' }}
+                  </span>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  <!-- TAB 3: LEGAL DOCUMENTS & EXPIRY ALERTS -->
+  @if (activeTab() === 'documents') {
+    <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+      <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800 text-left text-xs">
+        <thead class="bg-slate-50 dark:bg-slate-850 text-slate-600 dark:text-slate-400 font-semibold uppercase tracking-wider whitespace-nowrap">
+          <tr>
+            <th class="px-4 py-3">Doc Type</th>
+            <th class="px-4 py-3">Document / Receipt No.</th>
+            <th class="px-4 py-3">Land Parcel</th>
+            <th class="px-4 py-3">Issuing Authority</th>
+            <th class="px-4 py-3">Execution Date</th>
+            <th class="px-4 py-3">Expiry Date</th>
+            <th class="px-4 py-3">Status / Alerts</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300">
+          @if (documents().length === 0) {
+            <tr>
+              <td colspan="7" class="px-4 py-12 text-center text-slate-400">
+                No statutory documents logged. Click "+ Register Deed / Khajna" to upload tax dakhila or PoA deed.
+              </td>
+            </tr>
+          } @else {
+            @for (doc of documents(); track doc.id) {
+              <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                <td class="px-4 py-3.5">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold"
+                    [ngClass]="doc.doc_type === 'KHAJNA_TAX' ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300' : 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300'">
+                    {{ doc.doc_type }}
+                  </span>
+                </td>
+                <td class="px-4 py-3.5 font-mono font-bold text-slate-900 dark:text-slate-100">
+                  {{ doc.doc_number }}
+                </td>
+                <td class="px-4 py-3.5 font-medium text-slate-800 dark:text-slate-200">
+                  {{ getParcelTitle(doc.land_bank_id) }}
+                </td>
+                <td class="px-4 py-3.5 text-slate-600 dark:text-slate-400">
+                  {{ doc.issuing_office }}
+                </td>
+                <td class="px-4 py-3.5 text-slate-600 dark:text-slate-400 font-mono">
+                  {{ doc.execution_date }}
+                </td>
+                <td class="px-4 py-3.5 font-mono">
+                  @if (doc.expiry_date) {
+                    <span [ngClass]="doc.is_expired ? 'text-rose-600 font-bold' : 'text-slate-700 dark:text-slate-300'">
+                      {{ doc.expiry_date }}
+                    </span>
+                  } @else {
+                    <span class="text-slate-400">Perpetual</span>
+                  }
+                </td>
+                <td class="px-4 py-3.5">
+                  @if (doc.is_expired) {
+                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300">
+                      EXPIRED (Immediate Renewal)
+                    </span>
+                  } @else {
+                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                      {{ doc.verification_status }}
+                    </span>
+                  }
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  <!-- TAB 4: INTERACTIVE BANGLADESH LAND AREA CONVERTER -->
+  @if (activeTab() === 'converter') {
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 p-6 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850/50">
+      <div class="space-y-4">
+        <h4 class="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+          Input Measurement Value
+        </h4>
+
+        <form [formGroup]="converterForm" (input)="calculateConverter()" class="space-y-4">
+          <app-searchable-select
+            label="Measurement Standard"
+            [options]="unitOptions"
+            formControlName="unit"
+            (selectionChange)="calculateConverter()"
+            placeholder="Select unit..."
+            [allowCreateNew]="false"
+          />
+
+          <app-custom-input
+            label="Input Value"
+            type="number"
+            formControlName="value"
+            placeholder="e.g. 10"
+            [required]="true"
+          />
+        </form>
+
+        <div class="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-500">
+          <strong>Bangladesh Statutory Ratios:</strong>
+          <ul class="list-disc pl-4 mt-1 space-y-0.5 text-[11px]">
+            <li>1 Katha = 720 Sq Ft ≈ 1.6528 Decimal</li>
+            <li>1 Decimal = 435.60 Sq Ft</li>
+            <li>1 Bigha = 20 Katha = 14,400 Sq Ft</li>
+            <li>1 Acre = 100 Decimal = 43,560 Sq Ft</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Converted Results Display Cards -->
+      <div class="md:col-span-2 grid grid-cols-2 gap-4">
+        <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+          <span class="text-xs font-semibold text-slate-400 uppercase">Katha (Dhaka Standard)</span>
+          <div class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">
+            {{ converterResult()?.katha | number:'1.2-4' }} Katha
+          </div>
+          <span class="text-[11px] text-slate-400">Equivalent in local katha</span>
+        </div>
+
+        <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+          <span class="text-xs font-semibold text-slate-400 uppercase">Decimal / Shotok</span>
+          <div class="text-2xl font-bold text-indigo-600 dark:text-indigo-400 mt-1">
+            {{ converterResult()?.decimal | number:'1.2-4' }} Dec
+          </div>
+          <span class="text-[11px] text-slate-400">Government revenue record unit</span>
+        </div>
+
+        <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+          <span class="text-xs font-semibold text-slate-400 uppercase">Bigha (20 Katha)</span>
+          <div class="text-2xl font-bold text-purple-600 dark:text-purple-400 mt-1">
+            {{ converterResult()?.bigha | number:'1.3-4' }} Bigha
+          </div>
+          <span class="text-[11px] text-slate-400">Large estate acreage standard</span>
+        </div>
+
+        <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+          <span class="text-xs font-semibold text-slate-400 uppercase">Square Feet (Sq Ft)</span>
+          <div class="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">
+            {{ converterResult()?.sqft | number:'1.0-2' }} Sq Ft
+          </div>
+          <span class="text-[11px] text-slate-400">FAR & architectural calculations</span>
+        </div>
+      </div>
+    </div>
+  }
 </app-card-container>
 
-<!-- LOG SURVEY MODAL -->
-@if (isModalOpen()) {
-  <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="erp-card w-full max-w-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-      <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-850">
-        <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100">
-          Log Historic Survey / Khatian Record
+<!-- MODAL 1: ADD KHATIAN -->
+@if (isKhatianModalOpen()) {
+  <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="w-full max-w-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-850">
+        <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+          Log Khatian Survey Record (CS / SA / RS / BS)
         </h3>
-        <button (click)="closeModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <button (click)="closeKhatianModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
           </svg>
         </button>
       </div>
 
-      <form [formGroup]="surveyForm" (ngSubmit)="submitSurvey()" class="p-6 space-y-4">
+      <form [formGroup]="khatianForm" (ngSubmit)="submitKhatian()" class="p-6 space-y-4">
         @if (errorMessage()) {
-          <div class="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-lg text-xs text-rose-600 dark:text-rose-400">
+          <div class="p-3 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs rounded-xl">
             {{ errorMessage() }}
           </div>
         }
 
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Associated Land Parcel *</label>
-          <select formControlName="land_bank_id" class="erp-input text-xs">
-            <option [ngValue]="null" disabled>Select land parcel...</option>
-            @for (p of proposals(); track p.id) {
-              <option [value]="p.id">{{ p.project_code }} - {{ p.proposal_title }} ({{ p.mouza_name }})</option>
-            }
-          </select>
-        </div>
+        <app-searchable-select
+          label="Target Land Parcel"
+          [options]="parcelOptions()"
+          formControlName="land_bank_id"
+          placeholder="Select land parcel..."
+          [allowCreateNew]="true"
+          [required]="true"
+        />
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Dynamic Category Searchable Select with In-Place Add New! -->
+        <div class="grid grid-cols-2 gap-4">
           <app-searchable-select
-            categoryCode="LAND_SURVEY_TYPE"
-            label="Historic Survey Type *"
-            formControlName="survey_type_id"
+            label="Khatian Survey Type"
+            [options]="khatianTypeOptions"
+            formControlName="khatian_type"
             placeholder="Select survey type..."
-          ></app-searchable-select>
+            [allowCreateNew]="false"
+            [required]="true"
+          />
 
           <app-custom-input
+            label="Khatian Number"
             formControlName="khatian_number"
-            label="Khatian Number *"
-            placeholder="e.g. RS-1402 / SA-489"
-          ></app-custom-input>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <app-custom-input
-            formControlName="dag_number"
-            label="Dag (Plot) Number *"
-            placeholder="e.g. RS-2201 / CS-504"
-          ></app-custom-input>
-
-          <app-custom-input
-            formControlName="recorded_area_decimal"
-            type="number"
-            label="Recorded Area (Decimal) *"
-            placeholder="e.g. 30.55"
-            hint="Auto-converts to Katha in registry"
-          ></app-custom-input>
+            placeholder="e.g. RS-5521"
+            [required]="true"
+          />
         </div>
 
         <app-custom-input
+          label="Recorded Tenant / Zamindar Name"
           formControlName="recorded_tenant_name"
-          label="Recorded Tenant Name (দখলদার/প্রজা) *"
-          placeholder="e.g. Alhaj Rafiqul Islam Chowdhury"
-        ></app-custom-input>
+          placeholder="e.g. Alhaj Shamsul Haque"
+          [required]="true"
+        />
 
         <app-custom-input
-          formControlName="remarks"
-          label="Archival Remarks & Reference"
-          placeholder="e.g. Settlement volume page # 142, registered sub-registry deed link"
-        ></app-custom-input>
+          label="Jote / Case / Mutation Case No."
+          formControlName="case_or_jote_no"
+          placeholder="e.g. JOTE-8821"
+        />
 
-        <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
-          <app-custom-button type="button" variant="secondary" (btnClick)="closeModal()">Cancel</app-custom-button>
-          <app-custom-button type="submit" variant="primary" [loading]="isSubmitting()">Save Survey Record</app-custom-button>
+        <app-custom-textarea
+          label="Remarks / History Notes"
+          formControlName="remarks"
+          placeholder="Parentage, succession links or land office verification remarks..."
+          [rows]="2"
+        />
+
+        <div class="pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-3">
+          <app-custom-button variant="secondary" (btnClick)="closeKhatianModal()">
+            Cancel
+          </app-custom-button>
+          <app-custom-button variant="primary" type="submit" [disabled]="isSubmitting()">
+            @if (isSubmitting()) {
+              Saving Khatian...
+            } @else {
+              Save Khatian Record
+            }
+          </app-custom-button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- MODAL 2: ADD DAG / PLOT -->
+@if (isDagModalOpen()) {
+  <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="w-full max-w-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-850">
+        <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+          Register Dag / Plot with Multi-Unit Conversion
+        </h3>
+        <button (click)="closeDagModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <form [formGroup]="dagForm" (ngSubmit)="submitDag()" class="p-6 space-y-4">
+        @if (errorMessage()) {
+          <div class="p-3 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs rounded-xl">
+            {{ errorMessage() }}
+          </div>
+        }
+
+        <app-searchable-select
+          label="Target Land Parcel"
+          [options]="parcelOptions()"
+          formControlName="land_bank_id"
+          placeholder="Select land parcel..."
+          [allowCreateNew]="true"
+          [required]="true"
+        />
+
+        <div class="grid grid-cols-2 gap-4">
+          <app-searchable-select
+            label="Linked Khatian (Optional)"
+            [options]="khatianOptions()"
+            formControlName="khatian_id"
+            placeholder="Link to khatian..."
+            [allowCreateNew]="true"
+          />
+
+          <app-custom-input
+            label="Dag / Plot Number"
+            formControlName="dag_number"
+            placeholder="e.g. DAG-881"
+            [required]="true"
+          />
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <app-searchable-select
+            label="Land Classification"
+            [options]="landClassOptions"
+            formControlName="land_class"
+            placeholder="Select class..."
+            [allowCreateNew]="false"
+            [required]="true"
+          />
+
+          <app-searchable-select
+            label="Physical Possession"
+            [options]="possessionOptions"
+            formControlName="possession_status"
+            placeholder="Select status..."
+            [allowCreateNew]="false"
+            [required]="true"
+          />
+        </div>
+
+        <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850/50">
+          <span class="text-xs font-bold text-slate-800 dark:text-slate-200 mb-2 block">Plot Area & Math Converter</span>
+          <div class="grid grid-cols-2 gap-4">
+            <app-searchable-select
+              label="Input Unit"
+              [options]="unitOptions"
+              formControlName="input_unit"
+              placeholder="Select unit..."
+              [allowCreateNew]="false"
+              [required]="true"
+            />
+
+            <app-custom-input
+              label="Area Value"
+              type="number"
+              formControlName="input_value"
+              placeholder="e.g. 10"
+              [required]="true"
+            />
+          </div>
+          <div class="text-[11px] text-slate-400 mt-2">
+            The engine will auto-compute Katha, Decimal, Bigha, and Sq Ft across all Bangladesh statutory standards.
+          </div>
+        </div>
+
+        <div class="pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-3">
+          <app-custom-button variant="secondary" (btnClick)="closeDagModal()">
+            Cancel
+          </app-custom-button>
+          <app-custom-button variant="primary" type="submit" [disabled]="isSubmitting()">
+            @if (isSubmitting()) {
+              Saving Dag...
+            } @else {
+              Save Dag Plot
+            }
+          </app-custom-button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- MODAL 3: ADD STATUTORY DOCUMENT -->
+@if (isDocModalOpen()) {
+  <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="w-full max-w-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-850">
+        <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+          Register Legal Deed, Mutation, DCR or Khajna Receipt
+        </h3>
+        <button (click)="closeDocModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <form [formGroup]="docForm" (ngSubmit)="submitDoc()" class="p-6 space-y-4">
+        @if (errorMessage()) {
+          <div class="p-3 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs rounded-xl">
+            {{ errorMessage() }}
+          </div>
+        }
+
+        <app-searchable-select
+          label="Target Land Parcel"
+          [options]="parcelOptions()"
+          formControlName="land_bank_id"
+          placeholder="Select land parcel..."
+          [allowCreateNew]="true"
+          [required]="true"
+        />
+
+        <div class="grid grid-cols-2 gap-4">
+          <app-searchable-select
+            label="Document Classification"
+            [options]="docTypeOptions"
+            formControlName="doc_type"
+            placeholder="Select doc type..."
+            [allowCreateNew]="false"
+            [required]="true"
+          />
+
+          <app-custom-input
+            label="Document / Receipt No."
+            formControlName="doc_number"
+            placeholder="e.g. TAX-2026-991"
+            [required]="true"
+          />
+        </div>
+
+        <app-custom-input
+          label="Issuing Office / Authority"
+          formControlName="issuing_office"
+          placeholder="e.g. AC Land, Gulshan Revenue Circle"
+          [required]="true"
+        />
+
+        <div class="grid grid-cols-2 gap-4">
+          <app-custom-input
+            label="Execution / Issue Date"
+            type="date"
+            formControlName="execution_date"
+            [required]="true"
+          />
+
+          <app-custom-input
+            label="Annual Expiry Date"
+            type="date"
+            formControlName="expiry_date"
+            hint="For Khajna Tax or PoA (Alert triggers at 60 days)"
+          />
+        </div>
+
+        <app-searchable-select
+          label="Legal Verification Status"
+          [options]="verificationStatusOptions"
+          formControlName="verification_status"
+          placeholder="Select status..."
+          [allowCreateNew]="false"
+          [required]="true"
+        />
+
+        <app-custom-textarea
+          label="Verification Notes"
+          formControlName="notes"
+          placeholder="Volume and page reference in Sub-Registry or AC Land Dakhila serial..."
+          [rows]="2"
+        />
+
+        <div class="pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-3">
+          <app-custom-button variant="secondary" (btnClick)="closeDocModal()">
+            Cancel
+          </app-custom-button>
+          <app-custom-button variant="primary" type="submit" [disabled]="isSubmitting()">
+            @if (isSubmitting()) {
+              Registering Document...
+            } @else {
+              Save Legal Document
+            }
+          </app-custom-button>
         </div>
       </form>
     </div>

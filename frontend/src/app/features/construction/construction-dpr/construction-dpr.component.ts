@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
 import { ConstructionService } from '../../../core/services/construction.service';
 import { ProjectService } from '../../../core/services/project.service';
-import { DPRReport, Subcontractor, ConstructionMetrics } from '../../../core/models/construction.model';
+import { DPRReport, Subcontractor, ConstructionMetrics, WBSNode } from '../../../core/models/construction.model';
 import { Project } from '../../../core/models/project.model';
 import {
   CardContainerComponent,
@@ -36,28 +36,38 @@ export class ConstructionDprComponent implements OnInit {
   dprReports = signal<DPRReport[]>([]);
   projects = signal<Project[]>([]);
   contractors = signal<Subcontractor[]>([]);
+  wbsNodes = signal<WBSNode[]>([]);
   metrics = signal<ConstructionMetrics | null>(null);
 
   isLoading = signal<boolean>(false);
   isSubmitting = signal<boolean>(false);
   isCreateModalOpen = signal<boolean>(false);
+  selectedDprForPhotos = signal<DPRReport | null>(null);
 
   dprForm: FormGroup = this.fb.group({
     project_id: [null, Validators.required],
+    wbs_node_id: [null],
     report_date: [new Date().toISOString().split('T')[0], Validators.required],
     weather_condition_id: ['SUNNY', Validators.required],
+    floor_unit_location: ['', Validators.required],
+    machinery_deployed: [''],
     structural_activity_summary: ['', Validators.required],
     concrete_casting_cft: [0, [Validators.min(0)]],
     steel_rod_consumed_mt: [0, [Validators.min(0)]],
     cement_consumed_bags: [0, [Validators.min(0)]],
+    safety_incident_logged: [false],
+    safety_incident_notes: [''],
+    site_photo_url: [''],
+    site_photo_caption: [''],
     labor_entries: this.fb.array([])
   });
 
   weatherOptions = [
-    { value: 'SUNNY', label: '☀️ Sunny / Fair Weather' },
-    { value: 'OVERCAST', label: '⛅ Overcast / Cloudy' },
-    { value: 'RAIN_LIGHT', label: '🌦️ Light Intermittent Rain' },
-    { value: 'RAIN_HEAVY', label: '⛈️ Heavy Downpour / Work Stopped' }
+    { value: 'SUNNY', label: '☀️ Sunny / Clear Weather' },
+    { value: 'OVERCAST', label: '⛅ Overcast / Heavy Cloud' },
+    { value: 'RAIN_LIGHT', label: '🌦️ Light Rain (Work Continued)' },
+    { value: 'RAIN_HEAVY', label: '⛈️ Heavy Downpour (Work Halted)' },
+    { value: 'STORMY', label: '🌪️ Storm / High Wind Alert' }
   ];
 
   tradeCategoryOptions = [
@@ -88,14 +98,32 @@ export class ConstructionDprComponent implements OnInit {
   }
 
   loadDropdowns(): void {
-    this.projectService.getProjects().subscribe(p => this.projects.set(p));
+    this.projectService.getProjects().subscribe(p => {
+      this.projects.set(p);
+      if (p.length > 0) {
+        this.loadWBSNodes(p[0].id);
+      }
+    });
     this.constructionService.getContractors().subscribe(c => this.contractors.set(c));
+  }
+
+  loadWBSNodes(projectId: number): void {
+    this.constructionService.getWBSNodes({ project_id: projectId }).subscribe(nodes => {
+      this.wbsNodes.set(nodes);
+    });
   }
 
   get projectOptions() {
     return this.projects().map(p => ({
       value: p.id,
       label: `${p.project_name} (${p.project_code})`
+    }));
+  }
+
+  get wbsOptions() {
+    return this.wbsNodes().map(n => ({
+      value: n.id,
+      label: `[${n.node_code}] ${n.node_name}`
     }));
   }
 
@@ -127,15 +155,21 @@ export class ConstructionDprComponent implements OnInit {
   openCreateModal(): void {
     this.dprForm.reset({
       project_id: this.projects()[0]?.id || null,
+      wbs_node_id: this.wbsNodes()[0]?.id || null,
       report_date: new Date().toISOString().split('T')[0],
       weather_condition_id: 'SUNNY',
+      floor_unit_location: 'Tower 1 - Floor 4 Beam & Slab B4-S4',
+      machinery_deployed: '1x Putzmeister 42m Pump, 2x Transit Mixers, 4x Vibrators',
       structural_activity_summary: '',
       concrete_casting_cft: 0,
       steel_rod_consumed_mt: 0,
-      cement_consumed_bags: 0
+      cement_consumed_bags: 0,
+      safety_incident_logged: false,
+      safety_incident_notes: '',
+      site_photo_url: 'assets/images/construction/dpr_pour_1.jpg',
+      site_photo_caption: 'Concrete pouring and slump test verification'
     });
     this.laborArray.clear();
-    // Default 1 labor muster line
     this.addLaborRow();
     this.isCreateModalOpen.set(true);
   }
@@ -144,10 +178,45 @@ export class ConstructionDprComponent implements OnInit {
     this.isCreateModalOpen.set(false);
   }
 
+  viewPhotos(dpr: DPRReport): void {
+    this.selectedDprForPhotos.set(dpr);
+  }
+
+  closePhotosModal(): void {
+    this.selectedDprForPhotos.set(null);
+  }
+
   submitDPR(): void {
     if (this.dprForm.invalid) return;
     this.isSubmitting.set(true);
-    this.constructionService.createDPRReport(this.dprForm.value).subscribe({
+
+    const val = this.dprForm.value;
+    const photos: { url: string; caption: string }[] = [];
+    if (val.site_photo_url) {
+      photos.push({
+        url: val.site_photo_url,
+        caption: val.site_photo_caption || 'Site execution photo'
+      });
+    }
+
+    const payload = {
+      project_id: val.project_id,
+      wbs_node_id: val.wbs_node_id,
+      report_date: val.report_date,
+      weather_condition_id: val.weather_condition_id,
+      floor_unit_location: val.floor_unit_location,
+      machinery_deployed: val.machinery_deployed,
+      structural_activity_summary: val.structural_activity_summary,
+      concrete_casting_cft: val.concrete_casting_cft,
+      steel_rod_consumed_mt: val.steel_rod_consumed_mt,
+      cement_consumed_bags: val.cement_consumed_bags,
+      safety_incident_logged: Boolean(val.safety_incident_logged),
+      safety_incident_notes: val.safety_incident_notes,
+      site_photos: photos,
+      labor_entries: val.labor_entries
+    };
+
+    this.constructionService.createDPRReport(payload).subscribe({
       next: (created) => {
         this.dprReports.update(list => [created, ...list]);
         this.isSubmitting.set(false);

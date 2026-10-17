@@ -40,6 +40,7 @@ export class SidebarComponent implements OnInit {
       title: 'Settings & Core',
       iconSvg: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z',
       items: [
+        { id: 'governance', label: 'Maker-Checker Approval Engine', route: '/governance/approvals', badge: 'Tier-1' },
         { id: 'lookups', label: 'Dynamic Dropdowns', route: '/settings/lookups' },
         { id: 'rbac', label: 'RBAC & Project Security', route: '/settings/rbac' },
         { id: 'legal', label: 'Legal & Court Litigation', route: '/settings/legal-cases' },
@@ -131,9 +132,21 @@ export class SidebarComponent implements OnInit {
         { id: 'pdc-kanban', label: 'PDC Vault & Kanban Safe', route: '/accounts/pdc-kanban', badge: 'Safe' },
         { id: 'bank-recon-wizard', label: 'Smart Bank Statement Recon', route: '/accounts/bank-recon-wizard' },
         { id: 'reports', label: 'Financial Reports & P&L', route: '/accounts/financial-reports' },
-        { id: 'mushak-63', label: 'Mushak 6.3 VAT Tax Invoices', route: '/accounts/vat-mushak' },
-        { id: 'tds-vds', label: 'TDS & VDS Withholding Tax', route: '/accounts/tax-withholding' },
-        { id: 'ait-53ff', label: 'Sub-Registry AIT Calculator', route: '/accounts/sub-registry-calc' }
+        { id: 'mushak-63', label: 'Mushak 6.3 VAT Tax Invoices', route: '/tax/cockpit' },
+        { id: 'tds-vds', label: 'TDS & VDS Withholding Tax', route: '/tax/cockpit' },
+        { id: 'ait-53ff', label: 'Sub-Registry AIT Calculator', route: '/tax/cockpit' }
+      ]
+    },
+    {
+      id: 'tax',
+      title: 'NBR Tax & Statutory VAT',
+      iconSvg: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
+      items: [
+        { id: 'tax-cockpit', label: 'NBR Tax & VAT Cockpit', route: '/tax/cockpit', badge: 'NBR' },
+        { id: 'tax-mushak63', label: 'Mushak 6.3 VAT Invoices', route: '/tax/cockpit' },
+        { id: 'tax-mushak65', label: 'Mushak 6.5 Transfer Challan', route: '/tax/cockpit' },
+        { id: 'tax-tds', label: 'TDS & VDS Withholding Register', route: '/tax/cockpit' },
+        { id: 'tax-53ff', label: 'Section 53FF AIT Calculator', route: '/tax/cockpit' }
       ]
     },
     {
@@ -141,6 +154,7 @@ export class SidebarComponent implements OnInit {
       title: 'Construction Operations',
       iconSvg: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4',
       items: [
+        { id: 'wbs-boq', label: 'WBS & BOQ Hard Budget Locks', route: '/construction/wbs-boq' },
         { id: 'dpr', label: 'Site Diary & Daily Progress (DPR)', route: '/construction/dpr' },
         { id: 'labor-muster', label: 'Subcontractor Labor Muster Roll', route: '/construction/labor-muster' },
         { id: 'ra-bills', label: 'Contractor RA Billing', route: '/construction/ra-bills' },
@@ -153,6 +167,7 @@ export class SidebarComponent implements OnInit {
       title: 'Procurement & Stores',
       iconSvg: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4',
       items: [
+        { id: 'cockpit', label: 'SCM & Procurement Cockpit', route: '/procurement/cockpit', badge: 'PR→MIN' },
         { id: 'stores', label: 'Site Store Stock Inventory', route: '/procurement/stores' },
         { id: 'cs', label: 'Comparative Statements (CS)', route: '/procurement/comparative-statements' },
         { id: 'grn', label: 'GRN & 3-Way Match Audit', route: '/procurement/grn' }

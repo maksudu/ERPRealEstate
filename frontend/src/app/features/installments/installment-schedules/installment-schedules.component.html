@@ -1,84 +1,149 @@
 <div class="flex flex-col gap-6">
-  <!-- Collections Overview Metric Cards -->
-  <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-    <div class="bg-card border border-border rounded-xl p-4 flex items-center justify-between shadow-sm">
-      <div>
-        <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Installments Due / Overdue</p>
-        <h3 class="text-2xl font-bold text-foreground mt-1">{{ metrics()?.total_installments_due || 0 }}</h3>
-      </div>
-      <div class="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-500">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-        </svg>
-      </div>
-    </div>
-
-    <div class="bg-card border border-border rounded-xl p-4 flex items-center justify-between shadow-sm">
-      <div>
-        <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total Overdue Arrears</p>
-        <h3 class="text-xl font-bold text-rose-500 mt-1">BDT {{ (metrics()?.total_overdue_amount || 0) | number:'1.0-0' }}</h3>
-      </div>
-      <div class="w-10 h-10 rounded-lg bg-rose-500/10 flex items-center justify-center text-rose-500">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-        </svg>
-      </div>
-    </div>
-
-    <div class="bg-card border border-border rounded-xl p-4 flex items-center justify-between shadow-sm">
-      <div>
-        <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">PDCs in Safe Vault</p>
-        <h3 class="text-2xl font-bold text-primary mt-1">{{ metrics()?.total_pdc_in_vault || 0 }}</h3>
-      </div>
-      <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
-        </svg>
-      </div>
-    </div>
-
-    <div class="bg-card border border-border rounded-xl p-4 flex items-center justify-between shadow-sm">
-      <div>
-        <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Active NI 138 Litigations</p>
-        <h3 class="text-2xl font-bold text-purple-500 mt-1">{{ metrics()?.active_ni138_actions || 0 }}</h3>
-      </div>
-      <div class="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-500">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/>
-        </svg>
-      </div>
-    </div>
-  </div>
-
-  <!-- Unified Main Card Container -->
+  <!-- Unified Outer Card Container -->
   <app-card-container
-    title="Customer Installment Schedules & Milestones"
-    subtitle="Monthly, Quarterly & Construction-Milestone Payment Triggers with Grace Periods"
+    title="Customer Installment Schedules & Automated Milestone Generator"
+    subtitle="Civil Engineering Milestones, EMI Amortization, 2%/Month Late Surcharge Engine & SMS/WhatsApp Dispatches"
   >
-    <!-- Filter & Generator Bar -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-      <div class="flex-1 max-w-md">
+    <!-- Collections Overview Metric Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div class="bg-card border border-border rounded-xl p-4 flex items-center justify-between shadow-sm">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Due / Overdue Milestones</p>
+          <h3 class="text-2xl font-bold text-foreground mt-1">{{ metrics()?.total_installments_due || 0 }}</h3>
+          <span class="text-[11px] text-amber-500 font-medium">Pending Realization</span>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500 border border-amber-500/20">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="bg-card border border-border rounded-xl p-4 flex items-center justify-between shadow-sm">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total Overdue Arrears</p>
+          <h3 class="text-xl font-bold text-rose-500 mt-1">BDT {{ (metrics()?.total_overdue_amount || 0) | number:'1.0-0' }}</h3>
+          <span class="text-[11px] text-rose-500 font-medium">Past Grace Period</span>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-rose-500/10 flex items-center justify-center text-rose-500 border border-rose-500/20">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="bg-card border border-border rounded-xl p-4 flex items-center justify-between shadow-sm">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">PDCs in Safe Vault</p>
+          <h3 class="text-2xl font-bold text-primary mt-1">{{ metrics()?.total_pdc_in_vault || 0 }}</h3>
+          <span class="text-[11px] text-primary font-medium">Dual-Key Custody</span>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="bg-card border border-border rounded-xl p-4 flex items-center justify-between shadow-sm">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Late Surcharges (2%/mo)</p>
+          <h3 class="text-2xl font-bold text-purple-500 mt-1">Active</h3>
+          <span class="text-[11px] text-purple-500 font-medium">Automated Interest Engine</span>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-500 border border-purple-500/20">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Surcharge Engine Result Banner -->
+    @if (surchargeResultBanner()) {
+      <div class="mb-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between text-xs text-emerald-600 dark:text-emerald-400">
+        <div class="flex items-center gap-2">
+          <svg class="w-5 h-5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <span class="font-medium">{{ surchargeResultBanner() }}</span>
+        </div>
+        <button (click)="surchargeResultBanner.set(null)" class="text-muted-foreground hover:text-foreground">✕</button>
+      </div>
+    }
+
+    <!-- Filter & Generator Action Bar -->
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1 max-w-xl">
         <app-searchable-select
           placeholder="Filter by Booking Allotment..."
           [options]="bookingOptions"
           [ngModel]="selectedBookingId()"
-          (selectionChange)="onFilterBookingChange($event?.item_code)"
+          (selectionChange)="onFilterBookingChange($event?.value || $event)"
+        />
+
+        <app-searchable-select
+          placeholder="Filter by Status..."
+          [options]="statusFilterOptions"
+          [ngModel]="selectedStatusFilter()"
+          (selectionChange)="onFilterStatusChange($event?.value || $event)"
         />
       </div>
 
-      <div class="flex items-center gap-3">
+      <div class="flex flex-wrap items-center gap-2">
+        <!-- Calculate Overdue Surcharges (2%/mo) Button -->
+        <button
+          type="button"
+          (click)="calculateSurcharges()"
+          [disabled]="isCalculatingSurcharges()"
+          class="px-3 py-2 text-xs font-semibold rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500/20 border border-purple-500/20 inline-flex items-center gap-1.5 transition-colors"
+          title="Recalculate 2%/month prorated late fee on all overdue installments past grace period"
+        >
+          <svg class="w-4 h-4" [ngClass]="{ 'animate-spin': isCalculatingSurcharges() }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+          </svg>
+          {{ isCalculatingSurcharges() ? 'Calculating...' : '⚡ Surcharge (2%/mo)' }}
+        </button>
+
+        <!-- Dispatch SMS / WhatsApp Alerts Button -->
+        <button
+          type="button"
+          (click)="openAlertModal()"
+          class="px-3 py-2 text-xs font-semibold rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20 inline-flex items-center gap-1.5 transition-colors"
+          title="Broadcast SMS and WhatsApp payment reminder alerts"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+          </svg>
+          📢 Dispatch Alerts
+        </button>
+
+        <!-- Alert History Button -->
+        <button
+          type="button"
+          (click)="openAlertHistoryModal()"
+          class="px-3 py-2 text-xs font-semibold rounded-xl bg-secondary text-foreground hover:bg-secondary/80 border border-border inline-flex items-center gap-1.5 transition-colors"
+          title="View dispatch audit history for SMS & WhatsApp reminders"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+          </svg>
+          History
+        </button>
+
+        <!-- Generate Schedule Button -->
         <app-custom-button variant="primary" (clicked)="openGenerateModal()">
           <span class="flex items-center gap-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
             </svg>
-            + Generate Installment Plan
+            + Generate Schedule
           </span>
         </app-custom-button>
       </div>
     </div>
 
-    <!-- Installments Table -->
+    <!-- Installments Master Table -->
     <div class="overflow-x-auto border border-border rounded-xl">
       <table class="w-full text-left text-sm text-foreground">
         <thead class="bg-secondary/40 text-xs font-semibold uppercase text-muted-foreground border-b border-border">
@@ -86,10 +151,12 @@
             <th class="px-4 py-3">#</th>
             <th class="px-4 py-3">Milestone / Title</th>
             <th class="px-4 py-3">Booking Allotment</th>
-            <th class="px-4 py-3">Due Date</th>
-            <th class="px-4 py-3 text-right">Payable Amount</th>
+            <th class="px-4 py-3">Due Date & Grace</th>
+            <th class="px-4 py-3 text-right">Payable & Surcharge</th>
             <th class="px-4 py-3 text-right">Paid Amount</th>
+            <th class="px-4 py-3 text-center">Multi-Channel Alerts</th>
             <th class="px-4 py-3 text-center">Status</th>
+            <th class="px-4 py-3 text-right">Action</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-border/60">
@@ -101,7 +168,7 @@
               <td class="px-4 py-3.5">
                 <div class="font-semibold text-foreground">{{ item.title }}</div>
                 @if (item.milestone_trigger) {
-                  <span class="inline-block text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-secondary text-primary mt-0.5">
+                  <span class="inline-block text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 mt-0.5">
                     Trigger: {{ item.milestone_trigger }}
                   </span>
                 }
@@ -109,21 +176,48 @@
               <td class="px-4 py-3.5">
                 <div class="font-mono text-xs font-bold text-primary">{{ item.booking_reference_no }}</div>
                 <div class="text-xs text-muted-foreground">{{ item.customer_name }} (Unit {{ item.unit_number }})</div>
+                <div class="text-[11px] text-muted-foreground">📞 {{ item.customer_phone }}</div>
               </td>
               <td class="px-4 py-3.5">
                 <span class="font-mono text-xs text-foreground font-medium">{{ item.due_date }}</span>
                 <span class="block text-[11px] text-muted-foreground">Grace: {{ item.grace_period_days }} days</span>
+                @if (item.overdue_days > 0) {
+                  <span class="inline-block text-[10px] font-bold text-rose-500 font-mono mt-0.5">
+                    ⚠️ {{ item.overdue_days }} days overdue
+                  </span>
+                }
               </td>
-              <td class="px-4 py-3.5 text-right font-mono font-bold text-foreground">
-                BDT {{ item.payable_amount | number:'1.0-0' }}
+              <td class="px-4 py-3.5 text-right font-mono">
+                <div class="font-bold text-foreground">BDT {{ item.payable_amount | number:'1.0-0' }}</div>
                 @if (item.late_fee_accrued > 0) {
-                  <span class="block text-[11px] text-rose-500 font-normal">
-                    Late Fee: +BDT {{ item.late_fee_accrued | number:'1.0-0' }}
+                  <span class="block text-[11px] text-rose-500 font-semibold">
+                    +Surcharge: BDT {{ item.late_fee_accrued | number:'1.0-0' }} ({{ item.surcharge_percentage }}%)
                   </span>
                 }
               </td>
               <td class="px-4 py-3.5 text-right font-mono font-medium text-emerald-500">
                 BDT {{ item.paid_amount | number:'1.0-0' }}
+              </td>
+              <td class="px-4 py-3.5 text-center">
+                <div class="flex items-center justify-center gap-1.5">
+                  <span 
+                    class="px-2 py-0.5 text-[10px] rounded font-mono font-bold"
+                    [ngClass]="item.sms_alert_sent ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-secondary text-muted-foreground border border-border'"
+                    [title]="item.sms_alert_sent ? 'SMS Alert Dispatched' : 'SMS Pending'"
+                  >
+                    SMS {{ item.sms_alert_sent ? '✓' : '-' }}
+                  </span>
+                  <span 
+                    class="px-2 py-0.5 text-[10px] rounded font-mono font-bold"
+                    [ngClass]="item.whatsapp_alert_sent ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-secondary text-muted-foreground border border-border'"
+                    [title]="item.whatsapp_alert_sent ? 'WhatsApp Alert Dispatched' : 'WhatsApp Pending'"
+                  >
+                    WA {{ item.whatsapp_alert_sent ? '✓' : '-' }}
+                  </span>
+                </div>
+                @if (item.last_alert_sent_at) {
+                  <span class="block text-[10px] text-muted-foreground mt-0.5">{{ item.last_alert_sent_at | date:'shortDate' }}</span>
+                }
               </td>
               <td class="px-4 py-3.5 text-center">
                 <span 
@@ -138,11 +232,24 @@
                   {{ item.status }}
                 </span>
               </td>
+              <td class="px-4 py-3.5 text-right">
+                <button
+                  type="button"
+                  (click)="openAlertModal(item)"
+                  title="Dispatch direct SMS/WhatsApp reminder for this installment"
+                  class="px-2 py-1 text-xs rounded-lg bg-secondary hover:bg-secondary/80 text-foreground border border-border font-medium inline-flex items-center gap-1 transition-colors"
+                >
+                  <svg class="w-3.5 h-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                  </svg>
+                  Alert
+                </button>
+              </td>
             </tr>
           } @empty {
             <tr>
-              <td colspan="7" class="px-4 py-12 text-center text-muted-foreground">
-                No installment milestones found. Select a booking or generate a new schedule plan.
+              <td colspan="9" class="px-4 py-12 text-center text-muted-foreground">
+                No installment milestones found. Select a booking allotment or click "+ Generate Schedule" to configure a payment plan.
               </td>
             </tr>
           }
@@ -151,14 +258,14 @@
     </div>
   </app-card-container>
 
-  <!-- Generate Schedule Modal -->
+  <!-- Modal 1: Generate Installment Schedule with Milestone-Linked Builder -->
   @if (isGenerateModalOpen()) {
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div class="bg-card border border-border rounded-2xl w-full max-w-lg shadow-2xl p-6 flex flex-col gap-5">
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+      <div class="bg-card border border-border rounded-2xl w-full max-w-2xl shadow-2xl p-6 flex flex-col gap-5 my-8 max-h-[90vh] overflow-y-auto">
         <div class="flex items-center justify-between border-b border-border pb-3">
           <div>
-            <h3 class="text-base font-bold text-foreground">Generate Installment Schedule</h3>
-            <p class="text-xs text-muted-foreground">Automated calculation of down payment, tenure & milestone triggers</p>
+            <h3 class="text-lg font-bold text-foreground">Generate Installment Schedule</h3>
+            <p class="text-xs text-muted-foreground">Automated Milestone-Linked triggers, Equal Monthly Amortization & Grace Periods</p>
           </div>
           <button (click)="closeGenerateModal()" class="text-muted-foreground hover:text-foreground">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -169,7 +276,7 @@
 
         <form [formGroup]="generateForm" (ngSubmit)="submitGenerateSchedule()" class="flex flex-col gap-4">
           <app-searchable-select
-            label="Select Apartment Booking *"
+            label="Select Apartment Booking Allotment *"
             [options]="bookingOptions"
             [formGroup]="generateForm"
             controlName="booking_id"
@@ -182,7 +289,7 @@
             controlName="plan_type"
           />
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <app-custom-input
               label="Down Payment Ratio (%) *"
               type="number"
@@ -197,21 +304,260 @@
               [formGroup]="generateForm"
               controlName="total_installments"
             />
+            <app-custom-input
+              label="Grace Period (Days) *"
+              type="number"
+              placeholder="15"
+              [formGroup]="generateForm"
+              controlName="grace_period_days"
+            />
           </div>
 
-          <p class="text-[11px] text-muted-foreground bg-secondary/50 p-3 rounded-lg border border-border">
-            ℹ️ Selecting <strong>Construction Milestones</strong> configures 7 civil engineering milestone triggers (Piling, Basement Casting, Superstructure, Roof Slab, Brickwork, Finishing & Handover) with 15-day grace periods.
-          </p>
+          <!-- Construction Milestone-Linked Plan Customizer -->
+          @if (generateForm.get('plan_type')?.value === 'CONSTRUCTION_MILESTONE') {
+            <div class="border border-border rounded-xl p-4 bg-secondary/10 flex flex-col gap-3">
+              <div class="flex items-center justify-between">
+                <div>
+                  <span class="text-xs font-bold uppercase tracking-wider text-foreground">Milestone-Linked Phase Breakdown</span>
+                  <p class="text-[11px] text-muted-foreground">Civil engineering milestones triggering installment demands</p>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span 
+                    class="text-xs font-mono font-bold px-2 py-0.5 rounded"
+                    [ngClass]="getTotalMilestonePercentage() === 100 ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-500 border border-rose-500/20'"
+                  >
+                    Total: {{ getTotalMilestonePercentage() }}%
+                  </span>
+                  <button 
+                    type="button" 
+                    (click)="addCustomMilestone()"
+                    class="px-2.5 py-1 text-xs rounded-lg bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 font-medium"
+                  >
+                    + Add Phase
+                  </button>
+                </div>
+              </div>
+
+              <div class="space-y-2 max-h-52 overflow-y-auto pr-1">
+                @for (m of customMilestones(); track $index) {
+                  <div class="grid grid-cols-12 gap-2 items-center p-2 bg-card border border-border rounded-lg text-xs">
+                    <div class="col-span-6">
+                      <input 
+                        type="text" 
+                        [(ngModel)]="m.title" 
+                        [ngModelOptions]="{standalone: true}"
+                        placeholder="Milestone Title"
+                        class="w-full px-2 py-1 text-xs rounded bg-secondary/50 border border-border text-foreground"
+                      />
+                    </div>
+                    <div class="col-span-3">
+                      <input 
+                        type="text" 
+                        [(ngModel)]="m.milestone_trigger" 
+                        [ngModelOptions]="{standalone: true}"
+                        placeholder="Trigger Code"
+                        class="w-full px-2 py-1 text-xs font-mono rounded bg-secondary/50 border border-border text-primary"
+                      />
+                    </div>
+                    <div class="col-span-2 flex items-center gap-1">
+                      <input 
+                        type="number" 
+                        [(ngModel)]="m.percentage" 
+                        [ngModelOptions]="{standalone: true}"
+                        placeholder="%"
+                        class="w-full px-2 py-1 text-xs font-mono rounded bg-secondary/50 border border-border text-foreground"
+                      />
+                      <span class="text-muted-foreground font-mono">%</span>
+                    </div>
+                    <div class="col-span-1 text-right">
+                      <button 
+                        type="button" 
+                        (click)="removeCustomMilestone($index)"
+                        class="text-rose-500 hover:text-rose-700 text-xs px-1"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          <div class="text-[11px] text-muted-foreground bg-secondary/50 p-3 rounded-xl border border-border">
+            ℹ️ <strong>Automated Calculations:</strong> Due-dates are synchronized with the construction schedule calendar. Surcharge rules apply automatically at 2%/month prorated late payment surcharge after the configured grace period.
+          </div>
 
           <div class="flex justify-end gap-3 pt-3 border-t border-border">
             <app-custom-button variant="outline" type="button" (clicked)="closeGenerateModal()">
               Cancel
             </app-custom-button>
             <app-custom-button variant="primary" type="submit" [disabled]="generateForm.invalid || isSubmitting()">
-              {{ isSubmitting() ? 'Generating...' : 'Generate Milestones' }}
+              {{ isSubmitting() ? 'Generating...' : 'Generate Installment Plan' }}
             </app-custom-button>
           </div>
         </form>
+      </div>
+    </div>
+  }
+
+  <!-- Modal 2: Dispatch SMS & WhatsApp Alerts -->
+  @if (isAlertModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div class="bg-card border border-border rounded-2xl w-full max-w-lg shadow-2xl p-6 flex flex-col gap-5">
+        <div class="flex items-center justify-between border-b border-border pb-3">
+          <div>
+            <h3 class="text-base font-bold text-foreground">Omnichannel Payment Alert Dispatcher</h3>
+            <p class="text-xs text-muted-foreground">Automated SMS Gateway & WhatsApp Business Notification Dispatch</p>
+          </div>
+          <button (click)="closeAlertModal()" class="text-muted-foreground hover:text-foreground">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="flex flex-col gap-4">
+          <!-- Target Recipient Notice -->
+          <div class="p-3 rounded-xl bg-secondary/50 border border-border text-xs">
+            @if (selectedInstallmentForAlert()) {
+              <div class="font-bold text-foreground">
+                Target: {{ selectedInstallmentForAlert()?.customer_name }} ({{ selectedInstallmentForAlert()?.booking_reference_no }})
+              </div>
+              <div class="text-muted-foreground mt-0.5">
+                Installment #{{ selectedInstallmentForAlert()?.installment_no }} | BDT {{ selectedInstallmentForAlert()?.payable_amount | number:'1.0-0' }} | Due: {{ selectedInstallmentForAlert()?.due_date }}
+              </div>
+            } @else {
+              <div class="font-bold text-foreground">
+                Target: All Overdue & Pending Due Installments
+              </div>
+              <div class="text-muted-foreground mt-0.5">
+                Bulk dispatching alerts to all allottees with pending or overdue installments.
+              </div>
+            }
+          </div>
+
+          <!-- Channel Selection -->
+          <div>
+            <label class="text-xs font-semibold uppercase text-muted-foreground block mb-2">Notification Channels *</label>
+            <div class="flex gap-3">
+              <button
+                type="button"
+                (click)="toggleAlertChannel('SMS')"
+                class="flex-1 p-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-2 transition-colors"
+                [ngClass]="selectedAlertChannels().includes('SMS') ? 'bg-primary/10 border-primary text-primary' : 'bg-card border-border text-muted-foreground'"
+              >
+                <span>📱 SMS Gateway</span>
+                <span>{{ selectedAlertChannels().includes('SMS') ? '✓' : '' }}</span>
+              </button>
+
+              <button
+                type="button"
+                (click)="toggleAlertChannel('WHATSAPP')"
+                class="flex-1 p-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-2 transition-colors"
+                [ngClass]="selectedAlertChannels().includes('WHATSAPP') ? 'bg-emerald-500/10 border-emerald-500 text-emerald-500' : 'bg-card border-border text-muted-foreground'"
+              >
+                <span>💬 WhatsApp API</span>
+                <span>{{ selectedAlertChannels().includes('WHATSAPP') ? '✓' : '' }}</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Custom Message Textarea -->
+          <div>
+            <label class="text-xs font-semibold uppercase text-muted-foreground block mb-1">Message Content / Reminder Text</label>
+            <textarea
+              [ngModel]="customAlertMessage()"
+              (ngModelChange)="customAlertMessage.set($event)"
+              rows="4"
+              class="w-full p-3 text-xs rounded-xl bg-secondary/50 border border-border focus:outline-none focus:ring-2 focus:ring-primary text-foreground placeholder-muted-foreground font-sans"
+            ></textarea>
+          </div>
+
+          <div class="flex justify-end gap-3 pt-3 border-t border-border">
+            <app-custom-button variant="outline" type="button" (clicked)="closeAlertModal()">
+              Cancel
+            </app-custom-button>
+            <app-custom-button variant="primary" type="button" (clicked)="dispatchAlerts()" [disabled]="isDispatchingAlerts() || selectedAlertChannels().length === 0">
+              {{ isDispatchingAlerts() ? 'Dispatching...' : 'Dispatch Reminders Now' }}
+            </app-custom-button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Modal 3: Alert Dispatch Audit Log History -->
+  @if (isAlertHistoryModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+      <div class="bg-card border border-border rounded-2xl w-full max-w-2xl shadow-2xl p-6 flex flex-col gap-5 my-8 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between border-b border-border pb-3">
+          <div>
+            <h3 class="text-lg font-bold text-foreground">Alert Dispatch Audit Trail</h3>
+            <p class="text-xs text-muted-foreground">Historical SMS & WhatsApp notifications delivered to buyers</p>
+          </div>
+          <button (click)="closeAlertHistoryModal()" class="text-muted-foreground hover:text-foreground">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
+        @if (isLoadingAlertLogs()) {
+          <div class="py-12 text-center text-xs text-muted-foreground">Loading dispatch history...</div>
+        } @else {
+          <div class="overflow-x-auto border border-border rounded-xl">
+            <table class="w-full text-left text-xs text-foreground">
+              <thead class="bg-secondary/40 text-[11px] font-semibold uppercase text-muted-foreground border-b border-border">
+                <tr>
+                  <th class="px-3 py-2.5">Date & Time</th>
+                  <th class="px-3 py-2.5">Channel</th>
+                  <th class="px-3 py-2.5">Recipient</th>
+                  <th class="px-3 py-2.5">Message Excerpt</th>
+                  <th class="px-3 py-2.5 text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-border/60">
+                @for (log of alertLogs(); track log.id) {
+                  <tr class="hover:bg-secondary/20 transition-colors">
+                    <td class="px-3 py-2.5 font-mono text-muted-foreground whitespace-nowrap">
+                      {{ log.sent_at | date:'medium' }}
+                    </td>
+                    <td class="px-3 py-2.5">
+                      <span 
+                        class="px-2 py-0.5 rounded font-mono font-bold text-[10px]"
+                        [ngClass]="log.channel === 'WHATSAPP' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-primary/10 text-primary border border-primary/20'"
+                      >
+                        {{ log.channel }}
+                      </span>
+                    </td>
+                    <td class="px-3 py-2.5 font-mono">{{ log.recipient_phone || 'N/A' }}</td>
+                    <td class="px-3 py-2.5 text-muted-foreground truncate max-w-[200px]" [title]="log.message_content">
+                      {{ log.message_content }}
+                    </td>
+                    <td class="px-3 py-2.5 text-center">
+                      <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-500">
+                        {{ log.status }}
+                      </span>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="5" class="px-4 py-8 text-center text-muted-foreground">
+                      No alert dispatch history recorded yet.
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+
+        <div class="flex justify-end pt-3 border-t border-border">
+          <app-custom-button variant="outline" type="button" (clicked)="closeAlertHistoryModal()">
+            Close
+          </app-custom-button>
+        </div>
       </div>
     </div>
   }

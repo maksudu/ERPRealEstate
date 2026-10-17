@@ -103,16 +103,24 @@ class BOQItem(Base):
     # Unit of Measure: TON, BAG, CFT, THOUSAND_NOS, SQFT
     unit_of_measure_id = Column(String(32), nullable=False, default="CFT")
     
+    item_code = Column(String(64), nullable=True, index=True)
+    wbs_node_id = Column(BigInteger, ForeignKey("con_wbs_nodes.id", ondelete="SET NULL"), nullable=True, index=True)
     estimated_quantity = Column(Numeric(14, 4), nullable=False, default=0.00)
     estimated_unit_rate = Column(Numeric(14, 2), nullable=False, default=0.00)
     total_estimated_cost = Column(Numeric(16, 2), nullable=False, default=0.00)
     actual_consumed_quantity = Column(Numeric(14, 4), nullable=False, default=0.00)
+    requisitioned_quantity = Column(Numeric(14, 4), nullable=False, default=0.00)
+    variation_order_quantity = Column(Numeric(14, 4), nullable=False, default=0.00)
+    hard_lock_percentage = Column(Numeric(5, 2), nullable=False, default=105.00) # 105% ceiling
+    is_locked = Column(Boolean, nullable=False, default=False)
 
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
 
     project = relationship("Project", back_populates="boq_items")
     tower = relationship("Tower", back_populates="boq_items")
+    wbs_node = relationship("WBSNode", back_populates="boq_items")
+    variation_orders = relationship("VariationOrder", back_populates="boq_item", cascade="all, delete-orphan")
 
 
 class Drawing(Base):

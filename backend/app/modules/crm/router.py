@@ -16,7 +16,7 @@ from app.modules.crm.schemas import (
     LeadActivityCreate, LeadActivityResponse,
     CustomerCreate, CustomerResponse,
     NomineeCreate, NomineeResponse,
-    FacebookWebhookPayload
+    FacebookWebhookPayload, WebsiteInquiryPayload, LeadScoreBreakdown
 )
 
 logger = logging.getLogger(__name__)
@@ -26,11 +26,23 @@ router = APIRouter(prefix="/crm", tags=["Omnichannel CRM & Customer KYC"])
 # Global in-memory pointer for round-robin assignment among sales reps
 _round_robin_counter = 0
 
-async def _get_next_sales_rep(db: AsyncSession) -> Optional[User]:
+async def _get_next_sales_rep(db: AsyncSession, project_id: Optional[int] = None) -> Optional[User]:
     """
-    Selects the next active sales representative using sequential round-robin.
+    Selects the next active sales representative using sequential round-robin
+    with project specialization awareness under Prompt 09.
     """
     global _round_robin_counter
+
+    # If project is specified, attempt to prioritize sales reps associated with the project
+    if project_id:
+        proj_res = await db.execute(select(Project).where(Project.id == project_id))
+        project = proj_res.scalars().first()
+        if project and project.project_manager_id:
+            pm_res = await db.execute(select(User).where(User.id == project.project_manager_id, User.is_active == True))
+            pm = pm_res.scalars().first()
+            if pm:
+                return pm
+
     result = await db.execute(
         select(User).where(User.is_active == True).order_by(User.id.asc())
     )
@@ -41,6 +53,91 @@ async def _get_next_sales_rep(db: AsyncSession) -> Optional[User]:
     idx = _round_robin_counter % len(users)
     _round_robin_counter += 1
     return users[idx]
+
+
+def compute_lead_scoring_details(lead: Lead) -> LeadScoreBreakdown:
+    """
+    Enterprise Lead Scoring & Prioritization Algorithm (Prompt 09):
+    Computes 4 objective components:
+    1. Budget Fit Score (0-25)
+    2. Contact Completeness Score (0-25)
+    3. Channel Quality Score (0-25)
+    4. Pipeline & Engagement Progression Score (0-25)
+    """
+    # 1. Budget Fit
+    budget_fit = 10
+    budget_min = float(lead.budget_range_min or 0.0)
+    if budget_min >= 25000000.0: # 2.5 Crore+
+        budget_fit = 25
+    elif budget_min >= 15000000.0: # 1.5 - 2.5 Crore
+        budget_fit = 22
+    elif budget_min >= 8000000.0: # 80 Lakh - 1.5 Crore
+        budget_fit = 18
+    elif budget_min > 0:
+        budget_fit = 14
+
+    # 2. Contact Completeness
+    contact_score = 0
+    if lead.primary_phone:
+        contact_score += 15
+    if lead.email:
+        contact_score += 10
+
+    # 3. Channel Quality
+    source = (lead.lead_source_id or "").upper()
+    if source == "WALK_IN":
+        source_score = 25
+    elif source in ["WEB_FORM", "WHATSAPP"]:
+        source_score = 20
+    elif source == "BROKER":
+        source_score = 18
+    elif source == "FACEBOOK_ADS":
+        source_score = 15
+    else:
+        source_score = 12
+
+    # 4. Engagement & Progression
+    stage = (lead.lead_stage or "NEW").upper()
+    stage_weights = {
+        "TOKEN_BOOKED": 25,
+        "BOOKED": 25,
+        "NEGOTIATION": 22,
+        "SITE_VISIT_COMPLETED": 20,
+        "VISITED": 20,
+        "SITE_VISIT_SCHEDULED": 15,
+        "CONTACTED": 10,
+        "NEW": 5,
+        "LOST": 0,
+        "DROPPED": 0
+    }
+    engagement_score = stage_weights.get(stage, 5)
+
+    total_score = min(budget_fit + contact_score + source_score + engagement_score, 100)
+
+    # Health Grade & Recommendation
+    if total_score >= 80:
+        health_grade = "A_HOT"
+        action = "High conversion intent: Immediate executive site visit or contract drafting."
+    elif total_score >= 55:
+        health_grade = "B_WARM"
+        action = "Active prospect: Schedule floor plan presentation and budget tailoring."
+    else:
+        health_grade = "C_COLD"
+        action = "Nurturing required: Send automated brochure and quarterly updates."
+
+    return LeadScoreBreakdown(
+        lead_id=lead.id,
+        lead_name=lead.lead_name,
+        total_score=total_score,
+        budget_fit_score=budget_fit,
+        contact_completeness_score=contact_score,
+        source_quality_score=source_score,
+        engagement_progression_score=engagement_score,
+        lead_stage=lead.lead_stage,
+        health_grade=health_grade,
+        recommended_action=action
+    )
+
 
 
 # --------------------------------------------------------------------------
@@ -154,6 +251,86 @@ async def receive_facebook_lead_webhook(
 
 
 # --------------------------------------------------------------------------
+# Website Inbound Inquiry Webhook Receiver (Prompt 09)
+# --------------------------------------------------------------------------
+@router.post("/webhooks/website-inquiry")
+async def receive_website_inquiry(
+    payload: WebsiteInquiryPayload,
+    request: Request,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Website Contact Form & Inbound Buyer Landing Page Webhook (Prompt 09).
+    Ingests prospective inquiries, resolves project specialization, performs
+    round-robin executive assignment, and initializes lead scoring.
+    """
+    interested_project_id = payload.interested_project_id
+    if not interested_project_id and payload.project_code:
+        prj_res = await db.execute(select(Project).where(Project.project_code == payload.project_code))
+        p = prj_res.scalars().first()
+        if p:
+            interested_project_id = p.id
+
+    sales_rep = await _get_next_sales_rep(db, project_id=interested_project_id)
+    sales_rep_id = sales_rep.id if sales_rep else None
+
+    lead = Lead(
+        lead_source_id="WEB_FORM",
+        campaign_name=payload.utm_campaign or "Website-Inquiry-Direct",
+        lead_name=payload.full_name,
+        primary_phone=payload.phone_number,
+        email=payload.email,
+        interested_project_id=interested_project_id,
+        budget_range_min=payload.budget_range_min or 10000000.0,
+        budget_range_max=payload.budget_range_max or 25000000.0,
+        assigned_sales_rep_id=sales_rep_id,
+        lead_stage="NEW",
+        lead_score=70,
+        notes=f"Website Inbound Message: {payload.message or 'Interested in unit details.'}"
+    )
+    db.add(lead)
+    await db.flush()
+
+    scoring = compute_lead_scoring_details(lead)
+    lead.lead_score = scoring.total_score
+
+    activity = LeadActivity(
+        lead_id=lead.id,
+        sales_rep_id=sales_rep_id,
+        activity_type="STAGE_CHANGE",
+        activity_summary=f"Website inquiry ingested. Auto-assigned to {sales_rep.full_name_en if sales_rep else 'General Queue'}.",
+        outcome="NEW_LEAD"
+    )
+    db.add(activity)
+    await db.commit()
+    await db.refresh(lead)
+
+    return {
+        "status": "success",
+        "lead_id": lead.id,
+        "lead_name": lead.lead_name,
+        "assigned_to": sales_rep.full_name_en if sales_rep else "Unassigned",
+        "lead_score": lead.lead_score,
+        "health_grade": scoring.health_grade
+    }
+
+
+@router.get("/leads/{lead_id}/scoring-breakdown", response_model=LeadScoreBreakdown)
+async def get_lead_scoring_breakdown(
+    lead_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Returns itemized 4-tier lead scoring algorithm breakdown (Prompt 09).
+    """
+    result = await db.execute(select(Lead).where(Lead.id == lead_id))
+    lead = result.scalars().first()
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    return compute_lead_scoring_details(lead)
+
+
+# --------------------------------------------------------------------------
 # CRM Leads Endpoints (Kanban & List)
 # --------------------------------------------------------------------------
 @router.get("/leads", response_model=List[LeadResponse])
@@ -217,20 +394,9 @@ async def create_lead(
     """
     assigned_rep_id = payload.assigned_sales_rep_id
     if not assigned_rep_id:
-        rep = await _get_next_sales_rep(db)
+        rep = await _get_next_sales_rep(db, project_id=payload.interested_project_id)
         if rep:
             assigned_rep_id = rep.id
-
-    # Compute dynamic lead scoring
-    score = 50
-    if payload.email and payload.primary_phone:
-        score += 15
-    if payload.interested_project_id:
-        score += 15
-    if payload.budget_range_min and payload.budget_range_min > 0:
-        score += 10
-    if payload.lead_source_id in ["WALK_IN", "BROKER"]:
-        score += 10
 
     lead = Lead(
         lead_source_id=payload.lead_source_id or "WALK_IN",
@@ -243,9 +409,13 @@ async def create_lead(
         budget_range_max=payload.budget_range_max,
         assigned_sales_rep_id=assigned_rep_id,
         lead_stage=payload.lead_stage or "NEW",
-        lead_score=min(score, 100),
+        lead_score=50,
         notes=payload.notes
     )
+    # Compute dynamic lead scoring
+    scoring = compute_lead_scoring_details(lead)
+    lead.lead_score = scoring.total_score
+
     db.add(lead)
     await db.flush()
 
@@ -286,6 +456,8 @@ async def update_lead_stage(
 ):
     """
     Updates the Kanban stage of a lead and logs a stage-transition activity.
+    Supports Prompt 09 stages:
+    NEW -> CONTACTED -> SITE_VISIT_SCHEDULED -> SITE_VISIT_COMPLETED -> NEGOTIATION -> TOKEN_BOOKED -> LOST
     """
     stmt = (
         select(Lead)
@@ -305,17 +477,9 @@ async def update_lead_stage(
     new_stage = payload.lead_stage.upper()
     lead.lead_stage = new_stage
 
-    # Dynamic score adjustments based on pipeline progression
-    stage_scores = {
-        "NEW": 50,
-        "CONTACTED": 60,
-        "VISITED": 75,
-        "NEGOTIATION": 90,
-        "BOOKED": 100,
-        "DROPPED": 15
-    }
-    if new_stage in stage_scores:
-        lead.lead_score = stage_scores[new_stage]
+    # Dynamic score adjustments based on pipeline progression (Prompt 09)
+    scoring = compute_lead_scoring_details(lead)
+    lead.lead_score = scoring.total_score
 
     # Create activity audit
     activity = LeadActivity(
@@ -521,15 +685,29 @@ async def get_conversion_metrics(db: AsyncSession = Depends(get_db)):
     Returns funnel conversion analytics, lead source distribution, and pipeline health.
     """
     # Count leads by stage
-    stage_counts = {}
-    for stage in ["NEW", "CONTACTED", "VISITED", "NEGOTIATION", "BOOKED", "DROPPED"]:
-        res = await db.execute(
-            select(func.count(Lead.id)).where(Lead.lead_stage == stage)
-        )
-        stage_counts[stage] = res.scalar() or 0
+    stages_list = [
+        "NEW", "CONTACTED", "SITE_VISIT_SCHEDULED", "SITE_VISIT_COMPLETED",
+        "NEGOTIATION", "TOKEN_BOOKED", "LOST"
+    ]
+    stage_counts = {s: 0 for s in stages_list}
+    raw_res = await db.execute(
+        select(Lead.lead_stage, func.count(Lead.id)).group_by(Lead.lead_stage)
+    )
+    for stage_val, count_val in raw_res.all():
+        stage_str = (stage_val or "").upper()
+        if stage_str == "VISITED":
+            stage_counts["SITE_VISIT_COMPLETED"] = stage_counts.get("SITE_VISIT_COMPLETED", 0) + count_val
+        elif stage_str == "BOOKED":
+            stage_counts["TOKEN_BOOKED"] = stage_counts.get("TOKEN_BOOKED", 0) + count_val
+        elif stage_str == "DROPPED":
+            stage_counts["LOST"] = stage_counts.get("LOST", 0) + count_val
+        elif stage_str in stage_counts:
+            stage_counts[stage_str] += count_val
+        else:
+            stage_counts[stage_str] = count_val
 
     total_leads = sum(stage_counts.values())
-    booked_leads = stage_counts.get("BOOKED", 0)
+    booked_leads = stage_counts.get("TOKEN_BOOKED", 0)
     conversion_rate = (booked_leads / total_leads * 100.0) if total_leads > 0 else 0.0
 
     # Source breakdown

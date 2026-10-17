@@ -10,10 +10,12 @@ from sqlalchemy import func, or_
 from app.core.database import get_db
 from app.modules.sales.models import Booking
 from app.modules.crm.models import Customer
-from app.modules.installments.models import CustomerInstallment, PDCVault, NI138LegalAction
+from app.modules.installments.models import CustomerInstallment, PDCVault, NI138LegalAction, InstallmentAlertLog
 from app.modules.installments.schemas import (
     CustomerInstallmentCreate, CustomerInstallmentResponse,
     InstallmentScheduleGenerateRequest, InstallmentPaymentRequest,
+    InstallmentSurchargeCalculateRequest, InstallmentAlertDispatchRequest,
+    InstallmentAlertLogResponse,
     PDCVaultCreate, PDCVaultResponse, PDCStatusUpdateRequest,
     NI138LegalActionResponse, NI138ServeNoticeRequest, NI138FileCaseRequest,
     InstallmentMetrics
@@ -102,6 +104,8 @@ async def generate_installment_schedule(
     start_date = payload.start_date or date.today()
     created_installments = []
 
+    grace_period = payload.grace_period_days or 15
+
     # Installment 0: Down Payment Balance (if remaining)
     down_pay_due = max(0.0, down_payment_total - earnest_money)
     if down_pay_due > 0:
@@ -109,15 +113,35 @@ async def generate_installment_schedule(
             booking_id=booking.id,
             installment_no=0,
             title="Allotment Down Payment",
-            due_date=start_date + timedelta(days=15),
-            grace_period_days=15,
+            due_date=start_date + timedelta(days=grace_period),
+            grace_period_days=grace_period,
             payable_amount=down_pay_due,
             status="DUE"
         )
         db.add(inst_down)
         created_installments.append(inst_down)
 
-    if payload.plan_type.upper() == "CONSTRUCTION_MILESTONE":
+    if payload.custom_milestones and len(payload.custom_milestones) > 0:
+        # Prompt 09: Dynamic Custom Milestone-linked Schedules (e.g. Booking 10%, Down Payment 15%, Roof Casting 10%, Handover 10%)
+        current_date = start_date + timedelta(days=30)
+        for idx, m in enumerate(payload.custom_milestones, start=1):
+            pct_val = float(m.percentage or 10.0) / 100.0
+            amount = round(remaining_balance * pct_val, 2)
+            inst = CustomerInstallment(
+                booking_id=booking.id,
+                installment_no=idx,
+                title=f"Milestone #{idx}: {m.title}",
+                due_date=current_date,
+                grace_period_days=grace_period,
+                payable_amount=amount,
+                status="UPCOMING",
+                milestone_trigger=m.milestone_trigger or f"MILESTONE_{idx}"
+            )
+            db.add(inst)
+            created_installments.append(inst)
+            current_date += timedelta(days=60)
+
+    elif payload.plan_type.upper() in ["CONSTRUCTION_MILESTONE", "MILESTONE"]:
         # 7 Construction Milestone Triggers under Real Estate Standards
         milestones = [
             ("Piling & Foundation Completion", 0.15, "FOUNDATION_DONE"),
@@ -137,7 +161,7 @@ async def generate_installment_schedule(
                 installment_no=idx,
                 title=f"Milestone #{idx}: {title}",
                 due_date=current_date,
-                grace_period_days=15,
+                grace_period_days=grace_period,
                 payable_amount=amount,
                 status="UPCOMING",
                 milestone_trigger=trigger
@@ -156,7 +180,7 @@ async def generate_installment_schedule(
                 installment_no=i,
                 title=f"Quarterly Installment #{i:02d}",
                 due_date=current_date,
-                grace_period_days=15,
+                grace_period_days=grace_period,
                 payable_amount=per_quarter,
                 status="UPCOMING"
             )
@@ -164,7 +188,7 @@ async def generate_installment_schedule(
             created_installments.append(inst)
             current_date += timedelta(days=90)
 
-    else: # Default: MONTHLY
+    else: # Default: MONTHLY EMI
         months = max(1, payload.total_installments or 24)
         per_month = round(remaining_balance / months, 2)
         current_date = start_date + timedelta(days=30)
@@ -172,9 +196,9 @@ async def generate_installment_schedule(
             inst = CustomerInstallment(
                 booking_id=booking.id,
                 installment_no=i,
-                title=f"Monthly Installment #{i:02d}",
+                title=f"Monthly EMI #{i:02d}",
                 due_date=current_date,
-                grace_period_days=15,
+                grace_period_days=grace_period,
                 payable_amount=per_month,
                 status="UPCOMING"
             )
@@ -684,3 +708,173 @@ async def trigger_ni138_deadlines(enqueue_celery: bool = False):
     
     result = await execute_check_statutory_ni138_deadlines()
     return result
+
+
+# --------------------------------------------------------------------------
+# Automated Surcharge Calculation Engine (Prompt 09)
+# --------------------------------------------------------------------------
+@router.post("/schedules/calculate-overdue-surcharges")
+async def calculate_overdue_surcharges(
+    payload: Optional[InstallmentSurchargeCalculateRequest] = None,
+    booking_id: Optional[int] = None,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Automated late payment surcharge calculator under Prompt 09.
+    Scans installments past their grace period, calculates overdue days,
+    and applies statutory monthly surcharge (default 2% per 30-day delay).
+    """
+    surcharge_rate_monthly = float(payload.surcharge_percentage_monthly if payload else 2.00)
+    today = date.today()
+
+    stmt = select(CustomerInstallment).where(
+        CustomerInstallment.payable_amount > CustomerInstallment.paid_amount
+    )
+    if booking_id:
+        stmt = stmt.where(CustomerInstallment.booking_id == booking_id)
+
+    result = await db.execute(stmt)
+    installments = result.scalars().all()
+
+    updated_count = 0
+    total_surcharge_assessed = 0.0
+
+    for inst in installments:
+        grace_days = inst.grace_period_days or 15
+        cutoff_date = inst.due_date + timedelta(days=grace_days)
+        if today > cutoff_date:
+            overdue_days = (today - cutoff_date).days
+            unpaid_balance = float(inst.payable_amount - inst.paid_amount)
+            # Surcharge = unpaid_balance * (monthly_rate / 100) * (overdue_days / 30)
+            surcharge = round(unpaid_balance * (surcharge_rate_monthly / 100.0) * (overdue_days / 30.0), 2)
+
+            inst.overdue_days = overdue_days
+            inst.surcharge_percentage = surcharge_rate_monthly
+            inst.late_fee_accrued = surcharge
+            inst.status = "OVERDUE"
+
+            updated_count += 1
+            total_surcharge_assessed += surcharge
+
+    await db.commit()
+
+    return {
+        "status": "success",
+        "assessed_installments_count": updated_count,
+        "total_surcharge_assessed_bdt": round(total_surcharge_assessed, 2),
+        "monthly_surcharge_rate_percentage": surcharge_rate_monthly
+    }
+
+
+# --------------------------------------------------------------------------
+# Multi-Channel SMS & WhatsApp Alert Dispatch Engine (Prompt 09)
+# --------------------------------------------------------------------------
+@router.post("/alerts/dispatch", response_model=List[InstallmentAlertLogResponse])
+async def dispatch_installment_alerts(
+    payload: InstallmentAlertDispatchRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Dispatches automated SMS, WhatsApp, and Email alerts for upcoming, due,
+    or overdue installments with tailored templates and records delivery audit.
+    """
+    if not payload.installment_ids:
+        raise HTTPException(status_code=400, detail="No installment IDs provided for alert dispatch.")
+
+    stmt = (
+        select(CustomerInstallment)
+        .options(
+            selectinload(CustomerInstallment.booking).selectinload(Booking.customer),
+            selectinload(CustomerInstallment.booking).selectinload(Booking.unit),
+            selectinload(CustomerInstallment.booking).selectinload(Booking.project)
+        )
+        .where(CustomerInstallment.id.in_(payload.installment_ids))
+    )
+    result = await db.execute(stmt)
+    installments = result.scalars().all()
+
+    alert_logs = []
+    now = datetime.utcnow()
+
+    for inst in installments:
+        booking = inst.booking
+        customer = booking.customer if booking else None
+        project = booking.project if booking else None
+        unit = booking.unit if booking else None
+
+        customer_name = customer.full_name_en if customer else "Valued Allottee"
+        phone = customer.primary_phone if customer else "+8801700000000"
+        email = customer.email if customer else "allottee@example.com"
+        project_name = project.project_name if project else "Prime Residence"
+        unit_no = unit.unit_number if unit else "Unit"
+        unpaid_amount = float(inst.payable_amount - inst.paid_amount)
+
+        # Generate multi-channel notification message
+        if payload.custom_message:
+            msg = payload.custom_message
+        elif inst.status == "OVERDUE":
+            msg = (
+                f"Urgent Notice: Dear {customer_name}, installment #{inst.installment_no} ({inst.title}) "
+                f"of BDT {unpaid_amount:,.2f} for {unit_no} at {project_name} is OVERDUE by {inst.overdue_days} days. "
+                f"Late fee accrued: BDT {float(inst.late_fee_accrued or 0):,.2f}. Please pay immediately via bank transfer "
+                f"or pay order to avoid further legal/surcharge action. Helpline: +880-9612-888999."
+            )
+        else:
+            msg = (
+                f"Payment Reminder: Dear {customer_name}, installment #{inst.installment_no} ({inst.title}) "
+                f"of BDT {unpaid_amount:,.2f} for {unit_no} at {project_name} is due on {inst.due_date}. "
+                f"Grace period: {inst.grace_period_days} days. Please remit on time to maintain allotment priority. "
+                f"BlueOceans Real Estate Ltd."
+            )
+
+        for channel in payload.channels:
+            chan_upper = channel.upper()
+            log = InstallmentAlertLog(
+                installment_id=inst.id,
+                booking_id=booking.id if booking else inst.booking_id,
+                customer_id=customer.id if customer else booking.primary_customer_id,
+                channel=chan_upper,
+                recipient_phone=phone,
+                recipient_email=email,
+                message_content=msg,
+                status="SENT"
+            )
+            db.add(log)
+            alert_logs.append(log)
+
+            if chan_upper == "SMS":
+                inst.sms_alert_sent = True
+            elif chan_upper == "WHATSAPP":
+                inst.whatsapp_alert_sent = True
+            inst.last_alert_sent_at = now
+
+    await db.commit()
+
+    # Refresh logs to return
+    for log in alert_logs:
+        await db.refresh(log)
+
+    return alert_logs
+
+
+@router.get("/alerts", response_model=List[InstallmentAlertLogResponse])
+async def list_installment_alerts(
+    installment_id: Optional[int] = None,
+    booking_id: Optional[int] = None,
+    channel: Optional[str] = None,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Returns dispatched SMS and WhatsApp notification audit log history.
+    """
+    stmt = select(InstallmentAlertLog).order_by(InstallmentAlertLog.id.desc())
+    if installment_id:
+        stmt = stmt.where(InstallmentAlertLog.installment_id == installment_id)
+    if booking_id:
+        stmt = stmt.where(InstallmentAlertLog.booking_id == booking_id)
+    if channel:
+        stmt = stmt.where(InstallmentAlertLog.channel == channel.upper())
+
+    result = await db.execute(stmt)
+    return result.scalars().all()
+

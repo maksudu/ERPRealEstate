@@ -1,10 +1,10 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ConstructionService } from '../../../core/services/construction.service';
 import { ProjectService } from '../../../core/services/project.service';
-import { RABill, WorkOrder, Subcontractor } from '../../../core/models/construction.model';
+import { RABill, WorkOrder, Subcontractor, JointMeasurementSheet } from '../../../core/models/construction.model';
 import { Project } from '../../../core/models/project.model';
 import {
   CardContainerComponent,
@@ -21,7 +21,6 @@ import {
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
-    RouterLink,
     CardContainerComponent,
     CustomInputComponent,
     CustomTextareaComponent,
@@ -35,10 +34,14 @@ export class ConstructionRaBillsComponent implements OnInit {
   private projectService = inject(ProjectService);
   private fb = inject(FormBuilder);
 
+  // Active view tab: 'BILLS' | 'JMS' | 'WORK_ORDERS'
+  currentTab = signal<'BILLS' | 'JMS' | 'WORK_ORDERS'>('BILLS');
+
   raBills = signal<RABill[]>([]);
   workOrders = signal<WorkOrder[]>([]);
   contractors = signal<Subcontractor[]>([]);
   projects = signal<Project[]>([]);
+  jointMeasurements = signal<JointMeasurementSheet[]>([]);
 
   isLoading = signal<boolean>(false);
   isSubmitting = signal<boolean>(false);
@@ -46,18 +49,46 @@ export class ConstructionRaBillsComponent implements OnInit {
   // Modals
   isCreateBillModalOpen = signal<boolean>(false);
   isCreateWOModalOpen = signal<boolean>(false);
-  isApprovalModalOpen = signal<boolean>(false);
+  isCreateJMSModalOpen = signal<boolean>(false);
+  isSignModalOpen = signal<boolean>(false);
   selectedBill = signal<RABill | null>(null);
 
   billForm: FormGroup = this.fb.group({
     work_order_id: [null, Validators.required],
     ra_bill_number: ['', Validators.required],
     bill_date: [new Date().toISOString().split('T')[0], Validators.required],
-    gross_work_certified_amount: [5000000, [Validators.required, Validators.min(10000)]],
+    billing_period_start: [new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0]],
+    billing_period_end: [new Date().toISOString().split('T')[0]],
+    gross_work_certified_amount: [2500000, [Validators.required, Validators.min(1000)]],
+    retention_percent: [5, [Validators.required, Validators.min(0), Validators.max(20)]],
     advance_recovery_deducted: [0, [Validators.min(0)]],
-    tds_percentage: [5, [Validators.required, Validators.min(0), Validators.max(20)]],
-    vds_percentage: [5, [Validators.required, Validators.min(0), Validators.max(20)]],
+    material_store_recovery_amount: [0, [Validators.min(0)]], // Cement, Steel, Diesel
+    tds_rate: [5, [Validators.required, Validators.min(0), Validators.max(20)]],
+    vds_rate: [5, [Validators.required, Validators.min(0), Validators.max(20)]],
     remarks: ['']
+  });
+
+  jmsForm: FormGroup = this.fb.group({
+    work_order_id: [null, Validators.required],
+    jms_number: ['', Validators.required],
+    measurement_date: [new Date().toISOString().split('T')[0], Validators.required],
+    location_floor: ['', Validators.required],
+    trade_item: ['', Validators.required],
+    unit_of_measure: ['SFT', Validators.required],
+    measured_length: [0],
+    measured_breadth: [0],
+    measured_depth: [0],
+    measured_quantity: [0, [Validators.required, Validators.min(0.01)]],
+    unit_rate: [0, [Validators.required, Validators.min(0.01)]],
+    verified_by_site_engineer: ['Engr. Tanvir Ahmed', Validators.required],
+    subcontractor_representative: ['', Validators.required]
+  });
+
+  signForm: FormGroup = this.fb.group({
+    role: ['QUANTITY_SURVEYOR', Validators.required],
+    signatory_name: ['', Validators.required],
+    action: ['APPROVE', Validators.required],
+    approval_notes: ['']
   });
 
   woForm: FormGroup = this.fb.group({
@@ -77,6 +108,48 @@ export class ConstructionRaBillsComponent implements OnInit {
     { value: 'TILES_MARBLE', label: 'Tiles, Stone & Marble Cladding' }
   ];
 
+  uomOptions = [
+    { value: 'SFT', label: 'Square Feet (SFT) - Surface Area' },
+    { value: 'CFT', label: 'Cubic Feet (CFT) - Volume' },
+    { value: 'RFT', label: 'Running Feet (RFT) - Linear' },
+    { value: 'TON', label: 'Metric Ton (MT) - Reinforcement' },
+    { value: 'NOS', label: 'Numbers (Nos) - Fixtures' }
+  ];
+
+  roleOptions = [
+    { value: 'QUANTITY_SURVEYOR', label: 'Quantity Surveyor (QS Verification)' },
+    { value: 'PROJECT_DIRECTOR', label: 'Project Director (Technical & Commercial Signoff)' },
+    { value: 'ACCOUNTS', label: 'Head of Accounts (Financial Voucher Posting)' }
+  ];
+
+  // Computed Real-time Net Payable in Bill Form
+  computedDeductions = computed(() => {
+    // Read from form values
+    return () => {
+      const gross = Number(this.billForm.get('gross_work_certified_amount')?.value) || 0;
+      const retPct = Number(this.billForm.get('retention_percent')?.value) || 0;
+      const adv = Number(this.billForm.get('advance_recovery_deducted')?.value) || 0;
+      const store = Number(this.billForm.get('material_store_recovery_amount')?.value) || 0;
+      const tdsRate = Number(this.billForm.get('tds_rate')?.value) || 0;
+      const vdsRate = Number(this.billForm.get('vds_rate')?.value) || 0;
+
+      const retAmt = Math.round(gross * (retPct / 100));
+      const tdsAmt = Math.round(gross * (tdsRate / 100));
+      const vdsAmt = Math.round(gross * (vdsRate / 100));
+      const net = Math.round(gross - retAmt - adv - store - tdsAmt - vdsAmt);
+
+      return {
+        gross,
+        retAmt,
+        adv,
+        store,
+        tdsAmt,
+        vdsAmt,
+        net
+      };
+    };
+  });
+
   ngOnInit(): void {
     this.loadData();
     this.loadDropdownData();
@@ -91,6 +164,10 @@ export class ConstructionRaBillsComponent implements OnInit {
       },
       error: () => this.isLoading.set(false)
     });
+
+    this.constructionService.getJointMeasurements().subscribe({
+      next: (jms) => this.jointMeasurements.set(jms)
+    });
   }
 
   loadDropdownData(): void {
@@ -102,7 +179,7 @@ export class ConstructionRaBillsComponent implements OnInit {
   get workOrderOptions() {
     return this.workOrders().map(w => ({
       value: w.id,
-      label: `${w.work_order_no} - ${w.contractor_name} (${w.project_name} - BDT ${Number(w.total_contract_value).toLocaleString()})`
+      label: `${w.work_order_no} - ${w.contractor_name} (${w.project_name})`
     }));
   }
 
@@ -120,7 +197,64 @@ export class ConstructionRaBillsComponent implements OnInit {
     }));
   }
 
-  // Create Work Order Modal
+  // Dimension quantity calculation helper
+  calculateJMSQuantity(): void {
+    const l = Number(this.jmsForm.get('measured_length')?.value) || 0;
+    const b = Number(this.jmsForm.get('measured_breadth')?.value) || 0;
+    const d = Number(this.jmsForm.get('measured_depth')?.value) || 0;
+    const uom = this.jmsForm.get('unit_of_measure')?.value;
+
+    if (l > 0 && b > 0) {
+      if (uom === 'CFT') {
+        const depth = d > 0 ? d : 1.0;
+        this.jmsForm.patchValue({ measured_quantity: Math.round(l * b * depth * 100) / 100 });
+      } else {
+        this.jmsForm.patchValue({ measured_quantity: Math.round(l * b * 100) / 100 });
+      }
+    }
+  }
+
+  // --- JMS Modal ---
+  openCreateJMSModal(): void {
+    this.jmsForm.reset({
+      work_order_id: this.workOrders()[0]?.id || null,
+      jms_number: `JMS-WO${(this.jointMeasurements().length + 1).toString().padStart(2, '0')}-${Date.now().toString().slice(-4)}`,
+      measurement_date: new Date().toISOString().split('T')[0],
+      location_floor: 'Tower 1 - Floor 4 Beam & Slab B4-S4',
+      trade_item: 'Reinforcement Binding & Shuttering',
+      unit_of_measure: 'SFT',
+      measured_length: 50,
+      measured_breadth: 20,
+      measured_depth: 0,
+      measured_quantity: 1000,
+      unit_rate: 35,
+      verified_by_site_engineer: 'Engr. Tanvir Ahmed (Site In-Charge)',
+      subcontractor_representative: 'Md. Rafiqul Islam (Project Lead)'
+    });
+    this.isCreateJMSModalOpen.set(true);
+  }
+
+  closeCreateJMSModal(): void {
+    this.isCreateJMSModalOpen.set(false);
+  }
+
+  submitJMS(): void {
+    if (this.jmsForm.invalid) return;
+    this.isSubmitting.set(true);
+    this.constructionService.createJointMeasurement(this.jmsForm.value).subscribe({
+      next: (jms) => {
+        this.jointMeasurements.update(list => [jms, ...list]);
+        this.isSubmitting.set(false);
+        this.closeCreateJMSModal();
+      },
+      error: (err) => {
+        alert(err?.error?.detail || 'JMS creation failed');
+        this.isSubmitting.set(false);
+      }
+    });
+  }
+
+  // --- Work Order Modal ---
   openCreateWOModal(): void {
     this.woForm.reset({
       project_id: this.projects()[0]?.id || null,
@@ -129,7 +263,7 @@ export class ConstructionRaBillsComponent implements OnInit {
       total_contract_value: 50000000,
       retention_money_percent: 5,
       defect_liability_months: 12,
-      scope_of_work: ''
+      scope_of_work: 'Complete RCC structure, columns, shear walls, and post-tensioned floor slabs.'
     });
     this.isCreateWOModalOpen.set(true);
   }
@@ -154,18 +288,22 @@ export class ConstructionRaBillsComponent implements OnInit {
     });
   }
 
-  // Create RA Bill Modal
+  // --- RA Bill Modal ---
   openCreateBillModal(): void {
     const nextBillNo = `RA-BILL-${(this.raBills().length + 1).toString().padStart(2, '0')}`;
     this.billForm.reset({
       work_order_id: this.workOrders()[0]?.id || null,
       ra_bill_number: nextBillNo,
       bill_date: new Date().toISOString().split('T')[0],
-      gross_work_certified_amount: 5000000,
-      advance_recovery_deducted: 0,
-      tds_percentage: 5,
-      vds_percentage: 5,
-      remarks: ''
+      billing_period_start: new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0],
+      billing_period_end: new Date().toISOString().split('T')[0],
+      gross_work_certified_amount: 2500000,
+      retention_percent: 5,
+      advance_recovery_deducted: 100000,
+      material_store_recovery_amount: 50000,
+      tds_rate: 5,
+      vds_rate: 5,
+      remarks: 'Verified against joint measurement sheets.'
     });
     this.isCreateBillModalOpen.set(true);
   }
@@ -190,36 +328,55 @@ export class ConstructionRaBillsComponent implements OnInit {
     });
   }
 
-  // Approve RA Bill and emit Accounts Voucher event
-  openApprovalModal(bill: RABill): void {
+  // --- Digital Signature & Approval Chain Modal ---
+  openSignModal(bill: RABill): void {
     this.selectedBill.set(bill);
-    this.isApprovalModalOpen.set(true);
+    // Determine next role
+    let nextRole = 'QUANTITY_SURVEYOR';
+    if (bill.status === 'VERIFIED_BY_ENGINEER') {
+      nextRole = 'QUANTITY_SURVEYOR';
+    } else if (bill.status === 'VERIFIED_BY_QS') {
+      nextRole = 'PROJECT_DIRECTOR';
+    } else if (bill.status === 'APPROVED_BY_PD') {
+      nextRole = 'ACCOUNTS';
+    }
+
+    this.signForm.reset({
+      role: nextRole,
+      signatory_name: nextRole === 'ACCOUNTS' ? 'Head of Finance & Accounts' : 'Engr. Verification Officer',
+      action: 'APPROVE',
+      approval_notes: 'Verified and approved in accordance with site measurements.'
+    });
+    this.isSignModalOpen.set(true);
   }
 
-  closeApprovalModal(): void {
-    this.isApprovalModalOpen.set(false);
+  closeSignModal(): void {
+    this.isSignModalOpen.set(false);
     this.selectedBill.set(null);
   }
 
-  confirmApproval(): void {
+  submitSignature(): void {
     const bill = this.selectedBill();
-    if (!bill) return;
+    if (!bill || this.signForm.invalid) return;
 
     this.isSubmitting.set(true);
-    this.constructionService.approveRABill(bill.id, {
-      action: 'APPROVE',
-      approval_notes: 'RA Bill approved by Project Director. Emitted Accounts Liability Voucher Event.'
-    }).subscribe({
+    this.constructionService.signRABill(bill.id, this.signForm.value).subscribe({
       next: (updated) => {
         this.raBills.update(list => list.map(b => b.id === updated.id ? updated : b));
         this.isSubmitting.set(false);
-        this.closeApprovalModal();
-        alert(`RA Bill #${updated.ra_bill_number} Approved!\nAccounts Journal Voucher Ref Generated: ${updated.accounts_journal_voucher_ref}`);
+        this.closeSignModal();
+        if (updated.status === 'ACCOUNTS_VOUCHER_POSTED') {
+          alert(`🎉 RA Bill #${updated.ra_bill_number} Fully Approved!\nAccounts Journal Voucher Created: ${updated.accounts_journal_voucher_ref}`);
+        }
       },
       error: (err) => {
-        alert(err?.error?.detail || 'Approval failed');
+        alert(err?.error?.detail || 'Signature submission failed');
         this.isSubmitting.set(false);
       }
     });
+  }
+
+  formatStatus(status: string): string {
+    return (status || '').replace(/_/g, ' ');
   }
 }

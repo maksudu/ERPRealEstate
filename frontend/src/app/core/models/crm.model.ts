@@ -10,10 +10,22 @@ export interface LeadActivity {
   created_at?: string;
 }
 
+export type PipelineStage =
+  | 'NEW'
+  | 'CONTACTED'
+  | 'SITE_VISIT_SCHEDULED'
+  | 'SITE_VISIT_COMPLETED'
+  | 'NEGOTIATION'
+  | 'TOKEN_BOOKED'
+  | 'LOST'
+  | 'VISITED'
+  | 'BOOKED'
+  | 'DROPPED';
+
 export interface Lead {
   id: number;
   organization_id?: number | null;
-  lead_source_id: string; // FACEBOOK_ADS, WEB_FORM, WHATSAPP, WALK_IN, BROKER
+  lead_source_id: string; // FACEBOOK_ADS, WEB_FORM, WHATSAPP, WALK_IN, BROKER, REFERRAL
   campaign_name?: string | null;
   lead_name: string;
   primary_phone: string;
@@ -24,18 +36,45 @@ export interface Lead {
   budget_range_max?: number | null;
   assigned_sales_rep_id?: number | null;
   assigned_sales_rep_name?: string | null;
-  lead_stage: 'NEW' | 'CONTACTED' | 'VISITED' | 'NEGOTIATION' | 'BOOKED' | 'DROPPED';
+  lead_stage: PipelineStage;
   lead_score: number; // 0 to 100
   notes?: string | null;
   activities: LeadActivity[];
   created_at?: string;
 }
 
+export interface LeadScoreBreakdown {
+  lead_id: number;
+  lead_name: string;
+  total_score: number;
+  budget_fit_score: number;
+  contact_completeness_score: number;
+  source_quality_score: number;
+  engagement_progression_score: number;
+  lead_stage: string;
+  health_grade: 'A_HOT' | 'B_WARM' | 'C_COLD';
+  recommended_action: string;
+}
+
+export interface WebsiteInquiryPayload {
+  full_name: string;
+  phone_number: string;
+  email?: string | null;
+  project_code?: string | null;
+  interested_project_id?: number | null;
+  budget_range_min?: number | null;
+  budget_range_max?: number | null;
+  preferred_unit_type?: string | null;
+  message?: string | null;
+  utm_source?: string | null;
+  utm_campaign?: string | null;
+}
+
 export interface Nominee {
   id?: number;
   customer_id?: number;
   nominee_name: string;
-  relationship: string; // SPOUSE, SON, DAUGHTER, FATHER, MOTHER
+  relationship: string; // SPOUSE, SON, DAUGHTER, FATHER, MOTHER, BROTHER, SISTER
   nid_number?: string | null;
   share_percentage: number;
   photo_url?: string | null;
@@ -67,14 +106,7 @@ export interface Customer {
 export interface LeadConversionMetrics {
   total_leads: number;
   conversion_rate_percentage: number;
-  stage_funnel: {
-    NEW: number;
-    CONTACTED: number;
-    VISITED: number;
-    NEGOTIATION: number;
-    BOOKED: number;
-    DROPPED: number;
-  };
+  stage_funnel: { [stage: string]: number };
   source_distribution: { [key: string]: number };
   total_verified_customers: number;
 }

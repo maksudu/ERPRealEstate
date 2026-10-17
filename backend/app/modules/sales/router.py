@@ -12,15 +12,18 @@ from app.modules.projects.models import Project
 from app.modules.inventory.models import Unit
 from app.modules.crm.models import Customer
 from app.modules.auth.models import User
-from app.modules.sales.models import Booking, BookingCancellation, UnitTransfer
+from app.modules.sales.models import Booking, BookingCancellation, UnitTransfer, BookingJointBuyer
 from app.modules.sales.schemas import (
     BookingCreate, BookingResponse, DiscountApprovalAction,
     BookingCancellationCreate, BookingCancellationResponse,
     UnitTransferCreate, UnitTransferResponse,
+    BookingJointBuyerCreate, BookingJointBuyerResponse,
     SalesMetrics
 )
 from app.modules.sales.deed_generator import generate_bilingual_deed_pdf
 from app.modules.accounts.services import post_customer_collection_voucher
+from app.modules.governance.services import GovernanceEngineService
+from app.modules.governance.schemas import ApprovalRequestCreate
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +50,8 @@ async def list_bookings(
             selectinload(Booking.unit),
             selectinload(Booking.customer),
             selectinload(Booking.discount_approved_by),
-            selectinload(Booking.cancellation)
+            selectinload(Booking.cancellation),
+            selectinload(Booking.joint_buyers)
         )
         .order_by(Booking.id.desc())
     )
@@ -93,10 +97,13 @@ async def create_booking(
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Creates a new apartment booking and enforces the Multi-Level Discount Approval Matrix:
-    - Discount <= 1.0%: Sales Manager Approval (auto-approved or assigned tier)
-    - 1.0% < Discount <= 3.0%: Director Approval required
-    - Discount > 3.0%: Managing Director (MD) Approval required
+    Creates a new apartment booking with transparent pricing breakdown (Prompt 09)
+    and enforces the Multi-Level Discount Approval Matrix with Governance Engine integration:
+    - Base Price + Parking + Utility + Documentation Charges
+    - Discount <= 1.0%: Standard Sales Manager Discretion (Auto-Approved)
+    - 1.0% < Discount <= 3.0%: Sales Manager Approval Required
+    - 3.0% < Discount <= 7.0%: Head of Sales Approval Required
+    - Discount > 7.0%: Managing Director (MD) Approval Required
     """
     # Verify Unit
     unit_res = await db.execute(select(Unit).where(Unit.id == payload.unit_id))
@@ -114,15 +121,20 @@ async def create_booking(
         raise HTTPException(status_code=404, detail="Customer KYC profile not found")
 
     base_price = float(unit.total_unit_price or 0.0)
+    parking_charge = float(payload.parking_charge or 0.0)
+    utility_charge = float(payload.utility_charge or 0.0)
+    documentation_charge = float(payload.documentation_charge or 0.0)
+    gross_contract_value = base_price + parking_charge + utility_charge + documentation_charge
+
     discount_amount = float(payload.discount_amount or 0.0)
-    if discount_amount > base_price:
-        raise HTTPException(status_code=400, detail="Discount cannot exceed base unit price.")
+    if discount_amount > gross_contract_value:
+        raise HTTPException(status_code=400, detail="Discount cannot exceed total contract value.")
 
-    # Calculate discount percentage
+    # Calculate discount percentage on base price
     discount_percent = (discount_amount / base_price * 100.0) if base_price > 0 else 0.0
-    final_contract_value = base_price - discount_amount
+    final_contract_value = gross_contract_value - discount_amount
 
-    # Enforce Multi-Level Approval Tier
+    # Enforce Multi-Level Approval Tier Matrix (Prompt 08 & Prompt 09)
     if discount_percent <= 0.0:
         approval_tier = "SALES_MANAGER"
         approval_status = "APPROVED"
@@ -130,7 +142,10 @@ async def create_booking(
         approval_tier = "SALES_MANAGER"
         approval_status = "APPROVED" # Within Sales Manager discretion
     elif discount_percent <= 3.0:
-        approval_tier = "DIRECTOR"
+        approval_tier = "SALES_MANAGER"
+        approval_status = "PENDING_APPROVAL"
+    elif discount_percent <= 7.0:
+        approval_tier = "HEAD_OF_SALES"
         approval_status = "PENDING_APPROVAL"
     else:
         approval_tier = "MANAGING_DIRECTOR"
@@ -148,6 +163,10 @@ async def create_booking(
         primary_customer_id=payload.primary_customer_id,
         booking_date=payload.booking_date or date.today(),
         base_unit_price=base_price,
+        parking_charge=parking_charge,
+        utility_charge=utility_charge,
+        documentation_charge=documentation_charge,
+        parking_slot_number=payload.parking_slot_number,
         discount_amount=discount_amount,
         discount_percentage=round(discount_percent, 2),
         required_approval_tier=approval_tier,
@@ -155,11 +174,51 @@ async def create_booking(
         final_contract_value=final_contract_value,
         earnest_money_received=payload.earnest_money_received or 0.0,
         down_payment_total=payload.down_payment_total or 0.0,
-        status="PROVISIONAL" if approval_status == "APPROVED" else "PROVISIONAL",
+        status="PROVISIONAL",
         notes=payload.notes
     )
     db.add(booking)
     await db.flush()
+
+    # Save Joint-Buyers / Co-Applicants KYC under Prompt 09
+    if payload.joint_buyers:
+        for jb in payload.joint_buyers:
+            joint_buyer = BookingJointBuyer(
+                booking_id=booking.id,
+                full_name_en=jb.full_name_en,
+                full_name_bn=jb.full_name_bn,
+                nid_number=jb.nid_number,
+                passport_number=jb.passport_number,
+                tin_number=jb.tin_number,
+                primary_phone=jb.primary_phone,
+                email=jb.email,
+                present_address=jb.present_address,
+                relation_to_primary=jb.relation_to_primary or "CO_APPLICANT",
+                share_percentage=jb.share_percentage or 50.00,
+                photo_url=jb.photo_url,
+                nid_scan_url=jb.nid_scan_url
+            )
+            db.add(joint_buyer)
+
+    # Automatically route to Governance Maker-Checker Approval Engine if discount requires escalation
+    if approval_status == "PENDING_APPROVAL":
+        try:
+            gov_req = await GovernanceEngineService.create_approval_request(
+                db=db,
+                payload=ApprovalRequestCreate(
+                    document_type="DISCOUNT_APPROVAL",
+                    document_id=booking.id,
+                    document_reference=booking.booking_reference_no,
+                    requested_amount=discount_amount,
+                    title=f"Discount Escalation ({round(discount_percent, 2)}%) - {booking.booking_reference_no}",
+                    description=f"Escalated {round(discount_percent, 2)}% discount on unit {unit.unit_number} for customer {customer.full_name_en}. Required Tier: {approval_tier}.",
+                    priority="HIGH" if discount_percent > 7.0 else "MEDIUM"
+                ),
+                initiator_user_id=1 # Default system administrator/initiator
+            )
+            booking.governance_request_id = gov_req.id
+        except Exception as e:
+            logger.warning(f"Could not initialize governance approval workflow: {e}")
 
     # Post Double-Entry Cash/Bank Receipt Voucher for Earnest Money in General Ledger
     if float(booking.earnest_money_received or 0) > 0:
@@ -184,7 +243,8 @@ async def create_booking(
             selectinload(Booking.unit),
             selectinload(Booking.customer),
             selectinload(Booking.discount_approved_by),
-            selectinload(Booking.cancellation)
+            selectinload(Booking.cancellation),
+            selectinload(Booking.joint_buyers)
         )
         .where(Booking.id == booking.id)
     )
@@ -195,6 +255,41 @@ async def create_booking(
     resp.customer_name = saved.customer.full_name_en if saved.customer else None
     resp.customer_phone = saved.customer.primary_phone if saved.customer else None
     return resp
+
+
+@router.post("/bookings/{booking_id}/joint-buyers", response_model=BookingJointBuyerResponse)
+async def add_booking_joint_buyer(
+    booking_id: int,
+    payload: BookingJointBuyerCreate,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Appends a new Joint-Buyer / Co-Applicant KYC record to an existing sales booking.
+    """
+    booking_res = await db.execute(select(Booking).where(Booking.id == booking_id))
+    booking = booking_res.scalars().first()
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+
+    joint_buyer = BookingJointBuyer(
+        booking_id=booking_id,
+        full_name_en=payload.full_name_en,
+        full_name_bn=payload.full_name_bn,
+        nid_number=payload.nid_number,
+        passport_number=payload.passport_number,
+        tin_number=payload.tin_number,
+        primary_phone=payload.primary_phone,
+        email=payload.email,
+        present_address=payload.present_address,
+        relation_to_primary=payload.relation_to_primary or "CO_APPLICANT",
+        share_percentage=payload.share_percentage or 50.00,
+        photo_url=payload.photo_url,
+        nid_scan_url=payload.nid_scan_url
+    )
+    db.add(joint_buyer)
+    await db.commit()
+    await db.refresh(joint_buyer)
+    return joint_buyer
 
 
 # --------------------------------------------------------------------------

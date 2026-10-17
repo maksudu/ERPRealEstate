@@ -1,0 +1,13 @@
+/* Governance & Maker-Checker Custom Cockpit Styles */
+:host {
+  display: block;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

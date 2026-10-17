@@ -34,7 +34,16 @@ class Booking(Base):
     discount_approved_by_id = Column(BigInteger, ForeignKey("sys_users.id", ondelete="SET NULL"), nullable=True)
     discount_approval_notes = Column(Text, nullable=True)
 
-    final_contract_value = Column(Numeric(14, 2), nullable=False) # base_price - discount
+    # Pricing Breakdown under REHAB / Bangladesh Real Estate Standards
+    parking_charge = Column(Numeric(14, 2), nullable=False, default=0.00)
+    utility_charge = Column(Numeric(14, 2), nullable=False, default=0.00) # Gas, Electricity, Water & Sewerage connection
+    documentation_charge = Column(Numeric(14, 2), nullable=False, default=0.00) # Legal vetting, deed drafting & stamp charges
+    parking_slot_number = Column(String(64), nullable=True)
+
+    # Link to Governance Maker-Checker Approval Request
+    governance_request_id = Column(BigInteger, ForeignKey("gov_approval_requests.id", ondelete="SET NULL"), nullable=True)
+
+    final_contract_value = Column(Numeric(14, 2), nullable=False) # (base_price + parking + utility + doc) - discount
     earnest_money_received = Column(Numeric(14, 2), nullable=False, default=0.00)
     down_payment_total = Column(Numeric(14, 2), nullable=False, default=0.00)
     
@@ -52,6 +61,34 @@ class Booking(Base):
     discount_approved_by = relationship("User")
     cancellation = relationship("BookingCancellation", back_populates="booking", uselist=False, cascade="all, delete-orphan")
     transfers = relationship("UnitTransfer", back_populates="booking", cascade="all, delete-orphan")
+    joint_buyers = relationship("BookingJointBuyer", back_populates="booking", cascade="all, delete-orphan")
+
+
+class BookingJointBuyer(Base):
+    """
+    Joint Buyers / Co-applicants KYC under Bangladesh Real Estate Act.
+    Supports husband-wife, parent-child, and business partner co-ownership with specified shares.
+    """
+    __tablename__ = "sls_booking_joint_buyers"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    booking_id = Column(BigInteger, ForeignKey("sls_bookings.id", ondelete="CASCADE"), nullable=False, index=True)
+    full_name_en = Column(String(191), nullable=False)
+    full_name_bn = Column(String(191), nullable=True)
+    nid_number = Column(String(64), nullable=True, index=True)
+    passport_number = Column(String(64), nullable=True)
+    tin_number = Column(String(64), nullable=True)
+    primary_phone = Column(String(32), nullable=False)
+    email = Column(String(128), nullable=True)
+    present_address = Column(Text, nullable=True)
+    relation_to_primary = Column(String(64), nullable=False, default="CO_APPLICANT") # SPOUSE, BROTHER, SON, DAUGHTER, PARTNER
+    share_percentage = Column(Numeric(5, 2), nullable=False, default=50.00)
+    photo_url = Column(String(255), nullable=True)
+    nid_scan_url = Column(String(255), nullable=True)
+
+    created_at = Column(TIMESTAMP, server_default=func.now())
+
+    booking = relationship("Booking", back_populates="joint_buyers")
 
 
 class BookingCancellation(Base):

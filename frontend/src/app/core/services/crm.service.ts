@@ -7,7 +7,9 @@ import {
   LeadActivity, 
   Customer, 
   Nominee, 
-  LeadConversionMetrics 
+  LeadConversionMetrics,
+  LeadScoreBreakdown,
+  WebsiteInquiryPayload
 } from '../models/crm.model';
 
 @Injectable({
@@ -35,6 +37,10 @@ export class CrmService {
       lead_stage: stage,
       notes: notes
     });
+  }
+
+  getLeadScoringBreakdown(leadId: number): Observable<LeadScoreBreakdown> {
+    return this.http.get<LeadScoreBreakdown>(`${this.baseUrl}/leads/${leadId}/scoring-breakdown`);
   }
 
   // 2. Activities (Call Logs, Site Visit Schedulers)
@@ -66,8 +72,12 @@ export class CrmService {
     return this.http.get<LeadConversionMetrics>(`${this.baseUrl}/reports/conversion`);
   }
 
-  // 5. Facebook Webhook Simulation Trigger
+  // 5. Ingestion Webhooks
   simulateFacebookLead(payload: { lead_name: string; phone_number: string; email?: string; campaign_name?: string; interested_project_code?: string }): Observable<any> {
     return this.http.post<any>(`${this.baseUrl}/webhooks/facebook`, payload);
+  }
+
+  submitWebsiteInquiry(payload: WebsiteInquiryPayload): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/webhooks/website-inquiry`, payload);
   }
 }

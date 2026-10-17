@@ -1,61 +1,65 @@
 <div class="flex flex-col gap-6">
-  <!-- Sales KPI Summary Cards -->
-  <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-    <div class="bg-card border border-border rounded-xl p-4 flex items-center justify-between shadow-sm">
-      <div>
-        <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total Units Booked</p>
-        <h3 class="text-2xl font-bold text-foreground mt-1">{{ metrics()?.total_bookings || 0 }}</h3>
-      </div>
-      <div class="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-        </svg>
-      </div>
-    </div>
-
-    <div class="bg-card border border-border rounded-xl p-4 flex items-center justify-between shadow-sm">
-      <div>
-        <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Gross Contract Value</p>
-        <h3 class="text-xl font-bold text-primary mt-1">BDT {{ (metrics()?.gross_contract_value || 0) | number:'1.0-0' }}</h3>
-      </div>
-      <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-        </svg>
-      </div>
-    </div>
-
-    <div class="bg-card border border-border rounded-xl p-4 flex items-center justify-between shadow-sm">
-      <div>
-        <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Earnest Money Collected</p>
-        <h3 class="text-xl font-bold text-foreground mt-1">BDT {{ (metrics()?.total_earnest_collected || 0) | number:'1.0-0' }}</h3>
-      </div>
-      <div class="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
-        </svg>
-      </div>
-    </div>
-
-    <div class="bg-card border border-border rounded-xl p-4 flex items-center justify-between shadow-sm">
-      <div>
-        <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Pending Discount Approvals</p>
-        <h3 class="text-2xl font-bold text-amber-500 mt-1">{{ metrics()?.pending_discount_approvals || 0 }}</h3>
-      </div>
-      <div class="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-500">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-        </svg>
-      </div>
-    </div>
-  </div>
-
-  <!-- Unified Main Card Container -->
+  <!-- Unified Outer Card Container -->
   <app-card-container
-    title="Apartment Bookings & Deed Generator Master"
-    subtitle="Sales Execution, Sub-Registry Statutory Bilingual Deed of Agreement & Allotment"
+    title="Apartment Bookings, Joint-Buyer KYC & Sales Execution"
+    subtitle="Full Commercial Pricing Breakdown, Multi-Tier Escalated Discount Governance & Sub-Registry Bilingual Deed Generator"
   >
-    <!-- Action Bar & Search -->
+    <!-- Sales KPI Summary Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div class="bg-card border border-border rounded-xl p-4 flex items-center justify-between shadow-sm">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total Units Booked</p>
+          <h3 class="text-2xl font-bold text-foreground mt-1">{{ metrics()?.total_bookings || bookings().length }}</h3>
+          <span class="text-[11px] text-emerald-500 font-medium">Allotment Confirmed</span>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 border border-emerald-500/20">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="bg-card border border-border rounded-xl p-4 flex items-center justify-between shadow-sm">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Gross Sales Value</p>
+          <h3 class="text-xl font-bold text-primary mt-1">BDT {{ (metrics()?.gross_contract_value || 0) | number:'1.0-0' }}</h3>
+          <span class="text-[11px] text-muted-foreground">Base + Parking + Utility + Docs</span>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="bg-card border border-border rounded-xl p-4 flex items-center justify-between shadow-sm">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Earnest Money Collected</p>
+          <h3 class="text-xl font-bold text-foreground mt-1">BDT {{ (metrics()?.total_earnest_collected || 0) | number:'1.0-0' }}</h3>
+          <span class="text-[11px] text-blue-500 font-medium">Secured in Bank Account</span>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 border border-blue-500/20">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="bg-card border border-border rounded-xl p-4 flex items-center justify-between shadow-sm">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Escalated Governance</p>
+          <h3 class="text-2xl font-bold text-amber-500 mt-1">{{ metrics()?.pending_discount_approvals || 0 }}</h3>
+          <span class="text-[11px] text-amber-500 font-medium">Pending Multi-Tier Approval</span>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500 border border-amber-500/20">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter & Action Bar -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
       <div class="relative flex-1 max-w-md">
         <input 
@@ -63,7 +67,7 @@
           [ngModel]="searchQuery()" 
           (ngModelChange)="searchQuery.set($event)"
           placeholder="Search by Booking Ref, Buyer, Unit, or Project..." 
-          class="w-full pl-10 pr-4 py-2 text-sm rounded-lg bg-secondary/50 border border-border focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-foreground placeholder-muted-foreground"
+          class="w-full pl-10 pr-4 py-2 text-sm rounded-xl bg-secondary/50 border border-border focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-foreground placeholder-muted-foreground"
         />
         <svg class="w-4 h-4 text-muted-foreground absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
@@ -76,22 +80,22 @@
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
             </svg>
-            + Create Booking
+            + New Sales Booking
           </span>
         </app-custom-button>
       </div>
     </div>
 
-    <!-- Bookings Table -->
+    <!-- Bookings Master Table -->
     <div class="overflow-x-auto border border-border rounded-xl">
       <table class="w-full text-left text-sm text-foreground">
         <thead class="bg-secondary/40 text-xs font-semibold uppercase text-muted-foreground border-b border-border">
           <tr>
             <th class="px-4 py-3">Booking Ref</th>
-            <th class="px-4 py-3">Buyer / Allottee</th>
+            <th class="px-4 py-3">Primary Buyer & Joint KYC</th>
             <th class="px-4 py-3">Project & Unit</th>
-            <th class="px-4 py-3 text-right">Contract Value</th>
-            <th class="px-4 py-3 text-center">Discount Tier</th>
+            <th class="px-4 py-3 text-right">Pricing Breakdown & Net Total</th>
+            <th class="px-4 py-3 text-center">Discount Governance</th>
             <th class="px-4 py-3 text-center">Status</th>
             <th class="px-4 py-3 text-right">Actions</th>
           </tr>
@@ -104,32 +108,57 @@
                 <span class="block text-[11px] text-muted-foreground font-normal">{{ b.booking_date }}</span>
               </td>
               <td class="px-4 py-3.5">
-                <div class="font-semibold text-foreground">{{ b.customer_name }}</div>
+                <div class="font-semibold text-foreground flex items-center gap-1.5">
+                  {{ b.customer_name }}
+                  @if (b.joint_buyers && b.joint_buyers.length > 0) {
+                    <span 
+                      class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-primary/10 text-primary border border-primary/20 cursor-pointer"
+                      (click)="openKYCModal(b)"
+                      title="View Joint Buyers KYC"
+                    >
+                      +{{ b.joint_buyers.length }} Joint
+                    </span>
+                  }
+                </div>
                 <div class="text-xs text-muted-foreground">📞 {{ b.customer_phone }}</div>
+                @if (b.parking_slot_number) {
+                  <span class="inline-block text-[10px] font-mono text-muted-foreground mt-0.5">
+                    🚗 Slot: {{ b.parking_slot_number }}
+                  </span>
+                }
               </td>
               <td class="px-4 py-3.5">
                 <div class="font-medium text-foreground">Unit {{ b.unit_number }}</div>
                 <div class="text-xs text-muted-foreground truncate max-w-[180px]">{{ b.project_name }}</div>
               </td>
-              <td class="px-4 py-3.5 text-right font-mono font-semibold">
-                BDT {{ b.final_contract_value | number:'1.0-0' }}
+              <td class="px-4 py-3.5 text-right font-mono">
+                <div class="font-bold text-foreground">BDT {{ b.final_contract_value | number:'1.0-0' }}</div>
+                <div class="text-[11px] text-muted-foreground">
+                  Base: {{ b.base_unit_price | number:'1.0-0' }}
+                  @if (b.parking_charge > 0) { + Pkg: {{ b.parking_charge | number:'1.0-0' }} }
+                  @if (b.utility_charge > 0) { + Utl: {{ b.utility_charge | number:'1.0-0' }} }
+                </div>
                 @if (b.discount_amount > 0) {
-                  <span class="block text-[11px] text-emerald-500 font-normal">
-                    Disc: -{{ b.discount_percentage }}% (BDT {{ b.discount_amount | number:'1.0-0' }})
+                  <span class="block text-[11px] text-emerald-500 font-semibold">
+                    Disc: -{{ b.discount_percentage }}% (-BDT {{ b.discount_amount | number:'1.0-0' }})
                   </span>
                 }
               </td>
               <td class="px-4 py-3.5 text-center">
-                @if (b.discount_approval_status === 'APPROVED') {
-                  <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                @if (b.discount_amount <= 0) {
+                  <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-secondary text-muted-foreground border border-border">
+                    Standard Price
+                  </span>
+                } @else if (b.discount_approval_status === 'APPROVED') {
+                  <span class="text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 inline-flex items-center gap-1">
                     ✓ {{ b.required_approval_tier.replace('_', ' ') }}
                   </span>
                 } @else if (b.discount_approval_status === 'PENDING_APPROVAL') {
-                  <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20 animate-pulse">
+                  <span class="text-xs font-medium px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20 inline-flex items-center gap-1 animate-pulse">
                     ⏳ Req. {{ b.required_approval_tier.replace('_', ' ') }}
                   </span>
                 } @else {
-                  <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-500 border border-rose-500/20">
+                  <span class="text-xs font-medium px-2.5 py-1 rounded-full bg-rose-500/10 text-rose-500 border border-rose-500/20">
                     ✕ Rejected
                   </span>
                 }
@@ -138,7 +167,7 @@
                 <span 
                   class="text-xs font-semibold px-2.5 py-1 rounded-full uppercase"
                   [ngClass]="{
-                    'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20': b.status === 'AGREEMENT_SIGNED',
+                    'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20': b.status === 'AGREEMENT_SIGNED' || b.status === 'REGISTRATION_DONE',
                     'bg-blue-500/10 text-blue-500 border border-blue-500/20': b.status === 'PROVISIONAL',
                     'bg-purple-500/10 text-purple-500 border border-purple-500/20': b.status === 'TRANSFERRED',
                     'bg-rose-500/10 text-rose-500 border border-rose-500/20': b.status === 'CANCELLED'
@@ -149,6 +178,18 @@
               </td>
               <td class="px-4 py-3.5 text-right">
                 <div class="flex items-center justify-end gap-2">
+                  <!-- View KYC & Pricing Details Button -->
+                  <button 
+                    (click)="openKYCModal(b)"
+                    title="View Buyer KYC, Joint-Buyers & Pricing Breakdown"
+                    class="px-2 py-1 text-xs rounded-lg bg-secondary hover:bg-secondary/80 text-foreground border border-border font-medium inline-flex items-center gap-1 transition-colors"
+                  >
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                    </svg>
+                    KYC Details
+                  </button>
+
                   <!-- WeasyPrint Bilingual PDF Generator Download -->
                   <button 
                     (click)="downloadDeed(b)"
@@ -166,7 +207,7 @@
                     <button 
                       (click)="openTransferModal(b)"
                       title="Transfer Unit Mutation to another Buyer"
-                      class="px-2 py-1 text-xs rounded-lg bg-secondary hover:bg-secondary/80 text-foreground border border-border font-medium transition-colors"
+                      class="px-2 py-1 text-xs rounded-lg bg-secondary hover:bg-secondary/80 text-muted-foreground hover:text-foreground border border-border font-medium transition-colors"
                     >
                       Transfer
                     </button>
@@ -186,14 +227,14 @@
     </div>
   </app-card-container>
 
-  <!-- Modal 1: Create Sales Booking -->
+  <!-- Modal 1: Execute Sales Booking with Full Pricing Breakdown & Joint-Buyers -->
   @if (isCreateModalOpen()) {
     <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
-      <div class="bg-card border border-border rounded-2xl w-full max-w-xl shadow-2xl p-6 flex flex-col gap-5 my-8">
+      <div class="bg-card border border-border rounded-2xl w-full max-w-3xl shadow-2xl p-6 flex flex-col gap-5 my-8 max-h-[90vh] overflow-y-auto">
         <div class="flex items-center justify-between border-b border-border pb-3">
           <div>
-            <h3 class="text-lg font-bold text-foreground">Execute Apartment Booking</h3>
-            <p class="text-xs text-muted-foreground">Automatic Multi-Level Discount Approval Matrix Assignment</p>
+            <h3 class="text-lg font-bold text-foreground">Execute Apartment Booking & Pricing Breakdown</h3>
+            <p class="text-xs text-muted-foreground">Automated Multi-Tier Governance Escalation & Co-Applicant KYC Capture</p>
           </div>
           <button (click)="closeCreateModal()" class="text-muted-foreground hover:text-foreground">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -202,20 +243,23 @@
           </button>
         </div>
 
-        <form [formGroup]="bookingForm" (ngSubmit)="submitBooking()" class="flex flex-col gap-4">
-          <app-searchable-select
-            label="Project Name *"
-            [options]="projectOptions"
-            [formGroup]="bookingForm"
-            controlName="project_id"
-          />
+        <form [formGroup]="bookingForm" (ngSubmit)="submitBooking()" class="flex flex-col gap-5">
+          <!-- Property & Primary Buyer Selection -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <app-searchable-select
+              label="Select Project *"
+              [options]="projectOptions"
+              [formGroup]="bookingForm"
+              controlName="project_id"
+            />
 
-          <app-searchable-select
-            label="Allotted Unit / Apartment *"
-            [options]="unitOptions"
-            [formGroup]="bookingForm"
-            controlName="unit_id"
-          />
+            <app-searchable-select
+              label="Allotted Apartment Unit *"
+              [options]="unitOptions"
+              [formGroup]="bookingForm"
+              controlName="unit_id"
+            />
+          </div>
 
           <app-searchable-select
             label="Primary Buyer KYC Profile *"
@@ -224,36 +268,204 @@
             controlName="primary_customer_id"
           />
 
+          <!-- Section: Transparent Pricing Breakdown -->
+          <div class="border border-border rounded-xl p-4 bg-secondary/20 flex flex-col gap-4">
+            <div class="flex items-center justify-between border-b border-border pb-2">
+              <span class="text-xs font-bold uppercase tracking-wider text-primary">Transparent Pricing Breakdown</span>
+              <span class="text-xs font-mono text-muted-foreground">
+                Base Unit Price: BDT {{ getBaseUnitPrice() | number:'1.0-0' }}
+              </span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              <app-custom-input
+                label="Parking Slot No."
+                placeholder="e.g. B1-P14"
+                [formGroup]="bookingForm"
+                controlName="parking_slot_number"
+              />
+              <app-custom-input
+                label="Parking Charge (BDT)"
+                type="number"
+                placeholder="350000"
+                [formGroup]="bookingForm"
+                controlName="parking_charge"
+              />
+              <app-custom-input
+                label="Utility Charges (BDT)"
+                type="number"
+                placeholder="250000"
+                [formGroup]="bookingForm"
+                controlName="utility_charge"
+              />
+              <app-custom-input
+                label="Doc & Legal Fee (BDT)"
+                type="number"
+                placeholder="50000"
+                [formGroup]="bookingForm"
+                controlName="documentation_charge"
+              />
+            </div>
+
+            <!-- Dynamic Pricing Summary Ribbon -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 bg-secondary/50 rounded-xl border border-border text-center">
+              <div>
+                <span class="text-[11px] text-muted-foreground block uppercase font-medium">Gross Total Price</span>
+                <span class="text-base font-bold font-mono text-foreground">BDT {{ getGrossContractValue() | number:'1.0-0' }}</span>
+              </div>
+              <div>
+                <span class="text-[11px] text-muted-foreground block uppercase font-medium">Discount Amount & %</span>
+                <span class="text-base font-bold font-mono text-emerald-500">
+                  -BDT {{ (bookingForm.get('discount_amount')?.value || 0) | number:'1.0-0' }} ({{ getDiscountPercentage() }}%)
+                </span>
+              </div>
+              <div>
+                <span class="text-[11px] text-muted-foreground block uppercase font-medium">Net Final Contract Value</span>
+                <span class="text-base font-bold font-mono text-primary">BDT {{ getNetContractValue() | number:'1.0-0' }}</span>
+              </div>
+            </div>
+
+            <!-- Promotional Discount Input & Escalation Tier Badge -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+              <app-custom-input
+                label="Promotional Discount Amount (BDT)"
+                type="number"
+                placeholder="0"
+                [formGroup]="bookingForm"
+                controlName="discount_amount"
+              />
+
+              <div class="p-3 rounded-xl border border-border bg-card flex flex-col justify-center">
+                <span class="text-[11px] text-muted-foreground block font-medium">Governance Approval Required</span>
+                <div class="flex items-center gap-2 mt-1">
+                  <span class="text-xs px-2.5 py-0.5 rounded-full font-bold" [ngClass]="getDiscountEscalationTier().badgeClass">
+                    {{ getDiscountEscalationTier().tier.replace('_', ' ') }}
+                  </span>
+                  <span class="text-[11px] text-muted-foreground truncate">{{ getDiscountEscalationTier().description }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section: Joint Buyers / Co-Applicants KYC -->
+          <div class="border border-border rounded-xl p-4 bg-secondary/10 flex flex-col gap-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <span class="text-xs font-bold uppercase tracking-wider text-foreground">Joint Buyers & Nominee KYC</span>
+                <p class="text-[11px] text-muted-foreground">Register co-owners, share percentage and statutory identification</p>
+              </div>
+              <button 
+                type="button" 
+                (click)="toggleAddJointBuyer()"
+                class="px-3 py-1 text-xs rounded-lg bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 font-medium inline-flex items-center gap-1"
+              >
+                {{ isAddingJointBuyer() ? '✕ Cancel' : '+ Add Co-Buyer' }}
+              </button>
+            </div>
+
+            <!-- List of Added Joint Buyers -->
+            @if (tempJointBuyers().length > 0) {
+              <div class="space-y-2">
+                @for (jb of tempJointBuyers(); track $index) {
+                  <div class="flex items-center justify-between p-2.5 bg-card border border-border rounded-lg text-xs">
+                    <div>
+                      <span class="font-bold text-foreground">{{ jb.full_name_en }}</span>
+                      <span class="text-muted-foreground ml-2 font-mono">({{ jb.relation_to_primary }} - {{ jb.share_percentage }}% Share)</span>
+                      <div class="text-[11px] text-muted-foreground">
+                        📞 {{ jb.primary_phone }} | NID: {{ jb.nid_number || 'N/A' }} | E-TIN: {{ jb.tin_number || 'N/A' }}
+                      </div>
+                    </div>
+                    <button 
+                      type="button" 
+                      (click)="removeTempJointBuyer($index)"
+                      class="text-rose-500 hover:text-rose-700 px-2 py-1 text-xs"
+                    >
+                      ✕ Remove
+                    </button>
+                  </div>
+                }
+              </div>
+            }
+
+            <!-- Add Joint Buyer Inline Form -->
+            @if (isAddingJointBuyer()) {
+              <div class="p-3 bg-card border border-border rounded-xl space-y-3 mt-2">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <app-custom-input
+                    label="Full Name (English) *"
+                    placeholder="e.g. Begum Rokeya"
+                    [formGroup]="jointBuyerForm"
+                    controlName="full_name_en"
+                  />
+                  <app-searchable-select
+                    label="Relation to Primary Buyer *"
+                    [options]="relationOptions"
+                    [formGroup]="jointBuyerForm"
+                    controlName="relation_to_primary"
+                  />
+                  <app-custom-input
+                    label="Ownership Share (%) *"
+                    type="number"
+                    placeholder="50"
+                    [formGroup]="jointBuyerForm"
+                    controlName="share_percentage"
+                  />
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <app-custom-input
+                    label="Primary Mobile Phone *"
+                    placeholder="+8801700000000"
+                    [formGroup]="jointBuyerForm"
+                    controlName="primary_phone"
+                  />
+                  <app-custom-input
+                    label="National ID (NID / Smart Card)"
+                    placeholder="10 or 17 digit NID"
+                    [formGroup]="jointBuyerForm"
+                    controlName="nid_number"
+                  />
+                  <app-custom-input
+                    label="E-TIN Number"
+                    placeholder="12 digit TIN"
+                    [formGroup]="jointBuyerForm"
+                    controlName="tin_number"
+                  />
+                </div>
+
+                <div class="flex justify-end gap-2">
+                  <app-custom-button variant="outline" size="sm" type="button" (clicked)="toggleAddJointBuyer()">
+                    Cancel
+                  </app-custom-button>
+                  <app-custom-button variant="primary" size="sm" type="button" (clicked)="saveTempJointBuyer()" [disabled]="jointBuyerForm.invalid">
+                    Save Co-Buyer
+                  </app-custom-button>
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Earnest Money & Notes -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <app-custom-input
-              label="Promotional Discount Amount (BDT)"
-              type="number"
-              placeholder="0"
-              [formGroup]="bookingForm"
-              controlName="discount_amount"
-            />
-            <app-custom-input
-              label="Earnest Booking Money (BDT) *"
+              label="Earnest Booking Money Received (BDT) *"
               type="number"
               placeholder="500000"
               [formGroup]="bookingForm"
               controlName="earnest_money_received"
             />
-          </div>
-
-          <!-- Multi-Level Discount Policy Hint -->
-          <div class="text-[11px] bg-secondary/50 p-3 rounded-xl border border-border space-y-1">
-            <span class="font-bold text-foreground block">Governance Policy: Multi-Level Discount Approval Matrix</span>
-            <div class="text-muted-foreground">
-              • <strong>Discount &le; 1.0%:</strong> Sales Manager Approval (auto-approved).<br>
-              • <strong>1.0% &lt; Discount &le; 3.0%:</strong> Director Approval required.<br>
-              • <strong>Discount &gt; 3.0%:</strong> Managing Director (MD) 1-Tap Biometric Approval required.
-            </div>
+            <app-custom-input
+              label="Initial Down Payment Allocated (BDT)"
+              type="number"
+              placeholder="0"
+              [formGroup]="bookingForm"
+              controlName="down_payment_total"
+            />
           </div>
 
           <app-custom-textarea
-            label="Special Conditions / Terms"
-            placeholder="Special handover conditions, milestone payment customization..."
+            label="Special Allotment Clauses / Conditions"
+            placeholder="Special handover conditions, milestone payment customization, finish specifications..."
             [formGroup]="bookingForm"
             controlName="notes"
           />
@@ -263,7 +475,7 @@
               Cancel
             </app-custom-button>
             <app-custom-button variant="primary" type="submit" [disabled]="bookingForm.invalid || isSubmitting()">
-              {{ isSubmitting() ? 'Executing...' : 'Execute Booking' }}
+              {{ isSubmitting() ? 'Executing...' : 'Execute Booking & Allotment' }}
             </app-custom-button>
           </div>
         </form>
@@ -271,7 +483,183 @@
     </div>
   }
 
-  <!-- Modal 2: Unit Mutation & Ownership Transfer -->
+  <!-- Modal 2: KYC & Full Pricing Breakdown Audit Modal -->
+  @if (isKYCModalOpen() && selectedBookingForKYC()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+      <div class="bg-card border border-border rounded-2xl w-full max-w-2xl shadow-2xl p-6 flex flex-col gap-5 my-8 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between border-b border-border pb-3">
+          <div>
+            <h3 class="text-lg font-bold text-foreground">Buyer KYC Profile & Pricing Audit</h3>
+            <p class="text-xs text-muted-foreground">{{ selectedBookingForKYC()?.booking_reference_no }} | Unit {{ selectedBookingForKYC()?.unit_number }}</p>
+          </div>
+          <button (click)="closeKYCModal()" class="text-muted-foreground hover:text-foreground">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Commercial Pricing Breakdown Card -->
+        <div class="bg-secondary/30 border border-border rounded-xl p-4 flex flex-col gap-3">
+          <span class="text-xs font-bold uppercase tracking-wider text-primary">Commercial Cost Breakdown</span>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div class="bg-card p-2.5 rounded-lg border border-border">
+              <span class="text-muted-foreground block">Base Unit Price</span>
+              <span class="font-bold font-mono text-foreground text-sm">BDT {{ (selectedBookingForKYC()?.base_unit_price || 0) | number:'1.0-0' }}</span>
+            </div>
+            <div class="bg-card p-2.5 rounded-lg border border-border">
+              <span class="text-muted-foreground block">Parking Slot & Fee</span>
+              <span class="font-bold font-mono text-foreground text-sm">
+                {{ selectedBookingForKYC()?.parking_slot_number || 'N/A' }} (BDT {{ (selectedBookingForKYC()?.parking_charge || 0) | number:'1.0-0' }})
+              </span>
+            </div>
+            <div class="bg-card p-2.5 rounded-lg border border-border">
+              <span class="text-muted-foreground block">Utility Connection</span>
+              <span class="font-bold font-mono text-foreground text-sm">BDT {{ (selectedBookingForKYC()?.utility_charge || 0) | number:'1.0-0' }}</span>
+            </div>
+            <div class="bg-card p-2.5 rounded-lg border border-border">
+              <span class="text-muted-foreground block">Documentation Fee</span>
+              <span class="font-bold font-mono text-foreground text-sm">BDT {{ (selectedBookingForKYC()?.documentation_charge || 0) | number:'1.0-0' }}</span>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between p-3 bg-primary/10 border border-primary/20 rounded-xl">
+            <div>
+              <span class="text-xs text-muted-foreground block">Net Final Contract Value</span>
+              <span class="text-lg font-bold font-mono text-primary">BDT {{ selectedBookingForKYC()?.final_contract_value | number:'1.0-0' }}</span>
+            </div>
+            <div class="text-right">
+              <span class="text-xs text-emerald-500 font-semibold block">
+                Discount: -BDT {{ (selectedBookingForKYC()?.discount_amount || 0) | number:'1.0-0' }} ({{ selectedBookingForKYC()?.discount_percentage }}%)
+              </span>
+              <span class="text-[11px] text-muted-foreground">Earnest: BDT {{ (selectedBookingForKYC()?.earnest_money_received || 0) | number:'1.0-0' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Primary Allottee Profile -->
+        <div class="border border-border rounded-xl p-4 bg-card flex flex-col gap-2">
+          <span class="text-xs font-bold uppercase tracking-wider text-muted-foreground">Primary Allottee KYC</span>
+          <div class="flex items-center justify-between">
+            <div>
+              <h4 class="text-base font-bold text-foreground">{{ selectedBookingForKYC()?.customer_name }}</h4>
+              <p class="text-xs text-muted-foreground">📞 {{ selectedBookingForKYC()?.customer_phone }}</p>
+            </div>
+            <span class="text-xs px-2.5 py-1 rounded-full font-bold uppercase bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+              Primary Allottee
+            </span>
+          </div>
+        </div>
+
+        <!-- Joint Buyers & Nominees Section -->
+        <div class="border border-border rounded-xl p-4 bg-secondary/10 flex flex-col gap-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-foreground">Registered Joint-Buyers / Co-Applicants</span>
+            <button 
+              type="button" 
+              (click)="toggleAddJointBuyerToExisting()"
+              class="px-2.5 py-1 text-xs rounded-lg bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 font-medium inline-flex items-center gap-1"
+            >
+              {{ isAddingJointBuyerToExisting() ? '✕ Cancel' : '+ Add Co-Buyer' }}
+            </button>
+          </div>
+
+          <!-- Existing Joint Buyers List -->
+          @if (selectedBookingForKYC()?.joint_buyers && selectedBookingForKYC()!.joint_buyers!.length > 0) {
+            <div class="space-y-2">
+              @for (jb of selectedBookingForKYC()!.joint_buyers; track jb.id) {
+                <div class="p-3 bg-card border border-border rounded-xl flex items-center justify-between text-xs">
+                  <div>
+                    <div class="font-bold text-foreground text-sm flex items-center gap-2">
+                      {{ jb.full_name_en }}
+                      <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-primary/10 text-primary font-bold">
+                        {{ jb.relation_to_primary }} ({{ jb.share_percentage }}% Share)
+                      </span>
+                    </div>
+                    <div class="text-muted-foreground mt-1 space-x-3">
+                      <span>📞 {{ jb.primary_phone }}</span>
+                      <span>NID: <strong>{{ jb.nid_number || 'N/A' }}</strong></span>
+                      <span>E-TIN: <strong>{{ jb.tin_number || 'N/A' }}</strong></span>
+                    </div>
+                  </div>
+                  <span class="text-xs text-emerald-500 font-semibold">Active KYC</span>
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="text-xs text-muted-foreground text-center py-4 bg-card rounded-xl border border-dashed border-border">
+              No joint-buyers or co-applicants registered for this booking. Click "+ Add Co-Buyer" to register nominee or joint-owner.
+            </div>
+          }
+
+          <!-- In-place Add Joint Buyer to Existing Booking Form -->
+          @if (isAddingJointBuyerToExisting()) {
+            <div class="p-3 bg-card border border-border rounded-xl space-y-3 mt-2">
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <app-custom-input
+                  label="Full Name (English) *"
+                  placeholder="e.g. Begum Rokeya"
+                  [formGroup]="jointBuyerForm"
+                  controlName="full_name_en"
+                />
+                <app-searchable-select
+                  label="Relation *"
+                  [options]="relationOptions"
+                  [formGroup]="jointBuyerForm"
+                  controlName="relation_to_primary"
+                />
+                <app-custom-input
+                  label="Share (%) *"
+                  type="number"
+                  placeholder="50"
+                  [formGroup]="jointBuyerForm"
+                  controlName="share_percentage"
+                />
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <app-custom-input
+                  label="Phone *"
+                  placeholder="+8801700000000"
+                  [formGroup]="jointBuyerForm"
+                  controlName="primary_phone"
+                />
+                <app-custom-input
+                  label="National ID (NID)"
+                  placeholder="NID Number"
+                  [formGroup]="jointBuyerForm"
+                  controlName="nid_number"
+                />
+                <app-custom-input
+                  label="E-TIN"
+                  placeholder="TIN Number"
+                  [formGroup]="jointBuyerForm"
+                  controlName="tin_number"
+                />
+              </div>
+
+              <div class="flex justify-end gap-2">
+                <app-custom-button variant="outline" size="sm" type="button" (clicked)="toggleAddJointBuyerToExisting()">
+                  Cancel
+                </app-custom-button>
+                <app-custom-button variant="primary" size="sm" type="button" (clicked)="saveJointBuyerToExisting()" [disabled]="jointBuyerForm.invalid || isSubmitting()">
+                  {{ isSubmitting() ? 'Saving...' : 'Save & Link Joint Buyer' }}
+                </app-custom-button>
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="flex justify-end pt-3 border-t border-border">
+          <app-custom-button variant="outline" type="button" (clicked)="closeKYCModal()">
+            Close
+          </app-custom-button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Modal 3: Unit Mutation & Ownership Transfer -->
   @if (isTransferModalOpen()) {
     <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div class="bg-card border border-border rounded-2xl w-full max-w-md shadow-2xl p-6 flex flex-col gap-5">

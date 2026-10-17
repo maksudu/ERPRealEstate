@@ -149,3 +149,35 @@ class FacebookWebhookPayload(BaseModel):
     email: Optional[str] = None
     campaign_name: Optional[str] = None
     interested_project_code: Optional[str] = None
+
+
+class WebsiteInquiryPayload(BaseModel):
+    """
+    Website Contact Form & Landing Page Ingestion Payload.
+    Captures inbound prospective buyer inquiries with UTM campaign attribution.
+    """
+    full_name: str
+    phone_number: str
+    email: Optional[str] = None
+    project_code: Optional[str] = None
+    interested_project_id: Optional[int] = None
+    budget_range_min: Optional[float] = 10000000.00
+    budget_range_max: Optional[float] = 25000000.00
+    preferred_unit_type: Optional[str] = None # 3BHK, 4BHK, DUPLEX, PENTHOUSE
+    message: Optional[str] = None
+    utm_source: Optional[str] = "WEBSITE_CONTACT_FORM"
+    utm_campaign: Optional[str] = None
+
+
+class LeadScoreBreakdown(BaseModel):
+    lead_id: int
+    lead_name: str
+    total_score: int # 0 to 100
+    budget_fit_score: int # max 25
+    contact_completeness_score: int # max 25
+    source_quality_score: int # max 25
+    engagement_progression_score: int # max 25
+    lead_stage: str
+    health_grade: str # A_HOT, B_WARM, C_COLD
+    recommended_action: str
+

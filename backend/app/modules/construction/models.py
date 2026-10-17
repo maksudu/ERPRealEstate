@@ -1,10 +1,109 @@
 from sqlalchemy import (
-    Column, BigInteger, String, Numeric, Boolean, Integer, Date, ForeignKey, TIMESTAMP, Text, func
+    Column, BigInteger, String, Numeric, Boolean, Integer, Date, ForeignKey, TIMESTAMP, Text, JSON, func
 )
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 from app.modules.projects.models import Project, Tower
 from app.modules.auth.models import User
+
+class WBSNode(Base):
+    """
+    Work Breakdown Structure (WBS) & Activity Master hierarchy.
+    Multi-tier tree: Project -> Tower -> Phase (Substructure, Superstructure, Finishing, MEP) -> Activity (Piling, Mat Casting, Column, Brickwork, Plaster, Tiles).
+    Tracks planned vs actual dates, milestones, and physical % progress.
+    """
+    __tablename__ = "con_wbs_nodes"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    project_id = Column(BigInteger, ForeignKey("prj_projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    tower_id = Column(BigInteger, ForeignKey("prj_towers.id", ondelete="SET NULL"), nullable=True, index=True)
+    parent_id = Column(BigInteger, ForeignKey("con_wbs_nodes.id", ondelete="CASCADE"), nullable=True, index=True)
+    
+    node_code = Column(String(64), nullable=False, index=True) # e.g. WBS-SUB-01, ACT-PIL-001
+    node_name = Column(String(191), nullable=False) # e.g. "Substructure", "Cast-in-situ Piling", "Column Casting L1-L5"
+    wbs_tier = Column(String(32), nullable=False, default="ACTIVITY") # PHASE, SUB_PHASE, ACTIVITY, TASK
+    phase_category = Column(String(64), nullable=False, default="SUBSTRUCTURE") # SUBSTRUCTURE, SUPERSTRUCTURE, FINISHING, MEP
+    activity_type = Column(String(64), nullable=True) # PILING, MAT_CASTING, COLUMN, BEAM_SLAB, BRICKWORK, PLASTER, TILES, MEP
+    
+    planned_start_date = Column(Date, nullable=False)
+    planned_end_date = Column(Date, nullable=False)
+    actual_start_date = Column(Date, nullable=True)
+    actual_end_date = Column(Date, nullable=True)
+    
+    progress_percentage = Column(Numeric(5, 2), nullable=False, default=0.00) # 0.00 to 100.00%
+    weightage_percentage = Column(Numeric(5, 2), nullable=False, default=10.00) # Weightage within project
+    status = Column(String(32), nullable=False, default="NOT_STARTED", index=True) # NOT_STARTED, IN_PROGRESS, COMPLETED, DELAYED, CRITICAL_PATH
+    responsible_engineer = Column(String(128), nullable=True)
+    remarks = Column(Text, nullable=True)
+
+    created_at = Column(TIMESTAMP, server_default=func.now())
+    updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
+
+    project = relationship("Project")
+    parent = relationship("WBSNode", remote_side=[id], back_populates="children")
+    children = relationship("WBSNode", back_populates="parent", lazy="selectin")
+    boq_items = relationship("BOQItem", back_populates="wbs_node")
+
+
+class VariationOrder(Base):
+    """
+    Variation Order (VO) approving budget/quantity increases beyond 105% BOQ Hard Budget Lock.
+    """
+    __tablename__ = "con_variation_orders"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    project_id = Column(BigInteger, ForeignKey("prj_projects.id", ondelete="RESTRICT"), nullable=False, index=True)
+    boq_item_id = Column(BigInteger, ForeignKey("prj_boq_items.id", ondelete="CASCADE"), nullable=False, index=True)
+    vo_number = Column(String(64), unique=True, nullable=False, index=True) # e.g. VO-PRJ01-2026-001
+    additional_quantity = Column(Numeric(14, 4), nullable=False)
+    revised_rate = Column(Numeric(14, 2), nullable=True)
+    additional_budget = Column(Numeric(16, 2), nullable=False, default=0.00)
+    reason = Column(Text, nullable=False)
+    approved_by_pm = Column(String(128), nullable=True)
+    status = Column(String(32), nullable=False, default="PENDING", index=True) # PENDING, APPROVED, REJECTED
+    approval_date = Column(Date, nullable=True)
+
+    created_at = Column(TIMESTAMP, server_default=func.now())
+    updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
+
+    project = relationship("Project")
+    boq_item = relationship("BOQItem", back_populates="variation_orders")
+
+
+class JointMeasurementSheet(Base):
+    """
+    Joint Measurement Sheet (JMS) signed by Site Engineer and Subcontractor representative.
+    Direct input source for RA Billing Gross Certified amounts.
+    """
+    __tablename__ = "con_joint_measurements"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    work_order_id = Column(BigInteger, ForeignKey("con_work_orders.id", ondelete="RESTRICT"), nullable=False, index=True)
+    wbs_node_id = Column(BigInteger, ForeignKey("con_wbs_nodes.id", ondelete="SET NULL"), nullable=True, index=True)
+    jms_number = Column(String(64), unique=True, nullable=False, index=True) # e.g. JMS-WO01-004
+    measurement_date = Column(Date, nullable=False, default=func.current_date())
+    location_floor = Column(String(128), nullable=False) # e.g. Tower 1 - Floor 4 Beam & Slab B4-S4
+    trade_item = Column(String(191), nullable=False) # e.g. Shuttering & Scaffolding, Reinforcement Binding
+    unit_of_measure = Column(String(32), nullable=False, default="SFT") # SFT, CFT, RFT, TON, NOS
+    
+    # Dimensions
+    measured_length = Column(Numeric(10, 2), nullable=False, default=0.00)
+    measured_breadth = Column(Numeric(10, 2), nullable=False, default=0.00)
+    measured_depth = Column(Numeric(10, 2), nullable=False, default=0.00)
+    measured_quantity = Column(Numeric(14, 4), nullable=False)
+    unit_rate = Column(Numeric(14, 2), nullable=False)
+    total_amount = Column(Numeric(14, 2), nullable=False) # measured_quantity * unit_rate
+    
+    verified_by_site_engineer = Column(String(128), nullable=False)
+    subcontractor_representative = Column(String(128), nullable=False)
+    status = Column(String(32), nullable=False, default="VERIFIED_BY_ENGINEER", index=True) # DRAFT, VERIFIED_BY_ENGINEER, BILLED
+    ra_bill_id = Column(BigInteger, ForeignKey("con_ra_bills.id", ondelete="SET NULL"), nullable=True)
+
+    created_at = Column(TIMESTAMP, server_default=func.now())
+
+    work_order = relationship("WorkOrder")
+    wbs_node = relationship("WBSNode")
+
 
 class Subcontractor(Base):
     """
@@ -44,6 +143,13 @@ class DPRReport(Base):
     site_engineer_id = Column(BigInteger, ForeignKey("sys_users.id", ondelete="SET NULL"), nullable=True)
     
     structural_activity_summary = Column(Text, nullable=False)
+    wbs_node_id = Column(BigInteger, ForeignKey("con_wbs_nodes.id", ondelete="SET NULL"), nullable=True, index=True)
+    floor_unit_location = Column(String(191), nullable=True) # e.g. Tower 1 - Floor 4 Beam & Slab B4-S4
+    machinery_deployed = Column(String(255), nullable=True) # e.g. 1x Concrete Pump 42m, 2x Tower Cranes, 4x Vibrators
+    site_photos = Column(JSON, nullable=True) # JSON array of photos: [{"url": "...", "caption": "..."}]
+    safety_incident_logged = Column(Boolean, nullable=False, default=False)
+    safety_incident_notes = Column(Text, nullable=True)
+
     concrete_casting_cft = Column(Numeric(12, 2), nullable=False, default=0.00)
     steel_rod_consumed_mt = Column(Numeric(10, 3), nullable=False, default=0.000)
     cement_consumed_bags = Column(Integer, nullable=False, default=0)
@@ -58,6 +164,7 @@ class DPRReport(Base):
     project = relationship("Project")
     tower = relationship("Tower")
     site_engineer = relationship("User")
+    wbs_node = relationship("WBSNode")
     labor_entries = relationship("LaborMuster", back_populates="dpr", cascade="all, delete-orphan")
 
 
@@ -124,15 +231,24 @@ class RABill(Base):
     work_order_id = Column(BigInteger, ForeignKey("con_work_orders.id", ondelete="RESTRICT"), nullable=False, index=True)
     ra_bill_number = Column(String(64), nullable=False) # e.g. "RA-BILL-01", "RA-BILL-02"
     bill_date = Column(Date, nullable=False, default=func.current_date())
+    billing_period_start = Column(Date, nullable=True)
+    billing_period_end = Column(Date, nullable=True)
     
     # Certified Quantities & Deductions
     gross_work_certified_amount = Column(Numeric(14, 2), nullable=False)
-    retention_money_deducted = Column(Numeric(14, 2), nullable=False, default=0.00) # 5.0% of Gross
+    retention_percent = Column(Numeric(5, 2), nullable=False, default=5.00) # e.g. 5.0% - 10.0%
+    retention_money_deducted = Column(Numeric(14, 2), nullable=False, default=0.00)
     advance_recovery_deducted = Column(Numeric(14, 2), nullable=False, default=0.00)
-    tds_withheld_amount = Column(Numeric(14, 2), nullable=False, default=0.00) # Bangladesh Income Tax Sec 52 (e.g. 5-7%)
-    vds_withheld_amount = Column(Numeric(14, 2), nullable=False, default=0.00) # Value Added Tax Deducted at Source (e.g. 5%)
+    material_store_recovery_amount = Column(Numeric(14, 2), nullable=False, default=0.00) # Developer store cement/steel/diesel recovery
+    tds_rate = Column(Numeric(5, 2), nullable=False, default=5.00) # Income Tax Sec 52
+    tds_withheld_amount = Column(Numeric(14, 2), nullable=False, default=0.00)
+    vds_rate = Column(Numeric(5, 2), nullable=False, default=5.00) # VAT Withholding
+    vds_withheld_amount = Column(Numeric(14, 2), nullable=False, default=0.00)
     net_payable_amount = Column(Numeric(14, 2), nullable=False)
     
+    # Multi-Role Approval Chain
+    approval_signature_chain = Column(JSON, nullable=True) # e.g. [{"role": "SITE_ENGINEER", "name": "...", "status": "VERIFIED"}, ...]
+
     # Status: DRAFT, VERIFIED_BY_QS, APPROVED_BY_PD, ACCOUNTS_VOUCHER_POSTED
     status = Column(String(32), nullable=False, default="DRAFT", index=True)
     accounts_journal_voucher_ref = Column(String(64), nullable=True) # Ref returned by emitted accounts event

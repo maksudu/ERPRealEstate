@@ -1,16 +1,20 @@
 import logging
 from typing import List, Optional
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
-from sqlalchemy import func, or_
+from sqlalchemy import func, or_, desc
 
 from app.core.database import get_db
-from app.modules.projects.models import Project, Tower
+from app.modules.projects.models import Project, Tower, BOQItem
+from app.modules.projects.schemas import BOQItemResponse
 from app.modules.auth.models import User
-from app.modules.construction.models import Subcontractor, DPRReport, LaborMuster, WorkOrder, RABill, ConcreteCubeTest, SafetyNCR
+from app.modules.construction.models import (
+    Subcontractor, DPRReport, LaborMuster, WorkOrder, RABill,
+    ConcreteCubeTest, SafetyNCR, WBSNode, VariationOrder, JointMeasurementSheet
+)
 from app.modules.construction.schemas import (
     SubcontractorCreate, SubcontractorResponse,
     DPRReportCreate, DPRReportResponse,
@@ -19,7 +23,11 @@ from app.modules.construction.schemas import (
     RABillCreate, RABillResponse, RABillApprovalRequest,
     ConstructionMetrics,
     ConcreteCubeTestCreate, ConcreteCubeTestResponse, ConcreteCubeTestRecordUpdate, CubeTestNotificationAlert,
-    SafetyNCRCreate, SafetyNCRResponse, SafetyNCRRectify, SafetyNCRVerifyClose
+    SafetyNCRCreate, SafetyNCRResponse, SafetyNCRRectify, SafetyNCRVerifyClose,
+    WBSNodeCreate, WBSNodeResponse, WBSNodeUpdateProgress,
+    VariationOrderCreate, VariationOrderResponse, VariationOrderApprove,
+    JointMeasurementSheetCreate, JointMeasurementSheetResponse,
+    BOQRequisitionCheckRequest, BOQRequisitionCheckResponse
 )
 from app.modules.accounts.services import post_ra_bill_voucher
 
@@ -133,10 +141,16 @@ async def create_dpr_report(
     dpr = DPRReport(
         project_id=payload.project_id,
         tower_id=payload.tower_id,
+        wbs_node_id=payload.wbs_node_id,
         report_date=payload.report_date or date.today(),
         weather_condition_id=payload.weather_condition_id or "SUNNY",
         site_engineer_id=eng.id if eng else None,
         structural_activity_summary=payload.structural_activity_summary,
+        floor_unit_location=payload.floor_unit_location,
+        machinery_deployed=payload.machinery_deployed,
+        site_photos=payload.site_photos or [],
+        safety_incident_logged=bool(payload.safety_incident_logged),
+        safety_incident_notes=payload.safety_incident_notes,
         concrete_casting_cft=payload.concrete_casting_cft or 0.0,
         steel_rod_consumed_mt=payload.steel_rod_consumed_mt or 0.0,
         cement_consumed_bags=payload.cement_consumed_bags or 0,
@@ -301,7 +315,7 @@ async def create_ra_bill(
 ):
     """
     Submits an RA Bill and computes Statutory Deductions via mandatory formula:
-    $$\\text{Net Payable} = \\text{Gross Work Certified} - \\text{Retention (5\\%)} - \\text{Advance Recovery} - \\text{TDS (Sec 52)} - \\text{VDS}$$
+    Net Payable = Gross Work Certified - Retention (5-10%) - Advance Recovery - Store Recovery - TDS (Sec 52) - VDS
     """
     wo_res = await db.execute(
         select(WorkOrder)
@@ -313,29 +327,72 @@ async def create_ra_bill(
         raise HTTPException(status_code=404, detail="Work Order not found")
 
     gross = float(payload.gross_work_certified_amount)
-    retention_pct = float(wo.retention_money_percent or 5.0)
+    retention_pct = float(payload.retention_percent if payload.retention_percent is not None else (wo.retention_money_percent or 5.0))
     retention_amt = round(gross * (retention_pct / 100.0), 2)
     adv_recovery = float(payload.advance_recovery_deducted or 0.0)
+    store_recovery = float(payload.material_store_recovery_amount or 0.0)
 
     # Statutory Taxes u/s 52 and VDS
-    tds_pct = float(payload.tds_percentage or 5.0) # Income tax Sec 52
-    vds_pct = float(payload.vds_percentage or 5.0) # VAT deducted at source
+    tds_pct = float(payload.tds_rate if payload.tds_rate is not None else 5.0)
+    vds_pct = float(payload.vds_rate if payload.vds_rate is not None else 5.0)
     tds_amt = round(gross * (tds_pct / 100.0), 2)
     vds_amt = round(gross * (vds_pct / 100.0), 2)
 
-    net_payable = round(gross - retention_amt - adv_recovery - tds_amt - vds_amt, 2)
+    net_payable = round(gross - retention_amt - adv_recovery - store_recovery - tds_amt - vds_amt, 2)
+
+    initial_chain = [
+        {
+            "role": "SITE_ENGINEER",
+            "title": "Site Engineer",
+            "status": "VERIFIED",
+            "signed_by": "Engr. Tanvir Ahmed",
+            "signed_at": datetime.now().isoformat(),
+            "notes": "Verified joint measurement sheet & physical progress."
+        },
+        {
+            "role": "QUANTITY_SURVEYOR",
+            "title": "Quantity Surveyor (QS)",
+            "status": "PENDING",
+            "signed_by": None,
+            "signed_at": None,
+            "notes": None
+        },
+        {
+            "role": "PROJECT_DIRECTOR",
+            "title": "Project Director",
+            "status": "PENDING",
+            "signed_by": None,
+            "signed_at": None,
+            "notes": None
+        },
+        {
+            "role": "ACCOUNTS",
+            "title": "Head of Accounts",
+            "status": "PENDING",
+            "signed_by": None,
+            "signed_at": None,
+            "notes": None
+        }
+    ]
 
     ra_bill = RABill(
         work_order_id=wo.id,
         ra_bill_number=payload.ra_bill_number,
         bill_date=payload.bill_date or date.today(),
+        billing_period_start=payload.billing_period_start,
+        billing_period_end=payload.billing_period_end,
         gross_work_certified_amount=gross,
+        retention_percent=retention_pct,
         retention_money_deducted=retention_amt,
         advance_recovery_deducted=adv_recovery,
+        material_store_recovery_amount=store_recovery,
+        tds_rate=tds_pct,
         tds_withheld_amount=tds_amt,
+        vds_rate=vds_pct,
         vds_withheld_amount=vds_amt,
         net_payable_amount=net_payable,
-        status="VERIFIED_BY_QS",
+        approval_signature_chain=initial_chain,
+        status="VERIFIED_BY_ENGINEER",
         remarks=payload.remarks
     )
     db.add(ra_bill)
@@ -358,15 +415,17 @@ async def create_ra_bill(
 
 
 @router.put("/ra-bills/{ra_bill_id}/approval", response_model=RABillResponse)
-async def approve_ra_bill(
+@router.post("/ra-bills/{ra_bill_id}/sign", response_model=RABillResponse)
+async def approve_or_sign_ra_bill(
     ra_bill_id: int,
     payload: RABillApprovalRequest,
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Approves or rejects contractor RA Bill.
-    When APPROVED:
-    - Automatically emits event to Accounts service creating Contractor Liability Journal Voucher.
+    Subcontractor RA Billing Engine digital signature & approval chain:
+    Site Engineer -> Quantity Surveyor -> Project Director -> Accounts
+    When ACCOUNTS approves:
+    - Automatically emits double-entry Journal Voucher to Accounts module.
     """
     stmt = (
         select(RABill)
@@ -382,19 +441,49 @@ async def approve_ra_bill(
         raise HTTPException(status_code=404, detail="RA Bill not found")
 
     action = payload.action.upper()
-    if action == "APPROVE":
-        bill.status = "ACCOUNTS_VOUCHER_POSTED"
-        # Atomically creates balanced double-entry Journal Voucher in acc_vouchers & acc_journal_entries
-        voucher_ref = await post_ra_bill_voucher(db=db, bill=bill)
-        bill.accounts_journal_voucher_ref = voucher_ref
-        logger.info(
-            f"Accounts Voucher POSTED: {voucher_ref} "
-            f"for Contractor {bill.work_order.contractor.company_name} | Net Payable: BDT {bill.net_payable_amount:,.2f}"
-        )
+    role = (payload.role or "ACCOUNTS").upper()
+    chain = list(bill.approval_signature_chain or [])
+    updated = False
+    for step in chain:
+        if step.get("role") == role:
+            step["status"] = "APPROVED" if action in ["APPROVE", "VERIFY"] else "REJECTED"
+            step["signed_by"] = payload.signatory_name
+            step["signed_at"] = datetime.now().isoformat()
+            step["notes"] = payload.approval_notes
+            updated = True
+            break
+    if not updated:
+        chain.append({
+            "role": role,
+            "title": role.replace("_", " ").title(),
+            "status": "APPROVED" if action in ["APPROVE", "VERIFY"] else "REJECTED",
+            "signed_by": payload.signatory_name,
+            "signed_at": datetime.now().isoformat(),
+            "notes": payload.approval_notes
+        })
+    bill.approval_signature_chain = chain
+
+    if action in ["APPROVE", "VERIFY"]:
+        if role == "QUANTITY_SURVEYOR":
+            bill.status = "VERIFIED_BY_QS"
+        elif role == "PROJECT_DIRECTOR":
+            bill.status = "APPROVED_BY_PD"
+        elif role in ["ACCOUNTS", "HEAD_OF_ACCOUNTS"]:
+            bill.status = "ACCOUNTS_VOUCHER_POSTED"
+            voucher_ref = await post_ra_bill_voucher(db=db, bill=bill)
+            bill.accounts_journal_voucher_ref = voucher_ref
+            logger.info(
+                f"Accounts Voucher POSTED: {voucher_ref} "
+                f"for Contractor {bill.work_order.contractor.company_name} | Net Payable: BDT {bill.net_payable_amount:,.2f}"
+            )
+        elif role == "SITE_ENGINEER":
+            bill.status = "VERIFIED_BY_ENGINEER"
+        else:
+            bill.status = "APPROVED"
     else:
         bill.status = "REJECTED"
 
-    bill.remarks = f"{bill.remarks or ''} | {payload.approval_notes or ''}".strip(" |")
+    bill.remarks = f"{bill.remarks or ''} | [{role}: {payload.approval_notes or action}]".strip(" |")
     await db.commit()
     await db.refresh(bill)
 
@@ -857,4 +946,427 @@ async def verify_close_safety_ncr(
     resp.contractor_name = ncr.contractor.company_name if ncr.contractor else "Unassigned / General"
     resp.is_overdue = (ncr.status == "Open" and ncr.rectification_deadline < date.today())
     return resp
+
+
+# --------------------------------------------------------------------------
+# 8. Work Breakdown Structure (WBS) & Activity Master Tree
+# --------------------------------------------------------------------------
+def _to_wbs_response(n: WBSNode) -> WBSNodeResponse:
+    return WBSNodeResponse(
+        id=n.id,
+        project_id=n.project_id,
+        tower_id=n.tower_id,
+        parent_id=n.parent_id,
+        node_code=n.node_code,
+        node_name=n.node_name,
+        wbs_tier=n.wbs_tier,
+        phase_category=n.phase_category,
+        activity_type=n.activity_type,
+        planned_start_date=n.planned_start_date,
+        planned_end_date=n.planned_end_date,
+        actual_start_date=n.actual_start_date,
+        actual_end_date=n.actual_end_date,
+        progress_percentage=float(n.progress_percentage or 0.0),
+        weightage_percentage=float(n.weightage_percentage or 0.0),
+        status=n.status,
+        responsible_engineer=n.responsible_engineer,
+        remarks=n.remarks,
+        created_at=n.created_at,
+        children=[]
+    )
+
+
+@router.get("/wbs", response_model=List[WBSNodeResponse])
+async def list_wbs_nodes(
+    project_id: Optional[int] = Query(None),
+    tower_id: Optional[int] = Query(None),
+    parent_id: Optional[int] = Query(None),
+    as_tree: bool = Query(False),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Returns list of WBS nodes. If as_tree=True, returns root nodes with nested child nodes.
+    """
+    stmt = select(WBSNode).order_by(WBSNode.id.asc())
+    if project_id:
+        stmt = stmt.where(WBSNode.project_id == project_id)
+    if tower_id:
+        stmt = stmt.where(WBSNode.tower_id == tower_id)
+    if not as_tree and parent_id is not None:
+        stmt = stmt.where(WBSNode.parent_id == parent_id)
+
+    res = await db.execute(stmt)
+    nodes = res.scalars().all()
+
+    if as_tree:
+        node_dict = {n.id: _to_wbs_response(n) for n in nodes}
+        roots = []
+        for n in nodes:
+            resp_node = node_dict[n.id]
+            if n.parent_id and n.parent_id in node_dict:
+                node_dict[n.parent_id].children.append(resp_node)
+            elif n.parent_id is None:
+                roots.append(resp_node)
+        return roots
+
+    return [_to_wbs_response(n) for n in nodes]
+
+
+@router.post("/wbs", response_model=WBSNodeResponse, status_code=status.HTTP_201_CREATED)
+async def create_wbs_node(
+    payload: WBSNodeCreate,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Creates a new WBS hierarchy node (Phase, Sub-Phase, Activity, or Task).
+    """
+    node = WBSNode(
+        project_id=payload.project_id,
+        tower_id=payload.tower_id,
+        parent_id=payload.parent_id,
+        node_code=payload.node_code,
+        node_name=payload.node_name,
+        wbs_tier=payload.wbs_tier or "ACTIVITY",
+        phase_category=payload.phase_category or "SUBSTRUCTURE",
+        activity_type=payload.activity_type,
+        planned_start_date=payload.planned_start_date,
+        planned_end_date=payload.planned_end_date,
+        weightage_percentage=payload.weightage_percentage or 10.00,
+        progress_percentage=0.00,
+        status="NOT_STARTED",
+        responsible_engineer=payload.responsible_engineer,
+        remarks=payload.remarks
+    )
+    db.add(node)
+    await db.commit()
+    await db.refresh(node)
+    return _to_wbs_response(node)
+
+
+@router.put("/wbs/{wbs_id}/progress", response_model=WBSNodeResponse)
+async def update_wbs_progress(
+    wbs_id: int,
+    payload: WBSNodeUpdateProgress,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Updates milestone completion percentage and dates for a WBS Activity.
+    """
+    res = await db.execute(select(WBSNode).where(WBSNode.id == wbs_id))
+    node = res.scalar_one_or_none()
+    if not node:
+        raise HTTPException(status_code=404, detail="WBS Node not found")
+
+    node.progress_percentage = payload.progress_percentage
+    if payload.actual_start_date:
+        node.actual_start_date = payload.actual_start_date
+    elif node.progress_percentage > 0 and not node.actual_start_date:
+        node.actual_start_date = date.today()
+
+    if payload.actual_end_date:
+        node.actual_end_date = payload.actual_end_date
+    elif node.progress_percentage >= 100.0:
+        node.actual_end_date = date.today()
+        node.status = "COMPLETED"
+
+    if payload.status:
+        node.status = payload.status
+    elif node.progress_percentage >= 100.0:
+        node.status = "COMPLETED"
+    elif node.progress_percentage > 0:
+        node.status = "IN_PROGRESS"
+
+    if payload.remarks:
+        node.remarks = f"{node.remarks or ''} | {payload.remarks}".strip(" |")
+
+    await db.commit()
+    await db.refresh(node)
+    return _to_wbs_response(node)
+
+
+# --------------------------------------------------------------------------
+# 9. BOQ Dynamic Variance Control & Hard Budget Locks
+# --------------------------------------------------------------------------
+@router.get("/boq/budget-locks", response_model=List[BOQItemResponse])
+async def list_boq_budget_locks(
+    project_id: Optional[int] = Query(None),
+    tower_id: Optional[int] = Query(None),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Lists BOQ items with Hard Budget Lock threshold (105%), requisitioned vs allowable quantities, and lock flags.
+    """
+    stmt = select(BOQItem).order_by(BOQItem.id.asc())
+    if project_id:
+        stmt = stmt.where(BOQItem.project_id == project_id)
+    if tower_id:
+        stmt = stmt.where(BOQItem.tower_id == tower_id)
+
+    res = await db.execute(stmt)
+    items = res.scalars().all()
+
+    result = []
+    for item in items:
+        est = float(item.estimated_quantity or 0.0)
+        vo_qty = float(item.variation_order_quantity or 0.0)
+        lock_pct = float(item.hard_lock_percentage or 105.0)
+        allowable = round((est * (lock_pct / 100.0)) + vo_qty, 4)
+        req = float(item.requisitioned_quantity or 0.0)
+        variance = round(((req - est) / est * 100.0), 2) if est > 0 else 0.0
+
+        resp = BOQItemResponse.model_validate(item)
+        resp.allowable_quantity = allowable
+        resp.variance_percentage = variance
+        result.append(resp)
+    return result
+
+
+@router.post("/boq/check-budget-lock", response_model=BOQRequisitionCheckResponse)
+async def check_boq_budget_lock(
+    payload: BOQRequisitionCheckRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Pre-flight budget lock validation: determines whether a material requisition exceeds 105% of BOQ.
+    """
+    res = await db.execute(select(BOQItem).where(BOQItem.id == payload.boq_item_id))
+    item = res.scalar_one_or_none()
+    if not item:
+        raise HTTPException(status_code=404, detail="BOQ Item not found")
+
+    est = float(item.estimated_quantity or 0.0)
+    vo_qty = float(item.variation_order_quantity or 0.0)
+    lock_pct = float(item.hard_lock_percentage or 105.0)
+    allowable = round((est * (lock_pct / 100.0)) + vo_qty, 4)
+    already_req = float(item.requisitioned_quantity or 0.0)
+    remaining = max(0.0, round(allowable - already_req, 4))
+    requested = float(payload.requested_quantity)
+
+    lock_triggered = (already_req + requested) > allowable
+
+    if lock_triggered:
+        excess = round((already_req + requested) - allowable, 4)
+        msg = (
+            f"HARD BUDGET LOCK TRIGGERED: Requisition of {requested:,.2f} {item.unit_of_measure_id} "
+            f"exceeds 105% ceiling by {excess:,.2f} {item.unit_of_measure_id}. "
+            f"Requires an approved Variation Order (VO)."
+        )
+    else:
+        msg = f"Requisition within 105% budget limit. Remaining headroom: {remaining - requested:,.2f} {item.unit_of_measure_id}."
+
+    return BOQRequisitionCheckResponse(
+        boq_item_id=item.id,
+        item_description=item.item_description,
+        estimated_quantity=est,
+        variation_order_quantity=vo_qty,
+        allowable_ceiling_105=allowable,
+        already_requisitioned_quantity=already_req,
+        remaining_allowable_quantity=remaining,
+        requested_quantity=requested,
+        is_hard_locked=item.is_locked,
+        budget_lock_triggered=lock_triggered,
+        message=msg
+    )
+
+
+@router.post("/boq/requisition", response_model=BOQItemResponse)
+async def process_boq_requisition(
+    payload: BOQRequisitionCheckRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Processes site material requisition enforcing Hard Budget Lock rule.
+    If requisition exceeds 105% of BOQ quantity without approved Variation Order (VO), it is rejected with HTTP 400.
+    """
+    res = await db.execute(select(BOQItem).where(BOQItem.id == payload.boq_item_id))
+    item = res.scalar_one_or_none()
+    if not item:
+        raise HTTPException(status_code=404, detail="BOQ Item not found")
+
+    est = float(item.estimated_quantity or 0.0)
+    vo_qty = float(item.variation_order_quantity or 0.0)
+    lock_pct = float(item.hard_lock_percentage or 105.0)
+    allowable = round((est * (lock_pct / 100.0)) + vo_qty, 4)
+    already_req = float(item.requisitioned_quantity or 0.0)
+    requested = float(payload.requested_quantity)
+
+    if (already_req + requested) > allowable or item.is_locked:
+        excess = round((already_req + requested) - allowable, 4)
+        item.is_locked = True
+        await db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                f"HARD BUDGET LOCK ENFORCED: Site cannot requisition material exceeding 105% of BOQ quantity. "
+                f"Requested: {requested:,.2f}, Ceiling: {allowable:,.2f}, Excess: {excess:,.2f} {item.unit_of_measure_id}. "
+                f"Please obtain an approved Variation Order (VO) to unlock headroom."
+            )
+        )
+
+    # Allow requisition
+    item.requisitioned_quantity = round(already_req + requested, 4)
+    if item.requisitioned_quantity >= allowable:
+        item.is_locked = True
+    await db.commit()
+    await db.refresh(item)
+
+    resp = BOQItemResponse.model_validate(item)
+    resp.allowable_quantity = allowable
+    resp.variance_percentage = round(((float(item.requisitioned_quantity) - est) / est * 100.0), 2) if est > 0 else 0.0
+    return resp
+
+
+@router.get("/boq/variation-orders", response_model=List[VariationOrderResponse])
+async def list_variation_orders(
+    project_id: Optional[int] = Query(None),
+    boq_item_id: Optional[int] = Query(None),
+    status: Optional[str] = Query(None),
+    db: AsyncSession = Depends(get_db)
+):
+    stmt = select(VariationOrder).order_by(VariationOrder.id.desc())
+    if project_id:
+        stmt = stmt.where(VariationOrder.project_id == project_id)
+    if boq_item_id:
+        stmt = stmt.where(VariationOrder.boq_item_id == boq_item_id)
+    if status:
+        stmt = stmt.where(VariationOrder.status == status.upper())
+
+    res = await db.execute(stmt)
+    return res.scalars().all()
+
+
+@router.post("/boq/variation-orders", response_model=VariationOrderResponse, status_code=status.HTTP_201_CREATED)
+async def create_variation_order(
+    payload: VariationOrderCreate,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Submits a Variation Order (VO) to release additional budget/quantity for a locked BOQ item.
+    """
+    res = await db.execute(select(BOQItem).where(BOQItem.id == payload.boq_item_id))
+    item = res.scalar_one_or_none()
+    if not item:
+        raise HTTPException(status_code=404, detail="BOQ Item not found")
+
+    count_res = await db.execute(select(func.count(VariationOrder.id)))
+    next_num = (count_res.scalar() or 0) + 1
+    vo_number = f"VO-PRJ{payload.project_id:02d}-{datetime.now().year}-{next_num:03d}"
+
+    rate = float(payload.revised_rate if payload.revised_rate is not None else item.estimated_unit_rate)
+    budget = round(float(payload.additional_quantity) * rate, 2)
+
+    vo = VariationOrder(
+        project_id=payload.project_id,
+        boq_item_id=payload.boq_item_id,
+        vo_number=vo_number,
+        additional_quantity=payload.additional_quantity,
+        revised_rate=rate,
+        additional_budget=budget,
+        reason=payload.reason,
+        status="PENDING"
+    )
+    db.add(vo)
+    await db.commit()
+    await db.refresh(vo)
+    return vo
+
+
+@router.put("/boq/variation-orders/{vo_id}/approve", response_model=VariationOrderResponse)
+async def approve_variation_order(
+    vo_id: int,
+    payload: VariationOrderApprove,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Approves or rejects a Variation Order.
+    When APPROVED, automatically increments the BOQ item's variation_order_quantity and unlocks the hard lock.
+    """
+    res = await db.execute(
+        select(VariationOrder)
+        .options(selectinload(VariationOrder.boq_item))
+        .where(VariationOrder.id == vo_id)
+    )
+    vo = res.scalar_one_or_none()
+    if not vo:
+        raise HTTPException(status_code=404, detail="Variation Order not found")
+
+    action = payload.status.upper()
+    if action == "APPROVED":
+        vo.status = "APPROVED"
+        vo.approved_by_pm = payload.approved_by_pm
+        vo.approval_date = date.today()
+        # Unlock BOQ headroom!
+        if vo.boq_item:
+            vo.boq_item.variation_order_quantity = round(
+                float(vo.boq_item.variation_order_quantity or 0.0) + float(vo.additional_quantity), 4
+            )
+            vo.boq_item.is_locked = False
+    else:
+        vo.status = "REJECTED"
+
+    await db.commit()
+    await db.refresh(vo)
+    return vo
+
+
+# --------------------------------------------------------------------------
+# 10. Joint Measurement Sheet (JMS) Engine
+# --------------------------------------------------------------------------
+@router.get("/jms", response_model=List[JointMeasurementSheetResponse])
+async def list_joint_measurements(
+    work_order_id: Optional[int] = Query(None),
+    wbs_node_id: Optional[int] = Query(None),
+    db: AsyncSession = Depends(get_db)
+):
+    stmt = select(JointMeasurementSheet).order_by(JointMeasurementSheet.id.desc())
+    if work_order_id:
+        stmt = stmt.where(JointMeasurementSheet.work_order_id == work_order_id)
+    if wbs_node_id:
+        stmt = stmt.where(JointMeasurementSheet.wbs_node_id == wbs_node_id)
+
+    res = await db.execute(stmt)
+    return res.scalars().all()
+
+
+@router.post("/jms", response_model=JointMeasurementSheetResponse, status_code=status.HTTP_201_CREATED)
+async def create_joint_measurement(
+    payload: JointMeasurementSheetCreate,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Records a Joint Measurement Sheet (JMS) signed by Site Engineer and Contractor.
+    Computes measured quantity via dimensions (Length x Breadth x Depth) if provided.
+    """
+    qty = float(payload.measured_quantity)
+    l = float(payload.measured_length or 0.0)
+    b = float(payload.measured_breadth or 0.0)
+    d = float(payload.measured_depth or 0.0)
+    if qty <= 0.0 and (l * b > 0.0):
+        depth_mult = d if d > 0.0 else 1.0
+        qty = round(l * b * depth_mult, 4)
+
+    total = round(qty * float(payload.unit_rate), 2)
+
+    jms = JointMeasurementSheet(
+        work_order_id=payload.work_order_id,
+        wbs_node_id=payload.wbs_node_id,
+        jms_number=payload.jms_number,
+        measurement_date=payload.measurement_date or date.today(),
+        location_floor=payload.location_floor,
+        trade_item=payload.trade_item,
+        unit_of_measure=payload.unit_of_measure or "SFT",
+        measured_length=l,
+        measured_breadth=b,
+        measured_depth=d,
+        measured_quantity=qty,
+        unit_rate=payload.unit_rate,
+        total_amount=total,
+        verified_by_site_engineer=payload.verified_by_site_engineer,
+        subcontractor_representative=payload.subcontractor_representative,
+        status="VERIFIED_BY_ENGINEER"
+    )
+    db.add(jms)
+    await db.commit()
+    await db.refresh(jms)
+    return jms
 

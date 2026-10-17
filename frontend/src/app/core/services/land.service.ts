@@ -7,7 +7,13 @@ import {
   SurveyRecord, 
   JVAgreement, 
   DeedChainVerification, 
-  AreaConversionResult 
+  AreaConversionResult,
+  LandKhatian,
+  LandDag,
+  LandDeedDocument,
+  LandDocumentExpiryAlert,
+  JVAutoAllocationRequest,
+  JVAutoAllocationResponse
 } from '../models/land.model';
 
 @Injectable({
@@ -65,7 +71,47 @@ export class LandService {
     });
   }
 
-  // 4. JV Agreements
+  // 4. Khatians (CS, SA, RS, BS, Mutation)
+  getKhatians(filters?: { land_bank_id?: number; khatian_type?: string }): Observable<LandKhatian[]> {
+    let params = new HttpParams();
+    if (filters?.land_bank_id) params = params.set('land_bank_id', filters.land_bank_id);
+    if (filters?.khatian_type) params = params.set('khatian_type', filters.khatian_type);
+    return this.http.get<LandKhatian[]>(`${this.baseUrl}/khatians`, { params });
+  }
+
+  createKhatian(payload: any): Observable<LandKhatian> {
+    return this.http.post<LandKhatian>(`${this.baseUrl}/khatians`, payload);
+  }
+
+  // 5. Dags / Plots
+  getDags(filters?: { land_bank_id?: number; khatian_id?: number }): Observable<LandDag[]> {
+    let params = new HttpParams();
+    if (filters?.land_bank_id) params = params.set('land_bank_id', filters.land_bank_id);
+    if (filters?.khatian_id) params = params.set('khatian_id', filters.khatian_id);
+    return this.http.get<LandDag[]>(`${this.baseUrl}/dags`, { params });
+  }
+
+  createDag(payload: any): Observable<LandDag> {
+    return this.http.post<LandDag>(`${this.baseUrl}/dags`, payload);
+  }
+
+  // 6. Statutory Legal Documents & Expiry Alerts
+  getDocuments(filters?: { land_bank_id?: number; doc_type?: string }): Observable<LandDeedDocument[]> {
+    let params = new HttpParams();
+    if (filters?.land_bank_id) params = params.set('land_bank_id', filters.land_bank_id);
+    if (filters?.doc_type) params = params.set('doc_type', filters.doc_type);
+    return this.http.get<LandDeedDocument[]>(`${this.baseUrl}/documents`, { params });
+  }
+
+  createDocument(payload: any): Observable<LandDeedDocument> {
+    return this.http.post<LandDeedDocument>(`${this.baseUrl}/documents`, payload);
+  }
+
+  getDocumentExpiryAlerts(): Observable<LandDocumentExpiryAlert[]> {
+    return this.http.get<LandDocumentExpiryAlert[]>(`${this.baseUrl}/documents/expiry-alerts`);
+  }
+
+  // 7. JV Agreements & Auto-Allocation Matrix
   getJVAgreements(filters?: { land_bank_id?: number; status?: string }): Observable<JVAgreement[]> {
     let params = new HttpParams();
     if (filters?.land_bank_id) params = params.set('land_bank_id', filters.land_bank_id);
@@ -77,8 +123,13 @@ export class LandService {
     return this.http.post<JVAgreement>(`${this.baseUrl}/jv-agreements`, payload);
   }
 
-  // 5. Deed Chain Verification
+  autoAllocateJVUnits(payload: JVAutoAllocationRequest): Observable<JVAutoAllocationResponse> {
+    return this.http.post<JVAutoAllocationResponse>(`${this.baseUrl}/jv-agreements/auto-allocate`, payload);
+  }
+
+  // 8. Deed Chain Verification
   verifyDeedChain(landBankId: number): Observable<DeedChainVerification> {
     return this.http.get<DeedChainVerification>(`${this.baseUrl}/deed-chain-verify/${landBankId}`);
   }
 }
+

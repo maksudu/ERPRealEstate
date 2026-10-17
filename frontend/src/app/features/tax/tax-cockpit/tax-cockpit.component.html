@@ -1,0 +1,1353 @@
+<div class="space-y-6">
+  <!-- MAIN CARD CONTAINER -->
+  <app-card-container>
+    <!-- TOP HEADER BAR -->
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b border-slate-200 dark:border-slate-800">
+      <div>
+        <div class="flex items-center gap-2.5">
+          <span class="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+          </span>
+          <div>
+            <h1 class="text-xl lg:text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+              NBR VAT (Mushak 6.3/6.5), TDS/VDS & Sec 53FF AIT Engine
+              <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700">
+                NBR Statutory Compliant
+              </span>
+            </h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Automated Bangladesh Value Added Tax Act 2012 & Income Tax Act 2023 Compliance Architecture for Real Estate Developers
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Action Buttons -->
+      <div class="flex flex-wrap items-center gap-2">
+        <app-custom-button
+          label="Issue Mushak 6.3"
+          variant="primary"
+          (btnClick)="openCreate63Modal()">
+        </app-custom-button>
+        <app-custom-button
+          label="Create Mushak 6.5 Transfer"
+          variant="outline"
+          (btnClick)="openCreate65Modal()">
+        </app-custom-button>
+        <app-custom-button
+          label="Refresh Data"
+          variant="ghost"
+          (btnClick)="loadAllData()">
+        </app-custom-button>
+      </div>
+    </div>
+
+    <!-- METRIC KPI TILES -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-6 pb-6">
+      <!-- Total VAT Collected (Mushak 6.3) -->
+      <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-850/60 border border-slate-200 dark:border-slate-800">
+        <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
+          <span>Total VAT Collected (Mushak 6.3)</span>
+          <span class="p-1 rounded-md bg-emerald-100 dark:bg-emerald-950 text-emerald-600">VAT Act 2012</span>
+        </div>
+        <div class="text-2xl font-bold font-mono text-slate-900 dark:text-white">
+          ৳{{ totalVatCollected() | number:'1.2-2' }}
+        </div>
+        <div class="text-[11px] text-emerald-600 dark:text-emerald-400 mt-1 font-medium flex items-center gap-1">
+          <span>●</span> {{ invoices63().length }} Statutory Invoices Issued
+        </div>
+      </div>
+
+      <!-- Total TDS & VDS Withheld -->
+      <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-850/60 border border-slate-200 dark:border-slate-800">
+        <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
+          <span>TDS & VDS Withheld</span>
+          <span class="p-1 rounded-md bg-indigo-100 dark:bg-indigo-950 text-indigo-600">Sec 89 / 86</span>
+        </div>
+        <div class="text-2xl font-bold font-mono text-indigo-600 dark:text-indigo-400">
+          ৳{{ totalTdsWithheld() | number:'1.2-2' }}
+        </div>
+        <div class="text-[11px] text-slate-500 mt-1">
+          Across {{ tdsDeductions().length }} Vendor & Contractor Bills
+        </div>
+      </div>
+
+      <!-- Treasury Deposits -->
+      <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-850/60 border border-slate-200 dark:border-slate-800">
+        <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
+          <span>Treasury Deposited (TR-6)</span>
+          <span class="p-1 rounded-md bg-blue-100 dark:bg-blue-950 text-blue-600">Bangladesh Bank</span>
+        </div>
+        <div class="text-2xl font-bold font-mono text-blue-600 dark:text-blue-400">
+          ৳{{ totalTreasuryDeposited() | number:'1.2-2' }}
+        </div>
+        <div class="text-[11px] text-blue-600 mt-1 font-medium">
+          {{ treasuryChallans().length }} Sonali Bank Treasury Slips
+        </div>
+      </div>
+
+      <!-- Pending Treasury Deposits -->
+      <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-850/60 border border-slate-200 dark:border-slate-800">
+        <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
+          <span>Pending Treasury Deposit</span>
+          <span class="p-1 rounded-md bg-amber-100 dark:bg-amber-950 text-amber-600">Due within 15 Days</span>
+        </div>
+        <div class="text-2xl font-bold font-mono text-amber-600 dark:text-amber-400">
+          {{ pendingDepositsCount() }} Bills
+        </div>
+        <div class="text-[11px] text-amber-600 mt-1 font-medium">
+          Awaiting Treasury Challan TR-6 Deposit
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB NAVIGATION BAR -->
+    <div class="flex items-center gap-1.5 overflow-x-auto pb-3 border-b border-slate-200 dark:border-slate-800 scrollbar-none">
+      <button
+        (click)="activeTab.set('overview')"
+        [class]="activeTab() === 'overview'
+          ? 'px-4 py-2.5 rounded-xl font-semibold text-xs bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-sm'
+          : 'px-4 py-2.5 rounded-xl font-medium text-xs text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors'">
+        Executive Overview
+      </button>
+
+      <button
+        (click)="activeTab.set('mushak-63')"
+        [class]="activeTab() === 'mushak-63'
+          ? 'px-4 py-2.5 rounded-xl font-semibold text-xs bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-sm'
+          : 'px-4 py-2.5 rounded-xl font-medium text-xs text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors'">
+        Mushak 6.3 VAT Invoices ({{ invoices63().length }})
+      </button>
+
+      <button
+        (click)="activeTab.set('mushak-65')"
+        [class]="activeTab() === 'mushak-65'
+          ? 'px-4 py-2.5 rounded-xl font-semibold text-xs bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-sm'
+          : 'px-4 py-2.5 rounded-xl font-medium text-xs text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors'">
+        Mushak 6.5 Transfer Challan ({{ challans65().length }})
+      </button>
+
+      <button
+        (click)="activeTab.set('tds-vds')"
+        [class]="activeTab() === 'tds-vds'
+          ? 'px-4 py-2.5 rounded-xl font-semibold text-xs bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-sm'
+          : 'px-4 py-2.5 rounded-xl font-medium text-xs text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors'">
+        TDS & VDS Withholding Register
+      </button>
+
+      <button
+        (click)="activeTab.set('section-53ff')"
+        [class]="activeTab() === 'section-53ff'
+          ? 'px-4 py-2.5 rounded-xl font-semibold text-xs bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-sm'
+          : 'px-4 py-2.5 rounded-xl font-medium text-xs text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors'">
+        Sec 53FF AIT & Sub-Registry Calc
+      </button>
+
+      <button
+        (click)="activeTab.set('settings')"
+        [class]="activeTab() === 'settings'
+          ? 'px-4 py-2.5 rounded-xl font-semibold text-xs bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-sm'
+          : 'px-4 py-2.5 rounded-xl font-medium text-xs text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors'">
+        Dynamic Rules & Zones Settings
+      </button>
+    </div>
+
+    <!-- TAB 1: EXECUTIVE OVERVIEW -->
+    @if (activeTab() === 'overview') {
+      <div class="pt-6 space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Left: Statutory Compliance Architecture -->
+          <div class="p-5 rounded-2xl bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 space-y-4">
+            <h3 class="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+              Bangladesh Real Estate Tax Compliance Architecture
+            </h3>
+            <p class="text-xs text-slate-500 leading-relaxed">
+              Real estate developers in Bangladesh operate under strict statutory withholding and VAT mandates. This module automates the entire NBR pipeline:
+            </p>
+            <div class="space-y-3 text-xs">
+              <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
+                <div class="font-semibold text-slate-800 dark:text-slate-200">1. Output VAT on Customer Billing (VAT Act 2012)</div>
+                <div class="text-slate-500 mt-0.5">
+                  Residential ≤ 1,600 sqft at 2.0%, &gt; 1,600 sqft at 4.5%, and Commercial units at 7.5%. Official bilingual Form Mushak-6.3 generated on every milestone receipt.
+                </div>
+              </div>
+
+              <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
+                <div class="font-semibold text-slate-800 dark:text-slate-200">2. Inter-Site Movement Mushak 6.5</div>
+                <div class="text-slate-500 mt-0.5">
+                  Tracks transfer of rebar, cement, sand, stone chips, and subcontractor fabrication equipment between central stores and projects without double VAT taxation.
+                </div>
+              </div>
+
+              <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
+                <div class="font-semibold text-slate-800 dark:text-slate-200">3. Income Tax Withholding (TDS under Income Tax Act 2023)</div>
+                <div class="text-slate-500 mt-0.5">
+                  Section 89 contractor slabs (3% / 5% / 7%), Section 86 consultants (10% / 12%), Section 89 suppliers (2% to 5%) with automated Form 54 certificate generation.
+                </div>
+              </div>
+
+              <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
+                <div class="font-semibold text-slate-800 dark:text-slate-200">4. Section 53FF Advance Income Tax (AIT)</div>
+                <div class="text-slate-500 mt-0.5">
+                  Pre-registration AIT computation based on Rajuk/CDA/Pourashava zones per sqm/sqft before deed execution at Sub-Registry offices.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Live Dual-Engine Quick Workspace -->
+          <div class="space-y-4">
+            <!-- Quick TDS Mini Calculator Card -->
+            <div class="p-5 rounded-2xl bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 space-y-3">
+              <div class="flex items-center justify-between">
+                <h3 class="font-bold text-sm text-slate-900 dark:text-white">Quick TDS/VDS Withholding Calculator</h3>
+                <span class="text-[10px] font-mono text-emerald-600 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md">Live Engine</span>
+              </div>
+
+              <div [formGroup]="tdsForm" class="grid grid-cols-2 gap-3 text-xs">
+                <div>
+                  <label class="block font-medium text-slate-600 dark:text-slate-400 mb-1">Bill Type</label>
+                  <select
+                    formControlName="bill_type"
+                    (change)="runTdsCalculation()"
+                    class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-medium">
+                    <option value="CONTRACTOR_CIVIL">Civil Works Contractor (Sec 89)</option>
+                    <option value="CONSULTANT_PROFESSIONAL">Consultant / Architect (Sec 86)</option>
+                    <option value="SUPPLIER_GOODS">Supplier Supplies (Sec 89)</option>
+                    <option value="COMMISSION_BROKER">Broker Commission (Sec 94)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block font-medium text-slate-600 dark:text-slate-400 mb-1">Procurement Category</label>
+                  <select
+                    formControlName="category"
+                    (change)="runTdsCalculation()"
+                    class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-medium">
+                    <option value="SAND_AND_STONE_CHIPS">Sand & Aggregates (VDS 5%)</option>
+                    <option value="BRICKS_PROCUREMENT">Bricks Supply (VDS 7.5%)</option>
+                    <option value="TILES_SANITARY">Tiles & Sanitary (VDS 7.5%)</option>
+                    <option value="TRANSPORT_CARRIAGE">Transport / Carriage (VDS 10%)</option>
+                    <option value="CONSULTANCY">Consultancy / Design (VDS 15%)</option>
+                  </select>
+                </div>
+
+                <div class="col-span-2">
+                  <label class="block font-medium text-slate-600 dark:text-slate-400 mb-1">Gross Bill Amount (BDT)</label>
+                  <input
+                    type="number"
+                    formControlName="gross_amount"
+                    (input)="runTdsCalculation()"
+                    class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-mono font-bold text-sm" />
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <input type="checkbox" formControlName="payee_has_tin" (change)="runTdsCalculation()" id="hasTin" class="rounded accent-emerald-600" />
+                  <label for="hasTin" class="text-[11px] text-slate-600 dark:text-slate-400">Payee has 12-digit e-TIN</label>
+                </div>
+                <div class="flex items-center gap-2">
+                  <input type="checkbox" formControlName="payee_submitted_return_proof" (change)="runTdsCalculation()" id="hasPsr" class="rounded accent-emerald-600" />
+                  <label for="hasPsr" class="text-[11px] text-slate-600 dark:text-slate-400">Proof of Return Submitted</label>
+                </div>
+              </div>
+
+              <!-- Quick TDS Result Banner -->
+              @if (tdsResult(); as res) {
+                <div class="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-xs space-y-1.5">
+                  <div class="flex items-center justify-between font-semibold">
+                    <span class="text-emerald-900 dark:text-emerald-200">TDS Deduction ({{ res.tds_rate_percent }}%):</span>
+                    <span class="font-mono text-emerald-700 dark:text-emerald-300">৳{{ res.tds_deduction_amount | number:'1.2-2' }}</span>
+                  </div>
+                  <div class="flex items-center justify-between font-semibold">
+                    <span class="text-emerald-900 dark:text-emerald-200">VDS Deduction ({{ res.vds_rate_percent }}%):</span>
+                    <span class="font-mono text-emerald-700 dark:text-emerald-300">৳{{ res.vds_deduction_amount | number:'1.2-2' }}</span>
+                  </div>
+                  <div class="pt-1 border-t border-emerald-200 dark:border-emerald-800 flex items-center justify-between font-bold text-sm">
+                    <span class="text-emerald-950 dark:text-emerald-100">Net Payable to Payee:</span>
+                    <span class="font-mono text-emerald-800 dark:text-emerald-200">৳{{ res.net_payable_to_vendor | number:'1.2-2' }}</span>
+                  </div>
+                </div>
+              }
+            </div>
+
+            <!-- Quick Section 53FF AIT Card -->
+            <div class="p-5 rounded-2xl bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 space-y-3">
+              <div class="flex items-center justify-between">
+                <h3 class="font-bold text-sm text-slate-900 dark:text-white">Quick Sec 53FF AIT & Registration Preview</h3>
+                <span class="text-[10px] font-mono text-blue-600 bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded-md">Sub-Registry</span>
+              </div>
+              @if (aitResult(); as ait) {
+                <div class="p-3 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 text-xs space-y-1">
+                  <div class="flex items-center justify-between text-blue-900 dark:text-blue-200">
+                    <span>AIT ({{ ait.zone_name | slice:0:22 }}...):</span>
+                    <span class="font-mono font-bold">৳{{ ait.ait_amount_bdt | number:'1.2-2' }}</span>
+                  </div>
+                  <div class="flex items-center justify-between text-blue-900 dark:text-blue-200">
+                    <span>Stamp Duty + Reg + Local + VAT:</span>
+                    <span class="font-mono">৳{{ (ait.total_statutory_taxes - ait.ait_amount_bdt) | number:'1.2-2' }}</span>
+                  </div>
+                  <div class="pt-1 border-t border-blue-200 dark:border-blue-800 flex items-center justify-between font-bold text-sm text-blue-950 dark:text-blue-100">
+                    <span>Total Statutory Cost:</span>
+                    <span class="font-mono text-blue-800 dark:text-blue-200">৳{{ ait.total_statutory_taxes | number:'1.2-2' }} ({{ ait.tax_percentage_of_deed_value }}%)</span>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- TAB 2: MUSHAK 6.3 TAX INVOICES -->
+    @if (activeTab() === 'mushak-63') {
+      <div class="pt-6 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div class="text-xs text-slate-500">
+            Official Statutory Mushak 6.3 Tax Invoices issued under VAT Act 2012 Rule 40(1)(c).
+          </div>
+          <app-custom-button
+            label="Issue New Mushak 6.3"
+            variant="primary"
+            (btnClick)="openCreate63Modal()">
+          </app-custom-button>
+        </div>
+
+        <div class="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 dark:bg-slate-850 border-b border-slate-200 dark:border-slate-800 font-semibold text-slate-600 dark:text-slate-300">
+              <tr>
+                <th class="py-3 px-4">Invoice No</th>
+                <th class="py-3 px-4">Date</th>
+                <th class="py-3 px-4">Customer & Project</th>
+                <th class="py-3 px-4">Apartment Sqft</th>
+                <th class="py-3 px-4 text-right">Taxable Consideration</th>
+                <th class="py-3 px-4 text-center">VAT Rate</th>
+                <th class="py-3 px-4 text-right">VAT Amount</th>
+                <th class="py-3 px-4 text-right">Total Collected</th>
+                <th class="py-3 px-4 text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+              @for (inv of invoices63(); track inv.id) {
+                <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                  <td class="py-3 px-4 font-mono font-bold text-slate-900 dark:text-white">
+                    {{ inv.mushak_challan_number }}
+                  </td>
+                  <td class="py-3 px-4 text-slate-500">{{ inv.invoice_date }}</td>
+                  <td class="py-3 px-4">
+                    <div class="font-medium text-slate-800 dark:text-slate-200">{{ inv.customer_name || 'Valued Customer' }}</div>
+                    <div class="text-[11px] text-slate-400">{{ inv.project_name }} • Unit #{{ inv.unit_number || '5B' }}</div>
+                  </td>
+                  <td class="py-3 px-4 font-mono">{{ inv.apartment_sqft }} sft</td>
+                  <td class="py-3 px-4 font-mono text-right">৳{{ inv.taxable_amount | number:'1.2-2' }}</td>
+                  <td class="py-3 px-4 text-center font-bold text-emerald-600 dark:text-emerald-400">
+                    {{ inv.vat_rate_percent }}%
+                  </td>
+                  <td class="py-3 px-4 font-mono font-semibold text-right text-emerald-600 dark:text-emerald-400">
+                    ৳{{ inv.vat_amount | number:'1.2-2' }}
+                  </td>
+                  <td class="py-3 px-4 font-mono font-bold text-right text-slate-900 dark:text-white">
+                    ৳{{ inv.total_amount_collected | number:'1.2-2' }}
+                  </td>
+                  <td class="py-3 px-4 text-center">
+                    <div class="flex items-center justify-center gap-1.5">
+                      <button
+                        (click)="previewMushak63(inv)"
+                        title="Bilingual Print Preview"
+                        class="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                        </svg>
+                      </button>
+                      <button
+                        (click)="downloadMushak63Pdf(inv.id)"
+                        title="Download NBR PDF"
+                        class="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950 hover:bg-emerald-100 dark:hover:bg-emerald-900 text-emerald-600">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="9" class="py-8 text-center text-xs text-slate-400">
+                    No statutory Mushak 6.3 invoices issued yet. Click "Issue New Mushak 6.3" above.
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    <!-- TAB 3: MUSHAK 6.5 TRANSFER CHALLANS -->
+    @if (activeTab() === 'mushak-65') {
+      <div class="pt-6 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div class="text-xs text-slate-500">
+            Statutory Goods Transfer & Subcontractor Delivery Challans under VAT Act 2012 Rule 40(1)(e).
+          </div>
+          <app-custom-button
+            label="Create Mushak 6.5 Challan"
+            variant="primary"
+            (btnClick)="openCreate65Modal()">
+          </app-custom-button>
+        </div>
+
+        <div class="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 dark:bg-slate-850 border-b border-slate-200 dark:border-slate-800 font-semibold text-slate-600 dark:text-slate-300">
+              <tr>
+                <th class="py-3 px-4">Challan No</th>
+                <th class="py-3 px-4">Date & Time</th>
+                <th class="py-3 px-4">Origin Store / Site</th>
+                <th class="py-3 px-4">Destination / Subcontractor</th>
+                <th class="py-3 px-4">Vehicle & Driver</th>
+                <th class="py-3 px-4 text-right">Declared Value</th>
+                <th class="py-3 px-4 text-center">Status</th>
+                <th class="py-3 px-4 text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+              @for (c of challans65(); track c.id) {
+                <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                  <td class="py-3 px-4 font-mono font-bold text-slate-900 dark:text-white">
+                    {{ c.challan_number }}
+                  </td>
+                  <td class="py-3 px-4 text-slate-500">{{ c.issue_date }} • {{ c.issue_time }}</td>
+                  <td class="py-3 px-4 font-medium text-slate-800 dark:text-slate-200">
+                    {{ c.origin_project_name || 'Central Warehouse' }}
+                  </td>
+                  <td class="py-3 px-4 text-slate-600 dark:text-slate-400">
+                    {{ c.destination_project_name || 'Site Yard' }}
+                    @if (c.subcontractor_name) {
+                      <span class="block text-[11px] text-indigo-500 font-medium">Sub: {{ c.subcontractor_name }}</span>
+                    }
+                  </td>
+                  <td class="py-3 px-4">
+                    <div class="font-medium text-slate-800 dark:text-slate-200">{{ c.transport_vehicle_type }} ({{ c.vehicle_number }})</div>
+                    <div class="text-[11px] text-slate-400">{{ c.driver_name }} • {{ c.driver_phone }}</div>
+                  </td>
+                  <td class="py-3 px-4 font-mono font-bold text-right text-slate-900 dark:text-white">
+                    ৳{{ c.total_declared_value | number:'1.2-2' }}
+                  </td>
+                  <td class="py-3 px-4 text-center">
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
+                      {{ c.status }}
+                    </span>
+                  </td>
+                  <td class="py-3 px-4 text-center">
+                    <div class="flex items-center justify-center gap-1.5">
+                      <button
+                        (click)="previewMushak65(c)"
+                        title="Print Preview"
+                        class="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                        </svg>
+                      </button>
+                      <button
+                        (click)="downloadMushak65Pdf(c.id)"
+                        title="Download NBR PDF"
+                        class="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950 hover:bg-emerald-100 dark:hover:bg-emerald-900 text-emerald-600">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="8" class="py-8 text-center text-xs text-slate-400">
+                    No Mushak 6.5 transfer challans registered. Click "Create Mushak 6.5 Challan" above.
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    <!-- TAB 4: TDS & VDS WITHHOLDING REGISTER -->
+    @if (activeTab() === 'tds-vds') {
+      <div class="pt-6 space-y-6">
+        <!-- Interactive Full Calculator Workspace -->
+        <div class="p-5 rounded-2xl bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+            <div>
+              <h3 class="font-bold text-sm text-slate-900 dark:text-white">
+                Statutory TDS & VDS Withholding Rule Engine
+              </h3>
+              <p class="text-xs text-slate-500">
+                Income Tax Act 2023 (Sections 89, 86, 94, 88) & VAT Act 2012 Third Schedule Withholding
+              </p>
+            </div>
+            <app-custom-button label="Compute Rate" variant="primary" (btnClick)="runTdsCalculation()"></app-custom-button>
+          </div>
+
+          <div [formGroup]="tdsForm" class="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs">
+            <div>
+              <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Withholding Category</label>
+              <select
+                formControlName="bill_type"
+                (change)="runTdsCalculation()"
+                class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-medium">
+                <option value="CONTRACTOR_CIVIL">Civil Contractor (Sec 89: 3% to 7%)</option>
+                <option value="CONSULTANT_PROFESSIONAL">Consultancy & Engineering (Sec 86: 10% to 12%)</option>
+                <option value="SUPPLIER_GOODS">Material Supplier Supplies (Sec 89: 3% to 5%)</option>
+                <option value="COMMISSION_BROKER">Broker Commission (Sec 94: 10%)</option>
+                <option value="RENT_LEASE">Site / Building Lease (Sec 88: 5%)</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Material / Supply Item</label>
+              <select
+                formControlName="category"
+                (change)="runTdsCalculation()"
+                class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-medium">
+                <option value="SAND_AND_STONE_CHIPS">Sand & Aggregates (VDS 5%)</option>
+                <option value="BRICKS_PROCUREMENT">Auto & Clay Bricks (VDS 7.5%)</option>
+                <option value="TILES_SANITARY">Finishing Tiles & Sanitary (VDS 7.5%)</option>
+                <option value="TRANSPORT_CARRIAGE">Carriage / Freight Transport (VDS 10%)</option>
+                <option value="CONSULTANCY">Architecture / Structural Design (VDS 15%)</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Gross Bill Consideration (BDT)</label>
+              <input
+                type="number"
+                formControlName="gross_amount"
+                (input)="runTdsCalculation()"
+                class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-mono font-bold text-sm" />
+            </div>
+
+            <div class="flex flex-col justify-end space-y-1.5">
+              <div class="flex items-center gap-2">
+                <input type="checkbox" formControlName="payee_has_tin" (change)="runTdsCalculation()" id="hasTin2" class="rounded accent-emerald-600" />
+                <label for="hasTin2" class="text-xs text-slate-700 dark:text-slate-300">Payee has 12-digit e-TIN</label>
+              </div>
+              <div class="flex items-center gap-2">
+                <input type="checkbox" formControlName="payee_submitted_return_proof" (change)="runTdsCalculation()" id="hasPsr2" class="rounded accent-emerald-600" />
+                <label for="hasPsr2" class="text-xs text-slate-700 dark:text-slate-300">Submitted Proof of Tax Return</label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Calculation Result Breakdown Card -->
+          @if (tdsResult(); as r) {
+            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 grid grid-cols-1 md:grid-cols-4 gap-4 text-xs">
+              <div>
+                <span class="text-slate-400 block mb-0.5">TDS Rate & Section</span>
+                <div class="font-bold text-indigo-600 dark:text-indigo-400 text-sm">
+                  {{ r.tds_rate_percent }}% (৳{{ r.tds_deduction_amount | number:'1.2-2' }})
+                </div>
+                <div class="text-[10px] text-slate-500">{{ r.tds_slab_applied }}</div>
+              </div>
+
+              <div>
+                <span class="text-slate-400 block mb-0.5">VDS Withholding Rate</span>
+                <div class="font-bold text-emerald-600 dark:text-emerald-400 text-sm">
+                  {{ r.vds_rate_percent }}% (৳{{ r.vds_deduction_amount | number:'1.2-2' }})
+                </div>
+                <div class="text-[10px] text-slate-500">{{ r.applicable_vds_rule }}</div>
+              </div>
+
+              <div>
+                <span class="text-slate-400 block mb-0.5">Total Government Deductions</span>
+                <div class="font-bold text-rose-600 dark:text-rose-400 text-sm">
+                  ৳{{ r.total_tax_deducted | number:'1.2-2' }}
+                </div>
+                <div class="text-[10px] text-slate-500">Requires TR-6 Treasury Deposit</div>
+              </div>
+
+              <div class="p-2 rounded-lg bg-emerald-100/70 dark:bg-emerald-950/70 border border-emerald-300 dark:border-emerald-800">
+                <span class="text-emerald-800 dark:text-emerald-200 block text-[10px] uppercase font-bold">Net Check / Pay Order to Payee</span>
+                <div class="font-bold font-mono text-emerald-700 dark:text-emerald-300 text-base">
+                  ৳{{ r.net_payable_to_vendor | number:'1.2-2' }}
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Withholding Register Table -->
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-sm text-slate-900 dark:text-white">Withheld Deductions Ledger</h3>
+            <span class="text-xs text-slate-500">{{ tdsDeductions().length }} Records Logged</span>
+          </div>
+
+          <div class="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 dark:bg-slate-850 border-b border-slate-200 dark:border-slate-800 font-semibold text-slate-600 dark:text-slate-300">
+                <tr>
+                  <th class="py-3 px-4">ID</th>
+                  <th class="py-3 px-4">Payee / Vendor</th>
+                  <th class="py-3 px-4">Section</th>
+                  <th class="py-3 px-4 text-right">Gross Amount</th>
+                  <th class="py-3 px-4 text-center">Rate</th>
+                  <th class="py-3 px-4 text-right">Withheld Amount</th>
+                  <th class="py-3 px-4">Treasury Challan Ref</th>
+                  <th class="py-3 px-4 text-center">Status</th>
+                  <th class="py-3 px-4 text-center">Certificates</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                @for (d of tdsDeductions(); track d.id) {
+                  <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                    <td class="py-3 px-4 font-mono font-medium">#{{ d.id }}</td>
+                    <td class="py-3 px-4 font-medium text-slate-800 dark:text-slate-200">
+                      {{ d.vendor_name || d.contractor_name || 'Subcontractor / Supplier' }}
+                    </td>
+                    <td class="py-3 px-4">
+                      <span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                        {{ d.deduction_section }}
+                      </span>
+                    </td>
+                    <td class="py-3 px-4 font-mono text-right">৳{{ d.gross_amount | number:'1.2-2' }}</td>
+                    <td class="py-3 px-4 text-center font-bold text-indigo-600">{{ d.tax_rate_percent }}%</td>
+                    <td class="py-3 px-4 font-mono font-bold text-right text-rose-600">
+                      ৳{{ d.withheld_amount | number:'1.2-2' }}
+                    </td>
+                    <td class="py-3 px-4 text-slate-500 font-mono text-[11px]">
+                      {{ d.challan_number || 'Pending Deposit' }}
+                    </td>
+                    <td class="py-3 px-4 text-center">
+                      @if (d.status === 'DEPOSITED_TO_TREASURY') {
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
+                          Deposited
+                        </span>
+                      } @else {
+                        <button
+                          (click)="openDepositModal(d)"
+                          class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 hover:bg-amber-200 transition-colors">
+                          Deposit TR-6
+                        </button>
+                      }
+                    </td>
+                    <td class="py-3 px-4 text-center">
+                      <div class="flex items-center justify-center gap-1.5">
+                        <button
+                          (click)="downloadForm54(d.id)"
+                          title="Download Form 54 Certificate"
+                          class="px-2 py-1 rounded-lg text-[10px] font-semibold bg-indigo-50 dark:bg-indigo-950 text-indigo-600 hover:bg-indigo-100">
+                          Form 54
+                        </button>
+                        <button
+                          (click)="downloadMushak66(d.id)"
+                          title="Download Mushak 6.6 VDS Certificate"
+                          class="px-2 py-1 rounded-lg text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950 text-emerald-600 hover:bg-emerald-100">
+                          Mushak 6.6
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="9" class="py-8 text-center text-xs text-slate-400">
+                      No tax withholding entries recorded yet.
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- TAB 5: SECTION 53FF AIT & SUB-REGISTRY CALCULATOR -->
+    @if (activeTab() === 'section-53ff') {
+      <div class="pt-6 space-y-6">
+        <div class="p-6 rounded-2xl bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 space-y-5">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-3">
+            <div>
+              <h3 class="font-bold text-base text-slate-900 dark:text-white">
+                Sub-Registry Execution & Section 53FF Advance Income Tax (AIT) Calculator
+              </h3>
+              <p class="text-xs text-slate-500">
+                Statutory deed registration expense computation based on Rajuk, CDA, and Pourashava location zones
+              </p>
+            </div>
+            <app-custom-button label="Calculate Fees" variant="primary" (btnClick)="runAitCalculation()"></app-custom-button>
+          </div>
+
+          <div [formGroup]="aitForm" class="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs">
+            <div>
+              <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Sub-Registry Location Zone</label>
+              <select
+                formControlName="zone_code"
+                (change)="runAitCalculation()"
+                class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-medium">
+                @for (z of taxZones(); track z.zone_code) {
+                  <option [value]="z.zone_code">{{ z.zone_name }} ({{ z.city_authority }})</option>
+                }
+              </select>
+            </div>
+
+            <div>
+              <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Property Usage Type</label>
+              <select
+                formControlName="property_type"
+                (change)="runAitCalculation()"
+                class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-medium">
+                <option value="RESIDENTIAL">Residential Apartment</option>
+                <option value="COMMERCIAL">Commercial Shop / Office</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Apartment Gross Size (Sqft)</label>
+              <input
+                type="number"
+                formControlName="apartment_sqft"
+                (input)="runAitCalculation()"
+                class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-mono font-bold" />
+            </div>
+
+            <div>
+              <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Deed Valuation / Consideration (BDT)</label>
+              <input
+                type="number"
+                formControlName="deed_value_bdt"
+                (input)="runAitCalculation()"
+                class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-mono font-bold" />
+            </div>
+          </div>
+
+          <!-- Computed Result Sheet -->
+          @if (aitResult(); as res) {
+            <div class="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-4">
+              <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-2">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  Sub-Registry Statutory Payment Clearance Breakdown
+                </span>
+                <span class="text-[11px] font-mono text-slate-500">
+                  {{ res.apartment_sqft }} sqft ≈ {{ res.apartment_sqm }} sq. metre
+                </span>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                <div class="space-y-2.5">
+                  <div class="flex items-center justify-between">
+                    <span class="text-slate-600 dark:text-slate-400">Section 53FF AIT (৳{{ res.ait_rate_per_sqm }}/sqm):</span>
+                    <span class="font-mono font-bold text-indigo-600">৳{{ res.ait_amount_bdt | number:'1.2-2' }}</span>
+                  </div>
+
+                  <div class="flex items-center justify-between">
+                    <span class="text-slate-600 dark:text-slate-400">Stamp Duty (1.50%):</span>
+                    <span class="font-mono font-medium">৳{{ res.stamp_duty_amount | number:'1.2-2' }}</span>
+                  </div>
+
+                  <div class="flex items-center justify-between">
+                    <span class="text-slate-600 dark:text-slate-400">Registration Fee (1.00%):</span>
+                    <span class="font-mono font-medium">৳{{ res.registration_fee_amount | number:'1.2-2' }}</span>
+                  </div>
+                </div>
+
+                <div class="space-y-2.5">
+                  <div class="flex items-center justify-between">
+                    <span class="text-slate-600 dark:text-slate-400">Local Govt Tax (2.00%):</span>
+                    <span class="font-mono font-medium">৳{{ res.local_govt_tax_amount | number:'1.2-2' }}</span>
+                  </div>
+
+                  <div class="flex items-center justify-between">
+                    <span class="text-slate-600 dark:text-slate-400">VAT Act 2012 ({{ res.vat_rate_percent }}%):</span>
+                    <span class="font-mono font-medium">৳{{ res.vat_amount | number:'1.2-2' }}</span>
+                  </div>
+
+                  <div class="pt-2 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between font-bold text-slate-900 dark:text-white">
+                    <span>Total Statutory Government Fees:</span>
+                    <span class="font-mono text-rose-600 dark:text-rose-400">৳{{ res.total_statutory_taxes | number:'1.2-2' }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Grand Total Effective Cost Banner -->
+              <div class="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 flex items-center justify-between">
+                <div>
+                  <div class="text-[10px] uppercase font-bold tracking-wider text-emerald-900 dark:text-emerald-200">
+                    Total Effective Consideration (Deed Value + Government Taxes)
+                  </div>
+                  <div class="text-xs text-emerald-700 dark:text-emerald-400 font-medium">
+                    Statutory fees represent {{ res.tax_percentage_of_deed_value }}% of deed value
+                  </div>
+                </div>
+                <div class="text-right">
+                  <div class="text-2xl font-bold font-mono text-emerald-700 dark:text-emerald-300">
+                    ৳{{ res.total_effective_cost | number:'1.2-2' }}
+                  </div>
+                  <div class="text-[11px] text-emerald-600 font-mono">
+                    ≈ ৳{{ (res.total_effective_cost / 10000000) | number:'1.2-2' }} Crore
+                  </div>
+                </div>
+              </div>
+
+              <!-- Treasury Deposit Head References -->
+              <div class="space-y-1">
+                <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Required Treasury Challan Heads:</span>
+                <ul class="text-[11px] text-slate-500 space-y-0.5 font-mono">
+                  @for (h of res.required_treasury_heads; track h) {
+                    <li>• {{ h }}</li>
+                  }
+                </ul>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- TAB 6: DYNAMIC RULES & ZONES SETTINGS (ZERO HARDCODING) -->
+    @if (activeTab() === 'settings') {
+      <div class="pt-6 space-y-6">
+        <!-- Section 53FF Zones Configuration -->
+        <div class="p-5 rounded-2xl bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+            <div>
+              <h3 class="font-bold text-sm text-slate-900 dark:text-white">Dynamic Section 53FF Tax Zones</h3>
+              <p class="text-xs text-slate-500">Configured location zones & statutory valuation rates (Zero Hardcoded values)</p>
+            </div>
+            <app-custom-button label="Add New Zone" variant="primary" (btnClick)="isAddZoneModalOpen.set(true)"></app-custom-button>
+          </div>
+
+          <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 dark:bg-slate-850 border-b border-slate-200 dark:border-slate-800 font-semibold text-slate-600 dark:text-slate-300">
+                <tr>
+                  <th class="py-2.5 px-3">Zone Code</th>
+                  <th class="py-2.5 px-3">Location Description</th>
+                  <th class="py-2.5 px-3">Authority</th>
+                  <th class="py-2.5 px-3 text-right">Residential Rate / Sqm</th>
+                  <th class="py-2.5 px-3 text-right">Commercial Rate / Sqm</th>
+                  <th class="py-2.5 px-3 text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                @for (z of taxZones(); track z.id) {
+                  <tr>
+                    <td class="py-2.5 px-3 font-mono font-bold">{{ z.zone_code }}</td>
+                    <td class="py-2.5 px-3">{{ z.zone_name }}</td>
+                    <td class="py-2.5 px-3 font-medium text-emerald-600">{{ z.city_authority }}</td>
+                    <td class="py-2.5 px-3 font-mono text-right">৳{{ z.rate_per_sqm_residential | number }}</td>
+                    <td class="py-2.5 px-3 font-mono text-right">৳{{ z.rate_per_sqm_commercial | number }}</td>
+                    <td class="py-2.5 px-3 text-center">
+                      <span class="px-2 py-0.5 rounded-full text-[10px] bg-emerald-100 dark:bg-emerald-950 text-emerald-600 font-semibold">Active</span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Withholding Rules Configuration -->
+        <div class="p-5 rounded-2xl bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+            <div>
+              <h3 class="font-bold text-sm text-slate-900 dark:text-white">Dynamic Withholding Rules (TDS & VDS)</h3>
+              <p class="text-xs text-slate-500">Income Tax Act 2023 & VAT Act 2012 deduction parameters</p>
+            </div>
+            <app-custom-button label="Add New Rule" variant="outline" (btnClick)="isAddRuleModalOpen.set(true)"></app-custom-button>
+          </div>
+
+          <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 dark:bg-slate-850 border-b border-slate-200 dark:border-slate-800 font-semibold text-slate-600 dark:text-slate-300">
+                <tr>
+                  <th class="py-2.5 px-3">Rule Code</th>
+                  <th class="py-2.5 px-3">Type</th>
+                  <th class="py-2.5 px-3">Statutory Section</th>
+                  <th class="py-2.5 px-3">Category Name</th>
+                  <th class="py-2.5 px-3 text-center">With TIN (%)</th>
+                  <th class="py-2.5 px-3 text-center">Without TIN (%)</th>
+                  <th class="py-2.5 px-3 text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                @for (r of withholdingRules(); track r.id) {
+                  <tr>
+                    <td class="py-2.5 px-3 font-mono font-bold">{{ r.rule_code }}</td>
+                    <td class="py-2.5 px-3 font-semibold" [class.text-indigo-600]="r.rule_type === 'TDS'" [class.text-emerald-600]="r.rule_type === 'VDS'">
+                      {{ r.rule_type }}
+                    </td>
+                    <td class="py-2.5 px-3">{{ r.tax_section }}</td>
+                    <td class="py-2.5 px-3">{{ r.category_name }}</td>
+                    <td class="py-2.5 px-3 text-center font-bold">{{ r.rate_with_tin }}%</td>
+                    <td class="py-2.5 px-3 text-center font-bold text-rose-600">{{ r.rate_without_tin }}%</td>
+                    <td class="py-2.5 px-3 text-center">
+                      <span class="px-2 py-0.5 rounded-full text-[10px] bg-emerald-100 dark:bg-emerald-950 text-emerald-600 font-semibold">Active</span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    }
+  </app-card-container>
+
+  <!-- ============================================================== -->
+  <!-- MODAL: ISSUE NEW MUSHAK 6.3 INVOICE                           -->
+  <!-- ============================================================== -->
+  @if (isCreate63ModalOpen()) {
+    <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full border border-slate-200 dark:border-slate-800 p-6 space-y-5 shadow-2xl">
+        <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+          <h3 class="font-bold text-base text-slate-900 dark:text-white">
+            Issue Statutory Mushak 6.3 Tax Invoice
+          </h3>
+          <button (click)="closeModals()" class="text-slate-400 hover:text-slate-600">&times;</button>
+        </div>
+
+        <form [formGroup]="create63Form" (ngSubmit)="submitMushak63()" class="space-y-4 text-xs">
+          <!-- Dynamic Searchable Booking Select -->
+          <div>
+            <app-searchable-select
+              label="Select Property Booking Milestone"
+              [options]="bookingOptions()"
+              formControlName="booking_id"
+              [allowCreateNew]="true"
+              placeholder="Search by Booking # or Unit...">
+            </app-searchable-select>
+          </div>
+
+          <div>
+            <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Property Type</label>
+            <select
+              formControlName="apartment_type"
+              class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-medium">
+              <option value="RESIDENTIAL">Residential Apartment (≤1600 sqft: 2%, &gt;1600 sqft: 4.5%)</option>
+              <option value="COMMERCIAL">Commercial Shop / Office (7.5%)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Taxable Consideration (BDT)</label>
+            <input
+              type="number"
+              formControlName="taxable_amount"
+              class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-mono font-bold" />
+          </div>
+
+          <div>
+            <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Customer TIN or NID</label>
+            <input
+              type="text"
+              formControlName="customer_tin_nid"
+              class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700" />
+          </div>
+
+          <div class="pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-2">
+            <app-custom-button label="Cancel" variant="outline" (btnClick)="closeModals()"></app-custom-button>
+            <app-custom-button label="Issue & Generate PDF" variant="primary" [loading]="isSubmitting()"></app-custom-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- ============================================================== -->
+  <!-- MODAL: CREATE MUSHAK 6.5 TRANSFER CHALLAN                      -->
+  <!-- ============================================================== -->
+  @if (isCreate65ModalOpen()) {
+    <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-2xl w-full border border-slate-200 dark:border-slate-800 p-6 space-y-5 shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+          <h3 class="font-bold text-base text-slate-900 dark:text-white">
+            Create Form Mushak 6.5 Material / Subcontractor Transfer
+          </h3>
+          <button (click)="closeModals()" class="text-slate-400 hover:text-slate-600">&times;</button>
+        </div>
+
+        <form [formGroup]="create65Form" (ngSubmit)="submitMushak65()" class="space-y-4 text-xs">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <app-searchable-select
+                label="Origin Project / Warehouse"
+                [options]="projectOptions()"
+                formControlName="origin_project_id"
+                [allowCreateNew]="true"
+                placeholder="Select origin site...">
+              </app-searchable-select>
+            </div>
+            <div>
+              <app-searchable-select
+                label="Destination Project / Site"
+                [options]="projectOptions()"
+                formControlName="destination_project_id"
+                [allowCreateNew]="true"
+                placeholder="Select destination site...">
+              </app-searchable-select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-3 gap-3">
+            <div>
+              <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Vehicle Type</label>
+              <select formControlName="transport_vehicle_type" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                <option value="TRUCK">Heavy Truck</option>
+                <option value="PICKUP">Pickup Van</option>
+                <option value="COVERED_VAN">Covered Van</option>
+                <option value="TRAILER">Trailer / Flatbed</option>
+              </select>
+            </div>
+            <div>
+              <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Vehicle Plate No</label>
+              <input type="text" formControlName="vehicle_number" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700" />
+            </div>
+            <div>
+              <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Driver Name & Mobile</label>
+              <input type="text" formControlName="driver_name" placeholder="Name" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 mb-1" />
+              <input type="text" formControlName="driver_phone" placeholder="Phone" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700" />
+            </div>
+          </div>
+
+          <!-- Items Row Builder -->
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-slate-800 dark:text-slate-200">Declared Materials & Items</span>
+              <button type="button" (click)="addMushak65Item()" class="text-emerald-600 hover:text-emerald-700 font-semibold">+ Add Material</button>
+            </div>
+
+            <div class="space-y-2">
+              @for (itm of mushak65Items(); track $index) {
+                <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 grid grid-cols-12 gap-2 items-center">
+                  <div class="col-span-4">
+                    <input type="text" [(ngModel)]="itm.item_name" [ngModelOptions]="{standalone: true}" placeholder="Material Name" class="w-full px-2 py-1 text-xs rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700" />
+                  </div>
+                  <div class="col-span-2">
+                    <input type="number" [(ngModel)]="itm.quantity" [ngModelOptions]="{standalone: true}" (input)="itm.total_value = itm.quantity * itm.unit_value" placeholder="Qty" class="w-full px-2 py-1 text-xs rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700" />
+                  </div>
+                  <div class="col-span-2">
+                    <input type="text" [(ngModel)]="itm.unit" [ngModelOptions]="{standalone: true}" placeholder="Unit" class="w-full px-2 py-1 text-xs rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700" />
+                  </div>
+                  <div class="col-span-3">
+                    <input type="number" [(ngModel)]="itm.total_value" [ngModelOptions]="{standalone: true}" placeholder="Total BDT" class="w-full px-2 py-1 text-xs font-mono font-bold rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700" />
+                  </div>
+                  <div class="col-span-1 text-right">
+                    <button type="button" (click)="removeMushak65Item($index)" class="text-rose-500 hover:text-rose-700 font-bold">&times;</button>
+                  </div>
+                </div>
+              }
+            </div>
+
+            <div class="flex items-center justify-between font-bold text-xs pt-1">
+              <span>Total Declared Value:</span>
+              <span class="font-mono text-emerald-600">৳{{ calculateItemsTotal() | number:'1.2-2' }}</span>
+            </div>
+          </div>
+
+          <div class="pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-2">
+            <app-custom-button label="Cancel" variant="outline" (btnClick)="closeModals()"></app-custom-button>
+            <app-custom-button label="Issue Mushak 6.5" variant="primary" [loading]="isSubmitting()"></app-custom-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- ============================================================== -->
+  <!-- MODAL: RECORD TREASURY DEPOSIT                                -->
+  <!-- ============================================================== -->
+  @if (isDepositModalOpen()) {
+    <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full border border-slate-200 dark:border-slate-800 p-6 space-y-4 shadow-2xl">
+        <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+          <h3 class="font-bold text-base text-slate-900 dark:text-white">Record Treasury Challan Deposit</h3>
+          <button (click)="closeModals()" class="text-slate-400 hover:text-slate-600">&times;</button>
+        </div>
+
+        <form [formGroup]="depositForm" (ngSubmit)="submitTreasuryDeposit()" class="space-y-3 text-xs">
+          <div>
+            <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Treasury Challan Slip Number</label>
+            <input type="text" formControlName="challan_number" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-mono font-bold" />
+          </div>
+          <div>
+            <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Deposit Date</label>
+            <input type="date" formControlName="challan_deposit_date" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700" />
+          </div>
+
+          <div class="pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-2">
+            <app-custom-button label="Cancel" variant="outline" (btnClick)="closeModals()"></app-custom-button>
+            <app-custom-button label="Confirm Deposit" variant="primary" [loading]="isSubmitting()"></app-custom-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- ============================================================== -->
+  <!-- MODAL: ADD DYNAMIC ZONE MODAL                                 -->
+  <!-- ============================================================== -->
+  @if (isAddZoneModalOpen()) {
+    <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full border border-slate-200 dark:border-slate-800 p-6 space-y-4 shadow-2xl">
+        <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+          <h3 class="font-bold text-base text-slate-900 dark:text-white">Add New Location Tax Zone</h3>
+          <button (click)="closeModals()" class="text-slate-400 hover:text-slate-600">&times;</button>
+        </div>
+
+        <form [formGroup]="zoneForm" (ngSubmit)="submitNewZone()" class="space-y-3 text-xs">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block font-medium mb-1">Zone Code</label>
+              <input type="text" formControlName="zone_code" placeholder="e.g. UTTARA_SECTOR_18" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border" />
+            </div>
+            <div>
+              <label class="block font-medium mb-1">City Authority</label>
+              <select formControlName="city_authority" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border">
+                <option value="RAJUK">RAJUK (Dhaka)</option>
+                <option value="CDA">CDA (Chittagong)</option>
+                <option value="KDA">KDA (Khulna)</option>
+                <option value="RDA">RDA (Rajshahi)</option>
+                <option value="POURASHAVA">Pourashava / Municipality</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block font-medium mb-1">Location Name & Coverage</label>
+            <input type="text" formControlName="zone_name" placeholder="e.g. Uttara 3rd Phase & Diabari" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border" />
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block font-medium mb-1">Residential Rate / Sqm</label>
+              <input type="number" formControlName="rate_per_sqm_residential" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border font-mono" />
+            </div>
+            <div>
+              <label class="block font-medium mb-1">Commercial Rate / Sqm</label>
+              <input type="number" formControlName="rate_per_sqm_commercial" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border font-mono" />
+            </div>
+          </div>
+
+          <div class="pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-2">
+            <app-custom-button label="Cancel" variant="outline" (btnClick)="closeModals()"></app-custom-button>
+            <app-custom-button label="Save Zone" variant="primary" [loading]="isSubmitting()"></app-custom-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- ============================================================== -->
+  <!-- MODAL: ADD DYNAMIC WITHHOLDING RULE                            -->
+  <!-- ============================================================== -->
+  @if (isAddRuleModalOpen()) {
+    <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full border border-slate-200 dark:border-slate-800 p-6 space-y-4 shadow-2xl">
+        <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+          <h3 class="font-bold text-base text-slate-900 dark:text-white">Add Dynamic Withholding Rule</h3>
+          <button (click)="closeModals()" class="text-slate-400 hover:text-slate-600">&times;</button>
+        </div>
+
+        <form [formGroup]="ruleForm" (ngSubmit)="submitNewRule()" class="space-y-3 text-xs">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block font-medium mb-1">Rule Code</label>
+              <input type="text" formControlName="rule_code" placeholder="e.g. VDS_READYMIX" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border" />
+            </div>
+            <div>
+              <label class="block font-medium mb-1">Rule Type</label>
+              <select formControlName="rule_type" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border">
+                <option value="TDS">TDS (Income Tax)</option>
+                <option value="VDS">VDS (VAT Withholding)</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block font-medium mb-1">Statutory Section</label>
+            <input type="text" formControlName="tax_section" placeholder="e.g. Section 89 / VAT Act SRO" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border" />
+          </div>
+
+          <div>
+            <label class="block font-medium mb-1">Category Name</label>
+            <input type="text" formControlName="category_name" placeholder="e.g. Ready-Mix Concrete Supply" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border" />
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block font-medium mb-1">Rate with TIN (%)</label>
+              <input type="number" formControlName="rate_with_tin" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border font-mono" />
+            </div>
+            <div>
+              <label class="block font-medium mb-1">Rate without TIN (%)</label>
+              <input type="number" formControlName="rate_without_tin" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border font-mono" />
+            </div>
+          </div>
+
+          <div class="pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-2">
+            <app-custom-button label="Cancel" variant="outline" (btnClick)="closeModals()"></app-custom-button>
+            <app-custom-button label="Save Rule" variant="primary" [loading]="isSubmitting()"></app-custom-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- ============================================================== -->
+  <!-- MODAL: STATUTORY NBR BILINGUAL PRINT PREVIEW                   -->
+  <!-- ============================================================== -->
+  @if (isPrintModalOpen()) {
+    <div class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="bg-white text-slate-900 rounded-2xl max-w-3xl w-full border border-slate-200 p-8 space-y-6 shadow-2xl max-h-[92vh] overflow-y-auto">
+        <!-- Print Header & Controls -->
+        <div class="flex items-center justify-between border-b pb-3 no-print">
+          <div class="text-xs text-slate-500">Official NBR Statutory Document Preview</div>
+          <div class="flex items-center gap-2">
+            <app-custom-button label="Print Document" variant="primary" (btnClick)="printCurrentDocument()"></app-custom-button>
+            <app-custom-button label="Close" variant="outline" (btnClick)="closeModals()"></app-custom-button>
+          </div>
+        </div>
+
+        <!-- MUSHAK 6.3 PRINT PREVIEW -->
+        @if (printDocType() === 'MUSHAK_63' && activePrintData(); as p) {
+          <div class="border-2 border-slate-900 p-6 space-y-5 text-slate-900">
+            <div class="text-center border-b-2 border-slate-900 pb-3 space-y-1">
+              <div class="text-lg font-bold">গণপ্রজাতন্ত্রী বাংলাদেশ সরকার</div>
+              <div class="text-xs">জাতীয় রাজস্ব বোর্ড (National Board of Revenue)</div>
+              <div class="text-sm font-bold">কর চালানপত্র (TAX INVOICE)</div>
+              <div class="text-[10px] text-slate-600">[মূল্য সংযোজন কর ও সম্পূরক শুল্ক বিধিমালা, ২০১৬ এর বিধি ৪০ এর উপ-বিধি (১) এর দফা (গ) দ্রষ্টব্য]</div>
+              <div class="inline-block border-2 border-slate-900 bg-slate-900 text-white px-3 py-0.5 text-xs font-bold rounded">
+                মূসক - ৬.৩ (Mushak 6.3)
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 text-xs">
+              <div>
+                <div><strong>নিবন্ধিত সত্তার নাম:</strong> Maksudu Real Estate & Construction Ltd.</div>
+                <div><strong>নিবন্ধিত ব্যক্তির বিআইএন:</strong> 001234567-0101</div>
+                <div><strong>ঠিকানা:</strong> House 42, Road 11, Banani, Dhaka-1213</div>
+              </div>
+              <div class="text-right">
+                <div><strong>চালানপত্র নম্বর:</strong> <span class="font-mono font-bold">{{ p.mushak_challan_number }}</span></div>
+                <div><strong>ইস্যুর তারিখ:</strong> {{ p.invoice_date }}</div>
+                <div><strong>ইস্যুর সময়:</strong> 11:30 AM</div>
+              </div>
+            </div>
+
+            <div class="p-3 bg-slate-50 border border-slate-300 text-xs rounded">
+              <div><strong>ক্রেতার নাম:</strong> {{ p.customer_name || 'Valued Customer' }}</div>
+              <div><strong>ক্রেতার টিআইএন / এনআইডি:</strong> {{ p.customer_tin_nid }}</div>
+              <div><strong>প্রকল্প ও ইউনিট:</strong> {{ p.project_name }} • Unit #{{ p.unit_number || '5B' }} ({{ p.apartment_sqft }} Sqft)</div>
+            </div>
+
+            <table class="w-full border-collapse border border-slate-900 text-xs">
+              <thead class="bg-slate-100">
+                <tr>
+                  <th class="border border-slate-900 p-2 text-center">ক্র: নং</th>
+                  <th class="border border-slate-900 p-2">পণ্য বা সেবার বর্ণনা</th>
+                  <th class="border border-slate-900 p-2 text-center">একক</th>
+                  <th class="border border-slate-900 p-2 text-right">মূল্য (টাকা)</th>
+                  <th class="border border-slate-900 p-2 text-center">মূসক হার</th>
+                  <th class="border border-slate-900 p-2 text-right">মূসকের পরিমাণ (টাকা)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="border border-slate-900 p-2 text-center">১</td>
+                  <td class="border border-slate-900 p-2">
+                    Apartment Construction & Consideration Release<br>
+                    <span class="text-[10px] text-slate-500">Statutory Real Estate VAT under VAT Act 2012</span>
+                  </td>
+                  <td class="border border-slate-900 p-2 text-center">{{ p.apartment_sqft }} sft</td>
+                  <td class="border border-slate-900 p-2 text-right font-mono">৳{{ p.taxable_amount | number:'1.2-2' }}</td>
+                  <td class="border border-slate-900 p-2 text-center font-bold">{{ p.vat_rate_percent }}%</td>
+                  <td class="border border-slate-900 p-2 text-right font-mono font-bold">৳{{ p.vat_amount | number:'1.2-2' }}</td>
+                </tr>
+              </tbody>
+              <tfoot class="font-bold bg-slate-50">
+                <tr>
+                  <td colspan="3" class="border border-slate-900 p-2 text-right">সর্বমোট:</td>
+                  <td class="border border-slate-900 p-2 text-right font-mono">৳{{ p.taxable_amount | number:'1.2-2' }}</td>
+                  <td class="border border-slate-900 p-2"></td>
+                  <td class="border border-slate-900 p-2 text-right font-mono">৳{{ p.vat_amount | number:'1.2-2' }}</td>
+                </tr>
+                <tr class="bg-slate-100 text-sm">
+                  <td colspan="5" class="border border-slate-900 p-2 text-right">মূসক সহ মোট সংগৃহীত অর্থ:</td>
+                  <td class="border border-slate-900 p-2 text-right font-mono">৳{{ p.total_amount_collected | number:'1.2-2' }}</td>
+                </tr>
+              </tfoot>
+            </table>
+
+            <div class="pt-10 flex items-center justify-between text-xs font-bold text-center">
+              <div class="border-t border-slate-900 w-48 pt-1">ক্রেতার স্বাক্ষর</div>
+              <div class="border-t border-slate-900 w-56 pt-1">ক্ষমতাপ্রাপ্ত কর্মকর্তার স্বাক্ষর ও সিল</div>
+            </div>
+          </div>
+        }
+
+        <!-- MUSHAK 6.5 PRINT PREVIEW -->
+        @if (printDocType() === 'MUSHAK_65' && activePrintData(); as c) {
+          <div class="border-2 border-slate-900 p-6 space-y-5 text-slate-900">
+            <div class="text-center border-b-2 border-slate-900 pb-3 space-y-1">
+              <div class="text-lg font-bold">গণপ্রজাতন্ত্রী বাংলাদেশ সরকার</div>
+              <div class="text-xs">জাতীয় রাজস্ব বোর্ড (National Board of Revenue)</div>
+              <div class="text-sm font-bold">পণ্য স্থানান্তর চালানপত্র (GOODS TRANSFER CHALLAN)</div>
+              <div class="text-[10px] text-slate-600">[মূল্য সংযোজন কর ও সম্পূরক শুল্ক বিধিমালা, ২০১৬ এর বিধি ৪০ এর উপ-বিধি (১) এর দফা (ঙ) দ্রষ্টব্য]</div>
+              <div class="inline-block border-2 border-slate-900 bg-slate-900 text-white px-3 py-0.5 text-xs font-bold rounded">
+                মূসক - ৬.৫ (Mushak 6.5)
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 text-xs">
+              <div>
+                <div><strong>প্রেরক প্রজেক্ট / স্টোর:</strong> {{ c.origin_project_name || 'Central Store' }}</div>
+                <div><strong>প্রাপক প্রজেক্ট / সাইট:</strong> {{ c.destination_project_name || 'Project Yard' }}</div>
+                @if (c.subcontractor_name) {
+                  <div><strong>বাস্তবায়নকারী সাবকন্ট্রাক্টর:</strong> {{ c.subcontractor_name }}</div>
+                }
+              </div>
+              <div class="text-right">
+                <div><strong>চালান নম্বর:</strong> <span class="font-mono font-bold">{{ c.challan_number }}</span></div>
+                <div><strong>তারিখ ও সময়:</strong> {{ c.issue_date }} • {{ c.issue_time }}</div>
+                <div><strong>যানবাহন:</strong> {{ c.transport_vehicle_type }} ({{ c.vehicle_number }})</div>
+                <div><strong>চালক:</strong> {{ c.driver_name }} ({{ c.driver_phone }})</div>
+              </div>
+            </div>
+
+            <table class="w-full border-collapse border border-slate-900 text-xs">
+              <thead class="bg-slate-100">
+                <tr>
+                  <th class="border border-slate-900 p-2 text-center">ক্র: নং</th>
+                  <th class="border border-slate-900 p-2">মালামালের বিবরণ</th>
+                  <th class="border border-slate-900 p-2 text-center">পরিমাণ</th>
+                  <th class="border border-slate-900 p-2 text-right">ঘোষিত মূল্য (টাকা)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="border border-slate-900 p-2 text-center">১</td>
+                  <td class="border border-slate-900 p-2">Construction Structural Materials & Equipment</td>
+                  <td class="border border-slate-900 p-2 text-center">Bulk Batch</td>
+                  <td class="border border-slate-900 p-2 text-right font-mono font-bold">৳{{ c.total_declared_value | number:'1.2-2' }}</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="pt-10 grid grid-cols-3 gap-4 text-xs font-bold text-center">
+              <div class="border-t border-slate-900 pt-1">প্রেরণকারীর স্বাক্ষর</div>
+              <div class="border-t border-slate-900 pt-1">চালকের স্বাক্ষর</div>
+              <div class="border-t border-slate-900 pt-1">গ্রহণকারীর স্বাক্ষর ও সিল</div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>

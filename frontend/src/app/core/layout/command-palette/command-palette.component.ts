@@ -106,14 +106,16 @@ export class CommandPaletteComponent {
     { id: 'schedules', title: 'Installment Schedules', category: 'Collection', route: '/installments/schedules' },
     { id: 'pdc', title: 'PDC Cheque Vault', category: 'Collection', route: '/installments/pdc-vault' },
     { id: 'ni138', title: 'NI Act 138 Notices', category: 'Collection', route: '/installments/ni138-actions' },
+    { id: 'wbs-boq', title: 'WBS & BOQ Hard Budget Locks', category: 'Construction', route: '/construction/wbs-boq' },
     { id: 'dpr', title: 'Daily Progress Report', category: 'Construction', route: '/construction/dpr' },
     { id: 'labor', title: 'Labor Muster Roll', category: 'Construction', route: '/construction/labor-muster' },
     { id: 'ra-bills', title: 'Contractor RA Bills', category: 'Construction', route: '/construction/ra-bills' },
     { id: 'cube', title: 'Concrete Cube Tests', category: 'Construction', route: '/construction/cube-tests' },
     { id: 'safety', title: 'Safety & NCR', category: 'Construction', route: '/construction/safety-ncr' },
-    { id: 'stores', title: 'Site Stores', category: 'Procurement', route: '/procurement/stores' },
+    { id: 'scm-cockpit', title: 'SCM & Procurement Cockpit (PR, RFQ, CS, PO, GRN, QC, MIN)', category: 'Procurement', route: '/procurement/cockpit' },
+    { id: 'stores', title: 'Site Stores & Stock Valuation', category: 'Procurement', route: '/procurement/stores' },
     { id: 'cs', title: 'Requisitions & Comparative Statements', category: 'Procurement', route: '/procurement/comparative-statements' },
-    { id: 'grn', title: 'Goods Receipt (GRN)', category: 'Procurement', route: '/procurement/grn' },
+    { id: 'grn', title: 'Goods Receipt (GRN) & Gate Entry', category: 'Procurement', route: '/procurement/grn' },
     { id: 'coa', title: 'Chart of Accounts', category: 'Accounts', route: '/accounts/coa' },
     { id: 'vouchers', title: 'Vouchers', category: 'Accounts', route: '/accounts/vouchers' },
     { id: 'reports', title: 'Financial Reports', category: 'Accounts', route: '/accounts/financial-reports' },
@@ -127,7 +129,8 @@ export class CommandPaletteComponent {
     { id: 'equipment', title: 'Plant & Machinery', category: 'Settings', route: '/settings/equipment' },
     { id: 'import', title: 'Data Import (Excel)', category: 'Settings', route: '/settings/data-import' },
     { id: 'lookups', title: 'Dropdown Master Settings', category: 'Settings', route: '/settings/lookups' },
-    { id: 'rbac', title: 'Users, Roles & Project Access', category: 'Settings', route: '/settings/rbac' }
+    { id: 'rbac', title: 'Users, Roles & Project Access', category: 'Settings', route: '/settings/rbac' },
+    { id: 'governance', title: 'Maker-Checker Approval Engine & Dynamic Governance (Discount, PO, Cancellation)', category: 'Governance', route: '/governance/approvals' }
   ];
 
   filteredCommands = computed(() => {

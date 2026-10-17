@@ -64,6 +64,34 @@ class BookingCancellationResponse(BookingCancellationBase):
 
 
 # -------------------------------------------------------------
+# Joint Buyer KYC Schemas
+# -------------------------------------------------------------
+class BookingJointBuyerBase(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    full_name_en: str
+    full_name_bn: Optional[str] = None
+    nid_number: Optional[str] = None
+    passport_number: Optional[str] = None
+    tin_number: Optional[str] = None
+    primary_phone: str
+    email: Optional[str] = None
+    present_address: Optional[str] = None
+    relation_to_primary: str = "CO_APPLICANT"
+    share_percentage: float = 50.00
+    photo_url: Optional[str] = None
+    nid_scan_url: Optional[str] = None
+
+class BookingJointBuyerCreate(BookingJointBuyerBase):
+    pass
+
+class BookingJointBuyerResponse(BookingJointBuyerBase):
+    id: int
+    booking_id: int
+    created_at: Optional[datetime] = None
+
+
+# -------------------------------------------------------------
 # Sales Booking Schemas
 # -------------------------------------------------------------
 class BookingBase(BaseModel):
@@ -75,12 +103,17 @@ class BookingBase(BaseModel):
     primary_customer_id: int
     booking_date: date
     base_unit_price: float
+    parking_charge: float = 0.00
+    utility_charge: float = 0.00
+    documentation_charge: float = 0.00
+    parking_slot_number: Optional[str] = None
     discount_amount: float = 0.00
     discount_percentage: float = 0.00
     required_approval_tier: str = "SALES_MANAGER"
     discount_approval_status: str = "APPROVED"
     discount_approved_by_id: Optional[int] = None
     discount_approval_notes: Optional[str] = None
+    governance_request_id: Optional[int] = None
     final_contract_value: float
     earnest_money_received: float = 0.00
     down_payment_total: float = 0.00
@@ -92,10 +125,15 @@ class BookingCreate(BaseModel):
     unit_id: int
     primary_customer_id: int
     booking_date: Optional[date] = None
+    parking_charge: Optional[float] = 0.00
+    utility_charge: Optional[float] = 0.00
+    documentation_charge: Optional[float] = 0.00
+    parking_slot_number: Optional[str] = None
     discount_amount: Optional[float] = 0.00
     earnest_money_received: Optional[float] = 500000.00
     down_payment_total: Optional[float] = 0.00
     notes: Optional[str] = None
+    joint_buyers: Optional[List[BookingJointBuyerCreate]] = []
 
 class DiscountApprovalAction(BaseModel):
     decision: str # 'APPROVED', 'REJECTED'
@@ -110,6 +148,7 @@ class BookingResponse(BookingBase):
     customer_name: Optional[str] = None
     customer_phone: Optional[str] = None
     discount_approved_by_name: Optional[str] = None
+    joint_buyers: List[BookingJointBuyerResponse] = []
     cancellation: Optional[BookingCancellationResponse] = None
     created_at: Optional[datetime] = None
 

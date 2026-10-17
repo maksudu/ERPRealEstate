@@ -196,12 +196,13 @@ async def post_ra_bill_voucher(
     gross = Decimal(str(bill.gross_work_certified_amount or 0.00)).quantize(Decimal("0.01"))
     retention = Decimal(str(bill.retention_money_deducted or 0.00)).quantize(Decimal("0.01"))
     advance = Decimal(str(bill.advance_recovery_deducted or 0.00)).quantize(Decimal("0.01"))
+    store_recovery = Decimal(str(getattr(bill, "material_store_recovery_amount", 0.00) or 0.00)).quantize(Decimal("0.01"))
     tds = Decimal(str(bill.tds_withheld_amount or 0.00)).quantize(Decimal("0.01"))
     vds = Decimal(str(bill.vds_withheld_amount or 0.00)).quantize(Decimal("0.01"))
     net_payable = Decimal(str(bill.net_payable_amount or 0.00)).quantize(Decimal("0.01"))
 
-    # Verify reconciliation formula: Gross = Retention + Advance + TDS + VDS + Net Payable
-    deductions_sum = retention + advance + tds + vds + net_payable
+    # Verify reconciliation formula: Gross = Retention + Advance + StoreRecovery + TDS + VDS + Net Payable
+    deductions_sum = retention + advance + store_recovery + tds + vds + net_payable
     diff = gross - deductions_sum
     if abs(diff) > Decimal("0.00"):
         # adjust small rounding difference onto Net Payable
@@ -236,6 +237,16 @@ async def post_ra_bill_voucher(
             "debit": Decimal("0.00"),
             "credit": advance,
             "narration": f"Advance recovery deducted from {wo_no}"
+        })
+
+    if store_recovery > Decimal("0.00"):
+        lines.append({
+            "account_code": "1220",
+            "account_name_en": "Developer Store Material Recovery (Cement/Steel/Diesel)",
+            "account_type": "Asset",
+            "debit": Decimal("0.00"),
+            "credit": store_recovery,
+            "narration": f"Store materials (diesel/cement/steel) recovery on {wo_no}"
         })
 
     if tds > Decimal("0.00"):

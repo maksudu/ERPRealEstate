@@ -1,8 +1,15 @@
+export interface CustomMilestoneItem {
+  title: string;
+  percentage: number;
+  milestone_trigger?: string;
+}
+
 export interface CustomerInstallment {
   id: number;
   booking_id: number;
   booking_reference_no?: string | null;
   customer_name?: string | null;
+  customer_phone?: string | null;
   unit_number?: string | null;
   installment_no: number;
   title: string;
@@ -11,9 +18,27 @@ export interface CustomerInstallment {
   payable_amount: number;
   paid_amount: number;
   late_fee_accrued: number;
+  surcharge_percentage: number;
+  overdue_days: number;
+  sms_alert_sent: boolean;
+  whatsapp_alert_sent: boolean;
+  last_alert_sent_at?: string | null;
   status: 'UPCOMING' | 'DUE' | 'PAID' | 'OVERDUE';
   milestone_trigger?: string | null;
   created_at?: string;
+}
+
+export interface InstallmentAlertLog {
+  id: number;
+  installment_id: number;
+  booking_id: number;
+  customer_id: number;
+  channel: 'SMS' | 'WHATSAPP' | 'EMAIL';
+  recipient_phone?: string | null;
+  recipient_email?: string | null;
+  message_content: string;
+  status: 'SENT' | 'DELIVERED' | 'FAILED';
+  sent_at: string;
 }
 
 export interface PDCVaultItem {

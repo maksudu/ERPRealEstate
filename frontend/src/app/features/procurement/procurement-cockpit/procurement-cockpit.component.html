@@ -1,0 +1,1396 @@
+<app-card-container [paddingClass]="'p-6'">
+  <!-- Top Header & Scope Selector -->
+  <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b border-slate-200 dark:border-slate-800">
+    <div>
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-lg border border-emerald-500/20">
+          📦
+        </div>
+        <div>
+          <h1 class="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
+            Supply Chain & Site Procurement Cockpit
+          </h1>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            PR Indent → RFQ → Comparative Statement (CS) → PO → Gate Entry & GRN → QC Slump/Tensile → Store Stock Valuation & MIN
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Project Context Selector -->
+    <div class="w-full lg:w-80">
+      <app-searchable-select
+        label="Active Project Filter"
+        [options]="projectOptions()"
+        [ngModel]="selectedProjectId()"
+        (ngModelChange)="onProjectChange($event)"
+        [allowCreateNew]="false"
+        placeholder="Select Project Scope">
+      </app-searchable-select>
+    </div>
+  </div>
+
+  <!-- KPI Metrics Banner -->
+  @if (metrics()) {
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 my-6">
+      <div class="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-850/60 shadow-xs">
+        <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Active Stores</p>
+        <p class="text-lg font-bold text-slate-900 dark:text-white mt-1">{{ metrics()!.total_active_stores }} Stores</p>
+        <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">★ {{ metrics()!.central_warehouses_count }} Central Whse</span>
+      </div>
+
+      <div class="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-850/60 shadow-xs">
+        <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Pending Indents</p>
+        <p class="text-lg font-bold text-amber-600 dark:text-amber-400 mt-1">{{ metrics()!.pending_pr_count }} PRs</p>
+        <span class="text-[10px] text-slate-400">Awaiting RFQ / CS</span>
+      </div>
+
+      <div class="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-850/60 shadow-xs">
+        <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Active PO Commitments</p>
+        <p class="text-lg font-bold text-indigo-600 dark:text-indigo-400 mt-1">BDT {{ metrics()!.total_po_value | number:'1.0-0' }}</p>
+        <span class="text-[10px] text-slate-400">{{ metrics()!.active_po_count }} Approved POs</span>
+      </div>
+
+      <div class="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-850/60 shadow-xs">
+        <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Gate Pending QC</p>
+        <p class="text-lg font-bold text-purple-600 dark:text-purple-400 mt-1">{{ metrics()!.pending_qc_count }} GRNs</p>
+        <span class="text-[10px] text-slate-400">Slump/MTR test reqd</span>
+      </div>
+
+      <div class="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-850/60 shadow-xs">
+        <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Total Stock Value</p>
+        <p class="text-lg font-bold text-emerald-600 dark:text-emerald-400 mt-1">BDT {{ metrics()!.total_inventory_valuation | number:'1.0-0' }}</p>
+        <span class="text-[10px] text-slate-400">Weighted Average</span>
+      </div>
+
+      <div class="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-850/60 shadow-xs">
+        <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Reorder Alerts</p>
+        <p class="text-lg font-bold text-rose-600 dark:text-rose-400 mt-1">{{ metrics()!.low_stock_items_count }} Items</p>
+        <span class="text-[10px] text-rose-500 font-medium">Below safety level</span>
+      </div>
+    </div>
+  }
+
+  <!-- Navigation Tabs Bar -->
+  <div class="flex items-center gap-1.5 overflow-x-auto pb-4 border-b border-slate-200 dark:border-slate-800 no-scrollbar">
+    <button
+      (click)="setTab('pr_rfq')"
+      class="px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-2"
+      [ngClass]="activeTab() === 'pr_rfq' ? 'bg-emerald-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'">
+      <span>📝</span>
+      <span>Material Indents (PR) & RFQ</span>
+      <span class="px-1.5 py-0.2 rounded-full text-[10px]" [ngClass]="activeTab() === 'pr_rfq' ? 'bg-emerald-700 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'">
+        {{ requisitions().length }}
+      </span>
+    </button>
+
+    <button
+      (click)="setTab('cs')"
+      class="px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-2"
+      [ngClass]="activeTab() === 'cs' ? 'bg-emerald-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'">
+      <span>📊</span>
+      <span>Comparative Statements (CS)</span>
+      <span class="px-1.5 py-0.2 rounded-full text-[10px]" [ngClass]="activeTab() === 'cs' ? 'bg-emerald-700 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'">
+        {{ csList().length }}
+      </span>
+    </button>
+
+    <button
+      (click)="setTab('po')"
+      class="px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-2"
+      [ngClass]="activeTab() === 'po' ? 'bg-emerald-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'">
+      <span>📑</span>
+      <span>Purchase Orders (PO)</span>
+      <span class="px-1.5 py-0.2 rounded-full text-[10px]" [ngClass]="activeTab() === 'po' ? 'bg-emerald-700 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'">
+        {{ purchaseOrders().length }}
+      </span>
+    </button>
+
+    <button
+      (click)="setTab('grn_qc')"
+      class="px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-2"
+      [ngClass]="activeTab() === 'grn_qc' ? 'bg-emerald-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'">
+      <span>🚚</span>
+      <span>Gate Entry, GRN & QC Lab</span>
+      <span class="px-1.5 py-0.2 rounded-full text-[10px]" [ngClass]="activeTab() === 'grn_qc' ? 'bg-emerald-700 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'">
+        {{ goodsReceipts().length }}
+      </span>
+    </button>
+
+    <button
+      (click)="setTab('valuation_stores')"
+      class="px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-2"
+      [ngClass]="activeTab() === 'valuation_stores' ? 'bg-emerald-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'">
+      <span>🏢</span>
+      <span>Stores & Stock Valuation (W.Avg)</span>
+      <span class="px-1.5 py-0.2 rounded-full text-[10px]" [ngClass]="activeTab() === 'valuation_stores' ? 'bg-emerald-700 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'">
+        {{ valuationSummary().length }}
+      </span>
+    </button>
+
+    <button
+      (click)="setTab('min_transfers')"
+      class="px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-2"
+      [ngClass]="activeTab() === 'min_transfers' ? 'bg-emerald-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'">
+      <span>🔄</span>
+      <span>Store Issues (MIN) & Transfers</span>
+      <span class="px-1.5 py-0.2 rounded-full text-[10px]" [ngClass]="activeTab() === 'min_transfers' ? 'bg-emerald-700 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'">
+        {{ materialIssues().length }}
+      </span>
+    </button>
+  </div>
+
+  <!-- TAB CONTENT -->
+  <div class="mt-6">
+    <!-- TAB 1: PR & RFQ -->
+    @if (activeTab() === 'pr_rfq') {
+      <div class="space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h3 class="text-base font-semibold text-slate-800 dark:text-slate-200">
+              Site Purchase Requisitions (PR) with BOQ Hard Budget Verification
+            </h3>
+            <p class="text-xs text-slate-500">
+              Site engineers raise indents mapped to Towers, Floors & WBS Activities with automated 105% budget ceiling lock.
+            </p>
+          </div>
+          <div class="flex items-center gap-2">
+            <app-custom-button variant="secondary" (btnClick)="openCreateRFQModal()">
+              <span>✉️</span> Issue RFQ
+            </app-custom-button>
+            <app-custom-button variant="primary" (btnClick)="openCreatePRModal()">
+              <span>+</span> New Requisition (PR)
+            </app-custom-button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 dark:bg-slate-850 text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-800 font-semibold uppercase text-[11px]">
+              <tr>
+                <th class="py-3 px-4">PR Number & Date</th>
+                <th class="py-3 px-4">Material & Qty</th>
+                <th class="py-3 px-4">BOQ Budget Lock & Headroom</th>
+                <th class="py-3 px-4">WBS & Location</th>
+                <th class="py-3 px-4">Requester</th>
+                <th class="py-3 px-4 text-center">Status</th>
+                <th class="py-3 px-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+              @for (pr of requisitions(); track pr.id) {
+                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
+                  <td class="py-3 px-4 font-mono font-semibold text-emerald-600 dark:text-emerald-400">
+                    {{ pr.pr_number }}
+                    <span class="block text-[10px] text-slate-400 font-sans font-normal">{{ pr.requisition_date }}</span>
+                  </td>
+                  <td class="py-3 px-4">
+                    <span class="font-semibold text-slate-900 dark:text-slate-100">{{ pr.material_name }}</span>
+                    <span class="block text-[11px] text-slate-500">{{ pr.requested_quantity | number:'1.2-2' }} {{ pr.unit_of_measure }}</span>
+                  </td>
+                  <td class="py-3 px-4">
+                    @if (pr.boq_item_code) {
+                      <div class="flex items-center gap-1.5">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
+                          {{ pr.boq_item_code }}
+                        </span>
+                        <span class="text-[11px] text-emerald-600 font-medium">
+                          Headroom: {{ pr.boq_remaining_headroom | number:'1.1-1' }}
+                        </span>
+                      </div>
+                    } @else {
+                      <span class="text-[11px] text-slate-400 italic">General Site Requisition</span>
+                    }
+                  </td>
+                  <td class="py-3 px-4">
+                    <span class="font-medium text-slate-800 dark:text-slate-200">{{ pr.tower_name || 'Tower A' }}, {{ pr.floor_number || 'Site' }}</span>
+                    <span class="block text-[10px] text-slate-400">{{ pr.wbs_node_name || 'General Substructure' }}</span>
+                  </td>
+                  <td class="py-3 px-4 text-slate-500">{{ pr.requester_name }}</td>
+                  <td class="py-3 px-4 text-center">
+                    <span
+                      class="px-2.5 py-1 rounded-full text-[10px] font-semibold tracking-wide"
+                      [class.bg-amber-50]="pr.status === 'PENDING_CS'"
+                      [class.text-amber-600]="pr.status === 'PENDING_CS'"
+                      [class.bg-blue-50]="pr.status === 'RFQ_ISSUED'"
+                      [class.text-blue-600]="pr.status === 'RFQ_ISSUED'"
+                      [class.bg-indigo-50]="pr.status === 'CS_PREPARED'"
+                      [class.text-indigo-600]="pr.status === 'CS_PREPARED'"
+                      [class.bg-emerald-50]="pr.status === 'PO_ISSUED'"
+                      [class.text-emerald-600]="pr.status === 'PO_ISSUED'">
+                      {{ formatStatus(pr.status) }}
+                    </span>
+                  </td>
+                  <td class="py-3 px-4 text-right">
+                    <div class="flex items-center justify-end gap-1.5">
+                      <button
+                        (click)="openCreateRFQModal(pr)"
+                        class="px-2.5 py-1 text-xs rounded-lg font-medium text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer">
+                        RFQ
+                      </button>
+                      <button
+                        (click)="openCreateCSModal(pr)"
+                        class="px-2.5 py-1 text-xs rounded-lg font-medium text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-colors cursor-pointer">
+                        CS
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- RFQ Registry Cards -->
+        @if (rfqs().length > 0) {
+          <div class="mt-8 pt-6 border-t border-slate-200 dark:border-slate-800">
+            <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200 mb-3 flex items-center gap-2">
+              <span>📬</span> Issued Requests for Quotation (RFQ)
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              @for (rfq of rfqs(); track rfq.id) {
+                <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 shadow-xs">
+                  <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+                    <span class="font-mono text-xs font-bold text-blue-600 dark:text-blue-400">{{ rfq.rfq_number }}</span>
+                    <span class="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-blue-50 text-blue-600">
+                      {{ rfq.status }}
+                    </span>
+                  </div>
+                  <div class="mt-2 text-xs space-y-1">
+                    <p class="font-semibold text-slate-800 dark:text-slate-200">{{ rfq.material_name }} ({{ rfq.requested_quantity }} {{ rfq.unit_of_measure }})</p>
+                    <p class="text-slate-400 text-[11px]">Submission Deadline: {{ rfq.submission_deadline }}</p>
+                    <div class="mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                      <p class="text-[10px] uppercase font-bold text-slate-400">Invited Vendors ({{ rfq.invited_vendors.length }}):</p>
+                      <div class="flex flex-wrap gap-1 mt-1">
+                        @for (v of rfq.invited_vendors; track v.id) {
+                          <span class="px-1.5 py-0.5 rounded text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                            {{ v.vendor_name }}
+                          </span>
+                        }
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- TAB 2: COMPARATIVE STATEMENTS (CS) -->
+    @if (activeTab() === 'cs') {
+      <div class="space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h3 class="text-base font-semibold text-slate-800 dark:text-slate-200">
+              Comparative Statements (CS) - Multi-Vendor Bid Matrix
+            </h3>
+            <p class="text-xs text-slate-500">
+              Transparent side-by-side comparison of supplier quotes highlighting lowest responsive bidder, brand/grade, and credit terms.
+            </p>
+          </div>
+          <app-custom-button variant="primary" (btnClick)="openCreateCSModal()">
+            <span>+</span> Create Comparative Statement
+          </app-custom-button>
+        </div>
+
+        <div class="space-y-4">
+          @for (cs of csList(); track cs.id) {
+            <div class="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 shadow-xs">
+              <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+                <div class="flex items-center gap-3">
+                  <span class="font-mono text-sm font-bold text-emerald-600 dark:text-emerald-400">{{ cs.cs_number }}</span>
+                  <span class="text-xs text-slate-500">Date: {{ cs.cs_date }}</span>
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                    PR: {{ cs.pr_number }}
+                  </span>
+                </div>
+                <div class="flex items-center gap-2">
+                  @if (cs.status !== 'PO_GENERATED') {
+                    <app-custom-button variant="primary" (btnClick)="openGeneratePOModal(cs)">
+                      <span>📑</span> Generate Purchase Order (PO)
+                    </app-custom-button>
+                  } @else {
+                    <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      ✓ PO Generated
+                    </span>
+                  }
+                </div>
+              </div>
+
+              <!-- Side-by-Side Quotation Matrix -->
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-4">
+                @for (q of cs.quotations; track q.id) {
+                  <div
+                    class="p-4 rounded-xl border relative transition-all"
+                    [ngClass]="(q.is_recommended || q.vendor_id === cs.lowest_bidder_vendor_id) ? 'border-emerald-500 bg-emerald-500/5' : 'border-slate-200 dark:border-slate-800'">
+                    
+                    @if (q.vendor_id === cs.lowest_bidder_vendor_id) {
+                      <div class="absolute -top-2.5 right-3 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-600 text-white shadow-xs">
+                        ★ LOWEST BIDDER
+                      </div>
+                    }
+
+                    <p class="font-bold text-sm text-slate-900 dark:text-white">{{ q.vendor_name }}</p>
+                    <p class="text-xs font-mono text-emerald-600 dark:text-emerald-400 font-bold mt-1">
+                      BDT {{ q.quoted_unit_rate | number:'1.2-2' }} <span class="text-[10px] text-slate-400 font-sans font-normal">/ unit</span>
+                    </p>
+
+                    <div class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs space-y-1.5">
+                      <div class="flex justify-between">
+                        <span class="text-slate-400">Total Bid:</span>
+                        <span class="font-semibold text-slate-800 dark:text-slate-200">BDT {{ q.total_quoted_amount | number:'1.2-2' }}</span>
+                      </div>
+                      <div class="flex justify-between">
+                        <span class="text-slate-400">Brand / Grade:</span>
+                        <span class="font-medium text-slate-700 dark:text-slate-300">{{ q.brand_grade || 'Standard Quality' }}</span>
+                      </div>
+                      <div class="flex justify-between">
+                        <span class="text-slate-400">Payment Terms:</span>
+                        <span class="font-medium text-slate-700 dark:text-slate-300">{{ q.payment_terms || '30 Days Credit' }}</span>
+                      </div>
+                      <div class="flex justify-between">
+                        <span class="text-slate-400">Lead Time:</span>
+                        <span class="font-medium text-slate-700 dark:text-slate-300">{{ q.lead_time_days }} Days Delivery</span>
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+
+              @if (cs.justification_summary) {
+                <div class="mt-4 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 text-xs text-slate-600 dark:text-slate-300">
+                  <span class="font-bold text-slate-400 uppercase text-[10px] block">Commercial Committee Justification:</span>
+                  {{ cs.justification_summary }}
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- TAB 3: PURCHASE ORDERS (PO) -->
+    @if (activeTab() === 'po') {
+      <div class="space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h3 class="text-base font-semibold text-slate-800 dark:text-slate-200">
+              Approved Purchase Orders (PO) & Delivery Fulfillment
+            </h3>
+            <p class="text-xs text-slate-500">
+              Legally binding commitments issued to suppliers with multi-tier approvals and delivery schedule enforcement.
+            </p>
+          </div>
+          <app-custom-button variant="secondary" (btnClick)="openGateEntryModal()">
+            <span>🚚</span> Record Gate Entry (GRN)
+          </app-custom-button>
+        </div>
+
+        <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 dark:bg-slate-850 text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-800 font-semibold uppercase text-[11px]">
+              <tr>
+                <th class="py-3 px-4">PO Number & Date</th>
+                <th class="py-3 px-4">Supplier & Material</th>
+                <th class="py-3 px-4">Order Value</th>
+                <th class="py-3 px-4">Delivery Schedule & Receiving Progress</th>
+                <th class="py-3 px-4">Approval Status</th>
+                <th class="py-3 px-4 text-center">Fulfillment</th>
+                <th class="py-3 px-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+              @for (po of purchaseOrders(); track po.id) {
+                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
+                  <td class="py-3 px-4 font-mono font-semibold text-indigo-600 dark:text-indigo-400">
+                    {{ po.po_number }}
+                    <span class="block text-[10px] text-slate-400 font-sans font-normal">{{ po.po_date }}</span>
+                  </td>
+                  <td class="py-3 px-4">
+                    <span class="font-bold text-slate-900 dark:text-slate-100">{{ po.vendor_name }}</span>
+                    <span class="block text-[11px] text-slate-500">{{ po.material_name }} ({{ po.ordered_quantity }} {{ po.unit_of_measure }})</span>
+                  </td>
+                  <td class="py-3 px-4">
+                    <span class="font-semibold text-slate-900 dark:text-slate-100">BDT {{ po.total_po_amount | number:'1.2-2' }}</span>
+                    <span class="block text-[10px] text-slate-400">&#64; {{ po.unit_price | number:'1.2-2' }} / unit</span>
+                  </td>
+                  <td class="py-3 px-4 w-60">
+                    <div class="flex items-center justify-between text-[11px] mb-1">
+                      <span class="text-slate-500">Deadline: {{ po.delivery_deadline }}</span>
+                      <span class="font-bold text-emerald-600">{{ po.total_received_quantity }} / {{ po.ordered_quantity }}</span>
+                    </div>
+                    <div class="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+                      <div
+                        class="bg-emerald-500 h-2 rounded-full transition-all"
+                        [style.width.%]="(po.total_received_quantity / po.ordered_quantity) * 100">
+                      </div>
+                    </div>
+                  </td>
+                  <td class="py-3 px-4">
+                    <span
+                      class="px-2 py-0.5 rounded text-[10px] font-bold"
+                      [class.bg-emerald-50]="po.approval_status === 'APPROVED'"
+                      [class.text-emerald-700]="po.approval_status === 'APPROVED'"
+                      [class.bg-amber-50]="po.approval_status === 'PENDING_APPROVAL'"
+                      [class.text-amber-700]="po.approval_status === 'PENDING_APPROVAL'">
+                      {{ po.approval_status }}
+                    </span>
+                    <span class="block text-[10px] text-slate-400 mt-0.5">By: {{ po.approved_by_name || 'Project Director' }}</span>
+                  </td>
+                  <td class="py-3 px-4 text-center">
+                    <span
+                      class="px-2.5 py-1 rounded-full text-[10px] font-semibold"
+                      [class.bg-blue-50]="po.status === 'ISSUED'"
+                      [class.text-blue-600]="po.status === 'ISSUED'"
+                      [class.bg-amber-50]="po.status === 'PARTIALLY_RECEIVED'"
+                      [class.text-amber-600]="po.status === 'PARTIALLY_RECEIVED'"
+                      [class.bg-emerald-50]="po.status === 'FULLY_RECEIVED'"
+                      [class.text-emerald-600]="po.status === 'FULLY_RECEIVED'">
+                      {{ formatStatus(po.status) }}
+                    </span>
+                  </td>
+                  <td class="py-3 px-4 text-right">
+                    <button
+                      (click)="openGateEntryModal(po)"
+                      class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition-colors cursor-pointer shadow-xs">
+                      Receive Consignment
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    <!-- TAB 4: GATE ENTRY, GRN & QC LAB -->
+    @if (activeTab() === 'grn_qc') {
+      <div class="space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h3 class="text-base font-semibold text-slate-800 dark:text-slate-200">
+              Goods Receipt Notes (GRN), Gate Physical Count & QC Inspection
+            </h3>
+            <p class="text-xs text-slate-500">
+              Site gate entry log with vehicle tracking, laboratory slump/tensile verification, and Accounts 3-Way match certification.
+            </p>
+          </div>
+          <app-custom-button variant="primary" (btnClick)="openGateEntryModal()">
+            <span>+</span> Record Gate Entry GRN
+          </app-custom-button>
+        </div>
+
+        <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 dark:bg-slate-850 text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-800 font-semibold uppercase text-[11px]">
+              <tr>
+                <th class="py-3 px-4">GRN & Gate Entry</th>
+                <th class="py-3 px-4">Vehicle & Driver</th>
+                <th class="py-3 px-4">Material & Quantities</th>
+                <th class="py-3 px-4">Quality Lab (QC)</th>
+                <th class="py-3 px-4">3-Way Match Audit</th>
+                <th class="py-3 px-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+              @for (grn of goodsReceipts(); track grn.id) {
+                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
+                  <td class="py-3 px-4">
+                    <span class="font-mono font-bold text-emerald-600 dark:text-emerald-400">{{ grn.grn_number }}</span>
+                    <span class="block text-[10px] text-slate-400 font-sans">Challan: {{ grn.delivery_challan_number }}</span>
+                    <span class="inline-block mt-0.5 px-1.5 py-0.2 rounded text-[10px] bg-slate-100 dark:bg-slate-800 font-mono text-slate-500">
+                      {{ grn.gate_entry_number || 'GATE-01' }}
+                    </span>
+                  </td>
+                  <td class="py-3 px-4">
+                    <span class="font-semibold text-slate-900 dark:text-slate-100">{{ grn.vehicle_number || 'Dhaka Metro TA 11' }}</span>
+                    <span class="block text-[11px] text-slate-500">Driver: {{ grn.driver_name || 'N/A' }}</span>
+                    <span class="text-[10px] text-emerald-600 font-medium">✓ Count Verified: {{ grn.received_quantity }} {{ grn.unit_of_measure }}</span>
+                  </td>
+                  <td class="py-3 px-4">
+                    <span class="font-semibold text-slate-900 dark:text-slate-100">{{ grn.material_name }}</span>
+                    <span class="block text-[11px] text-emerald-600 font-medium">Accepted: {{ grn.accepted_quantity }} {{ grn.unit_of_measure }}</span>
+                    @if (grn.rejected_quantity > 0) {
+                      <span class="block text-[10px] text-rose-500">Rejected: {{ grn.rejected_quantity }}</span>
+                    }
+                  </td>
+                  <td class="py-3 px-4">
+                    <span
+                      class="px-2.5 py-1 rounded-full text-[10px] font-semibold"
+                      [class.bg-emerald-50]="grn.qc_status === 'PASSED'"
+                      [class.text-emerald-600]="grn.qc_status === 'PASSED'"
+                      [class.bg-amber-50]="grn.qc_status === 'PENDING'"
+                      [class.text-amber-600]="grn.qc_status === 'PENDING'"
+                      [class.bg-rose-50]="grn.qc_status === 'FAILED'"
+                      [class.text-rose-600]="grn.qc_status === 'FAILED'">
+                      {{ grn.qc_status === 'PASSED' ? '✓ QC PASSED' : 'PENDING QC LAB' }}
+                    </span>
+                    @if (grn.qc_status === 'PENDING') {
+                      <button
+                        (click)="openQCModal(grn)"
+                        class="block mt-1 text-[11px] font-semibold text-indigo-600 hover:underline cursor-pointer">
+                        Run QC Test →
+                      </button>
+                    }
+                  </td>
+                  <td class="py-3 px-4">
+                    <span
+                      class="px-2.5 py-1 rounded-full text-[10px] font-semibold"
+                      [class.bg-emerald-50]="grn.three_way_match_status === 'MATCHED_OK' || grn.three_way_match_status === 'ACCOUNTS_APPROVED'"
+                      [class.text-emerald-600]="grn.three_way_match_status === 'MATCHED_OK' || grn.three_way_match_status === 'ACCOUNTS_APPROVED'"
+                      [class.bg-amber-50]="grn.three_way_match_status === 'PENDING_MATCH'"
+                      [class.text-amber-600]="grn.three_way_match_status === 'PENDING_MATCH'"
+                      [class.bg-rose-50]="grn.three_way_match_status === 'VARIANCE_FLAGGED'"
+                      [class.text-rose-600]="grn.three_way_match_status === 'VARIANCE_FLAGGED'">
+                      {{ formatStatus(grn.three_way_match_status) }}
+                    </span>
+                    @if (grn.accounts_voucher_ref) {
+                      <span class="block text-[10px] text-slate-400 font-mono mt-0.5">JV: {{ grn.accounts_voucher_ref }}</span>
+                    }
+                  </td>
+                  <td class="py-3 px-4 text-right">
+                    <div class="flex items-center justify-end gap-1.5">
+                      @if (grn.qc_status === 'PENDING') {
+                        <button
+                          (click)="openQCModal(grn)"
+                          class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition-colors cursor-pointer shadow-xs">
+                          QC Test
+                        </button>
+                      }
+                      <button
+                        (click)="openThreeWayMatchModal(grn)"
+                        class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition-colors cursor-pointer shadow-xs">
+                        3-Way Match
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    <!-- TAB 5: SITE STORES & VALUATION -->
+    @if (activeTab() === 'valuation_stores') {
+      <div class="space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h3 class="text-base font-semibold text-slate-800 dark:text-slate-200">
+              Central Warehouse & Multi-Site Store Inventory Valuation
+            </h3>
+            <p class="text-xs text-slate-500">
+              Real-time store stock balances valued under Weighted Average Rate method across central warehouses and project sites.
+            </p>
+          </div>
+          <div class="flex items-center gap-2">
+            <app-custom-button variant="secondary" (btnClick)="openTransferModal()">
+              <span>🔄</span> Inter-Site Transfer
+            </app-custom-button>
+            <app-custom-button variant="primary" (btnClick)="openMINModal()">
+              <span>📤</span> Issue Material (MIN)
+            </app-custom-button>
+          </div>
+        </div>
+
+        <div class="space-y-6">
+          @for (store of valuationSummary(); track store.store_id) {
+            <div class="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 shadow-xs">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm" [class.bg-amber-100]="store.is_central_warehouse" [class.text-amber-800]="store.is_central_warehouse" [class.bg-emerald-100]="!store.is_central_warehouse" [class.text-emerald-800]="!store.is_central_warehouse">
+                    {{ store.is_central_warehouse ? '★' : '🏢' }}
+                  </div>
+                  <div>
+                    <h4 class="font-bold text-slate-900 dark:text-white text-sm">{{ store.store_name }}</h4>
+                    <p class="text-[11px] text-slate-400">{{ store.project_name || 'Central Head Office Hub' }}</p>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <span class="text-[11px] font-semibold uppercase text-slate-400 block">Total Store Valuation</span>
+                  <span class="font-bold text-base text-emerald-600 dark:text-emerald-400">BDT {{ store.total_valuation | number:'1.2-2' }}</span>
+                </div>
+              </div>
+
+              <!-- Stock Inventory Table -->
+              <div class="overflow-x-auto mt-4">
+                <table class="w-full text-left text-xs">
+                  <thead class="text-slate-500 dark:text-slate-400 font-semibold border-b border-slate-100 dark:border-slate-800 text-[11px]">
+                    <tr>
+                      <th class="py-2 px-3">Material Category</th>
+                      <th class="py-2 px-3">Current Physical Stock</th>
+                      <th class="py-2 px-3">Weighted Avg Unit Cost</th>
+                      <th class="py-2 px-3 text-right">Valuation (BDT)</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                    @for (item of store.items; track item.material_id) {
+                      <tr>
+                        <td class="py-2 px-3 font-semibold text-slate-800 dark:text-slate-200">
+                          {{ item.material_name }}
+                          <span class="block text-[10px] text-slate-400 font-normal font-mono">{{ item.category }}</span>
+                        </td>
+                        <td class="py-2 px-3">
+                          <span class="font-mono font-semibold text-slate-900 dark:text-slate-100">{{ item.current_stock_quantity | number:'1.2-2' }}</span>
+                          <span class="text-[11px] text-slate-400 ml-1">{{ item.unit_of_measure }}</span>
+                        </td>
+                        <td class="py-2 px-3 text-slate-600 dark:text-slate-300 font-mono">
+                          BDT {{ item.weighted_avg_rate | number:'1.2-2' }}
+                        </td>
+                        <td class="py-2 px-3 text-right font-bold text-emerald-600 dark:text-emerald-400 font-mono">
+                          {{ item.total_stock_value | number:'1.2-2' }}
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- TAB 6: MIN & TRANSFERS -->
+    @if (activeTab() === 'min_transfers') {
+      <div class="space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h3 class="text-base font-semibold text-slate-800 dark:text-slate-200">
+              Material Issue Notes (MIN) & Inter-Site Stock Transfers
+            </h3>
+            <p class="text-xs text-slate-500">
+              Issue materials directly against Towers, Floors & WBS activity nodes, and execute transfer dispatches between warehouses.
+            </p>
+          </div>
+          <div class="flex items-center gap-2">
+            <app-custom-button variant="secondary" (btnClick)="openTransferModal()">
+              <span>🔄</span> Inter-Site Transfer
+            </app-custom-button>
+            <app-custom-button variant="primary" (btnClick)="openMINModal()">
+              <span>+</span> Issue Material (MIN)
+            </app-custom-button>
+          </div>
+        </div>
+
+        <!-- Material Issues Table -->
+        <div>
+          <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200 mb-3 flex items-center gap-2">
+            <span>📤</span> Material Issue Notes (MIN) Log
+          </h4>
+          <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 dark:bg-slate-850 text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-800 font-semibold uppercase text-[11px]">
+                <tr>
+                  <th class="py-3 px-4">MIN Number & Date</th>
+                  <th class="py-3 px-4">Tower, Floor & WBS</th>
+                  <th class="py-3 px-4">Material & Issued Qty</th>
+                  <th class="py-3 px-4">Valuation Cost</th>
+                  <th class="py-3 px-4">Contractor / Purpose</th>
+                  <th class="py-3 px-4 text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+                @for (min of materialIssues(); track min.id) {
+                  <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
+                    <td class="py-3 px-4 font-mono font-bold text-purple-600 dark:text-purple-400">
+                      {{ min.min_number }}
+                      <span class="block text-[10px] text-slate-400 font-sans font-normal">{{ min.issue_date }}</span>
+                    </td>
+                    <td class="py-3 px-4">
+                      <span class="font-semibold text-slate-800 dark:text-slate-200">{{ min.tower_name || 'Tower A' }}, {{ min.floor_number }}</span>
+                      <span class="block text-[10px] text-slate-400">{{ min.wbs_node_name || 'Column Casting L1-L5' }}</span>
+                    </td>
+                    <td class="py-3 px-4">
+                      <span class="font-bold text-slate-900 dark:text-slate-100">{{ min.material_name }}</span>
+                      <span class="block text-[11px] text-purple-600 font-semibold">{{ min.issued_quantity }} {{ min.unit_of_measure }}</span>
+                    </td>
+                    <td class="py-3 px-4 font-mono">
+                      <span class="font-semibold text-slate-900 dark:text-slate-100">BDT {{ min.total_issue_cost | number:'1.2-2' }}</span>
+                      <span class="block text-[10px] text-slate-400">&#64; {{ min.unit_cost_at_issue | number:'1.2-2' }}</span>
+                    </td>
+                    <td class="py-3 px-4">
+                      <span class="font-medium text-slate-800 dark:text-slate-200">{{ min.contractor_name || 'Subcontractor' }}</span>
+                      <span class="block text-[10px] text-slate-400">{{ min.purpose }}</span>
+                    </td>
+                    <td class="py-3 px-4 text-center">
+                      <span class="px-2.5 py-1 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-600">
+                        {{ min.status }}
+                      </span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Stock Transfers Table -->
+        <div class="mt-8 pt-6 border-t border-slate-200 dark:border-slate-800">
+          <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200 mb-3 flex items-center gap-2">
+            <span>🔄</span> Inter-Site Stock Transfers
+          </h4>
+          <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 dark:bg-slate-850 text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-800 font-semibold uppercase text-[11px]">
+                <tr>
+                  <th class="py-3 px-4">Transfer Ref</th>
+                  <th class="py-3 px-4">From Store → To Store</th>
+                  <th class="py-3 px-4">Material & Qty</th>
+                  <th class="py-3 px-4">Dispatch Challan</th>
+                  <th class="py-3 px-4 text-center">Status</th>
+                  <th class="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+                @for (trf of stockTransfers(); track trf.id) {
+                  <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
+                    <td class="py-3 px-4 font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                      {{ trf.transfer_number }}
+                      <span class="block text-[10px] text-slate-400 font-sans font-normal">{{ trf.dispatch_date }}</span>
+                    </td>
+                    <td class="py-3 px-4">
+                      <span class="font-medium text-slate-800 dark:text-slate-200">{{ trf.from_store_name }}</span>
+                      <span class="block text-[10px] text-emerald-600 font-bold">→ {{ trf.to_store_name }}</span>
+                    </td>
+                    <td class="py-3 px-4">
+                      <span class="font-semibold text-slate-900 dark:text-slate-100">{{ trf.material_name }}</span>
+                      <span class="block text-[11px] text-slate-500">{{ trf.transfer_quantity }} {{ trf.unit_of_measure }}</span>
+                    </td>
+                    <td class="py-3 px-4 font-mono text-slate-500">{{ trf.dispatch_challan_number }}</td>
+                    <td class="py-3 px-4 text-center">
+                      <span
+                        class="px-2.5 py-1 rounded-full text-[10px] font-semibold"
+                        [class.bg-amber-50]="trf.status === 'DISPATCHED'"
+                        [class.text-amber-600]="trf.status === 'DISPATCHED'"
+                        [class.bg-emerald-50]="trf.status === 'RECEIVED'"
+                        [class.text-emerald-600]="trf.status === 'RECEIVED'">
+                        {{ trf.status }}
+                      </span>
+                    </td>
+                    <td class="py-3 px-4 text-right">
+                      @if (trf.status === 'DISPATCHED') {
+                        <button
+                          (click)="receiveTransfer(trf)"
+                          class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition-colors cursor-pointer shadow-xs">
+                          Acknowledge Receipt
+                        </button>
+                      } @else {
+                        <span class="text-[11px] text-slate-400">Received {{ trf.receipt_date }}</span>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</app-card-container>
+
+<!-- MODAL: NEW PURCHASE REQUISITION (PR) -->
+@if (isCreatePRModalOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-xl w-full border border-slate-200 dark:border-slate-800 shadow-2xl p-6">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
+        <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span>📝</span> Raise Site Purchase Requisition (PR)
+        </h3>
+        <button (click)="isCreatePRModalOpen.set(false)" class="text-slate-400 hover:text-slate-600 text-lg cursor-pointer">✕</button>
+      </div>
+
+      <form [formGroup]="prForm" (ngSubmit)="submitPR()" class="space-y-4 mt-4">
+        <app-searchable-select
+          label="Project"
+          [options]="projectOptions()"
+          formControlName="project_id"
+          [allowCreateNew]="false">
+        </app-searchable-select>
+
+        <app-searchable-select
+          label="Material Item Catalog"
+          [options]="materialOptions()"
+          formControlName="material_id"
+          [allowCreateNew]="true"
+          placeholder="Select Civil/Finishing Material">
+        </app-searchable-select>
+
+        <div class="grid grid-cols-2 gap-3">
+          <app-custom-input
+            label="Requested Quantity"
+            type="number"
+            formControlName="requested_quantity"
+            [required]="true">
+          </app-custom-input>
+
+          <app-custom-input
+            label="Required by Date"
+            type="date"
+            formControlName="required_by_date">
+          </app-custom-input>
+        </div>
+
+        <app-searchable-select
+          label="BOQ Item (Hard Budget Lock Link)"
+          [options]="boqOptions()"
+          formControlName="boq_item_id"
+          [allowCreateNew]="false"
+          placeholder="Select BOQ budget line (105% lock monitored)">
+        </app-searchable-select>
+
+        <div class="grid grid-cols-2 gap-3">
+          <app-searchable-select
+            label="WBS Activity Node"
+            [options]="wbsOptions()"
+            formControlName="wbs_node_id"
+            [allowCreateNew]="false">
+          </app-searchable-select>
+
+          <app-custom-input
+            label="Tower / Location"
+            formControlName="tower_name"
+            placeholder="e.g. Tower A">
+          </app-custom-input>
+        </div>
+
+        <app-custom-textarea
+          label="Purpose / Work Justification"
+          formControlName="purpose_notes"
+          [rows]="2"
+          placeholder="e.g. Rebar requirement for Mat foundation casting Zone B">
+        </app-custom-textarea>
+
+        <div class="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+          <app-custom-button variant="secondary" (btnClick)="isCreatePRModalOpen.set(false)">Cancel</app-custom-button>
+          <app-custom-button variant="primary" type="submit" [disabled]="isSubmitting()">Submit Requisition</app-custom-button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- MODAL: ISSUE RFQ -->
+@if (isCreateRFQModalOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full border border-slate-200 dark:border-slate-800 shadow-2xl p-6">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
+        <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span>📬</span> Issue Request for Quotation (RFQ)
+        </h3>
+        <button (click)="isCreateRFQModalOpen.set(false)" class="text-slate-400 hover:text-slate-600 text-lg cursor-pointer">✕</button>
+      </div>
+
+      <form [formGroup]="rfqForm" (ngSubmit)="submitRFQ()" class="space-y-4 mt-4">
+        <app-searchable-select
+          label="Source Purchase Requisition"
+          [options]="prOptions()"
+          formControlName="pr_id"
+          [allowCreateNew]="false">
+        </app-searchable-select>
+
+        <app-custom-input
+          label="Submission Deadline"
+          type="date"
+          formControlName="submission_deadline"
+          [required]="true">
+        </app-custom-input>
+
+        <app-custom-textarea
+          label="Procurement Instructions / Scope Notes"
+          formControlName="notes"
+          [rows]="3">
+        </app-custom-textarea>
+
+        <div class="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+          <app-custom-button variant="secondary" (btnClick)="isCreateRFQModalOpen.set(false)">Cancel</app-custom-button>
+          <app-custom-button variant="primary" type="submit" [disabled]="isSubmitting()">Dispatch RFQ to Vendors</app-custom-button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- MODAL: CREATE COMPARATIVE STATEMENT (CS) -->
+@if (isCreateCSModalOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 overflow-y-auto">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-3xl w-full border border-slate-200 dark:border-slate-800 shadow-2xl p-6 my-8">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
+        <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span>📊</span> Create Comparative Statement (CS)
+        </h3>
+        <button (click)="isCreateCSModalOpen.set(false)" class="text-slate-400 hover:text-slate-600 text-lg cursor-pointer">✕</button>
+      </div>
+
+      <form [formGroup]="csForm" (ngSubmit)="submitCS()" class="space-y-4 mt-4">
+        <app-searchable-select
+          label="Target Purchase Requisition"
+          [options]="prOptions()"
+          formControlName="pr_id"
+          [allowCreateNew]="false">
+        </app-searchable-select>
+
+        <div class="pt-2">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-bold uppercase text-slate-500">Supplier Quotation Bids (Min. 2 Vendors):</span>
+            <button (click)="addQuotationRow()" type="button" class="text-xs font-semibold text-emerald-600 hover:underline cursor-pointer">
+              + Add Supplier Bid
+            </button>
+          </div>
+
+          <div formArrayName="quotations" class="space-y-3">
+            @for (quote of quotationForms.controls; track $index) {
+              <div [formGroupName]="$index" class="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-850/60 space-y-3">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-slate-700 dark:text-slate-300">Bidder #{{ $index + 1 }}</span>
+                  @if (quotationForms.length > 2) {
+                    <button (click)="removeQuotationRow($index)" type="button" class="text-rose-500 text-xs hover:underline cursor-pointer">Remove</button>
+                  }
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <app-searchable-select
+                    label="Vendor"
+                    [options]="vendorOptions()"
+                    formControlName="vendor_id"
+                    [allowCreateNew]="true">
+                  </app-searchable-select>
+
+                  <app-custom-input
+                    label="Brand / Grade"
+                    formControlName="brand_grade"
+                    placeholder="e.g. BSRM 500W Grade 72.5">
+                  </app-custom-input>
+
+                  <app-custom-input
+                    label="Quoted Unit Rate (BDT)"
+                    type="number"
+                    formControlName="quoted_unit_rate"
+                    [required]="true">
+                  </app-custom-input>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                  <app-custom-input
+                    label="Payment Credit Terms"
+                    formControlName="payment_terms"
+                    placeholder="e.g. 30 Days Credit">
+                  </app-custom-input>
+
+                  <app-custom-input
+                    label="Delivery Lead Time (Days)"
+                    type="number"
+                    formControlName="lead_time_days">
+                  </app-custom-input>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <app-custom-textarea
+          label="Commercial Committee Recommendation Justification"
+          formControlName="justification_summary"
+          [rows]="2">
+        </app-custom-textarea>
+
+        <div class="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+          <app-custom-button variant="secondary" (btnClick)="isCreateCSModalOpen.set(false)">Cancel</app-custom-button>
+          <app-custom-button variant="primary" type="submit" [disabled]="isSubmitting()">Save Comparative Statement</app-custom-button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- MODAL: GENERATE PO FROM CS -->
+@if (isGeneratePOModalOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full border border-slate-200 dark:border-slate-800 shadow-2xl p-6">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
+        <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span>📑</span> Issue Purchase Order (PO)
+        </h3>
+        <button (click)="isGeneratePOModalOpen.set(false)" class="text-slate-400 hover:text-slate-600 text-lg cursor-pointer">✕</button>
+      </div>
+
+      <form [formGroup]="poFromCSForm" (ngSubmit)="submitPOFromCS()" class="space-y-4 mt-4">
+        <app-searchable-select
+          label="Destination Site Store"
+          [options]="storeOptions()"
+          formControlName="destination_store_id"
+          [allowCreateNew]="false">
+        </app-searchable-select>
+
+        <app-custom-input
+          label="Delivery Deadline Date"
+          type="date"
+          formControlName="delivery_deadline"
+          [required]="true">
+        </app-custom-input>
+
+        <app-custom-input
+          label="Delivery Schedule Notes"
+          formControlName="delivery_schedule_notes"
+          placeholder="e.g. 50% in Batch 1, remaining in Batch 2">
+        </app-custom-input>
+
+        <app-custom-textarea
+          label="Terms & Conditions"
+          formControlName="terms_and_conditions"
+          [rows]="2">
+        </app-custom-textarea>
+
+        <div class="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+          <app-custom-button variant="secondary" (btnClick)="isGeneratePOModalOpen.set(false)">Cancel</app-custom-button>
+          <app-custom-button variant="primary" type="submit" [disabled]="isSubmitting()">Authorize & Issue PO</app-custom-button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- MODAL: GATE ENTRY & GRN -->
+@if (isGateEntryModalOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-xl w-full border border-slate-200 dark:border-slate-800 shadow-2xl p-6">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
+        <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span>🚚</span> Physical Gate Entry & Goods Receipt Note (GRN)
+        </h3>
+        <button (click)="isGateEntryModalOpen.set(false)" class="text-slate-400 hover:text-slate-600 text-lg cursor-pointer">✕</button>
+      </div>
+
+      <form [formGroup]="gateEntryForm" (ngSubmit)="submitGateEntry()" class="space-y-4 mt-4">
+        <app-searchable-select
+          label="Purchase Order"
+          [options]="poOptions()"
+          formControlName="po_id"
+          [allowCreateNew]="false">
+        </app-searchable-select>
+
+        <div class="grid grid-cols-2 gap-3">
+          <app-custom-input
+            label="Delivery Challan Number"
+            formControlName="delivery_challan_number"
+            [required]="true">
+          </app-custom-input>
+
+          <app-custom-input
+            label="Vehicle Registration Number"
+            formControlName="vehicle_number"
+            [required]="true"
+            placeholder="e.g. Dhaka Metro TA 11-4567">
+          </app-custom-input>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <app-custom-input
+            label="Driver Name"
+            formControlName="driver_name"
+            [required]="true">
+          </app-custom-input>
+
+          <app-custom-input
+            label="Driver Phone Number"
+            formControlName="driver_phone">
+          </app-custom-input>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <app-custom-input
+            label="Received Physical Quantity"
+            type="number"
+            formControlName="received_quantity"
+            [required]="true">
+          </app-custom-input>
+
+          <app-custom-input
+            label="Rejected Quantity"
+            type="number"
+            formControlName="rejected_quantity">
+          </app-custom-input>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <app-custom-input
+            label="Supplier Invoice Number"
+            formControlName="supplier_invoice_number">
+          </app-custom-input>
+
+          <app-custom-input
+            label="Supplier Invoice Amount (BDT)"
+            type="number"
+            formControlName="supplier_invoice_amount">
+          </app-custom-input>
+        </div>
+
+        <div class="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+          <app-custom-button variant="secondary" (btnClick)="isGateEntryModalOpen.set(false)">Cancel</app-custom-button>
+          <app-custom-button variant="primary" type="submit" [disabled]="isSubmitting()">Record Gate Entry GRN</app-custom-button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- MODAL: QUALITY INSPECTION (QC) -->
+@if (isQCModalOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full border border-slate-200 dark:border-slate-800 shadow-2xl p-6">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
+        <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span>🔬</span> Quality Inspection (QC) Verification
+        </h3>
+        <button (click)="isQCModalOpen.set(false)" class="text-slate-400 hover:text-slate-600 text-lg cursor-pointer">✕</button>
+      </div>
+
+      <form [formGroup]="qcForm" (ngSubmit)="submitQC()" class="space-y-4 mt-4">
+        <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 text-xs">
+          <p class="font-bold text-slate-800 dark:text-slate-200">GRN Ref: {{ selectedGRN()?.grn_number }}</p>
+          <p class="text-slate-500">Material: {{ selectedGRN()?.material_name }} ({{ selectedGRN()?.accepted_quantity }} {{ selectedGRN()?.unit_of_measure }})</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <app-custom-input
+            label="Slump Test (mm)"
+            type="number"
+            formControlName="slump_test_mm"
+            placeholder="e.g. 100 mm">
+          </app-custom-input>
+
+          <app-custom-input
+            label="Tensile Strength (MPa)"
+            type="number"
+            formControlName="tensile_strength_mpa"
+            placeholder="e.g. 520 MPa">
+          </app-custom-input>
+        </div>
+
+        <app-custom-input
+          label="Mill Test Report (MTR) Certificate #"
+          formControlName="mtr_mill_test_report_number"
+          [required]="true"
+          placeholder="e.g. MTR-BSRM-88912">
+        </app-custom-input>
+
+        <div class="flex items-center gap-2 pt-1">
+          <input type="checkbox" id="mtr_ok" formControlName="mtr_verified" class="w-4 h-4 text-emerald-600 rounded">
+          <label for="mtr_ok" class="text-xs text-slate-700 dark:text-slate-300 font-semibold cursor-pointer">
+            MTR Mill Test Certificate physically verified against chemical composition
+          </label>
+        </div>
+
+        <app-custom-textarea
+          label="QA Lab Certification Remarks"
+          formControlName="qc_remarks"
+          [rows]="2">
+        </app-custom-textarea>
+
+        <div class="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+          <app-custom-button variant="secondary" (btnClick)="isQCModalOpen.set(false)">Cancel</app-custom-button>
+          <app-custom-button variant="primary" type="submit" [disabled]="isSubmitting()">Certify & Credit Stock</app-custom-button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- MODAL: 3-WAY MATCHING -->
+@if (isThreeWayMatchModalOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full border border-slate-200 dark:border-slate-800 shadow-2xl p-6">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
+        <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span>⚖️</span> Accounts 3-Way Match Verification
+        </h3>
+        <button (click)="isThreeWayMatchModalOpen.set(false)" class="text-slate-400 hover:text-slate-600 text-lg cursor-pointer">✕</button>
+      </div>
+
+      <form [formGroup]="threeWayMatchForm" (ngSubmit)="submitThreeWayMatch()" class="space-y-4 mt-4">
+        <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 text-xs space-y-1">
+          <div class="flex justify-between">
+            <span class="text-slate-400">Certified Received Qty:</span>
+            <span class="font-bold text-slate-800 dark:text-slate-200">{{ selectedGRN()?.accepted_quantity }} {{ selectedGRN()?.unit_of_measure }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-400">PO Contract Unit Rate:</span>
+            <span class="font-bold text-slate-800 dark:text-slate-200">BDT {{ selectedGRN()?.po_unit_price | number:'1.2-2' }}</span>
+          </div>
+          <div class="flex justify-between pt-1 border-t border-slate-200 dark:border-slate-700">
+            <span class="font-semibold text-slate-700 dark:text-slate-300">Expected Certified Amount:</span>
+            <span class="font-bold text-emerald-600">BDT {{ selectedGRN()?.calculated_expected_amount | number:'1.2-2' }}</span>
+          </div>
+        </div>
+
+        <app-custom-input
+          label="Supplier Invoice Number"
+          formControlName="supplier_invoice_number"
+          [required]="true">
+        </app-custom-input>
+
+        <app-custom-input
+          label="Supplier Invoice Bill Amount (BDT)"
+          type="number"
+          formControlName="supplier_invoice_amount"
+          [required]="true">
+        </app-custom-input>
+
+        <app-custom-textarea
+          label="Accounts Verification Notes"
+          formControlName="accounts_notes"
+          [rows]="2">
+        </app-custom-textarea>
+
+        <div class="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+          <app-custom-button variant="secondary" (btnClick)="isThreeWayMatchModalOpen.set(false)">Cancel</app-custom-button>
+          <app-custom-button variant="primary" type="submit" [disabled]="isSubmitting()">Post Journal Voucher</app-custom-button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- MODAL: MATERIAL ISSUE NOTE (MIN) -->
+@if (isMINModalOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full border border-slate-200 dark:border-slate-800 shadow-2xl p-6">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
+        <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span>📤</span> Issue Material Note (MIN) to Work Front
+        </h3>
+        <button (click)="isMINModalOpen.set(false)" class="text-slate-400 hover:text-slate-600 text-lg cursor-pointer">✕</button>
+      </div>
+
+      <form [formGroup]="minForm" (ngSubmit)="submitMIN()" class="space-y-4 mt-4">
+        <app-searchable-select
+          label="Issuing Store"
+          [options]="storeOptions()"
+          formControlName="store_id"
+          [allowCreateNew]="false">
+        </app-searchable-select>
+
+        <app-searchable-select
+          label="Material Item"
+          [options]="materialOptions()"
+          formControlName="material_id"
+          [allowCreateNew]="false">
+        </app-searchable-select>
+
+        <app-custom-input
+          label="Issue Quantity"
+          type="number"
+          formControlName="issued_quantity"
+          [required]="true">
+        </app-custom-input>
+
+        <div class="grid grid-cols-2 gap-3">
+          <app-custom-input
+            label="Tower Name"
+            formControlName="tower_name"
+            placeholder="e.g. Tower A">
+          </app-custom-input>
+
+          <app-custom-input
+            label="Floor / Level"
+            formControlName="floor_number"
+            placeholder="e.g. Floor 3">
+          </app-custom-input>
+        </div>
+
+        <app-searchable-select
+          label="WBS Activity Node"
+          [options]="wbsOptions()"
+          formControlName="wbs_node_id"
+          [allowCreateNew]="false">
+        </app-searchable-select>
+
+        <app-custom-input
+          label="Recipient Contractor / Gang"
+          formControlName="contractor_name"
+          placeholder="e.g. Bengal Civil Builders Ltd.">
+        </app-custom-input>
+
+        <app-custom-textarea
+          label="Purpose / Work Component"
+          formControlName="purpose"
+          [rows]="2"
+          placeholder="e.g. Column casting Level 3">
+        </app-custom-textarea>
+
+        <div class="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+          <app-custom-button variant="secondary" (btnClick)="isMINModalOpen.set(false)">Cancel</app-custom-button>
+          <app-custom-button variant="primary" type="submit" [disabled]="isSubmitting()">Issue Material (MIN)</app-custom-button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- MODAL: INTER-SITE TRANSFER -->
+@if (isTransferModalOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full border border-slate-200 dark:border-slate-800 shadow-2xl p-6">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
+        <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span>🔄</span> Inter-Site Stock Transfer Dispatch
+        </h3>
+        <button (click)="isTransferModalOpen.set(false)" class="text-slate-400 hover:text-slate-600 text-lg cursor-pointer">✕</button>
+      </div>
+
+      <form [formGroup]="transferForm" (ngSubmit)="submitTransfer()" class="space-y-4 mt-4">
+        <app-searchable-select
+          label="From Source Store (e.g. Central Whse)"
+          [options]="storeOptions()"
+          formControlName="from_store_id"
+          [allowCreateNew]="false">
+        </app-searchable-select>
+
+        <app-searchable-select
+          label="To Destination Site Store"
+          [options]="storeOptions()"
+          formControlName="to_store_id"
+          [allowCreateNew]="false">
+        </app-searchable-select>
+
+        <app-searchable-select
+          label="Material Item"
+          [options]="materialOptions()"
+          formControlName="material_id"
+          [allowCreateNew]="false">
+        </app-searchable-select>
+
+        <div class="grid grid-cols-2 gap-3">
+          <app-custom-input
+            label="Transfer Quantity"
+            type="number"
+            formControlName="transfer_quantity"
+            [required]="true">
+          </app-custom-input>
+
+          <app-custom-input
+            label="Dispatch Challan #"
+            formControlName="dispatch_challan_number"
+            [required]="true">
+          </app-custom-input>
+        </div>
+
+        <app-custom-textarea
+          label="Dispatch Remarks"
+          formControlName="remarks"
+          [rows]="2">
+        </app-custom-textarea>
+
+        <div class="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+          <app-custom-button variant="secondary" (btnClick)="isTransferModalOpen.set(false)">Cancel</app-custom-button>
+          <app-custom-button variant="primary" type="submit" [disabled]="isSubmitting()">Dispatch Transfer</app-custom-button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

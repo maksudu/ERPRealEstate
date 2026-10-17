@@ -123,6 +123,11 @@ export const routes: Routes = [
     title: 'NI Act 1881 Section 138 Cheque Dishonour Litigation - Bangladesh Real Estate ERP'
   },
   {
+    path: 'construction/wbs-boq',
+    loadComponent: () => import('./features/construction/construction-wbs-boq/construction-wbs-boq.component').then(m => m.ConstructionWbsBoqComponent),
+    title: 'Construction WBS & BOQ Hard Budget Locks - Bangladesh Real Estate ERP'
+  },
+  {
     path: 'construction/dpr',
     loadComponent: () => import('./features/construction/construction-dpr/construction-dpr.component').then(m => m.ConstructionDprComponent),
     title: 'Construction Site Diary (DPR) - Bangladesh Real Estate ERP'
@@ -146,6 +151,11 @@ export const routes: Routes = [
     path: 'construction/safety-ncr',
     loadComponent: () => import('./features/construction/safety-ncr/safety-ncr.component').then(m => m.SafetyNcrComponent),
     title: 'Site Safety & Non-Conformance Reports (NCR) - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'procurement/cockpit',
+    loadComponent: () => import('./features/procurement/procurement-cockpit/procurement-cockpit.component').then(m => m.ProcurementCockpitComponent),
+    title: 'Supply Chain & Procurement Cockpit (PR → RFQ → CS → PO → GRN → QC → Store Issue) - Bangladesh Real Estate ERP'
   },
   {
     path: 'procurement/stores',
@@ -208,6 +218,31 @@ export const routes: Routes = [
     title: 'Sub-Registry & Sec 53FF AIT Fee Calculator - Bangladesh Real Estate ERP'
   },
   {
+    path: 'tax/cockpit',
+    loadComponent: () => import('./features/tax/tax-cockpit/tax-cockpit.component').then(m => m.TaxCockpitComponent),
+    title: 'NBR VAT (Mushak 6.3/6.5), TDS/VDS & Sec 53FF AIT Engine - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'tax/mushak-6-3',
+    redirectTo: 'tax/cockpit',
+    pathMatch: 'full'
+  },
+  {
+    path: 'tax/mushak-6-5',
+    redirectTo: 'tax/cockpit',
+    pathMatch: 'full'
+  },
+  {
+    path: 'tax/tds-vds',
+    redirectTo: 'tax/cockpit',
+    pathMatch: 'full'
+  },
+  {
+    path: 'tax/section-53ff',
+    redirectTo: 'tax/cockpit',
+    pathMatch: 'full'
+  },
+  {
     path: 'handover/snagging',
     loadComponent: () => import('./features/handover/handover-snagging/handover-snagging.component').then(m => m.HandoverSnaggingComponent),
     title: 'Pre-Handover Snagging & DLP Warranty - Bangladesh Real Estate ERP'
@@ -266,6 +301,16 @@ export const routes: Routes = [
     path: 'hrms/attendance',
     loadComponent: () => import('./features/hrms/attendance/attendance-management.component').then(m => m.AttendanceManagementComponent),
     title: 'Attendance Punches & Leave Workflow - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'governance/approvals',
+    loadComponent: () => import('./features/governance/governance-cockpit/governance-cockpit.component').then(m => m.GovernanceCockpitComponent),
+    title: 'Maker-Checker Governance & Approvals - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'governance/cockpit',
+    redirectTo: 'governance/approvals',
+    pathMatch: 'full'
   }
     ]
   },

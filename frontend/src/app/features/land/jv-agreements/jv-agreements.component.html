@@ -1,30 +1,98 @@
 <app-card-container 
-  title="Joint Venture (JV) Agreements & Unit Allocation Engine" 
-  subtitle="50:50 / Custom sharing matrix, signing money ledger, and strict Landowner Unit Sales Lock"
-  badge="JV ENGINE"
+  title="Joint Venture (JV) Developer-Landowner Sharing & Allocation Matrix" 
+  subtitle="Configurable sharing ratios (50:50 / 60:40), visual unit sales lock mutex, signing advance & statutory PoA tracking"
+  badge="TIER-1 JV SHARING"
 >
   <!-- Card Header Actions -->
-  <div card-actions>
+  <div card-actions class="flex items-center gap-2.5">
+    @if (expiryAlerts().length > 0) {
+      <button 
+        type="button"
+        (click)="isAlertsDrawerOpen.set(true)"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition-all duration-200"
+      >
+        <svg class="w-4 h-4 text-amber-500 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+        <span>{{ expiryAlerts().length }} Legal Expiry Alerts</span>
+      </button>
+    }
+
     <app-custom-button variant="primary" (btnClick)="openCreateModal()">
       <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
       </svg>
-      Generate JV Agreement
+      New JV Agreement
     </app-custom-button>
   </div>
 
-  <!-- JV Agreements Table -->
-  <div class="overflow-x-auto">
+  <!-- 1. Executive Metric Summary Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+    <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+      <div class="flex items-center justify-between mb-1">
+        <span class="text-xs font-medium text-slate-500 dark:text-slate-400">Total JV Partnerships</span>
+        <div class="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+        </div>
+      </div>
+      <div class="text-xl font-bold text-slate-900 dark:text-slate-100">{{ agreements().length }} Registered</div>
+      <div class="text-[11px] text-slate-400 mt-1">Legally binding Saf-Kabala & PoA</div>
+    </div>
+
+    <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+      <div class="flex items-center justify-between mb-1">
+        <span class="text-xs font-medium text-slate-500 dark:text-slate-400">Standard Sharing Ratios</span>
+        <div class="w-7 h-7 rounded-lg bg-indigo-500/10 text-indigo-600 flex items-center justify-center">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/>
+          </svg>
+        </div>
+      </div>
+      <div class="text-xl font-bold text-indigo-600 dark:text-indigo-400">50:50 / 60:40</div>
+      <div class="text-[11px] text-slate-400 mt-1">Configurable developer vs landowner</div>
+    </div>
+
+    <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+      <div class="flex items-center justify-between mb-1">
+        <span class="text-xs font-medium text-slate-500 dark:text-slate-400">Landowner Sales Mutex</span>
+        <div class="w-7 h-7 rounded-lg bg-rose-500/10 text-rose-600 flex items-center justify-center">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+          </svg>
+        </div>
+      </div>
+      <div class="text-xl font-bold text-rose-600 dark:text-rose-400">100% Enforced</div>
+      <div class="text-[11px] text-slate-400 mt-1">Landowner units hard-locked from sales</div>
+    </div>
+
+    <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+      <div class="flex items-center justify-between mb-1">
+        <span class="text-xs font-medium text-slate-500 dark:text-slate-400">Statutory Clearances</span>
+        <div class="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-600 flex items-center justify-center">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+          </svg>
+        </div>
+      </div>
+      <div class="text-xl font-bold text-amber-600 dark:text-amber-400">{{ expiryAlerts().length }} Alert{{ expiryAlerts().length === 1 ? '' : 's' }}</div>
+      <div class="text-[11px] text-slate-400 mt-1">Khajna tax & PoA expiry monitoring</div>
+    </div>
+  </div>
+
+  <!-- 2. JV Agreements Master Table -->
+  <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
     <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800 text-left text-xs">
       <thead class="bg-slate-50 dark:bg-slate-850 text-slate-600 dark:text-slate-400 font-semibold uppercase tracking-wider">
         <tr>
-          <th class="px-4 py-3">Deed Number</th>
-          <th class="px-4 py-3">Land Parcel</th>
-          <th class="px-4 py-3">Sharing Ratio (LO : DEV)</th>
-          <th class="px-4 py-3">Signing Money (BDT)</th>
-          <th class="px-4 py-3">Tenure</th>
-          <th class="px-4 py-3">Allocated Units</th>
-          <th class="px-4 py-3 text-right">Actions</th>
+          <th class="px-4 py-3.5">Deed & PoA Number</th>
+          <th class="px-4 py-3.5">Land Parcel & Mouza</th>
+          <th class="px-4 py-3.5">Agreed Ratio (LO : DEV)</th>
+          <th class="px-4 py-3.5">Signing Money</th>
+          <th class="px-4 py-3.5">Allocated Units</th>
+          <th class="px-4 py-3.5">PoA Legal Status</th>
+          <th class="px-4 py-3.5 text-right">Actions</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300">
@@ -43,43 +111,68 @@
         } @else if (agreements().length === 0) {
           <tr>
             <td colspan="7" class="px-4 py-12 text-center text-slate-400">
-              No JV Agreements registered. Click "+ Generate JV Agreement" to draft partnership deed.
+              No JV Agreements registered. Click "+ New JV Agreement" to draft partnership deed.
             </td>
           </tr>
         } @else {
           @for (ag of agreements(); track ag.id) {
             <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
-              <td class="px-4 py-3.5 font-mono font-semibold text-emerald-600 dark:text-emerald-400">
-                {{ ag.agreement_deed_no }}
+              <td class="px-4 py-3.5">
+                <div class="font-mono font-bold text-emerald-600 dark:text-emerald-400">{{ ag.agreement_deed_no }}</div>
+                @if (ag.poa_deed_number) {
+                  <div class="text-[11px] font-mono text-slate-400 mt-0.5">PoA: {{ ag.poa_deed_number }}</div>
+                }
               </td>
               <td class="px-4 py-3.5">
                 <div class="font-medium text-slate-900 dark:text-slate-100">{{ getParcelTitle(ag.land_bank_id) }}</div>
+                <div class="text-[11px] text-slate-400 mt-0.5">Tenure: {{ ag.tenure_months }} Months Commitment</div>
               </td>
               <td class="px-4 py-3.5">
-                <div class="flex items-center gap-1.5 font-bold">
-                  <span class="text-indigo-600 dark:text-indigo-400">{{ ag.landowner_share_percent }}%</span>
+                <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 font-bold">
+                  <span class="text-indigo-600 dark:text-indigo-400">{{ ag.landowner_share_percent }}% Landowner</span>
                   <span class="text-slate-400">:</span>
-                  <span class="text-emerald-600 dark:text-emerald-400">{{ ag.developer_share_percent }}%</span>
+                  <span class="text-emerald-600 dark:text-emerald-400">{{ ag.developer_share_percent }}% Developer</span>
                 </div>
               </td>
-              <td class="px-4 py-3.5 font-semibold text-slate-900 dark:text-slate-100">
-                ৳ {{ ag.signing_money_total | number:'1.2-2' }}
-              </td>
-              <td class="px-4 py-3.5 text-slate-600 dark:text-slate-400">
-                {{ ag.tenure_months }} Months
+              <td class="px-4 py-3.5">
+                <div class="font-semibold text-slate-900 dark:text-slate-100">৳ {{ ag.signing_money_total | number:'1.2-2' }}</div>
+                <div class="text-[11px] text-emerald-600 dark:text-emerald-400">
+                  Paid: ৳ {{ (ag.signing_money_paid || 0) | number:'1.2-2' }}
+                </div>
               </td>
               <td class="px-4 py-3.5">
-                <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-                  {{ ag.unit_allocations.length }} Units Assigned
-                </span>
+                <div class="flex items-center gap-1.5">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                    🔒 {{ getLandownerCount(ag.unit_allocations) }} LO
+                  </span>
+                  <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                    🔓 {{ getDeveloperCount(ag.unit_allocations) }} DEV
+                  </span>
+                </div>
+                <div class="text-[10px] text-slate-400 mt-0.5">
+                  Total {{ ag.unit_allocations.length }} Units Assigned
+                </div>
+              </td>
+              <td class="px-4 py-3.5">
+                @if (ag.poa_verified) {
+                  <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                    <svg class="w-3 h-3 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                    </svg>
+                    PoA Verified
+                  </span>
+                } @else {
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                    Vetting Required
+                  </span>
+                }
               </td>
               <td class="px-4 py-3.5 text-right">
-                <app-custom-button variant="secondary" size="sm" (btnClick)="viewAllocations(ag)">
-                  <svg class="w-3.5 h-3.5 mr-1 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                <app-custom-button variant="primary" size="sm" (btnClick)="viewAllocations(ag)">
+                  <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
                   </svg>
-                  View Allocations
+                  Interactive Matrix
                 </app-custom-button>
               </td>
             </tr>
@@ -90,214 +183,427 @@
   </div>
 </app-card-container>
 
-<!-- 1. CREATE JV AGREEMENT MODAL -->
-@if (isCreateModalOpen()) {
-  <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="erp-card w-full max-w-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-      <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-850">
-        <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100">
-          Generate Joint Venture (JV) Agreement & Allotment Matrix
+<!-- 3. INTERACTIVE 2D UNIT ALLOCATION MODAL -->
+@if (isViewAllocationsModalOpen() && selectedAgreement()) {
+  <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="w-full max-w-5xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      
+      <!-- Modal Header -->
+      <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-850">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <h3 class="text-base font-bold text-slate-900 dark:text-slate-100">
+              Interactive Unit Allocation Matrix: {{ selectedAgreement()?.agreement_deed_no }}
+            </h3>
+          </div>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            {{ getParcelTitle(selectedAgreement()!.land_bank_id) }} | Agreed Ratio: {{ selectedAgreement()?.landowner_share_percent }}% LO : {{ selectedAgreement()?.developer_share_percent }}% DEV
+          </p>
+        </div>
+        
+        <div class="flex items-center gap-2">
+          <app-custom-button variant="primary" size="sm" (btnClick)="openAutoAllocateModal()">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+            </svg>
+            Auto-Partition Ratio Engine
+          </app-custom-button>
+
+          <button (click)="closeAllocationsModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Live Allocation Balance Bar -->
+      <div class="px-6 py-3 bg-slate-100/70 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4 text-xs font-semibold">
+        <div class="flex items-center gap-6">
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-indigo-600"></span>
+            <span class="text-slate-700 dark:text-slate-300">
+              Landowner Share: 
+              <strong class="text-indigo-600 dark:text-indigo-400">
+                {{ getLandownerCount(selectedAgreement()!.unit_allocations) }} Units
+              </strong>
+              ({{ getLandownerSft(selectedAgreement()!.unit_allocations) | number:'1.0-0' }} Sft)
+            </span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-emerald-600"></span>
+            <span class="text-slate-700 dark:text-slate-300">
+              Developer Share: 
+              <strong class="text-emerald-600 dark:text-emerald-400">
+                {{ getDeveloperCount(selectedAgreement()!.unit_allocations) }} Units
+              </strong>
+              ({{ getDeveloperSft(selectedAgreement()!.unit_allocations) | number:'1.0-0' }} Sft)
+            </span>
+          </div>
+        </div>
+
+        <div class="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-2">
+          <span>💡 Click any unit tile to toggle Landowner ↔ Developer allocation</span>
+        </div>
+      </div>
+
+      <!-- Unit Matrix Grid -->
+      <div class="p-6 max-h-[60vh] overflow-y-auto">
+        @if (selectedAgreement()!.unit_allocations.length === 0) {
+          <div class="py-12 text-center text-slate-400">
+            <p>No unit allocations mapped yet.</p>
+            <app-custom-button variant="primary" size="sm" class="mt-3 inline-block" (btnClick)="openAutoAllocateModal()">
+              Run Auto-Partition Ratio Engine
+            </app-custom-button>
+          </div>
+        } @else {
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            @for (unit of selectedAgreement()!.unit_allocations; track unit.unit_identifier) {
+              <div 
+                (click)="toggleUnitAllocation(unit)"
+                class="relative cursor-pointer rounded-xl p-4 border transition-all duration-200 hover:scale-[1.02] shadow-sm select-none"
+                [ngClass]="unit.allocation_type === 'LANDOWNER_UNIT' 
+                  ? 'bg-gradient-to-br from-indigo-50 to-indigo-100/40 dark:from-indigo-950/40 dark:to-indigo-900/20 border-indigo-300 dark:border-indigo-700/60 ring-1 ring-indigo-500/20'
+                  : 'bg-gradient-to-br from-emerald-50 to-emerald-100/40 dark:from-emerald-950/40 dark:to-emerald-900/20 border-emerald-300 dark:border-emerald-700/60 ring-1 ring-emerald-500/20'"
+              >
+                <!-- Badge & Mutex Lock -->
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-xs font-mono font-bold text-slate-900 dark:text-slate-100">
+                    Floor {{ unit.floor_number }} - Unit {{ unit.unit_number }}
+                  </span>
+                  @if (unit.allocation_type === 'LANDOWNER_UNIT') {
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-600 text-white shadow-xs">
+                      <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
+                      </svg>
+                      SALES LOCKED
+                    </span>
+                  } @else {
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-600 text-white shadow-xs">
+                      <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 2a5 5 0 00-5 5v2a2 2 0 00-2 2v5a2 2 0 002 2h10a2 2 0 002-2v-5a2 2 0 00-2-2H7V7a3 3 0 016 0v1h2V7a5 5 0 00-5-5z"/>
+                      </svg>
+                      OPEN FOR SALES
+                    </span>
+                  }
+                </div>
+
+                <!-- Unit SFT & Type -->
+                <div class="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                  {{ unit.gross_sft | number:'1.0-0' }} Sq Ft
+                  <span class="text-[11px] font-normal text-slate-500 dark:text-slate-400">({{ unit.unit_type }})</span>
+                </div>
+
+                <!-- Parking Slot -->
+                @if (unit.parking_slot_number) {
+                  <div class="flex items-center gap-1 text-[11px] text-slate-600 dark:text-slate-400 mt-1.5">
+                    <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                    </svg>
+                    <span>Car Bay: <strong>{{ unit.parking_slot_number }}</strong></span>
+                  </div>
+                }
+
+                <!-- Allocation Notes -->
+                <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-2 truncate">
+                  {{ unit.allocation_notes || (unit.allocation_type === 'LANDOWNER_UNIT' ? 'Landowner entitlement' : 'Developer commercial inventory') }}
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="px-6 py-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-850">
+        <div class="text-xs text-slate-500 dark:text-slate-400">
+          🔒 Legal Rule: Any unit allocated to the landowner cannot be booked or sold by Sales Executives.
+        </div>
+        <app-custom-button variant="secondary" (btnClick)="closeAllocationsModal()">
+          Close Matrix
+        </app-custom-button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- 4. AUTO-ALLOCATION RATIO GENERATOR MODAL -->
+@if (isAutoAllocateModalOpen()) {
+  <div class="fixed inset-0 z-60 overflow-y-auto bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-850">
+        <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+          Auto-Partition Ratio Sharing Engine
         </h3>
-        <button (click)="closeCreateModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+        <button (click)="closeAutoAllocateModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
           </svg>
         </button>
       </div>
 
-      <form [formGroup]="jvForm" (ngSubmit)="submitAgreement()" class="p-6 space-y-4">
-        @if (errorMessage()) {
-          <div class="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-lg text-xs text-rose-600 dark:text-rose-400">
-            {{ errorMessage() }}
-          </div>
-        }
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Associated Land Parcel *</label>
-            <select formControlName="land_bank_id" class="erp-input text-xs">
-              <option [ngValue]="null" disabled>Select land parcel...</option>
-              @for (p of proposals(); track p.id) {
-                <option [value]="p.id">{{ p.project_code }} - {{ p.proposal_title }}</option>
-              }
-            </select>
-          </div>
-
-          <app-custom-input
-            formControlName="agreement_deed_no"
-            label="JV Agreement Deed Number *"
-            placeholder="e.g. DEED-DHK-2026-90412"
-          ></app-custom-input>
+      <form [formGroup]="autoAllocForm" (ngSubmit)="runAutoAllocation()" class="p-6 space-y-4">
+        <div class="p-3 rounded-xl bg-indigo-50/60 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 text-xs text-indigo-900 dark:text-indigo-200">
+          Target Ratio: <strong>{{ selectedAgreement()?.landowner_share_percent }}% Landowner : {{ selectedAgreement()?.developer_share_percent }}% Developer</strong>.
+          The engine will calculate total units and partition floors and basement car bays mathematically.
         </div>
 
-        <!-- Sharing Ratio -->
-        <div class="p-4 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl space-y-3">
-          <span class="text-xs font-bold text-slate-800 dark:text-slate-200">Joint Venture Ratio Split (Must Total 100%)</span>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <app-custom-input
-              formControlName="landowner_share_percent"
-              type="number"
-              label="Landowner Share (%) *"
-              (input)="onShareChange('landowner')"
-            ></app-custom-input>
-
-            <app-custom-input
-              formControlName="developer_share_percent"
-              type="number"
-              label="Developer Share (%) *"
-              (input)="onShareChange('developer')"
-            ></app-custom-input>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-2 gap-4">
           <app-custom-input
-            formControlName="signing_money_total"
+            label="Total Floors"
             type="number"
-            label="Total Signing Money (BDT) *"
-            placeholder="e.g. 50000000"
-          ></app-custom-input>
-
+            formControlName="total_floors"
+            placeholder="e.g. 10"
+            [required]="true"
+          />
           <app-custom-input
-            formControlName="tenure_months"
+            label="Units per Floor"
             type="number"
-            label="Construction / Handover Tenure (Months) *"
-            placeholder="e.g. 36"
-          ></app-custom-input>
+            formControlName="units_per_floor"
+            placeholder="e.g. 2 or 4"
+            [required]="true"
+          />
         </div>
 
-        <!-- Unit Allocations Matrix -->
-        <div class="border-t border-slate-200 dark:border-slate-800 pt-4 space-y-3">
-          <div class="flex items-center justify-between">
-            <div>
-              <span class="text-xs font-bold text-slate-800 dark:text-slate-200">Unit Allocations Ledger</span>
-              <p class="text-[11px] text-rose-500 font-semibold mt-0.5">
-                CRITICAL: LANDOWNER_UNIT is permanently locked from sales!
-              </p>
-            </div>
-            <app-custom-button type="button" variant="dashed" size="sm" (btnClick)="addUnitAllocation()">
-              + Add Unit
-            </app-custom-button>
-          </div>
+        <app-custom-input
+          label="Unit Gross Sft"
+          type="number"
+          formControlName="unit_gross_sft"
+          placeholder="e.g. 1850"
+          [required]="true"
+        />
 
-          <div formArrayName="unit_allocations" class="space-y-2 max-h-48 overflow-y-auto pr-1">
-            @for (unitCtrl of unitAllocations.controls; track $index) {
-              <div [formGroupName]="$index" class="p-3 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-lg flex items-center gap-3">
-                <input
-                  formControlName="unit_identifier"
-                  placeholder="e.g. Tower A - Apt 4A"
-                  class="erp-input text-xs w-1/3"
-                />
+        <app-searchable-select
+          label="Floor Partition Strategy"
+          [options]="strategyOptions"
+          formControlName="allocation_strategy"
+          placeholder="Select strategy..."
+          [allowCreateNew]="false"
+          [required]="true"
+        />
 
-                <select formControlName="allocation_type" class="erp-input text-xs w-1/3">
-                  <option value="LANDOWNER_UNIT">Landowner Unit (Locked 🔒)</option>
-                  <option value="DEVELOPER_UNIT">Developer Unit (Saleable ✓)</option>
-                </select>
-
-                <input
-                  formControlName="allocation_notes"
-                  placeholder="Notes..."
-                  class="erp-input text-xs flex-1"
-                />
-
-                <button 
-                  type="button" 
-                  (click)="removeUnitAllocation($index)"
-                  class="text-slate-400 hover:text-rose-500 p-1"
-                >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                  </svg>
-                </button>
-              </div>
+        <div class="pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-3">
+          <app-custom-button variant="secondary" (btnClick)="closeAutoAllocateModal()">
+            Cancel
+          </app-custom-button>
+          <app-custom-button variant="primary" type="submit" [disabled]="isSubmitting()">
+            @if (isSubmitting()) {
+              Generating Matrix...
+            } @else {
+              Execute Auto-Allocation
             }
-          </div>
-        </div>
-
-        <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
-          <app-custom-button type="button" variant="secondary" (btnClick)="closeCreateModal()">Cancel</app-custom-button>
-          <app-custom-button type="submit" variant="primary" [loading]="isSubmitting()">Sign & Save Agreement</app-custom-button>
+          </app-custom-button>
         </div>
       </form>
     </div>
   </div>
 }
 
-<!-- 2. VIEW ALLOCATIONS MODAL -->
-@if (isViewAllocationsModalOpen()) {
-  <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="erp-card w-full max-w-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-      <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-850">
-        <div>
-          <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100">
-            Unit Allocation Ledger - {{ selectedAgreement()?.agreement_deed_no }}
-          </h3>
-          <p class="text-xs text-slate-400 mt-0.5">
-            Landowner: {{ selectedAgreement()?.landowner_share_percent }}% | Developer: {{ selectedAgreement()?.developer_share_percent }}%
-          </p>
-        </div>
-        <button (click)="closeAllocationsModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<!-- 5. CREATE JV AGREEMENT MODAL -->
+@if (isCreateModalOpen()) {
+  <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="w-full max-w-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] flex flex-col">
+      <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-850 shrink-0">
+        <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+          Draft Joint Venture (JV) Partnership Deed
+        </h3>
+        <button (click)="closeCreateModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
           </svg>
         </button>
       </div>
 
-      <div class="p-6">
-        <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800 text-left text-xs">
-          <thead class="bg-slate-50 dark:bg-slate-850 text-slate-500 font-semibold uppercase">
-            <tr>
-              <th class="px-4 py-2.5">Unit Identifier</th>
-              <th class="px-4 py-2.5">Allotment Type</th>
-              <th class="px-4 py-2.5">Sales Status</th>
-              <th class="px-4 py-2.5">Notes</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-            @for (u of selectedAgreement()?.unit_allocations; track u.id) {
-              <tr>
-                <td class="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
-                  {{ u.unit_identifier }}
-                </td>
-                <td class="px-4 py-3">
-                  <span 
-                    class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold"
-                    [class.bg-indigo-100]="u.allocation_type === 'LANDOWNER_UNIT'"
-                    [class.text-indigo-800]="u.allocation_type === 'LANDOWNER_UNIT'"
-                    [class.bg-emerald-100]="u.allocation_type === 'DEVELOPER_UNIT'"
-                    [class.text-emerald-800]="u.allocation_type === 'DEVELOPER_UNIT'"
-                  >
-                    {{ u.allocation_type }}
-                  </span>
-                </td>
-                <td class="px-4 py-3">
-                  @if (u.is_locked_for_sales) {
-                    <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-rose-600 dark:text-rose-400">
-                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                      </svg>
-                      PERMANENTLY LOCKED
-                    </span>
-                  } @else {
-                    <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
-                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                      </svg>
-                      Open for Sales
-                    </span>
-                  }
-                </td>
-                <td class="px-4 py-3 text-slate-500">
-                  {{ u.allocation_notes || '-' }}
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
+      <div class="p-6 overflow-y-auto space-y-5">
+        @if (errorMessage()) {
+          <div class="p-3 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs rounded-xl">
+            {{ errorMessage() }}
+          </div>
+        }
+
+        <form [formGroup]="jvForm" (ngSubmit)="submitAgreement()" class="space-y-5">
+          <!-- Land Parcel Dynamic Searchable Select -->
+          <app-searchable-select
+            label="Land Bank Parcel"
+            [options]="parcelOptions()"
+            formControlName="land_bank_id"
+            placeholder="Search and select parcel..."
+            [allowCreateNew]="true"
+            [required]="true"
+          />
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <app-custom-input
+              label="Agreement Deed Number"
+              formControlName="agreement_deed_no"
+              placeholder="e.g. JV-AGR-2026-001"
+              [required]="true"
+            />
+            <app-custom-input
+              label="Tenure Commitment (Months)"
+              type="number"
+              formControlName="tenure_months"
+              placeholder="e.g. 36"
+              [required]="true"
+            />
+          </div>
+
+          <!-- Sharing Ratio Preset Picker -->
+          <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850/50">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-bold text-slate-800 dark:text-slate-200">Agreed Sharing Ratio Preset</span>
+              <div class="flex items-center gap-2">
+                <button 
+                  type="button" 
+                  (click)="setPresetRatio(50, 50)"
+                  class="px-2.5 py-1 text-xs font-semibold rounded-lg border border-slate-300 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-800 transition-colors"
+                >
+                  50:50 Balanced
+                </button>
+                <button 
+                  type="button" 
+                  (click)="setPresetRatio(40, 60)"
+                  class="px-2.5 py-1 text-xs font-semibold rounded-lg border border-slate-300 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-800 transition-colors"
+                >
+                  60 Dev : 40 LO
+                </button>
+                <button 
+                  type="button" 
+                  (click)="setPresetRatio(45, 55)"
+                  class="px-2.5 py-1 text-xs font-semibold rounded-lg border border-slate-300 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-800 transition-colors"
+                >
+                  55 Dev : 45 LO
+                </button>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <app-custom-input
+                label="Landowner Share (%)"
+                type="number"
+                formControlName="landowner_share_percent"
+                (input)="onShareChange('landowner')"
+                [required]="true"
+              />
+              <app-custom-input
+                label="Developer Share (%)"
+                type="number"
+                formControlName="developer_share_percent"
+                (input)="onShareChange('developer')"
+                [required]="true"
+              />
+            </div>
+          </div>
+
+          <!-- Signing Money & Advance -->
+          <div class="grid grid-cols-2 gap-4">
+            <app-custom-input
+              label="Signing Advance Total (BDT)"
+              type="number"
+              formControlName="signing_money_total"
+              placeholder="e.g. 5000000"
+              [required]="true"
+            />
+            <app-custom-input
+              label="Signing Advance Paid (BDT)"
+              type="number"
+              formControlName="signing_money_paid"
+              placeholder="e.g. 2000000"
+            />
+          </div>
+
+          <!-- Statutory Power of Attorney (PoA) -->
+          <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850/50">
+            <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200 mb-3 flex items-center gap-1.5">
+              <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+              </svg>
+              Registered Power of Attorney (PoA) Details
+            </h4>
+            <div class="grid grid-cols-3 gap-3">
+              <app-custom-input
+                label="PoA Deed No."
+                formControlName="poa_deed_number"
+                placeholder="e.g. POA-2026/GUL-01"
+              />
+              <app-custom-input
+                label="Execution Date"
+                type="date"
+                formControlName="poa_execution_date"
+              />
+              <app-custom-input
+                label="Expiry Date"
+                type="date"
+                formControlName="poa_expiry_date"
+              />
+            </div>
+          </div>
+
+          <div class="pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-3">
+            <app-custom-button variant="secondary" (btnClick)="closeCreateModal()">
+              Cancel
+            </app-custom-button>
+            <app-custom-button variant="primary" type="submit" [disabled]="isSubmitting()">
+              @if (isSubmitting()) {
+                Registering JV Agreement...
+              } @else {
+                Save & Register JV Agreement
+              }
+            </app-custom-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- 6. STATUTORY EXPIRY ALERTS DRAWER -->
+@if (isAlertsDrawerOpen()) {
+  <div class="fixed inset-0 z-50 overflow-hidden bg-slate-900/60 backdrop-blur-sm flex justify-end">
+    <div class="w-full max-w-md bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-200">
+      <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-850">
+        <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+          <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+          Statutory Document Expiry Alerts (60-Day Window)
+        </h3>
+        <button (click)="isAlertsDrawerOpen.set(false)" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
       </div>
 
-      <div class="px-6 py-3 border-t border-slate-200 dark:border-slate-800 flex justify-end bg-slate-50/50 dark:bg-slate-850">
-        <app-custom-button variant="secondary" (btnClick)="closeAllocationsModal()">Close</app-custom-button>
+      <div class="p-6 overflow-y-auto space-y-3 flex-1">
+        @for (alert of expiryAlerts(); track alert.id) {
+          <div class="p-4 rounded-xl border border-amber-200 dark:border-amber-800/60 bg-amber-50/40 dark:bg-amber-950/20">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="font-mono font-bold text-xs text-amber-700 dark:text-amber-400">{{ alert.doc_number }}</span>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                [ngClass]="alert.alert_severity === 'DANGER' ? 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'">
+                {{ alert.status_message }}
+              </span>
+            </div>
+            <div class="text-xs font-semibold text-slate-800 dark:text-slate-200">{{ alert.parcel_title }}</div>
+            <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+              Doc Type: <strong>{{ alert.doc_type }}</strong> | Mouza: {{ alert.mouza }}
+            </div>
+            <div class="text-[11px] text-slate-500 dark:text-slate-400">
+              Expiry Date: <strong>{{ alert.expiry_date }}</strong>
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="p-4 border-t border-slate-200 dark:border-slate-800 flex justify-end">
+        <app-custom-button variant="secondary" (btnClick)="isAlertsDrawerOpen.set(false)">
+          Close Alerts
+        </app-custom-button>
       </div>
     </div>
   </div>

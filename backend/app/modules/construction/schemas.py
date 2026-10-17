@@ -57,17 +57,177 @@ class LaborMusterResponse(LaborMusterBase):
 
 
 # -------------------------------------------------------------
-# DPR Report Schemas
+# -------------------------------------------------------------
+# WBS Node Schemas
+# -------------------------------------------------------------
+class WBSNodeBase(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    project_id: int
+    tower_id: Optional[int] = None
+    parent_id: Optional[int] = None
+    node_code: str
+    node_name: str
+    wbs_tier: str = "ACTIVITY" # PHASE, SUB_PHASE, ACTIVITY, TASK
+    phase_category: str = "SUBSTRUCTURE" # SUBSTRUCTURE, SUPERSTRUCTURE, FINISHING, MEP
+    activity_type: Optional[str] = None # PILING, MAT_CASTING, COLUMN, BEAM_SLAB, BRICKWORK, PLASTER, TILES, MEP
+    planned_start_date: date
+    planned_end_date: date
+    actual_start_date: Optional[date] = None
+    actual_end_date: Optional[date] = None
+    progress_percentage: float = 0.00
+    weightage_percentage: float = 10.00
+    status: str = "NOT_STARTED" # NOT_STARTED, IN_PROGRESS, COMPLETED, DELAYED, CRITICAL_PATH
+    responsible_engineer: Optional[str] = None
+    remarks: Optional[str] = None
+
+class WBSNodeCreate(BaseModel):
+    project_id: int
+    tower_id: Optional[int] = None
+    parent_id: Optional[int] = None
+    node_code: str
+    node_name: str
+    wbs_tier: Optional[str] = "ACTIVITY"
+    phase_category: Optional[str] = "SUBSTRUCTURE"
+    activity_type: Optional[str] = None
+    planned_start_date: date
+    planned_end_date: date
+    weightage_percentage: Optional[float] = 10.00
+    responsible_engineer: Optional[str] = None
+    remarks: Optional[str] = None
+
+class WBSNodeUpdateProgress(BaseModel):
+    progress_percentage: float
+    actual_start_date: Optional[date] = None
+    actual_end_date: Optional[date] = None
+    status: Optional[str] = None
+    remarks: Optional[str] = None
+
+class WBSNodeResponse(WBSNodeBase):
+    id: int
+    created_at: Optional[datetime] = None
+    children: Optional[List['WBSNodeResponse']] = []
+
+
+# -------------------------------------------------------------
+# Variation Order Schemas (BOQ Hard Lock Release)
+# -------------------------------------------------------------
+class VariationOrderBase(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    project_id: int
+    boq_item_id: int
+    vo_number: str
+    additional_quantity: float
+    revised_rate: Optional[float] = None
+    additional_budget: float = 0.00
+    reason: str
+    approved_by_pm: Optional[str] = None
+    status: str = "PENDING"
+    approval_date: Optional[date] = None
+
+class VariationOrderCreate(BaseModel):
+    project_id: int
+    boq_item_id: int
+    additional_quantity: float
+    revised_rate: Optional[float] = None
+    reason: str
+
+class VariationOrderApprove(BaseModel):
+    approved_by_pm: str
+    status: str = "APPROVED" # APPROVED, REJECTED
+    approval_notes: Optional[str] = None
+
+class VariationOrderResponse(VariationOrderBase):
+    id: int
+    created_at: Optional[datetime] = None
+
+
+# -------------------------------------------------------------
+# Joint Measurement Sheet (JMS) Schemas
+# -------------------------------------------------------------
+class JointMeasurementSheetBase(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    work_order_id: int
+    wbs_node_id: Optional[int] = None
+    jms_number: str
+    measurement_date: date
+    location_floor: str
+    trade_item: str
+    unit_of_measure: str = "SFT"
+    measured_length: float = 0.00
+    measured_breadth: float = 0.00
+    measured_depth: float = 0.00
+    measured_quantity: float
+    unit_rate: float
+    total_amount: float
+    verified_by_site_engineer: str
+    subcontractor_representative: str
+    status: str = "VERIFIED_BY_ENGINEER"
+    ra_bill_id: Optional[int] = None
+
+class JointMeasurementSheetCreate(BaseModel):
+    work_order_id: int
+    wbs_node_id: Optional[int] = None
+    jms_number: str
+    measurement_date: Optional[date] = None
+    location_floor: str
+    trade_item: str
+    unit_of_measure: Optional[str] = "SFT"
+    measured_length: Optional[float] = 0.00
+    measured_breadth: Optional[float] = 0.00
+    measured_depth: Optional[float] = 0.00
+    measured_quantity: float
+    unit_rate: float
+    verified_by_site_engineer: str
+    subcontractor_representative: str
+
+class JointMeasurementSheetResponse(JointMeasurementSheetBase):
+    id: int
+    created_at: Optional[datetime] = None
+
+
+# -------------------------------------------------------------
+# BOQ Requisition & Hard Budget Lock Verification
+# -------------------------------------------------------------
+class BOQRequisitionCheckRequest(BaseModel):
+    boq_item_id: int
+    requested_quantity: float
+    requisition_memo_no: Optional[str] = None
+
+class BOQRequisitionCheckResponse(BaseModel):
+    boq_item_id: int
+    item_description: str
+    estimated_quantity: float
+    variation_order_quantity: float
+    allowable_ceiling_105: float
+    already_requisitioned_quantity: float
+    remaining_allowable_quantity: float
+    requested_quantity: float
+    is_hard_locked: bool
+    budget_lock_triggered: bool
+    message: str
+
+
+# -------------------------------------------------------------
+# DPR Report Schemas (Enhanced Site Diary)
 # -------------------------------------------------------------
 class DPRReportBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     project_id: int
     tower_id: Optional[int] = None
+    wbs_node_id: Optional[int] = None
     report_date: date
     weather_condition_id: str = "SUNNY"
     site_engineer_id: Optional[int] = None
     structural_activity_summary: str
+    floor_unit_location: Optional[str] = None
+    machinery_deployed: Optional[str] = None
+    site_photos: Optional[List[dict]] = []
+    safety_incident_logged: bool = False
+    safety_incident_notes: Optional[str] = None
     concrete_casting_cft: float = 0.00
     steel_rod_consumed_mt: float = 0.000
     cement_consumed_bags: int = 0
@@ -77,9 +237,15 @@ class DPRReportBase(BaseModel):
 class DPRReportCreate(BaseModel):
     project_id: int
     tower_id: Optional[int] = None
+    wbs_node_id: Optional[int] = None
     report_date: Optional[date] = None
     weather_condition_id: Optional[str] = "SUNNY"
     structural_activity_summary: str
+    floor_unit_location: Optional[str] = None
+    machinery_deployed: Optional[str] = None
+    site_photos: Optional[List[dict]] = []
+    safety_incident_logged: Optional[bool] = False
+    safety_incident_notes: Optional[str] = None
     concrete_casting_cft: Optional[float] = 0.00
     steel_rod_consumed_mt: Optional[float] = 0.000
     cement_consumed_bags: Optional[int] = 0
@@ -128,7 +294,7 @@ class WorkOrderResponse(WorkOrderBase):
 
 
 # -------------------------------------------------------------
-# RA Bill Schemas
+# RA Bill Schemas (Statutory Deductions & Approval Chain)
 # -------------------------------------------------------------
 class RABillBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -136,12 +302,19 @@ class RABillBase(BaseModel):
     work_order_id: int
     ra_bill_number: str
     bill_date: date
+    billing_period_start: Optional[date] = None
+    billing_period_end: Optional[date] = None
     gross_work_certified_amount: float
+    retention_percent: float = 5.00
     retention_money_deducted: float = 0.00
     advance_recovery_deducted: float = 0.00
+    material_store_recovery_amount: float = 0.00
+    tds_rate: float = 5.00
     tds_withheld_amount: float = 0.00
+    vds_rate: float = 5.00
     vds_withheld_amount: float = 0.00
     net_payable_amount: float
+    approval_signature_chain: Optional[List[dict]] = []
     status: str = "DRAFT"
     accounts_journal_voucher_ref: Optional[str] = None
     remarks: Optional[str] = None
@@ -150,14 +323,20 @@ class RABillCreate(BaseModel):
     work_order_id: int
     ra_bill_number: str
     bill_date: Optional[date] = None
+    billing_period_start: Optional[date] = None
+    billing_period_end: Optional[date] = None
     gross_work_certified_amount: float
+    retention_percent: Optional[float] = 5.00
     advance_recovery_deducted: Optional[float] = 0.00
-    tds_percentage: Optional[float] = 5.00 # Standard Sec 52 TDS
-    vds_percentage: Optional[float] = 5.00 # Standard VDS
+    material_store_recovery_amount: Optional[float] = 0.00 # Store materials: diesel, steel, cement
+    tds_rate: Optional[float] = 5.00 # Sec 52
+    vds_rate: Optional[float] = 5.00 # VDS
     remarks: Optional[str] = None
 
 class RABillApprovalRequest(BaseModel):
-    action: str # 'APPROVE', 'REJECT'
+    role: str # 'SITE_ENGINEER', 'QUANTITY_SURVEYOR', 'PROJECT_DIRECTOR', 'ACCOUNTS'
+    signatory_name: str
+    action: str # 'VERIFY', 'APPROVE', 'REJECT'
     approval_notes: Optional[str] = None
 
 class RABillResponse(RABillBase):

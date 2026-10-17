@@ -16,6 +16,11 @@ class CustomerInstallmentBase(BaseModel):
     payable_amount: float
     paid_amount: float = 0.00
     late_fee_accrued: float = 0.00
+    surcharge_percentage: float = 2.00
+    overdue_days: int = 0
+    sms_alert_sent: bool = False
+    whatsapp_alert_sent: bool = False
+    last_alert_sent_at: Optional[datetime] = None
     status: str = "UPCOMING"
     milestone_trigger: Optional[str] = None
 
@@ -28,12 +33,19 @@ class CustomerInstallmentCreate(BaseModel):
     payable_amount: float
     milestone_trigger: Optional[str] = None
 
+class MilestoneItemConfig(BaseModel):
+    title: str
+    percentage: float # e.g. 10.0 for 10%
+    milestone_trigger: Optional[str] = None
+
 class InstallmentScheduleGenerateRequest(BaseModel):
     booking_id: int
-    plan_type: str # 'MONTHLY', 'QUARTERLY', 'CONSTRUCTION_MILESTONE'
-    total_installments: int = 24
+    plan_type: str # 'MONTHLY', 'QUARTERLY', 'CONSTRUCTION_MILESTONE', 'CUSTOM_MILESTONE'
+    total_installments: Optional[int] = 24
     start_date: Optional[date] = None
     down_payment_percentage: Optional[float] = 20.00
+    grace_period_days: Optional[int] = 15
+    custom_milestones: Optional[List[MilestoneItemConfig]] = None
 
 class InstallmentPaymentRequest(BaseModel):
     payment_amount: float
@@ -41,10 +53,33 @@ class InstallmentPaymentRequest(BaseModel):
     money_receipt_no: Optional[str] = None
     remarks: Optional[str] = None
 
+class InstallmentSurchargeCalculateRequest(BaseModel):
+    surcharge_percentage_monthly: Optional[float] = 2.00 # standard 2% per 30-day overdue
+
+class InstallmentAlertDispatchRequest(BaseModel):
+    installment_ids: List[int]
+    channels: List[str] = ["SMS", "WHATSAPP"]
+    custom_message: Optional[str] = None
+
+class InstallmentAlertLogResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    installment_id: int
+    booking_id: int
+    customer_id: int
+    channel: str
+    recipient_phone: Optional[str] = None
+    recipient_email: Optional[str] = None
+    message_content: str
+    status: str
+    sent_at: Optional[datetime] = None
+
 class CustomerInstallmentResponse(CustomerInstallmentBase):
     id: int
     booking_reference_no: Optional[str] = None
     customer_name: Optional[str] = None
+    customer_phone: Optional[str] = None
     unit_number: Optional[str] = None
     created_at: Optional[datetime] = None
 

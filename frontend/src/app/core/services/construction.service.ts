@@ -11,7 +11,11 @@ import {
   ConstructionMetrics,
   ConcreteCubeTest,
   CubeTestNotificationAlert,
-  SafetyNCR
+  SafetyNCR,
+  WBSNode,
+  BOQItemBudgetLock,
+  VariationOrder,
+  JointMeasurementSheet
 } from '../models/construction.model';
 
 @Injectable({
@@ -53,7 +57,7 @@ export class ConstructionService {
     return this.http.post<WorkOrder>(`${this.baseUrl}/work-orders`, payload);
   }
 
-  // 4. RA Bills
+  // 4. RA Bills & Digital Signatures
   getRABills(workOrderId?: number): Observable<RABill[]> {
     let params = new HttpParams();
     if (workOrderId) params = params.set('work_order_id', workOrderId);
@@ -66,6 +70,10 @@ export class ConstructionService {
 
   approveRABill(raBillId: number, payload: { action: string; approval_notes?: string }): Observable<RABill> {
     return this.http.put<RABill>(`${this.baseUrl}/ra-bills/${raBillId}/approval`, payload);
+  }
+
+  signRABill(raBillId: number, payload: { role: string; signatory_name: string; action: string; approval_notes?: string }): Observable<RABill> {
+    return this.http.post<RABill>(`${this.baseUrl}/ra-bills/${raBillId}/sign`, payload);
   }
 
   // 5. Operations Metrics
@@ -113,5 +121,66 @@ export class ConstructionService {
   verifySafetyNCR(ncrId: number, payload: { verdict: string; verification_notes?: string }): Observable<SafetyNCR> {
     return this.http.patch<SafetyNCR>(`${this.baseUrl}/safety-ncrs/${ncrId}/verify`, payload);
   }
-}
 
+  // 8. Work Breakdown Structure (WBS) & Activity Master
+  getWBSNodes(filters?: { project_id?: number; tower_id?: number; parent_id?: number; as_tree?: boolean }): Observable<WBSNode[]> {
+    let params = new HttpParams();
+    if (filters?.project_id) params = params.set('project_id', filters.project_id);
+    if (filters?.tower_id) params = params.set('tower_id', filters.tower_id);
+    if (filters?.parent_id !== undefined && filters?.parent_id !== null) params = params.set('parent_id', filters.parent_id);
+    if (filters?.as_tree) params = params.set('as_tree', 'true');
+    return this.http.get<WBSNode[]>(`${this.baseUrl}/wbs`, { params });
+  }
+
+  createWBSNode(payload: any): Observable<WBSNode> {
+    return this.http.post<WBSNode>(`${this.baseUrl}/wbs`, payload);
+  }
+
+  updateWBSProgress(wbsId: number, payload: { progress_percentage: number; actual_start_date?: string; actual_end_date?: string; status?: string; remarks?: string }): Observable<WBSNode> {
+    return this.http.put<WBSNode>(`${this.baseUrl}/wbs/${wbsId}/progress`, payload);
+  }
+
+  // 9. BOQ Hard Budget Locks & Variation Orders
+  getBOQBudgetLocks(filters?: { project_id?: number; tower_id?: number }): Observable<BOQItemBudgetLock[]> {
+    let params = new HttpParams();
+    if (filters?.project_id) params = params.set('project_id', filters.project_id);
+    if (filters?.tower_id) params = params.set('tower_id', filters.tower_id);
+    return this.http.get<BOQItemBudgetLock[]>(`${this.baseUrl}/boq/budget-locks`, { params });
+  }
+
+  checkBOQBudgetLock(payload: { boq_item_id: number; requested_quantity: number; requisition_memo_no?: string }): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/boq/check-budget-lock`, payload);
+  }
+
+  processBOQRequisition(payload: { boq_item_id: number; requested_quantity: number; requisition_memo_no?: string }): Observable<BOQItemBudgetLock> {
+    return this.http.post<BOQItemBudgetLock>(`${this.baseUrl}/boq/requisition`, payload);
+  }
+
+  getVariationOrders(filters?: { project_id?: number; boq_item_id?: number; status?: string }): Observable<VariationOrder[]> {
+    let params = new HttpParams();
+    if (filters?.project_id) params = params.set('project_id', filters.project_id);
+    if (filters?.boq_item_id) params = params.set('boq_item_id', filters.boq_item_id);
+    if (filters?.status) params = params.set('status', filters.status);
+    return this.http.get<VariationOrder[]>(`${this.baseUrl}/boq/variation-orders`, { params });
+  }
+
+  createVariationOrder(payload: any): Observable<VariationOrder> {
+    return this.http.post<VariationOrder>(`${this.baseUrl}/boq/variation-orders`, payload);
+  }
+
+  approveVariationOrder(voId: number, payload: { approved_by_pm: string; status: string; approval_notes?: string }): Observable<VariationOrder> {
+    return this.http.put<VariationOrder>(`${this.baseUrl}/boq/variation-orders/${voId}/approve`, payload);
+  }
+
+  // 10. Joint Measurement Sheet (JMS) Engine
+  getJointMeasurements(filters?: { work_order_id?: number; wbs_node_id?: number }): Observable<JointMeasurementSheet[]> {
+    let params = new HttpParams();
+    if (filters?.work_order_id) params = params.set('work_order_id', filters.work_order_id);
+    if (filters?.wbs_node_id) params = params.set('wbs_node_id', filters.wbs_node_id);
+    return this.http.get<JointMeasurementSheet[]>(`${this.baseUrl}/jms`, { params });
+  }
+
+  createJointMeasurement(payload: any): Observable<JointMeasurementSheet> {
+    return this.http.post<JointMeasurementSheet>(`${this.baseUrl}/jms`, payload);
+  }
+}

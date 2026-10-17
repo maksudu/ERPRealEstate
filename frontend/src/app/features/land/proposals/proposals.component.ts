@@ -23,7 +23,8 @@ import {
     CardContainerComponent,
     CustomInputComponent,
     CustomTextareaComponent,
-    CustomButtonComponent
+    CustomButtonComponent,
+    SearchableSelectComponent
   ],
   templateUrl: './proposals.component.html'
 })
@@ -48,12 +49,48 @@ export class ProposalsComponent implements OnInit {
   // Conversion Preview Signal
   calculatedSqft = signal<number>(0);
   calculatedDecimal = signal<number>(0);
+  calculatedBigha = signal<number>(0);
+
+  unitOptions = [
+    { value: 'KATHA', label: 'Katha (কাঠা - 720 Sq Ft)', subLabel: 'Urban residential standard in Dhaka' },
+    { value: 'DECIMAL', label: 'Decimal / Shotok (শতাংশ - 435.60 Sq Ft)', subLabel: 'Government registry record standard' },
+    { value: 'BIGHA', label: 'Bigha (বিঘা - 20 Katha / 14,400 Sq Ft)', subLabel: 'Township / large tract standard' },
+    { value: 'SQFT', label: 'Square Feet (বর্গফুট)', subLabel: 'Architectural FAR standard' }
+  ];
+
+  dealTypeOptions = [
+    { value: 'JOINT_VENTURE', label: 'Joint Venture (JV 50:50 / 60:40)', subLabel: 'Landowner partnership with unit allocation' },
+    { value: 'OUTRIGHT_PURCHASE', label: 'Outright Saf-Kabala Purchase', subLabel: 'Full direct land title acquisition' },
+    { value: 'REVENUE_SHARE', label: 'Gross Revenue Sharing', subLabel: 'Percentage of top-line sales proceeds' }
+  ];
+
+  statusOptions = [
+    { value: 'DRAFT_PROPOSAL', label: 'Draft Proposal', subLabel: 'Initial acquisition assessment' },
+    { value: 'LEGAL_VETTING', label: 'Legal Vetting & AC Land Search', subLabel: 'Title deed search & chain verification' },
+    { value: 'SURVEY_IN_PROGRESS', label: 'Survey In Progress', subLabel: 'Physical boundary demarcation & soil test' },
+    { value: 'JV_SIGNED', label: 'JV Deed Signed & Registered', subLabel: 'Partnership deed & PoA completed' },
+    { value: 'ACQUIRED', label: 'Fully Acquired', subLabel: 'Transferred to developer possession' }
+  ];
+
+  thanaOptions = [
+    { value: 'Gulshan', label: 'Gulshan Thana', subLabel: 'Gulshan Sub-Registry Office' },
+    { value: 'Banani', label: 'Banani Thana', subLabel: 'Gulshan Sub-Registry Office' },
+    { value: 'Dhanmondi', label: 'Dhanmondi Thana', subLabel: 'Mohammadpur Sub-Registry Office' },
+    { value: 'Tejgaon', label: 'Tejgaon Thana', subLabel: 'Tejgaon Sub-Registry Office' },
+    { value: 'Uttara', label: 'Uttara Thana', subLabel: 'Uttara Sub-Registry Office' },
+    { value: 'Purbachal', label: 'Purbachal / Rupganj', subLabel: 'Rupganj Sub-Registry Office' },
+    { value: 'Badda', label: 'Badda Thana', subLabel: 'Badda Sub-Registry Office' },
+    { value: 'Mirpur', label: 'Mirpur Thana', subLabel: 'Mirpur Sub-Registry Office' }
+  ];
 
   proposalForm: FormGroup = this.fb.group({
     project_code: ['', [Validators.required, Validators.pattern(/^[A-Za-z0-9_-]+$/)]],
     proposal_title: ['', Validators.required],
     mouza_name: ['', Validators.required],
     jl_number: ['', Validators.required],
+    upazila_thana: ['Gulshan', Validators.required],
+    district: ['Dhaka', Validators.required],
+    sub_registry_office: ['Gulshan Sub-Registry Office', Validators.required],
     input_unit: ['KATHA', Validators.required],
     input_value: [null, [Validators.required, Validators.min(0.01)]],
     deal_type: ['JOINT_VENTURE', Validators.required],
@@ -101,25 +138,37 @@ export class ProposalsComponent implements OnInit {
       const sqft = val * 720;
       this.calculatedSqft.set(sqft);
       this.calculatedDecimal.set(Number((sqft / 435.6).toFixed(4)));
+      this.calculatedBigha.set(Number((val / 20).toFixed(4)));
     } else if (unit === 'DECIMAL') {
       const sqft = val * 435.6;
       this.calculatedSqft.set(sqft);
       this.calculatedDecimal.set(val);
+      this.calculatedBigha.set(Number(((sqft / 720) / 20).toFixed(4)));
+    } else if (unit === 'BIGHA') {
+      const sqft = val * 14400;
+      this.calculatedSqft.set(sqft);
+      this.calculatedDecimal.set(Number((sqft / 435.6).toFixed(4)));
+      this.calculatedBigha.set(val);
     } else {
       this.calculatedSqft.set(val);
       this.calculatedDecimal.set(Number((val / 435.6).toFixed(4)));
+      this.calculatedBigha.set(Number(((val / 720) / 20).toFixed(4)));
     }
   }
 
   openCreateModal(): void {
     this.proposalForm.reset({
+      project_code: `PRJ-LND-${new Date().getFullYear()}-${Math.floor(10 + Math.random() * 90)}`,
+      upazila_thana: 'Gulshan',
+      district: 'Dhaka',
+      sub_registry_office: 'Gulshan Sub-Registry Office',
       input_unit: 'KATHA',
+      input_value: 15,
       deal_type: 'JOINT_VENTURE',
       status: 'DRAFT_PROPOSAL'
     });
     this.createError.set(null);
-    this.calculatedSqft.set(0);
-    this.calculatedDecimal.set(0);
+    this.onAreaInput();
     this.isCreateModalOpen.set(true);
   }
 
@@ -142,8 +191,11 @@ export class ProposalsComponent implements OnInit {
       proposal_title: f.proposal_title,
       mouza_name: f.mouza_name,
       jl_number: f.jl_number,
+      upazila_thana: f.upazila_thana,
+      district: f.district,
+      sub_registry_office: f.sub_registry_office,
       input_unit: f.input_unit,
-      input_value: f.input_value,
+      input_value: Number(f.input_value),
       deal_type: f.deal_type,
       status: f.status,
       location_description: f.location_description,

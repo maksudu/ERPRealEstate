@@ -1,0 +1,818 @@
+<app-card-container>
+  <!-- HEADER & COCKPIT CONTROLS -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-200 dark:border-slate-800">
+    <div class="flex items-center gap-3">
+      <div class="w-12 h-12 rounded-2xl bg-indigo-500/10 dark:bg-indigo-500/20 flex items-center justify-center text-2xl text-indigo-600 dark:text-indigo-400">
+        🛡️
+      </div>
+      <div>
+        <h2 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+          Maker-Checker Governance & Dynamic Approval Engine
+          <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700 dark:bg-indigo-900/60 dark:text-indigo-300">
+            Tier-1 Security
+          </span>
+        </h2>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          Configurable multi-tier authorization chains, financial threshold matrix, field-level audit trail, and multi-channel notification dispatch.
+        </p>
+      </div>
+    </div>
+
+    <!-- Quick Actions Header Buttons -->
+    <div class="flex items-center gap-2.5">
+      <app-custom-button variant="outline" (btnClick)="openCreatePolicyModal()">
+        <span>⚙️</span> Configure Policy Chain
+      </app-custom-button>
+      <app-custom-button variant="primary" (btnClick)="openCreateRequestModal()">
+        <span>+</span> Raise Approval Request
+      </app-custom-button>
+    </div>
+  </div>
+
+  <!-- EXECUTIVE KPI STATS STRIP -->
+  @if (metrics(); as m) {
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 my-6">
+      <div class="p-4 rounded-xl border border-amber-200/60 dark:border-amber-900/40 bg-amber-500/5 dark:bg-amber-500/10">
+        <span class="text-[11px] font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider block">Pending Action</span>
+        <p class="text-2xl font-bold font-mono text-amber-700 dark:text-amber-300 mt-1">{{ m.total_pending_requests }}</p>
+        <span class="text-[10px] text-slate-400 mt-0.5 block">Awaiting sign-off</span>
+      </div>
+
+      <div class="p-4 rounded-xl border border-emerald-200/60 dark:border-emerald-900/40 bg-emerald-500/5 dark:bg-emerald-500/10">
+        <span class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block">Authorized (Done)</span>
+        <p class="text-2xl font-bold font-mono text-emerald-700 dark:text-emerald-300 mt-1">{{ m.total_approved_requests }}</p>
+        <span class="text-[10px] text-slate-400 mt-0.5 block">Active documents</span>
+      </div>
+
+      <div class="p-4 rounded-xl border border-rose-200/60 dark:border-rose-900/40 bg-rose-500/5 dark:bg-rose-500/10">
+        <span class="text-[11px] font-semibold text-rose-600 dark:text-rose-400 uppercase tracking-wider block">Rejected</span>
+        <p class="text-2xl font-bold font-mono text-rose-700 dark:text-rose-300 mt-1">{{ m.total_rejected_requests }}</p>
+        <span class="text-[10px] text-slate-400 mt-0.5 block">Halted documents</span>
+      </div>
+
+      <div class="p-4 rounded-xl border border-purple-200/60 dark:border-purple-900/40 bg-purple-500/5 dark:bg-purple-500/10">
+        <span class="text-[11px] font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wider block">Correction Needed</span>
+        <p class="text-2xl font-bold font-mono text-purple-700 dark:text-purple-300 mt-1">{{ m.total_correction_requests }}</p>
+        <span class="text-[10px] text-slate-400 mt-0.5 block">Returned to maker</span>
+      </div>
+
+      <div class="p-4 rounded-xl border border-blue-200/60 dark:border-blue-900/40 bg-blue-500/5 dark:bg-blue-500/10">
+        <span class="text-[11px] font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider block">Avg SLA Response</span>
+        <p class="text-2xl font-bold font-mono text-blue-700 dark:text-blue-300 mt-1">{{ m.average_sla_hours }}h</p>
+        <span class="text-[10px] text-slate-400 mt-0.5 block">Target: &lt; 24 Hours</span>
+      </div>
+
+      <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-850">
+        <span class="text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider block">Active Policies</span>
+        <p class="text-2xl font-bold font-mono text-slate-800 dark:text-slate-200 mt-1">{{ m.active_policies_count }}</p>
+        <span class="text-[10px] text-slate-400 mt-0.5 block">Configured chains</span>
+      </div>
+    </div>
+  }
+
+  <!-- TAB NAVIGATION BAR -->
+  <div class="flex items-center gap-1.5 overflow-x-auto pb-4 border-b border-slate-200 dark:border-slate-800 no-scrollbar">
+    <button
+      (click)="setTab('inbox')"
+      class="px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-2"
+      [ngClass]="activeTab() === 'inbox' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'">
+      <span>📥</span>
+      <span>Approvals Inbox & Execution</span>
+      <span class="px-1.5 py-0.2 rounded-full text-[10px]" [ngClass]="activeTab() === 'inbox' ? 'bg-indigo-700 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'">
+        {{ filteredRequests().length }}
+      </span>
+    </button>
+
+    <button
+      (click)="setTab('policies')"
+      class="px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-2"
+      [ngClass]="activeTab() === 'policies' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'">
+      <span>⚙️</span>
+      <span>Configurable Policy Chains (Thresholds)</span>
+      <span class="px-1.5 py-0.2 rounded-full text-[10px]" [ngClass]="activeTab() === 'policies' ? 'bg-indigo-700 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'">
+        {{ policies().length }}
+      </span>
+    </button>
+
+    <button
+      (click)="setTab('audit_trail')"
+      class="px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-2"
+      [ngClass]="activeTab() === 'audit_trail' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'">
+      <span>📜</span>
+      <span>Field-Level Audit Trail</span>
+      <span class="px-1.5 py-0.2 rounded-full text-[10px]" [ngClass]="activeTab() === 'audit_trail' ? 'bg-indigo-700 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'">
+        {{ allAuditLogs().length }}
+      </span>
+    </button>
+
+    <button
+      (click)="setTab('notifications')"
+      class="px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-2"
+      [ngClass]="activeTab() === 'notifications' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'">
+      <span>🔔</span>
+      <span>Multi-Channel Notification Dispatch</span>
+      <span class="px-1.5 py-0.2 rounded-full text-[10px]" [ngClass]="activeTab() === 'notifications' ? 'bg-indigo-700 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'">
+        {{ notifications().length }}
+      </span>
+    </button>
+  </div>
+
+  <!-- TAB CONTENT -->
+  <div class="mt-6">
+    <!-- ========================================== -->
+    <!-- TAB 1: MAKER-CHECKER APPROVALS INBOX -->
+    <!-- ========================================== -->
+    @if (activeTab() === 'inbox') {
+      <div class="space-y-4">
+        <!-- Search & Filter Controls -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850">
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="w-48">
+              <app-searchable-select
+                label="Document Type"
+                [options]="docTypeOptions()"
+                [allowCreateNew]="true"
+                (selectionChange)="filterDocType.set($event?.value || '')"
+                placeholder="All Document Types">
+              </app-searchable-select>
+            </div>
+
+            <div class="w-44">
+              <app-searchable-select
+                label="Status"
+                [options]="statusOptions()"
+                [allowCreateNew]="false"
+                (selectionChange)="filterStatus.set($event?.value || '')"
+                placeholder="All Statuses">
+              </app-searchable-select>
+            </div>
+          </div>
+
+          <div class="w-full md:w-72">
+            <app-custom-input
+              label="Search Requests"
+              placeholder="Search reference, number, maker..."
+              [(ngModel)]="searchQuery">
+            </app-custom-input>
+          </div>
+        </div>
+
+        <!-- Requests Cards List -->
+        <div class="space-y-4">
+          @for (req of filteredRequests(); track req.id) {
+            <div class="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 shadow-xs hover:border-indigo-400 dark:hover:border-indigo-600 transition-all">
+              <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+                <div class="flex items-center gap-3">
+                  <span class="font-mono text-sm font-bold text-indigo-600 dark:text-indigo-400">{{ req.request_number }}</span>
+                  <span class="px-2.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                    Ref: {{ req.document_reference_no }}
+                  </span>
+                  <span
+                    class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
+                    [ngClass]="{
+                      'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300': req.status === 'PENDING',
+                      'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300': req.status === 'APPROVED',
+                      'bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300': req.status === 'REJECTED',
+                      'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300': req.status === 'CORRECTION_REQUESTED'
+                    }">
+                    ● {{ req.status }}
+                  </span>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <app-custom-button variant="outline" size="sm" (btnClick)="viewRequestDetail(req)">
+                    <span>👁️</span> Timeline & Audit
+                  </app-custom-button>
+                  @if (req.status === 'PENDING') {
+                    <app-custom-button variant="primary" size="sm" (btnClick)="openActionModal(req)">
+                      <span>✍️</span> Authorize Action
+                    </app-custom-button>
+                  }
+                </div>
+              </div>
+
+              <!-- Document Summary & Financial Threshold Row -->
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                <div>
+                  <span class="text-[10px] uppercase font-bold text-slate-400 block">Document Type & Category:</span>
+                  <p class="font-semibold text-sm text-slate-800 dark:text-slate-200 mt-0.5">
+                    {{ req.document_type.replace('_', ' ') }}
+                  </p>
+                  <p class="text-xs text-slate-500 mt-0.5">
+                    Maker: <span class="font-medium text-slate-700 dark:text-slate-300">{{ req.maker_user_name }}</span>
+                  </p>
+                </div>
+
+                <div>
+                  <span class="text-[10px] uppercase font-bold text-slate-400 block">Financial Scope / Percentage:</span>
+                  <p class="text-sm font-bold font-mono text-indigo-600 dark:text-indigo-400 mt-0.5">
+                    @if (req.document_type === 'DISCOUNT_APPROVAL') {
+                      {{ req.financial_amount }}% Discount Rate
+                    } @else {
+                      BDT {{ req.financial_amount | number:'1.2-2' }}
+                    }
+                  </p>
+                  <p class="text-xs text-slate-500 mt-0.5">
+                    Tiers Required: <span class="font-semibold text-slate-700 dark:text-slate-300">{{ req.total_tiers }} Levels</span>
+                  </p>
+                </div>
+
+                <div>
+                  <span class="text-[10px] uppercase font-bold text-slate-400 block">Maker Justification:</span>
+                  <p class="text-xs text-slate-600 dark:text-slate-400 mt-0.5 italic line-clamp-2">
+                    "{{ req.maker_notes || 'Standard document submitted for maker-checker governance review.' }}"
+                  </p>
+                </div>
+              </div>
+
+              <!-- Sequential Multi-Tier Stepper Progress Bar -->
+              @if (req.steps && req.steps.length > 0) {
+                <div class="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800">
+                  <span class="text-[10px] uppercase font-bold text-slate-400 block mb-2">Sequential Approval Chain:</span>
+                  <div class="flex flex-wrap items-center gap-2">
+                    @for (step of req.steps; track step.id; let i = $index) {
+                      <div
+                        class="flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs"
+                        [ngClass]="{
+                          'border-emerald-400 bg-emerald-50 text-emerald-800 dark:bg-emerald-900/30 dark:border-emerald-700 dark:text-emerald-300 font-semibold': step.status === 'APPROVED',
+                          'border-amber-400 bg-amber-50 text-amber-800 dark:bg-amber-900/30 dark:border-amber-700 dark:text-amber-300 font-bold shadow-xs': step.status === 'PENDING' && req.current_tier === step.tier_level,
+                          'border-rose-400 bg-rose-50 text-rose-800 dark:bg-rose-900/30 dark:border-rose-700 dark:text-rose-300': step.status === 'REJECTED',
+                          'border-purple-400 bg-purple-50 text-purple-800 dark:bg-purple-900/30 dark:border-purple-700 dark:text-purple-300': step.status === 'CORRECTION_REQUESTED',
+                          'border-slate-200 bg-slate-50 text-slate-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-600': step.status === 'PENDING' && req.current_tier < step.tier_level
+                        }">
+                        <span>
+                          @if (step.status === 'APPROVED') { ✓ }
+                          @else if (step.status === 'PENDING' && req.current_tier === step.tier_level) { ⌛ }
+                          @else if (step.status === 'REJECTED') { ✕ }
+                          @else if (step.status === 'CORRECTION_REQUESTED') { ↺ }
+                          @else { {{ step.tier_level }} }
+                        </span>
+                        <span>{{ step.tier_name }}</span>
+                        <span class="text-[10px] font-mono text-slate-500">[{{ step.required_role }}]</span>
+                      </div>
+
+                      @if (i < req.steps.length - 1) {
+                        <span class="text-slate-300 dark:text-slate-700 text-xs font-bold">→</span>
+                      }
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          } @empty {
+            <div class="p-12 text-center rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40">
+              <span class="text-3xl">🛡️</span>
+              <p class="text-sm font-semibold text-slate-700 dark:text-slate-300 mt-2">No approval requests found</p>
+              <p class="text-xs text-slate-400 mt-1">Adjust your filters or submit a new document for Maker-Checker review.</p>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- ========================================== -->
+    <!-- TAB 2: CONFIGURABLE APPROVAL CHAINS -->
+    <!-- ========================================== -->
+    @if (activeTab() === 'policies') {
+      <div class="space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h3 class="text-base font-semibold text-slate-800 dark:text-slate-200">
+              Active Enterprise Governance Policies & Tiered Thresholds
+            </h3>
+            <p class="text-xs text-slate-500">
+              Rules dynamically route approval chains based on document type, monetary value, or discount percentages.
+            </p>
+          </div>
+          <app-custom-button variant="primary" (btnClick)="openCreatePolicyModal()">
+            <span>+</span> New Approval Chain Policy
+          </app-custom-button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          @for (pol of policies(); track pol.id) {
+            <div class="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 shadow-xs">
+              <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                <div>
+                  <span class="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400">{{ pol.policy_code }}</span>
+                  <h4 class="font-bold text-sm text-slate-900 dark:text-white">{{ pol.policy_name }}</h4>
+                </div>
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                  Active Chain
+                </span>
+              </div>
+
+              <p class="text-xs text-slate-500 mt-2">
+                {{ pol.description || 'Configurable multi-tier governance rules.' }}
+              </p>
+
+              <!-- Rules Matrix List -->
+              <div class="mt-4 space-y-2">
+                <span class="text-[10px] uppercase font-bold text-slate-400 block">Configured Tiers & Authority Thresholds:</span>
+                @for (r of pol.rules; track r.id) {
+                  <div class="p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                    <div class="flex items-center gap-2">
+                      <span class="w-5 h-5 rounded-full bg-indigo-600 text-white font-bold flex items-center justify-center text-[10px]">
+                        {{ r.tier_level }}
+                      </span>
+                      <span class="font-semibold text-slate-800 dark:text-slate-200">{{ r.tier_name }}</span>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                      <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+                        {{ r.required_role }}
+                      </span>
+                      <span class="font-mono text-slate-600 dark:text-slate-400 text-[11px]">
+                        @if (pol.document_type === 'DISCOUNT_APPROVAL') {
+                          {{ r.min_threshold }}% - {{ r.max_threshold ? r.max_threshold + '%' : 'Above' }}
+                        } @else {
+                          BDT {{ r.min_threshold | number:'1.0-0' }} - {{ r.max_threshold ? (r.max_threshold | number:'1.0-0') : 'Unbounded' }}
+                        }
+                      </span>
+                      <span class="text-[10px] text-slate-400">SLA: {{ r.sla_hours }}h</span>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- ========================================== -->
+    <!-- TAB 3: FIELD-LEVEL AUDIT TRAIL -->
+    <!-- ========================================== -->
+    @if (activeTab() === 'audit_trail') {
+      <div class="space-y-4">
+        <div>
+          <h3 class="text-base font-semibold text-slate-800 dark:text-slate-200">
+            Immutable Governance Audit Trail & Timeline Logs
+          </h3>
+          <p class="text-xs text-slate-500">
+            Non-repudiation log capturing creator, reviewer, exact timestamps, client IP addresses, and SHA-256 verification stamps.
+          </p>
+        </div>
+
+        <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead class="bg-slate-50 dark:bg-slate-850 text-slate-600 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800">
+              <tr>
+                <th class="py-3 px-4">Timestamp & IP</th>
+                <th class="py-3 px-4">Document Ref</th>
+                <th class="py-3 px-4">Action</th>
+                <th class="py-3 px-4">Performed By</th>
+                <th class="py-3 px-4">Audit Log Comments</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
+              @for (log of allAuditLogs(); track log.id) {
+                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
+                  <td class="py-3 px-4 font-mono text-[11px] text-slate-500">
+                    {{ log.timestamp || 'Just now' }}
+                    <span class="block text-[10px] text-slate-400">{{ log.ip_address || '127.0.0.1' }}</span>
+                  </td>
+                  <td class="py-3 px-4 font-semibold text-slate-800 dark:text-slate-200">
+                    {{ log.request_ref || ('REQ-' + log.request_id) }}
+                    <span class="block text-[10px] text-slate-400 uppercase">{{ log.doc_type?.replace('_', ' ') || 'Document' }}</span>
+                  </td>
+                  <td class="py-3 px-4">
+                    <span
+                      class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider"
+                      [ngClass]="{
+                        'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300': log.action === 'APPROVED' || log.action === 'FINAL_APPROVED',
+                        'bg-rose-100 text-rose-800 dark:bg-rose-900/50 dark:text-rose-300': log.action === 'REJECTED',
+                        'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300': log.action === 'CORRECTION_REQUESTED',
+                        'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300': log.action === 'SUBMITTED'
+                      }">
+                      {{ log.action }}
+                    </span>
+                  </td>
+                  <td class="py-3 px-4 font-medium text-slate-700 dark:text-slate-300">
+                    {{ log.performed_by_name }}
+                  </td>
+                  <td class="py-3 px-4 text-slate-600 dark:text-slate-400 text-xs">
+                    {{ log.comment || 'Audit log event captured successfully.' }}
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="5" class="py-8 text-center text-slate-400 text-xs">
+                    No audit records logged yet.
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    <!-- ========================================== -->
+    <!-- TAB 4: MULTI-CHANNEL NOTIFICATIONS -->
+    <!-- ========================================== -->
+    @if (activeTab() === 'notifications') {
+      <div class="space-y-4">
+        <div>
+          <h3 class="text-base font-semibold text-slate-800 dark:text-slate-200">
+            Multi-Channel Notification Dispatch Queue (Web In-App, Mobile Push, Email)
+          </h3>
+          <p class="text-xs text-slate-500">
+            Instant alerts broadcast across channels upon approval submission, escalation, rejection, or completion.
+          </p>
+        </div>
+
+        <div class="space-y-3">
+          @for (notif of notifications(); track notif.id) {
+            <div
+              class="p-4 rounded-xl border transition-all flex items-start justify-between gap-3"
+              [ngClass]="notif.status === 'READ' ? 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850' : 'border-indigo-300 dark:border-indigo-700 bg-indigo-50/20 dark:bg-indigo-950/20'">
+              <div class="flex items-start gap-3">
+                <span class="p-2 rounded-lg bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 text-sm">
+                  @if (notif.channel === 'WEB') { 💻 }
+                  @else if (notif.channel === 'MOBILE_PUSH') { 📱 }
+                  @else { 📧 }
+                </span>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="font-bold text-xs text-slate-900 dark:text-white">{{ notif.title }}</span>
+                    <span class="px-1.5 py-0.2 rounded text-[9px] font-mono uppercase bg-slate-100 dark:bg-slate-800 text-slate-500">
+                      {{ notif.channel }}
+                    </span>
+                    @if (notif.status === 'DELIVERED') {
+                      <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                    }
+                  </div>
+                  <p class="text-xs text-slate-600 dark:text-slate-400 mt-1">{{ notif.body }}</p>
+                  <span class="text-[10px] text-slate-400 mt-1 block">{{ notif.created_at || 'Just now' }}</span>
+                </div>
+              </div>
+
+              @if (notif.status !== 'READ') {
+                <button
+                  (click)="markNotificationAsRead(notif.id)"
+                  class="text-[11px] font-semibold text-indigo-600 hover:text-indigo-700 cursor-pointer">
+                  Mark Read
+                </button>
+              }
+            </div>
+          } @empty {
+            <div class="p-8 text-center text-slate-400 text-xs">
+              No notifications dispatched yet.
+            </div>
+          }
+        </div>
+      </div>
+    }
+  </div>
+</app-card-container>
+
+<!-- ========================================== -->
+<!-- MODAL: REQUEST DETAIL & TIMELINE AUDIT -->
+<!-- ========================================== -->
+@if (isDetailModalOpen() && selectedRequest(); as req) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-2xl w-full border border-slate-200 dark:border-slate-800 shadow-2xl p-6 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
+        <div>
+          <span class="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400">{{ req.request_number }}</span>
+          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 mt-0.5">
+            Document Review: {{ req.document_reference_no }}
+          </h3>
+        </div>
+        <button (click)="isDetailModalOpen.set(false)" class="text-slate-400 hover:text-slate-600 text-lg cursor-pointer">✕</button>
+      </div>
+
+      <!-- Overview Grid -->
+      <div class="grid grid-cols-2 gap-3 my-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-850 text-xs">
+        <div>
+          <span class="text-slate-400 block text-[10px] uppercase font-bold">Document Category:</span>
+          <span class="font-semibold text-slate-800 dark:text-slate-200">{{ req.document_type }}</span>
+        </div>
+        <div>
+          <span class="text-slate-400 block text-[10px] uppercase font-bold">Financial Value:</span>
+          <span class="font-mono font-bold text-indigo-600 dark:text-indigo-400">
+            @if (req.document_type === 'DISCOUNT_APPROVAL') {
+              {{ req.financial_amount }}% Discount
+            } @else {
+              BDT {{ req.financial_amount | number:'1.2-2' }}
+            }
+          </span>
+        </div>
+        <div>
+          <span class="text-slate-400 block text-[10px] uppercase font-bold">Maker / Submitter:</span>
+          <span class="font-medium text-slate-700 dark:text-slate-300">{{ req.maker_user_name }}</span>
+        </div>
+        <div>
+          <span class="text-slate-400 block text-[10px] uppercase font-bold">Overall Status:</span>
+          <span class="font-bold text-indigo-600">{{ req.status }} (Tier {{ req.current_tier }} of {{ req.total_tiers }})</span>
+        </div>
+      </div>
+
+      <!-- Step Timeline -->
+      <div class="space-y-3 mt-4">
+        <h4 class="text-xs font-bold uppercase text-slate-400">Tier Review Progression:</h4>
+        @for (step of req.steps; track step.id) {
+          <div class="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 text-xs space-y-1.5">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-slate-900 dark:text-white">Tier {{ step.tier_level }}: {{ step.tier_name }}</span>
+              <span
+                class="px-2 py-0.5 rounded text-[10px] font-bold"
+                [ngClass]="{
+                  'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300': step.status === 'APPROVED',
+                  'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300': step.status === 'PENDING',
+                  'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300': step.status === 'REJECTED'
+                }">
+                {{ step.status }}
+              </span>
+            </div>
+            <div class="text-[11px] text-slate-500 flex justify-between">
+              <span>Required Role: <strong class="text-slate-700 dark:text-slate-300">{{ step.required_role }}</strong></span>
+              @if (step.action_timestamp) {
+                <span>Signed: {{ step.action_timestamp }}</span>
+              }
+            </div>
+            @if (step.comments) {
+              <p class="text-[11px] italic text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-900 p-2 rounded">
+                "{{ step.comments }}"
+              </p>
+            }
+            @if (step.verification_hash) {
+              <div class="text-[9px] font-mono text-emerald-600 dark:text-emerald-400 break-all bg-emerald-50/50 dark:bg-emerald-950/20 p-1.5 rounded">
+                SHA-256 Stamp: {{ step.verification_hash }}
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="flex justify-end gap-2.5 mt-6 pt-4 border-t border-slate-200 dark:border-slate-800">
+        <app-custom-button variant="outline" (btnClick)="isDetailModalOpen.set(false)">
+          Close
+        </app-custom-button>
+        @if (req.status === 'PENDING') {
+          <app-custom-button variant="primary" (btnClick)="isDetailModalOpen.set(false); openActionModal(req)">
+            Authorize Action
+          </app-custom-button>
+        }
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ========================================== -->
+<!-- MODAL: AUTHORIZER ACTION (APPROVE/REJECT) -->
+<!-- ========================================== -->
+@if (isActionModalOpen() && selectedRequest(); as req) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full border border-slate-200 dark:border-slate-800 shadow-2xl p-6">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
+        <div>
+          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>✍️</span> Authorize Document Action
+          </h3>
+          <p class="text-xs text-slate-400 font-mono">{{ req.document_reference_no }} (Tier {{ req.current_tier }})</p>
+        </div>
+        <button (click)="isActionModalOpen.set(false)" class="text-slate-400 hover:text-slate-600 text-lg cursor-pointer">✕</button>
+      </div>
+
+      <form [formGroup]="actionForm" (ngSubmit)="submitAction()" class="space-y-4 mt-4">
+        <!-- Action Selector -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">
+            Select Maker-Checker Decision:
+          </label>
+          <div class="grid grid-cols-3 gap-2">
+            <button
+              type="button"
+              (click)="actionForm.patchValue({ action: 'APPROVE' })"
+              class="p-3 rounded-xl border text-center transition-all cursor-pointer font-bold text-xs"
+              [ngClass]="actionForm.value.action === 'APPROVE' ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300' : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'">
+              ✓ Approve & Sign
+            </button>
+            <button
+              type="button"
+              (click)="actionForm.patchValue({ action: 'REJECT' })"
+              class="p-3 rounded-xl border text-center transition-all cursor-pointer font-bold text-xs"
+              [ngClass]="actionForm.value.action === 'REJECT' ? 'border-rose-500 bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-300' : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'">
+              ✕ Reject
+            </button>
+            <button
+              type="button"
+              (click)="actionForm.patchValue({ action: 'REQUEST_CORRECTION' })"
+              class="p-3 rounded-xl border text-center transition-all cursor-pointer font-bold text-xs"
+              [ngClass]="actionForm.value.action === 'REQUEST_CORRECTION' ? 'border-purple-500 bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300' : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'">
+              ↺ Request Edit
+            </button>
+          </div>
+        </div>
+
+        <app-custom-input
+          label="Authorizer Full Name / Executive Title"
+          formControlName="approver_name"
+          placeholder="e.g. Nasir Uddin (Head of Sales)">
+        </app-custom-input>
+
+        <app-custom-textarea
+          label="Review Notes & Approval / Rejection Rationale"
+          formControlName="comments"
+          placeholder="State commercial or technical justification (Mandatory for non-repudiation audit log)">
+        </app-custom-textarea>
+
+        <div class="flex justify-end gap-2.5 pt-4 border-t border-slate-200 dark:border-slate-800">
+          <app-custom-button variant="outline" type="button" (btnClick)="isActionModalOpen.set(false)">
+            Cancel
+          </app-custom-button>
+          <app-custom-button
+            [variant]="actionForm.value.action === 'REJECT' ? 'danger' : 'primary'"
+            type="submit"
+            [disabled]="actionForm.invalid">
+            Execute Decision & Seal Hash
+          </app-custom-button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- ========================================== -->
+<!-- MODAL: RAISE NEW APPROVAL REQUEST (MAKER) -->
+<!-- ========================================== -->
+@if (isCreateRequestModalOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-xl w-full border border-slate-200 dark:border-slate-800 shadow-2xl p-6">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
+        <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span>📝</span> Submit Document for Maker-Checker Review
+        </h3>
+        <button (click)="isCreateRequestModalOpen.set(false)" class="text-slate-400 hover:text-slate-600 text-lg cursor-pointer">✕</button>
+      </div>
+
+      <form [formGroup]="newRequestForm" (ngSubmit)="submitNewRequest()" class="space-y-4 mt-4">
+        <app-searchable-select
+          label="Document Type"
+          [options]="docTypeOptions()"
+          formControlName="document_type"
+          [allowCreateNew]="true"
+          placeholder="Select Document Type">
+        </app-searchable-select>
+
+        <app-custom-input
+          label="Document Reference Number"
+          formControlName="document_reference_no"
+          placeholder="e.g. BK-2026-0095, PO-2026-0045, CAN-2026-0012">
+        </app-custom-input>
+
+        <div class="grid grid-cols-2 gap-3">
+          <app-searchable-select
+            label="Project Context"
+            [options]="projectOptions()"
+            formControlName="project_id"
+            [allowCreateNew]="false">
+          </app-searchable-select>
+
+          <app-custom-input
+            label="Financial Amount (BDT) or Discount %"
+            type="number"
+            formControlName="financial_amount"
+            placeholder="e.g. 5.5 for discount or 1500000 for PO">
+          </app-custom-input>
+        </div>
+
+        <app-custom-input
+          label="Maker Submitter Name"
+          formControlName="maker_user_name"
+          placeholder="Your full name and employee ID">
+        </app-custom-input>
+
+        <app-custom-textarea
+          label="Executive Summary & Justification"
+          formControlName="maker_notes"
+          placeholder="Provide background context for reviewing authorizers">
+        </app-custom-textarea>
+
+        <div class="flex justify-end gap-2.5 pt-4 border-t border-slate-200 dark:border-slate-800">
+          <app-custom-button variant="outline" type="button" (btnClick)="isCreateRequestModalOpen.set(false)">
+            Cancel
+          </app-custom-button>
+          <app-custom-button variant="primary" type="submit" [disabled]="newRequestForm.invalid">
+            Submit for Chain Review
+          </app-custom-button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- ========================================== -->
+<!-- MODAL: CONFIGURE APPROVAL CHAIN POLICY -->
+<!-- ========================================== -->
+@if (isCreatePolicyModalOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-2xl w-full border border-slate-200 dark:border-slate-800 shadow-2xl p-6 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
+        <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span>⚙️</span> Configure Dynamic Approval Chain Policy
+        </h3>
+        <button (click)="isCreatePolicyModalOpen.set(false)" class="text-slate-400 hover:text-slate-600 text-lg cursor-pointer">✕</button>
+      </div>
+
+      <form [formGroup]="newPolicyForm" (ngSubmit)="submitNewPolicy()" class="space-y-4 mt-4">
+        <div class="grid grid-cols-2 gap-3">
+          <app-custom-input
+            label="Policy Unique Code"
+            formControlName="policy_code"
+            placeholder="e.g. POL_SPECIAL_DISCOUNT">
+          </app-custom-input>
+
+          <app-custom-input
+            label="Policy Descriptive Name"
+            formControlName="policy_name"
+            placeholder="e.g. High-Value Apartment Discount Policy">
+          </app-custom-input>
+        </div>
+
+        <app-searchable-select
+          label="Document Type Governed"
+          [options]="docTypeOptions()"
+          formControlName="document_type"
+          [allowCreateNew]="true">
+        </app-searchable-select>
+
+        <app-custom-textarea
+          label="Policy Description"
+          formControlName="description"
+          placeholder="Describe governance rules and escalation criteria">
+        </app-custom-textarea>
+
+        <!-- Tier Rules Array -->
+        <div class="pt-4 border-t border-slate-200 dark:border-slate-800 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase text-slate-500">Tier Review Sequence:</span>
+            <app-custom-button variant="outline" size="sm" type="button" (btnClick)="addPolicyRule()">
+              <span>+</span> Add Tier
+            </app-custom-button>
+          </div>
+
+          <div formArrayName="rules" class="space-y-3">
+            @for (ruleCtrl of policyRulesArray.controls; track $index; let i = $index) {
+              <div [formGroupName]="i" class="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850 space-y-3">
+                <div class="flex items-center justify-between">
+                  <span class="font-bold text-xs text-indigo-600 dark:text-indigo-400">Tier {{ i + 1 }} Rule Configuration</span>
+                  @if (policyRulesArray.length > 1) {
+                    <button type="button" (click)="removePolicyRule(i)" class="text-rose-500 hover:text-rose-700 text-xs cursor-pointer font-bold">Remove</button>
+                  }
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                  <app-custom-input
+                    label="Tier Label"
+                    formControlName="tier_name"
+                    placeholder="e.g. Sales Manager Approval">
+                  </app-custom-input>
+
+                  <app-searchable-select
+                    label="Required Approver Role"
+                    [options]="roleOptions()"
+                    formControlName="required_role"
+                    [allowCreateNew]="true">
+                  </app-searchable-select>
+                </div>
+
+                <div class="grid grid-cols-3 gap-3">
+                  <app-custom-input
+                    label="Min Threshold (Amount or %)"
+                    type="number"
+                    formControlName="min_threshold">
+                  </app-custom-input>
+
+                  <app-custom-input
+                    label="Max Threshold (Optional)"
+                    type="number"
+                    formControlName="max_threshold">
+                  </app-custom-input>
+
+                  <app-custom-input
+                    label="SLA Deadline (Hours)"
+                    type="number"
+                    formControlName="sla_hours">
+                  </app-custom-input>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-2.5 pt-4 border-t border-slate-200 dark:border-slate-800">
+          <app-custom-button variant="outline" type="button" (btnClick)="isCreatePolicyModalOpen.set(false)">
+            Cancel
+          </app-custom-button>
+          <app-custom-button variant="primary" type="submit" [disabled]="newPolicyForm.invalid">
+            Save Policy Chain
+          </app-custom-button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

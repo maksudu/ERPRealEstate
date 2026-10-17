@@ -1,0 +1,16 @@
+/* Custom styling for Construction WBS Tree & BOQ Budget Locks */
+.tree-node-connector {
+  position: relative;
+}
+.tree-node-connector::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -20px;
+  bottom: 0;
+  width: 2px;
+  background-color: #cbd5e1;
+}
+.dark .tree-node-connector::before {
+  background-color: #334155;
+}
