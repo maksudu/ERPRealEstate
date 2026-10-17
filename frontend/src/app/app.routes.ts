@@ -211,6 +211,31 @@ export const routes: Routes = [
     path: 'settings/data-import',
     loadComponent: () => import('./features/settings/data-import/data-import.component').then(m => m.DataImportComponent),
     title: 'Legacy Excel Data Import & Migration - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'hrms/dashboard',
+    loadComponent: () => import('./features/hrms/dashboard/hrms-dashboard.component').then(m => m.HrmsDashboardComponent),
+    title: 'HRMS Cockpit & Labour Overview - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'hrms/employees',
+    loadComponent: () => import('./features/hrms/employees/employee-list.component').then(m => m.EmployeeListComponent),
+    title: 'Employee Directory & 360 Profiles - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'hrms/muster-roll',
+    loadComponent: () => import('./features/hrms/muster-roll/muster-roll.component').then(m => m.MusterRollComponent),
+    title: 'Daily Site Labour Muster Roll - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'hrms/payroll',
+    loadComponent: () => import('./features/hrms/payroll/payroll-management.component').then(m => m.PayrollManagementComponent),
+    title: 'Monthly Payroll & GL Disbursal - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'hrms/attendance',
+    loadComponent: () => import('./features/hrms/attendance/attendance-management.component').then(m => m.AttendanceManagementComponent),
+    title: 'Attendance Punches & Leave Workflow - Bangladesh Real Estate ERP'
   }
     ]
   },

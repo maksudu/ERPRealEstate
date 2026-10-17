@@ -48,6 +48,31 @@ async def get_current_user(
     return user
 
 
+async def get_current_user_optional(
+    db: AsyncSession = Depends(get_db),
+    token: Optional[str] = Depends(OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_PREFIX}/auth/login", auto_error=False))
+) -> Optional[User]:
+    if not token:
+        return None
+    try:
+        payload = decode_token(token)
+        username: str = payload.get("sub")
+        if not username:
+            return None
+        stmt = (
+            select(User)
+            .options(
+                selectinload(User.organization),
+                selectinload(User.project_assignments)
+            )
+            .where(User.username == username, User.is_active == True)
+        )
+        result = await db.execute(stmt)
+        return result.scalar_one_or_none()
+    except Exception:
+        return None
+
+
 async def require_group_admin(
     current_user: User = Depends(get_current_user)
 ) -> User:

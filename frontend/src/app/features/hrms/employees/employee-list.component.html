@@ -1,0 +1,395 @@
+<div class="space-y-6">
+  <!-- Top Header with Actions -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Employee Directory & Workforce Master</h1>
+      <p class="text-sm text-slate-500 dark:text-slate-400">Head-office corporate executives, engineers, project managers, and site supervisors.</p>
+    </div>
+
+    <button 
+      (click)="openAddModal()" 
+      class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm transition-all shadow-md shadow-indigo-600/20 active:scale-95 cursor-pointer">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+      <span>Add New Employee</span>
+    </button>
+  </div>
+
+  <!-- Filters & Workforce Tabs Bar -->
+  <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <!-- Workforce Segment Tabs -->
+    <div class="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl">
+      <button 
+        (click)="setTab('ALL')" 
+        [class]="activeTab() === 'ALL' ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 font-bold shadow-xs' : 'text-slate-600 dark:text-slate-400 font-medium'"
+        class="px-3.5 py-1.5 rounded-lg text-xs transition-all cursor-pointer">
+        All Workforce ({{ hrmsService.employees().length }})
+      </button>
+
+      <button 
+        (click)="setTab('CORPORATE')" 
+        [class]="activeTab() === 'CORPORATE' ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 font-bold shadow-xs' : 'text-slate-600 dark:text-slate-400 font-medium'"
+        class="px-3.5 py-1.5 rounded-lg text-xs transition-all cursor-pointer">
+        Corporate Head-Office
+      </button>
+
+      <button 
+        (click)="setTab('SITE_ENGINEERING')" 
+        [class]="activeTab() === 'SITE_ENGINEERING' ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 font-bold shadow-xs' : 'text-slate-600 dark:text-slate-400 font-medium'"
+        class="px-3.5 py-1.5 rounded-lg text-xs transition-all cursor-pointer">
+        Site Engineers & Foremen
+      </button>
+    </div>
+
+    <!-- Search & Filter Controls -->
+    <div class="flex items-center gap-3">
+      <div class="relative min-w-[220px]">
+        <input 
+          type="text" 
+          [ngModel]="searchQuery()" 
+          (ngModelChange)="searchQuery.set($event)"
+          placeholder="Search by name, code, phone..." 
+          class="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500" />
+        <svg class="w-4 h-4 absolute left-3 top-2.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+      </div>
+
+      <select 
+        [ngModel]="selectedDepartmentId()" 
+        (ngModelChange)="selectedDepartmentId.set($event)"
+        class="px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white">
+        <option [ngValue]="null">All Departments</option>
+        @for (d of hrmsService.departments(); track d.id) {
+          <option [value]="d.id">{{ d.name_en }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <!-- Employees Master Data Table -->
+  <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-sm">
+        <thead class="text-xs uppercase bg-slate-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 border-b border-slate-200/60 dark:border-slate-800">
+          <tr>
+            <th class="py-3.5 px-4">Employee</th>
+            <th class="py-3.5 px-4">Designation</th>
+            <th class="py-3.5 px-4">Department</th>
+            <th class="py-3.5 px-4">Workforce Role</th>
+            <th class="py-3.5 px-4">Contact</th>
+            <th class="py-3.5 px-4 text-right">Gross Salary (BDT)</th>
+            <th class="py-3.5 px-4 text-center">Status</th>
+            <th class="py-3.5 px-4 text-right">Action</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+          @for (emp of filteredEmployees(); track emp.id) {
+            <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+              <!-- Name & Code -->
+              <td class="py-3 px-4">
+                <div class="flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-full bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 font-bold text-xs flex items-center justify-center shrink-0 border border-indigo-200/60 dark:border-indigo-800/60">
+                    {{ emp.first_name[0] }}{{ emp.last_name[0] }}
+                  </div>
+                  <div>
+                    <div class="font-bold text-slate-900 dark:text-white">{{ emp.first_name }} {{ emp.last_name }}</div>
+                    <div class="text-xs text-slate-400 font-mono">{{ emp.employee_code }}</div>
+                  </div>
+                </div>
+              </td>
+
+              <!-- Designation -->
+              <td class="py-3 px-4 text-slate-700 dark:text-slate-300 font-medium">
+                {{ emp.designation_title || '--' }}
+              </td>
+
+              <!-- Department -->
+              <td class="py-3 px-4 text-slate-600 dark:text-slate-400 text-xs">
+                {{ emp.department_name || '--' }}
+              </td>
+
+              <!-- Workforce Category -->
+              <td class="py-3 px-4">
+                @if (emp.workforce_category === 'CORPORATE') {
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-800/60">
+                    Corporate HQ
+                  </span>
+                } @else {
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/60">
+                    Site Field Ops
+                  </span>
+                }
+              </td>
+
+              <!-- Contact -->
+              <td class="py-3 px-4 text-xs">
+                <div class="font-mono text-slate-700 dark:text-slate-300">{{ emp.phone }}</div>
+                <div class="text-slate-400 truncate max-w-[150px]">{{ emp.official_email || 'No email' }}</div>
+              </td>
+
+              <!-- Gross Salary -->
+              <td class="py-3 px-4 text-right font-mono font-bold text-slate-900 dark:text-white">
+                {{ emp.gross_salary | number:'1.2-2' }}
+              </td>
+
+              <!-- Status -->
+              <td class="py-3 px-4 text-center">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/60">
+                  {{ emp.status }}
+                </span>
+              </td>
+
+              <!-- Action -->
+              <td class="py-3 px-4 text-right">
+                <button 
+                  (click)="viewEmployee(emp)" 
+                  class="px-2.5 py-1 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 rounded-lg transition-colors cursor-pointer">
+                  View 360°
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="8" class="py-8 text-center text-slate-400 text-sm">
+                No employees found matching the filters.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Slide-over Employee 360 Detail Drawer -->
+@if (isDrawerOpen() && selectedEmployee(); as emp) {
+  <div class="fixed inset-0 z-50 overflow-hidden bg-slate-900/60 backdrop-blur-xs flex justify-end" (click)="closeDrawer()">
+    <div class="w-full max-w-lg bg-white dark:bg-slate-900 h-full shadow-2xl p-6 overflow-y-auto space-y-6" (click)="$event.stopPropagation()">
+      <!-- Drawer Header -->
+      <div class="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-2xl bg-indigo-600 text-white font-bold text-base flex items-center justify-center">
+            {{ emp.first_name[0] }}{{ emp.last_name[0] }}
+          </div>
+          <div>
+            <h2 class="text-lg font-bold text-slate-900 dark:text-white">{{ emp.first_name }} {{ emp.last_name }}</h2>
+            <div class="text-xs text-indigo-600 dark:text-indigo-400 font-mono">{{ emp.employee_code }} • {{ emp.designation_title }}</div>
+          </div>
+        </div>
+        <button (click)="closeDrawer()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-2xl font-bold cursor-pointer">&times;</button>
+      </div>
+
+      <!-- General Info -->
+      <div class="space-y-3">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Personal & Employment Details</h3>
+        <div class="grid grid-cols-2 gap-3 text-xs">
+          <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
+            <span class="text-slate-400 block">Department</span>
+            <span class="font-bold text-slate-900 dark:text-white">{{ emp.department_name }}</span>
+          </div>
+          <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
+            <span class="text-slate-400 block">Joining Date</span>
+            <span class="font-bold text-slate-900 dark:text-white">{{ emp.joining_date | date }}</span>
+          </div>
+          <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
+            <span class="text-slate-400 block">Workforce Category</span>
+            <span class="font-bold text-slate-900 dark:text-white">{{ emp.workforce_category }}</span>
+          </div>
+          <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
+            <span class="text-slate-400 block">Employment Status</span>
+            <span class="font-bold text-emerald-600 dark:text-emerald-400">{{ emp.status }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bangladesh Labour Act Salary Structure -->
+      <div class="space-y-3">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Monthly Compensation Structure (BDT)</h3>
+        <div class="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl space-y-2.5 text-xs">
+          <div class="flex justify-between py-1 border-b border-slate-200/60 dark:border-slate-700/60">
+            <span class="text-slate-600 dark:text-slate-400">Basic Salary</span>
+            <span class="font-mono font-bold text-slate-900 dark:text-white">{{ emp.basic_salary | number:'1.2-2' }}</span>
+          </div>
+          <div class="flex justify-between py-1 border-b border-slate-200/60 dark:border-slate-700/60">
+            <span class="text-slate-600 dark:text-slate-400">House Rent Allowance (50%)</span>
+            <span class="font-mono font-bold text-slate-900 dark:text-white">{{ emp.house_rent_allowance | number:'1.2-2' }}</span>
+          </div>
+          <div class="flex justify-between py-1 border-b border-slate-200/60 dark:border-slate-700/60">
+            <span class="text-slate-600 dark:text-slate-400">Medical Allowance (10%)</span>
+            <span class="font-mono font-bold text-slate-900 dark:text-white">{{ emp.medical_allowance | number:'1.2-2' }}</span>
+          </div>
+          <div class="flex justify-between py-1 border-b border-slate-200/60 dark:border-slate-700/60">
+            <span class="text-slate-600 dark:text-slate-400">Conveyance Allowance</span>
+            <span class="font-mono font-bold text-slate-900 dark:text-white">{{ emp.conveyance_allowance | number:'1.2-2' }}</span>
+          </div>
+          <div class="flex justify-between py-1 border-b border-slate-200/60 dark:border-slate-700/60">
+            <span class="text-slate-600 dark:text-slate-400">Site Hazard Allowance</span>
+            <span class="font-mono font-bold text-amber-600 dark:text-amber-400">{{ emp.site_hazard_allowance | number:'1.2-2' }}</span>
+          </div>
+          <div class="flex justify-between py-1 border-b border-slate-200/60 dark:border-slate-700/60">
+            <span class="text-slate-600 dark:text-slate-400">Mobile & Internet Allowance</span>
+            <span class="font-mono font-bold text-slate-900 dark:text-white">{{ emp.mobile_allowance | number:'1.2-2' }}</span>
+          </div>
+          <div class="flex justify-between pt-2 text-sm font-extrabold text-indigo-600 dark:text-indigo-400">
+            <span>Total Gross Monthly Earnings</span>
+            <span class="font-mono">BDT {{ emp.gross_salary | number:'1.2-2' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Statutory Deductions & Banking -->
+      <div class="space-y-3">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Statutory Tax & Banking</h3>
+        <div class="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl space-y-2 text-xs">
+          <div class="flex justify-between">
+            <span class="text-slate-600 dark:text-slate-400">Bank Name</span>
+            <span class="font-bold text-slate-900 dark:text-white">{{ emp.bank_name || 'Not provided' }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-600 dark:text-slate-400">Bank Account No</span>
+            <span class="font-mono font-bold text-slate-900 dark:text-white">{{ emp.bank_account_no || '--' }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-600 dark:text-slate-400">Provident Fund (8.33%)</span>
+            <span class="font-bold text-emerald-600 dark:text-emerald-400">{{ emp.is_pf_eligible ? 'Eligible' : 'Exempt' }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-600 dark:text-slate-400">Income Tax TDS Deduction</span>
+            <span class="font-bold text-indigo-600 dark:text-indigo-400">{{ emp.is_tax_eligible ? 'Active TDS Slab' : 'Exempt' }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Add Employee Modal -->
+@if (isAddModalOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-2xl w-full border border-slate-200 dark:border-slate-800 shadow-xl p-6 relative max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800 mb-4">
+        <h3 class="text-lg font-bold text-slate-900 dark:text-white">Register New Employee</h3>
+        <button (click)="closeAddModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl font-bold cursor-pointer">&times;</button>
+      </div>
+
+      <div class="space-y-4 text-xs">
+        <!-- Name row -->
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">First Name *</label>
+            <input 
+              type="text" 
+              [ngModel]="newEmp().first_name" 
+              (ngModelChange)="newEmp().first_name = $event"
+              placeholder="e.g. Engr. Tanvir" 
+              class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white" />
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Last Name *</label>
+            <input 
+              type="text" 
+              [ngModel]="newEmp().last_name" 
+              (ngModelChange)="newEmp().last_name = $event"
+              placeholder="e.g. Ahmed" 
+              class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white" />
+          </div>
+        </div>
+
+        <!-- Contact row -->
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Official Email</label>
+            <input 
+              type="email" 
+              [ngModel]="newEmp().official_email" 
+              (ngModelChange)="newEmp().official_email = $event"
+              placeholder="tanvir@bengalre.com" 
+              class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white" />
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Primary Phone *</label>
+            <input 
+              type="text" 
+              [ngModel]="newEmp().phone" 
+              (ngModelChange)="newEmp().phone = $event"
+              placeholder="+88017XXXXXXXX" 
+              class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white" />
+          </div>
+        </div>
+
+        <!-- Role & Workforce Category -->
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Department</label>
+            <select 
+              [ngModel]="newEmp().department_id" 
+              (ngModelChange)="newEmp().department_id = $event"
+              class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white">
+              @for (d of hrmsService.departments(); track d.id) {
+                <option [value]="d.id">{{ d.name_en }}</option>
+              }
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Designation</label>
+            <select 
+              [ngModel]="newEmp().designation_id" 
+              (ngModelChange)="newEmp().designation_id = $event"
+              class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white">
+              @for (des of hrmsService.designations(); track des.id) {
+                <option [value]="des.id">{{ des.title_en }} ({{ des.grade_level }})</option>
+              }
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Workforce Category</label>
+            <select 
+              [ngModel]="newEmp().workforce_category" 
+              (ngModelChange)="newEmp().workforce_category = $event"
+              class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white">
+              <option value="CORPORATE">Corporate Head-Office</option>
+              <option value="SITE_ENGINEERING">Site Engineering Staff</option>
+              <option value="SITE_SUPERVISION">Site Foreman / Supervisor</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Salary Breakdown Form -->
+        <div class="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-xl space-y-3">
+          <span class="font-bold text-slate-700 dark:text-slate-300 block">Monthly Salary Breakdown (BDT)</span>
+          <div class="grid grid-cols-3 gap-3">
+            <div>
+              <label class="block text-slate-500 mb-1">Basic Salary</label>
+              <input type="number" [ngModel]="newEmp().basic_salary" (ngModelChange)="newEmp().basic_salary = $event" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-mono" />
+            </div>
+            <div>
+              <label class="block text-slate-500 mb-1">House Rent (50%)</label>
+              <input type="number" [ngModel]="newEmp().house_rent_allowance" (ngModelChange)="newEmp().house_rent_allowance = $event" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-mono" />
+            </div>
+            <div>
+              <label class="block text-slate-500 mb-1">Medical Allowance (10%)</label>
+              <input type="number" [ngModel]="newEmp().medical_allowance" (ngModelChange)="newEmp().medical_allowance = $event" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-mono" />
+            </div>
+            <div>
+              <label class="block text-slate-500 mb-1">Conveyance</label>
+              <input type="number" [ngModel]="newEmp().conveyance_allowance" (ngModelChange)="newEmp().conveyance_allowance = $event" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-mono" />
+            </div>
+            <div>
+              <label class="block text-slate-500 mb-1">Site Hazard Allowance</label>
+              <input type="number" [ngModel]="newEmp().site_hazard_allowance" (ngModelChange)="newEmp().site_hazard_allowance = $event" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-mono" />
+            </div>
+            <div>
+              <label class="block text-slate-500 mb-1">Mobile Allowance</label>
+              <input type="number" [ngModel]="newEmp().mobile_allowance" (ngModelChange)="newEmp().mobile_allowance = $event" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-mono" />
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-3 flex justify-end gap-2 border-t border-slate-200 dark:border-slate-800">
+          <button (click)="closeAddModal()" class="px-4 py-2 font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl cursor-pointer">Cancel</button>
+          <button (click)="saveEmployee()" [disabled]="isSaving()" class="px-5 py-2 font-medium bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-md cursor-pointer disabled:opacity-50">
+            {{ isSaving() ? 'Saving...' : 'Register Employee' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

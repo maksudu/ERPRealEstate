@@ -106,6 +106,18 @@ export class SidebarComponent implements OnInit {
       ]
     },
     {
+      id: 'hrms',
+      title: 'HRMS & Site Labour',
+      iconSvg: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z',
+      items: [
+        { id: 'hrms-dashboard', label: 'HRMS & Labour Cockpit', route: '/hrms/dashboard', badge: 'New' },
+        { id: 'hrms-employees', label: 'Employee Directory 360°', route: '/hrms/employees' },
+        { id: 'hrms-muster', label: 'Daily Labour Muster Roll', route: '/hrms/muster-roll' },
+        { id: 'hrms-payroll', label: 'Payroll & NBR TDS Engine', route: '/hrms/payroll' },
+        { id: 'hrms-attendance', label: 'Attendance & Leave Log', route: '/hrms/attendance' }
+      ]
+    },
+    {
       id: 'accounts',
       title: 'Finance & Accounts',
       iconSvg: 'M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z',
