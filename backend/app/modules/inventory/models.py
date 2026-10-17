@@ -106,6 +106,10 @@ class Unit(Base):
     def status(self):
         return self.status_id
 
+    @status.setter
+    def status(self, value):
+        self.status_id = value
+
     @property
     def locked_by_user_id(self):
         return self.current_locked_by_user_id

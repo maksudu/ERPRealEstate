@@ -1,214 +1,349 @@
-<div class="p-6 space-y-6">
-  <!-- Header -->
-  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-    <div>
-      <div class="flex items-center gap-3">
-        <div class="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+<div class="flex flex-col gap-6">
+  <!-- Outer Card Container -->
+  <app-card-container
+    title="Key Handover & Possession Clearance Ledger"
+    subtitle="100% Financial Accounts Clearance, Official Key Handover Certificate, and Statutory 12-Month DLP Warranty Activation"
+  >
+    <!-- KPI Summary Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div class="bg-card border border-border rounded-xl p-4 flex items-center justify-between shadow-sm">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total Handover Inspections</p>
+          <h3 class="text-2xl font-bold text-foreground mt-1">{{ metrics()?.total_inspections_count || inspections().length }}</h3>
+          <span class="text-[11px] text-muted-foreground">Recorded Walkthroughs</span>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
           </svg>
         </div>
+      </div>
+
+      <div class="bg-card border border-border rounded-xl p-4 flex items-center justify-between shadow-sm">
         <div>
-          <h1 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Key Handover & Possession Clearance</h1>
-          <p class="text-sm text-slate-500 dark:text-slate-400">100% financial dues clearance verification & statutory possession letter generation</p>
+          <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Possession Handed Over</p>
+          <h3 class="text-2xl font-bold text-emerald-500 mt-1">{{ metrics()?.possession_handed_over_count || 0 }}</h3>
+          <span class="text-[11px] text-emerald-500 font-medium">Keys & Certificates Issued</span>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 border border-emerald-500/20">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="bg-card border border-border rounded-xl p-4 flex items-center justify-between shadow-sm">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Inspections Pending</p>
+          <h3 class="text-2xl font-bold text-amber-500 mt-1">{{ metrics()?.inspection_pending_count || 0 }}</h3>
+          <span class="text-[11px] text-amber-500 font-medium">Snag Fixes or Clearance</span>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500 border border-amber-500/20">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="bg-card border border-border rounded-xl p-4 flex items-center justify-between shadow-sm">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">12M DLP Warranty Active</p>
+          <h3 class="text-2xl font-bold text-blue-500 mt-1">{{ metrics()?.possession_handed_over_count || 0 }}</h3>
+          <span class="text-[11px] text-blue-500 font-medium">Protected Under Statutory SLA</span>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 border border-blue-500/20">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+          </svg>
         </div>
       </div>
     </div>
-    <div class="flex items-center gap-3">
-      <app-custom-button variant="primary" (buttonClick)="openCreateModal()">
-        <svg class="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-        </svg>
-        Record Handover Inspection
-      </app-custom-button>
-    </div>
-  </div>
 
-  <!-- Inspections Table Card -->
-  <app-card-container [paddingClass]="'p-0'">
-    <div class="p-5 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row justify-between items-center gap-4">
+    <!-- Filters & Action Toolbar -->
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
       <div class="w-full sm:w-80">
         <app-custom-input
           [(ngModel)]="searchQuery"
-          placeholder="Search by Buyer, Flat, Possession No..."
-        ></app-custom-input>
+          placeholder="Search Allottee, Unit, Possession / Key Cert No..."
+        />
       </div>
-      <div class="text-xs text-slate-500 dark:text-slate-400 font-medium">
-        Total Inspections: <span class="font-bold text-slate-900 dark:text-white">{{ filteredInspections().length }}</span>
+
+      <div class="flex items-center gap-3 w-full sm:w-auto">
+        <div class="w-56">
+          <app-searchable-select
+            placeholder="Filter Status"
+            [options]="statusFilterOptions"
+            [(ngModel)]="statusFilter"
+            [allowCreateNew]="false"
+          />
+        </div>
+
+        <app-custom-button variant="primary" (clicked)="openCreateModal()">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+          </svg>
+          Schedule Handover Inspection
+        </app-custom-button>
       </div>
     </div>
 
-    <div class="overflow-x-auto">
-      <table class="w-full text-left text-sm">
-        <thead class="bg-slate-50 dark:bg-slate-900/50 text-slate-600 dark:text-slate-400 text-xs font-semibold uppercase border-b border-slate-200 dark:border-slate-800">
-          <tr>
-            <th class="py-3.5 px-4">Inspection ID</th>
-            <th class="py-3.5 px-4">Project & Unit</th>
-            <th class="py-3.5 px-4">Allottee Buyer</th>
-            <th class="py-3.5 px-4">Supervising Engineer</th>
-            <th class="py-3.5 px-4 text-center">Financial Dues</th>
-            <th class="py-3.5 px-4 text-center">Handover Status</th>
-            <th class="py-3.5 px-4">Possession Certificate</th>
-            <th class="py-3.5 px-4 text-center">Actions</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
-          @if (isLoading()) {
+    <!-- Inspections Table -->
+    <div class="border border-border rounded-xl overflow-hidden bg-card">
+      <div class="overflow-x-auto">
+        <table class="w-full text-xs text-left border-collapse">
+          <thead class="bg-secondary/40 text-muted-foreground uppercase text-[10px] tracking-wider border-b border-border">
             <tr>
-              <td colspan="8" class="text-center py-10">
-                <div class="inline-flex items-center gap-2 text-slate-500">
-                  <svg class="animate-spin h-5 w-5 text-emerald-500" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  <span>Loading Handover Inspections...</span>
-                </div>
-              </td>
+              <th class="py-3 px-4 font-semibold">Inspection No</th>
+              <th class="py-3 px-4 font-semibold">Project & Apartment Unit</th>
+              <th class="py-3 px-4 font-semibold">Allottee Buyer</th>
+              <th class="py-3 px-4 font-semibold">Financial Clearance</th>
+              <th class="py-3 px-4 font-semibold">Pre-Handover Snags</th>
+              <th class="py-3 px-4 font-semibold">Key Certificate & Possession</th>
+              <th class="py-3 px-4 font-semibold">Handover Status</th>
+              <th class="py-3 px-4 font-semibold text-right">Actions</th>
             </tr>
-          } @else if (filteredInspections().length === 0) {
-            <tr>
-              <td colspan="8" class="text-center py-12 text-slate-500 dark:text-slate-400">
-                <svg class="w-12 h-12 mx-auto mb-3 text-slate-300 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-                </svg>
-                <div class="font-medium text-base">No Handover Inspections Logged</div>
-                <div class="text-xs text-slate-400 mt-1">Record a pre-handover joint inspection using the button above.</div>
-              </td>
-            </tr>
-          } @else {
+          </thead>
+          <tbody class="divide-y divide-border">
             @for (insp of filteredInspections(); track insp.id) {
-              <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
-                <td class="py-3.5 px-4 font-mono font-semibold text-slate-900 dark:text-white">
+              <tr class="hover:bg-secondary/20 transition-colors">
+                <td class="py-3.5 px-4 font-mono font-bold text-foreground">
                   #HND-{{ insp.id }}
-                  <div class="text-xs font-normal text-slate-400">{{ insp.inspection_date | date:'mediumDate' }}</div>
+                  <div class="text-[10px] text-muted-foreground font-normal">Date: {{ insp.inspection_date }}</div>
                 </td>
                 <td class="py-3.5 px-4">
-                  <div class="font-medium text-slate-900 dark:text-white">{{ insp.project_name || 'Project' }}</div>
-                  <div class="text-xs text-slate-500 font-semibold">Flat {{ insp.unit_number || '#' + insp.unit_id }}</div>
+                  <div class="font-bold text-foreground">{{ insp.project_name || 'Prime Residency' }}</div>
+                  <div class="text-[11px] text-primary font-semibold mt-0.5">Unit {{ insp.unit_number || 'N/A' }}</div>
                 </td>
-                <td class="py-3.5 px-4 font-medium text-slate-800 dark:text-slate-200">
-                  {{ insp.customer_name || 'Valued Allottee' }}
+                <td class="py-3.5 px-4">
+                  <div class="font-bold text-foreground">{{ insp.customer_name || 'Valued Allottee' }}</div>
+                  <div class="text-[11px] text-muted-foreground">{{ insp.customer_phone || '+8801700000000' }}</div>
                 </td>
-                <td class="py-3.5 px-4 text-xs text-slate-500 dark:text-slate-400">
-                  {{ insp.site_engineer_name || 'Site Engineer' }}
-                </td>
-                <td class="py-3.5 px-4 text-center">
+                <td class="py-3.5 px-4 whitespace-nowrap">
                   @if (insp.all_financial_dues_cleared) {
-                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300">
-                      ✓ Dues Cleared
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-500 font-bold text-[10px] uppercase border border-emerald-500/20">
+                      ✔ 100% Cleared by Accounts
                     </span>
                   } @else {
-                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-rose-100 text-rose-800 dark:bg-rose-900/50 dark:text-rose-300">
-                      Pending Dues
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-rose-500/10 text-rose-500 font-bold text-[10px] uppercase border border-rose-500/20">
+                      ⚠️ Accounts Due Pending
                     </span>
                   }
                 </td>
-                <td class="py-3.5 px-4 text-center">
-                  <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold"
-                    [ngClass]="insp.status === 'POSSESSION_HANDED_OVER' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300'">
-                    {{ insp.status.replace('_', ' ') }}
-                  </span>
+                <td class="py-3.5 px-4 whitespace-nowrap">
+                  @if ((insp.open_snags_count || 0) > 0) {
+                    <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                      {{ insp.open_snags_count }} Open Snags
+                    </span>
+                  } @else {
+                    <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                      ✔ Snags Cleared
+                    </span>
+                  }
                 </td>
-                <td class="py-3.5 px-4">
+                <td class="py-3.5 px-4 whitespace-nowrap">
                   @if (insp.possession_letter_number) {
-                    <div class="font-mono text-xs font-bold text-emerald-600 dark:text-emerald-400">{{ insp.possession_letter_number }}</div>
-                    <div class="text-[11px] text-slate-400">{{ insp.possession_handover_date | date:'mediumDate' }}</div>
+                    <div class="font-mono font-bold text-primary text-[11px]">{{ insp.possession_letter_number }}</div>
+                    <div class="font-mono text-muted-foreground text-[10px]">{{ insp.key_handover_certificate_number || 'KEY-2026-0001' }}</div>
+                    <div class="text-[10px] text-muted-foreground">Keys: {{ insp.key_sets_count || 3 }} complete sets</div>
                   } @else {
-                    <span class="text-xs text-slate-400 italic">Pending Execution</span>
+                    <span class="text-muted-foreground text-xs italic">Awaiting Handover Sign-off</span>
                   }
                 </td>
-                <td class="py-3.5 px-4 text-center">
-                  <div class="flex items-center justify-center gap-2">
+                <td class="py-3.5 px-4 whitespace-nowrap">
+                  @if (insp.status === 'POSSESSION_HANDED_OVER') {
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Keys Delivered
+                    </span>
+                    @if (insp.warranty_end_date) {
+                      <div class="text-[10px] text-muted-foreground mt-1">DLP valid to: {{ insp.warranty_end_date }}</div>
+                    }
+                  } @else if (insp.status === 'SNAGS_REPORTED') {
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                      <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Snags Under Fix
+                    </span>
+                  } @else {
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-500/10 text-blue-500 border border-blue-500/20">
+                      <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> Inspection Scheduled
+                    </span>
+                  }
+                </td>
+                <td class="py-3.5 px-4 text-right whitespace-nowrap">
+                  <div class="flex items-center justify-end gap-2">
                     @if (insp.status !== 'POSSESSION_HANDED_OVER') {
-                      <app-custom-button variant="primary" size="sm" (buttonClick)="openExecuteModal(insp)">
-                        Handover Keys
-                      </app-custom-button>
+                      <button
+                        (click)="openExecuteModal(insp)"
+                        [disabled]="!insp.all_financial_dues_cleared"
+                        class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-500 text-white hover:bg-emerald-600 transition-all shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
+                        [title]="!insp.all_financial_dues_cleared ? 'Accounts financial clearance is required first' : 'Deliver keys and execute possession letter'"
+                      >
+                        Deliver Keys
+                      </button>
                     } @else {
-                      <app-custom-button variant="secondary" size="sm" (buttonClick)="downloadPossessionPdf(insp)">
-                        <svg class="w-4 h-4 mr-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      <a
+                        [href]="getLetterUrl(insp.id)"
+                        target="_blank"
+                        class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-all inline-flex items-center gap-1 shadow-sm"
+                      >
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                         </svg>
-                        Possession PDF
-                      </app-custom-button>
+                        Official PDF
+                      </a>
                     }
                   </div>
                 </td>
               </tr>
+            } @empty {
+              <tr>
+                <td colspan="8" class="text-center py-8 text-muted-foreground text-xs">
+                  No handover inspection records found matching your query.
+                </td>
+              </tr>
             }
-          }
-        </tbody>
-      </table>
+          </tbody>
+        </table>
+      </div>
     </div>
   </app-card-container>
 
-  <!-- Create Inspection Modal -->
+  <!-- MODAL 1: Schedule Joint Handover Inspection -->
   @if (isCreateModalOpen()) {
-    <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full border border-slate-200 dark:border-slate-800 shadow-2xl p-6 space-y-5">
-        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
-          <h3 class="text-lg font-bold text-slate-900 dark:text-white">Record Joint Handover Inspection</h3>
-          <button (click)="closeCreateModal()" class="text-slate-400 hover:text-slate-600 p-1">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-          </button>
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
+      <div class="bg-card border border-border rounded-2xl w-full max-w-xl shadow-2xl p-6 overflow-y-auto max-h-[90vh]">
+        <div class="flex items-center justify-between border-b border-border pb-4 mb-4">
+          <div>
+            <h3 class="text-lg font-bold text-foreground">Schedule Handover Inspection</h3>
+            <p class="text-xs text-muted-foreground">Register joint apartment pre-inspection before handing over possession</p>
+          </div>
+          <button (click)="closeCreateModal()" class="text-muted-foreground hover:text-foreground">✕</button>
         </div>
 
         <form [formGroup]="createForm" (ngSubmit)="submitInspection()" class="space-y-4">
-          <app-custom-input label="Sales Booking ID" type="number" formControlName="booking_id"></app-custom-input>
-          <app-custom-input label="Unit ID" type="number" formControlName="unit_id"></app-custom-input>
-          <app-custom-input label="Site Supervising Engineer User ID" type="number" formControlName="site_engineer_id"></app-custom-input>
-          <app-custom-input label="Inspection Date" type="date" formControlName="inspection_date"></app-custom-input>
+          <app-searchable-select
+            label="Sales Booking & Customer"
+            placeholder="Select sales booking..."
+            [options]="bookingOptions()"
+            [formGroup]="createForm"
+            controlName="booking_id"
+            [required]="true"
+            (selectionChange)="onBookingChange($event)"
+          />
 
-          <div class="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
-            <input type="checkbox" id="financial_clearance" formControlName="all_financial_dues_cleared" class="w-4 h-4 text-emerald-600 rounded">
-            <label for="financial_clearance" class="text-xs font-semibold text-slate-700 dark:text-slate-300">
-              100% Financial Dues Cleared by Accounts
-            </label>
+          <app-searchable-select
+            label="Apartment Unit"
+            placeholder="Select unit..."
+            [options]="unitOptions()"
+            [formGroup]="createForm"
+            controlName="unit_id"
+            [required]="true"
+          />
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <app-custom-input
+              label="Inspection Date"
+              type="date"
+              [formGroup]="createForm"
+              controlName="inspection_date"
+              [required]="true"
+            />
+
+            <app-custom-input
+              label="Key Sets Prepared"
+              type="number"
+              placeholder="3"
+              [formGroup]="createForm"
+              controlName="key_sets_count"
+              [required]="true"
+            />
           </div>
 
-          <div>
-            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Inspection Notes</label>
-            <textarea formControlName="notes" rows="2" class="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
-          </div>
+          <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-foreground p-3 bg-secondary/50 rounded-xl border border-border">
+            <input type="checkbox" formControlName="all_financial_dues_cleared" class="rounded border-border text-primary focus:ring-primary w-4 h-4"/>
+            <span>All Financial Dues Cleared with Accounts (সকল কিস্তি ও ইউটিলিটি চার্জ পরিশোধিত)</span>
+          </label>
 
-          <div class="flex justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
-            <app-custom-button variant="secondary" (buttonClick)="closeCreateModal()">Cancel</app-custom-button>
-            <app-custom-button variant="primary" type="submit" [disabled]="createForm.invalid || isSubmitting()" (buttonClick)="submitInspection()">Save Inspection</app-custom-button>
+          <app-custom-textarea
+            label="Pre-Handover Inspection Notes"
+            placeholder="Notes regarding condition, utility meters, and joint inspection team..."
+            [formGroup]="createForm"
+            controlName="notes"
+            [rows]="3"
+          />
+
+          <div class="flex justify-end gap-3 pt-3 border-t border-border">
+            <app-custom-button variant="outline" type="button" (clicked)="closeCreateModal()">
+              Cancel
+            </app-custom-button>
+            <app-custom-button variant="primary" type="submit" [disabled]="createForm.invalid || isSubmitting()">
+              {{ isSubmitting() ? 'Scheduling...' : 'Confirm Inspection' }}
+            </app-custom-button>
           </div>
         </form>
       </div>
     </div>
   }
 
-  <!-- Execute Handover Modal -->
-  @if (isExecuteModalOpen()) {
-    <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full border border-slate-200 dark:border-slate-800 shadow-2xl p-6 space-y-5">
-        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+  <!-- MODAL 2: Execute Key Handover & Possession Clearance -->
+  @if (isExecuteModalOpen() && selectedInspection()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
+      <div class="bg-card border border-border rounded-2xl w-full max-w-lg shadow-2xl p-6">
+        <div class="flex items-center justify-between border-b border-border pb-4 mb-4">
           <div>
-            <h3 class="text-lg font-bold text-slate-900 dark:text-white">Execute Key Handover & Issue Certificate</h3>
-            <p class="text-xs text-slate-500">Legal transfer of physical possession</p>
+            <h3 class="text-lg font-bold text-foreground">Execute Key Possession Handover</h3>
+            <p class="text-xs text-muted-foreground">{{ selectedInspection()?.customer_name }} · Unit {{ selectedInspection()?.unit_number }}</p>
           </div>
-          <button (click)="closeExecuteModal()" class="text-slate-400 hover:text-slate-600 p-1">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-          </button>
+          <button (click)="closeExecuteModal()" class="text-muted-foreground hover:text-foreground">✕</button>
         </div>
 
-        <form [formGroup]="executeForm" (ngSubmit)="submitExecution()" class="space-y-4">
-          <app-custom-input label="Possession Handover Date" type="date" formControlName="possession_handover_date"></app-custom-input>
-
-          <div>
-            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Key Inventory & Handover Remarks</label>
-            <textarea formControlName="notes" rows="3" class="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
+        <form [formGroup]="executeForm" (ngSubmit)="submitExecuteHandover()" class="space-y-4">
+          <div class="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-xs space-y-1">
+            <div class="font-bold text-emerald-500 flex items-center gap-1">
+              ✔ 100% Financial Accounts Clearance Confirmed
+            </div>
+            <p class="text-muted-foreground">
+              Executing possession will generate the official <strong>Possession Letter</strong>, <strong>Key Handover Certificate</strong>, and activate the <strong>12-Month Defect Liability Period (DLP) Warranty</strong>.
+            </p>
           </div>
 
-          <div class="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-800 dark:text-emerald-300">
-            ✔ Financial dues verified 100% cleared.<br>
-            ✔ Official Possession Certificate with QR and serial will be generated.
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <app-custom-input
+              label="Possession Date"
+              type="date"
+              [formGroup]="executeForm"
+              controlName="possession_handover_date"
+              [required]="true"
+            />
+
+            <app-custom-input
+              label="Brass Key Sets Delivered"
+              type="number"
+              placeholder="3"
+              [formGroup]="executeForm"
+              controlName="key_sets_count"
+              [required]="true"
+            />
           </div>
 
-          <div class="flex justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
-            <app-custom-button variant="secondary" (buttonClick)="closeExecuteModal()">Cancel</app-custom-button>
-            <app-custom-button variant="primary" type="submit" [disabled]="executeForm.invalid || isSubmitting()" (buttonClick)="submitExecution()">Confirm Key Handover</app-custom-button>
+          <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-foreground">
+            <input type="checkbox" formControlName="joint_customer_signoff" class="rounded border-border text-primary focus:ring-primary w-4 h-4"/>
+            Joint Buyer/Allottee Possession Sign-off Confirmed
+          </label>
+
+          <app-custom-textarea
+            label="Handover Execution Remarks"
+            placeholder="e.g. 3 sets of keys, mailbox keys, DB panel key, sub-meter reading recorded..."
+            [formGroup]="executeForm"
+            controlName="notes"
+            [rows]="3"
+          />
+
+          <div class="flex justify-end gap-3 pt-3 border-t border-border">
+            <app-custom-button variant="outline" type="button" (clicked)="closeExecuteModal()">
+              Cancel
+            </app-custom-button>
+            <app-custom-button variant="primary" type="submit" [disabled]="executeForm.invalid || isSubmitting()">
+              {{ isSubmitting() ? 'Executing...' : 'Deliver Keys & Generate Certificate' }}
+            </app-custom-button>
           </div>
         </form>
       </div>

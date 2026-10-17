@@ -177,3 +177,170 @@ class InstallmentMetrics(BaseModel):
     total_vault_amount: float
     total_dishonoured_cheques: int
     active_ni138_actions: int
+    total_money_receipts_count: Optional[int] = 0
+    total_money_receipts_amount: Optional[float] = 0.00
+    total_tripartite_loans_count: Optional[int] = 0
+    total_tripartite_disbursed_amount: Optional[float] = 0.00
+
+
+# -------------------------------------------------------------
+# Money Receipt (MR) Schemas (Prompt 10)
+# -------------------------------------------------------------
+class MoneyReceiptCreate(BaseModel):
+    booking_id: int
+    receipt_date: date
+    payment_mode: str = "CASH" # 'CASH', 'CHEQUE', 'BANK_TRANSFER', 'BEFTN', 'RTGS', 'BKASH', 'NAGAD'
+    instrument_no: Optional[str] = None
+    instrument_date: Optional[date] = None
+    bank_name: Optional[str] = None
+    branch_name: Optional[str] = None
+    amount_received: float
+    remarks: Optional[str] = None
+    send_sms_notification: bool = True
+
+class MoneyReceiptAllocationResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    receipt_id: int
+    installment_id: int
+    installment_no: Optional[int] = None
+    installment_title: Optional[str] = None
+    allocated_late_fee: float
+    allocated_principal: float
+    total_allocated: float
+    created_at: Optional[datetime] = None
+
+class MoneyReceiptResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    mr_number: str
+    receipt_date: date
+    booking_id: int
+    booking_reference_no: Optional[str] = None
+    customer_id: int
+    customer_name: Optional[str] = None
+    customer_phone: Optional[str] = None
+    unit_number: Optional[str] = None
+    project_name: Optional[str] = None
+    payment_mode: str
+    instrument_no: Optional[str] = None
+    instrument_date: Optional[date] = None
+    bank_name: Optional[str] = None
+    branch_name: Optional[str] = None
+    amount_received: float
+    late_fee_adjusted: float
+    installment_principal_adjusted: float
+    excess_advance_amount: float
+    qr_verification_token: str
+    qr_code_payload: Optional[str] = None
+    sms_confirmation_sent: bool
+    sms_sent_at: Optional[datetime] = None
+    gl_voucher_id: Optional[int] = None
+    status: str
+    remarks: Optional[str] = None
+    allocations: List[MoneyReceiptAllocationResponse] = []
+    created_at: Optional[datetime] = None
+
+
+# -------------------------------------------------------------
+# Bank Home Loan Tripartite Schemas (Prompt 10)
+# -------------------------------------------------------------
+class LoanTrancheCreate(BaseModel):
+    tranche_number: int
+    milestone_title: str
+    sanctioned_tranche_amount: float
+    remarks: Optional[str] = None
+
+class LoanTrancheInspectionRequest(BaseModel):
+    bank_inspection_date: date
+    inspection_status: str = "INSPECTION_PASSED" # 'INSPECTION_PASSED', 'INSPECTION_REJECTED'
+    inspection_engineer_name: Optional[str] = None
+    inspection_notes: Optional[str] = None
+
+class LoanTrancheDisburseRequest(BaseModel):
+    disbursed_date: date
+    disbursed_amount: float
+    payment_mode: str = "BANK_TRANSFER" # 'BANK_TRANSFER', 'CHEQUE', 'BEFTN', 'RTGS'
+    payment_instrument_no: str
+    bank_name: Optional[str] = None
+    branch_name: Optional[str] = None
+    remarks: Optional[str] = None
+
+class LoanTrancheResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    loan_id: int
+    tranche_number: int
+    milestone_title: str
+    sanctioned_tranche_amount: float
+    bank_inspection_date: Optional[date] = None
+    inspection_status: str
+    inspection_engineer_name: Optional[str] = None
+    inspection_notes: Optional[str] = None
+    disbursement_claimed_date: Optional[date] = None
+    disbursed_date: Optional[date] = None
+    disbursed_amount: float
+    payment_instrument_no: Optional[str] = None
+    receipt_id: Optional[int] = None
+    mr_number: Optional[str] = None
+    status: str
+    remarks: Optional[str] = None
+    created_at: Optional[datetime] = None
+
+class TripartiteLoanCreate(BaseModel):
+    booking_id: int
+    financial_institution_code: str # DBH_FINANCE, IDLC, SCB, CITY_BANK, BRAC_BANK
+    bank_name: str
+    branch_name: str
+    sanction_letter_no: str
+    sanction_date: date
+    sanctioned_amount: float
+    developer_noc_ref: Optional[str] = None
+    developer_noc_date: Optional[date] = None
+    noc_status: Optional[str] = "PENDING"
+    tripartite_agreement_date: Optional[date] = None
+    bank_officer_name: Optional[str] = None
+    bank_officer_phone: Optional[str] = None
+    bank_officer_email: Optional[str] = None
+    remarks: Optional[str] = None
+    tranches: Optional[List[LoanTrancheCreate]] = None
+
+class TripartiteLoanNOCRequest(BaseModel):
+    developer_noc_ref: str
+    developer_noc_date: date
+    remarks: Optional[str] = None
+
+class TripartiteLoanResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    loan_reference_no: str
+    booking_id: int
+    booking_reference_no: Optional[str] = None
+    customer_id: int
+    customer_name: Optional[str] = None
+    customer_phone: Optional[str] = None
+    unit_number: Optional[str] = None
+    project_name: Optional[str] = None
+    financial_institution_code: str
+    bank_name: str
+    branch_name: str
+    sanction_letter_no: str
+    sanction_date: date
+    sanctioned_amount: float
+    disbursed_amount_total: float
+    developer_noc_ref: Optional[str] = None
+    developer_noc_date: Optional[date] = None
+    noc_status: str
+    tripartite_agreement_date: Optional[date] = None
+    bank_officer_name: Optional[str] = None
+    bank_officer_phone: Optional[str] = None
+    bank_officer_email: Optional[str] = None
+    status: str
+    remarks: Optional[str] = None
+    tranches: List[LoanTrancheResponse] = []
+    created_at: Optional[datetime] = None
+

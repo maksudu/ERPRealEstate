@@ -772,7 +772,13 @@ async def generate_po_from_cs(
     user_id = user.id if user else 1
 
     count = (await db.execute(select(func.count(PurchaseOrder.id)))).scalar() or 0
-    po_no = f"PO-{date.today().year}-{count + 1:04d}"
+    idx = count + 1
+    while True:
+        po_no = f"PO-{date.today().year}-{idx:04d}"
+        existing_po = (await db.execute(select(PurchaseOrder.id).where(PurchaseOrder.po_number == po_no))).scalar_one_or_none()
+        if not existing_po:
+            break
+        idx += 1
 
     po = PurchaseOrder(
         po_number=po_no,

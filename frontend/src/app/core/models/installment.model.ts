@@ -90,4 +90,103 @@ export interface InstallmentMetrics {
   total_vault_amount: number;
   total_dishonoured_cheques: number;
   active_ni138_actions: number;
+  total_money_receipts_count?: number;
+  total_money_receipts_amount?: number;
+  total_tripartite_loans_count?: number;
+  total_tripartite_disbursed_amount?: number;
 }
+
+export interface MoneyReceiptAllocation {
+  id?: number;
+  receipt_id?: number;
+  installment_id: number;
+  installment_no?: number | null;
+  installment_title?: string | null;
+  allocated_late_fee: number;
+  allocated_principal: number;
+  total_allocated: number;
+  created_at?: string;
+}
+
+export interface MoneyReceipt {
+  id: number;
+  mr_number: string;
+  receipt_date: string;
+  booking_id: number;
+  booking_reference_no?: string | null;
+  customer_id: number;
+  customer_name?: string | null;
+  customer_phone?: string | null;
+  unit_number?: string | null;
+  project_name?: string | null;
+  payment_mode: 'CASH' | 'CHEQUE' | 'BANK_TRANSFER' | 'BEFTN' | 'RTGS' | 'BKASH' | 'NAGAD' | string;
+  instrument_no?: string | null;
+  instrument_date?: string | null;
+  bank_name?: string | null;
+  branch_name?: string | null;
+  amount_received: number;
+  late_fee_adjusted: number;
+  installment_principal_adjusted: number;
+  excess_advance_amount: number;
+  qr_verification_token: string;
+  qr_code_payload?: string | null;
+  sms_confirmation_sent: boolean;
+  sms_sent_at?: string | null;
+  gl_voucher_id?: number | null;
+  status: 'CLEARED' | 'PENDING_CLEARANCE' | 'BOUNCED_CANCELLED' | string;
+  remarks?: string | null;
+  allocations?: MoneyReceiptAllocation[];
+  created_at?: string;
+}
+
+export interface LoanTranche {
+  id: number;
+  loan_id: number;
+  tranche_number: number;
+  milestone_title: string;
+  sanctioned_tranche_amount: number;
+  bank_inspection_date?: string | null;
+  inspection_status: 'PENDING_INSPECTION' | 'INSPECTION_PASSED' | 'INSPECTION_REJECTED' | string;
+  inspection_engineer_name?: string | null;
+  inspection_notes?: string | null;
+  disbursement_claimed_date?: string | null;
+  disbursed_date?: string | null;
+  disbursed_amount: number;
+  payment_instrument_no?: string | null;
+  receipt_id?: number | null;
+  mr_number?: string | null;
+  status: 'PENDING' | 'INSPECTION_DONE' | 'DISBURSED' | 'RECONCILED' | string;
+  remarks?: string | null;
+  created_at?: string;
+}
+
+export interface TripartiteLoan {
+  id: number;
+  loan_reference_no: string;
+  booking_id: number;
+  booking_reference_no?: string | null;
+  customer_id: number;
+  customer_name?: string | null;
+  customer_phone?: string | null;
+  unit_number?: string | null;
+  project_name?: string | null;
+  financial_institution_code: string;
+  bank_name: string;
+  branch_name: string;
+  sanction_letter_no: string;
+  sanction_date: string;
+  sanctioned_amount: number;
+  disbursed_amount_total: number;
+  developer_noc_ref?: string | null;
+  developer_noc_date?: string | null;
+  noc_status: 'PENDING' | 'ISSUED' | 'WAIVED' | string;
+  tripartite_agreement_date?: string | null;
+  bank_officer_name?: string | null;
+  bank_officer_phone?: string | null;
+  bank_officer_email?: string | null;
+  status: 'DRAFT' | 'SANCTIONED' | 'NOC_ISSUED' | 'DISBURSING' | 'COMPLETED' | 'CANCELLED' | string;
+  remarks?: string | null;
+  tranches?: LoanTranche[];
+  created_at?: string;
+}
+

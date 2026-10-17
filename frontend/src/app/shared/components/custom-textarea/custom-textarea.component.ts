@@ -54,7 +54,7 @@ import { FormsModule, ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/f
 export class CustomTextareaComponent implements ControlValueAccessor {
   @Input() label: string = '';
   @Input() placeholder: string = '';
-  @Input() rows: number = 3;
+  @Input() rows: number | string = 3;
   @Input() maxLength?: number;
   @Input() required: boolean = false;
   @Input() disabled: boolean = false;

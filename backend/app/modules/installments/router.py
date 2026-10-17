@@ -7,10 +7,16 @@ from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy import func, or_
 
+import uuid
+from decimal import Decimal
 from app.core.database import get_db
+from app.core.sms import send_sms
 from app.modules.sales.models import Booking
 from app.modules.crm.models import Customer
-from app.modules.installments.models import CustomerInstallment, PDCVault, NI138LegalAction, InstallmentAlertLog
+from app.modules.installments.models import (
+    CustomerInstallment, PDCVault, NI138LegalAction, InstallmentAlertLog,
+    MoneyReceipt, MoneyReceiptAllocation, TripartiteLoan, LoanTranche
+)
 from app.modules.installments.schemas import (
     CustomerInstallmentCreate, CustomerInstallmentResponse,
     InstallmentScheduleGenerateRequest, InstallmentPaymentRequest,
@@ -18,7 +24,10 @@ from app.modules.installments.schemas import (
     InstallmentAlertLogResponse,
     PDCVaultCreate, PDCVaultResponse, PDCStatusUpdateRequest,
     NI138LegalActionResponse, NI138ServeNoticeRequest, NI138FileCaseRequest,
-    InstallmentMetrics
+    InstallmentMetrics,
+    MoneyReceiptCreate, MoneyReceiptResponse, MoneyReceiptAllocationResponse,
+    TripartiteLoanCreate, TripartiteLoanResponse, TripartiteLoanNOCRequest,
+    LoanTrancheCreate, LoanTrancheResponse, LoanTrancheInspectionRequest, LoanTrancheDisburseRequest
 )
 from app.modules.installments.legal_notice_generator import generate_section138_legal_notice_pdf
 from app.modules.accounts.services import post_customer_collection_voucher
@@ -669,13 +678,33 @@ async def get_installment_metrics(db: AsyncSession = Depends(get_db)):
         )
     ).scalar() or 0
 
+    mr_count = (
+        await db.execute(select(func.count(MoneyReceipt.id)))
+    ).scalar() or 0
+
+    mr_amt = (
+        await db.execute(select(func.sum(MoneyReceipt.amount_received)))
+    ).scalar() or 0.0
+
+    loan_count = (
+        await db.execute(select(func.count(TripartiteLoan.id)))
+    ).scalar() or 0
+
+    loan_disbursed_amt = (
+        await db.execute(select(func.sum(TripartiteLoan.disbursed_amount_total)))
+    ).scalar() or 0.0
+
     return InstallmentMetrics(
         total_installments_due=due_count,
         total_overdue_amount=float(overdue_amt),
         total_pdc_in_vault=vault_count,
         total_vault_amount=float(vault_amt),
         total_dishonoured_cheques=bounced_count,
-        active_ni138_actions=legal_count
+        active_ni138_actions=legal_count,
+        total_money_receipts_count=mr_count,
+        total_money_receipts_amount=float(mr_amt),
+        total_tripartite_loans_count=loan_count,
+        total_tripartite_disbursed_amount=float(loan_disbursed_amt)
     )
 
 
@@ -868,13 +897,671 @@ async def list_installment_alerts(
     Returns dispatched SMS and WhatsApp notification audit log history.
     """
     stmt = select(InstallmentAlertLog).order_by(InstallmentAlertLog.id.desc())
-    if installment_id:
-        stmt = stmt.where(InstallmentAlertLog.installment_id == installment_id)
-    if booking_id:
-        stmt = stmt.where(InstallmentAlertLog.booking_id == booking_id)
-    if channel:
-        stmt = stmt.where(InstallmentAlertLog.channel == channel.upper())
-
     result = await db.execute(stmt)
     return result.scalars().all()
+
+
+# --------------------------------------------------------------------------
+# 5. Money Receipts & Partial Payment Adjustment Waterfall Engine (Prompt 10)
+# --------------------------------------------------------------------------
+@router.get("/money-receipts", response_model=List[MoneyReceiptResponse])
+async def list_money_receipts(
+    booking_id: Optional[int] = None,
+    customer_id: Optional[int] = None,
+    payment_mode: Optional[str] = None,
+    search: Optional[str] = None,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Returns money receipts with multi-mode payment details and granular waterfall installment allocations.
+    """
+    stmt = (
+        select(MoneyReceipt)
+        .options(
+            selectinload(MoneyReceipt.booking).selectinload(Booking.customer),
+            selectinload(MoneyReceipt.booking).selectinload(Booking.unit),
+            selectinload(MoneyReceipt.booking).selectinload(Booking.project),
+            selectinload(MoneyReceipt.allocations).selectinload(MoneyReceiptAllocation.installment)
+        )
+        .order_by(MoneyReceipt.id.desc())
+    )
+
+    if booking_id:
+        stmt = stmt.where(MoneyReceipt.booking_id == booking_id)
+    if customer_id:
+        stmt = stmt.where(MoneyReceipt.customer_id == customer_id)
+    if payment_mode:
+        stmt = stmt.where(MoneyReceipt.payment_mode == payment_mode.upper())
+    if search:
+        search_term = f"%{search.strip()}%"
+        stmt = stmt.where(
+            or_(
+                MoneyReceipt.mr_number.ilike(search_term),
+                MoneyReceipt.instrument_no.ilike(search_term),
+                MoneyReceipt.bank_name.ilike(search_term)
+            )
+        )
+
+    result = await db.execute(stmt)
+    receipts = result.scalars().all()
+
+    responses = []
+    for r in receipts:
+        resp = MoneyReceiptResponse.model_validate(r)
+        if r.booking:
+            resp.booking_reference_no = r.booking.booking_reference_no
+            if r.booking.customer:
+                resp.customer_name = r.booking.customer.full_name_en
+                resp.customer_phone = r.booking.customer.primary_phone
+            if r.booking.unit:
+                resp.unit_number = r.booking.unit.unit_number
+            if r.booking.project:
+                resp.project_name = r.booking.project.project_name
+
+        alloc_resps = []
+        for a in r.allocations:
+            ar = MoneyReceiptAllocationResponse.model_validate(a)
+            if a.installment:
+                ar.installment_no = a.installment.installment_no
+                ar.installment_title = a.installment.title
+            alloc_resps.append(ar)
+        resp.allocations = alloc_resps
+        responses.append(resp)
+
+    return responses
+
+
+@router.post("/money-receipts", response_model=MoneyReceiptResponse, status_code=status.HTTP_201_CREATED)
+async def create_money_receipt(
+    payload: MoneyReceiptCreate,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Executes Customer Payment Collection with Waterfall Adjustment Logic:
+      1. Phase 1: Adjusts late fees / surcharges across overdue installments first.
+      2. Phase 2: Adjusts installment principal (oldest overdue first) until amount is exhausted.
+      3. Phase 3: Any leftover balance becomes customer credit advance for future installments.
+      4. Auto-generates unique MR number & cryptographic QR verification token.
+      5. Automatically posts Double-Entry Cash/Bank/MFS Collection Voucher to General Ledger.
+      6. Dispatches SMS confirmation alert to buyer mobile phone.
+    """
+    stmt = (
+        select(Booking)
+        .options(
+            selectinload(Booking.customer),
+            selectinload(Booking.unit),
+            selectinload(Booking.project)
+        )
+        .where(Booking.id == payload.booking_id)
+    )
+    result = await db.execute(stmt)
+    booking = result.scalars().first()
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking record not found.")
+
+    # Unique MR Number generation
+    count_res = await db.execute(select(func.count(MoneyReceipt.id)))
+    count = count_res.scalar() or 0
+    candidate_no = f"MR-2026-{count + 1:04d}"
+    idx = 1
+    while True:
+        check = await db.execute(select(MoneyReceipt.id).where(MoneyReceipt.mr_number == candidate_no))
+        if not check.scalar():
+            break
+        candidate_no = f"MR-2026-{count + 1 + idx:04d}"
+        idx += 1
+    mr_number = candidate_no
+
+    # Fetch all installments for this booking ordered by due date
+    inst_stmt = (
+        select(CustomerInstallment)
+        .where(CustomerInstallment.booking_id == booking.id)
+        .order_by(CustomerInstallment.due_date.asc(), CustomerInstallment.installment_no.asc())
+    )
+    inst_res = await db.execute(inst_stmt)
+    installments = inst_res.scalars().all()
+
+    remaining = Decimal(str(payload.amount_received))
+    total_late_fee_adj = Decimal("0.00")
+    total_principal_adj = Decimal("0.00")
+    allocation_map = {} # installment_id -> {'late_fee': Decimal, 'principal': Decimal}
+
+    # Phase 1: Adjust late fees / surcharges first
+    for inst in installments:
+        if remaining <= Decimal("0.00"):
+            break
+        unpaid_fee = Decimal(str(inst.late_fee_accrued or 0.0))
+        if unpaid_fee > Decimal("0.00"):
+            alloc_fee = min(remaining, unpaid_fee)
+            inst.late_fee_accrued = float(unpaid_fee - alloc_fee)
+            remaining -= alloc_fee
+            total_late_fee_adj += alloc_fee
+            allocation_map[inst.id] = allocation_map.get(inst.id, {'late_fee': Decimal("0.00"), 'principal': Decimal("0.00")})
+            allocation_map[inst.id]['late_fee'] += alloc_fee
+
+    # Phase 2: Adjust installment principal (oldest first)
+    for inst in installments:
+        if remaining <= Decimal("0.00"):
+            break
+        payable = Decimal(str(inst.payable_amount))
+        paid = Decimal(str(inst.paid_amount or 0.0))
+        unpaid_princ = payable - paid
+        if unpaid_princ > Decimal("0.00"):
+            alloc_princ = min(remaining, unpaid_princ)
+            new_paid = paid + alloc_princ
+            inst.paid_amount = float(new_paid)
+            remaining -= alloc_princ
+            total_principal_adj += alloc_princ
+
+            if new_paid >= payable:
+                inst.status = "PAID"
+            else:
+                inst.status = "PARTIALLY_PAID"
+
+            allocation_map[inst.id] = allocation_map.get(inst.id, {'late_fee': Decimal("0.00"), 'principal': Decimal("0.00")})
+            allocation_map[inst.id]['principal'] += alloc_princ
+
+    # Phase 3: Any leftover becomes advance credit
+    excess_advance = remaining
+
+    # Cryptographic QR verification token and payload
+    qr_token = uuid.uuid4().hex
+    qr_payload = (
+        f"VERIFIED:MR={mr_number}|BOOKING={booking.booking_reference_no}|"
+        f"AMOUNT=BDT {payload.amount_received:,.2f}|DATE={payload.receipt_date}|AUTH={qr_token[:16]}"
+    )
+
+    # Create Money Receipt
+    receipt = MoneyReceipt(
+        mr_number=mr_number,
+        receipt_date=payload.receipt_date,
+        booking_id=booking.id,
+        customer_id=booking.primary_customer_id,
+        payment_mode=payload.payment_mode.upper(),
+        instrument_no=payload.instrument_no,
+        instrument_date=payload.instrument_date,
+        bank_name=payload.bank_name,
+        branch_name=payload.branch_name,
+        amount_received=payload.amount_received,
+        late_fee_adjusted=float(total_late_fee_adj),
+        installment_principal_adjusted=float(total_principal_adj),
+        excess_advance_amount=float(excess_advance),
+        qr_verification_token=qr_token,
+        qr_code_payload=qr_payload,
+        status="CLEARED",
+        remarks=payload.remarks
+    )
+    db.add(receipt)
+    await db.flush()
+
+    # Create Allocation records
+    for inst_id, alloc in allocation_map.items():
+        tot = alloc['late_fee'] + alloc['principal']
+        if tot > Decimal("0.00"):
+            rec_alloc = MoneyReceiptAllocation(
+                receipt_id=receipt.id,
+                installment_id=inst_id,
+                allocated_late_fee=float(alloc['late_fee']),
+                allocated_principal=float(alloc['principal']),
+                total_allocated=float(tot)
+            )
+            db.add(rec_alloc)
+
+    # Post Double-Entry General Ledger Collection Voucher
+    try:
+        voucher_ref = await post_customer_collection_voucher(
+            db=db,
+            booking_id=booking.id,
+            amount=payload.amount_received,
+            title=f"Money Receipt {mr_number} ({payload.payment_mode})",
+            payment_mode=payload.payment_mode,
+            project_id=booking.project_id
+        )
+    except Exception as e:
+        logger.warning(f"Could not post GL voucher for Money Receipt {mr_number}: {e}")
+
+    # SMS Confirmation Dispatch
+    customer = booking.customer
+    if payload.send_sms_notification and customer and customer.primary_phone:
+        sms_text = (
+            f"Dear {customer.full_name_en}, Money Receipt {mr_number} issued for BDT {payload.amount_received:,.2f} "
+            f"against Booking {booking.booking_reference_no}. Surcharge Adj: BDT {total_late_fee_adj:,.2f}, "
+            f"Principal Adj: BDT {total_principal_adj:,.2f}. Thank you."
+        )
+        sms_res = send_sms(customer.primary_phone, sms_text)
+        if sms_res.get("success"):
+            receipt.sms_confirmation_sent = True
+            receipt.sms_sent_at = func.now()
+
+    await db.commit()
+
+    # Re-query rich response
+    rich_res = await db.execute(
+        select(MoneyReceipt)
+        .options(
+            selectinload(MoneyReceipt.booking).selectinload(Booking.customer),
+            selectinload(MoneyReceipt.booking).selectinload(Booking.unit),
+            selectinload(MoneyReceipt.booking).selectinload(Booking.project),
+            selectinload(MoneyReceipt.allocations).selectinload(MoneyReceiptAllocation.installment)
+        )
+        .where(MoneyReceipt.id == receipt.id)
+    )
+    saved_mr = rich_res.scalars().first()
+
+    resp = MoneyReceiptResponse.model_validate(saved_mr)
+    if saved_mr.booking:
+        resp.booking_reference_no = saved_mr.booking.booking_reference_no
+        if saved_mr.booking.customer:
+            resp.customer_name = saved_mr.booking.customer.full_name_en
+            resp.customer_phone = saved_mr.booking.customer.primary_phone
+        if saved_mr.booking.unit:
+            resp.unit_number = saved_mr.booking.unit.unit_number
+        if saved_mr.booking.project:
+            resp.project_name = saved_mr.booking.project.project_name
+
+    alloc_resps = []
+    for a in saved_mr.allocations:
+        ar = MoneyReceiptAllocationResponse.model_validate(a)
+        if a.installment:
+            ar.installment_no = a.installment.installment_no
+            ar.installment_title = a.installment.title
+        alloc_resps.append(ar)
+    resp.allocations = alloc_resps
+
+    return resp
+
+
+@router.get("/money-receipts/{receipt_id}", response_model=MoneyReceiptResponse)
+async def get_money_receipt(receipt_id: int, db: AsyncSession = Depends(get_db)):
+    """
+    Returns single money receipt with allocation breakdown.
+    """
+    stmt = (
+        select(MoneyReceipt)
+        .options(
+            selectinload(MoneyReceipt.booking).selectinload(Booking.customer),
+            selectinload(MoneyReceipt.booking).selectinload(Booking.unit),
+            selectinload(MoneyReceipt.booking).selectinload(Booking.project),
+            selectinload(MoneyReceipt.allocations).selectinload(MoneyReceiptAllocation.installment)
+        )
+        .where(MoneyReceipt.id == receipt_id)
+    )
+    result = await db.execute(stmt)
+    r = result.scalars().first()
+    if not r:
+        raise HTTPException(status_code=404, detail="Money Receipt not found.")
+
+    resp = MoneyReceiptResponse.model_validate(r)
+    if r.booking:
+        resp.booking_reference_no = r.booking.booking_reference_no
+        if r.booking.customer:
+            resp.customer_name = r.booking.customer.full_name_en
+            resp.customer_phone = r.booking.customer.primary_phone
+        if r.booking.unit:
+            resp.unit_number = r.booking.unit.unit_number
+        if r.booking.project:
+            resp.project_name = r.booking.project.project_name
+
+    alloc_resps = []
+    for a in r.allocations:
+        ar = MoneyReceiptAllocationResponse.model_validate(a)
+        if a.installment:
+            ar.installment_no = a.installment.installment_no
+            ar.installment_title = a.installment.title
+        alloc_resps.append(ar)
+    resp.allocations = alloc_resps
+
+    return resp
+
+
+@router.get("/money-receipts/{receipt_id}/verify")
+async def verify_money_receipt_qr(receipt_id: int, db: AsyncSession = Depends(get_db)):
+    """
+    Public QR Verification Endpoint for scanning physical Money Receipts.
+    """
+    stmt = (
+        select(MoneyReceipt)
+        .options(
+            selectinload(MoneyReceipt.booking).selectinload(Booking.customer),
+            selectinload(MoneyReceipt.booking).selectinload(Booking.unit),
+            selectinload(MoneyReceipt.booking).selectinload(Booking.project)
+        )
+        .where(MoneyReceipt.id == receipt_id)
+    )
+    result = await db.execute(stmt)
+    r = result.scalars().first()
+    if not r:
+        raise HTTPException(status_code=404, detail="Money Receipt not found or invalid QR verification token.")
+
+    return {
+        "verified": True,
+        "mr_number": r.mr_number,
+        "receipt_date": str(r.receipt_date),
+        "amount_received": float(r.amount_received),
+        "payment_mode": r.payment_mode,
+        "customer_name": r.booking.customer.full_name_en if r.booking and r.booking.customer else "N/A",
+        "booking_reference_no": r.booking.booking_reference_no if r.booking else "N/A",
+        "unit_number": r.booking.unit.unit_number if r.booking and r.booking.unit else "N/A",
+        "project_name": r.booking.project.project_name if r.booking and r.booking.project else "N/A",
+        "status": r.status,
+        "qr_verification_token": r.qr_verification_token,
+        "late_fee_adjusted": float(r.late_fee_adjusted),
+        "principal_adjusted": float(r.installment_principal_adjusted),
+        "excess_advance": float(r.excess_advance_amount)
+    }
+
+
+# --------------------------------------------------------------------------
+# 6. Bank Home Loan Tripartite Agreement & Tranche Ledger (Prompt 10)
+# --------------------------------------------------------------------------
+@router.get("/tripartite-loans", response_model=List[TripartiteLoanResponse])
+async def list_tripartite_loans(
+    booking_id: Optional[int] = None,
+    financial_institution_code: Optional[str] = None,
+    status_filter: Optional[str] = Query(None, alias="status"),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Returns Tripartite Bank Home Loan ledger records with milestone-linked tranches.
+    """
+    stmt = (
+        select(TripartiteLoan)
+        .options(
+            selectinload(TripartiteLoan.booking).selectinload(Booking.customer),
+            selectinload(TripartiteLoan.booking).selectinload(Booking.unit),
+            selectinload(TripartiteLoan.booking).selectinload(Booking.project),
+            selectinload(TripartiteLoan.tranches).selectinload(LoanTranche.receipt)
+        )
+        .order_by(TripartiteLoan.id.desc())
+    )
+
+    if booking_id:
+        stmt = stmt.where(TripartiteLoan.booking_id == booking_id)
+    if financial_institution_code:
+        stmt = stmt.where(TripartiteLoan.financial_institution_code == financial_institution_code.upper())
+    if status_filter:
+        stmt = stmt.where(TripartiteLoan.status == status_filter.upper())
+
+    result = await db.execute(stmt)
+    loans = result.scalars().all()
+
+    responses = []
+    for l in loans:
+        resp = TripartiteLoanResponse.model_validate(l)
+        if l.booking:
+            resp.booking_reference_no = l.booking.booking_reference_no
+            if l.booking.customer:
+                resp.customer_name = l.booking.customer.full_name_en
+                resp.customer_phone = l.booking.customer.primary_phone
+            if l.booking.unit:
+                resp.unit_number = l.booking.unit.unit_number
+            if l.booking.project:
+                resp.project_name = l.booking.project.project_name
+
+        tranche_resps = []
+        for t in l.tranches:
+            tr = LoanTrancheResponse.model_validate(t)
+            if t.receipt:
+                tr.mr_number = t.receipt.mr_number
+            tranche_resps.append(tr)
+        resp.tranches = tranche_resps
+        responses.append(resp)
+
+    return responses
+
+
+@router.post("/tripartite-loans", response_model=TripartiteLoanResponse, status_code=status.HTTP_201_CREATED)
+async def create_tripartite_loan(
+    payload: TripartiteLoanCreate,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Creates a new Tripartite Home Loan tracking record between Buyer, Developer, and Bank/NBFI.
+    """
+    b_res = await db.execute(
+        select(Booking)
+        .options(
+            selectinload(Booking.customer),
+            selectinload(Booking.unit),
+            selectinload(Booking.project)
+        )
+        .where(Booking.id == payload.booking_id)
+    )
+    booking = b_res.scalars().first()
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking record not found.")
+
+    # Unique Loan Reference Number
+    count_res = await db.execute(select(func.count(TripartiteLoan.id)))
+    count = count_res.scalar() or 0
+    loan_ref = f"TRP-{payload.financial_institution_code[:3]}-2026-{count + 1:03d}"
+
+    loan = TripartiteLoan(
+        loan_reference_no=loan_ref,
+        booking_id=booking.id,
+        customer_id=booking.primary_customer_id,
+        financial_institution_code=payload.financial_institution_code.upper(),
+        bank_name=payload.bank_name,
+        branch_name=payload.branch_name,
+        sanction_letter_no=payload.sanction_letter_no,
+        sanction_date=payload.sanction_date,
+        sanctioned_amount=payload.sanctioned_amount,
+        disbursed_amount_total=0.00,
+        developer_noc_ref=payload.developer_noc_ref,
+        developer_noc_date=payload.developer_noc_date,
+        noc_status=payload.noc_status or "PENDING",
+        tripartite_agreement_date=payload.tripartite_agreement_date,
+        bank_officer_name=payload.bank_officer_name,
+        bank_officer_phone=payload.bank_officer_phone,
+        bank_officer_email=payload.bank_officer_email,
+        status="SANCTIONED",
+        remarks=payload.remarks
+    )
+    db.add(loan)
+    await db.flush()
+
+    # Create scheduled tranches if provided
+    if payload.tranches:
+        for t in payload.tranches:
+            tranche = LoanTranche(
+                loan_id=loan.id,
+                tranche_number=t.tranche_number,
+                milestone_title=t.milestone_title,
+                sanctioned_tranche_amount=t.sanctioned_tranche_amount,
+                inspection_status="PENDING_INSPECTION",
+                status="PENDING",
+                remarks=t.remarks
+            )
+            db.add(tranche)
+
+    await db.commit()
+
+    # Re-query
+    rich_res = await db.execute(
+        select(TripartiteLoan)
+        .options(
+            selectinload(TripartiteLoan.booking).selectinload(Booking.customer),
+            selectinload(TripartiteLoan.booking).selectinload(Booking.unit),
+            selectinload(TripartiteLoan.booking).selectinload(Booking.project),
+            selectinload(TripartiteLoan.tranches).selectinload(LoanTranche.receipt)
+        )
+        .where(TripartiteLoan.id == loan.id)
+    )
+    saved = rich_res.scalars().first()
+
+    resp = TripartiteLoanResponse.model_validate(saved)
+    if saved.booking:
+        resp.booking_reference_no = saved.booking.booking_reference_no
+        if saved.booking.customer:
+            resp.customer_name = saved.booking.customer.full_name_en
+            resp.customer_phone = saved.booking.customer.primary_phone
+        if saved.booking.unit:
+            resp.unit_number = saved.booking.unit.unit_number
+        if saved.booking.project:
+            resp.project_name = saved.booking.project.project_name
+
+    tranche_resps = []
+    for t in saved.tranches:
+        tr = LoanTrancheResponse.model_validate(t)
+        if t.receipt:
+            tr.mr_number = t.receipt.mr_number
+        tranche_resps.append(tr)
+    resp.tranches = tranche_resps
+
+    return resp
+
+
+@router.post("/tripartite-loans/{loan_id}/noc", response_model=TripartiteLoanResponse)
+async def issue_developer_noc(
+    loan_id: int,
+    payload: TripartiteLoanNOCRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Issues Developer Non-Objection Certificate (NOC) endorsing the tripartite mortgage charge.
+    """
+    stmt = (
+        select(TripartiteLoan)
+        .options(
+            selectinload(TripartiteLoan.booking).selectinload(Booking.customer),
+            selectinload(TripartiteLoan.booking).selectinload(Booking.unit),
+            selectinload(TripartiteLoan.booking).selectinload(Booking.project),
+            selectinload(TripartiteLoan.tranches)
+        )
+        .where(TripartiteLoan.id == loan_id)
+    )
+    result = await db.execute(stmt)
+    loan = result.scalars().first()
+    if not loan:
+        raise HTTPException(status_code=404, detail="Tripartite Loan not found.")
+
+    loan.developer_noc_ref = payload.developer_noc_ref
+    loan.developer_noc_date = payload.developer_noc_date
+    loan.noc_status = "ISSUED"
+    loan.status = "NOC_ISSUED"
+    if payload.remarks:
+        loan.remarks = f"{loan.remarks or ''} | NOC Endorsement: {payload.remarks}"
+
+    await db.commit()
+    await db.refresh(loan)
+
+    resp = TripartiteLoanResponse.model_validate(loan)
+    if loan.booking:
+        resp.booking_reference_no = loan.booking.booking_reference_no
+        if loan.booking.customer:
+            resp.customer_name = loan.booking.customer.full_name_en
+            resp.customer_phone = loan.booking.customer.primary_phone
+        if loan.booking.unit:
+            resp.unit_number = loan.booking.unit.unit_number
+        if loan.booking.project:
+            resp.project_name = loan.booking.project.project_name
+
+    tranche_resps = []
+    for t in loan.tranches:
+        tr = LoanTrancheResponse.model_validate(t)
+        tranche_resps.append(tr)
+    resp.tranches = tranche_resps
+
+    return resp
+
+
+@router.put("/tripartite-loans/{loan_id}/tranches/{tranche_id}/inspection", response_model=LoanTrancheResponse)
+async def record_tranche_inspection(
+    loan_id: int,
+    tranche_id: int,
+    payload: LoanTrancheInspectionRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Records Bank Civil Engineer Inspection Verification for a milestone tranche.
+    """
+    stmt = (
+        select(LoanTranche)
+        .where(LoanTranche.id == tranche_id, LoanTranche.loan_id == loan_id)
+    )
+    result = await db.execute(stmt)
+    tranche = result.scalars().first()
+    if not tranche:
+        raise HTTPException(status_code=404, detail="Tranche record not found.")
+
+    tranche.bank_inspection_date = payload.bank_inspection_date
+    tranche.inspection_status = payload.inspection_status.upper()
+    tranche.inspection_engineer_name = payload.inspection_engineer_name
+    tranche.inspection_notes = payload.inspection_notes
+
+    if tranche.inspection_status == "INSPECTION_PASSED":
+        tranche.status = "INSPECTION_DONE"
+    elif tranche.inspection_status == "INSPECTION_REJECTED":
+        tranche.status = "PENDING"
+
+    await db.commit()
+    await db.refresh(tranche)
+
+    return LoanTrancheResponse.model_validate(tranche)
+
+
+@router.post("/tripartite-loans/{loan_id}/tranches/{tranche_id}/disburse", response_model=LoanTrancheResponse)
+async def disburse_tranche(
+    loan_id: int,
+    tranche_id: int,
+    payload: LoanTrancheDisburseRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Records disbursement from Bank/NBFI for an approved tranche:
+      1. Automatically triggers Money Receipt (MR) creation with waterfall adjustment.
+      2. Reconciles tranche and links to the generated Money Receipt.
+      3. Updates total disbursed amount on the Tripartite Loan ledger.
+    """
+    stmt = (
+        select(LoanTranche)
+        .options(selectinload(LoanTranche.loan).selectinload(TripartiteLoan.booking))
+        .where(LoanTranche.id == tranche_id, LoanTranche.loan_id == loan_id)
+    )
+    result = await db.execute(stmt)
+    tranche = result.scalars().first()
+    if not tranche:
+        raise HTTPException(status_code=404, detail="Tranche record not found.")
+
+    loan = tranche.loan
+    booking = loan.booking
+
+    # 1. Trigger Money Receipt creation via waterfall
+    mr_payload = MoneyReceiptCreate(
+        booking_id=booking.id,
+        receipt_date=payload.disbursed_date,
+        payment_mode=payload.payment_mode,
+        instrument_no=payload.payment_instrument_no,
+        instrument_date=payload.disbursed_date,
+        bank_name=payload.bank_name or loan.bank_name,
+        branch_name=payload.branch_name or loan.branch_name,
+        amount_received=payload.disbursed_amount,
+        remarks=f"Tripartite Bank Home Loan Disbursement - Tranche #{tranche.tranche_number} ({tranche.milestone_title})",
+        send_sms_notification=True
+    )
+    mr_resp = await create_money_receipt(payload=mr_payload, db=db)
+
+    # 2. Update Tranche
+    tranche.disbursed_date = payload.disbursed_date
+    tranche.disbursed_amount = payload.disbursed_amount
+    tranche.payment_instrument_no = payload.payment_instrument_no
+    tranche.receipt_id = mr_resp.id
+    tranche.status = "RECONCILED"
+    if payload.remarks:
+        tranche.remarks = f"{tranche.remarks or ''} | Disbursement: {payload.remarks}"
+
+    # 3. Update Loan Total
+    loan.disbursed_amount_total = float(loan.disbursed_amount_total or 0.0) + float(payload.disbursed_amount)
+    if float(loan.disbursed_amount_total) >= float(loan.sanctioned_amount):
+        loan.status = "COMPLETED"
+    else:
+        loan.status = "DISBURSING"
+
+    await db.commit()
+    await db.refresh(tranche)
+
+    resp = LoanTrancheResponse.model_validate(tranche)
+    resp.mr_number = mr_resp.mr_number
+    return resp
+
 

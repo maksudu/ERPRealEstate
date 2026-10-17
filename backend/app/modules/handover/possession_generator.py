@@ -160,6 +160,7 @@ def generate_possession_letter_pdf(data: dict) -> bytes:
 
         <div class="ref-row">
             <div><strong>Possession Certificate No:</strong> {data.get('possession_letter_number', 'POS-2026-001')}</div>
+            <div><strong>Key Certificate No:</strong> {data.get('key_handover_certificate_number', 'KEY-2026-0001')}</div>
             <div><strong>Handover Date:</strong> {data.get('possession_handover_date', '2026-10-16')}</div>
         </div>
 
@@ -189,17 +190,22 @@ def generate_possession_letter_pdf(data: dict) -> bytes:
                 <th>Site Supervising Engineer</th>
                 <td>{data.get('site_engineer_name', 'Lead Project Engineer')}</td>
             </tr>
+            <tr>
+                <th>Brass Key Sets & Access</th>
+                <td><strong>{data.get('key_sets_count', 3)} Complete Sets</strong> (Main Door, Bedroom Mortise, DB Key & Sub-Meter)</td>
+            </tr>
         </table>
 
         <div class="section-title">2. Financial Clearance & Snagging Rectification</div>
         <div class="declaration-box">
             ✔ <strong>100% Financial Clearance Verified:</strong> All installment considerations, statutory utility connection charges, and registration expenses have been unconditionally settled with the corporate accounts department.<br>
-            ✔ <strong>Snagging & Joint Pre-Inspection:</strong> The physical inspection of the apartment, including sanitary fittings, electrical DB boards, floor tiles, and joinery works, has been completed to the satisfaction of the Allottee.
+            ✔ <strong>Digital Snagging & Joint Pre-Inspection:</strong> The physical inspection of the apartment, including sanitary fittings, electrical DB boards, floor tiles, and joinery works, has been completed and verified closed to the satisfaction of the Allottee.<br>
+            ✔ <strong>Joint Customer Sign-off:</strong> Possession and physical keys accepted without encumbrance.
         </div>
 
         <div class="section-title">3. 12-Month Defect Liability Period (DLP) Warranty</div>
         <p style="font-size: 9pt; color: #475569; margin-bottom: 20px;">
-            The developer hereby covenants a statutory <strong>12-Month Defect Liability Warranty</strong> from the date of physical possession. Any defects in plumbing, sanitary lines, internal electrical wiring, and tile de-bonding shall be repaired free of cost within 72 hours of ticket generation via the ERP Portal.
+            The developer hereby covenants a statutory <strong>12-Month Defect Liability Warranty</strong> valid from <strong>{data.get('warranty_start_date', 'Handover Date')}</strong> to <strong>{data.get('warranty_end_date', '365 Days')}</strong>. Any structural defects, plumbing & sanitary lines, internal electrical wiring, and tile de-bonding shall be repaired free of cost within designated SLA resolution timers (Critical: 24h, High: 48h, Medium: 72h) via the ERP Portal.
         </p>
 
         <div class="signatures">

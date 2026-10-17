@@ -104,6 +104,8 @@ export class SidebarComponent implements OnInit {
       title: 'Collections & PDC Vault',
       iconSvg: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z',
       items: [
+        { id: 'money-receipts', label: 'Money Receipts & Waterfall', route: '/installments/money-receipts', badge: 'Smart MR' },
+        { id: 'tripartite-loans', label: 'Bank Loan Tripartite Ledger', route: '/installments/tripartite-loans', badge: 'Tripartite' },
         { id: 'schedules', label: 'Installment Schedules & MR', route: '/installments/schedules' },
         { id: 'pdc', label: 'PDC Cheque Vault & Safe', route: '/installments/pdc-vault' },
         { id: 'ni138', label: 'NI Act 138 Legal Recovery', route: '/installments/ni138-actions' }

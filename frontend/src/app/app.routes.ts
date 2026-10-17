@@ -113,6 +113,16 @@ export const routes: Routes = [
     title: 'Installment Schedules & Milestone Triggers - Bangladesh Real Estate ERP'
   },
   {
+    path: 'installments/money-receipts',
+    loadComponent: () => import('./features/installments/money-receipts/money-receipts.component').then(m => m.MoneyReceiptsComponent),
+    title: 'Money Receipts & Waterfall Collections - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'installments/tripartite-loans',
+    loadComponent: () => import('./features/installments/tripartite-loans/tripartite-loans.component').then(m => m.TripartiteLoansComponent),
+    title: 'Bank Home Loan Tripartite Ledger - Bangladesh Real Estate ERP'
+  },
+  {
     path: 'installments/pdc-vault',
     loadComponent: () => import('./features/installments/pdc-vault/pdc-vault.component').then(m => m.PDCVaultComponent),
     title: 'PDC Cheque Vault & Safe Deposits - Bangladesh Real Estate ERP'

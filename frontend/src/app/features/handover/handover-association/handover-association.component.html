@@ -1,272 +1,980 @@
-<div class="p-6 space-y-6">
-  <!-- Header -->
-  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-    <div>
-      <div class="flex items-center gap-3">
-        <div class="p-2.5 rounded-xl bg-purple-500/10 text-purple-500 border border-purple-500/20">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-          </svg>
-        </div>
+<div class="flex flex-col gap-6">
+  <!-- Outer Card Container -->
+  <app-card-container
+    title="Commercial Rental Leasing, CAM Billing & Property Operations"
+    subtitle="Commercial Space Lease Terms, Security Deposit Ledger, Monthly CAM (Common Area Maintenance) Service Billing, and Utility Sub-Meter Register"
+  >
+    <!-- KPI Summary Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div class="bg-card border border-border rounded-xl p-4 flex items-center justify-between shadow-sm">
         <div>
-          <h1 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Building Owners Association & Leasing</h1>
-          <p class="text-sm text-slate-500 dark:text-slate-400">ফ্ল্যাট মালিক কল্যাণ সমিতি, sinking fund transfer & commercial leasing management</p>
+          <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Active Commercial Leases</p>
+          <h3 class="text-2xl font-bold text-foreground mt-1">{{ metrics()?.active_commercial_leases_count || leases().length }}</h3>
+          <span class="text-[11px] text-muted-foreground">Retail Shops & Offices</span>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="bg-card border border-border rounded-xl p-4 flex items-center justify-between shadow-sm">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Monthly Rent Receivable</p>
+          <h3 class="text-xl font-bold text-emerald-500 mt-1">BDT {{ (metrics()?.total_monthly_rent_receivable || 0) | number:'1.0-0' }}</h3>
+          <span class="text-[11px] text-emerald-500 font-medium">Contracted Commercial Rent</span>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 border border-emerald-500/20">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="bg-card border border-border rounded-xl p-4 flex items-center justify-between shadow-sm">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total CAM Billed</p>
+          <h3 class="text-xl font-bold text-blue-500 mt-1">BDT {{ (metrics()?.total_cam_billed_amount || 0) | number:'1.0-0' }}</h3>
+          <span class="text-[11px] text-blue-500 font-medium">Common Area Maintenance</span>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 border border-blue-500/20">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="bg-card border border-border rounded-xl p-4 flex items-center justify-between shadow-sm">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Unpaid CAM Invoices</p>
+          <h3 class="text-2xl font-bold text-amber-500 mt-1">{{ metrics()?.unpaid_cam_bills_count || 0 }}</h3>
+          <span class="text-[11px] text-amber-500 font-medium">Pending Recovery</span>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500 border border-amber-500/20">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
         </div>
       </div>
     </div>
-    <div class="flex items-center gap-3">
-      @if (activeTab() === 'associations') {
-        <app-custom-button variant="primary" (buttonClick)="openAssocModal()">
-          <svg class="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-          </svg>
-          Form Owners Association
-        </app-custom-button>
-      } @else {
-        <app-custom-button variant="primary" (buttonClick)="openLeaseModal()">
-          <svg class="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-          </svg>
-          Record Lease Agreement
-        </app-custom-button>
-      }
-    </div>
-  </div>
 
-  <!-- Tab Switcher -->
-  <div class="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
-    <button
-      (click)="activeTab.set('associations')"
-      class="px-4 py-2 text-sm font-semibold rounded-lg transition-colors"
-      [ngClass]="activeTab() === 'associations' ? 'bg-purple-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'"
-    >
-      Flat Owners Associations ({{ associations().length }})
-    </button>
-    <button
-      (click)="activeTab.set('leases')"
-      class="px-4 py-2 text-sm font-semibold rounded-lg transition-colors"
-      [ngClass]="activeTab() === 'leases' ? 'bg-purple-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'"
-    >
-      Commercial & Unit Leases ({{ leases().length }})
-    </button>
-  </div>
+    <!-- 4-Tab Navigation Selector -->
+    <div class="flex flex-wrap items-center justify-between border-b border-border pb-3 mb-6 gap-3">
+      <div class="flex flex-wrap gap-2">
+        <button
+          type="button"
+          (click)="setTab('leases')"
+          class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5"
+          [ngClass]="activeTab() === 'leases' ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-secondary/50 text-muted-foreground hover:bg-secondary'"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+          </svg>
+          Commercial Leases ({{ filteredLeases().length }})
+        </button>
 
-  <!-- Tab 1: Owners Associations -->
-  @if (activeTab() === 'associations') {
-    <app-card-container [paddingClass]="'p-0'">
-      <div class="overflow-x-auto">
-        <table class="w-full text-left text-sm">
-          <thead class="bg-slate-50 dark:bg-slate-900/50 text-slate-600 dark:text-slate-400 text-xs font-semibold uppercase border-b border-slate-200 dark:border-slate-800">
-            <tr>
-              <th class="py-3.5 px-4">Association Name</th>
-              <th class="py-3.5 px-4">Project</th>
-              <th class="py-3.5 px-4">Handover Date</th>
-              <th class="py-3.5 px-4 text-right">Sinking Fund Transferred</th>
-              <th class="py-3.5 px-4 text-right">Monthly Service Charge</th>
-              <th class="py-3.5 px-4">Executive Committee</th>
-              <th class="py-3.5 px-4 text-center">Status</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
-            @if (isLoading()) {
-              <tr>
-                <td colspan="7" class="text-center py-10">
-                  <div class="inline-flex items-center gap-2 text-slate-500">
-                    <svg class="animate-spin h-5 w-5 text-purple-500" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                    <span>Loading Associations...</span>
-                  </div>
-                </td>
-              </tr>
-            } @else if (associations().length === 0) {
-              <tr>
-                <td colspan="7" class="text-center py-12 text-slate-500 dark:text-slate-400">
-                  <div class="font-medium text-base">No Flat Owners Associations Registered</div>
-                  <div class="text-xs text-slate-400 mt-1">Form the first association using the button above.</div>
-                </td>
-              </tr>
-            } @else {
-              @for (assoc of associations(); track assoc.id) {
-                <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
-                  <td class="py-3.5 px-4 font-semibold text-slate-900 dark:text-white">
-                    {{ assoc.association_name }}
-                  </td>
-                  <td class="py-3.5 px-4 font-medium text-slate-700 dark:text-slate-300">
-                    {{ assoc.project_name || 'Project #' + assoc.project_id }}
-                  </td>
-                  <td class="py-3.5 px-4 text-xs text-slate-500">
-                    {{ assoc.handover_date | date:'mediumDate' }}
-                  </td>
-                  <td class="py-3.5 px-4 text-right font-bold text-purple-600 dark:text-purple-400">
-                    ৳{{ assoc.sinking_fund_transferred_bdt | number:'1.2-2' }}
-                  </td>
-                  <td class="py-3.5 px-4 text-right font-semibold text-slate-800 dark:text-slate-200">
-                    ৳{{ assoc.monthly_service_charge_per_flat | number:'1.2-2' }} / mo
-                  </td>
-                  <td class="py-3.5 px-4 text-xs">
-                    <div>President: <strong>{{ assoc.president_name || 'N/A' }}</strong></div>
-                    <div class="text-slate-400">Secretary: {{ assoc.secretary_name || 'N/A' }}</div>
-                    @if (assoc.contact_phone) {
-                      <div class="text-slate-400 font-mono">{{ assoc.contact_phone }}</div>
-                    }
-                  </td>
-                  <td class="py-3.5 px-4 text-center">
-                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300">
-                      {{ assoc.status }}
-                    </span>
-                  </td>
-                </tr>
-              }
-            }
-          </tbody>
-        </table>
+        <button
+          type="button"
+          (click)="setTab('cam')"
+          class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5"
+          [ngClass]="activeTab() === 'cam' ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-secondary/50 text-muted-foreground hover:bg-secondary'"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          Monthly CAM Billing ({{ filteredCAMBills().length }})
+        </button>
+
+        <button
+          type="button"
+          (click)="setTab('utility')"
+          class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5"
+          [ngClass]="activeTab() === 'utility' ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-secondary/50 text-muted-foreground hover:bg-secondary'"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+          </svg>
+          Utility Sub-Meters ({{ filteredUtilityReadings().length }})
+        </button>
+
+        <button
+          type="button"
+          (click)="setTab('associations')"
+          class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5"
+          [ngClass]="activeTab() === 'associations' ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-secondary/50 text-muted-foreground hover:bg-secondary'"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+          </svg>
+          Owners Association ({{ associations().length }})
+        </button>
       </div>
-    </app-card-container>
-  }
 
-  <!-- Tab 2: Leases -->
-  @if (activeTab() === 'leases') {
-    <app-card-container [paddingClass]="'p-0'">
-      <div class="overflow-x-auto">
-        <table class="w-full text-left text-sm">
-          <thead class="bg-slate-50 dark:bg-slate-900/50 text-slate-600 dark:text-slate-400 text-xs font-semibold uppercase border-b border-slate-200 dark:border-slate-800">
-            <tr>
-              <th class="py-3.5 px-4">Tenant Particulars</th>
-              <th class="py-3.5 px-4">Leased Unit</th>
-              <th class="py-3.5 px-4">Lease Term</th>
-              <th class="py-3.5 px-4 text-right">Monthly Rent (BDT)</th>
-              <th class="py-3.5 px-4 text-right">Security Deposit (BDT)</th>
-              <th class="py-3.5 px-4 text-center">Escalation</th>
-              <th class="py-3.5 px-4 text-center">Status</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
-            @if (isLoading()) {
+      <div>
+        @if (activeTab() === 'leases') {
+          <app-custom-button variant="primary" (clicked)="openLeaseModal()">
+            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Register Commercial Lease
+          </app-custom-button>
+        } @else if (activeTab() === 'cam') {
+          <app-custom-button variant="primary" (clicked)="openCAMModal()">
+            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Generate Monthly CAM Bill
+          </app-custom-button>
+        } @else if (activeTab() === 'utility') {
+          <app-custom-button variant="primary" (clicked)="openUtilityModal()">
+            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Record Sub-Meter Reading
+          </app-custom-button>
+        } @else {
+          <app-custom-button variant="primary" (clicked)="openAssocModal()">
+            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Form Owners Association
+          </app-custom-button>
+        }
+      </div>
+    </div>
+
+    <!-- Search Toolbar -->
+    <div class="w-full sm:w-80 mb-6">
+      <app-custom-input
+        [(ngModel)]="searchQuery"
+        placeholder="Search records, reference, or tenants..."
+      />
+    </div>
+
+    <!-- TAB 1: Commercial Leases -->
+    @if (activeTab() === 'leases') {
+      <div class="border border-border rounded-xl overflow-hidden bg-card">
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs text-left border-collapse">
+            <thead class="bg-secondary/40 text-muted-foreground uppercase text-[10px] tracking-wider border-b border-border">
               <tr>
-                <td colspan="7" class="text-center py-10">
-                  <div class="inline-flex items-center gap-2 text-slate-500">
-                    <svg class="animate-spin h-5 w-5 text-purple-500" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                    <span>Loading Leases...</span>
-                  </div>
-                </td>
+                <th class="py-3 px-4 font-semibold">Lease Ref</th>
+                <th class="py-3 px-4 font-semibold">Tenant & Commercial Entity</th>
+                <th class="py-3 px-4 font-semibold">Commercial Space & Unit</th>
+                <th class="py-3 px-4 font-semibold">Floor Area & Rent</th>
+                <th class="py-3 px-4 font-semibold">CAM Rate / SFT</th>
+                <th class="py-3 px-4 font-semibold">Security Deposit</th>
+                <th class="py-3 px-4 font-semibold">Lease Term</th>
+                <th class="py-3 px-4 font-semibold text-right">Status</th>
               </tr>
-            } @else if (leases().length === 0) {
-              <tr>
-                <td colspan="7" class="text-center py-12 text-slate-500 dark:text-slate-400">
-                  <div class="font-medium text-base">No Rental Lease Agreements Found</div>
-                  <div class="text-xs text-slate-400 mt-1">Record a commercial or apartment lease using the button above.</div>
-                </td>
-              </tr>
-            } @else {
-              @for (lease of leases(); track lease.id) {
-                <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
+            </thead>
+            <tbody class="divide-y divide-border">
+              @for (l of filteredLeases(); track l.id) {
+                <tr class="hover:bg-secondary/20 transition-colors">
+                  <td class="py-3.5 px-4 font-mono font-bold text-primary">
+                    {{ l.lease_reference_no || ('LSE-' + l.id) }}
+                  </td>
                   <td class="py-3.5 px-4">
-                    <div class="font-medium text-slate-900 dark:text-white">{{ lease.tenant_name }}</div>
-                    <div class="text-xs font-mono text-slate-400">NID: {{ lease.tenant_nid }}</div>
-                    @if (lease.tenant_phone) {
-                      <div class="text-xs text-slate-400">{{ lease.tenant_phone }}</div>
+                    <div class="font-bold text-foreground">{{ l.tenant_company_name || l.tenant_name }}</div>
+                    <div class="text-[11px] text-muted-foreground">{{ l.tenant_name }} · {{ l.tenant_phone }}</div>
+                    @if (l.trade_license_number) {
+                      <div class="text-[10px] text-muted-foreground">Trade Lic: {{ l.trade_license_number }}</div>
                     }
                   </td>
-                  <td class="py-3.5 px-4 font-medium">
-                    {{ lease.project_name || 'Project' }} · Flat {{ lease.unit_number || '#' + lease.unit_id }}
+                  <td class="py-3.5 px-4">
+                    <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-secondary text-foreground border border-border mb-1">
+                      {{ l.commercial_space_type }}
+                    </span>
+                    <div class="font-semibold text-foreground">Unit {{ l.unit_number || l.unit_id }}</div>
                   </td>
-                  <td class="py-3.5 px-4 text-xs text-slate-500">
-                    <div>{{ lease.lease_start_date | date:'mediumDate' }}</div>
-                    <div class="text-slate-400">to {{ lease.lease_expiry_date | date:'mediumDate' }}</div>
+                  <td class="py-3.5 px-4 whitespace-nowrap">
+                    <div class="font-bold text-foreground">BDT {{ l.monthly_rent_bdt | number:'1.0-0' }} / mo</div>
+                    <div class="text-[11px] text-muted-foreground">{{ l.floor_area_sqft }} SFT &#64; BDT {{ l.rent_per_sqft_bdt }}/sft</div>
                   </td>
-                  <td class="py-3.5 px-4 text-right font-bold text-slate-900 dark:text-white">
-                    ৳{{ lease.monthly_rent_bdt | number:'1.2-2' }}
+                  <td class="py-3.5 px-4 font-semibold text-blue-500 whitespace-nowrap">
+                    BDT {{ l.cam_rate_per_sqft_bdt }}/SFT
                   </td>
-                  <td class="py-3.5 px-4 text-right font-medium text-slate-800 dark:text-slate-200">
-                    ৳{{ lease.security_deposit_bdt | number:'1.2-2' }}
+                  <td class="py-3.5 px-4 whitespace-nowrap">
+                    <div class="font-bold text-foreground">BDT {{ l.security_deposit_bdt | number:'1.0-0' }}</div>
+                    @if (l.security_deposit_status === 'RECEIVED') {
+                      <span class="inline-block px-1.5 py-0.5 rounded text-[9px] font-bold uppercase bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                        Deposit Received
+                      </span>
+                    } @else {
+                      <span class="inline-block px-1.5 py-0.5 rounded text-[9px] font-bold uppercase bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                        {{ l.security_deposit_status }}
+                      </span>
+                    }
                   </td>
-                  <td class="py-3.5 px-4 text-center font-semibold text-purple-600 dark:text-purple-400">
-                    {{ lease.rent_escalation_percent }}%
+                  <td class="py-3.5 px-4 text-[11px] text-muted-foreground whitespace-nowrap">
+                    <div>From: {{ l.lease_start_date }}</div>
+                    <div>To: {{ l.lease_expiry_date }}</div>
+                    <div class="text-[10px] text-primary">Grace: {{ l.fitout_grace_period_days }} days fit-out</div>
                   </td>
-                  <td class="py-3.5 px-4 text-center">
-                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300">
-                      {{ lease.status }}
+                  <td class="py-3.5 px-4 text-right whitespace-nowrap">
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> {{ l.status }}
                     </span>
                   </td>
                 </tr>
+              } @empty {
+                <tr>
+                  <td colspan="8" class="text-center py-8 text-muted-foreground text-xs">
+                    No commercial lease agreements found.
+                  </td>
+                </tr>
               }
-            }
-          </tbody>
-        </table>
+            </tbody>
+          </table>
+        </div>
       </div>
-    </app-card-container>
-  }
+    }
 
-  <!-- Modal 1: Form Owners Association -->
-  @if (isAssocModalOpen()) {
-    <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full border border-slate-200 dark:border-slate-800 shadow-2xl p-6 space-y-5">
-        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
-          <h3 class="text-lg font-bold text-slate-900 dark:text-white">Form Building Owners Association</h3>
-          <button (click)="closeAssocModal()" class="text-slate-400 hover:text-slate-600 p-1">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-          </button>
+    <!-- TAB 2: Monthly CAM Billing -->
+    @if (activeTab() === 'cam') {
+      <div class="border border-border rounded-xl overflow-hidden bg-card">
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs text-left border-collapse">
+            <thead class="bg-secondary/40 text-muted-foreground uppercase text-[10px] tracking-wider border-b border-border">
+              <tr>
+                <th class="py-3 px-4 font-semibold">Bill No</th>
+                <th class="py-3 px-4 font-semibold">Tenant / Lease</th>
+                <th class="py-3 px-4 font-semibold">Bill Month</th>
+                <th class="py-3 px-4 font-semibold">Space Area</th>
+                <th class="py-3 px-4 font-semibold">CAM Base Rate</th>
+                <th class="py-3 px-4 font-semibold">Breakdown (Sinking/Gen/Common)</th>
+                <th class="py-3 px-4 font-semibold">Total Bill Amount</th>
+                <th class="py-3 px-4 font-semibold">Payment Status</th>
+                <th class="py-3 px-4 font-semibold text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border">
+              @for (b of filteredCAMBills(); track b.id) {
+                <tr class="hover:bg-secondary/20 transition-colors">
+                  <td class="py-3.5 px-4 font-mono font-bold text-primary">
+                    {{ b.bill_number }}
+                    <div class="text-[10px] text-muted-foreground font-normal">Due: {{ b.due_date }}</div>
+                  </td>
+                  <td class="py-3.5 px-4">
+                    <div class="font-bold text-foreground">{{ b.tenant_company_name || b.tenant_name }}</div>
+                    <div class="text-[11px] text-muted-foreground">Unit {{ b.unit_number || 'N/A' }}</div>
+                  </td>
+                  <td class="py-3.5 px-4 font-semibold text-foreground whitespace-nowrap">
+                    {{ b.bill_month }}
+                  </td>
+                  <td class="py-3.5 px-4 whitespace-nowrap">
+                    {{ b.area_sqft }} SFT
+                  </td>
+                  <td class="py-3.5 px-4 whitespace-nowrap">
+                    BDT {{ b.cam_amount | number:'1.0-0' }}
+                    <div class="text-[10px] text-muted-foreground">&#64; BDT {{ b.cam_rate_per_sqft }}/sft</div>
+                  </td>
+                  <td class="py-3.5 px-4 text-[10px] text-muted-foreground whitespace-nowrap">
+                    <div>Sinking: BDT {{ b.sinking_fund_charge }}</div>
+                    <div>Generator: BDT {{ b.generator_backup_charge }}</div>
+                    <div>Common Util: BDT {{ b.common_electricity_water }}</div>
+                  </td>
+                  <td class="py-3.5 px-4 font-bold text-foreground whitespace-nowrap">
+                    BDT {{ b.total_bill_amount | number:'1.0-0' }}
+                  </td>
+                  <td class="py-3.5 px-4 whitespace-nowrap">
+                    @if (b.payment_status === 'PAID') {
+                      <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> PAID
+                      </span>
+                    } @else if (b.payment_status === 'PARTIALLY_PAID') {
+                      <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> PARTIAL
+                      </span>
+                    } @else {
+                      <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-500/10 text-rose-500 border border-rose-500/20">
+                        <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> UNPAID
+                      </span>
+                    }
+                  </td>
+                  <td class="py-3.5 px-4 text-right whitespace-nowrap">
+                    @if (b.payment_status !== 'PAID') {
+                      <button
+                        (click)="openPayCAMModal(b)"
+                        class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-sm"
+                      >
+                        Record Pay
+                      </button>
+                    } @else {
+                      <span class="text-xs text-muted-foreground font-semibold">Cleared ✔</span>
+                    }
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="9" class="text-center py-8 text-muted-foreground text-xs">
+                    No CAM billing invoices recorded.
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    <!-- TAB 3: Utility Sub-Meter Readings -->
+    @if (activeTab() === 'utility') {
+      <div class="border border-border rounded-xl overflow-hidden bg-card">
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs text-left border-collapse">
+            <thead class="bg-secondary/40 text-muted-foreground uppercase text-[10px] tracking-wider border-b border-border">
+              <tr>
+                <th class="py-3 px-4 font-semibold">Meter Number</th>
+                <th class="py-3 px-4 font-semibold">Meter Type</th>
+                <th class="py-3 px-4 font-semibold">Commercial Tenant</th>
+                <th class="py-3 px-4 font-semibold">Reading Date</th>
+                <th class="py-3 px-4 font-semibold">Previous Reading</th>
+                <th class="py-3 px-4 font-semibold">Current Reading</th>
+                <th class="py-3 px-4 font-semibold">Units Consumed</th>
+                <th class="py-3 px-4 font-semibold">Tariff / Unit</th>
+                <th class="py-3 px-4 font-semibold">Total Utility Bill</th>
+                <th class="py-3 px-4 font-semibold text-right">Billing Status</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border">
+              @for (u of filteredUtilityReadings(); track u.id) {
+                <tr class="hover:bg-secondary/20 transition-colors">
+                  <td class="py-3.5 px-4 font-mono font-bold text-primary">
+                    {{ u.meter_number }}
+                  </td>
+                  <td class="py-3.5 px-4 whitespace-nowrap">
+                    <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-secondary text-foreground border border-border">
+                      {{ u.meter_type }}
+                    </span>
+                  </td>
+                  <td class="py-3.5 px-4">
+                    <div class="font-bold text-foreground">{{ u.tenant_company_name || u.tenant_name }}</div>
+                    <div class="text-[11px] text-muted-foreground">Unit {{ u.unit_number || 'N/A' }}</div>
+                  </td>
+                  <td class="py-3.5 px-4 whitespace-nowrap">
+                    {{ u.reading_date }}
+                  </td>
+                  <td class="py-3.5 px-4 whitespace-nowrap">
+                    {{ u.previous_reading | number:'1.2-2' }}
+                  </td>
+                  <td class="py-3.5 px-4 whitespace-nowrap">
+                    {{ u.current_reading | number:'1.2-2' }}
+                  </td>
+                  <td class="py-3.5 px-4 font-bold text-foreground whitespace-nowrap">
+                    {{ u.units_consumed | number:'1.2-2' }} Units
+                  </td>
+                  <td class="py-3.5 px-4 whitespace-nowrap">
+                    BDT {{ u.tariff_rate_per_unit | number:'1.2-2' }}
+                  </td>
+                  <td class="py-3.5 px-4 font-bold text-emerald-500 whitespace-nowrap">
+                    BDT {{ u.total_utility_amount | number:'1.2-2' }}
+                    <div class="text-[9px] text-muted-foreground font-normal">Incl. {{ u.vat_rate_percent }}% VAT</div>
+                  </td>
+                  <td class="py-3.5 px-4 text-right whitespace-nowrap">
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-500/10 text-blue-500 border border-blue-500/20">
+                      <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> {{ u.billing_status }}
+                    </span>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="10" class="text-center py-8 text-muted-foreground text-xs">
+                    No utility sub-meter readings recorded yet.
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    <!-- TAB 4: Building Owners Association -->
+    @if (activeTab() === 'associations') {
+      <div class="border border-border rounded-xl overflow-hidden bg-card">
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs text-left border-collapse">
+            <thead class="bg-secondary/40 text-muted-foreground uppercase text-[10px] tracking-wider border-b border-border">
+              <tr>
+                <th class="py-3 px-4 font-semibold">Society / Committee Name</th>
+                <th class="py-3 px-4 font-semibold">Project</th>
+                <th class="py-3 px-4 font-semibold">Handover Date</th>
+                <th class="py-3 px-4 font-semibold">Sinking Fund Transferred</th>
+                <th class="py-3 px-4 font-semibold">Monthly Service Charge / Flat</th>
+                <th class="py-3 px-4 font-semibold">President & Secretary</th>
+                <th class="py-3 px-4 font-semibold text-right">Status</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border">
+              @for (a of associations(); track a.id) {
+                <tr class="hover:bg-secondary/20 transition-colors">
+                  <td class="py-3.5 px-4 font-bold text-foreground">
+                    {{ a.association_name }}
+                  </td>
+                  <td class="py-3.5 px-4 font-medium text-foreground">
+                    {{ a.project_name || 'Project' }}
+                  </td>
+                  <td class="py-3.5 px-4 whitespace-nowrap">
+                    {{ a.handover_date }}
+                  </td>
+                  <td class="py-3.5 px-4 font-bold text-primary whitespace-nowrap">
+                    BDT {{ a.sinking_fund_transferred_bdt | number:'1.0-0' }}
+                  </td>
+                  <td class="py-3.5 px-4 font-bold text-emerald-500 whitespace-nowrap">
+                    BDT {{ a.monthly_service_charge_per_flat | number:'1.0-0' }} / mo
+                  </td>
+                  <td class="py-3.5 px-4 text-xs text-foreground">
+                    <div>President: {{ a.president_name || 'N/A' }}</div>
+                    <div class="text-[11px] text-muted-foreground">Sec: {{ a.secretary_name || 'N/A' }} · {{ a.contact_phone }}</div>
+                  </td>
+                  <td class="py-3.5 px-4 text-right whitespace-nowrap">
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> {{ a.status }}
+                    </span>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="7" class="text-center py-8 text-muted-foreground text-xs">
+                    No building owners welfare associations registered.
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+  </app-card-container>
+
+  <!-- MODAL 1: Register Commercial Lease Agreement -->
+  @if (isLeaseModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
+      <div class="bg-card border border-border rounded-2xl w-full max-w-2xl shadow-2xl p-6 overflow-y-auto max-h-[90vh]">
+        <div class="flex items-center justify-between border-b border-border pb-4 mb-4">
+          <div>
+            <h3 class="text-lg font-bold text-foreground">Register Commercial Space Lease</h3>
+            <p class="text-xs text-muted-foreground">Commercial space / shop agreement terms, security deposit, and CAM billing rate</p>
+          </div>
+          <button (click)="closeLeaseModal()" class="text-muted-foreground hover:text-foreground">✕</button>
         </div>
 
-        <form [formGroup]="assocForm" (ngSubmit)="submitAssociation()" class="space-y-4">
-          <app-custom-input label="Project ID" type="number" formControlName="project_id"></app-custom-input>
-          <app-custom-input label="Association Name (কল্যাণ সমিতি)" formControlName="association_name"></app-custom-input>
-          <app-custom-input label="Handover Date" type="date" formControlName="handover_date"></app-custom-input>
-
+        <form [formGroup]="leaseForm" (ngSubmit)="submitLease()" class="space-y-4">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <app-custom-input label="Sinking Fund Transferred (BDT)" type="number" formControlName="sinking_fund_transferred_bdt"></app-custom-input>
-            <app-custom-input label="Monthly Service Charge / Flat (BDT)" type="number" formControlName="monthly_service_charge_per_flat"></app-custom-input>
+            <app-searchable-select
+              label="Commercial Space / Shop Unit"
+              placeholder="Select commercial unit..."
+              [options]="unitOptions()"
+              [formGroup]="leaseForm"
+              controlName="unit_id"
+              [required]="true"
+            />
+
+            <app-searchable-select
+              label="Commercial Space Type"
+              categoryCode="COMMERCIAL_SPACE_TYPE"
+              placeholder="Select space type..."
+              [formGroup]="leaseForm"
+              controlName="commercial_space_type"
+              [required]="true"
+              [allowCreateNew]="true"
+            />
+          </div>
+
+          <!-- Tenant Profile -->
+          <div class="p-3.5 bg-secondary/30 rounded-xl border border-border space-y-3">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-primary">Tenant Enterprise Profile</h4>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <app-custom-input
+                label="Commercial Entity / Brand Name"
+                placeholder="e.g. Shwapno, Apex, Medinova..."
+                [formGroup]="leaseForm"
+                controlName="tenant_company_name"
+              />
+
+              <app-custom-input
+                label="Authorized Signatory Name"
+                placeholder="Full name..."
+                [formGroup]="leaseForm"
+                controlName="tenant_name"
+                [required]="true"
+              />
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <app-custom-input
+                label="Trade License Number"
+                placeholder="TRAD-DNCC-XXXX"
+                [formGroup]="leaseForm"
+                controlName="trade_license_number"
+              />
+
+              <app-custom-input
+                label="TIN / BIN Number"
+                placeholder="BIN-XXXXXXXX-0101"
+                [formGroup]="leaseForm"
+                controlName="tin_bin_number"
+              />
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <app-custom-input
+                label="National ID / Passport"
+                placeholder="NID number..."
+                [formGroup]="leaseForm"
+                controlName="tenant_nid"
+                [required]="true"
+              />
+
+              <app-custom-input
+                label="Primary Phone"
+                placeholder="+8801700000000"
+                [formGroup]="leaseForm"
+                controlName="tenant_phone"
+                [required]="true"
+              />
+
+              <app-custom-input
+                label="Corporate Email"
+                placeholder="tenant&#64;company.com"
+                [formGroup]="leaseForm"
+                controlName="tenant_email"
+              />
+            </div>
+          </div>
+
+          <!-- Lease Terms & Rates -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <app-custom-input
+              label="Floor Area (SFT)"
+              type="number"
+              placeholder="850"
+              [formGroup]="leaseForm"
+              controlName="floor_area_sqft"
+              [required]="true"
+            />
+
+            <app-custom-input
+              label="Rent per SFT (BDT)"
+              type="number"
+              placeholder="110"
+              [formGroup]="leaseForm"
+              controlName="rent_per_sqft_bdt"
+              [required]="true"
+            />
+
+            <app-custom-input
+              label="CAM Rate per SFT (BDT)"
+              type="number"
+              placeholder="16"
+              [formGroup]="leaseForm"
+              controlName="cam_rate_per_sqft_bdt"
+              [required]="true"
+            />
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <app-custom-input
+              label="Security Deposit (BDT)"
+              type="number"
+              placeholder="250000"
+              [formGroup]="leaseForm"
+              controlName="security_deposit_bdt"
+              [required]="true"
+            />
+
+            <app-searchable-select
+              label="Security Deposit Status"
+              placeholder="Select deposit status..."
+              [options]="depositStatusOptions"
+              [formGroup]="leaseForm"
+              controlName="security_deposit_status"
+              [allowCreateNew]="false"
+            />
+
+            <app-custom-input
+              label="Fit-out Grace Period (Days)"
+              type="number"
+              placeholder="30"
+              [formGroup]="leaseForm"
+              controlName="fitout_grace_period_days"
+            />
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <app-custom-input label="President Name" formControlName="president_name"></app-custom-input>
-            <app-custom-input label="General Secretary Name" formControlName="secretary_name"></app-custom-input>
+            <app-custom-input
+              label="Lease Start Date"
+              type="date"
+              [formGroup]="leaseForm"
+              controlName="lease_start_date"
+              [required]="true"
+            />
+
+            <app-custom-input
+              label="Lease Expiry Date"
+              type="date"
+              [formGroup]="leaseForm"
+              controlName="lease_expiry_date"
+              [required]="true"
+            />
           </div>
 
-          <app-custom-input label="Association Contact Phone" formControlName="contact_phone"></app-custom-input>
-
-          <div class="flex justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
-            <app-custom-button variant="secondary" (buttonClick)="closeAssocModal()">Cancel</app-custom-button>
-            <app-custom-button variant="primary" type="submit" [disabled]="assocForm.invalid || isSubmitting()" (buttonClick)="submitAssociation()">Register Association</app-custom-button>
+          <div class="flex justify-end gap-3 pt-3 border-t border-border">
+            <app-custom-button variant="outline" type="button" (clicked)="closeLeaseModal()">
+              Cancel
+            </app-custom-button>
+            <app-custom-button variant="primary" type="submit" [disabled]="leaseForm.invalid || isSubmitting()">
+              {{ isSubmitting() ? 'Registering...' : 'Register Commercial Lease' }}
+            </app-custom-button>
           </div>
         </form>
       </div>
     </div>
   }
 
-  <!-- Modal 2: Record Lease -->
-  @if (isLeaseModalOpen()) {
-    <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full border border-slate-200 dark:border-slate-800 shadow-2xl p-6 space-y-5">
-        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
-          <h3 class="text-lg font-bold text-slate-900 dark:text-white">Record Rental Lease Agreement</h3>
-          <button (click)="closeLeaseModal()" class="text-slate-400 hover:text-slate-600 p-1">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-          </button>
+  <!-- MODAL 2: Generate Monthly CAM Bill -->
+  @if (isCAMModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
+      <div class="bg-card border border-border rounded-2xl w-full max-w-lg shadow-2xl p-6">
+        <div class="flex items-center justify-between border-b border-border pb-4 mb-4">
+          <div>
+            <h3 class="text-lg font-bold text-foreground">Generate Monthly CAM Bill</h3>
+            <p class="text-xs text-muted-foreground">Calculate Common Area Maintenance charges per contracted floor area</p>
+          </div>
+          <button (click)="closeCAMModal()" class="text-muted-foreground hover:text-foreground">✕</button>
         </div>
 
-        <form [formGroup]="leaseForm" (ngSubmit)="submitLease()" class="space-y-4">
-          <app-custom-input label="Unit ID" type="number" formControlName="unit_id"></app-custom-input>
+        <form [formGroup]="camForm" (ngSubmit)="submitCAMBill()" class="space-y-4">
+          <app-searchable-select
+            label="Lease Agreement"
+            placeholder="Select commercial lease..."
+            [options]="leaseOptions()"
+            [formGroup]="camForm"
+            controlName="lease_id"
+            [required]="true"
+          />
+
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <app-custom-input label="Tenant Full Name" formControlName="tenant_name"></app-custom-input>
-            <app-custom-input label="Tenant NID Number" formControlName="tenant_nid"></app-custom-input>
+            <app-custom-input
+              label="Billing Month (YYYY-MM)"
+              placeholder="2026-10"
+              [formGroup]="camForm"
+              controlName="bill_month"
+              [required]="true"
+            />
+
+            <app-custom-input
+              label="Payment Due Date"
+              type="date"
+              [formGroup]="camForm"
+              controlName="due_date"
+              [required]="true"
+            />
           </div>
 
-          <app-custom-input label="Tenant Phone" formControlName="tenant_phone"></app-custom-input>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <app-custom-input
+              label="Sinking Fund Share"
+              type="number"
+              [formGroup]="camForm"
+              controlName="sinking_fund_charge"
+            />
+
+            <app-custom-input
+              label="Generator Backup"
+              type="number"
+              [formGroup]="camForm"
+              controlName="generator_backup_charge"
+            />
+
+            <app-custom-input
+              label="Common Electricity"
+              type="number"
+              [formGroup]="camForm"
+              controlName="common_electricity_water"
+            />
+          </div>
+
+          <app-custom-textarea
+            label="Billing Remarks"
+            placeholder="Notes regarding CAM charges..."
+            [formGroup]="camForm"
+            controlName="remarks"
+            [rows]="2"
+          />
+
+          <div class="flex justify-end gap-3 pt-3 border-t border-border">
+            <app-custom-button variant="outline" type="button" (clicked)="closeCAMModal()">
+              Cancel
+            </app-custom-button>
+            <app-custom-button variant="primary" type="submit" [disabled]="camForm.invalid || isSubmitting()">
+              {{ isSubmitting() ? 'Generating...' : 'Generate CAM Bill' }}
+            </app-custom-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- MODAL 3: Pay CAM Bill -->
+  @if (isPayCAMModalOpen() && selectedCAMBill()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
+      <div class="bg-card border border-border rounded-2xl w-full max-w-lg shadow-2xl p-6">
+        <div class="flex items-center justify-between border-b border-border pb-4 mb-4">
+          <div>
+            <h3 class="text-lg font-bold text-foreground">Record CAM Payment: {{ selectedCAMBill()?.bill_number }}</h3>
+            <p class="text-xs text-muted-foreground">{{ selectedCAMBill()?.tenant_company_name }} · {{ selectedCAMBill()?.bill_month }}</p>
+          </div>
+          <button (click)="closePayCAMModal()" class="text-muted-foreground hover:text-foreground">✕</button>
+        </div>
+
+        <form [formGroup]="payCAMForm" (ngSubmit)="submitPayCAM()" class="space-y-4">
+          <div class="p-3 bg-secondary/50 rounded-xl border border-border text-xs flex justify-between">
+            <div>Total Bill: <strong class="text-foreground">BDT {{ selectedCAMBill()?.total_bill_amount | number:'1.0-0' }}</strong></div>
+            <div>Already Paid: <strong class="text-emerald-500">BDT {{ selectedCAMBill()?.paid_amount | number:'1.0-0' }}</strong></div>
+          </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <app-custom-input label="Lease Start Date" type="date" formControlName="lease_start_date"></app-custom-input>
-            <app-custom-input label="Lease Expiry Date" type="date" formControlName="lease_expiry_date"></app-custom-input>
+            <app-custom-input
+              label="Payment Amount (BDT)"
+              type="number"
+              [formGroup]="payCAMForm"
+              controlName="paid_amount"
+              [required]="true"
+            />
+
+            <app-custom-input
+              label="Payment Date"
+              type="date"
+              [formGroup]="payCAMForm"
+              controlName="paid_date"
+              [required]="true"
+            />
           </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <app-custom-input label="Monthly Rent (BDT)" type="number" formControlName="monthly_rent_bdt"></app-custom-input>
-            <app-custom-input label="Security Deposit (BDT)" type="number" formControlName="security_deposit_bdt"></app-custom-input>
-            <app-custom-input label="Escalation (%)" type="number" formControlName="rent_escalation_percent"></app-custom-input>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <app-searchable-select
+              label="Payment Mode"
+              placeholder="Select mode..."
+              [options]="paymentModeOptions"
+              [formGroup]="payCAMForm"
+              controlName="payment_mode"
+              [allowCreateNew]="false"
+            />
+
+            <app-custom-input
+              label="Cheque / TXN Reference"
+              placeholder="TXN number or cheque..."
+              [formGroup]="payCAMForm"
+              controlName="instrument_no"
+            />
           </div>
 
-          <div class="flex justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
-            <app-custom-button variant="secondary" (buttonClick)="closeLeaseModal()">Cancel</app-custom-button>
-            <app-custom-button variant="primary" type="submit" [disabled]="leaseForm.invalid || isSubmitting()" (buttonClick)="submitLease()">Save Lease</app-custom-button>
+          <div class="flex justify-end gap-3 pt-3 border-t border-border">
+            <app-custom-button variant="outline" type="button" (clicked)="closePayCAMModal()">
+              Cancel
+            </app-custom-button>
+            <app-custom-button variant="primary" type="submit" [disabled]="payCAMForm.invalid || isSubmitting()">
+              {{ isSubmitting() ? 'Recording...' : 'Record Payment' }}
+            </app-custom-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- MODAL 4: Record Utility Sub-Meter Reading -->
+  @if (isUtilityModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
+      <div class="bg-card border border-border rounded-2xl w-full max-w-lg shadow-2xl p-6">
+        <div class="flex items-center justify-between border-b border-border pb-4 mb-4">
+          <div>
+            <h3 class="text-lg font-bold text-foreground">Record Commercial Sub-Meter Reading</h3>
+            <p class="text-xs text-muted-foreground">Log electricity, water, gas, or HVAC consumption entry</p>
+          </div>
+          <button (click)="closeUtilityModal()" class="text-muted-foreground hover:text-foreground">✕</button>
+        </div>
+
+        <form [formGroup]="utilityForm" (ngSubmit)="submitUtilityReading()" class="space-y-4">
+          <app-searchable-select
+            label="Lease Agreement"
+            placeholder="Select commercial lease..."
+            [options]="leaseOptions()"
+            [formGroup]="utilityForm"
+            controlName="lease_id"
+            [required]="true"
+          />
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <app-custom-input
+              label="Sub-Meter Number"
+              placeholder="e.g. DESCO-COMM-0402"
+              [formGroup]="utilityForm"
+              controlName="meter_number"
+              [required]="true"
+            />
+
+            <app-searchable-select
+              label="Sub-Meter Utility Type"
+              categoryCode="UTILITY_METER_TYPE"
+              placeholder="Select utility type..."
+              [formGroup]="utilityForm"
+              controlName="meter_type"
+              [required]="true"
+              [allowCreateNew]="true"
+            />
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <app-custom-input
+              label="Previous Reading"
+              type="number"
+              [formGroup]="utilityForm"
+              controlName="previous_reading"
+              [required]="true"
+            />
+
+            <app-custom-input
+              label="Current Reading"
+              type="number"
+              [formGroup]="utilityForm"
+              controlName="current_reading"
+              [required]="true"
+            />
+
+            <app-custom-input
+              label="Tariff / Unit (BDT)"
+              type="number"
+              [formGroup]="utilityForm"
+              controlName="tariff_rate_per_unit"
+              [required]="true"
+            />
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <app-custom-input
+              label="Reading Date"
+              type="date"
+              [formGroup]="utilityForm"
+              controlName="reading_date"
+              [required]="true"
+            />
+
+            <app-custom-input
+              label="VAT Rate (%)"
+              type="number"
+              placeholder="5.00"
+              [formGroup]="utilityForm"
+              controlName="vat_rate_percent"
+            />
+          </div>
+
+          <div class="flex justify-end gap-3 pt-3 border-t border-border">
+            <app-custom-button variant="outline" type="button" (clicked)="closeUtilityModal()">
+              Cancel
+            </app-custom-button>
+            <app-custom-button variant="primary" type="submit" [disabled]="utilityForm.invalid || isSubmitting()">
+              {{ isSubmitting() ? 'Recording...' : 'Save Sub-Meter Reading' }}
+            </app-custom-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- MODAL 5: Form Owners Association -->
+  @if (isAssocModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
+      <div class="bg-card border border-border rounded-2xl w-full max-w-lg shadow-2xl p-6">
+        <div class="flex items-center justify-between border-b border-border pb-4 mb-4">
+          <div>
+            <h3 class="text-lg font-bold text-foreground">Form Flat Owners Association</h3>
+            <p class="text-xs text-muted-foreground">Register building welfare committee & transfer common sinking fund</p>
+          </div>
+          <button (click)="closeAssocModal()" class="text-muted-foreground hover:text-foreground">✕</button>
+        </div>
+
+        <form [formGroup]="assocForm" (ngSubmit)="submitAssociation()" class="space-y-4">
+          <app-searchable-select
+            label="Residential Project"
+            placeholder="Select project..."
+            [options]="projectOptions()"
+            [formGroup]="assocForm"
+            controlName="project_id"
+            [required]="true"
+          />
+
+          <app-custom-input
+            label="Association / Committee Name"
+            placeholder="e.g. Lakeview Grand Flat Owners Welfare Society"
+            [formGroup]="assocForm"
+            controlName="association_name"
+            [required]="true"
+          />
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <app-custom-input
+              label="Handover Date"
+              type="date"
+              [formGroup]="assocForm"
+              controlName="handover_date"
+              [required]="true"
+            />
+
+            <app-custom-input
+              label="Sinking Fund Transferred (BDT)"
+              type="number"
+              placeholder="750000"
+              [formGroup]="assocForm"
+              controlName="sinking_fund_transferred_bdt"
+              [required]="true"
+            />
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <app-custom-input
+              label="Monthly Maintenance / Flat (BDT)"
+              type="number"
+              placeholder="4000"
+              [formGroup]="assocForm"
+              controlName="monthly_service_charge_per_flat"
+              [required]="true"
+            />
+
+            <app-custom-input
+              label="Committee Contact Phone"
+              placeholder="+8801700000000"
+              [formGroup]="assocForm"
+              controlName="contact_phone"
+            />
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <app-custom-input
+              label="President Name"
+              placeholder="President..."
+              [formGroup]="assocForm"
+              controlName="president_name"
+            />
+
+            <app-custom-input
+              label="General Secretary Name"
+              placeholder="Secretary..."
+              [formGroup]="assocForm"
+              controlName="secretary_name"
+            />
+          </div>
+
+          <div class="flex justify-end gap-3 pt-3 border-t border-border">
+            <app-custom-button variant="outline" type="button" (clicked)="closeAssocModal()">
+              Cancel
+            </app-custom-button>
+            <app-custom-button variant="primary" type="submit" [disabled]="assocForm.invalid || isSubmitting()">
+              {{ isSubmitting() ? 'Forming...' : 'Register Society' }}
+            </app-custom-button>
           </div>
         </form>
       </div>

@@ -1,0 +1,618 @@
+<div class="flex flex-col gap-6">
+  <!-- Unified Outer Card Container -->
+  <app-card-container
+    title="Tripartite Bank Home Loan & Tranche Disbursement Ledger"
+    subtitle="Tripartite Agreements (Buyer, Developer & Bank/NBFI), Developer NOC Issuance & Civil Milestone Tranche Reconciliation"
+  >
+    <!-- KPI Summary Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div class="bg-card border border-border rounded-xl p-4 flex items-center justify-between shadow-sm">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Tripartite Loans Active</p>
+          <h3 class="text-2xl font-bold text-foreground mt-1">{{ loans().length }}</h3>
+          <span class="text-[11px] text-primary font-medium">Bank Home Loan Facilities</span>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="bg-card border border-border rounded-xl p-4 flex items-center justify-between shadow-sm">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total Sanctioned Facility</p>
+          <h3 class="text-xl font-bold text-primary mt-1">
+            BDT {{ (metrics()?.total_tripartite_loans_count ? metrics()?.total_tripartite_disbursed_amount : 0) | number:'1.0-0' }}
+          </h3>
+          <span class="text-[11px] text-muted-foreground">Approved by Banks/NBFIs</span>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 border border-blue-500/20">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="bg-card border border-border rounded-xl p-4 flex items-center justify-between shadow-sm">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total Disbursed to Developer</p>
+          <h3 class="text-xl font-bold text-emerald-500 mt-1">
+            BDT {{ (metrics()?.total_tripartite_disbursed_amount || 0) | number:'1.0-0' }}
+          </h3>
+          <span class="text-[11px] text-emerald-500 font-medium">Reconciled to Milestones</span>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 border border-emerald-500/20">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="bg-card border border-border rounded-xl p-4 flex items-center justify-between shadow-sm">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Financial Partners</p>
+          <h3 class="text-2xl font-bold text-purple-500 mt-1">8 Partners</h3>
+          <span class="text-[11px] text-purple-500 font-medium">DBH, IDLC, SCB, City Bank</span>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-500 border border-purple-500/20">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter & Action Bar -->
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1 max-w-xl">
+        <div class="relative flex-1">
+          <input 
+            type="text" 
+            [ngModel]="searchQuery()" 
+            (ngModelChange)="searchQuery.set($event)"
+            placeholder="Search by Loan Ref, Buyer, Booking, Bank, or Sanction No..." 
+            class="w-full pl-10 pr-4 py-2 text-sm rounded-xl bg-secondary/50 border border-border focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-foreground placeholder-muted-foreground"
+          />
+          <svg class="w-4 h-4 text-muted-foreground absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+        </div>
+
+        <div class="w-full sm:w-64">
+          <app-searchable-select
+            placeholder="Filter by Bank/NBFI..."
+            [options]="bankOptions"
+            [ngModel]="selectedBankFilter()"
+            (selectionChange)="selectedBankFilter.set($event?.value || $event); loadData()"
+          />
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <app-custom-button variant="primary" (clicked)="openCreateModal()">
+          <span class="flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            + Register Tripartite Loan
+          </span>
+        </app-custom-button>
+      </div>
+    </div>
+
+    <!-- Tripartite Loans Master Table -->
+    <div class="overflow-x-auto border border-border rounded-xl">
+      <table class="w-full text-left text-sm text-foreground">
+        <thead class="bg-secondary/40 text-xs font-semibold uppercase text-muted-foreground border-b border-border">
+          <tr>
+            <th class="px-4 py-3">Loan Reference & Sanction</th>
+            <th class="px-4 py-3">Buyer & Allotted Unit</th>
+            <th class="px-4 py-3">Financial Institution Desk</th>
+            <th class="px-4 py-3 text-right">Sanctioned vs Disbursed</th>
+            <th class="px-4 py-3 text-center">Developer NOC</th>
+            <th class="px-4 py-3 text-center">Status</th>
+            <th class="px-4 py-3 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border/60">
+          @for (l of filteredLoans(); track l.id) {
+            <tr class="hover:bg-secondary/20 transition-colors">
+              <td class="px-4 py-3.5 font-mono">
+                <span class="font-bold text-primary">{{ l.loan_reference_no }}</span>
+                <span class="block text-xs text-foreground font-sans mt-0.5">Letter: {{ l.sanction_letter_no }}</span>
+                <span class="block text-[11px] text-muted-foreground">{{ l.sanction_date }}</span>
+              </td>
+              <td class="px-4 py-3.5">
+                <div class="font-semibold text-foreground">{{ l.customer_name }}</div>
+                <div class="text-xs text-muted-foreground">
+                  Unit {{ l.unit_number || 'N/A' }} ({{ l.project_name }})
+                </div>
+                <div class="text-[11px] font-mono text-muted-foreground">{{ l.booking_reference_no }}</div>
+              </td>
+              <td class="px-4 py-3.5">
+                <div class="font-bold text-foreground">{{ l.bank_name }}</div>
+                <div class="text-xs text-muted-foreground">{{ l.branch_name }}</div>
+                @if (l.bank_officer_name) {
+                  <div class="text-[11px] text-primary mt-0.5">👤 {{ l.bank_officer_name }} ({{ l.bank_officer_phone || 'N/A' }})</div>
+                }
+              </td>
+              <td class="px-4 py-3.5 text-right font-mono">
+                <div class="font-bold text-foreground">BDT {{ l.sanctioned_amount | number:'1.0-0' }}</div>
+                <div class="text-xs text-emerald-500 font-semibold mt-0.5">
+                  Disbursed: BDT {{ l.disbursed_amount_total | number:'1.0-0' }}
+                </div>
+                <!-- Progress Bar -->
+                <div class="w-32 bg-secondary rounded-full h-1.5 mt-1.5 ml-auto overflow-hidden">
+                  <div 
+                    class="bg-emerald-500 h-1.5 rounded-full"
+                    [style.width.%]="l.sanctioned_amount > 0 ? (l.disbursed_amount_total / l.sanctioned_amount) * 100 : 0"
+                  ></div>
+                </div>
+              </td>
+              <td class="px-4 py-3.5 text-center">
+                @if (l.noc_status === 'ISSUED') {
+                  <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 inline-flex items-center gap-1">
+                    ✓ NOC Issued
+                  </span>
+                  @if (l.developer_noc_ref) {
+                    <span class="block text-[10px] font-mono text-muted-foreground mt-0.5">{{ l.developer_noc_ref }}</span>
+                  }
+                } @else {
+                  <button 
+                    (click)="openNOCModal(l)"
+                    title="Click to issue Developer NOC for this tripartite loan"
+                    class="px-2 py-0.5 text-xs rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20 hover:bg-amber-500/20 font-medium inline-flex items-center gap-1"
+                  >
+                    ⏳ Issue NOC
+                  </button>
+                }
+              </td>
+              <td class="px-4 py-3.5 text-center">
+                <span 
+                  class="text-xs font-semibold px-2.5 py-1 rounded-full uppercase"
+                  [ngClass]="{
+                    'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20': l.status === 'COMPLETED',
+                    'bg-blue-500/10 text-blue-500 border border-blue-500/20': l.status === 'DISBURSING',
+                    'bg-purple-500/10 text-purple-500 border border-purple-500/20': l.status === 'NOC_ISSUED',
+                    'bg-secondary text-muted-foreground border border-border': l.status === 'SANCTIONED'
+                  }"
+                >
+                  {{ l.status.replace('_', ' ') }}
+                </span>
+              </td>
+              <td class="px-4 py-3.5 text-right">
+                <div class="flex items-center justify-end gap-2">
+                  <button 
+                    (click)="openDetailsModal(l)"
+                    title="View Construction Milestone Tranches & Disburse"
+                    class="px-2.5 py-1 text-xs rounded-lg bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 font-medium inline-flex items-center gap-1.5 transition-colors"
+                  >
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                    </svg>
+                    Tranches ({{ l.tranches?.length || 0 }})
+                  </button>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="7" class="px-4 py-12 text-center text-muted-foreground">
+                No tripartite bank home loans recorded. Click "+ Register Tripartite Loan" to create an agreement.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </app-card-container>
+
+  <!-- Modal 1: Register Tripartite Home Loan Facility -->
+  @if (isCreateModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+      <div class="bg-card border border-border rounded-2xl w-full max-w-2xl shadow-2xl p-6 flex flex-col gap-5 my-8 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between border-b border-border pb-3">
+          <div>
+            <h3 class="text-lg font-bold text-foreground">Register Tripartite Home Loan Agreement</h3>
+            <p class="text-xs text-muted-foreground">Tripartite Arrangement between Buyer, Blue Oceans Developer & Bank/NBFI</p>
+          </div>
+          <button (click)="closeCreateModal()" class="text-muted-foreground hover:text-foreground">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
+        <form [formGroup]="loanForm" (ngSubmit)="submitLoan()" class="flex flex-col gap-4">
+          <app-searchable-select
+            label="Select Apartment Booking Allotment *"
+            [options]="bookingOptions"
+            [formGroup]="loanForm"
+            controlName="booking_id"
+          />
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <app-searchable-select
+              label="Financial Partner / NBFI *"
+              [options]="bankFormOptions"
+              [formGroup]="loanForm"
+              controlName="financial_institution_code"
+            />
+
+            <app-custom-input
+              label="Bank / Financial Institution Name *"
+              placeholder="e.g. DBH Finance PLC"
+              [formGroup]="loanForm"
+              controlName="bank_name"
+            />
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <app-custom-input
+              label="Sanction Letter Number *"
+              placeholder="e.g. DBH/HL/2026/8891"
+              [formGroup]="loanForm"
+              controlName="sanction_letter_no"
+            />
+
+            <app-custom-input
+              label="Sanction Date *"
+              type="date"
+              [formGroup]="loanForm"
+              controlName="sanction_date"
+            />
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <app-custom-input
+              label="Sanctioned Loan Facility Amount (BDT) *"
+              type="number"
+              placeholder="e.g. 6000000"
+              [formGroup]="loanForm"
+              controlName="sanctioned_amount"
+            />
+
+            <app-custom-input
+              label="Branch Name & Location *"
+              placeholder="e.g. Principal Branch, Motijheel, Dhaka"
+              [formGroup]="loanForm"
+              controlName="branch_name"
+            />
+          </div>
+
+          <!-- Bank Officer Details -->
+          <div class="p-3.5 bg-secondary/30 rounded-xl border border-border space-y-3">
+            <span class="text-xs font-bold uppercase tracking-wider text-primary block">Bank Relationship Desk</span>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <app-custom-input
+                label="Bank Officer Name"
+                placeholder="Officer Full Name"
+                [formGroup]="loanForm"
+                controlName="bank_officer_name"
+              />
+              <app-custom-input
+                label="Mobile Phone"
+                placeholder="+8801700000000"
+                [formGroup]="loanForm"
+                controlName="bank_officer_phone"
+              />
+              <app-custom-input
+                label="Corporate Email"
+                placeholder="officer&#64;bank.com.bd"
+                [formGroup]="loanForm"
+                controlName="bank_officer_email"
+              />
+            </div>
+          </div>
+
+          <div class="text-[11px] text-muted-foreground bg-secondary/50 p-3 rounded-xl border border-border">
+            ℹ️ <strong>Standard Milestone Tranches:</strong> Submitting will automatically schedule 3 standard construction milestone tranches:
+            1) Plinth/Basement Casting (35%), 2) Roof Casting 5th Floor (35%), 3) Finishing & Handover (30%).
+          </div>
+
+          <div class="flex justify-end gap-3 pt-3 border-t border-border">
+            <app-custom-button variant="outline" type="button" (clicked)="closeCreateModal()">
+              Cancel
+            </app-custom-button>
+            <app-custom-button variant="primary" type="submit" [disabled]="loanForm.invalid || isSubmitting()">
+              {{ isSubmitting() ? 'Registering...' : 'Register Agreement & Schedule Tranches' }}
+            </app-custom-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- Modal 2: Issue Developer NOC -->
+  @if (isNOCModalOpen() && selectedLoanForNOC()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div class="bg-card border border-border rounded-2xl w-full max-w-md shadow-2xl p-6 flex flex-col gap-4">
+        <div class="flex items-center justify-between border-b border-border pb-3">
+          <div>
+            <h3 class="text-base font-bold text-foreground">Issue Developer NOC</h3>
+            <p class="text-xs text-muted-foreground">{{ selectedLoanForNOC()?.loan_reference_no }} | {{ selectedLoanForNOC()?.bank_name }}</p>
+          </div>
+          <button (click)="closeNOCModal()" class="text-muted-foreground hover:text-foreground">✕</button>
+        </div>
+
+        <form [formGroup]="nocForm" (ngSubmit)="submitNOC()" class="flex flex-col gap-4">
+          <div class="p-3 bg-secondary/40 rounded-xl border border-border text-xs space-y-1">
+            <div>Allottee: <strong>{{ selectedLoanForNOC()?.customer_name }}</strong></div>
+            <div>Booking: <strong>{{ selectedLoanForNOC()?.booking_reference_no }}</strong> (Unit {{ selectedLoanForNOC()?.unit_number }})</div>
+          </div>
+
+          <app-custom-input
+            label="Developer NOC Reference Number *"
+            placeholder="NOC-DEV-2026-XXXX"
+            [formGroup]="nocForm"
+            controlName="developer_noc_ref"
+          />
+
+          <app-custom-input
+            label="NOC Issuance Date *"
+            type="date"
+            [formGroup]="nocForm"
+            controlName="developer_noc_date"
+          />
+
+          <app-custom-textarea
+            label="NOC Endorsement Remarks"
+            placeholder="Endorsement conditions, mortgage charge permissions..."
+            [formGroup]="nocForm"
+            controlName="remarks"
+          />
+
+          <div class="flex justify-end gap-2 pt-2 border-t border-border">
+            <app-custom-button variant="outline" type="button" (clicked)="closeNOCModal()">
+              Cancel
+            </app-custom-button>
+            <app-custom-button variant="primary" type="submit" [disabled]="nocForm.invalid || isSubmitting()">
+              {{ isSubmitting() ? 'Issuing...' : 'Issue & Sign NOC' }}
+            </app-custom-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- Modal 3: Bank Civil Engineer Inspection Verification -->
+  @if (isInspectionModalOpen() && selectedTrancheForInspection()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div class="bg-card border border-border rounded-2xl w-full max-w-md shadow-2xl p-6 flex flex-col gap-4">
+        <div class="flex items-center justify-between border-b border-border pb-3">
+          <div>
+            <h3 class="text-base font-bold text-foreground">Bank Civil Inspection Verification</h3>
+            <p class="text-xs text-muted-foreground">Tranche #{{ selectedTrancheForInspection()?.tranche_number }}: {{ selectedTrancheForInspection()?.milestone_title }}</p>
+          </div>
+          <button (click)="closeInspectionModal()" class="text-muted-foreground hover:text-foreground">✕</button>
+        </div>
+
+        <form [formGroup]="inspectionForm" (ngSubmit)="submitInspection()" class="flex flex-col gap-4">
+          <app-custom-input
+            label="Bank Inspection Date *"
+            type="date"
+            [formGroup]="inspectionForm"
+            controlName="bank_inspection_date"
+          />
+
+          <app-searchable-select
+            label="Inspection Outcome *"
+            [options]="inspectionStatusOptions"
+            [formGroup]="inspectionForm"
+            controlName="inspection_status"
+          />
+
+          <app-custom-input
+            label="Bank Civil Engineer Name *"
+            placeholder="Engr. M. A. Rouf"
+            [formGroup]="inspectionForm"
+            controlName="inspection_engineer_name"
+          />
+
+          <app-custom-textarea
+            label="Inspection Field Notes"
+            placeholder="Column casting depth, concrete curing verification details..."
+            [formGroup]="inspectionForm"
+            controlName="inspection_notes"
+          />
+
+          <div class="flex justify-end gap-2 pt-2 border-t border-border">
+            <app-custom-button variant="outline" type="button" (clicked)="closeInspectionModal()">
+              Cancel
+            </app-custom-button>
+            <app-custom-button variant="primary" type="submit" [disabled]="inspectionForm.invalid || isSubmitting()">
+              {{ isSubmitting() ? 'Saving...' : 'Confirm Inspection Status' }}
+            </app-custom-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- Modal 4: Record Tranche Disbursement & Auto-Generate Money Receipt -->
+  @if (isDisburseModalOpen() && selectedTrancheForDisburse()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div class="bg-card border border-border rounded-2xl w-full max-w-md shadow-2xl p-6 flex flex-col gap-4">
+        <div class="flex items-center justify-between border-b border-border pb-3">
+          <div>
+            <h3 class="text-base font-bold text-foreground">Disburse Tranche & Generate MR</h3>
+            <p class="text-xs text-muted-foreground">Tranche #{{ selectedTrancheForDisburse()?.tranche_number }}: {{ selectedTrancheForDisburse()?.milestone_title }}</p>
+          </div>
+          <button (click)="closeDisburseModal()" class="text-muted-foreground hover:text-foreground">✕</button>
+        </div>
+
+        <form [formGroup]="disburseForm" (ngSubmit)="submitDisburse()" class="flex flex-col gap-4">
+          <div class="p-3 bg-primary/10 rounded-xl border border-primary/20 text-xs">
+            <div class="font-bold text-primary">Sanctioned Tranche Facility</div>
+            <div class="text-base font-bold font-mono text-foreground mt-0.5">
+              BDT {{ selectedTrancheForDisburse()?.sanctioned_tranche_amount | number:'1.0-0' }}
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <app-custom-input
+              label="Disbursement Date *"
+              type="date"
+              [formGroup]="disburseForm"
+              controlName="disbursed_date"
+            />
+
+            <app-custom-input
+              label="Disbursed Amount (BDT) *"
+              type="number"
+              [formGroup]="disburseForm"
+              controlName="disbursed_amount"
+            />
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <app-searchable-select
+              label="Disbursement Instrument *"
+              [options]="paymentModeOptions"
+              [formGroup]="disburseForm"
+              controlName="payment_mode"
+            />
+
+            <app-custom-input
+              label="Pay Order / BEFTN Ref *"
+              placeholder="PO-DBH-992144"
+              [formGroup]="disburseForm"
+              controlName="payment_instrument_no"
+            />
+          </div>
+
+          <p class="text-[11px] text-muted-foreground bg-secondary/50 p-2.5 rounded-lg border border-border">
+            ⚡ <strong>Automated Ledger Posting:</strong> Submitting will instantly issue an official Money Receipt (MR), apply waterfall adjustment across all installments, and reconcile this tranche.
+          </p>
+
+          <div class="flex justify-end gap-2 pt-2 border-t border-border">
+            <app-custom-button variant="outline" type="button" (clicked)="closeDisburseModal()">
+              Cancel
+            </app-custom-button>
+            <app-custom-button variant="primary" type="submit" [disabled]="disburseForm.invalid || isSubmitting()">
+              {{ isSubmitting() ? 'Disbursing...' : 'Disburse & Reconcile' }}
+            </app-custom-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- Modal 5: Comprehensive Tripartite Loan & Tranches Ledger Dialog -->
+  @if (isDetailsModalOpen() && selectedLoanDetails()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+      <div class="bg-card border border-border rounded-2xl w-full max-w-3xl shadow-2xl p-6 flex flex-col gap-5 my-8 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between border-b border-border pb-3">
+          <div>
+            <h3 class="text-lg font-bold text-foreground">Tripartite Loan & Milestone Tranches Ledger</h3>
+            <p class="text-xs text-muted-foreground">{{ selectedLoanDetails()?.loan_reference_no }} | {{ selectedLoanDetails()?.bank_name }}</p>
+          </div>
+          <button (click)="closeDetailsModal()" class="text-muted-foreground hover:text-foreground">✕</button>
+        </div>
+
+        <!-- Facility Overview Ribbon -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs bg-secondary/30 p-3 rounded-xl border border-border">
+          <div>
+            <span class="text-muted-foreground block text-[10px] uppercase font-bold">Sanctioned Amount</span>
+            <span class="text-base font-bold font-mono text-foreground">BDT {{ selectedLoanDetails()?.sanctioned_amount | number:'1.0-0' }}</span>
+          </div>
+          <div>
+            <span class="text-muted-foreground block text-[10px] uppercase font-bold">Total Disbursed</span>
+            <span class="text-base font-bold font-mono text-emerald-500">BDT {{ selectedLoanDetails()?.disbursed_amount_total | number:'1.0-0' }}</span>
+          </div>
+          <div>
+            <span class="text-muted-foreground block text-[10px] uppercase font-bold">Undisbursed Balance</span>
+            <span class="text-base font-bold font-mono text-primary">
+              BDT {{ (selectedLoanDetails()!.sanctioned_amount - selectedLoanDetails()!.disbursed_amount_total) | number:'1.0-0' }}
+            </span>
+          </div>
+          <div>
+            <span class="text-muted-foreground block text-[10px] uppercase font-bold">Developer NOC</span>
+            <span class="font-bold" [ngClass]="selectedLoanDetails()?.noc_status === 'ISSUED' ? 'text-emerald-500' : 'text-amber-500'">
+              {{ selectedLoanDetails()?.noc_status }} ({{ selectedLoanDetails()?.developer_noc_ref || 'None' }})
+            </span>
+          </div>
+        </div>
+
+        <!-- Milestone Tranches Table -->
+        <div class="border border-border rounded-xl overflow-hidden">
+          <table class="w-full text-xs text-left">
+            <thead class="bg-secondary/50 text-[10px] font-bold uppercase text-muted-foreground">
+              <tr>
+                <th class="p-3">#</th>
+                <th class="p-3">Milestone Title</th>
+                <th class="p-3 text-right">Sanctioned Amount</th>
+                <th class="p-3 text-center">Civil Inspection</th>
+                <th class="p-3 text-center">Disbursement Status</th>
+                <th class="p-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border/60">
+              @for (t of selectedLoanDetails()?.tranches || []; track t.id) {
+                <tr class="hover:bg-secondary/20 transition-colors">
+                  <td class="p-3 font-mono font-bold text-muted-foreground">T{{ t.tranche_number }}</td>
+                  <td class="p-3">
+                    <div class="font-bold text-foreground">{{ t.milestone_title }}</div>
+                    @if (t.remarks) {
+                      <div class="text-[10px] text-muted-foreground">{{ t.remarks }}</div>
+                    }
+                  </td>
+                  <td class="p-3 text-right font-mono font-bold text-foreground">
+                    BDT {{ t.sanctioned_tranche_amount | number:'1.0-0' }}
+                  </td>
+                  <td class="p-3 text-center">
+                    @if (t.inspection_status === 'INSPECTION_PASSED') {
+                      <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                        ✓ Verified: {{ t.bank_inspection_date }}
+                      </span>
+                    } @else {
+                      <button 
+                        (click)="openInspectionModal(selectedLoanDetails()!, t)"
+                        class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/10 text-amber-500 border border-amber-500/20 hover:bg-amber-500/20"
+                      >
+                        ⏳ Verify Inspection
+                      </button>
+                    }
+                  </td>
+                  <td class="p-3 text-center">
+                    @if (t.status === 'RECONCILED' || t.status === 'DISBURSED') {
+                      <div>
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                          Reconciled ({{ t.mr_number || 'MR' }})
+                        </span>
+                        <span class="block text-[10px] text-muted-foreground font-mono mt-0.5">
+                          BDT {{ t.disbursed_amount | number:'1.0-0' }} ({{ t.disbursed_date }})
+                        </span>
+                      </div>
+                    } @else {
+                      <span class="text-[10px] text-muted-foreground uppercase font-mono">Awaiting Disbursement</span>
+                    }
+                  </td>
+                  <td class="p-3 text-right">
+                    @if (t.status !== 'RECONCILED' && t.status !== 'DISBURSED') {
+                      <button 
+                        (click)="openDisburseModal(selectedLoanDetails()!, t)"
+                        class="px-2.5 py-1 text-xs rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-semibold transition-colors"
+                      >
+                        Disburse Tranche
+                      </button>
+                    } @else {
+                      <span class="text-xs text-muted-foreground">✓ Settled</span>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="flex justify-end pt-3 border-t border-border">
+          <app-custom-button variant="outline" type="button" (clicked)="closeDetailsModal()">
+            Close
+          </app-custom-button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

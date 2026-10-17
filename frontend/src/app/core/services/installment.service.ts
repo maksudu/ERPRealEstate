@@ -8,7 +8,11 @@ import {
   NI138LegalAction,
   InstallmentAlertLog,
   CustomMilestoneItem,
-  InstallmentMetrics
+  InstallmentMetrics,
+  MoneyReceipt,
+  MoneyReceiptAllocation,
+  TripartiteLoan,
+  LoanTranche
 } from '../models/installment.model';
 
 @Injectable({
@@ -106,5 +110,52 @@ export class InstallmentService {
 
   triggerNi138Deadlines(): Observable<any> {
     return this.http.post<any>(`${this.baseUrl}/cron/trigger-ni138-deadlines`, {});
+  }
+
+  // 7. Money Receipts & Partial Waterfall Collections (Prompt 10)
+  getMoneyReceipts(filters?: { booking_id?: number; customer_id?: number; payment_mode?: string; search?: string }): Observable<MoneyReceipt[]> {
+    let params = new HttpParams();
+    if (filters?.booking_id) params = params.set('booking_id', filters.booking_id);
+    if (filters?.customer_id) params = params.set('customer_id', filters.customer_id);
+    if (filters?.payment_mode) params = params.set('payment_mode', filters.payment_mode);
+    if (filters?.search) params = params.set('search', filters.search);
+    return this.http.get<MoneyReceipt[]>(`${this.baseUrl}/money-receipts`, { params });
+  }
+
+  createMoneyReceipt(payload: any): Observable<MoneyReceipt> {
+    return this.http.post<MoneyReceipt>(`${this.baseUrl}/money-receipts`, payload);
+  }
+
+  getMoneyReceipt(id: number): Observable<MoneyReceipt> {
+    return this.http.get<MoneyReceipt>(`${this.baseUrl}/money-receipts/${id}`);
+  }
+
+  verifyMoneyReceipt(id: number): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/money-receipts/${id}/verify`);
+  }
+
+  // 8. Bank Home Loan Tripartite Agreement & Tranche Ledger (Prompt 10)
+  getTripartiteLoans(filters?: { booking_id?: number; financial_institution_code?: string; status?: string }): Observable<TripartiteLoan[]> {
+    let params = new HttpParams();
+    if (filters?.booking_id) params = params.set('booking_id', filters.booking_id);
+    if (filters?.financial_institution_code) params = params.set('financial_institution_code', filters.financial_institution_code);
+    if (filters?.status) params = params.set('status', filters.status);
+    return this.http.get<TripartiteLoan[]>(`${this.baseUrl}/tripartite-loans`, { params });
+  }
+
+  createTripartiteLoan(payload: any): Observable<TripartiteLoan> {
+    return this.http.post<TripartiteLoan>(`${this.baseUrl}/tripartite-loans`, payload);
+  }
+
+  issueDeveloperNOC(loanId: number, payload: { developer_noc_ref: string; developer_noc_date: string; remarks?: string }): Observable<TripartiteLoan> {
+    return this.http.post<TripartiteLoan>(`${this.baseUrl}/tripartite-loans/${loanId}/noc`, payload);
+  }
+
+  recordTrancheInspection(loanId: number, trancheId: number, payload: any): Observable<LoanTranche> {
+    return this.http.put<LoanTranche>(`${this.baseUrl}/tripartite-loans/${loanId}/tranches/${trancheId}/inspection`, payload);
+  }
+
+  disburseTranche(loanId: number, trancheId: number, payload: any): Observable<LoanTranche> {
+    return this.http.post<LoanTranche>(`${this.baseUrl}/tripartite-loans/${loanId}/tranches/${trancheId}/disburse`, payload);
   }
 }
