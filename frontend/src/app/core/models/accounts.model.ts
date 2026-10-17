@@ -166,3 +166,134 @@ export interface SubRegistryCalculationResponse {
   total_transfer_cost_bdt: number;
 }
 
+export interface ChartOfAccountTreeNode {
+  id: number;
+  account_code: string;
+  account_name_en: string;
+  account_name_bn?: string | null;
+  account_type: string;
+  level: number;
+  is_group: boolean;
+  is_leaf_account: boolean;
+  currency: string;
+  is_reconciliation_account: boolean;
+  is_active: boolean;
+  parent_account_id?: number | null;
+  current_balance: number;
+  children?: ChartOfAccountTreeNode[];
+  expanded?: boolean;
+}
+
+export interface CostCenter {
+  id: number;
+  project_id: number;
+  tower_id?: number | null;
+  cost_center_code: string;
+  name: string;
+  wbs_stage: 'SUBSTRUCTURE' | 'SUPERSTRUCTURE' | 'FINISHING' | 'MEP' | 'EXTERNAL_WORKS' | 'GENERAL_OVERHEAD';
+  budget_allocated: number;
+  actual_spent: number;
+  variance_bdt?: number;
+  variance_percent?: number;
+  project_name?: string | null;
+  tower_name?: string | null;
+  is_active: boolean;
+  created_at?: string;
+}
+
+export interface FiscalYear {
+  id: number;
+  year_name: string;
+  start_date: string;
+  end_date: string;
+  is_closed: boolean;
+  created_at?: string;
+}
+
+export interface PDCVaultCheque {
+  id: number;
+  project_id: number;
+  project_name?: string | null;
+  booking_id?: number | null;
+  cheque_no: string;
+  bank_name: string;
+  branch_name?: string | null;
+  drawer_name: string;
+  cheque_date: string;
+  amount: number;
+  status: 'IN_VAULT' | 'DEPOSITED' | 'CLEARED' | 'BOUNCED';
+  deposit_date?: string | null;
+  clearance_date?: string | null;
+  bounce_date?: string | null;
+  bounce_reason?: string | null;
+  legal_notice_sent: boolean;
+  voucher_id?: number | null;
+  created_at?: string;
+}
+
+export interface CWIPSummary {
+  project_id: number;
+  project_name: string;
+  total_accumulated_cwip: number;
+  total_capitalized_cogs: number;
+  active_cwip_balance: number;
+  cost_centers: {
+    id: number;
+    cost_center_code: string;
+    name: string;
+    wbs_stage: string;
+    spent: number;
+  }[];
+}
+
+export interface CWIPCapitalizeRequest {
+  project_id: number;
+  cost_center_id?: number | null;
+  capitalized_amount: number;
+  completion_percentage: number;
+  cwip_account_id: number;
+  cogs_account_id: number;
+  remarks?: string | null;
+}
+
+export interface IFRS15RecognizeRequest {
+  project_id: number;
+  booking_id: number;
+  recognized_amount: number;
+  recognition_method: 'POC_OVER_TIME' | 'POINT_IN_TIME_HANDOVER';
+  advance_liability_account_id: number;
+  revenue_account_id: number;
+  remarks?: string | null;
+}
+
+export interface BankStatementRow {
+  transaction_date: string;
+  reference_no?: string | null;
+  description: string;
+  debit_amount: number;
+  credit_amount: number;
+}
+
+export interface BankStatementAutoMatchItem {
+  transaction_date: string;
+  reference_no?: string | null;
+  description: string;
+  debit_amount: number;
+  credit_amount: number;
+  match_status: 'MATCHED' | 'UNMATCHED' | 'DISCREPANCY';
+  matched_voucher_number?: string | null;
+}
+
+export interface BankReconciliationFullResponse {
+  reconciliation_id: number;
+  bank_account_id: number;
+  statement_date: string;
+  statement_balance: number;
+  book_balance: number;
+  difference_amount: number;
+  is_reconciled: boolean;
+  matched_count: number;
+  unmatched_count: number;
+  items: BankStatementAutoMatchItem[];
+}
+

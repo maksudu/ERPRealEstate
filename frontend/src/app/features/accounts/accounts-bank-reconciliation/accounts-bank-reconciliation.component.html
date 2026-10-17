@@ -1,0 +1,242 @@
+<div class="space-y-6">
+  <!-- Master Card Container -->
+  <app-card-container
+    title="Smart Bank Statement Reconciliation Wizard"
+    subtitle="AI-Assisted Transaction Ingestion, Multi-Day Tolerance Voucher Matcher & Escrow Audit Engine"
+    badge="IFRS-15 & Bank Compliance">
+
+    <form [formGroup]="reconForm" (ngSubmit)="runAutoMatch()" class="space-y-6">
+      
+      <!-- Step 1: Bank Account & Balance Specification -->
+      <div class="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/40">
+        <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-3 flex items-center gap-2">
+          <span class="w-6 h-6 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300 flex items-center justify-center text-xs font-bold">1</span>
+          Select Bank Account & Statement Parameters
+        </h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <app-searchable-select
+            label="Corporate / Escrow Bank Account"
+            placeholder="Select Bank Account..."
+            [options]="bankAccountOptions()"
+            [allowCreateNew]="false"
+            formControlName="bank_account_id"
+            [required]="true">
+          </app-searchable-select>
+
+          <app-custom-input
+            label="Statement Cutoff Date"
+            type="date"
+            formControlName="statement_date"
+            [required]="true">
+          </app-custom-input>
+
+          <app-custom-input
+            label="Statement Closing Balance (BDT)"
+            type="number"
+            placeholder="0.00"
+            formControlName="statement_balance"
+            [required]="true"
+            hint="Exact balance reported on the official bank statement.">
+          </app-custom-input>
+        </div>
+      </div>
+
+      <!-- Step 2: Statement Transaction Lines -->
+      <div class="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 shadow-sm">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+            <span class="w-6 h-6 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300 flex items-center justify-center text-xs font-bold">2</span>
+            Bank Statement Transaction Lines ({{ rowsArray.length }} Rows)
+          </h3>
+
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              (click)="loadSampleStatementRows()"
+              class="px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+              Reset Demo Lines
+            </button>
+            <app-custom-button
+              label="Add Line"
+              variant="outline"
+              icon="plus"
+              (btnClick)="addRow()">
+            </app-custom-button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">
+                <th class="py-2.5 px-3">Date</th>
+                <th class="py-2.5 px-3">Reference / Cheque</th>
+                <th class="py-2.5 px-3 min-w-[200px]">Description / Counterparty</th>
+                <th class="py-2.5 px-3 text-right">Withdrawal (Debit)</th>
+                <th class="py-2.5 px-3 text-right">Deposit (Credit)</th>
+                <th class="py-2.5 px-3 text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody formArrayName="rows" class="divide-y divide-slate-100 dark:divide-slate-800">
+              @for (row of rowsArray.controls; track $index) {
+                <tr [formGroupName]="$index" class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition">
+                  <td class="py-2 px-3">
+                    <input
+                      type="date"
+                      formControlName="transaction_date"
+                      class="w-full px-2 py-1 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                  </td>
+                  <td class="py-2 px-3">
+                    <input
+                      type="text"
+                      placeholder="Ref / Chq"
+                      formControlName="reference_no"
+                      class="w-full px-2 py-1 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                  </td>
+                  <td class="py-2 px-3">
+                    <input
+                      type="text"
+                      placeholder="Description"
+                      formControlName="description"
+                      class="w-full px-2 py-1 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                  </td>
+                  <td class="py-2 px-3">
+                    <input
+                      type="number"
+                      placeholder="0.00"
+                      formControlName="debit_amount"
+                      class="w-full px-2 py-1 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-right text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                  </td>
+                  <td class="py-2 px-3">
+                    <input
+                      type="number"
+                      placeholder="0.00"
+                      formControlName="credit_amount"
+                      class="w-full px-2 py-1 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-right text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                  </td>
+                  <td class="py-2 px-3 text-center">
+                    <button
+                      type="button"
+                      (click)="removeRow($index)"
+                      class="text-rose-500 hover:text-rose-700 p-1"
+                      title="Remove Line">
+                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end">
+          <app-custom-button
+            label="Run Auto-Matching Algorithm"
+            variant="primary"
+            icon="check"
+            type="submit"
+            [disabled]="isSubmitting()">
+          </app-custom-button>
+        </div>
+      </div>
+    </form>
+
+    <!-- Step 3: Match Results Output -->
+    @if (reconciliationResult(); as res) {
+      <div class="mt-8 pt-6 border-t border-slate-200 dark:border-slate-800 animate-fade-in space-y-6">
+        <div class="flex items-center justify-between">
+          <h3 class="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+            Reconciliation Audit Report
+            @if (res.is_reconciled) {
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                100% Balanced & Reconciled
+              </span>
+            } @else {
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                Variance Detected: ৳{{ res.difference_amount | number:'1.2-2' }}
+              </span>
+            }
+          </h3>
+        </div>
+
+        <!-- Metric Badges -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/40">
+            <span class="text-xs font-medium text-slate-500">Statement Balance</span>
+            <p class="text-xl font-bold text-slate-900 dark:text-white mt-1">
+              ৳{{ res.statement_balance | number:'1.2-2' }}
+            </p>
+          </div>
+          <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/40">
+            <span class="text-xs font-medium text-slate-500">General Ledger Book Balance</span>
+            <p class="text-xl font-bold text-slate-900 dark:text-white mt-1">
+              ৳{{ res.book_balance | number:'1.2-2' }}
+            </p>
+          </div>
+          <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/40">
+            <span class="text-xs font-medium text-slate-500">Net Variance Difference</span>
+            <p class="text-xl font-bold mt-1" [class.text-emerald-600]="res.difference_amount === 0" [class.text-rose-600]="res.difference_amount !== 0">
+              ৳{{ res.difference_amount | number:'1.2-2' }}
+            </p>
+          </div>
+          <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/40">
+            <span class="text-xs font-medium text-slate-500">Matching Statistics</span>
+            <p class="text-xl font-bold text-slate-900 dark:text-white mt-1">
+              {{ res.matched_count }} Matched / {{ res.unmatched_count }} Open
+            </p>
+          </div>
+        </div>
+
+        <!-- Matched Items Table -->
+        <div class="rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+          <table class="w-full text-left text-xs">
+            <thead>
+              <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 font-semibold text-slate-600 dark:text-slate-300">
+                <th class="py-3 px-4">Txn Date</th>
+                <th class="py-3 px-4">Statement Reference</th>
+                <th class="py-3 px-4">Description</th>
+                <th class="py-3 px-4 text-right">Debit (Out)</th>
+                <th class="py-3 px-4 text-right">Credit (In)</th>
+                <th class="py-3 px-4 text-center">Match Status</th>
+                <th class="py-3 px-4">Matched Voucher No</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-850">
+              @for (item of res.items; track $index) {
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
+                  <td class="py-2.5 px-4 text-slate-600 dark:text-slate-300">{{ item.transaction_date }}</td>
+                  <td class="py-2.5 px-4 font-mono font-medium text-slate-800 dark:text-slate-200">{{ item.reference_no || '—' }}</td>
+                  <td class="py-2.5 px-4 text-slate-700 dark:text-slate-300">{{ item.description }}</td>
+                  <td class="py-2.5 px-4 text-right text-slate-900 dark:text-slate-100">
+                    {{ item.debit_amount > 0 ? ('৳' + (item.debit_amount | number:'1.2-2')) : '—' }}
+                  </td>
+                  <td class="py-2.5 px-4 text-right text-emerald-600 dark:text-emerald-400 font-medium">
+                    {{ item.credit_amount > 0 ? ('৳' + (item.credit_amount | number:'1.2-2')) : '—' }}
+                  </td>
+                  <td class="py-2.5 px-4 text-center">
+                    @if (item.match_status === 'MATCHED') {
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                        MATCHED
+                      </span>
+                    } @else {
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                        UNMATCHED
+                      </span>
+                    }
+                  </td>
+                  <td class="py-2.5 px-4 font-mono text-blue-600 dark:text-blue-400">
+                    {{ item.matched_voucher_number || 'Awaiting Entry' }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+  </app-card-container>
+</div>

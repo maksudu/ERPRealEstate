@@ -194,6 +194,66 @@
           </div>
         </div>
       </div>
+
+      <!-- Cost Center Budgeted vs Actual Cost Variance -->
+      @if (costCenterVariance(); as ccv) {
+        <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-card overflow-hidden shadow-sm mt-4">
+          <div class="px-5 py-3.5 bg-muted/40 border-b border-border flex items-center justify-between">
+            <h3 class="font-bold text-foreground text-sm flex items-center gap-2">
+              <span>Multi-Project Cost Center Variance (Budgeted vs Actual Cost)</span>
+              <span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300">
+                WBS Tracking
+              </span>
+            </h3>
+            <span class="text-xs text-muted-foreground">
+              Total Budget: ৳{{ ccv.total_budget_allocated | number:'1.2-2' }} • Total Spent: ৳{{ ccv.total_actual_spent | number:'1.2-2' }}
+            </span>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead>
+                <tr class="border-b border-border bg-muted/20 text-muted-foreground font-semibold uppercase tracking-wider">
+                  <th class="py-2.5 px-4">Code</th>
+                  <th class="py-2.5 px-4">Cost Center Name</th>
+                  <th class="py-2.5 px-4">WBS Stage</th>
+                  <th class="py-2.5 px-4 text-right">Allocated Budget</th>
+                  <th class="py-2.5 px-4 text-right">Actual Spent</th>
+                  <th class="py-2.5 px-4 text-right">Cost Variance</th>
+                  <th class="py-2.5 px-4 text-center">Variance %</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-border">
+                @for (cc of ccv.cost_centers; track cc.id) {
+                  <tr class="hover:bg-muted/30 transition">
+                    <td class="py-2.5 px-4 font-mono font-bold">{{ cc.cost_center_code }}</td>
+                    <td class="py-2.5 px-4 font-medium text-foreground">{{ cc.name }}</td>
+                    <td class="py-2.5 px-4">
+                      <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                        {{ cc.wbs_stage }}
+                      </span>
+                    </td>
+                    <td class="py-2.5 px-4 text-right font-medium">৳{{ cc.budget_allocated | number:'1.2-2' }}</td>
+                    <td class="py-2.5 px-4 text-right font-medium text-blue-600 dark:text-blue-400">৳{{ cc.actual_spent | number:'1.2-2' }}</td>
+                    <td class="py-2.5 px-4 text-right font-bold" [class.text-emerald-600]="cc.variance_bdt >= 0" [class.text-rose-600]="cc.variance_bdt < 0">
+                      ৳{{ cc.variance_bdt | number:'1.2-2' }}
+                    </td>
+                    <td class="py-2.5 px-4 text-center">
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold"
+                        [class.bg-emerald-100]="cc.variance_bdt >= 0"
+                        [class.text-emerald-800]="cc.variance_bdt >= 0"
+                        [class.bg-rose-100]="cc.variance_bdt < 0"
+                        [class.text-rose-800]="cc.variance_bdt < 0">
+                        {{ cc.variance_percent }}%
+                      </span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
     </div>
   }
 

@@ -119,6 +119,8 @@ export class AccountsFinancialReportsComponent implements OnInit {
     });
   }
 
+  costCenterVariance = signal<any>(null);
+
   loadProfitLoss(): void {
     const filter: any = {
       from_date: this.plFromDate(),
@@ -129,6 +131,11 @@ export class AccountsFinancialReportsComponent implements OnInit {
     this.accountsService.getProfitLoss(filter).subscribe({
       next: (res) => this.profitLoss.set(res),
       error: (err) => console.error('Failed to load P&L', err)
+    });
+
+    this.accountsService.getCostCenterVarianceReport(this.plProjectId() || undefined).subscribe({
+      next: (res) => this.costCenterVariance.set(res),
+      error: (err) => console.error('Failed to load cost center variance', err)
     });
   }
 

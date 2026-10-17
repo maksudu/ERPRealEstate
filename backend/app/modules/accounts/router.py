@@ -17,20 +17,33 @@ from app.modules.procurement.models import Vendor
 from app.modules.construction.models import Subcontractor
 from app.modules.accounts.models import (
     ChartOfAccount, Voucher, JournalEntry, BankReconciliation,
-    MushakTaxInvoice, TDSDeduction
+    MushakTaxInvoice, TDSDeduction, CostCenter, FiscalYear,
+    PDCVault, CWIPCapitalization, IFRS15RevenueRecognition,
+    BankStatementItem
 )
 from app.modules.accounts.schemas import (
-    ChartOfAccountCreate, ChartOfAccountResponse,
+    ChartOfAccountCreate, ChartOfAccountResponse, ChartOfAccountTreeNode,
     VoucherCreate, VoucherResponse, JournalEntryResponse,
     BankReconciliationCreate, BankReconciliationResponse,
     TrialBalanceReport, TrialBalanceItem,
     ProfitLossReport, BalanceSheetReport,
     MushakTaxInvoiceCreate, MushakTaxInvoiceResponse,
     TDSDeductionCreate, TDSDeductionResponse, TDSDeductionDeposit,
-    SubRegistryCalculationRequest, SubRegistryCalculationResponse
+    SubRegistryCalculationRequest, SubRegistryCalculationResponse,
+    FiscalYearBase, FiscalYearCreate, FiscalYearResponse,
+    CostCenterBase, CostCenterCreate, CostCenterResponse,
+    PDCVaultBase, PDCVaultCreate, PDCStatusUpdate, PDCVaultResponse,
+    CWIPCapitalizeRequest, CWIPSummaryResponse,
+    IFRS15RecognizeRequest, IFRS15Response,
+    BankStatementAutoMatchRequest, BankReconciliationFullResponse
 )
 from app.modules.accounts.mushak_generator import generate_mushak_63_pdf
-from app.modules.accounts.services import post_vat_mushak_revenue_voucher
+from app.modules.accounts.services import (
+    post_vat_mushak_revenue_voucher, build_hierarchical_coa_tree,
+    get_cost_center_variances, get_project_cwip_summary,
+    post_cwip_capitalization, post_ifrs15_revenue_recognition,
+    update_pdc_vault_status, auto_match_bank_statement
+)
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +54,18 @@ router = APIRouter(prefix="/accounts", tags=["Double-Entry Accounts, VAT & NBR C
 # --------------------------------------------------------------------------
 # 1. Chart of Accounts (COA)
 # --------------------------------------------------------------------------
+@router.get("/coa/hierarchy", response_model=List[ChartOfAccountTreeNode])
+async def get_chart_of_accounts_hierarchy(
+    organization_id: int = Query(1),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Returns the full 5-tier hierarchical Chart of Accounts tree with recursive aggregated balances.
+    """
+    tree = await build_hierarchical_coa_tree(db=db, org_id=organization_id)
+    return tree
+
+
 @router.get("/coa", response_model=List[ChartOfAccountResponse])
 async def list_chart_of_accounts(
     account_type: Optional[str] = Query(None),
@@ -1013,4 +1038,329 @@ async def calculate_sub_registry_fees(payload: SubRegistryCalculationRequest):
         total_statutory_fees_bdt=total_statutory,
         total_transfer_cost_bdt=total_cost
     )
+
+
+# --------------------------------------------------------------------------
+# 8. Multi-Project Cost Centers & Variance Report
+# --------------------------------------------------------------------------
+@router.get("/cost-centers", response_model=List[CostCenterResponse])
+async def list_cost_centers(
+    project_id: Optional[int] = Query(None),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    List construction cost centers with project details and live spent variance.
+    """
+    variances = await get_cost_center_variances(db=db, project_id=project_id)
+    return variances
+
+
+@router.post("/cost-centers", response_model=CostCenterResponse, status_code=status.HTTP_201_CREATED)
+async def create_cost_center(
+    payload: CostCenterCreate,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Create a new multi-dimensional cost center linked to Project and Tower.
+    """
+    existing = await db.execute(select(CostCenter).where(CostCenter.cost_center_code == payload.cost_center_code))
+    if existing.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail=f"Cost center code {payload.cost_center_code} already exists.")
+
+    cc = CostCenter(
+        organization_id=1,
+        project_id=payload.project_id,
+        tower_id=payload.tower_id,
+        cost_center_code=payload.cost_center_code,
+        name=payload.name,
+        wbs_stage=payload.wbs_stage,
+        budget_allocated=payload.budget_allocated,
+        actual_spent=0.00,
+        is_active=payload.is_active
+    )
+    db.add(cc)
+    await db.commit()
+    await db.refresh(cc)
+
+    proj_name = None
+    if cc.project_id:
+        p_res = await db.execute(select(Project.project_name).where(Project.id == cc.project_id))
+        proj_name = p_res.scalar()
+
+    resp = CostCenterResponse.model_validate(cc)
+    resp.project_name = proj_name
+    resp.variance_bdt = float(cc.budget_allocated)
+    return resp
+
+
+@router.get("/cost-centers/variance")
+async def get_cost_center_variance_report(
+    project_id: Optional[int] = Query(None),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Detailed Budgeted vs Actual Cost Variance Report across WBS stages.
+    """
+    variances = await get_cost_center_variances(db=db, project_id=project_id)
+    total_budget = sum(v["budget_allocated"] for v in variances)
+    total_spent = sum(v["actual_spent"] for v in variances)
+    net_variance = round(total_budget - total_spent, 2)
+    variance_pct = round((net_variance / total_budget * 100.0), 2) if total_budget > 0 else 0.0
+
+    return {
+        "project_id": project_id,
+        "total_budget_allocated": total_budget,
+        "total_actual_spent": total_spent,
+        "net_variance_bdt": net_variance,
+        "variance_percent": variance_pct,
+        "cost_centers": variances
+    }
+
+
+# --------------------------------------------------------------------------
+# 9. Fiscal Years Management
+# --------------------------------------------------------------------------
+@router.get("/fiscal-years", response_model=List[FiscalYearResponse])
+async def list_fiscal_years(db: AsyncSession = Depends(get_db)):
+    """
+    List company financial years.
+    """
+    res = await db.execute(select(FiscalYear).order_by(FiscalYear.start_date.desc()))
+    return res.scalars().all()
+
+
+@router.post("/fiscal-years", response_model=FiscalYearResponse, status_code=status.HTTP_201_CREATED)
+async def create_fiscal_year(
+    payload: FiscalYearCreate,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Create a new financial fiscal year.
+    """
+    existing = await db.execute(select(FiscalYear).where(FiscalYear.year_name == payload.year_name))
+    if existing.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail=f"Fiscal year {payload.year_name} already exists.")
+
+    fy = FiscalYear(
+        organization_id=1,
+        year_name=payload.year_name,
+        start_date=payload.start_date,
+        end_date=payload.end_date,
+        is_closed=payload.is_closed
+    )
+    db.add(fy)
+    await db.commit()
+    await db.refresh(fy)
+    return fy
+
+
+@router.patch("/fiscal-years/{id}/close", response_model=FiscalYearResponse)
+async def close_fiscal_year(
+    id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Close a fiscal year for audit lock.
+    """
+    fy = (await db.execute(select(FiscalYear).where(FiscalYear.id == id))).scalar_one_or_none()
+    if not fy:
+        raise HTTPException(status_code=404, detail="Fiscal year not found.")
+    fy.is_closed = True
+    await db.commit()
+    await db.refresh(fy)
+    return fy
+
+
+# --------------------------------------------------------------------------
+# 10. Construction Work In Progress (CWIP) Engine
+# --------------------------------------------------------------------------
+@router.get("/cwip/summary", response_model=CWIPSummaryResponse)
+async def get_cwip_summary(
+    project_id: int = Query(...),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Retrieve project CWIP accumulated expenditure, capitalized COGS, and active balance.
+    """
+    summary = await get_project_cwip_summary(db=db, project_id=project_id)
+    return summary
+
+
+@router.post("/cwip/capitalize")
+async def capitalize_cwip(
+    payload: CWIPCapitalizeRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Capitalize CWIP construction costs to Cost of Goods Sold (Flats) upon completion / possession.
+      DEBIT: Cost of Goods Sold (Flats)
+      CREDIT: CWIP Construction Asset
+    """
+    try:
+        result = await post_cwip_capitalization(
+            db=db,
+            project_id=payload.project_id,
+            cwip_account_id=payload.cwip_account_id,
+            cogs_account_id=payload.cogs_account_id,
+            capitalized_amount=payload.capitalized_amount,
+            completion_percentage=payload.completion_percentage,
+            cost_center_id=payload.cost_center_id,
+            remarks=payload.remarks
+        )
+        await db.commit()
+        return result
+    except ValueError as e:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+# --------------------------------------------------------------------------
+# 11. IFRS-15 Revenue Recognition Engine
+# --------------------------------------------------------------------------
+@router.post("/ifrs15/recognize")
+async def recognize_revenue_ifrs15(
+    payload: IFRS15RecognizeRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    IFRS 15 Revenue Recognition upon Flat Handover or POC Progress:
+      DEBIT: Customer Advance Liability - Flat
+      CREDIT: Real Estate Apartment Sales Revenue
+    """
+    try:
+        result = await post_ifrs15_revenue_recognition(
+            db=db,
+            project_id=payload.project_id,
+            booking_id=payload.booking_id,
+            advance_liability_account_id=payload.advance_liability_account_id,
+            revenue_account_id=payload.revenue_account_id,
+            recognized_amount=payload.recognized_amount,
+            recognition_method=payload.recognition_method,
+            remarks=payload.remarks
+        )
+        await db.commit()
+        return result
+    except ValueError as e:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+# --------------------------------------------------------------------------
+# 12. Post-Dated Cheque (PDC) Vault & Kanban Lifecycle
+# --------------------------------------------------------------------------
+@router.get("/pdc", response_model=List[PDCVaultResponse])
+async def list_pdc_vault(
+    project_id: Optional[int] = Query(None),
+    status: Optional[str] = Query(None),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Retrieve Post-Dated Cheques in Vault, Deposited, Cleared, or Bounced.
+    """
+    stmt = (
+        select(PDCVault)
+        .options(selectinload(PDCVault.project))
+        .order_by(PDCVault.cheque_date.asc())
+    )
+    if project_id:
+        stmt = stmt.where(PDCVault.project_id == project_id)
+    if status:
+        stmt = stmt.where(PDCVault.status == status)
+
+    result = await db.execute(stmt)
+    pdcs = result.scalars().all()
+
+    resp_list = []
+    for p in pdcs:
+        r = PDCVaultResponse.model_validate(p)
+        r.project_name = p.project.project_name if p.project else None
+        resp_list.append(r)
+    return resp_list
+
+
+@router.post("/pdc", response_model=PDCVaultResponse, status_code=status.HTTP_201_CREATED)
+async def create_pdc(
+    payload: PDCVaultCreate,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Register a new customer post-dated cheque into Safe Vault.
+    """
+    pdc = PDCVault(
+        organization_id=1,
+        project_id=payload.project_id,
+        booking_id=payload.booking_id,
+        cheque_no=payload.cheque_no,
+        bank_name=payload.bank_name,
+        branch_name=payload.branch_name,
+        drawer_name=payload.drawer_name,
+        cheque_date=payload.cheque_date,
+        amount=payload.amount,
+        status="IN_VAULT"
+    )
+    db.add(pdc)
+    await db.commit()
+    await db.refresh(pdc)
+
+    p_res = await db.execute(select(Project.project_name).where(Project.id == pdc.project_id))
+    proj_name = p_res.scalar()
+
+    r = PDCVaultResponse.model_validate(pdc)
+    r.project_name = proj_name
+    return r
+
+
+@router.patch("/pdc/{id}/status", response_model=PDCVaultResponse)
+async def update_pdc_status_route(
+    id: int,
+    payload: PDCStatusUpdate,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Transitions PDC lifecycle:
+    IN_VAULT -> DEPOSITED -> CLEARED (Auto-posts Bank Receipt) / BOUNCED (flags legal notice).
+    """
+    try:
+        pdc = await update_pdc_vault_status(
+            db=db,
+            pdc_id=id,
+            new_status=payload.status,
+            bounce_reason=payload.bounce_reason,
+            bank_account_id=payload.bank_account_id
+        )
+        await db.commit()
+        await db.refresh(pdc)
+
+        p_res = await db.execute(select(Project.project_name).where(Project.id == pdc.project_id))
+        proj_name = p_res.scalar()
+
+        r = PDCVaultResponse.model_validate(pdc)
+        r.project_name = proj_name
+        return r
+    except ValueError as e:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+# --------------------------------------------------------------------------
+# 13. Smart Bank Statement Auto-Matching & Reconciliation
+# --------------------------------------------------------------------------
+@router.post("/bank-reconciliation/auto-match", response_model=BankReconciliationFullResponse)
+async def auto_match_bank_statement_route(
+    payload: BankStatementAutoMatchRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Parses bank transaction statement rows and auto-matches against posted vouchers.
+    """
+    rows_data = [row.model_dump() for row in payload.rows]
+    result = await auto_match_bank_statement(
+        db=db,
+        bank_account_id=payload.bank_account_id,
+        statement_date=payload.statement_date,
+        statement_balance=payload.statement_balance,
+        statement_rows=rows_data
+    )
+    await db.commit()
+    return result
 

@@ -1,0 +1,405 @@
+<div class="space-y-6">
+  <!-- Master Card Container -->
+  <app-card-container 
+    title="Post-Dated Cheque (PDC) Vault & Safe Management" 
+    subtitle="Physical Safe Inventory, Banking Pipeline & Negotiable Instruments Act 1881 Section 138 Recovery"
+    badge="CFO Safe Engine">
+    
+    <!-- Action Slot -->
+    <div card-actions class="flex items-center gap-3">
+      <app-custom-button 
+        label="Register Cheque" 
+        variant="primary" 
+        icon="plus" 
+        (btnClick)="openRegisterModal()">
+      </app-custom-button>
+    </div>
+
+    <!-- Summary KPI Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850/50">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">In Safe Vault</span>
+          <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+        </div>
+        <p class="text-2xl font-bold text-slate-900 dark:text-white mt-2">
+          ৳{{ totalVaultAmount() | number:'1.2-2' }}
+        </p>
+        <span class="text-xs text-slate-500 dark:text-slate-400">{{ inVaultCheques().length }} Cheques in Physical Custody</span>
+      </div>
+
+      <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850/50">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Deposited in Bank</span>
+          <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+        </div>
+        <p class="text-2xl font-bold text-slate-900 dark:text-white mt-2">
+          {{ depositedCheques().length }} Cheques
+        </p>
+        <span class="text-xs text-blue-600 dark:text-blue-400 font-medium">Awaiting BACPS 2.0 Clearing</span>
+      </div>
+
+      <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850/50">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Cleared & Credited</span>
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+        </div>
+        <p class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-2">
+          ৳{{ totalClearedAmount() | number:'1.2-2' }}
+        </p>
+        <span class="text-xs text-slate-500 dark:text-slate-400">{{ clearedCheques().length }} Realized Vouchers</span>
+      </div>
+
+      <div class="p-4 rounded-xl border border-rose-200 dark:border-rose-900/50 bg-rose-50/40 dark:bg-rose-950/20">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold uppercase tracking-wider text-rose-600 dark:text-rose-400">Dishonored / Bounced</span>
+          <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+        </div>
+        <p class="text-2xl font-bold text-rose-600 dark:text-rose-400 mt-2">
+          ৳{{ totalBouncedAmount() | number:'1.2-2' }}
+        </p>
+        <span class="text-xs text-rose-600 dark:text-rose-400 font-medium">NI Act 138 Notice Triggered</span>
+      </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      <app-searchable-select
+        label="Filter by Real Estate Project"
+        placeholder="Select Project..."
+        [options]="projectOptions()"
+        [allowCreateNew]="false"
+        [(ngModel)]="filterProjectId"
+        (selectionChange)="loadCheques()">
+      </app-searchable-select>
+
+      <app-custom-input
+        label="Search Cheque Number, Customer, or Bank"
+        placeholder="e.g. CHQ-8899, Standard Chartered, Rahim..."
+        [(ngModel)]="searchQuery"
+        icon="search">
+      </app-custom-input>
+    </div>
+
+    <!-- 4-Column Kanban Pipeline -->
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+      
+      <!-- Column 1: IN VAULT -->
+      <div class="flex flex-col rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/40 p-3 min-h-[500px]">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+            <h3 class="text-sm font-semibold text-slate-800 dark:text-slate-200">In Safe Vault</h3>
+          </div>
+          <span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300">
+            {{ inVaultCheques().length }}
+          </span>
+        </div>
+
+        <div class="space-y-3 mt-3 flex-1 overflow-y-auto">
+          @for (c of inVaultCheques(); track c.id) {
+            <div class="p-3.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 shadow-sm hover:shadow-md transition">
+              <div class="flex items-start justify-between">
+                <div>
+                  <span class="text-xs font-bold text-slate-900 dark:text-slate-100">{{ c.cheque_no }}</span>
+                  <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ c.bank_name }}</p>
+                </div>
+                <span class="text-sm font-bold text-slate-900 dark:text-emerald-400">
+                  ৳{{ c.amount | number:'1.2-2' }}
+                </span>
+              </div>
+              <div class="mt-2 text-xs text-slate-600 dark:text-slate-300">
+                <span class="font-medium">Drawer:</span> {{ c.drawer_name }}
+              </div>
+              <div class="mt-1 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+                <span>Maturity: {{ c.cheque_date }}</span>
+                <span>{{ c.project_name || 'Project' }}</span>
+              </div>
+              <div class="mt-3 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2">
+                <button 
+                  type="button"
+                  (click)="openActionModal(c, 'DEPOSIT')"
+                  class="px-2.5 py-1 text-xs font-medium rounded-md bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 hover:bg-blue-100 transition">
+                  Deposit to Bank
+                </button>
+              </div>
+            </div>
+          } @empty {
+            <div class="text-center py-10 text-xs text-slate-400">No cheques in vault.</div>
+          }
+        </div>
+      </div>
+
+      <!-- Column 2: DEPOSITED -->
+      <div class="flex flex-col rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/40 p-3 min-h-[500px]">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+            <h3 class="text-sm font-semibold text-slate-800 dark:text-slate-200">Deposited</h3>
+          </div>
+          <span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-300">
+            {{ depositedCheques().length }}
+          </span>
+        </div>
+
+        <div class="space-y-3 mt-3 flex-1 overflow-y-auto">
+          @for (c of depositedCheques(); track c.id) {
+            <div class="p-3.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 shadow-sm hover:shadow-md transition">
+              <div class="flex items-start justify-between">
+                <div>
+                  <span class="text-xs font-bold text-slate-900 dark:text-slate-100">{{ c.cheque_no }}</span>
+                  <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ c.bank_name }}</p>
+                </div>
+                <span class="text-sm font-bold text-slate-900 dark:text-emerald-400">
+                  ৳{{ c.amount | number:'1.2-2' }}
+                </span>
+              </div>
+              <div class="mt-2 text-xs text-slate-600 dark:text-slate-300">
+                <span class="font-medium">Drawer:</span> {{ c.drawer_name }}
+              </div>
+              <div class="mt-1 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+                <span>Dep: {{ c.deposit_date || 'Today' }}</span>
+                <span>{{ c.project_name || 'Project' }}</span>
+              </div>
+              <div class="mt-3 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2">
+                <button 
+                  type="button"
+                  (click)="openActionModal(c, 'BOUNCE')"
+                  class="px-2.5 py-1 text-xs font-medium rounded-md bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 hover:bg-rose-100 transition">
+                  Bounce
+                </button>
+                <button 
+                  type="button"
+                  (click)="openActionModal(c, 'CLEAR')"
+                  class="px-2.5 py-1 text-xs font-medium rounded-md bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 hover:bg-emerald-100 transition">
+                  Clear
+                </button>
+              </div>
+            </div>
+          } @empty {
+            <div class="text-center py-10 text-xs text-slate-400">No cheques in bank pipeline.</div>
+          }
+        </div>
+      </div>
+
+      <!-- Column 3: CLEARED -->
+      <div class="flex flex-col rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/40 p-3 min-h-[500px]">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <h3 class="text-sm font-semibold text-slate-800 dark:text-slate-200">Cleared & Credited</h3>
+          </div>
+          <span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300">
+            {{ clearedCheques().length }}
+          </span>
+        </div>
+
+        <div class="space-y-3 mt-3 flex-1 overflow-y-auto">
+          @for (c of clearedCheques(); track c.id) {
+            <div class="p-3.5 rounded-lg border border-emerald-100 dark:border-emerald-950 bg-white dark:bg-slate-850 shadow-sm">
+              <div class="flex items-start justify-between">
+                <div>
+                  <span class="text-xs font-bold text-slate-900 dark:text-slate-100">{{ c.cheque_no }}</span>
+                  <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ c.bank_name }}</p>
+                </div>
+                <span class="text-sm font-bold text-emerald-600 dark:text-emerald-400">
+                  ৳{{ c.amount | number:'1.2-2' }}
+                </span>
+              </div>
+              <div class="mt-2 text-xs text-slate-600 dark:text-slate-300">
+                <span class="font-medium">Drawer:</span> {{ c.drawer_name }}
+              </div>
+              <div class="mt-2 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+                <span>Cleared: {{ c.clearance_date }}</span>
+                <span class="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 font-medium">Auto-Voucher</span>
+              </div>
+            </div>
+          } @empty {
+            <div class="text-center py-10 text-xs text-slate-400">No cleared cheques.</div>
+          }
+        </div>
+      </div>
+
+      <!-- Column 4: BOUNCED -->
+      <div class="flex flex-col rounded-xl border border-rose-200 dark:border-rose-900/50 bg-rose-50/20 dark:bg-rose-950/10 p-3 min-h-[500px]">
+        <div class="flex items-center justify-between pb-3 border-b border-rose-200 dark:border-rose-900/50">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+            <h3 class="text-sm font-semibold text-rose-800 dark:text-rose-200">Dishonored / Bounced</h3>
+          </div>
+          <span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-rose-100 text-rose-800 dark:bg-rose-900/60 dark:text-rose-300">
+            {{ bouncedCheques().length }}
+          </span>
+        </div>
+
+        <div class="space-y-3 mt-3 flex-1 overflow-y-auto">
+          @for (c of bouncedCheques(); track c.id) {
+            <div class="p-3.5 rounded-lg border border-rose-200 dark:border-rose-900/40 bg-white dark:bg-slate-850 shadow-sm">
+              <div class="flex items-start justify-between">
+                <div>
+                  <span class="text-xs font-bold text-rose-700 dark:text-rose-400">{{ c.cheque_no }}</span>
+                  <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ c.bank_name }}</p>
+                </div>
+                <span class="text-sm font-bold text-rose-600 dark:text-rose-400">
+                  ৳{{ c.amount | number:'1.2-2' }}
+                </span>
+              </div>
+              <div class="mt-2 text-xs text-slate-600 dark:text-slate-300">
+                <span class="font-medium">Reason:</span> {{ c.bounce_reason || 'Insufficient Funds' }}
+              </div>
+              <div class="mt-2 flex items-center justify-between text-[11px]">
+                <span class="text-slate-500 dark:text-slate-400">Date: {{ c.bounce_date }}</span>
+                <span class="px-1.5 py-0.5 rounded bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 font-semibold text-[10px]">
+                  NI Act 138 Active
+                </span>
+              </div>
+            </div>
+          } @empty {
+            <div class="text-center py-10 text-xs text-slate-400">No dishonored cheques.</div>
+          }
+        </div>
+      </div>
+
+    </div>
+  </app-card-container>
+
+  <!-- Register PDC Modal -->
+  @if (isRegisterModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+      <div class="w-full max-w-lg bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-850/80">
+          <h3 class="text-base font-semibold text-slate-900 dark:text-slate-100">Register Cheque in Safe Vault</h3>
+          <button type="button" (click)="closeRegisterModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <form [formGroup]="registerForm" (ngSubmit)="submitRegister()" class="p-6 space-y-4">
+          <app-searchable-select
+            label="Real Estate Project"
+            placeholder="Select Project..."
+            [options]="projectCreateOptions()"
+            [allowCreateNew]="false"
+            formControlName="project_id"
+            [required]="true">
+          </app-searchable-select>
+
+          <div class="grid grid-cols-2 gap-3">
+            <app-custom-input
+              label="Cheque Number"
+              placeholder="e.g. CHQ-99120"
+              formControlName="cheque_no"
+              [required]="true">
+            </app-custom-input>
+
+            <app-custom-input
+              label="Cheque Amount (BDT)"
+              type="number"
+              placeholder="0.00"
+              formControlName="amount"
+              [required]="true">
+            </app-custom-input>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <app-custom-input
+              label="Bank Name"
+              placeholder="e.g. Standard Chartered"
+              formControlName="bank_name"
+              [required]="true">
+            </app-custom-input>
+
+            <app-custom-input
+              label="Branch Name"
+              placeholder="e.g. Gulshan-2 Branch"
+              formControlName="branch_name">
+            </app-custom-input>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <app-custom-input
+              label="Drawer / Client Name"
+              placeholder="e.g. Engr. Tanvir Ahmed"
+              formControlName="drawer_name"
+              [required]="true">
+            </app-custom-input>
+
+            <app-custom-input
+              label="Maturity Date"
+              type="date"
+              formControlName="cheque_date"
+              [required]="true">
+            </app-custom-input>
+          </div>
+
+          <div class="pt-4 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-3">
+            <app-custom-button label="Cancel" variant="outline" (btnClick)="closeRegisterModal()"></app-custom-button>
+            <app-custom-button label="Save to Safe" variant="primary" type="submit"></app-custom-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- Action Modal (Deposit, Clear, Bounce) -->
+  @if (isActionModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+      <div class="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-850/80">
+          <h3 class="text-base font-semibold text-slate-900 dark:text-slate-100">
+            @if (actionType() === 'DEPOSIT') { Confirm Deposit to Bank }
+            @if (actionType() === 'CLEAR') { Clear Cheque & Realize Voucher }
+            @if (actionType() === 'BOUNCE') { Mark Cheque Dishonored / Bounced }
+          </h3>
+          <button type="button" (click)="closeActionModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <form [formGroup]="actionForm" (ngSubmit)="submitAction()" class="p-6 space-y-4">
+          <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 text-xs space-y-1">
+            <p><span class="font-semibold text-slate-700 dark:text-slate-300">Cheque:</span> {{ selectedCheque()?.cheque_no }}</p>
+            <p><span class="font-semibold text-slate-700 dark:text-slate-300">Amount:</span> ৳{{ selectedCheque()?.amount | number:'1.2-2' }}</p>
+            <p><span class="font-semibold text-slate-700 dark:text-slate-300">Drawer:</span> {{ selectedCheque()?.drawer_name }}</p>
+          </div>
+
+          @if (actionType() === 'CLEAR') {
+            <app-searchable-select
+              label="Deposit Receiving Bank Account"
+              placeholder="Select Bank Account..."
+              [options]="bankSelectOptions()"
+              [allowCreateNew]="false"
+              formControlName="bank_account_id"
+              hint="Debit Bank Account and Credit Advance from Allottee.">
+            </app-searchable-select>
+          }
+
+          @if (actionType() === 'BOUNCE') {
+            <app-custom-input
+              label="Dishonor Memo Reason"
+              placeholder="e.g. Insufficient Funds / Signature Mismatch"
+              formControlName="bounce_reason"
+              [required]="true">
+            </app-custom-input>
+            <p class="text-[11px] text-rose-600 dark:text-rose-400">
+              Marking this cheque as Bounced will auto-flag for Section 138 Statutory Legal Demand Notice within 30 days under Negotiable Instruments Act 1881.
+            </p>
+          }
+
+          <div class="pt-4 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-3">
+            <app-custom-button label="Cancel" variant="outline" (btnClick)="closeActionModal()"></app-custom-button>
+            <app-custom-button 
+              [label]="actionType() === 'BOUNCE' ? 'Confirm Bounce' : (actionType() === 'CLEAR' ? 'Clear & Post' : 'Confirm Deposit')" 
+              [variant]="actionType() === 'BOUNCE' ? 'danger' : 'primary'" 
+              type="submit">
+            </app-custom-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>

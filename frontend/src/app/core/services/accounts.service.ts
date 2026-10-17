@@ -112,5 +112,75 @@ export class AccountsService {
   calculateSubRegistryFees(payload: SubRegistryCalculationRequest): Observable<SubRegistryCalculationResponse> {
     return this.http.post<SubRegistryCalculationResponse>(`${this.baseUrl}/sub-registry-calc`, payload);
   }
+
+  // 8. 5-Tier Hierarchical Chart of Accounts
+  getCOAHierarchy(organizationId: number = 1): Observable<import('../models/accounts.model').ChartOfAccountTreeNode[]> {
+    return this.http.get<import('../models/accounts.model').ChartOfAccountTreeNode[]>(`${this.baseUrl}/coa/hierarchy?organization_id=${organizationId}`);
+  }
+
+  // 9. Cost Centers & Variance
+  getCostCenters(projectId?: number): Observable<import('../models/accounts.model').CostCenter[]> {
+    let params = new HttpParams();
+    if (projectId) params = params.set('project_id', projectId);
+    return this.http.get<import('../models/accounts.model').CostCenter[]>(`${this.baseUrl}/cost-centers`, { params });
+  }
+
+  createCostCenter(payload: any): Observable<import('../models/accounts.model').CostCenter> {
+    return this.http.post<import('../models/accounts.model').CostCenter>(`${this.baseUrl}/cost-centers`, payload);
+  }
+
+  getCostCenterVarianceReport(projectId?: number): Observable<any> {
+    let params = new HttpParams();
+    if (projectId) params = params.set('project_id', projectId);
+    return this.http.get<any>(`${this.baseUrl}/cost-centers/variance`, { params });
+  }
+
+  // 10. Fiscal Years
+  getFiscalYears(): Observable<import('../models/accounts.model').FiscalYear[]> {
+    return this.http.get<import('../models/accounts.model').FiscalYear[]>(`${this.baseUrl}/fiscal-years`);
+  }
+
+  createFiscalYear(payload: any): Observable<import('../models/accounts.model').FiscalYear> {
+    return this.http.post<import('../models/accounts.model').FiscalYear>(`${this.baseUrl}/fiscal-years`, payload);
+  }
+
+  closeFiscalYear(id: number): Observable<import('../models/accounts.model').FiscalYear> {
+    return this.http.patch<import('../models/accounts.model').FiscalYear>(`${this.baseUrl}/fiscal-years/${id}/close`, {});
+  }
+
+  // 11. CWIP Capitalization
+  getCWIPSummary(projectId: number): Observable<import('../models/accounts.model').CWIPSummary> {
+    return this.http.get<import('../models/accounts.model').CWIPSummary>(`${this.baseUrl}/cwip/summary?project_id=${projectId}`);
+  }
+
+  capitalizeCWIP(payload: import('../models/accounts.model').CWIPCapitalizeRequest): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/cwip/capitalize`, payload);
+  }
+
+  // 12. IFRS-15 Revenue Recognition
+  recognizeIFRS15Revenue(payload: import('../models/accounts.model').IFRS15RecognizeRequest): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/ifrs15/recognize`, payload);
+  }
+
+  // 13. PDC Vault & Safe Management
+  getPDCVault(filters?: { project_id?: number; status?: string }): Observable<import('../models/accounts.model').PDCVaultCheque[]> {
+    let params = new HttpParams();
+    if (filters?.project_id) params = params.set('project_id', filters.project_id);
+    if (filters?.status) params = params.set('status', filters.status);
+    return this.http.get<import('../models/accounts.model').PDCVaultCheque[]>(`${this.baseUrl}/pdc`, { params });
+  }
+
+  createPDC(payload: any): Observable<import('../models/accounts.model').PDCVaultCheque> {
+    return this.http.post<import('../models/accounts.model').PDCVaultCheque>(`${this.baseUrl}/pdc`, payload);
+  }
+
+  updatePDCStatus(id: number, payload: { status: string; bounce_reason?: string; bank_account_id?: number }): Observable<import('../models/accounts.model').PDCVaultCheque> {
+    return this.http.patch<import('../models/accounts.model').PDCVaultCheque>(`${this.baseUrl}/pdc/${id}/status`, payload);
+  }
+
+  // 14. Smart Bank Statement Auto-Matching
+  autoMatchBankStatement(payload: { bank_account_id: number; statement_date: string; statement_balance: number; rows: import('../models/accounts.model').BankStatementRow[] }): Observable<import('../models/accounts.model').BankReconciliationFullResponse> {
+    return this.http.post<import('../models/accounts.model').BankReconciliationFullResponse>(`${this.baseUrl}/bank-reconciliation/auto-match`, payload);
+  }
 }
 

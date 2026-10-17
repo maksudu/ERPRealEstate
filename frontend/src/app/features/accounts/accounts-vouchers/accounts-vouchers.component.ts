@@ -4,7 +4,7 @@ import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators, F
 import { ActivatedRoute } from '@angular/router';
 import { AccountsService } from '../../../core/services/accounts.service';
 import { ProjectService } from '../../../core/services/project.service';
-import { Voucher, ChartOfAccount } from '../../../core/models/accounts.model';
+import { Voucher, ChartOfAccount, CostCenter } from '../../../core/models/accounts.model';
 import { Project } from '../../../core/models/project.model';
 import {
   CardContainerComponent,
@@ -38,6 +38,7 @@ export class AccountsVouchersComponent implements OnInit {
   vouchers = signal<Voucher[]>([]);
   coaList = signal<ChartOfAccount[]>([]);
   projects = signal<Project[]>([]);
+  costCenters = signal<CostCenter[]>([]);
 
   isLoading = signal<boolean>(false);
   isSubmitting = signal<boolean>(false);
@@ -99,6 +100,14 @@ export class AccountsVouchersComponent implements OnInit {
     }))
   );
 
+  costCenterOptions = computed(() => [
+    { value: null, label: 'None (General Project Overhead)' },
+    ...this.costCenters().map(c => ({
+      value: c.id,
+      label: `${c.cost_center_code} - ${c.name} (${c.wbs_stage})`
+    }))
+  ]);
+
   computedTotalDebit = computed(() => {
     // dynamically compute from form array values
     const entries = this.createForm.get('entries')?.value || [];
@@ -123,8 +132,20 @@ export class AccountsVouchersComponent implements OnInit {
 
   loadProjects(): void {
     this.projectService.getProjects().subscribe({
-      next: (res) => this.projects.set(res),
+      next: (res) => {
+        this.projects.set(res);
+        if (res.length > 0) {
+          this.loadCostCenters(res[0].id);
+        }
+      },
       error: (err) => console.error('Failed to load projects', err)
+    });
+  }
+
+  loadCostCenters(projectId: number): void {
+    this.accountsService.getCostCenters(projectId).subscribe({
+      next: (res) => this.costCenters.set(res),
+      error: (err) => console.error('Failed to load cost centers', err)
     });
   }
 
@@ -181,8 +202,11 @@ export class AccountsVouchersComponent implements OnInit {
     const defaultAccId = this.coaList().length > this.entriesArray.length ? this.coaList()[this.entriesArray.length].id : (this.coaList().length ? this.coaList()[0].id : null);
     const group = this.fb.group({
       account_id: [defaultAccId, Validators.required],
+      cost_center_id: [null],
       debit_amount: [defaultDebit, [Validators.min(0)]],
       credit_amount: [defaultCredit, [Validators.min(0)]],
+      cheque_no: [''],
+      bill_reference: [''],
       narration: ['']
     });
     this.entriesArray.push(group);

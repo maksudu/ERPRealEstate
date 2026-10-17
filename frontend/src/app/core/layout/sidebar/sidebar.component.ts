@@ -122,9 +122,12 @@ export class SidebarComponent implements OnInit {
       title: 'Finance & Accounts',
       iconSvg: 'M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z',
       items: [
-        { id: 'coa', label: 'Chart of Accounts (COA)', route: '/accounts/coa' },
+        { id: 'coa', label: '5-Tier Chart of Accounts', route: '/accounts/coa' },
         { id: 'vouchers', label: 'General Ledger & Vouchers', route: '/accounts/vouchers' },
-        { id: 'reports', label: 'Financial Reports & Bank Recon', route: '/accounts/financial-reports' },
+        { id: 'cwip-cockpit', label: 'CWIP & IFRS-15 Cockpit', route: '/accounts/cwip-cockpit', badge: 'Tier-1' },
+        { id: 'pdc-kanban', label: 'PDC Vault & Kanban Safe', route: '/accounts/pdc-kanban', badge: 'Safe' },
+        { id: 'bank-recon-wizard', label: 'Smart Bank Statement Recon', route: '/accounts/bank-recon-wizard' },
+        { id: 'reports', label: 'Financial Reports & P&L', route: '/accounts/financial-reports' },
         { id: 'mushak-63', label: 'Mushak 6.3 VAT Tax Invoices', route: '/accounts/vat-mushak' },
         { id: 'tds-vds', label: 'TDS & VDS Withholding Tax', route: '/accounts/tax-withholding' },
         { id: 'ait-53ff', label: 'Sub-Registry AIT Calculator', route: '/accounts/sub-registry-calc' }

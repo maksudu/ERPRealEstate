@@ -219,7 +219,7 @@
                   </div>
 
                   <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
-                    <div class="md:col-span-6">
+                    <div class="md:col-span-4">
                       <app-searchable-select
                         label="Account Head *"
                         placeholder="Select Account"
@@ -230,7 +230,17 @@
                       </app-searchable-select>
                     </div>
 
-                    <div class="md:col-span-3">
+                    <div class="md:col-span-4">
+                      <app-searchable-select
+                        label="Cost Center / WBS Dimension"
+                        placeholder="General Project"
+                        [options]="costCenterOptions()"
+                        [ngModel]="entryGroup.get('cost_center_id')?.value"
+                        (ngModelChange)="entryGroup.get('cost_center_id')?.setValue($event)">
+                      </app-searchable-select>
+                    </div>
+
+                    <div class="md:col-span-2">
                       <app-custom-input
                         label="Debit (Dr) BDT"
                         type="number"
@@ -239,7 +249,7 @@
                       </app-custom-input>
                     </div>
 
-                    <div class="md:col-span-3">
+                    <div class="md:col-span-2">
                       <app-custom-input
                         label="Credit (Cr) BDT"
                         type="number"
@@ -247,6 +257,26 @@
                         formControlName="credit_amount">
                       </app-custom-input>
                     </div>
+                  </div>
+
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
+                    <app-custom-input
+                      label="Cheque No (Optional)"
+                      placeholder="e.g. CHQ-99120"
+                      formControlName="cheque_no">
+                    </app-custom-input>
+
+                    <app-custom-input
+                      label="Bill / PO Reference"
+                      placeholder="e.g. RA-004, PO-2026-9"
+                      formControlName="bill_reference">
+                    </app-custom-input>
+
+                    <app-custom-input
+                      label="Line Narration"
+                      placeholder="Specific note for this ledger entry..."
+                      formControlName="narration">
+                    </app-custom-input>
                   </div>
                 </div>
               }

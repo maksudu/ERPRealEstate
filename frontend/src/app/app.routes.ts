@@ -163,6 +163,21 @@ export const routes: Routes = [
     title: 'Financial Reports & Bank Reconciliation - Bangladesh Real Estate ERP'
   },
   {
+    path: 'accounts/cwip-cockpit',
+    loadComponent: () => import('./features/accounts/accounts-cwip-cockpit/accounts-cwip-cockpit.component').then(m => m.AccountsCwipCockpitComponent),
+    title: 'CWIP Capitalization & IFRS-15 Cockpit - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'accounts/pdc-kanban',
+    loadComponent: () => import('./features/accounts/accounts-pdc-vault/accounts-pdc-vault.component').then(m => m.AccountsPdcVaultComponent),
+    title: 'PDC Cheque Vault & Kanban - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'accounts/bank-recon-wizard',
+    loadComponent: () => import('./features/accounts/accounts-bank-reconciliation/accounts-bank-reconciliation.component').then(m => m.AccountsBankReconciliationComponent),
+    title: 'Bank Statement Reconciliation Wizard - Bangladesh Real Estate ERP'
+  },
+  {
     path: 'accounts/vat-mushak',
     loadComponent: () => import('./features/accounts/accounts-vat-mushak/accounts-vat-mushak.component').then(m => m.AccountsVatMushakComponent),
     title: 'Mushak 6.3 VAT Tax Invoices - Bangladesh Real Estate ERP'

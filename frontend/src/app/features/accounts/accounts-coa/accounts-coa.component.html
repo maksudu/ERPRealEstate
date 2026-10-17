@@ -1,167 +1,303 @@
-<app-card-container>
-  <!-- Header -->
-  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-5">
-    <div>
-      <div class="flex items-center gap-2">
-        <h1 class="text-2xl font-bold tracking-tight text-foreground">Chart of Accounts (COA) Master</h1>
-        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
-          Double-Entry
-        </span>
+<div class="space-y-6">
+  <!-- Master Card Container -->
+  <app-card-container
+    title="5-Tier Hierarchical Chart of Accounts (COA)"
+    subtitle="Enterprise General Ledger Structure: Assets, Liabilities, Equity, Revenue, CWIP Direct Cost & Overheads"
+    badge="SAP/Oracle Standard">
+
+    <!-- Action Slot -->
+    <div card-actions class="flex items-center gap-2 flex-wrap">
+      <!-- Toggle View Mode -->
+      <div class="flex items-center bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg border border-slate-200 dark:border-slate-700">
+        <button
+          type="button"
+          (click)="viewMode.set('tree')"
+          class="px-3 py-1 text-xs font-semibold rounded-md transition"
+          [ngClass]="viewMode() === 'tree' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-600 dark:text-slate-300'">
+          Tree View
+        </button>
+        <button
+          type="button"
+          (click)="viewMode.set('flat')"
+          class="px-3 py-1 text-xs font-semibold rounded-md transition"
+          [ngClass]="viewMode() === 'flat' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-600 dark:text-slate-300'">
+          Flat Table
+        </button>
       </div>
-      <p class="text-sm text-muted-foreground mt-1">
-        General Ledger accounting tree: Assets (1000s), Liabilities (2000s), Equity (3000s), Revenue (4000s), and Expenses (5000s).
-      </p>
-    </div>
 
-    <div class="flex items-center gap-3">
+      @if (viewMode() === 'tree') {
+        <button
+          type="button"
+          (click)="expandAll()"
+          class="px-2.5 py-1 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+          Expand All
+        </button>
+        <button
+          type="button"
+          (click)="collapseAll()"
+          class="px-2.5 py-1 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+          Collapse All
+        </button>
+      }
+
       <app-custom-button
-        variant="outline"
-        (btnClick)="loadCOA()">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-        </svg>
-        <span>Refresh</span>
-      </app-custom-button>
-      <app-custom-button
+        label="Add Head of Account"
         variant="primary"
+        icon="plus"
         (btnClick)="openCreateModal()">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-        </svg>
-        <span>New Head of Account</span>
       </app-custom-button>
     </div>
-  </div>
 
-  <!-- Filters Row -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 my-5 p-4 rounded-xl bg-card border border-border">
-    <app-searchable-select
-      label="Filter by Account Type"
-      placeholder="All Account Types"
-      [options]="accountTypeOptions"
-      [ngModel]="filterType()"
-      (ngModelChange)="filterType.set($event); onFilterChange()">
-    </app-searchable-select>
+    <!-- Search & Filter Bar -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      <app-custom-input
+        label="Search Account by Code, Name, or Bengali"
+        placeholder="e.g. 1020, CWIP, Escrow, অগ্রিম..."
+        [(ngModel)]="searchQuery"
+        icon="search">
+      </app-custom-input>
 
-    <div class="flex items-end">
-      <app-custom-button
-        variant="secondary"
-        (btnClick)="filterType.set(''); onFilterChange()">
-        Clear Filter
-      </app-custom-button>
+      <app-searchable-select
+        label="Filter Account Type"
+        placeholder="All Account Types..."
+        [options]="accountTypeOptions"
+        [allowCreateNew]="false"
+        [(ngModel)]="filterType"
+        (selectionChange)="loadFlatCOA()">
+      </app-searchable-select>
     </div>
-  </div>
 
-  <!-- COA Table -->
-  <div class="rounded-xl border border-border overflow-hidden bg-card">
-    <div class="overflow-x-auto">
-      <table class="w-full text-left text-sm">
-        <thead class="bg-muted/50 text-muted-foreground text-xs uppercase font-semibold border-b border-border">
-          <tr>
-            <th class="px-4 py-3.5">Account Code</th>
-            <th class="px-4 py-3.5">English Head of Account</th>
-            <th class="px-4 py-3.5">বাংলা হিসাবের নাম</th>
-            <th class="px-4 py-3.5 text-center">Classification Type</th>
-            <th class="px-4 py-3.5 text-right">Current Ledger Balance (BDT)</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-border">
-          @if (isLoading()) {
-            <tr>
-              <td colspan="5" class="text-center py-10 text-muted-foreground">
-                <div class="inline-flex items-center gap-2">
-                  <div class="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-                  Loading Chart of Accounts...
-                </div>
-              </td>
-            </tr>
-          } @else if (coaList().length === 0) {
-            <tr>
-              <td colspan="5" class="text-center py-12 text-muted-foreground">
-                No accounts found. Click "+ New Head of Account" to configure General Ledger structure.
-              </td>
-            </tr>
-          } @else {
-            @for (acc of coaList(); track acc.id) {
-              <tr class="hover:bg-muted/30 transition-colors">
-                <td class="px-4 py-3.5 font-mono font-bold text-foreground">
-                  {{ acc.account_code }}
-                </td>
-                <td class="px-4 py-3.5 font-medium text-foreground">
-                  {{ acc.account_name_en }}
-                </td>
-                <td class="px-4 py-3.5 text-muted-foreground">
-                  {{ acc.account_name_bn || '—' }}
-                </td>
-                <td class="px-4 py-3.5 text-center">
-                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border"
-                    [ngClass]="[getTypeBadge(acc.account_type).bg, getTypeBadge(acc.account_type).textCol, getTypeBadge(acc.account_type).border]">
-                    {{ acc.account_type }}
-                  </span>
-                </td>
-                <td class="px-4 py-3.5 text-right font-bold" [ngClass]="acc.current_balance >= 0 ? 'text-foreground' : 'text-rose-600'">
-                  ৳{{ acc.current_balance | number:'1.2-2' }}
-                </td>
-              </tr>
+    <!-- VIEW 1: INTERACTIVE 5-TIER TREE VIEW -->
+    @if (viewMode() === 'tree') {
+      <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 p-4 min-h-[500px]">
+        @if (isLoading()) {
+          <div class="py-16 text-center text-xs text-slate-400">Loading hierarchical accounts tree...</div>
+        } @else {
+          <div class="space-y-1">
+            @for (rootNode of coaTree(); track rootNode.id) {
+              @if (filterTreeNode(rootNode, searchQuery())) {
+                <ng-container *ngTemplateOutlet="nodeTemplate; context: { $implicit: rootNode, depth: 0 }"></ng-container>
+              }
             }
-          }
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- Create Account Modal -->
-  @if (isCreateModalOpen()) {
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-      <div class="bg-card border border-border w-full max-w-md rounded-2xl shadow-2xl overflow-hidden flex flex-col">
-        <div class="px-6 py-4 border-b border-border flex items-center justify-between bg-muted/40">
-          <div>
-            <h2 class="text-lg font-bold text-foreground">Add New Head of Account</h2>
-            <p class="text-xs text-muted-foreground">Double-entry General Ledger registry.</p>
           </div>
-          <button type="button" (click)="closeCreateModal()" class="text-muted-foreground hover:text-foreground">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        }
+      </div>
+
+      <!-- Recursive Node Template -->
+      <ng-template #nodeTemplate let-node let-depth="depth">
+        <div class="group">
+          <div 
+            class="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/60 transition border border-transparent hover:border-slate-200 dark:hover:border-slate-700/60"
+            [style.paddingLeft.px]="depth * 24 + 12">
+            
+            <div class="flex items-center gap-2.5 min-w-0 flex-1">
+              <!-- Expand / Collapse chevron for nodes with children -->
+              @if (node.children && node.children.length > 0) {
+                <button 
+                  type="button" 
+                  (click)="toggleNode(node)" 
+                  class="w-5 h-5 flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition">
+                  <svg 
+                    class="w-3.5 h-3.5 transition-transform duration-200" 
+                    [class.rotate-90]="node.expanded" 
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              } @else {
+                <span class="w-5 h-5 flex items-center justify-center">
+                  <span class="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600"></span>
+                </span>
+              }
+
+              <!-- Level Chip -->
+              <span class="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold"
+                [class.bg-blue-100]="node.level === 1"
+                [class.text-blue-800]="node.level === 1"
+                [class.bg-indigo-100]="node.level === 2"
+                [class.text-indigo-800]="node.level === 2"
+                [class.bg-purple-100]="node.level === 3"
+                [class.text-purple-800]="node.level === 3"
+                [class.bg-slate-100]="node.level >= 4"
+                [class.text-slate-700]="node.level >= 4">
+                L{{ node.level }}
+              </span>
+
+              <!-- Code -->
+              <span class="font-mono text-xs font-bold text-slate-900 dark:text-slate-100">
+                {{ node.account_code }}
+              </span>
+
+              <!-- Name -->
+              <span class="text-xs text-slate-800 dark:text-slate-200 font-medium truncate">
+                {{ node.account_name_en }}
+              </span>
+
+              @if (node.account_name_bn) {
+                <span class="text-[11px] text-slate-400 dark:text-slate-500 truncate hidden sm:inline">
+                  ({{ node.account_name_bn }})
+                </span>
+              }
+
+              @if (node.is_reconciliation_account) {
+                <span class="px-1.5 py-0.5 text-[9px] font-semibold rounded bg-cyan-100 text-cyan-800 dark:bg-cyan-950 dark:text-cyan-300">
+                  Bank / Escrow
+                </span>
+              }
+            </div>
+
+            <!-- Right: Balance & Actions -->
+            <div class="flex items-center gap-3 shrink-0">
+              <!-- Inline Balance Indicator -->
+              <span class="px-2 py-0.5 text-xs font-mono font-bold rounded"
+                [ngClass]="node.current_balance >= 0 ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' : 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300'">
+                ৳{{ node.current_balance | number:'1.2-2' }}
+              </span>
+
+              <!-- Quick Add Child Head button on hover -->
+              <button
+                type="button"
+                (click)="openCreateModal(node)"
+                class="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-blue-600 transition"
+                title="Add Child Account">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Child Nodes rendering -->
+          @if (node.expanded && node.children && node.children.length > 0) {
+            <div class="space-y-1">
+              @for (child of node.children; track child.id) {
+                @if (filterTreeNode(child, searchQuery())) {
+                  <ng-container *ngTemplateOutlet="nodeTemplate; context: { $implicit: child, depth: depth + 1 }"></ng-container>
+                }
+              }
+            </div>
+          }
+        </div>
+      </ng-template>
+    }
+
+    <!-- VIEW 2: FLAT LEDGER LIST -->
+    @if (viewMode() === 'flat') {
+      <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead>
+              <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400 font-semibold uppercase tracking-wider">
+                <th class="py-3 px-4">Account Code</th>
+                <th class="py-3 px-4">Account Name (English)</th>
+                <th class="py-3 px-4">Account Name (Bangla)</th>
+                <th class="py-3 px-4">Type</th>
+                <th class="py-3 px-4 text-center">Posting Level</th>
+                <th class="py-3 px-4 text-right">Current Ledger Balance</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+              @for (acc of coaFlatList(); track acc.id) {
+                <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition">
+                  <td class="py-3 px-4 font-mono font-bold text-slate-900 dark:text-white">{{ acc.account_code }}</td>
+                  <td class="py-3 px-4 text-slate-800 dark:text-slate-200 font-medium">{{ acc.account_name_en }}</td>
+                  <td class="py-3 px-4 text-slate-500 dark:text-slate-400">{{ acc.account_name_bn || '—' }}</td>
+                  <td class="py-3 px-4">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+                      {{ acc.account_type }}
+                    </span>
+                  </td>
+                  <td class="py-3 px-4 text-center">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold">
+                      {{ acc.is_leaf_account ? 'Leaf (Posting)' : 'Group' }}
+                    </span>
+                  </td>
+                  <td class="py-3 px-4 text-right font-mono font-bold" [class.text-emerald-600]="acc.current_balance >= 0" [class.text-rose-600]="acc.current_balance < 0">
+                    ৳{{ acc.current_balance | number:'1.2-2' }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+  </app-card-container>
+
+  <!-- Create Account Head Modal -->
+  @if (isCreateModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+      <div class="w-full max-w-lg bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-850/80">
+          <h3 class="text-base font-semibold text-slate-900 dark:text-slate-100">Add Head of Account (COA)</h3>
+          <button type="button" (click)="closeCreateModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
           </button>
         </div>
 
         <form [formGroup]="createForm" (ngSubmit)="submitCreate()" class="p-6 space-y-4">
-          <app-custom-input
-            label="Account Code (Numeric) *"
-            placeholder="e.g. 1040, 2050, 5060"
-            formControlName="account_code"
-            [required]="true">
-          </app-custom-input>
-
           <app-searchable-select
-            label="Account Type *"
-            placeholder="Select Type"
-            [options]="typeSelectOptions"
-            [ngModel]="createForm.get('account_type')?.value"
-            (ngModelChange)="createForm.get('account_type')?.setValue($event)"
-            [required]="true">
+            label="Parent Group Account (Hierarchy Dimension)"
+            placeholder="Select Parent Account..."
+            [options]="parentAccountOptions()"
+            [allowCreateNew]="false"
+            formControlName="parent_account_id">
           </app-searchable-select>
 
+          <div class="grid grid-cols-2 gap-3">
+            <app-custom-input
+              label="Account Code"
+              placeholder="e.g. 1020-01"
+              formControlName="account_code"
+              [required]="true">
+            </app-custom-input>
+
+            <app-searchable-select
+              label="Account Type"
+              placeholder="Select Type..."
+              [options]="typeSelectOptions"
+              [allowCreateNew]="false"
+              formControlName="account_type"
+              [required]="true">
+            </app-searchable-select>
+          </div>
+
           <app-custom-input
-            label="Account Name (English) *"
-            placeholder="e.g. Prime Bank Principal Escrow A/C"
+            label="Account Name (English)"
+            placeholder="e.g. Standard Chartered Escrow Account"
             formControlName="account_name_en"
             [required]="true">
           </app-custom-input>
 
           <app-custom-input
-            label="Account Name (বাংলা)"
-            placeholder="e.g. প্রাইম ব্যাংক এস্ক্রো হিসাব"
+            label="Account Name (Bengali - Optional)"
+            placeholder="e.g. স্ট্যান্ডার্ড চার্টার্ড ব্যাংক হিসাব"
             formControlName="account_name_bn">
           </app-custom-input>
 
-          <div class="pt-4 border-t border-border flex items-center justify-end gap-3">
-            <app-custom-button variant="outline" (btnClick)="closeCreateModal()">Cancel</app-custom-button>
-            <app-custom-button variant="primary" type="submit" [disabled]="isSubmitting()">
-              {{ isSubmitting() ? 'Saving...' : 'Add Account Head' }}
-            </app-custom-button>
+          <div class="flex items-center gap-4 pt-2">
+            <label class="flex items-center gap-2 cursor-pointer text-xs text-slate-700 dark:text-slate-300">
+              <input type="checkbox" formControlName="is_leaf_account" class="rounded text-blue-600 focus:ring-blue-500" />
+              <span>Allow Direct Journal Posting (Leaf Account)</span>
+            </label>
+
+            <label class="flex items-center gap-2 cursor-pointer text-xs text-slate-700 dark:text-slate-300">
+              <input type="checkbox" formControlName="is_reconciliation_account" class="rounded text-blue-600 focus:ring-blue-500" />
+              <span>Bank / Escrow Reconciliation Flag</span>
+            </label>
+          </div>
+
+          <div class="pt-4 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-3">
+            <app-custom-button label="Cancel" variant="outline" (btnClick)="closeCreateModal()"></app-custom-button>
+            <app-custom-button label="Save Account" variant="primary" type="submit" [disabled]="isSubmitting()"></app-custom-button>
           </div>
         </form>
       </div>
     </div>
   }
-</app-card-container>
+</div>

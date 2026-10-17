@@ -1,0 +1,289 @@
+<div class="space-y-6">
+  <!-- Master Card Container -->
+  <app-card-container
+    title="CWIP Capitalization & IFRS-15 Revenue Recognition Cockpit"
+    subtitle="Construction Work-In-Progress Asset Valuation, Multi-Dimensional WBS Tracking & Possession Revenue Recognition"
+    badge="IFRS-15 & Real Estate Accounting">
+
+    <!-- Action Slot -->
+    <div card-actions class="flex items-center gap-3">
+      <app-custom-button
+        label="Capitalize CWIP -> COGS"
+        variant="primary"
+        icon="check"
+        (btnClick)="openCapitalizeModal()">
+      </app-custom-button>
+
+      <app-custom-button
+        label="IFRS-15 Revenue Recognition"
+        variant="outline"
+        icon="check"
+        (btnClick)="openRevenueModal()">
+      </app-custom-button>
+    </div>
+
+    <!-- Project Selector Bar -->
+    <div class="max-w-md mb-6">
+      <app-searchable-select
+        label="Select Development Project"
+        placeholder="Choose Project..."
+        [options]="projectOptions()"
+        [allowCreateNew]="false"
+        [(ngModel)]="selectedProjectId"
+        (selectionChange)="onProjectChange($event)">
+      </app-searchable-select>
+    </div>
+
+    <!-- 3 Core CWIP Metrics -->
+    @if (cwipSummary(); as s) {
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+        <div class="p-5 rounded-2xl border border-blue-100 dark:border-blue-950 bg-gradient-to-br from-blue-50/60 to-white dark:from-blue-950/20 dark:to-slate-850 shadow-sm">
+          <span class="text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">Total Accumulated CWIP</span>
+          <p class="text-2xl font-bold text-slate-900 dark:text-white mt-2">
+            ৳{{ s.total_accumulated_cwip | number:'1.2-2' }}
+          </p>
+          <span class="text-xs text-slate-500 dark:text-slate-400 mt-1 block">
+            Materials, contractor RA bills, and direct labor debited to CWIP (5100)
+          </span>
+        </div>
+
+        <div class="p-5 rounded-2xl border border-emerald-100 dark:border-emerald-950 bg-gradient-to-br from-emerald-50/60 to-white dark:from-emerald-950/20 dark:to-slate-850 shadow-sm">
+          <span class="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Capitalized to Cost of Goods Sold (Flats)</span>
+          <p class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-2">
+            ৳{{ s.total_capitalized_cogs | number:'1.2-2' }}
+          </p>
+          <span class="text-xs text-slate-500 dark:text-slate-400 mt-1 block">
+            Derecognized from CWIP into Cost of Sales upon possession & handover
+          </span>
+        </div>
+
+        <div class="p-5 rounded-2xl border border-amber-100 dark:border-amber-950 bg-gradient-to-br from-amber-50/60 to-white dark:from-amber-950/20 dark:to-slate-850 shadow-sm">
+          <span class="text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">Active CWIP Balance (Site Asset)</span>
+          <p class="text-2xl font-bold text-slate-900 dark:text-white mt-2">
+            ৳{{ s.active_cwip_balance | number:'1.2-2' }}
+          </p>
+          <span class="text-xs text-slate-500 dark:text-slate-400 mt-1 block">
+            Current balance capitalized as Work-In-Progress on Balance Sheet
+          </span>
+        </div>
+      </div>
+    }
+
+    <!-- Cost Center Budget vs Actual Cost Variance Table -->
+    <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 overflow-hidden shadow-sm">
+      <div class="px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/60 flex items-center justify-between">
+        <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100">
+          Multi-Project Cost Centers & WBS Variance Breakdown
+        </h3>
+        <span class="text-xs text-slate-500">{{ costCenters().length }} Active Cost Centers</span>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead>
+            <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-900/40 text-slate-600 dark:text-slate-400 font-semibold uppercase tracking-wider">
+              <th class="py-3 px-4">Cost Center Code</th>
+              <th class="py-3 px-4">Cost Center Name</th>
+              <th class="py-3 px-4">WBS Stage</th>
+              <th class="py-3 px-4 text-right">Allocated Budget</th>
+              <th class="py-3 px-4 text-right">Actual Spent (CWIP)</th>
+              <th class="py-3 px-4 text-right">Cost Variance (BDT)</th>
+              <th class="py-3 px-4 text-center">Variance %</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+            @for (cc of costCenters(); track cc.id) {
+              <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition">
+                <td class="py-3 px-4 font-mono font-medium text-slate-900 dark:text-slate-100">{{ cc.cost_center_code }}</td>
+                <td class="py-3 px-4 text-slate-800 dark:text-slate-200">{{ cc.name }}</td>
+                <td class="py-3 px-4">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                    {{ cc.wbs_stage }}
+                  </span>
+                </td>
+                <td class="py-3 px-4 text-right font-medium text-slate-900 dark:text-white">
+                  ৳{{ cc.budget_allocated | number:'1.2-2' }}
+                </td>
+                <td class="py-3 px-4 text-right font-medium text-blue-600 dark:text-blue-400">
+                  ৳{{ cc.actual_spent | number:'1.2-2' }}
+                </td>
+                <td class="py-3 px-4 text-right font-bold" [class.text-emerald-600]="(cc.variance_bdt || 0) >= 0" [class.text-rose-600]="(cc.variance_bdt || 0) < 0">
+                  ৳{{ cc.variance_bdt | number:'1.2-2' }}
+                </td>
+                <td class="py-3 px-4 text-center">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold"
+                    [class.bg-emerald-100]="(cc.variance_bdt || 0) >= 0"
+                    [class.text-emerald-800]="(cc.variance_bdt || 0) >= 0"
+                    [class.bg-rose-100]="(cc.variance_bdt || 0) < 0"
+                    [class.text-rose-800]="(cc.variance_bdt || 0) < 0">
+                    {{ cc.variance_percent || 0 }}%
+                  </span>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="7" class="py-8 text-center text-slate-400">
+                  No cost centers configured for this project.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </app-card-container>
+
+  <!-- Capitalize Modal (Debit COGS 5200, Credit CWIP 5100) -->
+  @if (isCapitalizeModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+      <div class="w-full max-w-lg bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-850/80">
+          <div>
+            <h3 class="text-base font-semibold text-slate-900 dark:text-slate-100">Capitalize CWIP to Cost of Goods Sold</h3>
+            <p class="text-xs text-slate-500">DEBIT: COGS (5200) | CREDIT: CWIP (5100)</p>
+          </div>
+          <button type="button" (click)="closeCapitalizeModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <form [formGroup]="capitalizeForm" (ngSubmit)="submitCapitalize()" class="p-6 space-y-4">
+          <app-searchable-select
+            label="CREDIT: CWIP Account (Source Asset)"
+            placeholder="Select CWIP Account..."
+            [options]="cwipAccountOptions()"
+            [allowCreateNew]="false"
+            formControlName="cwip_account_id"
+            [required]="true">
+          </app-searchable-select>
+
+          <app-searchable-select
+            label="DEBIT: COGS Account (Destination Expense)"
+            placeholder="Select COGS Account..."
+            [options]="cogsAccountOptions()"
+            [allowCreateNew]="false"
+            formControlName="cogs_account_id"
+            [required]="true">
+          </app-searchable-select>
+
+          <app-searchable-select
+            label="Cost Center Dimension (Optional)"
+            placeholder="Select Cost Center..."
+            [options]="costCenterOptions()"
+            [allowCreateNew]="false"
+            formControlName="cost_center_id">
+          </app-searchable-select>
+
+          <div class="grid grid-cols-2 gap-3">
+            <app-custom-input
+              label="Capitalized Amount (BDT)"
+              type="number"
+              placeholder="0.00"
+              formControlName="capitalized_amount"
+              [required]="true">
+            </app-custom-input>
+
+            <app-custom-input
+              label="Completion Percentage (%)"
+              type="number"
+              placeholder="100.00"
+              formControlName="completion_percentage"
+              [required]="true">
+            </app-custom-input>
+          </div>
+
+          <app-custom-textarea
+            label="Narration / Audit Remarks"
+            placeholder="e.g. Tower A Civil Handover CWIP Transfer"
+            formControlName="remarks">
+          </app-custom-textarea>
+
+          <div class="pt-4 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-3">
+            <app-custom-button label="Cancel" variant="outline" (btnClick)="closeCapitalizeModal()"></app-custom-button>
+            <app-custom-button label="Post Capitalization Voucher" variant="primary" type="submit" [disabled]="isSubmitting()"></app-custom-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- IFRS-15 Revenue Recognition Modal -->
+  @if (isRevenueModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+      <div class="w-full max-w-lg bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-850/80">
+          <div>
+            <h3 class="text-base font-semibold text-slate-900 dark:text-slate-100">IFRS-15 Revenue Recognition</h3>
+            <p class="text-xs text-slate-500">DEBIT: Advance Liability (2300) | CREDIT: Apartment Sales Revenue (4100)</p>
+          </div>
+          <button type="button" (click)="closeRevenueModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <form [formGroup]="revenueForm" (ngSubmit)="submitRevenue()" class="p-6 space-y-4">
+          <app-searchable-select
+            label="Allotted Customer Booking"
+            placeholder="Select Booking..."
+            [options]="bookingOptions()"
+            [allowCreateNew]="false"
+            formControlName="booking_id"
+            [required]="true">
+          </app-searchable-select>
+
+          <app-searchable-select
+            label="Recognition Method"
+            placeholder="Select Method..."
+            [options]="methodOptions"
+            [allowCreateNew]="false"
+            formControlName="recognition_method"
+            [required]="true">
+          </app-searchable-select>
+
+          <div class="grid grid-cols-2 gap-3">
+            <app-searchable-select
+              label="DEBIT: Advance Liability"
+              placeholder="Advance Account..."
+              [options]="advanceAccountOptions()"
+              [allowCreateNew]="false"
+              formControlName="advance_liability_account_id"
+              [required]="true">
+            </app-searchable-select>
+
+            <app-searchable-select
+              label="CREDIT: Revenue Account"
+              placeholder="Revenue Account..."
+              [options]="revenueAccountOptions()"
+              [allowCreateNew]="false"
+              formControlName="revenue_account_id"
+              [required]="true">
+            </app-searchable-select>
+          </div>
+
+          <app-custom-input
+            label="Recognized Revenue Amount (BDT)"
+            type="number"
+            placeholder="0.00"
+            formControlName="recognized_amount"
+            [required]="true">
+          </app-custom-input>
+
+          <app-custom-textarea
+            label="Narration / Handover Certificate Ref"
+            placeholder="e.g. Unit 12B Handover possession deed signed"
+            formControlName="remarks">
+          </app-custom-textarea>
+
+          <div class="pt-4 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-3">
+            <app-custom-button label="Cancel" variant="outline" (btnClick)="closeRevenueModal()"></app-custom-button>
+            <app-custom-button label="Recognize Revenue & Post JV" variant="primary" type="submit" [disabled]="isSubmitting()"></app-custom-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>

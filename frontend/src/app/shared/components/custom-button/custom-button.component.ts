@@ -20,11 +20,16 @@ export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'dashed' | 'out
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
         </svg>
       }
+      @if (label) {
+        <span>{{ label }}</span>
+      }
       <ng-content></ng-content>
     </button>
   `
 })
 export class CustomButtonComponent {
+  @Input() label: string = '';
+  @Input() icon?: string;
   @Input() variant: ButtonVariant = 'primary';
   @Input() type: 'button' | 'submit' | 'reset' = 'button';
   @Input() disabled: boolean = false;

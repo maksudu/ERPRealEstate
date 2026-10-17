@@ -31,6 +31,37 @@ class ChartOfAccountResponse(ChartOfAccountBase):
     current_balance: float = 0.00
     created_at: Optional[datetime] = None
 
+class ChartOfAccountTreeNode(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    account_code: str
+    account_name_en: str
+    account_name_bn: Optional[str] = None
+    account_type: str
+    level: int = 5
+    is_group: bool = False
+    is_leaf_account: bool = True
+    currency: str = "BDT"
+    is_reconciliation_account: bool = False
+    is_active: bool = True
+    parent_account_id: Optional[int] = None
+    current_balance: float = 0.00
+    children: List["ChartOfAccountTreeNode"] = []
+
+class FiscalYearBase(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    year_name: str
+    start_date: date
+    end_date: date
+    is_closed: bool = False
+
+class FiscalYearCreate(FiscalYearBase):
+    pass
+
+class FiscalYearResponse(FiscalYearBase):
+    id: int
+    created_at: Optional[datetime] = None
+
 
 # --------------------------------------------------------------------------
 # Journal Entry & Voucher Schemas
@@ -40,6 +71,10 @@ class JournalEntryInput(BaseModel):
     debit_amount: float = 0.00
     credit_amount: float = 0.00
     project_id: Optional[int] = None
+    cost_center_id: Optional[int] = None
+    cheque_no: Optional[str] = None
+    cheque_date: Optional[date] = None
+    bill_reference: Optional[str] = None
     narration: Optional[str] = None
 
 class JournalEntryResponse(BaseModel):
@@ -48,6 +83,8 @@ class JournalEntryResponse(BaseModel):
     id: int
     voucher_id: int
     project_id: Optional[int] = None
+    cost_center_id: Optional[int] = None
+    cost_center_name: Optional[str] = None
     account_id: int
     account_code: Optional[str] = None
     account_name_en: Optional[str] = None
@@ -55,6 +92,9 @@ class JournalEntryResponse(BaseModel):
     voucher_date: date
     debit_amount: float
     credit_amount: float
+    cheque_no: Optional[str] = None
+    cheque_date: Optional[date] = None
+    bill_reference: Optional[str] = None
     narration: Optional[str] = None
 
 class VoucherBase(BaseModel):
@@ -262,4 +302,145 @@ class SubRegistryCalculationResponse(BaseModel):
     # Total
     total_statutory_fees_bdt: float
     total_transfer_cost_bdt: float
+
+
+# -------------------------------------------------------------
+# Multi-Project Cost Centers Schemas
+# -------------------------------------------------------------
+class CostCenterBase(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    project_id: int
+    tower_id: Optional[int] = None
+    cost_center_code: str
+    name: str
+    wbs_stage: str = "SUPERSTRUCTURE"
+    budget_allocated: float = 0.00
+    is_active: bool = True
+
+class CostCenterCreate(CostCenterBase):
+    pass
+
+class CostCenterResponse(CostCenterBase):
+    id: int
+    actual_spent: float = 0.00
+    project_name: Optional[str] = None
+    tower_name: Optional[str] = None
+    variance_bdt: Optional[float] = 0.00
+    created_at: Optional[datetime] = None
+
+
+# -------------------------------------------------------------
+# PDC Cheque Vault Schemas
+# -------------------------------------------------------------
+class PDCVaultBase(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    project_id: int
+    booking_id: Optional[int] = None
+    cheque_no: str
+    bank_name: str
+    branch_name: Optional[str] = None
+    drawer_name: str
+    cheque_date: date
+    amount: float
+    status: str = "IN_VAULT" # IN_VAULT, DEPOSITED, CLEARED, BOUNCED
+
+class PDCVaultCreate(PDCVaultBase):
+    pass
+
+class PDCStatusUpdate(BaseModel):
+    status: str # DEPOSITED, CLEARED, BOUNCED
+    bounce_reason: Optional[str] = None
+    bank_account_id: Optional[int] = None # For clearance entry
+
+class PDCVaultResponse(PDCVaultBase):
+    id: int
+    deposit_date: Optional[date] = None
+    clearance_date: Optional[date] = None
+    bounce_date: Optional[date] = None
+    bounce_reason: Optional[str] = None
+    legal_notice_sent: bool = False
+    voucher_id: Optional[int] = None
+    project_name: Optional[str] = None
+    created_at: Optional[datetime] = None
+
+
+# -------------------------------------------------------------
+# CWIP Capitalization & IFRS-15 Revenue Recognition
+# -------------------------------------------------------------
+class CWIPCapitalizeRequest(BaseModel):
+    project_id: int
+    cost_center_id: Optional[int] = None
+    capitalized_amount: float
+    completion_percentage: float = 100.00
+    cwip_account_id: int
+    cogs_account_id: int
+    remarks: Optional[str] = None
+
+class CWIPSummaryResponse(BaseModel):
+    project_id: int
+    project_name: str
+    total_accumulated_cwip: float
+    total_capitalized_cogs: float
+    active_cwip_balance: float
+    cost_centers: List[dict]
+
+class IFRS15RecognizeRequest(BaseModel):
+    project_id: int
+    booking_id: int
+    recognized_amount: float
+    recognition_method: str = "POINT_IN_TIME_HANDOVER" # POC_OVER_TIME, POINT_IN_TIME_HANDOVER
+    advance_liability_account_id: int
+    revenue_account_id: int
+    remarks: Optional[str] = None
+
+class IFRS15Response(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    project_id: int
+    booking_id: int
+    recognition_date: date
+    recognized_amount: float
+    recognition_method: str
+    voucher_id: Optional[int] = None
+    remarks: Optional[str] = None
+
+
+# -------------------------------------------------------------
+# Smart Bank Statement Auto-Matching Schemas
+# -------------------------------------------------------------
+class BankStatementRow(BaseModel):
+    transaction_date: date
+    reference_no: Optional[str] = None
+    description: str
+    debit_amount: float = 0.00
+    credit_amount: float = 0.00
+
+class BankStatementAutoMatchRequest(BaseModel):
+    bank_account_id: int
+    statement_date: date
+    statement_balance: float
+    rows: List[BankStatementRow]
+
+class BankStatementItemOut(BaseModel):
+    id: Optional[int] = None
+    transaction_date: date
+    reference_no: Optional[str] = None
+    description: str
+    debit_amount: float
+    credit_amount: float
+    match_status: str # MATCHED, UNMATCHED, DISCREPANCY
+    matched_voucher_number: Optional[str] = None
+
+class BankReconciliationFullResponse(BaseModel):
+    reconciliation_id: int
+    bank_account_id: int
+    statement_date: date
+    statement_balance: float
+    book_balance: float
+    difference_amount: float
+    is_reconciled: bool
+    matched_count: int
+    unmatched_count: int
+    items: List[BankStatementItemOut]
+
 

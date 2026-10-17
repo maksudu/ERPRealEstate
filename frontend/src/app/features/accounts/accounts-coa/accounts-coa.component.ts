@@ -1,8 +1,8 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AccountsService } from '../../../core/services/accounts.service';
-import { ChartOfAccount } from '../../../core/models/accounts.model';
+import { ChartOfAccount, ChartOfAccountTreeNode } from '../../../core/models/accounts.model';
 import {
   CardContainerComponent,
   CustomInputComponent,
@@ -28,11 +28,15 @@ export class AccountsCoaComponent implements OnInit {
   private accountsService = inject(AccountsService);
   private fb = inject(FormBuilder);
 
-  coaList = signal<ChartOfAccount[]>([]);
+  coaTree = signal<ChartOfAccountTreeNode[]>([]);
+  coaFlatList = signal<ChartOfAccount[]>([]);
   isLoading = signal<boolean>(false);
   isSubmitting = signal<boolean>(false);
   isCreateModalOpen = signal<boolean>(false);
 
+  // View state
+  viewMode = signal<'tree' | 'flat'>('tree');
+  searchQuery = signal<string>('');
   filterType = signal<string>('');
 
   createForm: FormGroup = this.fb.group({
@@ -40,7 +44,10 @@ export class AccountsCoaComponent implements OnInit {
     account_name_en: ['', Validators.required],
     account_name_bn: [''],
     account_type: ['Asset', Validators.required],
-    is_leaf_account: [true]
+    parent_account_id: [null],
+    is_leaf_account: [true],
+    currency: ['BDT'],
+    is_reconciliation_account: [false]
   });
 
   accountTypeOptions = [
@@ -60,35 +67,77 @@ export class AccountsCoaComponent implements OnInit {
     { value: 'Expense', label: 'Expense (e.g. 5000)' }
   ];
 
+  parentAccountOptions = computed(() => [
+    { value: null, label: 'None (Root Level 1 Account)' },
+    ...this.coaFlatList().map(a => ({
+      value: a.id,
+      label: `${a.account_code} - ${a.account_name_en} (${a.account_type})`
+    }))
+  ]);
+
   ngOnInit(): void {
-    this.loadCOA();
+    this.loadHierarchy();
+    this.loadFlatCOA();
   }
 
-  loadCOA(): void {
+  loadHierarchy(): void {
     this.isLoading.set(true);
-    this.accountsService.getCOA(this.filterType() || undefined).subscribe({
-      next: (res) => {
-        this.coaList.set(res);
+    this.accountsService.getCOAHierarchy().subscribe({
+      next: (tree) => {
+        // Expand root nodes by default
+        this.expandNodes(tree, true);
+        this.coaTree.set(tree);
         this.isLoading.set(false);
       },
       error: (err) => {
-        console.error('Failed to load COA', err);
+        console.error('Failed to load COA hierarchy', err);
         this.isLoading.set(false);
       }
     });
   }
 
-  onFilterChange(): void {
-    this.loadCOA();
+  loadFlatCOA(): void {
+    this.accountsService.getCOA(this.filterType() || undefined).subscribe({
+      next: (res) => this.coaFlatList.set(res),
+      error: (err) => console.error('Failed to load flat COA', err)
+    });
   }
 
-  openCreateModal(): void {
+  expandNodes(nodes: ChartOfAccountTreeNode[], state: boolean): void {
+    for (const n of nodes) {
+      n.expanded = state;
+      if (n.children && n.children.length > 0) {
+        this.expandNodes(n.children, state);
+      }
+    }
+  }
+
+  toggleNode(node: ChartOfAccountTreeNode): void {
+    node.expanded = !node.expanded;
+  }
+
+  expandAll(): void {
+    const tree = [...this.coaTree()];
+    this.expandNodes(tree, true);
+    this.coaTree.set(tree);
+  }
+
+  collapseAll(): void {
+    const tree = [...this.coaTree()];
+    this.expandNodes(tree, false);
+    this.coaTree.set(tree);
+  }
+
+  openCreateModal(parent?: ChartOfAccountTreeNode): void {
     this.createForm.reset({
       account_code: '',
       account_name_en: '',
       account_name_bn: '',
-      account_type: 'Asset',
-      is_leaf_account: true
+      account_type: parent ? parent.account_type : 'Asset',
+      parent_account_id: parent ? parent.id : null,
+      is_leaf_account: true,
+      currency: 'BDT',
+      is_reconciliation_account: false
     });
     this.isCreateModalOpen.set(true);
   }
@@ -107,7 +156,8 @@ export class AccountsCoaComponent implements OnInit {
       next: () => {
         this.isSubmitting.set(false);
         this.closeCreateModal();
-        this.loadCOA();
+        this.loadHierarchy();
+        this.loadFlatCOA();
       },
       error: (err) => {
         alert(err.error?.detail || 'Failed to create account');
@@ -116,18 +166,17 @@ export class AccountsCoaComponent implements OnInit {
     });
   }
 
-  getTypeBadge(type: string): { bg: string; textCol: string; border: string } {
-    switch (type) {
-      case 'Asset':
-        return { bg: 'bg-blue-50 dark:bg-blue-950/40', textCol: 'text-blue-700 dark:text-blue-300', border: 'border-blue-200 dark:border-blue-800' };
-      case 'Liability':
-        return { bg: 'bg-amber-50 dark:bg-amber-950/40', textCol: 'text-amber-700 dark:text-amber-300', border: 'border-amber-200 dark:border-amber-800' };
-      case 'Equity':
-        return { bg: 'bg-purple-50 dark:bg-purple-950/40', textCol: 'text-purple-700 dark:text-purple-300', border: 'border-purple-200 dark:border-purple-800' };
-      case 'Revenue':
-        return { bg: 'bg-emerald-50 dark:bg-emerald-950/40', textCol: 'text-emerald-700 dark:text-emerald-300', border: 'border-emerald-200 dark:border-emerald-800' };
-      default:
-        return { bg: 'bg-rose-50 dark:bg-rose-950/40', textCol: 'text-rose-700 dark:text-rose-300', border: 'border-rose-200 dark:border-rose-800' };
+  // Filtered Tree logic
+  filterTreeNode(node: ChartOfAccountTreeNode, query: string): boolean {
+    if (!query) return true;
+    const q = query.toLowerCase();
+    const matchSelf = node.account_code.toLowerCase().includes(q) ||
+                      node.account_name_en.toLowerCase().includes(q) ||
+                      (node.account_name_bn && node.account_name_bn.toLowerCase().includes(q));
+    const matchChildren = node.children ? node.children.some(c => this.filterTreeNode(c, query)) : false;
+    if (matchChildren) {
+      node.expanded = true; // Auto-expand path to matched child
     }
+    return matchSelf || matchChildren;
   }
 }
