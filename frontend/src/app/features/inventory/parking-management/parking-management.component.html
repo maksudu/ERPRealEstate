@@ -1,0 +1,245 @@
+<div class="space-y-6">
+  <!-- Master Card Container -->
+  <app-card-container
+    title="Basement Car Parking & Bay Inventory"
+    subtitle="Spatial parking slot allocation across basement levels (B1/B2/Open) and direct apartment unit binding"
+    badge="Basement Spatial Logistics">
+
+    <!-- Action Header: Project & Level Selectors -->
+    <div card-actions class="flex items-center gap-3 flex-wrap">
+      <div class="w-64">
+        <app-searchable-select
+          placeholder="Select Project..."
+          [options]="projectOptions()"
+          [ngModel]="selectedProjectId()"
+          [allowCreateNew]="false"
+          (ngModelChange)="selectedProjectId.set(+$event); loadSlots(); loadUnits()">
+        </app-searchable-select>
+      </div>
+
+      <div class="w-60">
+        <app-searchable-select
+          placeholder="Filter Basement Level..."
+          [options]="levelOptions"
+          [ngModel]="selectedLevel()"
+          [allowCreateNew]="false"
+          (ngModelChange)="selectedLevel.set($event)">
+        </app-searchable-select>
+      </div>
+
+      <app-custom-button
+        label="Add Parking Slot"
+        variant="primary"
+        icon="plus"
+        (btnClick)="openCreateModal()">
+      </app-custom-button>
+    </div>
+
+    <!-- Toast Banner -->
+    @if (toastMessage()) {
+      <div 
+        class="mb-4 p-3 rounded-xl border text-xs flex items-center justify-between"
+        [ngClass]="{
+          'bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300': toastType() === 'success',
+          'bg-rose-50 border-rose-200 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300': toastType() === 'error',
+          'bg-sky-50 border-sky-200 text-sky-800 dark:bg-sky-950/40 dark:text-sky-300': toastType() === 'info'
+        }">
+        <span class="font-medium">{{ toastMessage() }}</span>
+        <button (click)="toastMessage.set(null)" class="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 font-bold">✕</button>
+      </div>
+    }
+
+    <!-- KPI Summary Bar -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+      <div class="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between">
+        <div>
+          <div class="text-[10px] text-slate-400 uppercase font-bold">Total Bays</div>
+          <div class="text-lg font-bold text-slate-900 dark:text-white">{{ totalSlots() }}</div>
+        </div>
+        <svg class="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+        </svg>
+      </div>
+
+      <div class="p-3 bg-white dark:bg-slate-900 rounded-xl border border-emerald-200 dark:border-emerald-900 shadow-sm flex items-center justify-between">
+        <div>
+          <div class="text-[10px] text-slate-400 uppercase font-bold">Available</div>
+          <div class="text-lg font-bold text-emerald-600 dark:text-emerald-400">{{ availableSlots() }}</div>
+        </div>
+        <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+      </div>
+
+      <div class="p-3 bg-white dark:bg-slate-900 rounded-xl border border-blue-200 dark:border-blue-900 shadow-sm flex items-center justify-between">
+        <div>
+          <div class="text-[10px] text-slate-400 uppercase font-bold">Allocated</div>
+          <div class="text-lg font-bold text-blue-600 dark:text-blue-400">{{ allocatedSlots() }}</div>
+        </div>
+        <span class="w-3 h-3 rounded-full bg-blue-500"></span>
+      </div>
+
+      <div class="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between">
+        <div>
+          <div class="text-[10px] text-slate-400 uppercase font-bold">Blocked</div>
+          <div class="text-lg font-bold text-slate-500">{{ blockedSlots() }}</div>
+        </div>
+        <span class="w-3 h-3 rounded-full bg-slate-500"></span>
+      </div>
+    </div>
+
+    <!-- Visual Parking Grid -->
+    @if (isLoading()) {
+      <div class="py-16 text-center text-xs text-slate-400">Loading basement parking slots...</div>
+    } @else {
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+        @for (slot of filteredSlots(); track slot.id) {
+          <div 
+            class="p-4 rounded-xl border transition-all flex flex-col justify-between text-left"
+            [ngClass]="{
+              'border-emerald-300 bg-emerald-50/50 dark:bg-emerald-950/30 dark:border-emerald-800': slot.status === 'AVAILABLE',
+              'border-blue-300 bg-blue-50/50 dark:bg-blue-950/30 dark:border-blue-800': slot.status === 'ALLOCATED',
+              'border-slate-300 bg-slate-100/70 dark:bg-slate-800/40 dark:border-slate-700 opacity-60': slot.status === 'BLOCKED'
+            }">
+
+            <!-- Slot Header -->
+            <div class="flex items-center justify-between mb-2">
+              <span class="font-mono font-bold text-sm text-slate-900 dark:text-white">{{ slot.slot_number }}</span>
+              <span 
+                class="px-1.5 py-0.5 rounded text-[9px] font-bold"
+                [ngClass]="{
+                  'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200': slot.status === 'AVAILABLE',
+                  'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200': slot.status === 'ALLOCATED',
+                  'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300': slot.status === 'BLOCKED'
+                }">
+                {{ slot.status }}
+              </span>
+            </div>
+
+            <!-- Car Stall Graphics -->
+            <div class="py-3 flex flex-col items-center justify-center text-center">
+              <svg class="w-8 h-8" [ngClass]="slot.status === 'ALLOCATED' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 17a2 2 0 100 4 2 2 0 000-4zm8 0a2 2 0 100 4 2 2 0 000-4m-9-3h10l1.5-4.5H5.5L7 14zm-3-8h16a2 2 0 012 2v9a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2z" />
+              </svg>
+              <span class="text-[10px] font-mono font-medium text-slate-500 mt-1">{{ slot.basement_level }}</span>
+            </div>
+
+            <!-- Slot Price & Allocation State -->
+            <div class="pt-2 border-t border-slate-200 dark:border-slate-800 text-xs flex flex-col gap-1.5">
+              <div class="flex items-center justify-between">
+                <span class="text-[10px] text-slate-400">Price</span>
+                <span class="font-mono font-bold text-slate-900 dark:text-white">৳{{ (slot.price / 100000) | number:'1.1-1' }} Lac</span>
+              </div>
+
+              @if (slot.status === 'ALLOCATED') {
+                <div class="p-1 rounded bg-blue-100/60 dark:bg-blue-900/40 text-[10px] font-medium text-blue-800 dark:text-blue-300 text-center truncate">
+                  Bound: Unit {{ slot.assigned_unit_number || '#' + slot.assigned_unit_id }}
+                </div>
+              } @else if (slot.status === 'AVAILABLE') {
+                <button
+                  type="button"
+                  (click)="openAssignModal(slot)"
+                  class="w-full py-1 text-[10px] font-bold text-center rounded border border-emerald-400 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-700 dark:text-emerald-300 dark:hover:bg-emerald-950 transition">
+                  Allocate to Flat
+                </button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+  </app-card-container>
+
+  <!-- Modal 1: Allocate Parking Slot to Apartment -->
+  @if (isAssignModalOpen() && selectedSlotForAssign(); as slot) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
+      <div class="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-850/80">
+          <h3 class="text-base font-semibold text-slate-900 dark:text-slate-100">Allocate Slot {{ slot.slot_number }}</h3>
+          <button type="button" (click)="closeAssignModal()" class="text-slate-400 hover:text-slate-600">✕</button>
+        </div>
+
+        <form [formGroup]="assignForm" (ngSubmit)="submitAssign()" class="p-6 space-y-4">
+          <div class="p-3 bg-slate-50 dark:bg-slate-850 rounded-xl border border-slate-200 dark:border-slate-800 text-xs space-y-1">
+            <div class="flex justify-between">
+              <span class="text-slate-500">Basement Level:</span>
+              <span class="font-bold">{{ slot.basement_level }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-500">Slot Consideration Price:</span>
+              <span class="font-mono font-bold text-emerald-600">৳{{ slot.price | number }}</span>
+            </div>
+          </div>
+
+          <app-searchable-select
+            label="Bind to Apartment Unit"
+            placeholder="Select target flat..."
+            [options]="unitOptions()"
+            [allowCreateNew]="false"
+            formControlName="unit_id"
+            [required]="true">
+          </app-searchable-select>
+
+          <p class="text-[11px] text-slate-500">
+            Binding this parking slot will automatically append ৳{{ slot.price | number }} to the apartment's contract rate card.
+          </p>
+
+          <div class="pt-4 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-3">
+            <app-custom-button label="Cancel" variant="outline" (btnClick)="closeAssignModal()"></app-custom-button>
+            <app-custom-button label="Confirm Allocation" variant="primary" type="submit" [loading]="isSubmitting()"></app-custom-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- Modal 2: Create Parking Slot -->
+  @if (isCreateModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
+      <div class="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-850/80">
+          <h3 class="text-base font-semibold text-slate-900 dark:text-slate-100">Add New Parking Slot</h3>
+          <button type="button" (click)="closeCreateModal()" class="text-slate-400 hover:text-slate-600">✕</button>
+        </div>
+
+        <form [formGroup]="createForm" (ngSubmit)="submitCreate()" class="p-6 space-y-4">
+          <app-custom-input
+            label="Slot Number"
+            placeholder="e.g. P-B1-15"
+            formControlName="slot_number"
+            [required]="true">
+          </app-custom-input>
+
+          <app-searchable-select
+            label="Basement Level"
+            placeholder="Select Level..."
+            [options]="levelOptions"
+            [allowCreateNew]="false"
+            formControlName="basement_level"
+            [required]="true">
+          </app-searchable-select>
+
+          <app-searchable-select
+            label="Slot Type"
+            placeholder="Select Type..."
+            [options]="slotTypeOptions"
+            [allowCreateNew]="false"
+            formControlName="slot_type"
+            [required]="true">
+          </app-searchable-select>
+
+          <app-custom-input
+            label="Base Slot Price (BDT)"
+            type="number"
+            formControlName="price"
+            [required]="true">
+          </app-custom-input>
+
+          <div class="pt-4 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-3">
+            <app-custom-button label="Cancel" variant="outline" (btnClick)="closeCreateModal()"></app-custom-button>
+            <app-custom-button label="Save Slot" variant="primary" type="submit" [loading]="isSubmitting()"></app-custom-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>

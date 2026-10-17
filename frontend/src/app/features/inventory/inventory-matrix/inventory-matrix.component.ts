@@ -26,7 +26,8 @@ export interface FloorRow {
     FormsModule,
     ReactiveFormsModule,
     CardContainerComponent,
-    CustomButtonComponent
+    CustomButtonComponent,
+    SearchableSelectComponent
   ],
   templateUrl: './inventory-matrix.component.html'
 })
@@ -39,6 +40,29 @@ export class InventoryMatrixComponent implements OnInit, OnDestroy {
   selectedProjectId = signal<number | null>(null);
   units = signal<Unit[]>([]);
   isLoading = signal<boolean>(false);
+
+  projectOptions = computed(() =>
+    this.projects().map(p => ({
+      value: p.id,
+      label: `${p.project_code} - ${p.project_name}`
+    }))
+  );
+
+  facingOptions = [
+    { value: '', label: 'All Facings' },
+    { value: 'LAKE_VIEW', label: 'Gulshan Lake View' },
+    { value: 'SOUTH_FACING', label: 'South Facing' },
+    { value: 'CORNER_PLOT', label: 'Corner Plot' },
+    { value: 'ROAD_FACING', label: 'Road Facing' }
+  ];
+
+  statusOptions = [
+    { value: '', label: 'All Statuses' },
+    { value: 'AVAILABLE', label: 'Available' },
+    { value: 'ON_HOLD', label: '15-Min Locked (Hold)' },
+    { value: 'LANDOWNER_SHARE', label: 'Landowner Share' },
+    { value: 'BOOKED', label: 'Booked / Sold' }
+  ];
   
   // Real-time Action Notifications
   toastMessage = signal<string | null>(null);
@@ -241,13 +265,13 @@ export class InventoryMatrixComponent implements OnInit, OnDestroy {
 
     this.isLocking.set(true);
     this.inventoryService.lockUnit(u.id, 'Principal Sales Officer').subscribe({
-      next: (res) => {
+      next: (res: any) => {
         this.isLocking.set(false);
         this.showToast(res.message, 'success');
         this.closeDetailsModal();
         this.loadUnits();
       },
-      error: (err) => {
+      error: (err: any) => {
         this.isLocking.set(false);
         this.showToast(err.error?.detail || 'Unit is already locked or conflicting.', 'error');
       }
@@ -260,13 +284,13 @@ export class InventoryMatrixComponent implements OnInit, OnDestroy {
 
     this.isLocking.set(true);
     this.inventoryService.unlockUnit(u.id).subscribe({
-      next: (res) => {
+      next: (res: any) => {
         this.isLocking.set(false);
         this.showToast(res.message, 'success');
         this.closeDetailsModal();
         this.loadUnits();
       },
-      error: (err) => {
+      error: (err: any) => {
         this.isLocking.set(false);
         this.showToast(err.error?.detail || 'Failed to release lock.', 'error');
       }

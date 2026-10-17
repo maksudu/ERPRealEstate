@@ -1,0 +1,350 @@
+<div class="space-y-6">
+  <!-- Master Card Container -->
+  <app-card-container
+    title="Unit Subdivision & Duplex Combination Cockpit"
+    subtitle="Merge adjacent units into executive duplex residences or subdivide commercial floors into retail shop allotments"
+    badge="Architectural Operations">
+
+    <!-- Action Header: Project Selector & Tool Tabs -->
+    <div card-actions class="flex items-center gap-3 flex-wrap">
+      <div class="w-64">
+        <app-searchable-select
+          placeholder="Select Project..."
+          [options]="projectOptions()"
+          [ngModel]="selectedProjectId()"
+          [allowCreateNew]="false"
+          (ngModelChange)="selectedProjectId.set(+$event); loadUnits()">
+        </app-searchable-select>
+      </div>
+
+      <!-- Tab Switcher -->
+      <div class="flex items-center bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs">
+        <button
+          type="button"
+          (click)="activeTab.set('merge')"
+          class="px-3 py-1.5 rounded-md font-semibold transition"
+          [ngClass]="activeTab() === 'merge' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-600 dark:text-slate-400'">
+          Merge Adjacent Units
+        </button>
+        <button
+          type="button"
+          (click)="activeTab.set('split')"
+          class="px-3 py-1.5 rounded-md font-semibold transition"
+          [ngClass]="activeTab() === 'split' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-600 dark:text-slate-400'">
+          Subdivide Floor Space
+        </button>
+        <button
+          type="button"
+          (click)="activeTab.set('history')"
+          class="px-3 py-1.5 rounded-md font-semibold transition"
+          [ngClass]="activeTab() === 'history' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-600 dark:text-slate-400'">
+          Combination Audit Trail
+        </button>
+      </div>
+    </div>
+
+    <!-- Real-time Toast -->
+    @if (toastMessage()) {
+      <div 
+        class="mb-4 p-3 rounded-xl border text-xs flex items-center justify-between"
+        [ngClass]="{
+          'bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300': toastType() === 'success',
+          'bg-rose-50 border-rose-200 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300': toastType() === 'error',
+          'bg-sky-50 border-sky-200 text-sky-800 dark:bg-sky-950/40 dark:text-sky-300': toastType() === 'info'
+        }">
+        <span class="font-medium">{{ toastMessage() }}</span>
+        <button (click)="toastMessage.set(null)" class="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 font-bold">✕</button>
+      </div>
+    }
+
+    <!-- TAB 1: MERGE ADJACENT UNITS (e.g. 14A + 14B -> DUPLEX) -->
+    @if (activeTab() === 'merge') {
+      <div class="space-y-6 animate-in fade-in duration-150">
+        <!-- Floor Filter Toolbar -->
+        <div class="p-4 bg-slate-50/80 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <span class="text-xs font-bold text-slate-700 dark:text-slate-300">Target Floor:</span>
+            <div class="w-48">
+              <app-searchable-select
+                placeholder="Select Floor..."
+                [options]="floorOptions()"
+                [ngModel]="selectedFloor()"
+                [allowCreateNew]="false"
+                (ngModelChange)="selectedFloor.set(+$event); selectedUnitIdsForMerge.set([])">
+              </app-searchable-select>
+            </div>
+          </div>
+          <p class="text-xs text-slate-500 dark:text-slate-400">
+            Select 2 or 3 adjacent available units on Floor {{ selectedFloor() }} to fuse into a single luxury residence.
+          </p>
+        </div>
+
+        <!-- Available Units on Floor Grid -->
+        <div>
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-3">
+            Available Units on Floor {{ selectedFloor() }} (Click to Select)
+          </h4>
+
+          @if (floorUnitsForMerge().length === 0) {
+            <div class="p-8 text-center text-xs text-slate-400 rounded-xl border border-dashed border-slate-300 dark:border-slate-700">
+              No available, unmerged units found on Floor {{ selectedFloor() }}. Try selecting a different floor.
+            </div>
+          } @else {
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+              @for (u of floorUnitsForMerge(); track u.id) {
+                <div
+                  role="button"
+                  tabindex="0"
+                  (click)="toggleUnitForMerge(u.id)"
+                  class="p-4 rounded-xl border-2 transition-all cursor-pointer text-left relative flex flex-col justify-between"
+                  [ngClass]="selectedUnitIdsForMerge().includes(u.id) 
+                    ? 'border-blue-600 bg-blue-50/70 dark:bg-blue-950/40 dark:border-blue-500 shadow-md scale-[1.02]' 
+                    : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 hover:border-slate-400'">
+                  
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="font-mono font-bold text-sm text-slate-900 dark:text-white">Unit {{ u.unit_number }}</span>
+                    <input 
+                      type="checkbox" 
+                      [checked]="selectedUnitIdsForMerge().includes(u.id)"
+                      class="rounded text-blue-600 focus:ring-blue-500 pointer-events-none" />
+                  </div>
+
+                  <div class="space-y-1 text-xs text-slate-600 dark:text-slate-300 mb-3">
+                    <div>{{ u.unit_type_id }} • {{ u.facing_id }}</div>
+                    <div class="font-semibold">{{ u.gross_saleable_area_sqft }} sqft gross</div>
+                  </div>
+
+                  <div class="pt-2 border-t border-slate-100 dark:border-slate-800 font-mono font-bold text-xs text-blue-600 dark:text-blue-400">
+                    ৳{{ (u.total_unit_price / 10000000) | number:'1.2-2' }} Cr
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Combined Specifications Live Preview Bar -->
+        @if (selectedUnitsSummary(); as summary) {
+          @if (summary.units.length >= 2) {
+            <div class="p-5 rounded-2xl border border-blue-200 bg-blue-50/80 dark:bg-blue-950/40 dark:border-blue-800 flex items-center justify-between flex-wrap gap-4 animate-in fade-in slide-in-from-top-1">
+              <div>
+                <span class="text-[10px] uppercase font-bold text-blue-800 dark:text-blue-300 tracking-wider">Combined Space Preview</span>
+                <div class="text-base font-bold text-slate-900 dark:text-white">
+                  {{ summary.units.length }} Units Selected: 
+                  <span class="font-mono text-blue-700 dark:text-blue-300">
+                    {{ summary.units[0].unit_number }} + {{ summary.units[1].unit_number }}
+                    @if (summary.units.length > 2) { + {{ summary.units[2].unit_number }} }
+                  </span>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-6 text-xs">
+                <div>
+                  <div class="text-[10px] text-slate-500 dark:text-slate-400 uppercase">Gross Area</div>
+                  <div class="text-base font-mono font-bold text-slate-900 dark:text-white">{{ summary.totalGross | number }} sqft</div>
+                </div>
+                <div>
+                  <div class="text-[10px] text-slate-500 dark:text-slate-400 uppercase">Net Carpet</div>
+                  <div class="text-base font-mono font-bold text-slate-900 dark:text-white">{{ summary.totalNet | number }} sqft</div>
+                </div>
+                <div>
+                  <div class="text-[10px] text-slate-500 dark:text-slate-400 uppercase">Fused Consideration</div>
+                  <div class="text-base font-mono font-bold text-emerald-600 dark:text-emerald-400">৳{{ (summary.totalPrice / 10000000) | number:'1.2-2' }} Cr</div>
+                </div>
+              </div>
+            </div>
+          }
+        }
+
+        <!-- Merge Configuration Form -->
+        <form [formGroup]="mergeForm" (ngSubmit)="submitMerge()" class="p-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 space-y-4">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+            Fused Residence Architectural Parameters
+          </h4>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <app-custom-input
+              label="New Unified Unit Code"
+              placeholder="e.g. DUPLEX-14AB"
+              formControlName="new_unit_number"
+              [required]="true">
+            </app-custom-input>
+
+            <app-searchable-select
+              label="Unified Unit Category"
+              placeholder="Select Category..."
+              [options]="categoryOptions"
+              [allowCreateNew]="false"
+              formControlName="unit_type"
+              [required]="true">
+            </app-searchable-select>
+
+            <app-searchable-select
+              label="Primary Orientation"
+              placeholder="Select Facing..."
+              [options]="facingOptions"
+              [allowCreateNew]="false"
+              formControlName="facing"
+              [required]="true">
+            </app-searchable-select>
+          </div>
+
+          <div class="grid grid-cols-3 gap-4">
+            <app-custom-input label="Total Bedrooms" type="number" formControlName="bed_count"></app-custom-input>
+            <app-custom-input label="Total Bathrooms" type="number" formControlName="bath_count"></app-custom-input>
+            <app-custom-input label="Total Balconies" type="number" formControlName="balcony_count"></app-custom-input>
+          </div>
+
+          <app-custom-input
+            label="Engineering & Client Remarks"
+            placeholder="e.g. Knocking down internal partition wall W-14, combined duplex entry foyer"
+            formControlName="remarks">
+          </app-custom-input>
+
+          <div class="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+            <app-custom-button
+              label="Execute Architectural Merge"
+              variant="primary"
+              type="submit"
+              [disabled]="selectedUnitIdsForMerge().length < 2 || isSubmitting()"
+              [loading]="isSubmitting()">
+            </app-custom-button>
+          </div>
+        </form>
+      </div>
+    }
+
+    <!-- TAB 2: SUBDIVIDE COMMERCIAL OR LARGE FLOOR SPACE -->
+    @if (activeTab() === 'split') {
+      <div class="space-y-6 animate-in fade-in duration-150">
+        <!-- Parent Unit Selector -->
+        <div class="p-5 bg-slate-50/80 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3">
+          <div class="max-w-md">
+            <app-searchable-select
+              label="Select Parent Commercial Floor / Unit to Subdivide"
+              placeholder="Choose commercial or penthouse unit..."
+              [options]="splittableUnitOptions()"
+              [ngModel]="selectedParentUnitId()"
+              [allowCreateNew]="false"
+              (ngModelChange)="selectedParentUnitId.set(+$event)">
+            </app-searchable-select>
+          </div>
+          <p class="text-xs text-slate-500 dark:text-slate-400">
+            Subdividing an open commercial or retail floor creates dedicated sub-allotments with proportional area and rate cards.
+          </p>
+        </div>
+
+        @if (selectedParentUnitId()) {
+          <form [formGroup]="splitForm" (ngSubmit)="submitSplit()" class="p-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 space-y-5">
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                Subdivided Retail / Commercial Allotments
+              </h4>
+
+              <app-custom-button
+                label="Add Allotment Row"
+                variant="outline"
+                size="sm"
+                (btnClick)="addSubdivisionRow()">
+              </app-custom-button>
+            </div>
+
+            <!-- Dynamic Allotment Rows -->
+            <div formArrayName="subdivisions" class="space-y-3">
+              @for (row of subdivisions.controls; track $index) {
+                <div [formGroupName]="$index" class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 grid grid-cols-1 sm:grid-cols-5 gap-3 items-end">
+                  <app-custom-input label="Shop / Allotment #" placeholder="e.g. G-01A" formControlName="unit_number"></app-custom-input>
+                  <app-custom-input label="Gross SFT" type="number" formControlName="gross_sft"></app-custom-input>
+                  <app-custom-input label="Net Carpet SFT" type="number" formControlName="net_carpet_sft"></app-custom-input>
+                  <app-custom-input label="Allotment Type" placeholder="SHOP" formControlName="unit_type"></app-custom-input>
+                  
+                  <div class="flex items-center gap-2">
+                    <div class="flex-1">
+                      <app-custom-input label="Facing" formControlName="facing"></app-custom-input>
+                    </div>
+                    @if (subdivisions.length > 2) {
+                      <button 
+                        type="button" 
+                        (click)="removeSubdivisionRow($index)"
+                        class="p-2 mb-0.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition"
+                        title="Remove Allotment">
+                        ✕
+                      </button>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+
+            <app-custom-input
+              label="Subdivision Authority & Permitting Memo"
+              placeholder="e.g. Approved under RAJUK Sub-demarcation Notification #914"
+              formControlName="remarks">
+            </app-custom-input>
+
+            <div class="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+              <app-custom-button
+                label="Commit Subdivision Allotments"
+                variant="primary"
+                type="submit"
+                [loading]="isSubmitting()">
+              </app-custom-button>
+            </div>
+          </form>
+        }
+      </div>
+    }
+
+    <!-- TAB 3: COMBINATION AUDIT TRAIL -->
+    @if (activeTab() === 'history') {
+      <div class="space-y-4 animate-in fade-in duration-150">
+        <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead>
+                <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400 font-semibold uppercase tracking-wider">
+                  <th class="py-3 px-4">Operation</th>
+                  <th class="py-3 px-4">Source Units</th>
+                  <th class="py-3 px-4">Fused / Created Units</th>
+                  <th class="py-3 px-4 text-right">Combined Gross Area</th>
+                  <th class="py-3 px-4 text-right">Total Consideration Value</th>
+                  <th class="py-3 px-4">Remarks</th>
+                  <th class="py-3 px-4">Timestamp</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                @if (combinationLogs().length === 0) {
+                  <tr>
+                    <td colspan="7" class="py-8 text-center text-slate-400">
+                      No unit merge or subdivision operations logged yet.
+                    </td>
+                  </tr>
+                }
+                @for (log of combinationLogs(); track log.id) {
+                  <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition">
+                    <td class="py-3 px-4">
+                      <span 
+                        class="px-2 py-0.5 rounded text-[10px] font-bold"
+                        [ngClass]="log.operation_type === 'MERGE' ? 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300' : 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300'">
+                        {{ log.operation_type }}
+                      </span>
+                    </td>
+                    <td class="py-3 px-4 font-mono font-bold text-slate-800 dark:text-slate-200">{{ log.source_unit_numbers }}</td>
+                    <td class="py-3 px-4 font-mono font-bold text-emerald-600 dark:text-emerald-400">{{ log.target_unit_numbers }}</td>
+                    <td class="py-3 px-4 text-right font-mono">{{ log.combined_gross_sft | number }} sqft</td>
+                    <td class="py-3 px-4 text-right font-mono font-bold text-slate-900 dark:text-white">
+                      ৳{{ (log.combined_price / 10000000) | number:'1.2-2' }} Cr
+                    </td>
+                    <td class="py-3 px-4 text-slate-500 dark:text-slate-400">{{ log.remarks || '—' }}</td>
+                    <td class="py-3 px-4 text-slate-400 text-[11px]">{{ log.created_at | date:'mediumDate' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    }
+
+  </app-card-container>
+</div>

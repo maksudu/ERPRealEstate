@@ -4,17 +4,29 @@ export interface Unit {
   tower_id: number;
   floor_number: number;
   unit_number: string;
-  unit_type_id: string; // TYPE_3BHK, TYPE_4BHK, PENTHOUSE, DUPLEX
-  facing_id: string; // SOUTH_FACING, NORTH_FACING, LAKE_VIEW, CORNER_PLOT, ROAD_FACING
+  unit_type_id: string; // TYPE_3BHK, TYPE_4BHK, PENTHOUSE, DUPLEX, COMMERCIAL, SHOP
+  facing_id: string; // SOUTH_FACING, NORTH_FACING, LAKE_VIEW, CORNER_PLOT, ROAD_FACING, NORTH_EAST
   net_carpet_area_sqft: number;
   gross_saleable_area_sqft: number;
+  bed_count?: number;
+  bath_count?: number;
+  balcony_count?: number;
+  floor_plan_image_url?: string;
+  render_images_json?: string;
   base_rate_per_sqft: number;
   floor_escalation_rate: number;
   facing_premium_rate: number;
   effective_rate_per_sqft: number;
   total_unit_price: number;
-  status_id: 'AVAILABLE' | 'ON_HOLD' | 'BOOKED' | 'SOLD' | 'LANDOWNER_SHARE';
+  utility_connection_fee?: number;
+  parking_charge?: number;
+  max_discount_amount?: number;
+  status_id: 'AVAILABLE' | 'ON_HOLD' | 'RESERVED' | 'BOOKED' | 'SOLD' | 'LANDOWNER_SHARE' | 'RETAINED' | 'BLOCKED';
   is_landowner_share: boolean;
+  is_merged?: boolean;
+  merged_into_unit_id?: number;
+  parent_unit_id?: number;
+  combination_type?: string;
   current_locked_by_user_id?: number;
   current_locked_by_user_name?: string;
   lock_expires_at?: string;
@@ -33,6 +45,98 @@ export interface UnitLockResponse {
   message: string;
 }
 
+export interface UnitTile {
+  id: number;
+  project_id: number;
+  tower_id: number;
+  floor_number: number;
+  unit_number: string;
+  unit_type: string;
+  facing: string;
+  gross_sft: number;
+  net_carpet_sft: number;
+  bed_count: number;
+  bath_count: number;
+  balcony_count: number;
+  base_price_per_sft: number;
+  floor_rise_rate: number;
+  facing_premium: number;
+  total_base_price: number;
+  utility_connection_fee: number;
+  parking_charge: number;
+  max_discount_amount: number;
+  status: 'AVAILABLE' | 'RESERVED' | 'SOLD' | 'LANDOWNER_SHARE' | 'RETAINED' | 'BLOCKED';
+  color_code: string;
+  status_label: string;
+  lock_remaining_seconds: number;
+  locked_by_user_name?: string;
+  floor_plan_image_url?: string;
+  is_merged: boolean;
+  combination_type?: string;
+}
+
+export interface StackingFloorNode {
+  floor_number: number;
+  floor_name: string;
+  floor_type: 'PENTHOUSE' | 'TYPICAL' | 'PODIUM' | 'GROUND' | 'BASEMENT';
+  total_units: number;
+  available_count: number;
+  reserved_count: number;
+  sold_count: number;
+  landowner_count: number;
+  retained_count: number;
+  blocked_count: number;
+  units: UnitTile[];
+}
+
+export interface StackingSummary {
+  total_units: number;
+  available: number;
+  reserved: number;
+  sold: number;
+  landowner: number;
+  retained: number;
+  blocked: number;
+  total_saleable_sqft: number;
+  total_inventory_value: number;
+}
+
+export interface TowerStackingResponse {
+  project_id: number;
+  project_name: string;
+  tower_id: number;
+  tower_name: string;
+  total_floors: number;
+  residential_floors: number;
+  basement_floors: number;
+  floors: StackingFloorNode[];
+  summary: StackingSummary;
+}
+
+export interface PriceBreakdown {
+  unit_id: number;
+  unit_number: string;
+  unit_type: string;
+  facing: string;
+  gross_sft: number;
+  net_carpet_sft: number;
+  base_rate_per_sft: number;
+  base_cost: number;
+  floor_number: number;
+  floor_rise_rate: number;
+  floor_rise_cost: number;
+  facing_premium_rate: number;
+  facing_premium_cost: number;
+  parking_charge: number;
+  utility_connection_fee: number;
+  subtotal: number;
+  max_discount_amount: number;
+  min_allowed_price: number;
+  net_effective_price: number;
+  is_landowner_share: boolean;
+  status: string;
+}
+
 export interface ParkingBay {
   id: number;
   project_id: number;
@@ -42,4 +146,62 @@ export interface ParkingBay {
   price: number;
   is_allocated: boolean;
   allocated_to_unit_id?: number;
+}
+
+export interface ParkingSlot {
+  id: number;
+  project_id: number;
+  tower_id?: number;
+  basement_level: string;
+  slot_number: string;
+  slot_type: string;
+  price: number;
+  status: 'AVAILABLE' | 'RESERVED' | 'ALLOCATED' | 'BLOCKED';
+  assigned_unit_id?: number;
+  assigned_unit_number?: string;
+  created_at?: string;
+}
+
+export interface UnitMergePayload {
+  project_id: number;
+  tower_id: number;
+  floor_number: number;
+  source_unit_ids: number[];
+  new_unit_number: string;
+  unit_type: string;
+  facing: string;
+  bed_count: number;
+  bath_count: number;
+  balcony_count: number;
+  remarks?: string;
+}
+
+export interface SubdivisionItem {
+  unit_number: string;
+  gross_sft: number;
+  net_carpet_sft: number;
+  unit_type: string;
+  facing: string;
+  bed_count: number;
+  bath_count: number;
+  balcony_count: number;
+}
+
+export interface UnitSplitPayload {
+  unit_id: number;
+  subdivisions: SubdivisionItem[];
+  remarks?: string;
+}
+
+export interface CombinationLog {
+  id: number;
+  project_id: number;
+  tower_id: number;
+  operation_type: 'MERGE' | 'SPLIT';
+  source_unit_numbers: string;
+  target_unit_numbers: string;
+  combined_gross_sft: number;
+  combined_price: number;
+  remarks?: string;
+  created_at?: string;
 }

@@ -7,15 +7,22 @@ import json
 
 from app.core.database import get_db
 from app.core.redis import get_redis_client
-from app.modules.inventory.models import Unit, ParkingBay
+from app.modules.inventory.models import Unit, ParkingBay, ParkingSlot, UnitCombinationLog
 from app.modules.inventory.schemas import (
     UnitCreate, UnitResponse, UnitLockRequest, UnitLockResponse,
     ParkingBayCreate, ParkingBayResponse,
+    TowerStackingResponse, PriceBreakdownResponse,
+    UnitMergeRequest, UnitSplitRequest,
+    ParkingSlotCreate, ParkingSlotResponse, ParkingSlotAssignRequest,
     calculate_unit_pricing
+)
+from app.modules.inventory.services import (
+    get_tower_stacking_plan, get_unit_price_breakdown,
+    merge_units as service_merge_units, split_unit as service_split_unit
 )
 from app.modules.inventory.ws_manager import manager
 
-router = APIRouter(prefix="/inventory", tags=["Property Inventory & 15-Min Redis Locking"])
+router = APIRouter(prefix="/inventory", tags=["Property Inventory & 2D Stacking Plan"])
 
 LOCK_TTL_SECONDS = 900  # 15 Minutes Distributed Mutex
 
@@ -295,3 +302,204 @@ async def list_parking_bays(
         stmt = stmt.where(ParkingBay.is_allocated == is_allocated)
     res = await db.execute(stmt)
     return res.scalars().all()
+
+
+# -------------------------------------------------------------
+# 4. 2D Visual Tower Stacking Plan & Unit Matrix
+# -------------------------------------------------------------
+@router.get("/stacking-plan", response_model=TowerStackingResponse)
+async def get_stacking_plan_endpoint(
+    project_id: int = Query(...),
+    tower_id: Optional[int] = Query(None),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Returns full visual architectural cross-section of the tower elevation,
+    with all floors stacked vertically from Penthouse to Basements,
+    complete with 6-color unit status codes and 15-minute hold counters.
+    """
+    return await get_tower_stacking_plan(db, project_id=project_id, tower_id=tower_id)
+
+
+@router.get("/units/{unit_id}/pricing-breakdown", response_model=PriceBreakdownResponse)
+async def get_unit_pricing_sheet(
+    unit_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Dynamic Price Calculator:
+    Itemizes Base Cost + Floor Rise Cost + Facing Premium + Car Parking + Utility Connection Fee - Max Allowable Discount.
+    """
+    return await get_unit_price_breakdown(db, unit_id=unit_id)
+
+
+@router.post("/units/{unit_id}/reserve", response_model=UnitLockResponse)
+async def instant_reserve_unit(
+    unit_id: int,
+    payload: UnitLockRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    15-Minute Instant Unit Reservation Mutex Lock.
+    """
+    return await lock_unit(unit_id=unit_id, payload=payload, db=db)
+
+
+@router.post("/units/{unit_id}/release", response_model=dict)
+async def release_reserve_unit(
+    unit_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Releases active unit reservation hold manually.
+    """
+    return await unlock_unit(unit_id=unit_id, db=db)
+
+
+# -------------------------------------------------------------
+# 5. Unit Subdivision & Combination Engine
+# -------------------------------------------------------------
+@router.post("/units/merge", response_model=UnitResponse, status_code=status.HTTP_201_CREATED)
+async def merge_units_endpoint(
+    payload: UnitMergeRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Combines two adjacent units on a floor (e.g., 10A + 10B -> Duplex).
+    Calculates combined square footage, merges rate cards, and creates new unit.
+    """
+    return await service_merge_units(db, payload=payload)
+
+
+@router.post("/units/{unit_id}/split", response_model=List[UnitResponse], status_code=status.HTTP_201_CREATED)
+async def split_unit_endpoint(
+    unit_id: int,
+    payload: UnitSplitRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Subdivides a commercial floor or large flat into retail shop allotments.
+    """
+    return await service_split_unit(db, unit_id=unit_id, payload=payload)
+
+
+@router.get("/combinations", response_model=List[dict])
+async def list_combination_logs(
+    project_id: Optional[int] = Query(None),
+    tower_id: Optional[int] = Query(None),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Audit log history of all unit mergers & floor subdivisions.
+    """
+    stmt = select(UnitCombinationLog).order_by(desc(UnitCombinationLog.created_at))
+    if project_id:
+        stmt = stmt.where(UnitCombinationLog.project_id == project_id)
+    if tower_id:
+        stmt = stmt.where(UnitCombinationLog.tower_id == tower_id)
+    res = await db.execute(stmt)
+    logs = res.scalars().all()
+    return [
+        {
+            "id": l.id,
+            "project_id": l.project_id,
+            "tower_id": l.tower_id,
+            "operation_type": l.operation_type,
+            "source_unit_numbers": l.source_unit_numbers,
+            "target_unit_numbers": l.target_unit_numbers,
+            "combined_gross_sft": float(l.combined_gross_sft),
+            "combined_price": float(l.combined_price),
+            "remarks": l.remarks,
+            "created_at": l.created_at.isoformat() if l.created_at else None
+        }
+        for l in logs
+    ]
+
+
+# -------------------------------------------------------------
+# 6. Basement Parking Slots Management
+# -------------------------------------------------------------
+@router.get("/parking-slots", response_model=List[ParkingSlotResponse])
+async def list_parking_slots(
+    project_id: Optional[int] = Query(None),
+    tower_id: Optional[int] = Query(None),
+    basement_level: Optional[str] = Query(None),
+    status: Optional[str] = Query(None),
+    db: AsyncSession = Depends(get_db)
+):
+    stmt = select(ParkingSlot).order_by(ParkingSlot.basement_level.asc(), ParkingSlot.slot_number.asc())
+    if project_id:
+        stmt = stmt.where(ParkingSlot.project_id == project_id)
+    if tower_id:
+        stmt = stmt.where(ParkingSlot.tower_id == tower_id)
+    if basement_level:
+        stmt = stmt.where(ParkingSlot.basement_level == basement_level)
+    if status:
+        stmt = stmt.where(ParkingSlot.status == status)
+    res = await db.execute(stmt)
+    slots = res.scalars().all()
+
+    # Load unit numbers for assigned slots
+    unit_ids = [s.assigned_unit_id for s in slots if s.assigned_unit_id]
+    unit_map = {}
+    if unit_ids:
+        u_res = await db.execute(select(Unit.id, Unit.unit_number).where(Unit.id.in_(unit_ids)))
+        unit_map = dict(u_res.fetchall())
+
+    results = []
+    for s in slots:
+        r = ParkingSlotResponse.model_validate(s)
+        r.assigned_unit_number = unit_map.get(s.assigned_unit_id)
+        results.append(r)
+    return results
+
+
+@router.post("/parking-slots", response_model=ParkingSlotResponse, status_code=status.HTTP_201_CREATED)
+async def create_parking_slot(
+    payload: ParkingSlotCreate,
+    db: AsyncSession = Depends(get_db)
+):
+    slot = ParkingSlot(
+        project_id=payload.project_id,
+        tower_id=payload.tower_id,
+        basement_level=payload.basement_level,
+        slot_number=payload.slot_number.strip().upper(),
+        slot_type=payload.slot_type,
+        price=payload.price,
+        status="AVAILABLE"
+    )
+    db.add(slot)
+    await db.commit()
+    await db.refresh(slot)
+    return slot
+
+
+@router.post("/parking-slots/assign", response_model=dict)
+async def assign_parking_slot_to_unit(
+    payload: ParkingSlotAssignRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    # Fetch slot
+    s_stmt = select(ParkingSlot).where(ParkingSlot.id == payload.slot_id)
+    s_res = await db.execute(s_stmt)
+    slot = s_res.scalar_one_or_none()
+    if not slot:
+        raise HTTPException(status_code=404, detail="Parking slot not found.")
+
+    # Fetch unit
+    u_stmt = select(Unit).where(Unit.id == payload.unit_id)
+    u_res = await db.execute(u_stmt)
+    unit = u_res.scalar_one_or_none()
+    if not unit:
+        raise HTTPException(status_code=404, detail="Target unit not found.")
+
+    slot.assigned_unit_id = unit.id
+    slot.status = "ALLOCATED"
+    unit.parking_charge = (unit.parking_charge or 0.0) + float(slot.price)
+
+    await db.commit()
+    return {
+        "success": True,
+        "message": f"Parking Slot {slot.slot_number} successfully allocated to Unit {unit.unit_number}."
+    }
+

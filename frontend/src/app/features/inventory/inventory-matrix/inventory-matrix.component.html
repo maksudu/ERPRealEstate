@@ -4,26 +4,14 @@
 >
   <!-- Card Header Actions: Project Selector -->
   <div card-actions class="flex items-center gap-2">
-    <div class="flex items-center gap-2">
-      <span class="text-xs font-semibold text-slate-600 dark:text-slate-400 whitespace-nowrap flex items-center gap-1.5">
-        <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-        </svg>
-        Project:
-      </span>
-      <select 
-        (change)="onProjectChange($event)" 
-        class="erp-input text-xs py-1.5 px-3 min-w-[240px] sm:w-72 font-medium bg-white dark:bg-slate-900 shadow-sm"
-      >
-        @if (projects().length === 0) {
-          <option value="" disabled selected>Loading Projects...</option>
-        }
-        @for (p of projects(); track p.id) {
-          <option [value]="p.id" [selected]="p.id === selectedProjectId()">
-            {{ p.project_code }} - {{ p.project_name }}
-          </option>
-        }
-      </select>
+    <div class="w-72">
+      <app-searchable-select
+        placeholder="Select Project..."
+        [options]="projectOptions()"
+        [ngModel]="selectedProjectId()"
+        [allowCreateNew]="false"
+        (ngModelChange)="selectedProjectId.set(+$event); loadUnits()">
+      </app-searchable-select>
     </div>
   </div>
 
@@ -91,30 +79,26 @@
       </div>
 
       <!-- Facing Filter -->
-      <select 
-        [value]="filterFacing()"
-        (change)="onFacingChange($event)" 
-        class="text-xs py-1.5 px-3 w-44 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 font-medium shadow-xs transition-all"
-      >
-        <option value="">All Facings</option>
-        <option value="LAKE_VIEW">Lake View</option>
-        <option value="SOUTH_FACING">South Facing</option>
-        <option value="CORNER_PLOT">Corner Plot</option>
-        <option value="ROAD_FACING">Road Facing</option>
-      </select>
+      <div class="w-48">
+        <app-searchable-select
+          placeholder="Filter Facing..."
+          [options]="facingOptions"
+          [ngModel]="filterFacing()"
+          [allowCreateNew]="false"
+          (ngModelChange)="filterFacing.set($event)">
+        </app-searchable-select>
+      </div>
 
       <!-- Status Filter -->
-      <select 
-        [value]="filterStatus()"
-        (change)="onStatusChange($event)" 
-        class="text-xs py-1.5 px-3 w-48 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 font-medium shadow-xs transition-all"
-      >
-        <option value="">All Statuses</option>
-        <option value="AVAILABLE">Available</option>
-        <option value="ON_HOLD">Locked (On-Hold)</option>
-        <option value="LANDOWNER_SHARE">Landowner Share</option>
-        <option value="BOOKED">Booked / Sold</option>
-      </select>
+      <div class="w-48">
+        <app-searchable-select
+          placeholder="Filter Status..."
+          [options]="statusOptions"
+          [ngModel]="filterStatus()"
+          [allowCreateNew]="false"
+          (ngModelChange)="filterStatus.set($event)">
+        </app-searchable-select>
+      </div>
 
       @if (filterFacing() || filterStatus()) {
         <button 

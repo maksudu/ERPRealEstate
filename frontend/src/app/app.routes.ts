@@ -63,9 +63,24 @@ export const routes: Routes = [
     title: 'BOQ Estimation & IFC Drawings - Bangladesh Real Estate ERP'
   },
   {
+    path: 'inventory/stacking-plan',
+    loadComponent: () => import('./features/inventory/tower-stacking/tower-stacking.component').then(m => m.TowerStackingComponent),
+    title: 'Visual 2D Tower Stacking Plan & Unit Matrix - Bangladesh Real Estate ERP'
+  },
+  {
     path: 'inventory/matrix',
     loadComponent: () => import('./features/inventory/inventory-matrix/inventory-matrix.component').then(m => m.InventoryMatrixComponent),
     title: 'Property Inventory & 15-Min Mutex Matrix - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'inventory/subdivision',
+    loadComponent: () => import('./features/inventory/unit-subdivision/unit-subdivision.component').then(m => m.UnitSubdivisionComponent),
+    title: 'Unit Subdivision & Duplex Combination - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'inventory/parking',
+    loadComponent: () => import('./features/inventory/parking-management/parking-management.component').then(m => m.ParkingManagementComponent),
+    title: 'Basement Parking Bays Management - Bangladesh Real Estate ERP'
   },
   {
     path: 'crm/leads',

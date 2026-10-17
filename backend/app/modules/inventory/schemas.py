@@ -32,13 +32,25 @@ class UnitBase(BaseModel):
     facing_id: str = "SOUTH_FACING"
     net_carpet_area_sqft: float
     gross_saleable_area_sqft: float
+    bed_count: int = 3
+    bath_count: int = 3
+    balcony_count: int = 2
+    floor_plan_image_url: Optional[str] = None
+    render_images_json: Optional[str] = None
     base_rate_per_sqft: float = 12500.00
     floor_escalation_rate: float = 0.00
     facing_premium_rate: float = 0.00
     effective_rate_per_sqft: float = 12500.00
     total_unit_price: float = 0.00
+    utility_connection_fee: float = 250000.00
+    parking_charge: float = 0.00
+    max_discount_amount: float = 150000.00
     status_id: str = "AVAILABLE"
     is_landowner_share: bool = False
+    is_merged: bool = False
+    merged_into_unit_id: Optional[int] = None
+    parent_unit_id: Optional[int] = None
+    combination_type: Optional[str] = None
     current_locked_by_user_id: Optional[int] = None
     current_locked_by_user_name: Optional[str] = None
     lock_expires_at: Optional[datetime] = None
@@ -52,9 +64,16 @@ class UnitCreate(BaseModel):
     facing_id: str = "SOUTH_FACING"
     net_carpet_area_sqft: float
     gross_saleable_area_sqft: float
+    bed_count: int = 3
+    bath_count: int = 3
+    balcony_count: int = 2
+    floor_plan_image_url: Optional[str] = None
     base_rate_per_sqft: float = 12500.00
     floor_escalation_rate: float = 0.00
     facing_premium_rate: float = 0.00
+    utility_connection_fee: float = 250000.00
+    parking_charge: float = 0.00
+    max_discount_amount: float = 150000.00
     status_id: Optional[str] = "AVAILABLE"
     is_landowner_share: Optional[bool] = False
 
@@ -67,7 +86,139 @@ class UnitResponse(UnitBase):
 
 
 # -------------------------------------------------------------
-# Parking Bay Schemas
+# 2D Tower Stacking Architectural Elevation Schemas
+# -------------------------------------------------------------
+class UnitTileResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    project_id: int
+    tower_id: int
+    floor_number: int
+    unit_number: str
+    unit_type: str
+    facing: str
+    gross_sft: float
+    net_carpet_sft: float
+    bed_count: int
+    bath_count: int
+    balcony_count: int
+    base_price_per_sft: float
+    floor_rise_rate: float
+    facing_premium: float
+    total_base_price: float
+    utility_connection_fee: float
+    parking_charge: float
+    max_discount_amount: float
+    status: str
+    color_code: str
+    status_label: str
+    lock_remaining_seconds: int = 0
+    locked_by_user_name: Optional[str] = None
+    floor_plan_image_url: Optional[str] = None
+    is_merged: bool = False
+    combination_type: Optional[str] = None
+
+
+class StackingFloorNode(BaseModel):
+    floor_number: int
+    floor_name: str
+    floor_type: str # PENTHOUSE, TYPICAL, PODIUM, GROUND, BASEMENT
+    total_units: int
+    available_count: int
+    reserved_count: int
+    sold_count: int
+    landowner_count: int
+    retained_count: int
+    blocked_count: int
+    units: List[UnitTileResponse]
+
+
+class StackingSummary(BaseModel):
+    total_units: int
+    available: int
+    reserved: int
+    sold: int
+    landowner: int
+    retained: int
+    blocked: int
+    total_saleable_sqft: float
+    total_inventory_value: float
+
+
+class TowerStackingResponse(BaseModel):
+    project_id: int
+    project_name: str
+    tower_id: int
+    tower_name: str
+    total_floors: int
+    residential_floors: int
+    basement_floors: int
+    floors: List[StackingFloorNode]
+    summary: StackingSummary
+
+
+# -------------------------------------------------------------
+# Dynamic Price Calculator Sheet Schema
+# -------------------------------------------------------------
+class PriceBreakdownResponse(BaseModel):
+    unit_id: int
+    unit_number: str
+    unit_type: str
+    facing: str
+    gross_sft: float
+    net_carpet_sft: float
+    base_rate_per_sft: float
+    base_cost: float
+    floor_number: int
+    floor_rise_rate: float
+    floor_rise_cost: float
+    facing_premium_rate: float
+    facing_premium_cost: float
+    parking_charge: float
+    utility_connection_fee: float
+    subtotal: float
+    max_discount_amount: float
+    min_allowed_price: float
+    net_effective_price: float
+    is_landowner_share: bool
+    status: str
+
+
+# -------------------------------------------------------------
+# Unit Combination & Subdivision Schemas
+# -------------------------------------------------------------
+class UnitMergeRequest(BaseModel):
+    project_id: int
+    tower_id: int
+    floor_number: int
+    source_unit_ids: List[int]
+    new_unit_number: str
+    unit_type: str = "DUPLEX"
+    facing: str = "SOUTH"
+    bed_count: int = 5
+    bath_count: int = 5
+    balcony_count: int = 4
+    remarks: Optional[str] = None
+
+class SubdivisionItem(BaseModel):
+    unit_number: str
+    gross_sft: float
+    net_carpet_sft: float
+    unit_type: str = "COMMERCIAL"
+    facing: str = "ROAD_FACING"
+    bed_count: int = 0
+    bath_count: int = 1
+    balcony_count: int = 0
+
+class UnitSplitRequest(BaseModel):
+    unit_id: int
+    subdivisions: List[SubdivisionItem]
+    remarks: Optional[str] = None
+
+
+# -------------------------------------------------------------
+# Parking Slot & Bay Schemas
 # -------------------------------------------------------------
 class ParkingBayBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -92,12 +243,43 @@ class ParkingBayResponse(ParkingBayBase):
     created_at: Optional[datetime] = None
 
 
+class ParkingSlotBase(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    project_id: int
+    tower_id: Optional[int] = None
+    basement_level: str = "BASEMENT_1"
+    slot_number: str
+    slot_type: str = "BASEMENT_1"
+    price: float = 500000.00
+    status: str = "AVAILABLE"
+    assigned_unit_id: Optional[int] = None
+
+class ParkingSlotCreate(BaseModel):
+    project_id: int
+    tower_id: Optional[int] = None
+    basement_level: str = "BASEMENT_1"
+    slot_number: str
+    slot_type: str = "BASEMENT_1"
+    price: float = 500000.00
+
+class ParkingSlotResponse(ParkingSlotBase):
+    id: int
+    assigned_unit_number: Optional[str] = None
+    created_at: Optional[datetime] = None
+
+class ParkingSlotAssignRequest(BaseModel):
+    slot_id: int
+    unit_id: int
+
+
 # -------------------------------------------------------------
 # Real-Time Lock Request & Status Schemas
 # -------------------------------------------------------------
 class UnitLockRequest(BaseModel):
     user_id: Optional[int] = 1
     user_name: Optional[str] = "Sales Agent"
+    duration_minutes: Optional[int] = 15
 
 class UnitLockResponse(BaseModel):
     success: bool
