@@ -105,6 +105,8 @@ module.exports = {
         display: ['Outfit', 'Inter', 'system-ui', 'sans-serif'],
       },
       boxShadow: {
+        'xs': '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+        '2xs': '0 1px 1px 0 rgba(0, 0, 0, 0.03)',
         'luxury': '0 10px 30px -5px rgba(217, 119, 6, 0.15), 0 4px 6px -2px rgba(15, 23, 42, 0.05)',
         'luxury-dark': '0 10px 30px -5px rgba(0, 0, 0, 0.6), 0 0 15px 1px rgba(217, 119, 6, 0.12)',
         'glass': '0 8px 32px 0 rgba(15, 23, 42, 0.08)',

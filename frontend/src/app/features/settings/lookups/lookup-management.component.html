@@ -30,7 +30,7 @@
                 type="button"
                 (click)="selectCategory(cat)"
                 class="w-full text-left px-3 py-2.5 rounded-lg text-xs font-medium transition-all flex items-center justify-between hover:bg-slate-100 dark:hover:bg-slate-800"
-                [ngClass]="selectedCategory()?.id === cat.id ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' : 'text-slate-800 dark:text-slate-200'"
+                [ngClass]="selectedCategory()?.id === cat.id ? 'bg-amber-500/10 text-amber-900 font-bold border-l-2 border-amber-500 dark:bg-amber-500/15 dark:text-amber-200' : 'text-slate-800 dark:text-slate-200'"
               >
                 <div class="truncate pr-2">
                   <div class="truncate font-semibold">{{ cat.category_name }}</div>
@@ -57,6 +57,7 @@
             <app-custom-table
               [columns]="tableColumns"
               [totalRecords]="selectedCategoryItems().length"
+              [loading]="isLoadingItems()"
               [showFilter]="true"
               filterPlaceholder="Search items in this category..."
             >

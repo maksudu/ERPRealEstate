@@ -57,13 +57,25 @@ export interface TableColumn {
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">
-            <ng-content></ng-content>
+            @if (loading) {
+              @for (item of [1, 2, 3, 4, 5]; track $index) {
+                <tr>
+                  @for (col of columns; track col.field) {
+                    <td class="px-4 py-3.5">
+                      <div class="skeleton-box h-3.5 rounded" [style.width.%]="($index % 2 === 0) ? 80 : 60"></div>
+                    </td>
+                  }
+                </tr>
+              }
+            } @else {
+              <ng-content></ng-content>
+            }
           </tbody>
         </table>
       </div>
 
       <!-- Empty State -->
-      @if (totalRecords === 0) {
+      @if (!loading && totalRecords === 0) {
         <div class="py-12 text-center text-slate-400 dark:text-slate-500">
           <svg class="w-12 h-12 mx-auto mb-3 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
@@ -80,6 +92,7 @@ export class CustomTableComponent {
   @Input() emptyMessage: string = 'No records found';
   @Input() showFilter: boolean = false;
   @Input() filterPlaceholder: string = 'Search...';
+  @Input() loading: boolean = false;
 
   @Output() search = new EventEmitter<string>();
 

@@ -135,7 +135,22 @@ export interface DataTableColumn {
             </thead>
 
             <tbody class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">
-              @if (paginatedData().length > 0) {
+              @if (loading) {
+                @for (item of [1, 2, 3, 4, 5]; track $index) {
+                  <tr>
+                    @if (selectable) {
+                      <td class="px-4 py-3.5 text-center">
+                        <div class="skeleton-box w-4 h-4 rounded mx-auto"></div>
+                      </td>
+                    }
+                    @for (col of visibleColumns(); track col.field) {
+                      <td class="px-4 py-3.5">
+                        <div class="skeleton-box h-3.5 rounded" [style.width.%]="($index % 2 === 0) ? 75 : 60"></div>
+                      </td>
+                    }
+                  </tr>
+                }
+              } @else if (paginatedData().length > 0) {
                 @for (row of paginatedData(); track row.id || $index) {
                   <tr 
                     class="hover:bg-slate-50/80 dark:hover:bg-slate-800/60 transition-colors"
@@ -231,6 +246,7 @@ export class DataTableComponent {
   }
   @Input() selectable: boolean = false;
   @Input() exportFileName: string = 'export_data';
+  @Input() loading: boolean = false;
 
   @Output() rowSelectionChange = new EventEmitter<any[]>();
 
