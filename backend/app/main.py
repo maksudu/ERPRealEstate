@@ -25,6 +25,7 @@ import app.modules.hrms.models
 import app.modules.tax.models
 import app.modules.governance.models
 import app.modules.legal.models
+import app.modules.bi.models
 
 from app.modules.lookups.router import router as lookups_router
 from app.modules.auth.router import router as auth_router
@@ -38,11 +39,12 @@ from app.modules.construction.router import router as construction_router
 from app.modules.procurement.router import router as procurement_router
 from app.modules.accounts.router import router as accounts_router
 from app.modules.handover.router import router as handover_router
+from app.modules.legal.router import router as legal_router
 from app.modules.operations.router import router as operations_router
 from app.modules.hrms.router import router as hrms_router
 from app.modules.tax.router import router as tax_router
 from app.modules.governance.router import router as governance_router
-from app.modules.legal.router import router as legal_router
+from app.modules.bi.router import router as bi_router
 
 
 
@@ -140,6 +142,7 @@ app.include_router(operations_router, prefix=settings.API_V1_PREFIX)
 app.include_router(hrms_router, prefix=settings.API_V1_PREFIX)
 app.include_router(tax_router, prefix=settings.API_V1_PREFIX)
 app.include_router(governance_router, prefix=settings.API_V1_PREFIX)
+app.include_router(bi_router, prefix=settings.API_V1_PREFIX)
 
 if __name__ == "__main__":
 

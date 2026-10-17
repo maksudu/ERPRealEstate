@@ -90,6 +90,10 @@ export class CommandPaletteComponent {
   searchQuery = signal<string>('');
 
   commands: CommandItem[] = [
+    { id: 'bi-cockpit', title: 'Executive Management BI Cockpit (Board & C-Suite)', category: 'Executive BI', route: '/bi/cockpit' },
+    { id: 'bi-runway', title: 'Cash Runway Sensitivity Simulator (90 / 180 / 365 Days)', category: 'Executive BI', route: '/bi/cockpit' },
+    { id: 'bi-evm', title: 'Project Profitability & EVM Performance (SPI & CPI)', category: 'Executive BI', route: '/bi/cockpit' },
+    { id: 'bi-heatmap', title: 'Real-time Overdue Collections Aging Matrix Heatmap', category: 'Executive BI', route: '/bi/cockpit' },
     { id: 'land-proposals', title: 'Land Proposals', category: 'Land', route: '/land/proposals' },
     { id: 'land-surveys', title: 'Land Surveys & Khatian (CS, SA, RS)', category: 'Land', route: '/land/surveys' },
     { id: 'jv', title: 'Joint Venture Agreements', category: 'Land', route: '/land/jv-agreements' },
@@ -124,8 +128,7 @@ export class CommandPaletteComponent {
     { id: 'sub-registry', title: 'Sub-Registry Cost Calculator', category: 'Accounts', route: '/accounts/sub-registry-calc' },
     { id: 'snagging', title: 'Snagging', category: 'Handover', route: '/handover/snagging' },
     { id: 'possession', title: 'Possession Handover', category: 'Handover', route: '/handover/possession' },
-    { id: 'association', title: 'Flat Owners Association', category: 'Handover', route: '/handover/association' },
-    { id: 'legal', title: 'Legal Cases', category: 'Settings', route: '/settings/legal-cases' },
+    { id: 'legal', title: 'Legal & Statutory Compliance Vault (RAJUK/CDA, Stay Orders & Land Disputes)', category: 'Legal', route: '/legal/compliance-vault' },
     { id: 'equipment', title: 'Plant & Machinery', category: 'Settings', route: '/settings/equipment' },
     { id: 'import', title: 'Data Import (Excel)', category: 'Settings', route: '/settings/data-import' },
     { id: 'lookups', title: 'Dropdown Master Settings', category: 'Settings', route: '/settings/lookups' },

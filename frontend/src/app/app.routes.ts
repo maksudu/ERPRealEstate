@@ -273,9 +273,19 @@ export const routes: Routes = [
     title: 'Broker Commissions & Section 53 TDS - Bangladesh Real Estate ERP'
   },
   {
+    path: 'legal/compliance-vault',
+    loadComponent: () => import('./features/legal/compliance-vault/compliance-vault.component').then(m => m.ComplianceVaultComponent),
+    title: 'Legal & Statutory Compliance Vault, Land Dispute Tracking & RAJUK/CDA Approvals - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'legal/vault',
+    redirectTo: 'legal/compliance-vault',
+    pathMatch: 'full'
+  },
+  {
     path: 'settings/legal-cases',
-    loadComponent: () => import('./features/settings/legal-cases/legal-cases.component').then(m => m.LegalCasesComponent),
-    title: 'Legal Litigation & Court Cases Register - Bangladesh Real Estate ERP'
+    redirectTo: 'legal/compliance-vault',
+    pathMatch: 'full'
   },
   {
     path: 'settings/equipment',
@@ -320,6 +330,21 @@ export const routes: Routes = [
   {
     path: 'governance/cockpit',
     redirectTo: 'governance/approvals',
+    pathMatch: 'full'
+  },
+  {
+    path: 'bi/cockpit',
+    loadComponent: () => import('./features/bi/executive-cockpit/executive-cockpit.component').then(m => m.ExecutiveCockpitComponent),
+    title: 'Executive Management BI Cockpit, Cash Runway & EVM - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'bi/dashboard',
+    redirectTo: 'bi/cockpit',
+    pathMatch: 'full'
+  },
+  {
+    path: 'executive/cockpit',
+    redirectTo: 'bi/cockpit',
     pathMatch: 'full'
   }
     ]

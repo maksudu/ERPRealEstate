@@ -1,0 +1,597 @@
+<app-card-container class="w-full">
+  <!-- Top Header Section -->
+  <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 pb-6 border-b border-border">
+    <div class="flex items-center gap-3.5">
+      <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-sm border border-primary/20">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+      </div>
+      <div>
+        <div class="flex items-center gap-2.5">
+          <h1 class="text-xl font-bold tracking-tight text-foreground">
+            Executive Management BI Cockpit
+          </h1>
+          <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">
+            Real-Time Intelligence
+          </span>
+        </div>
+        <p class="text-xs text-muted-foreground mt-0.5">
+          Board of Directors, Managing Directors & CFO Command: Portfolio Asset Valuation, EVM (SPI/CPI), Cash Runway & Overdue Collections
+        </p>
+      </div>
+    </div>
+
+    <!-- Header Actions (1-Click Exports) -->
+    <div class="flex flex-wrap items-center gap-2.5">
+      <app-custom-button
+        variant="outline"
+        size="sm"
+        (click)="loadInitialData()"
+        [disabled]="isLoading()"
+      >
+        <span class="flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5" [class.animate-spin]="isLoading()" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          Refresh
+        </span>
+      </app-custom-button>
+
+      <app-custom-button
+        variant="secondary"
+        size="sm"
+        (click)="exportBoardPdf()"
+        [disabled]="isExportingPdf()"
+      >
+        <span class="flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+          </svg>
+          {{ isExportingPdf() ? 'Generating PDF...' : 'Board Presentation PDF' }}
+        </span>
+      </app-custom-button>
+
+      <app-custom-button
+        variant="primary"
+        size="sm"
+        (click)="exportAuditExcel()"
+        [disabled]="isExportingExcel()"
+      >
+        <span class="flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          {{ isExportingExcel() ? 'Building Excel...' : 'Excel Audit Model' }}
+        </span>
+      </app-custom-button>
+    </div>
+  </div>
+
+  <!-- Executive Ribbon: 6 Top-Level KPIs -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3.5 my-6">
+    <!-- KPI 1: Portfolio Asset Value -->
+    <div class="bg-card p-4 rounded-xl border border-border shadow-xs hover:border-primary/40 transition-colors">
+      <div class="flex items-center justify-between text-muted-foreground mb-1.5">
+        <span class="text-xs font-medium uppercase tracking-wider">Portfolio Asset Value</span>
+        <div class="p-1.5 rounded-lg bg-primary/10 text-primary">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+          </svg>
+        </div>
+      </div>
+      <div class="text-lg font-bold text-foreground">
+        {{ formatBDT(cockpitData()?.valuation?.total_asset_value_bdt || 0) }}
+      </div>
+      <div class="flex items-center justify-between text-xs text-muted-foreground mt-2">
+        <span>{{ cockpitData()?.valuation?.total_units_count || 0 }} Units</span>
+        <span class="text-emerald-600 dark:text-emerald-400 font-medium">Avg {{ formatBDT(cockpitData()?.valuation?.average_unit_price_bdt || 0) }}</span>
+      </div>
+    </div>
+
+    <!-- KPI 2: Sold vs Unsold Inventory -->
+    <div class="bg-card p-4 rounded-xl border border-border shadow-xs hover:border-primary/40 transition-colors">
+      <div class="flex items-center justify-between text-muted-foreground mb-1.5">
+        <span class="text-xs font-medium uppercase tracking-wider">Inventory Realization</span>
+        <div class="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+          </svg>
+        </div>
+      </div>
+      <div class="text-lg font-bold text-foreground">
+        {{ (cockpitData()?.valuation?.portfolio_sold_percentage || 0).toFixed(1) }}% Sold
+      </div>
+      <!-- Progress Bar -->
+      <div class="w-full bg-muted rounded-full h-1.5 mt-2 overflow-hidden">
+        <div class="bg-emerald-500 h-1.5 rounded-full" [style.width.%]="cockpitData()?.valuation?.portfolio_sold_percentage || 0"></div>
+      </div>
+      <div class="flex items-center justify-between text-xs text-muted-foreground mt-2">
+        <span>Sold: {{ formatBDT(cockpitData()?.valuation?.sold_inventory_value_bdt || 0) }}</span>
+        <span>Unsold: {{ formatBDT(cockpitData()?.valuation?.unsold_inventory_value_bdt || 0) }}</span>
+      </div>
+    </div>
+
+    <!-- KPI 3: 90-Day Cash Runway -->
+    <div class="bg-card p-4 rounded-xl border border-border shadow-xs hover:border-primary/40 transition-colors">
+      <div class="flex items-center justify-between text-muted-foreground mb-1.5">
+        <span class="text-xs font-medium uppercase tracking-wider">90-Day Net Runway</span>
+        <span [class]="getRiskBadgeClass(cockpitData()?.runway_90d?.runway_health_status === 'STRONG_SURPLUS' ? 'LOW' : 'HIGH')" class="px-2 py-0.5 rounded-md text-[10px] font-bold">
+          {{ cockpitData()?.runway_90d?.runway_health_status || 'SURPLUS' }}
+        </span>
+      </div>
+      <div class="text-lg font-bold" [class.text-emerald-600]="(cockpitData()?.runway_90d?.net_cash_runway_bdt || 0) >= 0" [class.text-red-600]="(cockpitData()?.runway_90d?.net_cash_runway_bdt || 0) < 0">
+        {{ formatBDT(cockpitData()?.runway_90d?.net_cash_runway_bdt || 0) }}
+      </div>
+      <div class="flex items-center justify-between text-xs text-muted-foreground mt-2">
+        <span>Inflow: {{ formatBDT(cockpitData()?.runway_90d?.total_inflow_bdt || 0) }}</span>
+        <span>Liabilities: {{ formatBDT(cockpitData()?.runway_90d?.total_outflow_bdt || 0) }}</span>
+      </div>
+    </div>
+
+    <!-- KPI 4: 180-Day Cash Runway -->
+    <div class="bg-card p-4 rounded-xl border border-border shadow-xs hover:border-primary/40 transition-colors">
+      <div class="flex items-center justify-between text-muted-foreground mb-1.5">
+        <span class="text-xs font-medium uppercase tracking-wider">180-Day Net Runway</span>
+        <div class="p-1.5 rounded-lg bg-blue-500/10 text-blue-600">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+      </div>
+      <div class="text-lg font-bold" [class.text-emerald-600]="(cockpitData()?.runway_180d?.net_cash_runway_bdt || 0) >= 0" [class.text-red-600]="(cockpitData()?.runway_180d?.net_cash_runway_bdt || 0) < 0">
+        {{ formatBDT(cockpitData()?.runway_180d?.net_cash_runway_bdt || 0) }}
+      </div>
+      <div class="flex items-center justify-between text-xs text-muted-foreground mt-2">
+        <span>Burn: {{ formatBDT(cockpitData()?.runway_180d?.monthly_burn_rate_bdt || 0) }}/mo</span>
+        <span class="text-primary font-medium">{{ cockpitData()?.runway_180d?.runway_coverage_months || 0 }} Mo Coverage</span>
+      </div>
+    </div>
+
+    <!-- KPI 5: EVM Construction Indices (SPI / CPI) -->
+    <div class="bg-card p-4 rounded-xl border border-border shadow-xs hover:border-primary/40 transition-colors">
+      <div class="flex items-center justify-between text-muted-foreground mb-1.5">
+        <span class="text-xs font-medium uppercase tracking-wider">EVM Schedule & Cost</span>
+        <div class="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-600">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+      </div>
+      <div class="flex items-baseline gap-2">
+        <span class="text-lg font-bold text-foreground">SPI {{ (cockpitData()?.overall_spi || 1.0).toFixed(2) }}</span>
+        <span class="text-sm font-semibold text-muted-foreground">| CPI {{ (cockpitData()?.overall_cpi || 1.0).toFixed(2) }}</span>
+      </div>
+      <div class="flex items-center justify-between text-xs text-muted-foreground mt-2">
+        <span class="text-blue-600 font-medium">EV / PV: Schedule</span>
+        <span class="text-indigo-600 font-medium">EV / AC: Cost</span>
+      </div>
+    </div>
+
+    <!-- KPI 6: Sales Velocity & Portfolio IRR -->
+    <div class="bg-card p-4 rounded-xl border border-border shadow-xs hover:border-primary/40 transition-colors">
+      <div class="flex items-center justify-between text-muted-foreground mb-1.5">
+        <span class="text-xs font-medium uppercase tracking-wider">Velocity & IRR %</span>
+        <div class="p-1.5 rounded-lg bg-amber-500/10 text-amber-600">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+          </svg>
+        </div>
+      </div>
+      <div class="text-lg font-bold text-foreground">
+        {{ (cockpitData()?.overall_portfolio_irr || 0).toFixed(1) }}% IRR
+      </div>
+      <div class="flex items-center justify-between text-xs text-muted-foreground mt-2">
+        <span>Avg Sell Velocity:</span>
+        <span class="font-medium text-emerald-600">
+          {{ cockpitData()?.sales_velocities?.[0]?.avg_days_to_sell || 45 }} Days/Unit
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navigation Tabs -->
+  <div class="flex flex-wrap items-center gap-2 border-b border-border pb-3 mb-6">
+    <button
+      (click)="activeTab.set('OVERVIEW')"
+      [class]="activeTab() === 'OVERVIEW' ? 'bg-primary text-primary-foreground font-semibold shadow-xs' : 'text-muted-foreground hover:bg-muted/80 hover:text-foreground'"
+      class="px-4 py-2 rounded-xl text-xs transition-all flex items-center gap-2"
+    >
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+      </svg>
+      Executive Overview & Visual Analytics
+    </button>
+
+    <button
+      (click)="activeTab.set('RUNWAY')"
+      [class]="activeTab() === 'RUNWAY' ? 'bg-primary text-primary-foreground font-semibold shadow-xs' : 'text-muted-foreground hover:bg-muted/80 hover:text-foreground'"
+      class="px-4 py-2 rounded-xl text-xs transition-all flex items-center gap-2"
+    >
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      Cash Runway Simulator (90 / 180 / 365 Days)
+    </button>
+
+    <button
+      (click)="activeTab.set('PROFITABILITY')"
+      [class]="activeTab() === 'PROFITABILITY' ? 'bg-primary text-primary-foreground font-semibold shadow-xs' : 'text-muted-foreground hover:bg-muted/80 hover:text-foreground'"
+      class="px-4 py-2 rounded-xl text-xs transition-all flex items-center gap-2"
+    >
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+      </svg>
+      Project Profitability & EVM (SPI / CPI)
+    </button>
+
+    <button
+      (click)="activeTab.set('HEATMAP')"
+      [class]="activeTab() === 'HEATMAP' ? 'bg-primary text-primary-foreground font-semibold shadow-xs' : 'text-muted-foreground hover:bg-muted/80 hover:text-foreground'"
+      class="px-4 py-2 rounded-xl text-xs transition-all flex items-center gap-2"
+    >
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      </svg>
+      Overdue Aging Matrix Heatmap
+    </button>
+  </div>
+
+  <!-- TAB 1: EXECUTIVE OVERVIEW & VISUAL ANALYTICS -->
+  <div *ngIf="activeTab() === 'OVERVIEW'" class="space-y-6">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Chart Card 1: Cash Flow Inflow vs Liabilities Waterfall -->
+      <div class="bg-card p-5 rounded-2xl border border-border shadow-sm">
+        <div class="flex items-center justify-between pb-4 border-b border-border mb-4">
+          <div>
+            <h3 class="text-sm font-bold text-foreground">Cash Flow Liquidity Breakdown</h3>
+            <p class="text-xs text-muted-foreground">Inflows (Installments, PDCs, Leases) vs Outflows (POs, RA Bills, Labour)</p>
+          </div>
+          <span class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-primary/10 text-primary">
+            {{ selectedHorizonDays() }} Days Horizon
+          </span>
+        </div>
+        <div class="h-72 w-full relative">
+          <canvas #runwayCanvas></canvas>
+        </div>
+      </div>
+
+      <!-- Chart Card 2: EVM Indices & Profit Margins -->
+      <div class="bg-card p-5 rounded-2xl border border-border shadow-sm">
+        <div class="flex items-center justify-between pb-4 border-b border-border mb-4">
+          <div>
+            <h3 class="text-sm font-bold text-foreground">Project EVM Performance & Profitability</h3>
+            <p class="text-xs text-muted-foreground">Schedule Index (SPI), Cost Index (CPI) vs Gross Profit Margin %</p>
+          </div>
+          <span class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-indigo-500/10 text-indigo-600">
+            Baseline = 1.00
+          </span>
+        </div>
+        <div class="h-72 w-full relative">
+          <canvas #evmCanvas></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Sales Velocity Ranking Table -->
+    <div class="bg-card p-5 rounded-2xl border border-border shadow-sm">
+      <div class="flex items-center justify-between pb-4 border-b border-border mb-4">
+        <div>
+          <h3 class="text-sm font-bold text-foreground">Project Sales Velocity & Absorption Benchmarking</h3>
+          <p class="text-xs text-muted-foreground">Average days to sell a unit per project & velocity ranking</p>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-xs text-left">
+          <thead class="bg-muted/50 text-muted-foreground uppercase text-[10px] tracking-wider font-semibold border-b border-border">
+            <tr>
+              <th class="p-3">Project Name</th>
+              <th class="p-3 text-right">Total Units</th>
+              <th class="p-3 text-right">Sold Units</th>
+              <th class="p-3 text-right">Absorption Rate</th>
+              <th class="p-3 text-right">Avg Days to Sell Unit</th>
+              <th class="p-3 text-center">Velocity Tier</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border">
+            <tr *ngFor="let item of cockpitData()?.sales_velocities" class="hover:bg-muted/30 transition-colors">
+              <td class="p-3 font-semibold text-foreground">{{ item.project_name }}</td>
+              <td class="p-3 text-right">{{ item.total_units }}</td>
+              <td class="p-3 text-right font-medium text-emerald-600">{{ item.units_sold }}</td>
+              <td class="p-3 text-right">
+                <span class="font-medium">{{ item.total_units > 0 ? ((item.units_sold / item.total_units) * 100).toFixed(1) : 0 }}%</span>
+              </td>
+              <td class="p-3 text-right font-bold text-foreground">{{ item.avg_days_to_sell }} Days</td>
+              <td class="p-3 text-center">
+                <span [class]="getRiskBadgeClass(item.velocity_status === 'FAST_MOVING' ? 'LOW' : (item.velocity_status === 'NORMAL' ? 'MEDIUM' : 'HIGH'))" class="px-2 py-0.5 rounded-full text-[10px] font-semibold">
+                  {{ item.velocity_status }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: CASH RUNWAY SENSITIVITY SIMULATOR -->
+  <div *ngIf="activeTab() === 'RUNWAY'" class="space-y-6">
+    <!-- Simulator Filter Bar with Dynamic Searchable Select -->
+    <div class="bg-card p-4 rounded-xl border border-border flex flex-col md:flex-row items-center justify-between gap-4">
+      <div class="w-full md:w-96">
+        <app-searchable-select
+          label="Simulation Horizon Window"
+          [options]="horizonOptions"
+          [allowCreateNew]="true"
+          categoryCode="BI_RUNWAY_HORIZON"
+          [ngModel]="selectedHorizonDays()"
+          (selectionChange)="onHorizonChange($event)"
+          placeholder="Select Horizon Window..."
+        ></app-searchable-select>
+      </div>
+
+      <div class="flex items-center gap-4 text-xs">
+        <div class="p-3 bg-muted/40 rounded-xl border border-border text-center">
+          <span class="text-muted-foreground block text-[10px] uppercase font-medium">Monthly Burn Rate</span>
+          <span class="text-base font-bold text-foreground">{{ formatBDT(activeHorizon()?.monthly_burn_rate_bdt || 0) }}</span>
+        </div>
+        <div class="p-3 bg-muted/40 rounded-xl border border-border text-center">
+          <span class="text-muted-foreground block text-[10px] uppercase font-medium">Liquidity Runway Coverage</span>
+          <span class="text-base font-bold text-primary">{{ activeHorizon()?.runway_coverage_months || 0 }} Months</span>
+        </div>
+        <div class="p-3 bg-muted/40 rounded-xl border border-border text-center">
+          <span class="text-muted-foreground block text-[10px] uppercase font-medium">Runway Health Status</span>
+          <span [class]="getRiskBadgeClass(activeHorizon()?.runway_health_status === 'STRONG_SURPLUS' ? 'LOW' : 'HIGH')" class="px-2.5 py-1 rounded-md text-xs font-bold inline-block mt-0.5">
+            {{ activeHorizon()?.runway_health_status || 'SURPLUS' }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Runway Comparison Grid: Inflows vs Outflows -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Inflows Card -->
+      <div class="bg-card p-5 rounded-2xl border border-border shadow-xs">
+        <div class="flex items-center justify-between pb-3 border-b border-border mb-4">
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+            <h3 class="text-sm font-bold text-foreground">Projected Cash Inflows (Next {{ selectedHorizonDays() }} Days)</h3>
+          </div>
+          <span class="text-base font-bold text-emerald-600">{{ formatBDT(activeHorizon()?.total_inflow_bdt || 0) }}</span>
+        </div>
+
+        <div class="space-y-3 text-xs">
+          <div class="flex items-center justify-between p-3 rounded-xl bg-muted/30 border border-border/50">
+            <div>
+              <span class="font-semibold text-foreground block">Customer Installment Milestone Collections</span>
+              <span class="text-muted-foreground text-[11px]">Due installments scheduled in next {{ selectedHorizonDays() }} days</span>
+            </div>
+            <span class="font-bold text-emerald-600 text-sm">{{ formatBDT(activeHorizon()?.projected_installment_inflow_bdt || 0) }}</span>
+          </div>
+
+          <div class="flex items-center justify-between p-3 rounded-xl bg-muted/30 border border-border/50">
+            <div>
+              <span class="font-semibold text-foreground block">Post-Dated Cheques (PDC Vault Liquidation)</span>
+              <span class="text-muted-foreground text-[11px]">Cheques in vault maturing within horizon window</span>
+            </div>
+            <span class="font-bold text-emerald-600 text-sm">{{ formatBDT(activeHorizon()?.projected_pdc_clearing_inflow_bdt || 0) }}</span>
+          </div>
+
+          <div class="flex items-center justify-between p-3 rounded-xl bg-muted/30 border border-border/50">
+            <div>
+              <span class="font-semibold text-foreground block">Commercial Space & Shop Leases (CAM Service Charges)</span>
+              <span class="text-muted-foreground text-[11px]">Active tenancy monthly rentals and utility collections</span>
+            </div>
+            <span class="font-bold text-emerald-600 text-sm">{{ formatBDT(activeHorizon()?.projected_rental_inflow_bdt || 0) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Outflows / Committed Liabilities Card -->
+      <div class="bg-card p-5 rounded-2xl border border-border shadow-xs">
+        <div class="flex items-center justify-between pb-3 border-b border-border mb-4">
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-red-500"></span>
+            <h3 class="text-sm font-bold text-foreground">Committed Liabilities & Operational Payables</h3>
+          </div>
+          <span class="text-base font-bold text-red-600">{{ formatBDT(activeHorizon()?.total_outflow_bdt || 0) }}</span>
+        </div>
+
+        <div class="space-y-3 text-xs">
+          <div class="flex items-center justify-between p-3 rounded-xl bg-muted/30 border border-border/50">
+            <div>
+              <span class="font-semibold text-foreground block">Committed Procurement Material POs</span>
+              <span class="text-muted-foreground text-[11px]">Steel, Cement, Ready-mix & Electrical vendor liabilities</span>
+            </div>
+            <span class="font-bold text-red-600 text-sm">{{ formatBDT(activeHorizon()?.committed_po_material_outflow_bdt || 0) }}</span>
+          </div>
+
+          <div class="flex items-center justify-between p-3 rounded-xl bg-muted/30 border border-border/50">
+            <div>
+              <span class="font-semibold text-foreground block">Contractor Running Account (RA) Bills</span>
+              <span class="text-muted-foreground text-[11px]">Certified work liabilities net of TDS, VDS & Retention</span>
+            </div>
+            <span class="font-bold text-red-600 text-sm">{{ formatBDT(activeHorizon()?.committed_contractor_ra_outflow_bdt || 0) }}</span>
+          </div>
+
+          <div class="flex items-center justify-between p-3 rounded-xl bg-muted/30 border border-border/50">
+            <div>
+              <span class="font-semibold text-foreground block">Site Labour Muster Roll & Staff Payroll</span>
+              <span class="text-muted-foreground text-[11px]">Civil labour muster rolls and project engineering salaries</span>
+            </div>
+            <span class="font-bold text-red-600 text-sm">{{ formatBDT(activeHorizon()?.committed_labor_payroll_outflow_bdt || 0) }}</span>
+          </div>
+
+          <div class="flex items-center justify-between p-3 rounded-xl bg-muted/30 border border-border/50">
+            <div>
+              <span class="font-semibold text-foreground block">Statutory Clearance Overheads & Permits</span>
+              <span class="text-muted-foreground text-[11px]">RAJUK, Fire, DoE license renewals and municipal taxes</span>
+            </div>
+            <span class="font-bold text-red-600 text-sm">{{ formatBDT(activeHorizon()?.committed_statutory_overhead_outflow_bdt || 0) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: PROJECT PROFITABILITY & EVM (SPI / CPI) -->
+  <div *ngIf="activeTab() === 'PROFITABILITY'" class="space-y-6">
+    <!-- Search & Filter Controls -->
+    <div class="bg-card p-4 rounded-xl border border-border flex flex-col md:flex-row items-center justify-between gap-4">
+      <div class="w-full md:w-72">
+        <app-searchable-select
+          label="Filter by Project"
+          [options]="projectOptions()"
+          [allowCreateNew]="true"
+          categoryCode="BI_PROFITABILITY_METRIC"
+          [ngModel]="selectedProjectFilter()"
+          (selectionChange)="selectedProjectFilter.set($event)"
+          placeholder="All Projects..."
+        ></app-searchable-select>
+      </div>
+
+      <div class="w-full md:w-80">
+        <app-custom-input
+          label="Search Project or Status"
+          [ngModel]="searchTerm()"
+          (ngModelChange)="searchTerm.set($event)"
+          placeholder="Search by project name or EVM status..."
+        ></app-custom-input>
+      </div>
+    </div>
+
+    <!-- EVM & Profitability Table -->
+    <div class="bg-card p-5 rounded-2xl border border-border shadow-xs overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-xs text-left">
+          <thead class="bg-muted/50 text-muted-foreground uppercase text-[10px] tracking-wider font-semibold border-b border-border">
+            <tr>
+              <th class="p-3">Project</th>
+              <th class="p-3 text-right">Projected Revenue</th>
+              <th class="p-3 text-right">Land Cost</th>
+              <th class="p-3 text-right">Construction</th>
+              <th class="p-3 text-right">Gross Profit</th>
+              <th class="p-3 text-right">Margin %</th>
+              <th class="p-3 text-right">IRR %</th>
+              <th class="p-3 text-right">PV (Planned)</th>
+              <th class="p-3 text-right">EV (Earned)</th>
+              <th class="p-3 text-right">AC (Actual)</th>
+              <th class="p-3 text-center">SPI (EV/PV)</th>
+              <th class="p-3 text-center">CPI (EV/AC)</th>
+              <th class="p-3 text-center">EVM Status</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border">
+            <tr *ngFor="let proj of filteredProfitability()" class="hover:bg-muted/30 transition-colors">
+              <td class="p-3 font-semibold text-foreground whitespace-nowrap">{{ proj.project_name }}</td>
+              <td class="p-3 text-right font-medium text-foreground whitespace-nowrap">{{ formatBDT(proj.total_revenue_bdt) }}</td>
+              <td class="p-3 text-right text-muted-foreground whitespace-nowrap">{{ formatBDT(proj.land_cost_bdt) }}</td>
+              <td class="p-3 text-right text-muted-foreground whitespace-nowrap">{{ formatBDT(proj.construction_cost_bdt) }}</td>
+              <td class="p-3 text-right font-bold text-emerald-600 whitespace-nowrap">{{ formatBDT(proj.projected_gross_profit_bdt) }}</td>
+              <td class="p-3 text-right font-semibold text-foreground whitespace-nowrap">{{ proj.gross_profit_margin_pct.toFixed(1) }}%</td>
+              <td class="p-3 text-right font-semibold text-indigo-600 whitespace-nowrap">{{ proj.projected_irr_pct.toFixed(1) }}%</td>
+              <td class="p-3 text-right text-muted-foreground whitespace-nowrap">{{ formatBDT(proj.planned_value_pv) }}</td>
+              <td class="p-3 text-right text-muted-foreground whitespace-nowrap">{{ formatBDT(proj.earned_value_ev) }}</td>
+              <td class="p-3 text-right text-muted-foreground whitespace-nowrap">{{ formatBDT(proj.actual_cost_ac) }}</td>
+              <td class="p-3 text-center font-bold text-blue-600 whitespace-nowrap">
+                <span [class.text-emerald-600]="proj.spi_index >= 1.0" [class.text-red-600]="proj.spi_index < 1.0">
+                  {{ proj.spi_index.toFixed(2) }}
+                </span>
+              </td>
+              <td class="p-3 text-center font-bold text-purple-600 whitespace-nowrap">
+                <span [class.text-emerald-600]="proj.cpi_index >= 1.0" [class.text-red-600]="proj.cpi_index < 1.0">
+                  {{ proj.cpi_index.toFixed(2) }}
+                </span>
+              </td>
+              <td class="p-3 text-center whitespace-nowrap">
+                <span [class]="getEVMStatusBadgeClass(proj.evm_status)" class="px-2 py-0.5 rounded-full text-[10px] font-semibold">
+                  {{ proj.evm_status }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 4: REAL-TIME OVERDUE AGING MATRIX HEATMAP -->
+  <div *ngIf="activeTab() === 'HEATMAP'" class="space-y-6">
+    <!-- Heatmap Filter Bar -->
+    <div class="bg-card p-4 rounded-xl border border-border flex flex-col md:flex-row items-center justify-between gap-4">
+      <div class="w-full md:w-72">
+        <app-searchable-select
+          label="Filter by Project"
+          [options]="projectOptions()"
+          [allowCreateNew]="true"
+          categoryCode="BI_HEATMAP_BUCKET"
+          [ngModel]="selectedProjectFilter()"
+          (selectionChange)="selectedProjectFilter.set($event)"
+          placeholder="All Projects..."
+        ></app-searchable-select>
+      </div>
+
+      <div class="w-full md:w-72">
+        <app-searchable-select
+          label="Filter by Risk Intensity"
+          [options]="riskOptions"
+          [allowCreateNew]="true"
+          categoryCode="BI_HEATMAP_BUCKET"
+          [ngModel]="selectedRiskFilter()"
+          (selectionChange)="selectedRiskFilter.set($event)"
+          placeholder="All Risk Tiers..."
+        ></app-searchable-select>
+      </div>
+
+      <!-- Risk Legend Indicator -->
+      <div class="flex items-center gap-2 text-xs">
+        <span class="text-muted-foreground text-[11px] font-medium mr-1">Intensity:</span>
+        <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">Low (0-30d)</span>
+        <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border border-yellow-500/30">Med (31-90d)</span>
+        <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30">High (91-180d)</span>
+        <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-red-500/15 text-red-700 dark:text-red-400 border border-red-500/30">Critical (>180d)</span>
+      </div>
+    </div>
+
+    <!-- Matrix Heatmap Table -->
+    <div class="bg-card p-5 rounded-2xl border border-border shadow-xs overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-xs text-left">
+          <thead class="bg-muted/50 text-muted-foreground uppercase text-[10px] tracking-wider font-semibold border-b border-border">
+            <tr>
+              <th class="p-3">Project Name</th>
+              <th class="p-3 text-center">0 - 30 Days (Current)</th>
+              <th class="p-3 text-center">31 - 60 Days (Follow-up)</th>
+              <th class="p-3 text-center">61 - 90 Days (Escalation)</th>
+              <th class="p-3 text-center">91 - 180 Days (Legal Notice)</th>
+              <th class="p-3 text-center">180+ Days (Default Risk)</th>
+              <th class="p-3 text-right font-bold">Total Overdue</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border">
+            <tr *ngFor="let row of filteredHeatmap()" class="hover:bg-muted/30 transition-colors">
+              <td class="p-3 font-semibold text-foreground whitespace-nowrap">
+                {{ row.project_name }}
+                <span class="block text-[10px] text-muted-foreground font-normal">{{ row.total_overdue_units }} Units Delinquent</span>
+              </td>
+
+              <!-- 5 Aging Buckets -->
+              <td *ngFor="let bucket of row.buckets" class="p-2 text-center">
+                <div [class]="getRiskBadgeClass(bucket.risk_intensity)" class="p-2.5 rounded-xl text-center transition-all">
+                  <span class="block font-bold text-xs">{{ formatBDT(bucket.overdue_amount_bdt) }}</span>
+                  <span class="block text-[10px] mt-0.5 opacity-80">{{ bucket.overdue_count }} buyer{{ bucket.overdue_count === 1 ? '' : 's' }}</span>
+                </div>
+              </td>
+
+              <!-- Total Project Overdue -->
+              <td class="p-3 text-right font-bold text-sm text-red-600 whitespace-nowrap">
+                {{ formatBDT(row.total_project_overdue_bdt) }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</app-card-container>
