@@ -58,28 +58,13 @@ class BrokerCommissionResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-# Court Case Schemas
-class CourtCaseBase(BaseModel):
-    project_id: Optional[int] = None
-    case_type: str
-    case_number: str
-    concerned_court: str
-    plaintiff: str
-    defendant: str
-    appointed_advocate: str
-    next_hearing_date: Optional[date] = None
-    status: str = "HEARING_ONGOING"
-    case_summary: Optional[str] = None
-
-
-class CourtCaseCreate(CourtCaseBase):
-    pass
-
-
-class CourtCaseResponse(CourtCaseBase):
-    id: int
-    created_at: Optional[datetime] = None
-    model_config = ConfigDict(from_attributes=True)
+# Court Case Schemas (PROMPT 12 / Enhanced)
+from app.modules.legal.schemas import (
+    CourtCaseBase,
+    CourtCaseCreate,
+    CourtCaseResponse,
+    CourtCaseUpdate,
+)
 
 
 # Machinery Asset Schemas

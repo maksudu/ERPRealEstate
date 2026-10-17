@@ -69,13 +69,26 @@ class AuthorityClearance(Base):
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     project_id = Column(BigInteger, ForeignKey("prj_projects.id", ondelete="CASCADE"), nullable=False, index=True)
-    # Clearance types: LUC (Land Use Clearance), BUILDING_PLAN, FIRE_NOC, AVIATION_HEIGHT, ENVIRONMENTAL, WASA, DESCO_DPDC
+    # Clearance types: LUC (Land Use Clearance), BUILDING_PLAN, FIRE_NOC, AVIATION_HEIGHT, ENVIRONMENTAL, WASA, DESCO_DPDC, OCCUPANCY_CERT
     clearance_type_id = Column(String(64), nullable=False, index=True)
+    authority_name = Column(String(64), nullable=False, default="RAJUK", index=True) # RAJUK, CDA, KDA, RDA, DoE, FSCD, CAAB, WASA, DESCO_DPDC, TITAS_GAS
+    reference_no = Column(String(64), nullable=True, index=True) # e.g. CLR-2026-RAJUK-01
     application_memo_no = Column(String(128), nullable=True)
     approved_memo_no = Column(String(128), nullable=True)
     approval_date = Column(Date, nullable=True)
     expiry_date = Column(Date, nullable=True)
-    # Status: NOT_APPLIED, SUBMITTED, IN_REVIEW, APPROVED, REJECTED, EXPIRED
+    validity_months = Column(Integer, default=12)
+    renewal_reminder_days = Column(Integer, default=30)
+    renewal_fee_bdt = Column(Numeric(14, 2), default=0.00)
+    renewal_alert_status = Column(String(32), default="VALID", index=True) # VALID, EXPIRING_SOON, EXPIRED, RENEWAL_SUBMITTED
+    
+    # Specific statutory approval attributes
+    sanctioned_floors = Column(String(64), nullable=True) # e.g., 2 Basement + Ground + 14 Floors
+    sanctioned_height_m = Column(Numeric(8, 2), nullable=True) # Height in meters (CAAB)
+    contact_officer_name = Column(String(128), nullable=True)
+    contact_officer_phone = Column(String(64), nullable=True)
+
+    # Status: NOT_APPLIED, SUBMITTED, IN_REVIEW, APPROVED, REJECTED, EXPIRED, RENEWAL_PENDING
     status = Column(String(32), nullable=False, default="NOT_APPLIED", index=True)
     document_url = Column(String(255), nullable=True)
     remarks = Column(String(255), nullable=True)
@@ -84,6 +97,31 @@ class AuthorityClearance(Base):
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
 
     project = relationship("Project", back_populates="clearances")
+    conditions = relationship("AuthorityClearanceCondition", back_populates="clearance", cascade="all, delete-orphan")
+
+
+class AuthorityClearanceCondition(Base):
+    """
+    Checklist of mandatory sanction conditions imposed by approval authorities (RAJUK/CDA/DoE/Fire).
+    """
+    __tablename__ = "prj_clearance_conditions"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    clearance_id = Column(BigInteger, ForeignKey("prj_authority_clearances.id", ondelete="CASCADE"), nullable=False, index=True)
+    condition_code = Column(String(32), nullable=False) # e.g. COND-01
+    condition_title = Column(String(255), nullable=False)
+    condition_category = Column(String(64), nullable=False, default="STATUTORY_MANDATE", index=True) # ARCHITECTURAL_SETBACK, FIRE_SAFETY, ENVIRONMENTAL_ETP, STRUCTURAL_INTEGRITY, ELECTRICAL_SUBSTATION
+    mandatory_level = Column(String(32), nullable=False, default="CRITICAL") # CRITICAL, MANDATORY, ADVISORY
+    compliance_status = Column(String(32), nullable=False, default="PENDING", index=True) # PENDING, IN_PROGRESS, COMPLIED, WAIVED
+    compliance_date = Column(Date, nullable=True)
+    verified_by_officer = Column(String(128), nullable=True)
+    evidence_doc_url = Column(String(255), nullable=True)
+    remarks = Column(Text, nullable=True)
+
+    created_at = Column(TIMESTAMP, server_default=func.now())
+    updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
+
+    clearance = relationship("AuthorityClearance", back_populates="conditions")
 
 
 class BOQItem(Base):

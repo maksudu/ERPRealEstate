@@ -1,0 +1,1710 @@
+<app-card-container class="w-full">
+  <!-- Top Header Section -->
+  <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-6 border-b border-border">
+    <div>
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold tracking-tight text-foreground">
+            Legal & Statutory Compliance Vault
+          </h1>
+          <p class="text-xs text-muted-foreground mt-0.5">
+            RAJUK / CDA / DoE / Fire Sanctions, Condition Checklists, Renewal Expiration Reminders & Litigation Vault
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Header Actions -->
+    <div class="flex flex-wrap items-center gap-2.5">
+      <app-custom-button
+        variant="outline"
+        size="sm"
+        (click)="loadInitialData()"
+      >
+        <span class="flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          Refresh
+        </span>
+      </app-custom-button>
+
+      <app-custom-button
+        variant="primary"
+        size="sm"
+        (click)="openCreatePermitModal()"
+      >
+        <span class="flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          + New Sanction Permit
+        </span>
+      </app-custom-button>
+
+      <app-custom-button
+        variant="secondary"
+        size="sm"
+        (click)="openCreateCaseModal()"
+      >
+        <span class="flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          + Log Land Dispute Case
+        </span>
+      </app-custom-button>
+    </div>
+  </div>
+
+  <!-- Executive KPI Metrics Ribbon -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 my-6">
+    <!-- Metric 1: Permits Sanctions -->
+    <div class="bg-card border border-border rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Sanction Permits</span>
+        <span class="p-1.5 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </span>
+      </div>
+      <div class="mt-2 flex items-baseline gap-2">
+        <span class="text-2xl font-bold text-foreground">
+          {{ metrics()?.approved_permits || 0 }} / {{ metrics()?.total_permits || 0 }}
+        </span>
+        <span class="text-xs font-medium text-emerald-600 dark:text-emerald-400">Approved</span>
+      </div>
+      <p class="text-[11px] text-muted-foreground mt-1">
+        RAJUK, CDA, Fire NOC, DoE & CAAB sanctions
+      </p>
+    </div>
+
+    <!-- Metric 2: Renewal Alerts -->
+    <div class="bg-card border border-border rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Renewal Alerts</span>
+        <span class="p-1.5 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </span>
+      </div>
+      <div class="mt-2 flex items-baseline gap-2">
+        <span class="text-2xl font-bold text-amber-600 dark:text-amber-400">
+          {{ metrics()?.expiring_soon_permits || 0 }}
+        </span>
+        <span class="text-xs text-rose-500 font-semibold" *ngIf="(metrics()?.expired_permits || 0) > 0">
+          ({{ metrics()?.expired_permits }} Expired)
+        </span>
+        <span class="text-xs text-muted-foreground" *ngIf="(metrics()?.expired_permits || 0) === 0">
+          within 30 days
+        </span>
+      </div>
+      <p class="text-[11px] text-muted-foreground mt-1">
+        Automated countdown before expiration
+      </p>
+    </div>
+
+    <!-- Metric 3: Condition Compliance Rate -->
+    <div class="bg-card border border-border rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Condition Compliance</span>
+        <span class="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+          </svg>
+        </span>
+      </div>
+      <div class="mt-2 flex items-baseline gap-2">
+        <span class="text-2xl font-bold text-foreground">
+          {{ metrics()?.condition_compliance_percentage || 0 }}%
+        </span>
+        <span class="text-xs text-muted-foreground">
+          ({{ metrics()?.complied_conditions || 0 }}/{{ metrics()?.total_conditions || 0 }})
+        </span>
+      </div>
+      <div class="w-full bg-muted rounded-full h-1.5 mt-2 overflow-hidden">
+        <div
+          class="bg-emerald-500 h-1.5 rounded-full transition-all duration-500"
+          [style.width.%]="metrics()?.condition_compliance_percentage || 0"
+        ></div>
+      </div>
+    </div>
+
+    <!-- Metric 4: Active Court Cases & Stay Orders -->
+    <div class="bg-card border border-border rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Litigation & Stay Orders</span>
+        <span class="p-1.5 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </span>
+      </div>
+      <div class="mt-2 flex items-baseline gap-2">
+        <span class="text-2xl font-bold text-foreground">
+          {{ metrics()?.active_court_cases || 0 }} Cases
+        </span>
+        <span
+          class="text-xs font-bold px-2 py-0.5 rounded-full"
+          [ngClass]="(metrics()?.interim_stay_orders_active || 0) > 0 ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400 animate-pulse' : 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'"
+        >
+          {{ metrics()?.interim_stay_orders_active || 0 }} Stay Orders
+        </span>
+      </div>
+      <p class="text-[11px] text-muted-foreground mt-1">
+        Disputed Area: {{ metrics()?.total_disputed_area_decimals || 0 }} Dec | Claim: {{ formatCurrency(metrics()?.total_financial_exposure_bdt || 0) }}
+      </p>
+    </div>
+  </div>
+
+  <!-- Tab Navigation -->
+  <div class="flex border-b border-border mb-6">
+    <button
+      type="button"
+      (click)="setActiveTab('PERMITS')"
+      class="px-5 py-3 text-xs font-semibold transition-colors border-b-2 flex items-center gap-2"
+      [ngClass]="activeTab() === 'PERMITS' ? 'border-primary text-primary bg-primary/5' : 'border-transparent text-muted-foreground hover:text-foreground'"
+    >
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      </svg>
+      Statutory Clearances & Plan Sanctions
+      <span class="ml-1.5 px-2 py-0.5 text-[10px] rounded-full bg-primary/10 text-primary font-bold">
+        {{ permits().length }}
+      </span>
+    </button>
+
+    <button
+      type="button"
+      (click)="setActiveTab('RENEWAL_CALENDAR')"
+      class="px-5 py-3 text-xs font-semibold transition-colors border-b-2 flex items-center gap-2"
+      [ngClass]="activeTab() === 'RENEWAL_CALENDAR' ? 'border-primary text-primary bg-primary/5' : 'border-transparent text-muted-foreground hover:text-foreground'"
+    >
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+      </svg>
+      Renewal Calendar & Expiration Alerts
+      <span class="ml-1.5 px-2 py-0.5 text-[10px] rounded-full bg-amber-500/10 text-amber-600 font-bold">
+        {{ renewalCalendar().length }}
+      </span>
+    </button>
+
+    <button
+      type="button"
+      (click)="setActiveTab('LITIGATION_CASES')"
+      class="px-5 py-3 text-xs font-semibold transition-colors border-b-2 flex items-center gap-2"
+      [ngClass]="activeTab() === 'LITIGATION_CASES' ? 'border-primary text-primary bg-primary/5' : 'border-transparent text-muted-foreground hover:text-foreground'"
+    >
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
+      </svg>
+      Dispute & Litigation Vault
+      <span class="ml-1.5 px-2 py-0.5 text-[10px] rounded-full bg-rose-500/10 text-rose-600 font-bold">
+        {{ cases().length }}
+      </span>
+    </button>
+
+    <button
+      type="button"
+      (click)="setActiveTab('SAFE_VAULT')"
+      class="px-5 py-3 text-xs font-semibold transition-colors border-b-2 flex items-center gap-2"
+      [ngClass]="activeTab() === 'SAFE_VAULT' ? 'border-primary text-primary bg-primary/5' : 'border-transparent text-muted-foreground hover:text-foreground'"
+    >
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+      </svg>
+      Certified Digital Safe & Hearing Diary
+    </button>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- TAB 1: STATUTORY CLEARANCES & PLAN SANCTIONS             -->
+  <!-- ======================================================== -->
+  <div *ngIf="activeTab() === 'PERMITS'" class="space-y-4">
+    <!-- Filter Row -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 p-3.5 bg-muted/40 rounded-xl border border-border">
+      <!-- Search Input -->
+      <div>
+        <app-custom-input
+          label="Search Sanction / Memo"
+          placeholder="Ref No, Memo No, Project..."
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event)"
+        />
+      </div>
+
+      <!-- Project Filter -->
+      <div>
+        <app-searchable-select
+          label="Filter by Project"
+          placeholder="All Spatial Projects"
+          [options]="projectOptions()"
+          [ngModel]="filterProjectId()"
+          (selectionChange)="filterProjectId.set($event); loadPermits()"
+          [allowCreateNew]="false"
+        />
+      </div>
+
+      <!-- Authority Filter -->
+      <div>
+        <app-searchable-select
+          label="Authority Name"
+          placeholder="All Authorities"
+          categoryCode="STATUTORY_AUTHORITY"
+          [ngModel]="filterAuthority()"
+          (selectionChange)="filterAuthority.set($event); loadPermits()"
+          [allowCreateNew]="true"
+        />
+      </div>
+
+      <!-- Clearance Type Filter -->
+      <div>
+        <app-searchable-select
+          label="Clearance Type"
+          placeholder="All Permit Types"
+          categoryCode="CLEARANCE_PERMIT_TYPE"
+          [ngModel]="filterClearanceType()"
+          (selectionChange)="filterClearanceType.set($event); loadPermits()"
+          [allowCreateNew]="true"
+        />
+      </div>
+
+      <!-- Status Filter -->
+      <div>
+        <app-searchable-select
+          label="Approval Status"
+          placeholder="All Statuses"
+          categoryCode="CLEARANCE_STATUS"
+          [ngModel]="filterPermitStatus()"
+          (selectionChange)="filterPermitStatus.set($event); loadPermits()"
+          [allowCreateNew]="true"
+        />
+      </div>
+    </div>
+
+    <!-- Clearances Table -->
+    <div class="border border-border rounded-xl overflow-hidden bg-card">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-muted/70 text-muted-foreground font-semibold uppercase tracking-wider border-b border-border">
+            <tr>
+              <th class="py-3 px-4">Permit Ref & Project</th>
+              <th class="py-3 px-4">Authority & Type</th>
+              <th class="py-3 px-4">Approved Memo No</th>
+              <th class="py-3 px-4">Sanction Specs</th>
+              <th class="py-3 px-4">Expiry & Alert</th>
+              <th class="py-3 px-4">Condition Checklist</th>
+              <th class="py-3 px-4">Status</th>
+              <th class="py-3 px-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border">
+            <tr *ngFor="let p of filteredPermits()" class="hover:bg-muted/30 transition-colors">
+              <!-- Permit Ref & Project -->
+              <td class="py-3.5 px-4">
+                <div class="font-bold text-foreground">{{ p.reference_no || ('CLR-' + p.id) }}</div>
+                <div class="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1">
+                  <svg class="w-3 h-3 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  </svg>
+                  {{ p.project_name || 'Project #' + p.project_id }}
+                </div>
+              </td>
+
+              <!-- Authority & Type -->
+              <td class="py-3.5 px-4">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-primary/10 text-primary border border-primary/20">
+                  {{ p.authority_name }}
+                </span>
+                <div class="text-[11px] text-foreground font-medium mt-1">
+                  {{ p.clearance_type_id }}
+                </div>
+              </td>
+
+              <!-- Approved Memo No -->
+              <td class="py-3.5 px-4">
+                <div class="font-medium text-foreground">{{ p.approved_memo_no || '—' }}</div>
+                <div class="text-[10px] text-muted-foreground mt-0.5">
+                  App Date: {{ formatDate(p.approval_date) }}
+                </div>
+              </td>
+
+              <!-- Sanction Specs -->
+              <td class="py-3.5 px-4">
+                <div class="text-xs text-foreground font-medium">
+                  {{ p.sanctioned_floors || 'Height ' + (p.sanctioned_height_m || 'N/A') + 'm' }}
+                </div>
+                <div class="text-[10px] text-muted-foreground mt-0.5" *ngIf="p.contact_officer_name">
+                  Officer: {{ p.contact_officer_name }}
+                </div>
+              </td>
+
+              <!-- Expiry & Alert -->
+              <td class="py-3.5 px-4">
+                <div class="font-medium text-foreground">{{ formatDate(p.expiry_date) }}</div>
+                <div class="mt-1">
+                  <span
+                    class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold"
+                    [ngClass]="{
+                      'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400': p.renewal_alert_status === 'VALID',
+                      'bg-amber-500/15 text-amber-600 dark:text-amber-400 animate-pulse': p.renewal_alert_status === 'EXPIRING_SOON',
+                      'bg-rose-500/15 text-rose-600 dark:text-rose-400': p.renewal_alert_status === 'EXPIRED'
+                    }"
+                  >
+                    {{ p.renewal_alert_status }} ({{ p.days_to_expiry !== undefined ? p.days_to_expiry + 'd' : '—' }})
+                  </span>
+                </div>
+              </td>
+
+              <!-- Condition Checklist -->
+              <td class="py-3.5 px-4">
+                <button
+                  type="button"
+                  (click)="openConditionsDrawer(p)"
+                  class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-muted hover:bg-muted/80 text-foreground transition-colors border border-border"
+                >
+                  <svg class="w-3.5 h-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                  </svg>
+                  Checklist: {{ p.complied_conditions_count }}/{{ p.conditions_count }}
+                </button>
+              </td>
+
+              <!-- Status -->
+              <td class="py-3.5 px-4">
+                <span
+                  class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold"
+                  [ngClass]="{
+                    'bg-emerald-500/15 text-emerald-600': p.status === 'APPROVED',
+                    'bg-blue-500/15 text-blue-600': p.status === 'IN_REVIEW' || p.status === 'SUBMITTED',
+                    'bg-amber-500/15 text-amber-600': p.status === 'RENEWAL_PENDING',
+                    'bg-slate-500/15 text-slate-600': p.status === 'NOT_APPLIED',
+                    'bg-rose-500/15 text-rose-600': p.status === 'REJECTED' || p.status === 'EXPIRED'
+                  }"
+                >
+                  {{ p.status }}
+                </span>
+              </td>
+
+              <!-- Actions -->
+              <td class="py-3.5 px-4 text-right space-x-1">
+                <button
+                  type="button"
+                  (click)="openEditPermitModal(p)"
+                  class="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
+                  title="Edit Permit & Sanction Details"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
+
+                <a
+                  *ngIf="p.document_url"
+                  [href]="p.document_url"
+                  target="_blank"
+                  class="inline-block p-1.5 text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                  title="View Official Sanction Certificate PDF"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </a>
+              </td>
+            </tr>
+
+            <tr *ngIf="filteredPermits().length === 0">
+              <td colspan="8" class="text-center py-10 text-muted-foreground">
+                No statutory clearances or building sanctions found matching criteria.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- TAB 2: RENEWAL CALENDAR & EXPIRATION ALERTS              -->
+  <!-- ======================================================== -->
+  <div *ngIf="activeTab() === 'RENEWAL_CALENDAR'" class="space-y-4">
+    <div class="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 flex items-start gap-3">
+      <svg class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      </svg>
+      <div>
+        <h3 class="text-xs font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wide">
+          Automated Statutory Sanction Expiration Reminder Engine
+        </h3>
+        <p class="text-xs text-muted-foreground mt-0.5">
+          Clearances expiring within 30 days trigger statutory renewal alerts. Early renewal filings prevent site shutdown, RAJUK penalties, or occupancy stoppage.
+        </p>
+      </div>
+    </div>
+
+    <!-- Renewal Timeline Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div
+        *ngFor="let item of renewalCalendar()"
+        class="bg-card border rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden"
+        [ngClass]="{
+          'border-rose-500/50 bg-rose-500/5': item.alert_urgency === 'CRITICAL_EXPIRED',
+          'border-amber-500/50 bg-amber-500/5': item.alert_urgency === 'URGENT_15_DAYS',
+          'border-yellow-500/50 bg-yellow-500/5': item.alert_urgency === 'WARNING_30_DAYS',
+          'border-border': item.alert_urgency === 'NORMAL_VALID'
+        }"
+      >
+        <!-- Top Urgency Badge -->
+        <div class="flex items-center justify-between mb-3">
+          <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-primary/10 text-primary">
+            {{ item.authority_name }}
+          </span>
+          <span
+            class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide"
+            [ngClass]="{
+              'bg-rose-500 text-white animate-pulse': item.alert_urgency === 'CRITICAL_EXPIRED',
+              'bg-amber-500 text-white': item.alert_urgency === 'URGENT_15_DAYS',
+              'bg-yellow-500/20 text-yellow-700 dark:text-yellow-400': item.alert_urgency === 'WARNING_30_DAYS',
+              'bg-emerald-500/15 text-emerald-600': item.alert_urgency === 'NORMAL_VALID'
+            }"
+          >
+            {{ item.days_remaining < 0 ? 'Expired (' + (item.days_remaining * -1) + 'd ago)' : item.days_remaining + ' Days Left' }}
+          </span>
+        </div>
+
+        <h4 class="text-xs font-bold text-foreground">
+          {{ item.clearance_type_id }}
+        </h4>
+        <p class="text-[11px] text-muted-foreground mt-0.5">
+          {{ item.project_name }} | {{ item.approved_memo_no || item.reference_no }}
+        </p>
+
+        <div class="mt-3 pt-3 border-t border-border/50 text-[11px] space-y-1.5">
+          <div class="flex items-center justify-between">
+            <span class="text-muted-foreground">Expires On:</span>
+            <span class="font-bold text-foreground">{{ formatDate(item.expiry_date) }}</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-muted-foreground">Renewal Fee:</span>
+            <span class="font-bold text-primary">{{ formatCurrency(item.renewal_fee_bdt) }}</span>
+          </div>
+          <div class="flex items-center justify-between" *ngIf="item.contact_officer_name">
+            <span class="text-muted-foreground">Desk Officer:</span>
+            <span class="text-foreground truncate max-w-[150px]">{{ item.contact_officer_name }}</span>
+          </div>
+        </div>
+
+        <div class="mt-3 pt-2">
+          <app-custom-button
+            variant="outline"
+            size="sm"
+            class="w-full"
+            (click)="setActiveTab('PERMITS')"
+          >
+            Initiate Renewal Application
+          </app-custom-button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- TAB 3: DISPUTE & LITIGATION VAULT                       -->
+  <!-- ======================================================== -->
+  <div *ngIf="activeTab() === 'LITIGATION_CASES'" class="space-y-4">
+    <!-- Filter Row -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-3.5 bg-muted/40 rounded-xl border border-border">
+      <app-custom-input
+        label="Search Case No / Court"
+        placeholder="Case No, Plaintiff, Advocate..."
+        [ngModel]="searchQuery()"
+        (ngModelChange)="searchQuery.set($event)"
+      />
+
+      <app-searchable-select
+        label="Case Type"
+        placeholder="All Suit Types"
+        categoryCode="LEGAL_CASE_TYPE"
+        [ngModel]="filterCaseType()"
+        (selectionChange)="filterCaseType.set($event); loadCases()"
+        [allowCreateNew]="true"
+      />
+
+      <app-searchable-select
+        label="Filter by Project"
+        placeholder="All Projects / Parcels"
+        [options]="projectOptions()"
+        [ngModel]="filterProjectId()"
+        (selectionChange)="filterProjectId.set($event); loadCases()"
+        [allowCreateNew]="false"
+      />
+
+      <div class="flex items-end">
+        <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-foreground p-2 rounded-lg bg-card border border-border w-full">
+          <input
+            type="checkbox"
+            [checked]="filterStayOrderOnly() === true"
+            (change)="filterStayOrderOnly.set($any($event.target).checked ? true : null); loadCases()"
+            class="rounded text-primary focus:ring-primary h-4 w-4"
+          />
+          Show Active Stay Orders Only
+        </label>
+      </div>
+    </div>
+
+    <!-- Cases Table -->
+    <div class="border border-border rounded-xl overflow-hidden bg-card">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-muted/70 text-muted-foreground font-semibold uppercase tracking-wider border-b border-border">
+            <tr>
+              <th class="py-3 px-4">Case No & Court</th>
+              <th class="py-3 px-4">Statutory Section & Category</th>
+              <th class="py-3 px-4">Litigants</th>
+              <th class="py-3 px-4">Impacted Land Plot</th>
+              <th class="py-3 px-4">Stay Order Status</th>
+              <th class="py-3 px-4">Advocate & Hearing</th>
+              <th class="py-3 px-4">Risk & Exposure</th>
+              <th class="py-3 px-4 text-right">Vault & Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border">
+            <tr *ngFor="let c of filteredCases()" class="hover:bg-muted/30 transition-colors">
+              <!-- Case No & Court -->
+              <td class="py-3.5 px-4">
+                <div class="font-bold text-foreground">{{ c.case_number }}</div>
+                <div class="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1">
+                  <svg class="w-3.5 h-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
+                  </svg>
+                  {{ c.concerned_court }}
+                </div>
+              </td>
+
+              <!-- Section & Category -->
+              <td class="py-3.5 px-4">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-primary/10 text-primary border border-primary/20">
+                  {{ c.case_type }}
+                </span>
+                <div class="text-[11px] text-muted-foreground font-medium mt-1">
+                  {{ c.legal_act_section || 'General Land Dispute' }}
+                </div>
+              </td>
+
+              <!-- Litigants -->
+              <td class="py-3.5 px-4">
+                <div class="text-xs font-semibold text-foreground">P: {{ c.plaintiff }}</div>
+                <div class="text-xs text-muted-foreground mt-0.5">D: {{ c.defendant }}</div>
+              </td>
+
+              <!-- Impacted Land Plot -->
+              <td class="py-3.5 px-4">
+                <div class="font-medium text-foreground">{{ c.land_mouza || 'Mouza N/A' }}</div>
+                <div class="text-[10px] text-muted-foreground mt-0.5">
+                  Plots: {{ c.cs_rs_bs_plot_no || '—' }} ({{ c.disputed_area_decimals }} Dec)
+                </div>
+              </td>
+
+              <!-- Stay Order Status -->
+              <td class="py-3.5 px-4">
+                <div *ngIf="c.is_interim_stay_active" class="space-y-1">
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-600 dark:text-rose-400 animate-pulse">
+                    <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                    STAY ORDER ACTIVE
+                  </span>
+                  <div class="text-[10px] text-rose-500 font-medium">
+                    Until: {{ formatDate(c.stay_order_valid_until) }}
+                  </div>
+                </div>
+                <div *ngIf="!c.is_interim_stay_active">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-600">
+                    No Stay Order
+                  </span>
+                </div>
+              </td>
+
+              <!-- Advocate & Hearing -->
+              <td class="py-3.5 px-4">
+                <div class="font-medium text-foreground">{{ c.appointed_advocate }}</div>
+                <div class="text-[10px] text-muted-foreground mt-0.5">
+                  Next Hearing: <span class="font-bold text-foreground">{{ formatDate(c.next_hearing_date) }}</span>
+                </div>
+              </td>
+
+              <!-- Risk & Exposure -->
+              <td class="py-3.5 px-4">
+                <span
+                  class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold"
+                  [ngClass]="{
+                    'bg-rose-500/15 text-rose-600': c.estimated_risk_level === 'CRITICAL' || c.estimated_risk_level === 'HIGH',
+                    'bg-amber-500/15 text-amber-600': c.estimated_risk_level === 'MEDIUM',
+                    'bg-emerald-500/15 text-emerald-600': c.estimated_risk_level === 'LOW'
+                  }"
+                >
+                  {{ c.estimated_risk_level }} RISK
+                </span>
+                <div class="text-[11px] text-foreground font-bold mt-1">
+                  {{ formatCurrency(c.financial_claim_bdt) }}
+                </div>
+              </td>
+
+              <!-- Actions -->
+              <td class="py-3.5 px-4 text-right space-x-1">
+                <button
+                  type="button"
+                  (click)="selectCaseForVault(c)"
+                  class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm"
+                  title="Open Digital Safe & Hearing Diary"
+                >
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                  Vault ({{ c.documents_count }})
+                </button>
+
+                <button
+                  type="button"
+                  (click)="openEditCaseModal(c)"
+                  class="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
+                  title="Edit Case Record"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
+              </td>
+            </tr>
+
+            <tr *ngIf="filteredCases().length === 0">
+              <td colspan="8" class="text-center py-10 text-muted-foreground">
+                No legal disputes or court cases found matching criteria.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- TAB 4: CERTIFIED DIGITAL SAFE ARCHIVE & HEARING DIARY    -->
+  <!-- ======================================================== -->
+  <div *ngIf="activeTab() === 'SAFE_VAULT'" class="space-y-6">
+    <!-- Active Case Selector Header -->
+    <div class="bg-card border border-border rounded-xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div class="flex-1 w-full md:max-w-md">
+        <label class="block text-xs font-semibold text-foreground mb-1.5">
+          Select Active Litigation Case for Vault Access:
+        </label>
+        <app-searchable-select
+          placeholder="Select Court Case..."
+          [options]="caseSelectOptions()"
+          [ngModel]="selectedCaseForVault()?.id"
+          (selectionChange)="onCaseSelectChange($event)"
+          [allowCreateNew]="false"
+        />
+      </div>
+
+      <div class="flex items-center gap-2" *ngIf="selectedCaseForVault()">
+        <app-custom-button
+          variant="outline"
+          size="sm"
+          (click)="openRecordHearingModal()"
+        >
+          <span class="flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            + Record Hearing
+          </span>
+        </app-custom-button>
+
+        <app-custom-button
+          variant="primary"
+          size="sm"
+          (click)="openUploadDocModal()"
+        >
+          <span class="flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+            </svg>
+            + Upload Certified Document
+          </span>
+        </app-custom-button>
+      </div>
+    </div>
+
+    <!-- Active Case Summary Box -->
+    <div *ngIf="selectedCaseForVault() as c" class="bg-muted/40 border border-border rounded-xl p-4">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div>
+          <span class="text-xs font-bold text-primary uppercase tracking-wide">{{ c.case_type }}</span>
+          <h3 class="text-sm font-bold text-foreground mt-0.5">{{ c.case_number }}</h3>
+          <p class="text-xs text-muted-foreground mt-0.5">
+            {{ c.concerned_court }} | {{ c.legal_act_section }}
+          </p>
+        </div>
+        <div class="flex flex-wrap items-center gap-3 text-xs">
+          <div>
+            <span class="text-muted-foreground">Plaintiff:</span>
+            <span class="font-semibold text-foreground ml-1">{{ c.plaintiff }}</span>
+          </div>
+          <div>
+            <span class="text-muted-foreground">Defendant:</span>
+            <span class="font-semibold text-foreground ml-1">{{ c.defendant }}</span>
+          </div>
+          <div>
+            <span class="text-muted-foreground">Advocate:</span>
+            <span class="font-semibold text-primary ml-1">{{ c.appointed_advocate }}</span>
+          </div>
+        </div>
+      </div>
+      <div *ngIf="c.is_interim_stay_active" class="mt-3 p-2.5 bg-rose-500/10 border border-rose-500/30 rounded-lg text-xs text-rose-700 dark:text-rose-400 font-medium flex items-center gap-2">
+        <svg class="w-4 h-4 text-rose-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+        <span><strong>Active Interim Injunction / Stay Order:</strong> {{ c.stay_order_details || 'Stay order in force' }} (Valid until: {{ formatDate(c.stay_order_valid_until) }})</span>
+      </div>
+    </div>
+
+    <!-- Dual Layout: Left (Digital Safe Archive) & Right (Hearing Diary) -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" *ngIf="selectedCaseForVault() as c">
+      <!-- Left Column: Certified Safe Documents -->
+      <div class="bg-card border border-border rounded-xl p-4 space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-border">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </div>
+            <div>
+              <h4 class="text-xs font-bold text-foreground uppercase tracking-wide">
+                Digital Safe Archive (Certified Copies)
+              </h4>
+              <p class="text-[10px] text-muted-foreground">Certified land titles, petitions, stay orders & decrees</p>
+            </div>
+          </div>
+          <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+            {{ c.documents?.length || 0 }} Items
+          </span>
+        </div>
+
+        <div class="space-y-3">
+          <div
+            *ngFor="let doc of c.documents"
+            class="p-3 bg-muted/30 border border-border rounded-lg space-y-2 hover:bg-muted/50 transition-colors"
+          >
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-primary/10 text-primary uppercase">
+                  {{ doc.document_category }}
+                </span>
+                <h5 class="text-xs font-bold text-foreground mt-1">{{ doc.document_title }}</h5>
+              </div>
+              <a
+                [href]="doc.file_url"
+                target="_blank"
+                class="px-2 py-1 rounded text-[11px] font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex items-center gap-1"
+              >
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                View
+              </a>
+            </div>
+
+            <div class="text-[10px] text-muted-foreground grid grid-cols-2 gap-1 pt-1 border-t border-border/40">
+              <div>Copy No: <span class="font-medium text-foreground">{{ doc.certified_copy_no || '—' }}</span></div>
+              <div>Issue Date: <span class="font-medium text-foreground">{{ formatDate(doc.issue_or_filing_date) }}</span></div>
+              <div class="col-span-2">Issuing Authority: <span class="font-medium text-foreground">{{ doc.issuing_authority_or_court || '—' }}</span></div>
+            </div>
+
+            <div class="text-[9px] font-mono text-muted-foreground bg-muted p-1 rounded break-all flex items-center gap-1">
+              <svg class="w-3 h-3 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+              SHA-256: {{ doc.digital_safe_hash || 'Verified Safe Checksum' }}
+            </div>
+          </div>
+
+          <div *ngIf="!c.documents || c.documents.length === 0" class="text-center py-8 text-xs text-muted-foreground">
+            No certified documents archived yet in this safe vault.
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Court Hearing Diary -->
+      <div class="bg-card border border-border rounded-xl p-4 space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-border">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <div>
+              <h4 class="text-xs font-bold text-foreground uppercase tracking-wide">
+                Court Hearing Timeline & Proceedings Diary
+              </h4>
+              <p class="text-[10px] text-muted-foreground">Chronological record of bench proceedings & orders passed</p>
+            </div>
+          </div>
+          <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+            {{ c.hearings?.length || 0 }} Sessions
+          </span>
+        </div>
+
+        <div class="space-y-3">
+          <div
+            *ngFor="let h of c.hearings"
+            class="p-3 bg-muted/30 border border-border rounded-lg space-y-2 hover:bg-muted/50 transition-colors"
+          >
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-xs text-foreground flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                {{ formatDate(h.hearing_date) }}
+              </span>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-primary/10 text-primary">
+                {{ h.order_passed || 'PROCEEDINGS' }}
+              </span>
+            </div>
+
+            <p class="text-xs text-foreground">
+              {{ h.summary_of_proceedings }}
+            </p>
+
+            <div class="text-[10px] text-muted-foreground grid grid-cols-2 gap-1 pt-1 border-t border-border/40">
+              <div>Judge: <span class="font-medium text-foreground">{{ h.presiding_judge || '—' }}</span></div>
+              <div>Bench: <span class="font-medium text-foreground">{{ h.court_bench || '—' }}</span></div>
+              <div>Advocate: <span class="font-medium text-foreground">{{ h.attended_advocate || '—' }}</span></div>
+              <div>Next Hearing: <span class="font-bold text-primary">{{ formatDate(h.next_hearing_date) }}</span></div>
+            </div>
+
+            <div *ngIf="h.action_items" class="text-[11px] bg-amber-500/10 text-amber-700 dark:text-amber-400 p-2 rounded border border-amber-500/20 font-medium">
+              <strong>Action Directive:</strong> {{ h.action_items }}
+            </div>
+          </div>
+
+          <div *ngIf="!c.hearings || c.hearings.length === 0" class="text-center py-8 text-xs text-muted-foreground">
+            No hearing entries logged yet for this case.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- CONDITIONS CHECKLIST DRAWER / MODAL                      -->
+  <!-- ======================================================== -->
+  <div *ngIf="selectedPermitForConditions() as cl" class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+    <div class="bg-card border border-border rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+      <!-- Drawer Header -->
+      <div class="p-5 border-b border-border flex items-center justify-between bg-muted/30">
+        <div>
+          <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-primary/10 text-primary">
+            {{ cl.authority_name }} — {{ cl.clearance_type_id }}
+          </span>
+          <h3 class="text-sm font-bold text-foreground mt-1">
+            Mandatory Approval Conditions Checklist: {{ cl.approved_memo_no || cl.reference_no }}
+          </h3>
+          <p class="text-xs text-muted-foreground mt-0.5">
+            {{ cl.project_name }} | Imposed by {{ cl.authority_name }}
+          </p>
+        </div>
+        <button
+          type="button"
+          (click)="closeConditionsDrawer()"
+          class="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-xl transition-colors"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Drawer Body -->
+      <div class="p-5 overflow-y-auto space-y-4 flex-1">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-muted-foreground">
+            Compliance Status: {{ cl.complied_conditions_count }} of {{ cl.conditions_count }} Complied
+          </span>
+          <app-custom-button
+            variant="primary"
+            size="sm"
+            (click)="openAddConditionModal()"
+          >
+            + Add Sanction Condition
+          </app-custom-button>
+        </div>
+
+        <div class="space-y-3">
+          <div
+            *ngFor="let cond of cl.conditions"
+            class="p-3.5 bg-muted/30 border border-border rounded-xl space-y-2 hover:bg-muted/50 transition-colors"
+          >
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex items-start gap-2.5">
+                <input
+                  type="checkbox"
+                  [checked]="cond.compliance_status === 'COMPLIED'"
+                  (change)="toggleConditionCompliance(cond)"
+                  class="mt-1 rounded text-primary focus:ring-primary h-4 w-4 cursor-pointer"
+                />
+                <div>
+                  <span class="text-[10px] font-mono font-bold text-primary mr-1.5">{{ cond.condition_code }}</span>
+                  <span class="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold bg-muted text-muted-foreground mr-1.5">
+                    {{ cond.condition_category }}
+                  </span>
+                  <span
+                    class="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold"
+                    [ngClass]="cond.mandatory_level === 'CRITICAL' ? 'bg-rose-500/15 text-rose-600' : 'bg-amber-500/15 text-amber-600'"
+                  >
+                    {{ cond.mandatory_level }}
+                  </span>
+                  <h4 class="text-xs font-bold text-foreground mt-1">{{ cond.condition_title }}</h4>
+                </div>
+              </div>
+
+              <span
+                class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide flex-shrink-0"
+                [ngClass]="{
+                  'bg-emerald-500/15 text-emerald-600': cond.compliance_status === 'COMPLIED',
+                  'bg-blue-500/15 text-blue-600': cond.compliance_status === 'IN_PROGRESS',
+                  'bg-slate-500/15 text-slate-600': cond.compliance_status === 'PENDING',
+                  'bg-purple-500/15 text-purple-600': cond.compliance_status === 'WAIVED'
+                }"
+              >
+                {{ cond.compliance_status }}
+              </span>
+            </div>
+
+            <div class="text-[11px] text-muted-foreground pl-6" *ngIf="cond.remarks">
+              {{ cond.remarks }}
+            </div>
+
+            <div class="text-[10px] text-muted-foreground pl-6 flex items-center justify-between border-t border-border/40 pt-1.5" *ngIf="cond.compliance_date || cond.verified_by_officer">
+              <span>Verified On: {{ formatDate(cond.compliance_date) }}</span>
+              <span>Officer: {{ cond.verified_by_officer || '—' }}</span>
+            </div>
+          </div>
+
+          <div *ngIf="!cl.conditions || cl.conditions.length === 0" class="text-center py-10 text-xs text-muted-foreground">
+            No mandatory conditions recorded for this clearance permit yet. Click "+ Add Sanction Condition" above.
+          </div>
+        </div>
+      </div>
+
+      <!-- Drawer Footer -->
+      <div class="p-4 border-t border-border bg-muted/20 flex justify-end">
+        <app-custom-button variant="outline" size="sm" (click)="closeConditionsDrawer()">
+          Close Checklist
+        </app-custom-button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: ADD CONDITION TO CHECKLIST                        -->
+  <!-- ======================================================== -->
+  <div *ngIf="isConditionModalOpen()" class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+    <div class="bg-card border border-border rounded-2xl w-full max-w-lg p-6 shadow-2xl">
+      <div class="flex items-center justify-between pb-4 border-b border-border">
+        <h3 class="text-sm font-bold text-foreground">
+          + Add Mandatory Sanction Condition
+        </h3>
+        <button
+          type="button"
+          (click)="isConditionModalOpen.set(false)"
+          class="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <form [formGroup]="conditionForm" (ngSubmit)="submitCondition()" class="space-y-4 pt-4">
+        <div class="grid grid-cols-2 gap-3">
+          <app-custom-input
+            label="Condition Code"
+            placeholder="e.g. COND-01"
+            [formGroup]="conditionForm"
+            controlName="condition_code"
+            [required]="true"
+          />
+
+          <app-searchable-select
+            label="Condition Category"
+            placeholder="Select Category..."
+            categoryCode="CLEARANCE_CONDITION_CATEGORY"
+            [formGroup]="conditionForm"
+            controlName="condition_category"
+            [allowCreateNew]="true"
+            [required]="true"
+          />
+        </div>
+
+        <app-custom-input
+          label="Condition Mandate Title"
+          placeholder="e.g. 3.0m Setback, 50,000 Gallon Fire Reservoir, Rainwater Pit..."
+          [formGroup]="conditionForm"
+          controlName="condition_title"
+          [required]="true"
+        />
+
+        <div class="grid grid-cols-2 gap-3">
+          <app-searchable-select
+            label="Mandatory Severity Level"
+            [options]="[
+              { value: 'CRITICAL', label: 'CRITICAL (Occupancy Block)' },
+              { value: 'MANDATORY', label: 'MANDATORY (Standard Compliance)' },
+              { value: 'ADVISORY', label: 'ADVISORY (Good Practice)' }
+            ]"
+            [formGroup]="conditionForm"
+            controlName="mandatory_level"
+            [allowCreateNew]="false"
+            [required]="true"
+          />
+
+          <app-searchable-select
+            label="Compliance Status"
+            [options]="[
+              { value: 'PENDING', label: 'PENDING' },
+              { value: 'IN_PROGRESS', label: 'IN_PROGRESS' },
+              { value: 'COMPLIED', label: 'COMPLIED' },
+              { value: 'WAIVED', label: 'WAIVED' }
+            ]"
+            [formGroup]="conditionForm"
+            controlName="compliance_status"
+            [allowCreateNew]="false"
+            [required]="true"
+          />
+        </div>
+
+        <app-custom-input
+          label="Verification Officer"
+          placeholder="e.g. Inspector M. Kabir, FSCD"
+          [formGroup]="conditionForm"
+          controlName="verified_by_officer"
+        />
+
+        <app-custom-textarea
+          label="Remarks & Demarcation Notes"
+          placeholder="Enter compliance details or notes..."
+          [formGroup]="conditionForm"
+          controlName="remarks"
+          [rows]="2"
+        />
+
+        <div class="flex justify-end gap-3 pt-3 border-t border-border">
+          <app-custom-button variant="outline" size="sm" (click)="isConditionModalOpen.set(false)">
+            Cancel
+          </app-custom-button>
+          <app-custom-button variant="primary" size="sm" type="submit" [disabled]="isSubmitting()">
+            Save Condition
+          </app-custom-button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: CREATE / EDIT STATUTORY PERMIT                   -->
+  <!-- ======================================================== -->
+  <div *ngIf="isPermitModalOpen()" class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+    <div class="bg-card border border-border rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+      <div class="p-5 border-b border-border flex items-center justify-between bg-muted/30">
+        <h3 class="text-sm font-bold text-foreground">
+          {{ permitForm.get('id')?.value ? 'Edit Statutory Permit & Sanction' : '+ Record New Statutory Clearance & Permit' }}
+        </h3>
+        <button
+          type="button"
+          (click)="isPermitModalOpen.set(false)"
+          class="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <form [formGroup]="permitForm" (ngSubmit)="submitPermit()" class="p-5 overflow-y-auto space-y-4 flex-1">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <app-searchable-select
+            label="Project Master"
+            placeholder="Select Project..."
+            [options]="projectOptions()"
+            [formGroup]="permitForm"
+            controlName="project_id"
+            [allowCreateNew]="false"
+            [required]="true"
+          />
+
+          <app-searchable-select
+            label="Statutory Authority"
+            placeholder="Select Authority..."
+            categoryCode="STATUTORY_AUTHORITY"
+            [formGroup]="permitForm"
+            controlName="authority_name"
+            [allowCreateNew]="true"
+            [required]="true"
+          />
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <app-searchable-select
+            label="Clearance / Permit Type"
+            placeholder="Select Type..."
+            categoryCode="CLEARANCE_PERMIT_TYPE"
+            [formGroup]="permitForm"
+            controlName="clearance_type_id"
+            [allowCreateNew]="true"
+            [required]="true"
+          />
+
+          <app-custom-input
+            label="Permit Reference No"
+            placeholder="e.g. CLR-RAJUK-2026-001"
+            [formGroup]="permitForm"
+            controlName="reference_no"
+          />
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <app-custom-input
+            label="Application Memo No"
+            placeholder="e.g. RAJUK/APP/2025/1124"
+            [formGroup]="permitForm"
+            controlName="application_memo_no"
+          />
+
+          <app-custom-input
+            label="Approved Sanction Memo No"
+            placeholder="e.g. RAJUK/SANCTION/2026/092"
+            [formGroup]="permitForm"
+            controlName="approved_memo_no"
+          />
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <app-custom-input
+            label="Approval Date"
+            type="date"
+            [formGroup]="permitForm"
+            controlName="approval_date"
+          />
+
+          <app-custom-input
+            label="Expiry Date"
+            type="date"
+            [formGroup]="permitForm"
+            controlName="expiry_date"
+          />
+
+          <app-custom-input
+            label="Renewal Fee (BDT)"
+            type="number"
+            [formGroup]="permitForm"
+            controlName="renewal_fee_bdt"
+          />
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <app-custom-input
+            label="Sanctioned Floors"
+            placeholder="e.g. 2 Basement + Ground + 14 Floors"
+            [formGroup]="permitForm"
+            controlName="sanctioned_floors"
+          />
+
+          <app-custom-input
+            label="Sanctioned Height (Meters)"
+            type="number"
+            placeholder="e.g. 52.80"
+            [formGroup]="permitForm"
+            controlName="sanctioned_height_m"
+          />
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <app-custom-input
+            label="Desk Contact Officer Name"
+            placeholder="e.g. Engr. M. A. Rashid (Authorized Officer)"
+            [formGroup]="permitForm"
+            controlName="contact_officer_name"
+          />
+
+          <app-custom-input
+            label="Officer Phone / Email"
+            placeholder="e.g. +8801711223344"
+            [formGroup]="permitForm"
+            controlName="contact_officer_phone"
+          />
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <app-searchable-select
+            label="Permit Status"
+            placeholder="Select Status..."
+            categoryCode="CLEARANCE_STATUS"
+            [formGroup]="permitForm"
+            controlName="status"
+            [allowCreateNew]="true"
+            [required]="true"
+          />
+
+          <app-custom-input
+            label="Document Certificate URL"
+            placeholder="/static/uploads/clearances/sanction.pdf"
+            [formGroup]="permitForm"
+            controlName="document_url"
+          />
+        </div>
+
+        <app-custom-textarea
+          label="Remarks & Conditions Summary"
+          placeholder="Enter condition notes, structural codes, or FAR mandates..."
+          [formGroup]="permitForm"
+          controlName="remarks"
+          [rows]="2"
+        />
+
+        <div class="flex justify-end gap-3 pt-3 border-t border-border">
+          <app-custom-button variant="outline" size="sm" (click)="isPermitModalOpen.set(false)">
+            Cancel
+          </app-custom-button>
+          <app-custom-button variant="primary" size="sm" type="submit" [disabled]="isSubmitting()">
+            Save Sanction Permit
+          </app-custom-button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: CREATE / EDIT COURT CASE                          -->
+  <!-- ======================================================== -->
+  <div *ngIf="isCaseModalOpen()" class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+    <div class="bg-card border border-border rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+      <div class="p-5 border-b border-border flex items-center justify-between bg-muted/30">
+        <h3 class="text-sm font-bold text-foreground">
+          {{ caseForm.get('id')?.value ? 'Edit Litigation Record' : '+ Log New Land Dispute / Court Case' }}
+        </h3>
+        <button
+          type="button"
+          (click)="isCaseModalOpen.set(false)"
+          class="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <form [formGroup]="caseForm" (ngSubmit)="submitCase()" class="p-5 overflow-y-auto space-y-4 flex-1">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <app-searchable-select
+            label="Case / Suit Classification"
+            placeholder="Select Type..."
+            categoryCode="LEGAL_CASE_TYPE"
+            [formGroup]="caseForm"
+            controlName="case_type"
+            [allowCreateNew]="true"
+            [required]="true"
+          />
+
+          <app-custom-input
+            label="Court Case Number"
+            placeholder="e.g. Title Suit No. 88 of 2026"
+            [formGroup]="caseForm"
+            controlName="case_number"
+            [required]="true"
+          />
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <app-searchable-select
+            label="Concerned Court / Forum"
+            placeholder="Select Court..."
+            categoryCode="COURT_NAME"
+            [formGroup]="caseForm"
+            controlName="concerned_court"
+            [allowCreateNew]="true"
+            [required]="true"
+          />
+
+          <app-searchable-select
+            label="Statutory Section / Act"
+            placeholder="Select Section..."
+            categoryCode="LEGAL_ACT_SECTION"
+            [formGroup]="caseForm"
+            controlName="legal_act_section"
+            [allowCreateNew]="true"
+          />
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <app-custom-input
+            label="Impacted Mouza"
+            placeholder="e.g. Mouza: Baunia"
+            [formGroup]="caseForm"
+            controlName="land_mouza"
+          />
+
+          <app-custom-input
+            label="CS / RS / BS Plot No"
+            placeholder="e.g. CS-102, RS-452"
+            [formGroup]="caseForm"
+            controlName="cs_rs_bs_plot_no"
+          />
+
+          <app-custom-input
+            label="Disputed Land (Decimals)"
+            type="number"
+            placeholder="e.g. 5.50"
+            [formGroup]="caseForm"
+            controlName="disputed_area_decimals"
+          />
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <app-custom-input
+            label="Plaintiff (Badi)"
+            placeholder="Name of Plaintiff"
+            [formGroup]="caseForm"
+            controlName="plaintiff"
+            [required]="true"
+          />
+
+          <app-custom-input
+            label="Defendant (Bibadi)"
+            placeholder="Name of Defendant"
+            [formGroup]="caseForm"
+            controlName="defendant"
+            [required]="true"
+          />
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <app-custom-input
+            label="Appointed Advocate"
+            placeholder="Senior Advocate Name"
+            [formGroup]="caseForm"
+            controlName="appointed_advocate"
+            [required]="true"
+          />
+
+          <app-custom-input
+            label="Advocate Chamber / Law Firm"
+            placeholder="e.g. Supreme Court Bar Rm 204"
+            [formGroup]="caseForm"
+            controlName="advocate_chamber"
+          />
+
+          <app-custom-input
+            label="Advocate Contact Phone"
+            placeholder="e.g. +8801700112233"
+            [formGroup]="caseForm"
+            controlName="advocate_contact_phone"
+          />
+        </div>
+
+        <!-- Interim Stay Order Section -->
+        <div class="p-3.5 bg-rose-500/10 border border-rose-500/20 rounded-xl space-y-3">
+          <label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-rose-700 dark:text-rose-400">
+            <input
+              type="checkbox"
+              formControlName="is_interim_stay_active"
+              class="rounded text-rose-600 focus:ring-rose-500 h-4 w-4"
+            />
+            Has the Court Issued an Interim Injunction / Stay Order?
+          </label>
+
+          <div *ngIf="caseForm.get('is_interim_stay_active')?.value" class="space-y-3 pt-2 border-t border-rose-500/20">
+            <app-custom-textarea
+              label="Stay Order Terms & Restraining Scope"
+              placeholder="e.g. Ad-interim stay on construction over eastern 6 decimals pending commission report..."
+              [formGroup]="caseForm"
+              controlName="stay_order_details"
+              [rows]="2"
+            />
+
+            <div class="grid grid-cols-2 gap-3">
+              <app-custom-input
+                label="Stay Granted Date"
+                type="date"
+                [formGroup]="caseForm"
+                controlName="stay_order_granted_date"
+              />
+
+              <app-custom-input
+                label="Stay Order Valid Until"
+                type="date"
+                [formGroup]="caseForm"
+                controlName="stay_order_valid_until"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <app-searchable-select
+            label="Estimated Risk Level"
+            [options]="[
+              { value: 'LOW', label: 'LOW' },
+              { value: 'MEDIUM', label: 'MEDIUM' },
+              { value: 'HIGH', label: 'HIGH' },
+              { value: 'CRITICAL', label: 'CRITICAL (Stay Order on Site)' }
+            ]"
+            [formGroup]="caseForm"
+            controlName="estimated_risk_level"
+            [allowCreateNew]="false"
+            [required]="true"
+          />
+
+          <app-custom-input
+            label="Financial Claim Exposure (BDT)"
+            type="number"
+            placeholder="e.g. 15000000"
+            [formGroup]="caseForm"
+            controlName="financial_claim_bdt"
+          />
+
+          <app-custom-input
+            label="Next Hearing Date"
+            type="date"
+            [formGroup]="caseForm"
+            controlName="next_hearing_date"
+          />
+        </div>
+
+        <app-custom-textarea
+          label="Litigation Summary & Strategy"
+          placeholder="Brief facts, historical land lineage, defense arguments..."
+          [formGroup]="caseForm"
+          controlName="case_summary"
+          [rows]="2"
+        />
+
+        <div class="flex justify-end gap-3 pt-3 border-t border-border">
+          <app-custom-button variant="outline" size="sm" (click)="isCaseModalOpen.set(false)">
+            Cancel
+          </app-custom-button>
+          <app-custom-button variant="primary" size="sm" type="submit" [disabled]="isSubmitting()">
+            Save Litigation Record
+          </app-custom-button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: UPLOAD CERTIFIED DOCUMENT (DIGITAL SAFE)          -->
+  <!-- ======================================================== -->
+  <div *ngIf="isDocModalOpen()" class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+    <div class="bg-card border border-border rounded-2xl w-full max-w-lg p-6 shadow-2xl">
+      <div class="flex items-center justify-between pb-4 border-b border-border">
+        <h3 class="text-sm font-bold text-foreground">
+          + Archive Certified Document in Digital Safe
+        </h3>
+        <button
+          type="button"
+          (click)="isDocModalOpen.set(false)"
+          class="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <form [formGroup]="docForm" (ngSubmit)="submitDocument()" class="space-y-4 pt-4">
+        <div class="grid grid-cols-2 gap-3">
+          <app-custom-input
+            label="Document Code"
+            placeholder="e.g. DOC-SAFE-01"
+            [formGroup]="docForm"
+            controlName="document_code"
+            [required]="true"
+          />
+
+          <app-searchable-select
+            label="Document Classification"
+            placeholder="Select Category..."
+            categoryCode="SAFE_DOCUMENT_CATEGORY"
+            [formGroup]="docForm"
+            controlName="document_category"
+            [allowCreateNew]="true"
+            [required]="true"
+          />
+        </div>
+
+        <app-custom-input
+          label="Certified Document Title"
+          placeholder="e.g. Certified Copy of Registered Baya Deed No. 4412/1984"
+          [formGroup]="docForm"
+          controlName="document_title"
+          [required]="true"
+        />
+
+        <div class="grid grid-cols-2 gap-3">
+          <app-custom-input
+            label="Certified Copy / Volume No"
+            placeholder="e.g. CC-TEJGAON-84-4412"
+            [formGroup]="docForm"
+            controlName="certified_copy_no"
+          />
+
+          <app-custom-input
+            label="Issue / Execution Date"
+            type="date"
+            [formGroup]="docForm"
+            controlName="issue_or_filing_date"
+          />
+        </div>
+
+        <app-custom-input
+          label="Issuing Authority / Sub-Registry / Bench"
+          placeholder="e.g. Tejgaon Sub-Registry / High Court Bench 07"
+          [formGroup]="docForm"
+          controlName="issuing_authority_or_court"
+        />
+
+        <app-custom-input
+          label="Digital Safe File URL / Path"
+          placeholder="/static/uploads/legal_vault/baya_deed.pdf"
+          [formGroup]="docForm"
+          controlName="file_url"
+          [required]="true"
+        />
+
+        <app-custom-textarea
+          label="Archival & Legal Importance Notes"
+          placeholder="Historical title lineage, vital recital clauses..."
+          [formGroup]="docForm"
+          controlName="summary_notes"
+          [rows]="2"
+        />
+
+        <div class="flex justify-end gap-3 pt-3 border-t border-border">
+          <app-custom-button variant="outline" size="sm" (click)="isDocModalOpen.set(false)">
+            Cancel
+          </app-custom-button>
+          <app-custom-button variant="primary" size="sm" type="submit" [disabled]="isSubmitting()">
+            Save to Digital Safe
+          </app-custom-button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: RECORD COURT HEARING ENTRY                        -->
+  <!-- ======================================================== -->
+  <div *ngIf="isHearingModalOpen()" class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+    <div class="bg-card border border-border rounded-2xl w-full max-w-lg p-6 shadow-2xl">
+      <div class="flex items-center justify-between pb-4 border-b border-border">
+        <h3 class="text-sm font-bold text-foreground">
+          + Record Court Hearing Session & Diary
+        </h3>
+        <button
+          type="button"
+          (click)="isHearingModalOpen.set(false)"
+          class="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <form [formGroup]="hearingForm" (ngSubmit)="submitHearing()" class="space-y-4 pt-4">
+        <div class="grid grid-cols-2 gap-3">
+          <app-custom-input
+            label="Hearing Date"
+            type="date"
+            [formGroup]="hearingForm"
+            controlName="hearing_date"
+            [required]="true"
+          />
+
+          <app-custom-input
+            label="Order Passed"
+            placeholder="e.g. TIME_PETITION_ALLOWED"
+            [formGroup]="hearingForm"
+            controlName="order_passed"
+            [required]="true"
+          />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <app-custom-input
+            label="Presiding Judge"
+            placeholder="Hon'ble Justice / Judge Name"
+            [formGroup]="hearingForm"
+            controlName="presiding_judge"
+          />
+
+          <app-custom-input
+            label="Court Bench / Room"
+            placeholder="e.g. Division Bench No. 07"
+            [formGroup]="hearingForm"
+            controlName="court_bench"
+          />
+        </div>
+
+        <app-custom-textarea
+          label="Summary of Bench Proceedings"
+          placeholder="Describe arguments, submissions, witnesses examined, documents marked as exhibits..."
+          [formGroup]="hearingForm"
+          controlName="summary_of_proceedings"
+          [rows]="3"
+          [required]="true"
+        />
+
+        <div class="grid grid-cols-2 gap-3">
+          <app-custom-input
+            label="Next Adjourned Hearing Date"
+            type="date"
+            [formGroup]="hearingForm"
+            controlName="next_hearing_date"
+          />
+
+          <app-custom-input
+            label="Attended Advocate"
+            placeholder="Advocate Name"
+            [formGroup]="hearingForm"
+            controlName="attended_advocate"
+          />
+        </div>
+
+        <app-custom-input
+          label="Action Directives / Steps Taken"
+          placeholder="e.g. File Affidavit-in-Opposition within 14 days"
+          [formGroup]="hearingForm"
+          controlName="action_items"
+        />
+
+        <div class="flex justify-end gap-3 pt-3 border-t border-border">
+          <app-custom-button variant="outline" size="sm" (click)="isHearingModalOpen.set(false)">
+            Cancel
+          </app-custom-button>
+          <app-custom-button variant="primary" size="sm" type="submit" [disabled]="isSubmitting()">
+            Save Hearing Log
+          </app-custom-button>
+        </div>
+      </form>
+    </div>
+  </div>
+</app-card-container>

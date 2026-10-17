@@ -66,29 +66,103 @@ class BrokerCommission(Base):
 
 class CourtCase(Base):
     """
-    Legal Case & Court Litigation Tracking (Module 46).
-    Types: Title Suit, Injunction, NI Act 138 (Cheque Bounce), Land Dispute.
+    Legal Case & Court Litigation Tracking (Module 46 / PROMPT 12).
+    Types: Title Suit, Injunction, NI Act 138 (Cheque Bounce), Land Dispute, Writ Petition.
     """
     __tablename__ = "leg_court_cases"
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     project_id = Column(BigInteger, ForeignKey("prj_projects.id", ondelete="SET NULL"), nullable=True, index=True)
     
-    case_type = Column(String(64), nullable=False, index=True) # Title Suit, Injunction, NI Act 138, Land Dispute
+    case_type = Column(String(64), nullable=False, index=True) # Title Suit, Injunction, NI Act 138, Land Dispute, Writ Petition
     case_number = Column(String(64), nullable=False, index=True)
-    concerned_court = Column(String(128), nullable=False) # e.g., Joint District Judge 1st Court Dhaka
+    concerned_court = Column(String(128), nullable=False) # e.g., Supreme Court High Court Div / Joint District Judge 1st Court Dhaka
+    legal_act_section = Column(String(128), nullable=True) # e.g., Specific Relief Act 1877 Sec 42, CPC Order 39 Rule 1 & 2
+    dispute_category = Column(String(64), nullable=False, default="LAND_TITLE_DISPUTE", index=True) # LAND_TITLE_DISPUTE, BOUNDARY_ENCROACHMENT, INJUNCTION_STAY, COMMERCIAL_CONTRACT
+    
+    # Impacted Land Identification
+    land_mouza = Column(String(128), nullable=True) # e.g., Mouza: Baunia, Tejgaon
+    cs_rs_bs_plot_no = Column(String(128), nullable=True) # e.g., CS-102, RS-450, BS-891
+    disputed_area_decimals = Column(Numeric(10, 4), nullable=False, default=0.0000)
+    
+    # Litigants & Legal Counsel
     plaintiff = Column(String(128), nullable=False)
     defendant = Column(String(128), nullable=False)
     appointed_advocate = Column(String(128), nullable=False)
+    advocate_chamber = Column(String(128), nullable=True)
+    advocate_contact_phone = Column(String(64), nullable=True)
+    advocate_email = Column(String(128), nullable=True)
     
+    # Injunction & Stay Orders
+    is_interim_stay_active = Column(Boolean, nullable=False, default=False, index=True) # Active status quo / stay order
+    stay_order_details = Column(Text, nullable=True)
+    stay_order_granted_date = Column(Date, nullable=True)
+    stay_order_valid_until = Column(Date, nullable=True)
+    
+    # Risk, Claims & Timeline
+    estimated_risk_level = Column(String(32), nullable=False, default="MEDIUM", index=True) # LOW, MEDIUM, HIGH, CRITICAL
+    financial_claim_bdt = Column(Numeric(16, 2), nullable=False, default=0.00)
     next_hearing_date = Column(Date, nullable=True)
-    status = Column(String(32), nullable=False, default="HEARING_ONGOING", index=True) # FILED, HEARING_ONGOING, STAY_ORDER_GRANTED, DISPOSED, DECREE_FAVORABLE
+    status = Column(String(32), nullable=False, default="HEARING_ONGOING", index=True) # FILED, HEARING_ONGOING, STAY_ORDER_GRANTED, EVIDENCE_STAGE, DECREE_FAVORABLE, DISPOSED
+    decree_outcome = Column(String(64), nullable=True) # FAVORABLE_DECREE, COMPROMISE_SOLENAMA, DISMISSED
     case_summary = Column(Text, nullable=True)
 
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
 
     project = relationship("Project")
+    documents = relationship("CourtCaseDocument", back_populates="court_case", cascade="all, delete-orphan")
+    hearings = relationship("CourtCaseHearing", back_populates="court_case", cascade="all, delete-orphan")
+
+
+class CourtCaseDocument(Base):
+    """
+    Digital Safe Archive for certified copies of land titles, High Court petitions, interim stay orders & judgments.
+    """
+    __tablename__ = "leg_case_documents"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    case_id = Column(BigInteger, ForeignKey("leg_court_cases.id", ondelete="CASCADE"), nullable=False, index=True)
+    document_code = Column(String(32), nullable=False, index=True) # e.g. DOC-SAFE-01
+    document_category = Column(String(64), nullable=False, index=True) # CERTIFIED_LAND_TITLE, HIGH_COURT_WRIT_PETITION, INTERIM_INJUNCTION_ORDER, JUDGMENT_SUMMARY, PLAINT_WRITTEN_STATEMENT, CS_RS_BS_PORCHA
+    document_title = Column(String(255), nullable=False)
+    certified_copy_no = Column(String(128), nullable=True) # Certified copy / registry volume index
+    issue_or_filing_date = Column(Date, nullable=True)
+    issuing_authority_or_court = Column(String(128), nullable=True) # Sub-Registry Tejgaon / High Court Bench 04
+    file_url = Column(String(255), nullable=False)
+    file_size_kb = Column(Integer, default=0)
+    digital_safe_hash = Column(String(64), nullable=True) # SHA-256 integrity checksum
+    uploaded_by_name = Column(String(128), nullable=True)
+    is_confidential = Column(Boolean, default=True)
+    summary_notes = Column(Text, nullable=True)
+
+    created_at = Column(TIMESTAMP, server_default=func.now())
+    updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
+
+    court_case = relationship("CourtCase", back_populates="documents")
+
+
+class CourtCaseHearing(Base):
+    """
+    Litigation hearing history, bench proceedings summary & next adjourned date diary.
+    """
+    __tablename__ = "leg_case_hearings"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    case_id = Column(BigInteger, ForeignKey("leg_court_cases.id", ondelete="CASCADE"), nullable=False, index=True)
+    hearing_date = Column(Date, nullable=False, index=True)
+    presiding_judge = Column(String(128), nullable=True)
+    court_bench = Column(String(128), nullable=True)
+    summary_of_proceedings = Column(Text, nullable=False)
+    order_passed = Column(String(128), nullable=True) # ADJOURNED, TIME_PETITION_ALLOWED, INTERIM_STAY_EXTENDED, EVIDENCE_RECORDED, ARGUMENTS_HEARD
+    next_hearing_date = Column(Date, nullable=True, index=True)
+    attended_advocate = Column(String(128), nullable=True)
+    action_items = Column(Text, nullable=True)
+
+    created_at = Column(TIMESTAMP, server_default=func.now())
+    updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
+
+    court_case = relationship("CourtCase", back_populates="hearings")
 
 
 class MachineryAsset(Base):
