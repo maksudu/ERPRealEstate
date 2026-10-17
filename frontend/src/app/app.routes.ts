@@ -298,6 +298,37 @@ export const routes: Routes = [
     title: 'Legacy Excel Data Import & Migration - Bangladesh Real Estate ERP'
   },
   {
+    path: 'hrms',
+    redirectTo: 'hrms/org-structure',
+    pathMatch: 'full'
+  },
+  {
+    path: 'hrms/org-structure',
+    loadComponent: () => import('./features/hrms/org-structure/org-structure.component').then(m => m.OrgStructureComponent),
+    title: 'Company Master & Org Structure - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'hrms/departments',
+    loadComponent: () => import('./features/hrms/departments/departments.component').then(m => m.DepartmentsComponent),
+    title: 'Department Master & Corporate Hierarchy - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'hrms/designations',
+    loadComponent: () => import('./features/hrms/designations/designations.component').then(m => m.DesignationsComponent),
+    title: 'Designations, Salary Grades & Position Management - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'hrms/positions',
+    redirectTo: 'hrms/designations',
+    pathMatch: 'full'
+  },
+  {
+    path: 'hrms/companies',
+    redirectTo: 'hrms/org-structure',
+    pathMatch: 'full'
+  },
+
+  {
     path: 'hrms/dashboard',
     loadComponent: () => import('./features/hrms/dashboard/hrms-dashboard.component').then(m => m.HrmsDashboardComponent),
     title: 'HRMS Cockpit & Labour Overview - Bangladesh Real Estate ERP'
@@ -320,7 +351,17 @@ export const routes: Routes = [
   {
     path: 'hrms/attendance',
     loadComponent: () => import('./features/hrms/attendance/attendance-management.component').then(m => m.AttendanceManagementComponent),
-    title: 'Attendance Punches & Leave Workflow - Bangladesh Real Estate ERP'
+    title: 'Attendance Punches & Shift Management - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'hrms/leave-overtime',
+    loadComponent: () => import('./features/hrms/leave/leave-overtime.component').then(m => m.LeaveOvertimeComponent),
+    title: 'Leave & Overtime Management Engine - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'hrms/leave',
+    redirectTo: 'hrms/leave-overtime',
+    pathMatch: 'full'
   },
   {
     path: 'governance/approvals',

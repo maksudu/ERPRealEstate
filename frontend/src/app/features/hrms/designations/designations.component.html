@@ -1,0 +1,1432 @@
+<div class="space-y-6">
+  <!-- Feedback / Alert Notifications -->
+  @if (successMessage()) {
+    <div class="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 flex items-center justify-between text-emerald-800 dark:text-emerald-300 text-xs font-semibold animate-fadeIn shadow-2xs">
+      <div class="flex items-center gap-2">
+        <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        <span>{{ successMessage() }}</span>
+      </div>
+      <button type="button" (click)="clearAlerts()" class="text-emerald-600 hover:text-emerald-800 dark:hover:text-emerald-200">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+  }
+
+  @if (errorMessage()) {
+    <div class="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 flex items-center justify-between text-rose-800 dark:text-rose-300 text-xs font-semibold animate-fadeIn shadow-2xs">
+      <div class="flex items-center gap-2">
+        <svg class="w-4 h-4 text-rose-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+        <span>{{ errorMessage() }}</span>
+      </div>
+      <button type="button" (click)="clearAlerts()" class="text-rose-600 hover:text-rose-800 dark:hover:text-rose-200">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+  }
+
+  <!-- Unified Top Card Container (Consistent Spacing & Radius) -->
+  <app-card-container
+    title="Designation & Position Management"
+    subtitle="Enterprise Job Architecture: Salary Grades, Employee Hierarchy Bands, Sanctioned Headcount & Vacancy Pipeline"
+    badge="HRMS Core"
+    paddingClass="p-0"
+  >
+    <!-- Top Action Toolbar -->
+    <div card-actions class="flex flex-wrap items-center gap-2">
+      <app-custom-button
+        variant="outline"
+        size="sm"
+        label="Lookup Settings"
+        (btnClick)="activeTab.set('settings')"
+      >
+        <svg class="w-4 h-4 mr-1 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+      </app-custom-button>
+
+      @if (activeTab() === 'designations') {
+        <app-custom-button
+          variant="primary"
+          size="sm"
+          label="+ New Job Title"
+          (btnClick)="openCreateDesigModal()"
+        ></app-custom-button>
+      } @else if (activeTab() === 'grades') {
+        <app-custom-button
+          variant="primary"
+          size="sm"
+          label="+ New Salary Grade"
+          (btnClick)="openCreateGradeModal()"
+        ></app-custom-button>
+      } @else if (activeTab() === 'positions' || activeTab() === 'vacancies') {
+        <app-custom-button
+          variant="primary"
+          size="sm"
+          label="+ Sanction New Position"
+          (btnClick)="openCreatePosModal()"
+        ></app-custom-button>
+      }
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="px-6 pt-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40">
+      <app-custom-tabs
+        [tabs]="tabs()"
+        [activeTabId]="activeTab()"
+        (tabChange)="activeTab.set($event)"
+      ></app-custom-tabs>
+    </div>
+
+    <!-- Tab 1: Job Titles & Designations -->
+    @if (activeTab() === 'designations') {
+      <div class="p-6 space-y-5 animate-fadeIn">
+        <!-- Filter Toolbar -->
+        <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 grid grid-cols-1 md:grid-cols-5 gap-3 items-center">
+          <div class="md:col-span-2">
+            <app-custom-input
+              label="Search Job Titles / Codes"
+              placeholder="e.g. Project Director, MD, PM..."
+              [(ngModel)]="desigSearch"
+              (ngModelChange)="loadDesignations()"
+            ></app-custom-input>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Department</label>
+            <select
+              class="w-full text-xs py-2 px-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500"
+              [(ngModel)]="desigDeptFilter"
+              (ngModelChange)="loadDesignations()"
+            >
+              <option [ngValue]="null">All Departments</option>
+              @for (dept of deptService.departments(); track dept.id) {
+                <option [ngValue]="dept.id">{{ dept.name_en }}</option>
+              }
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Salary Grade</label>
+            <select
+              class="w-full text-xs py-2 px-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500"
+              [(ngModel)]="desigGradeFilter"
+              (ngModelChange)="loadDesignations()"
+            >
+              <option [ngValue]="null">All Grades</option>
+              @for (g of posService.salaryGrades(); track g.id) {
+                <option [ngValue]="g.id">{{ g.grade_name }}</option>
+              }
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Employee Level</label>
+            <select
+              class="w-full text-xs py-2 px-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500"
+              [(ngModel)]="desigLevelFilter"
+              (ngModelChange)="loadDesignations()"
+            >
+              <option [ngValue]="null">All Levels</option>
+              @for (lvl of employeeLevels; track lvl.code) {
+                <option [value]="lvl.code">{{ lvl.name }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <!-- Data Table -->
+        <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 uppercase font-semibold text-[11px] tracking-wider border-b border-slate-200 dark:border-slate-700">
+              <tr>
+                <th class="py-3 px-4">Job Code</th>
+                <th class="py-3 px-4">Title (English / Bangla)</th>
+                <th class="py-3 px-4">Department</th>
+                <th class="py-3 px-4">Salary Grade & Band</th>
+                <th class="py-3 px-4">Statutory Pay Scale</th>
+                <th class="py-3 px-4 text-center">Incumbents</th>
+                <th class="py-3 px-4 text-center">Sanctioned</th>
+                <th class="py-3 px-4">Status</th>
+                <th class="py-3 px-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+              @for (d of posService.designations(); track d.id) {
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                  <td class="py-3 px-4 font-mono font-bold text-amber-600 dark:text-amber-400">
+                    {{ d.designation_code }}
+                  </td>
+                  <td class="py-3 px-4">
+                    <div class="font-bold text-slate-900 dark:text-white">{{ d.title_en }}</div>
+                    @if (d.title_bn) {
+                      <div class="text-[11px] text-slate-400 font-normal">{{ d.title_bn }}</div>
+                    }
+                  </td>
+                  <td class="py-3 px-4 font-medium text-slate-700 dark:text-slate-300">
+                    {{ d.department_name || 'N/A' }}
+                  </td>
+                  <td class="py-3 px-4">
+                    <div class="font-semibold text-slate-800 dark:text-slate-200">{{ d.salary_grade_name || 'Ungraded' }}</div>
+                    <span class="inline-block mt-0.5 px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700">
+                      {{ d.employee_level }}
+                    </span>
+                  </td>
+                  <td class="py-3 px-4 font-mono text-slate-700 dark:text-slate-300">
+                    ৳{{ d.min_salary | number:'1.0-0' }} - ৳{{ d.max_salary | number:'1.0-0' }}
+                  </td>
+                  <td class="py-3 px-4 text-center font-bold text-emerald-600 dark:text-emerald-400">
+                    {{ d.employees_count || 0 }}
+                  </td>
+                  <td class="py-3 px-4 text-center font-bold text-blue-600 dark:text-blue-400">
+                    {{ d.positions_count || 0 }}
+                  </td>
+                  <td class="py-3 px-4">
+                    <app-status-badge
+                      [status]="d.is_active ? 'ACTIVE' : 'INACTIVE'"
+                      [labelEn]="d.is_active ? 'Active' : 'Inactive'"
+                    ></app-status-badge>
+                  </td>
+                  <td class="py-3 px-4 text-right">
+                    <div class="flex items-center justify-end gap-1.5">
+                      <button
+                        (click)="openEditDesigModal(d)"
+                        class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-amber-100 dark:hover:bg-amber-950/60 text-slate-700 dark:text-slate-300 hover:text-amber-800 dark:hover:text-amber-300 transition-colors"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        (click)="confirmDelete('DESIG', d.id, d.title_en)"
+                        class="px-2 py-1 text-xs rounded-lg text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="9" class="py-10 text-center text-slate-500 text-xs">
+                    No job titles found matching the current filters.
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination Bar -->
+        <div class="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400 pt-2">
+          <div>
+            Showing <span class="font-bold">{{ desigOffset() + 1 }}</span> to
+            <span class="font-bold">{{ (desigOffset() + desigLimit()) > posService.designationsTotal() ? posService.designationsTotal() : (desigOffset() + desigLimit()) }}</span>
+            of <span class="font-bold">{{ posService.designationsTotal() }}</span> entries
+          </div>
+          <div class="flex items-center gap-2">
+            <button
+              [disabled]="desigOffset() === 0"
+              (click)="onDesigPageChange(desigOffset() - desigLimit())"
+              class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors font-medium"
+            >
+              Previous
+            </button>
+            <button
+              [disabled]="(desigOffset() + desigLimit()) >= posService.designationsTotal()"
+              (click)="onDesigPageChange(desigOffset() + desigLimit())"
+              class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors font-medium"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Tab 2: Salary Grades & Scales -->
+    @if (activeTab() === 'grades') {
+      <div class="p-6 space-y-5 animate-fadeIn">
+        <!-- Filter Toolbar -->
+        <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 flex flex-wrap gap-3 items-center justify-between">
+          <div class="w-72">
+            <app-custom-input
+              label="Search Grade Code / Name"
+              placeholder="e.g. GRADE-01, Executive..."
+              [(ngModel)]="gradeSearch"
+              (ngModelChange)="loadSalaryGrades()"
+            ></app-custom-input>
+          </div>
+          <div class="flex items-center gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Level Filter</label>
+              <select
+                class="text-xs py-2 px-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                [(ngModel)]="gradeLevelFilter"
+                (ngModelChange)="loadSalaryGrades()"
+              >
+                <option [ngValue]="null">All Employee Levels</option>
+                @for (lvl of employeeLevels; track lvl.code) {
+                  <option [value]="lvl.code">{{ lvl.name }}</option>
+                }
+              </select>
+            </div>
+            <div class="pt-5">
+              <app-custom-button
+                variant="primary"
+                size="sm"
+                label="+ Add Salary Grade"
+                (btnClick)="openCreateGradeModal()"
+              ></app-custom-button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Grades Table -->
+        <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 uppercase font-semibold text-[11px] tracking-wider border-b border-slate-200 dark:border-slate-700">
+              <tr>
+                <th class="py-3 px-4">Grade Code</th>
+                <th class="py-3 px-4">Grade Classification</th>
+                <th class="py-3 px-4">Corporate Level Band</th>
+                <th class="py-3 px-4">Scale Range (Min - Max)</th>
+                <th class="py-3 px-4">Statutory Allowance Package</th>
+                <th class="py-3 px-4 text-center">Designations</th>
+                <th class="py-3 px-4 text-center">Positions</th>
+                <th class="py-3 px-4">Status</th>
+                <th class="py-3 px-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+              @for (g of posService.salaryGrades(); track g.id) {
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                  <td class="py-3 px-4 font-mono font-bold text-amber-600 dark:text-amber-400">
+                    {{ g.grade_code }}
+                  </td>
+                  <td class="py-3 px-4 font-bold text-slate-900 dark:text-white">
+                    {{ g.grade_name }}
+                    @if (g.description) {
+                      <div class="text-[11px] text-slate-400 font-normal mt-0.5 line-clamp-1">{{ g.description }}</div>
+                    }
+                  </td>
+                  <td class="py-3 px-4">
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                      {{ g.employee_level }}
+                    </span>
+                  </td>
+                  <td class="py-3 px-4 font-mono font-semibold text-slate-800 dark:text-slate-200">
+                    ৳{{ g.min_salary | number:'1.0-0' }} - ৳{{ g.max_salary | number:'1.0-0' }}
+                  </td>
+                  <td class="py-3 px-4 text-[11px] text-slate-600 dark:text-slate-400 space-y-0.5">
+                    <div>House Rent: <span class="font-bold text-slate-800 dark:text-slate-200">{{ g.default_house_rent_pct }}%</span></div>
+                    <div>Medical: <span class="font-bold text-slate-800 dark:text-slate-200">৳{{ g.default_medical_allowance | number:'1.0-0' }}</span> • Conv: <span class="font-bold text-slate-800 dark:text-slate-200">৳{{ g.default_conveyance | number:'1.0-0' }}</span></div>
+                  </td>
+                  <td class="py-3 px-4 text-center font-bold text-blue-600 dark:text-blue-400">
+                    {{ g.designations_count || 0 }}
+                  </td>
+                  <td class="py-3 px-4 text-center font-bold text-emerald-600 dark:text-emerald-400">
+                    {{ g.positions_count || 0 }}
+                  </td>
+                  <td class="py-3 px-4">
+                    <app-status-badge
+                      [status]="g.is_active ? 'ACTIVE' : 'INACTIVE'"
+                      [labelEn]="g.is_active ? 'Active' : 'Retired'"
+                    ></app-status-badge>
+                  </td>
+                  <td class="py-3 px-4 text-right">
+                    <div class="flex items-center justify-end gap-1.5">
+                      <button
+                        (click)="openEditGradeModal(g)"
+                        class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-amber-100 dark:hover:bg-amber-950/60 text-slate-700 dark:text-slate-300 hover:text-amber-800 dark:hover:text-amber-300 transition-colors"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        (click)="confirmDelete('GRADE', g.id, g.grade_name)"
+                        class="px-2 py-1 text-xs rounded-lg text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="9" class="py-10 text-center text-slate-500 text-xs">
+                    No salary grades recorded yet.
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination Bar -->
+        <div class="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400 pt-2">
+          <div>
+            Showing <span class="font-bold">{{ gradeOffset() + 1 }}</span> to
+            <span class="font-bold">{{ (gradeOffset() + gradeLimit()) > posService.salaryGradesTotal() ? posService.salaryGradesTotal() : (gradeOffset() + gradeLimit()) }}</span>
+            of <span class="font-bold">{{ posService.salaryGradesTotal() }}</span> entries
+          </div>
+          <div class="flex items-center gap-2">
+            <button
+              [disabled]="gradeOffset() === 0"
+              (click)="onGradePageChange(gradeOffset() - gradeLimit())"
+              class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors font-medium"
+            >
+              Previous
+            </button>
+            <button
+              [disabled]="(gradeOffset() + gradeLimit()) >= posService.salaryGradesTotal()"
+              (click)="onGradePageChange(gradeOffset() + gradeLimit())"
+              class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors font-medium"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Tab 3: Employee Levels & Bands -->
+    @if (activeTab() === 'levels') {
+      <div class="p-6 space-y-6 animate-fadeIn">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="p-4 rounded-xl bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800">
+            <div class="text-xs text-purple-700 dark:text-purple-300 font-semibold uppercase tracking-wider">Total Sanctioned Headcount</div>
+            <div class="text-2xl font-bold font-mono text-purple-900 dark:text-purple-200 mt-1">
+              {{ posService.positionStats()?.total_approved || 0 }}
+            </div>
+            <div class="text-[11px] text-purple-600 dark:text-purple-400 mt-1">Across all real estate operating functions</div>
+          </div>
+          <div class="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800">
+            <div class="text-xs text-emerald-700 dark:text-emerald-300 font-semibold uppercase tracking-wider">Filled Headcount</div>
+            <div class="text-2xl font-bold font-mono text-emerald-900 dark:text-emerald-200 mt-1">
+              {{ posService.positionStats()?.total_filled || 0 }}
+            </div>
+            <div class="text-[11px] text-emerald-600 dark:text-emerald-400 mt-1">Active incumbent staff assigned</div>
+          </div>
+          <div class="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
+            <div class="text-xs text-amber-700 dark:text-amber-300 font-semibold uppercase tracking-wider">Vacancies in Pipeline</div>
+            <div class="text-2xl font-bold font-mono text-amber-900 dark:text-amber-200 mt-1">
+              {{ posService.positionStats()?.total_vacant || 0 }}
+            </div>
+            <div class="text-[11px] text-amber-600 dark:text-amber-400 mt-1">Under active recruitment requisition</div>
+          </div>
+        </div>
+
+        <!-- Levels Progression Matrix -->
+        <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 uppercase font-semibold text-[11px] tracking-wider border-b border-slate-200 dark:border-slate-700">
+              <tr>
+                <th class="py-3 px-4">Level Code</th>
+                <th class="py-3 px-4">Executive Hierarchy Classification</th>
+                <th class="py-3 px-4 text-center">Salary Grades</th>
+                <th class="py-3 px-4 text-center">Sanctioned</th>
+                <th class="py-3 px-4 text-center">Filled</th>
+                <th class="py-3 px-4 text-center">Vacancies</th>
+                <th class="py-3 px-4">Occupancy Rate</th>
+                <th class="py-3 px-4 text-right">Monthly Budgeted Payroll</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+              @for (lvl of levelMatrix(); track lvl.code) {
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                  <td class="py-3 px-4 font-mono font-bold text-amber-600 dark:text-amber-400">
+                    {{ lvl.code }}
+                  </td>
+                  <td class="py-3 px-4 font-bold text-slate-900 dark:text-white">
+                    <span class="px-2 py-0.5 rounded text-[11px] border {{ lvl.color }}">
+                      {{ lvl.name }}
+                    </span>
+                  </td>
+                  <td class="py-3 px-4 text-center font-bold text-slate-700 dark:text-slate-300">
+                    {{ lvl.gradesCount }}
+                  </td>
+                  <td class="py-3 px-4 text-center font-bold text-blue-600 dark:text-blue-400">
+                    {{ lvl.sanctioned }}
+                  </td>
+                  <td class="py-3 px-4 text-center font-bold text-emerald-600 dark:text-emerald-400">
+                    {{ lvl.filled }}
+                  </td>
+                  <td class="py-3 px-4 text-center font-bold text-amber-600 dark:text-amber-400">
+                    {{ lvl.vacant }}
+                  </td>
+                  <td class="py-3 px-4">
+                    <div class="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+                      <div class="bg-emerald-500 h-2 rounded-full" [style.width.%]="lvl.occupancyRate"></div>
+                    </div>
+                    <span class="text-[10px] text-slate-500 mt-0.5 block">{{ lvl.occupancyRate }}% Occupied</span>
+                  </td>
+                  <td class="py-3 px-4 text-right font-mono font-bold text-slate-800 dark:text-slate-200">
+                    ৳{{ lvl.totalBudget | number:'1.0-0' }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    <!-- Tab 4: Position Management (Sanctioned) -->
+    @if (activeTab() === 'positions') {
+      <div class="p-6 space-y-5 animate-fadeIn">
+        <!-- Filter Toolbar -->
+        <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 grid grid-cols-1 md:grid-cols-5 gap-3 items-center">
+          <div class="md:col-span-2">
+            <app-custom-input
+              label="Search Position Title / Code"
+              placeholder="e.g. POS-ENG-001, Site Engineer..."
+              [(ngModel)]="posSearch"
+              (ngModelChange)="loadPositions()"
+            ></app-custom-input>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Status</label>
+            <select
+              class="w-full text-xs py-2 px-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+              [(ngModel)]="posStatusFilter"
+              (ngModelChange)="loadPositions()"
+            >
+              <option [ngValue]="null">All Statuses</option>
+              @for (st of positionStatusOptions; track st.value) {
+                <option [value]="st.value">{{ st.label }}</option>
+              }
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Department</label>
+            <select
+              class="w-full text-xs py-2 px-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+              [(ngModel)]="posDeptFilter"
+              (ngModelChange)="loadPositions()"
+            >
+              <option [ngValue]="null">All Departments</option>
+              @for (d of deptService.departments(); track d.id) {
+                <option [ngValue]="d.id">{{ d.name_en }}</option>
+              }
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Position Type</label>
+            <select
+              class="w-full text-xs py-2 px-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+              [(ngModel)]="posTypeFilter"
+              (ngModelChange)="loadPositions()"
+            >
+              <option [ngValue]="null">All Types</option>
+              @for (t of positionTypeOptions; track t.value) {
+                <option [value]="t.value">{{ t.label }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <!-- Positions Table -->
+        <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 uppercase font-semibold text-[11px] tracking-wider border-b border-slate-200 dark:border-slate-700">
+              <tr>
+                <th class="py-3 px-4">Position Code</th>
+                <th class="py-3 px-4">Position Title & Role</th>
+                <th class="py-3 px-4">Department & Allocation</th>
+                <th class="py-3 px-4">Job Designation</th>
+                <th class="py-3 px-4">Incumbent Employee</th>
+                <th class="py-3 px-4">Budgeted Salary</th>
+                <th class="py-3 px-4">Status</th>
+                <th class="py-3 px-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+              @for (p of posService.positions(); track p.id) {
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                  <td class="py-3 px-4 font-mono font-bold text-amber-600 dark:text-amber-400">
+                    {{ p.position_code }}
+                  </td>
+                  <td class="py-3 px-4 font-bold text-slate-900 dark:text-white">
+                    <div>{{ p.position_title }}</div>
+                    <span class="inline-block mt-0.5 px-1.5 py-0.2 rounded text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                      {{ p.position_type.replace('_', ' ') }}
+                    </span>
+                  </td>
+                  <td class="py-3 px-4">
+                    <div class="font-semibold text-slate-800 dark:text-slate-200">{{ p.department_name }}</div>
+                    @if (p.project_name) {
+                      <div class="text-[11px] text-amber-600 dark:text-amber-400 font-medium">Site: {{ p.project_name }}</div>
+                    } @else if (p.branch_name) {
+                      <div class="text-[11px] text-blue-600 dark:text-blue-400 font-medium">Office: {{ p.branch_name }}</div>
+                    }
+                  </td>
+                  <td class="py-3 px-4 text-slate-700 dark:text-slate-300">
+                    <div class="font-medium">{{ p.designation_title }}</div>
+                    <div class="text-[10px] text-slate-400">{{ p.salary_grade_name || 'Ungraded' }}</div>
+                  </td>
+                  <td class="py-3 px-4">
+                    @if (p.occupied_employee_id) {
+                      <div class="flex items-center gap-1.5 font-bold text-emerald-800 dark:text-emerald-300">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                        <span>{{ p.occupied_employee_name }}</span>
+                      </div>
+                      <div class="text-[10px] font-mono text-slate-400">{{ p.occupied_employee_code }}</div>
+                    } @else {
+                      <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300">
+                        Vacant (In Pipeline)
+                      </span>
+                    }
+                  </td>
+                  <td class="py-3 px-4 font-mono font-bold text-slate-800 dark:text-slate-200">
+                    ৳{{ p.budgeted_salary | number:'1.0-0' }}
+                  </td>
+                  <td class="py-3 px-4">
+                    <app-status-badge
+                      [status]="p.status"
+                      [labelEn]="p.status"
+                    ></app-status-badge>
+                  </td>
+                  <td class="py-3 px-4 text-right">
+                    <div class="flex items-center justify-end gap-1.5">
+                      @if (p.status === 'VACANT') {
+                        <button
+                          (click)="openOccupyModal(p)"
+                          class="px-2 py-1 text-xs font-semibold rounded-lg bg-emerald-100 dark:bg-emerald-950/60 hover:bg-emerald-200 text-emerald-800 dark:text-emerald-200 transition-colors"
+                        >
+                          Occupy
+                        </button>
+                      } @else if (p.status === 'FILLED') {
+                        <button
+                          (click)="openVacateModal(p)"
+                          class="px-2 py-1 text-xs font-semibold rounded-lg bg-amber-100 dark:bg-amber-950/60 hover:bg-amber-200 text-amber-800 dark:text-amber-200 transition-colors"
+                        >
+                          Vacate
+                        </button>
+                      }
+                      <button
+                        (click)="openEditPosModal(p)"
+                        class="px-2 py-1 text-xs font-semibold rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-amber-100 dark:hover:bg-amber-950/60 text-slate-700 dark:text-slate-300 hover:text-amber-800 dark:hover:text-amber-300 transition-colors"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        [disabled]="p.status === 'FILLED'"
+                        (click)="confirmDelete('POS', p.id, p.position_title)"
+                        class="px-2 py-1 text-xs rounded-lg text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 disabled:opacity-30 transition-colors"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="8" class="py-10 text-center text-slate-500 text-xs">
+                    No positions found matching the current filters.
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination Bar -->
+        <div class="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400 pt-2">
+          <div>
+            Showing <span class="font-bold">{{ posOffset() + 1 }}</span> to
+            <span class="font-bold">{{ (posOffset() + posLimit()) > posService.positionsTotal() ? posService.positionsTotal() : (posOffset() + posLimit()) }}</span>
+            of <span class="font-bold">{{ posService.positionsTotal() }}</span> entries
+          </div>
+          <div class="flex items-center gap-2">
+            <button
+              [disabled]="posOffset() === 0"
+              (click)="onPosPageChange(posOffset() - posLimit())"
+              class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors font-medium"
+            >
+              Previous
+            </button>
+            <button
+              [disabled]="(posOffset() + posLimit()) >= posService.positionsTotal()"
+              (click)="onPosPageChange(posOffset() + posLimit())"
+              class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors font-medium"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Tab 5: Vacant Positions Pipeline -->
+    @if (activeTab() === 'vacancies') {
+      <div class="p-6 space-y-5 animate-fadeIn">
+        <div class="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 flex items-center justify-between">
+          <div>
+            <div class="text-sm font-bold text-amber-900 dark:text-amber-200">Recruitment & Headcount Pipeline</div>
+            <div class="text-xs text-amber-700 dark:text-amber-400">All positions currently vacant with open requisitions and budgeted salaries</div>
+          </div>
+          <div class="text-right">
+            <span class="text-2xl font-bold font-mono text-amber-900 dark:text-amber-100">{{ vacantPositions().length }}</span>
+            <span class="text-xs text-amber-700 dark:text-amber-400 block font-semibold">Vacant Positions</span>
+          </div>
+        </div>
+
+        <!-- Vacancies Table -->
+        <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 uppercase font-semibold text-[11px] tracking-wider border-b border-slate-200 dark:border-slate-700">
+              <tr>
+                <th class="py-3 px-4">Position Code</th>
+                <th class="py-3 px-4">Requisition Title</th>
+                <th class="py-3 px-4">Department & Site</th>
+                <th class="py-3 px-4">Budgeted Salary</th>
+                <th class="py-3 px-4">Target Hire Date</th>
+                <th class="py-3 px-4">Requisition Remarks</th>
+                <th class="py-3 px-4 text-right">Quick Action</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+              @for (v of vacantPositions(); track v.id) {
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                  <td class="py-3 px-4 font-mono font-bold text-amber-600 dark:text-amber-400">
+                    {{ v.position_code }}
+                  </td>
+                  <td class="py-3 px-4 font-bold text-slate-900 dark:text-white">
+                    {{ v.position_title }}
+                    <div class="text-[10px] text-slate-400 font-normal">{{ v.designation_title }} • {{ v.salary_grade_name || 'Ungraded' }}</div>
+                  </td>
+                  <td class="py-3 px-4">
+                    <div class="font-semibold text-slate-800 dark:text-slate-200">{{ v.department_name }}</div>
+                    @if (v.project_name) {
+                      <div class="text-[11px] text-amber-600 dark:text-amber-400">Site: {{ v.project_name }}</div>
+                    } @else if (v.branch_name) {
+                      <div class="text-[11px] text-blue-600 dark:text-blue-400">Office: {{ v.branch_name }}</div>
+                    }
+                  </td>
+                  <td class="py-3 px-4 font-mono font-bold text-emerald-700 dark:text-emerald-300">
+                    ৳{{ v.budgeted_salary | number:'1.0-0' }}
+                  </td>
+                  <td class="py-3 px-4">
+                    @if (v.target_hire_date) {
+                      <span class="px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300">
+                        {{ v.target_hire_date }}
+                      </span>
+                    } @else {
+                      <span class="text-slate-400 text-xs">Immediate / Urgent</span>
+                    }
+                  </td>
+                  <td class="py-3 px-4 text-slate-500 text-[11px] max-w-xs truncate">
+                    {{ v.remarks || 'Standard vacancy requisition' }}
+                  </td>
+                  <td class="py-3 px-4 text-right">
+                    <button
+                      (click)="openOccupyModal(v)"
+                      class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-colors shadow-2xs"
+                    >
+                      Occupy / Assign Employee
+                    </button>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="7" class="py-10 text-center text-slate-500 text-xs">
+                    All sanctioned positions are currently filled! Zero vacant positions.
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    <!-- Tab 6: Dynamic Dropdown Settings -->
+    @if (activeTab() === 'settings') {
+      <div class="p-6 space-y-6 animate-fadeIn">
+        <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800">
+          <h3 class="text-sm font-bold text-slate-900 dark:text-white">Dynamic Master Dropdown Management</h3>
+          <p class="text-xs text-slate-500 mt-1">Configure and manage all dynamic select categories without hardcoded values. Items added here appear instantly in dropdown selectors across the system.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <!-- Category 1: Employee Hierarchy Levels -->
+          <div class="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-3">
+            <div class="flex items-center justify-between">
+              <h4 class="font-bold text-xs uppercase text-slate-700 dark:text-slate-300 tracking-wider">Employee Levels</h4>
+              <button
+                (click)="openQuickLookupModal('EMPLOYEE_LEVEL')"
+                class="px-2 py-1 text-[11px] font-bold text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 rounded-lg transition-colors"
+              >
+                + Add Option
+              </button>
+            </div>
+            <div class="space-y-1.5">
+              @for (lvl of employeeLevels; track lvl.code) {
+                <div class="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-800/60 text-xs">
+                  <span class="font-medium text-slate-800 dark:text-slate-200">{{ lvl.name }}</span>
+                  <span class="font-mono text-[10px] text-slate-400">{{ lvl.code }}</span>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Category 2: Position Lifecycle Statuses -->
+          <div class="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-3">
+            <div class="flex items-center justify-between">
+              <h4 class="font-bold text-xs uppercase text-slate-700 dark:text-slate-300 tracking-wider">Position Statuses</h4>
+              <button
+                (click)="openQuickLookupModal('POSITION_STATUS')"
+                class="px-2 py-1 text-[11px] font-bold text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 rounded-lg transition-colors"
+              >
+                + Add Option
+              </button>
+            </div>
+            <div class="space-y-1.5">
+              @for (st of positionStatusOptions; track st.value) {
+                <div class="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-800/60 text-xs">
+                  <span class="font-medium text-slate-800 dark:text-slate-200">{{ st.label }}</span>
+                  <span class="font-mono text-[10px] text-slate-400">{{ st.value }}</span>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Category 3: Position Types -->
+          <div class="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-3">
+            <div class="flex items-center justify-between">
+              <h4 class="font-bold text-xs uppercase text-slate-700 dark:text-slate-300 tracking-wider">Position Types</h4>
+              <button
+                (click)="openQuickLookupModal('POSITION_TYPE')"
+                class="px-2 py-1 text-[11px] font-bold text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 rounded-lg transition-colors"
+              >
+                + Add Option
+              </button>
+            </div>
+            <div class="space-y-1.5">
+              @for (t of positionTypeOptions; track t.value) {
+                <div class="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-800/60 text-xs">
+                  <span class="font-medium text-slate-800 dark:text-slate-200">{{ t.label }}</span>
+                  <span class="font-mono text-[10px] text-slate-400">{{ t.value }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+  </app-card-container>
+
+  <!-- ====================================================================== -->
+  <!-- MODAL 1: Add / Edit Job Title (Designation) Modal -->
+  <!-- ====================================================================== -->
+  <app-modal
+    [isOpen]="isDesigModalOpen()"
+    [title]="editingDesigId() ? 'Edit Job Title / Designation' : 'Create New Job Title / Designation'"
+    size="lg"
+    (close)="isDesigModalOpen.set(false)"
+  >
+    <div class="space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Department with in-place "+ Add New" -->
+        <div class="space-y-1">
+          <div class="flex items-center justify-between">
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Department *</label>
+            <button
+              type="button"
+              (click)="openQuickLookupModal('DEPARTMENT')"
+              class="text-[11px] font-bold text-amber-600 dark:text-amber-400 hover:underline"
+            >
+              + Add New
+            </button>
+          </div>
+          <app-searchable-select
+            [options]="deptOptions()"
+            placeholder="Select owning department..."
+            [(ngModel)]="desigForm.department_id"
+          ></app-searchable-select>
+        </div>
+
+        <!-- Designation Code -->
+        <app-custom-input
+          label="Designation Code *"
+          placeholder="e.g. PROJ-DIR, SR-PM, ACCT"
+          [(ngModel)]="desigForm.designation_code"
+        ></app-custom-input>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Title EN -->
+        <app-custom-input
+          label="Title (English) *"
+          placeholder="e.g. Senior Project Manager"
+          [(ngModel)]="desigForm.title_en"
+        ></app-custom-input>
+
+        <!-- Title BN -->
+        <app-custom-input
+          label="Title (Bangla)"
+          placeholder="e.g. সিনিয়র প্রকল্প ব্যবস্থাপক"
+          [(ngModel)]="desigForm.title_bn"
+        ></app-custom-input>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Salary Grade with in-place "+ Add New" -->
+        <div class="space-y-1">
+          <div class="flex items-center justify-between">
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Salary Grade</label>
+            <button
+              type="button"
+              (click)="openCreateGradeModal()"
+              class="text-[11px] font-bold text-amber-600 dark:text-amber-400 hover:underline"
+            >
+              + Add New Grade
+            </button>
+          </div>
+          <app-searchable-select
+            [options]="gradeOptions()"
+            placeholder="Select salary grade scale..."
+            [(ngModel)]="desigForm.salary_grade_id"
+          ></app-searchable-select>
+        </div>
+
+        <!-- Employee Level with in-place "+ Add New" -->
+        <div class="space-y-1">
+          <div class="flex items-center justify-between">
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Employee Level *</label>
+            <button
+              type="button"
+              (click)="openQuickLookupModal('EMPLOYEE_LEVEL')"
+              class="text-[11px] font-bold text-amber-600 dark:text-amber-400 hover:underline"
+            >
+              + Add Level
+            </button>
+          </div>
+          <app-searchable-select
+            [options]="levelOptions()"
+            placeholder="Select employee hierarchy band..."
+            [(ngModel)]="desigForm.employee_level"
+          ></app-searchable-select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <app-custom-input
+          label="Minimum Salary (BDT)"
+          type="number"
+          placeholder="25000"
+          [(ngModel)]="desigForm.min_salary"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Maximum Salary (BDT)"
+          type="number"
+          placeholder="150000"
+          [(ngModel)]="desigForm.max_salary"
+        ></app-custom-input>
+      </div>
+
+      <app-custom-textarea
+        label="Job Scope & Description"
+        placeholder="Key responsibilities, reporting authority, required experience..."
+        [(ngModel)]="desigForm.description"
+        [rows]="3"
+      ></app-custom-textarea>
+
+      <div class="flex items-center gap-2 pt-2">
+        <input
+          type="checkbox"
+          id="desigActiveCheckbox"
+          [(ngModel)]="desigForm.is_active"
+          class="w-4 h-4 text-amber-600 rounded border-slate-300 dark:border-slate-700 focus:ring-amber-500"
+        >
+        <label for="desigActiveCheckbox" class="text-xs font-semibold text-slate-700 dark:text-slate-300">
+          Designation is active and available for new position allocations
+        </label>
+      </div>
+    </div>
+
+    <div modal-actions class="flex items-center justify-end gap-2 pt-4 border-t border-slate-200 dark:border-slate-800">
+      <app-custom-button
+        variant="ghost"
+        size="sm"
+        label="Cancel"
+        (btnClick)="isDesigModalOpen.set(false)"
+      ></app-custom-button>
+      <app-custom-button
+        variant="primary"
+        size="sm"
+        [label]="editingDesigId() ? 'Update Job Title' : 'Save Job Title'"
+        (btnClick)="saveDesignation()"
+      ></app-custom-button>
+    </div>
+  </app-modal>
+
+  <!-- ====================================================================== -->
+  <!-- MODAL 2: Add / Edit Salary Grade Modal -->
+  <!-- ====================================================================== -->
+  <app-modal
+    [isOpen]="isGradeModalOpen()"
+    [title]="editingGradeId() ? 'Edit Salary Grade & Scale' : 'Create Salary Grade & Scale'"
+    size="lg"
+    (close)="isGradeModalOpen.set(false)"
+  >
+    <div class="space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <app-custom-input
+          label="Grade Code *"
+          placeholder="e.g. GRADE-01, GRADE-05"
+          [(ngModel)]="gradeForm.grade_code"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Grade Name *"
+          placeholder="e.g. Grade 1 - Executive Director"
+          [(ngModel)]="gradeForm.grade_name"
+        ></app-custom-input>
+      </div>
+
+      <div class="space-y-1">
+        <div class="flex items-center justify-between">
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Employee Hierarchy Level *</label>
+          <button
+            type="button"
+            (click)="openQuickLookupModal('EMPLOYEE_LEVEL')"
+            class="text-[11px] font-bold text-amber-600 dark:text-amber-400 hover:underline"
+          >
+            + Add New
+          </button>
+        </div>
+        <app-searchable-select
+          [options]="levelOptions()"
+          placeholder="Select hierarchy level..."
+          [(ngModel)]="gradeForm.employee_level"
+        ></app-searchable-select>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <app-custom-input
+          label="Minimum Base Salary (BDT) *"
+          type="number"
+          placeholder="30000"
+          [(ngModel)]="gradeForm.min_salary"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Maximum Base Salary (BDT) *"
+          type="number"
+          placeholder="180000"
+          [(ngModel)]="gradeForm.max_salary"
+        ></app-custom-input>
+      </div>
+
+      <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-3">
+        <div class="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Statutory Allowances Package</div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <app-custom-input
+            label="House Rent (% of Basic)"
+            type="number"
+            placeholder="50"
+            [(ngModel)]="gradeForm.default_house_rent_pct"
+          ></app-custom-input>
+          <app-custom-input
+            label="Medical Allowance (BDT)"
+            type="number"
+            placeholder="4000"
+            [(ngModel)]="gradeForm.default_medical_allowance"
+          ></app-custom-input>
+          <app-custom-input
+            label="Conveyance Allowance (BDT)"
+            type="number"
+            placeholder="5000"
+            [(ngModel)]="gradeForm.default_conveyance"
+          ></app-custom-input>
+        </div>
+      </div>
+
+      <app-custom-textarea
+        label="Description & Remarks"
+        placeholder="Applicability rules, promotion criteria..."
+        [(ngModel)]="gradeForm.description"
+        [rows]="2"
+      ></app-custom-textarea>
+
+      <div class="flex items-center gap-2 pt-2">
+        <input
+          type="checkbox"
+          id="gradeActiveCheckbox"
+          [(ngModel)]="gradeForm.is_active"
+          class="w-4 h-4 text-amber-600 rounded border-slate-300 dark:border-slate-700 focus:ring-amber-500"
+        >
+        <label for="gradeActiveCheckbox" class="text-xs font-semibold text-slate-700 dark:text-slate-300">
+          Salary Grade is active and valid for payroll calculations
+        </label>
+      </div>
+    </div>
+
+    <div modal-actions class="flex items-center justify-end gap-2 pt-4 border-t border-slate-200 dark:border-slate-800">
+      <app-custom-button
+        variant="ghost"
+        size="sm"
+        label="Cancel"
+        (btnClick)="isGradeModalOpen.set(false)"
+      ></app-custom-button>
+      <app-custom-button
+        variant="primary"
+        size="sm"
+        [label]="editingGradeId() ? 'Update Salary Grade' : 'Save Salary Grade'"
+        (btnClick)="saveSalaryGrade()"
+      ></app-custom-button>
+    </div>
+  </app-modal>
+
+  <!-- ====================================================================== -->
+  <!-- MODAL 3: Add / Edit Sanctioned Position Modal -->
+  <!-- ====================================================================== -->
+  <app-modal
+    [isOpen]="isPosModalOpen()"
+    [title]="editingPosId() ? 'Edit Sanctioned Position' : 'Sanction New Manpower Position'"
+    size="lg"
+    (close)="isPosModalOpen.set(false)"
+  >
+    <div class="space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <app-custom-input
+          label="Position Code *"
+          placeholder="e.g. POS-ENG-001, POS-ACCTS-002"
+          [(ngModel)]="posForm.position_code"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Position Title *"
+          placeholder="e.g. Senior Project Manager - Tower A"
+          [(ngModel)]="posForm.position_title"
+        ></app-custom-input>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Department with in-place "+ Add New" -->
+        <div class="space-y-1">
+          <div class="flex items-center justify-between">
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Department *</label>
+            <button
+              type="button"
+              (click)="openQuickLookupModal('DEPARTMENT')"
+              class="text-[11px] font-bold text-amber-600 dark:text-amber-400 hover:underline"
+            >
+              + Add New
+            </button>
+          </div>
+          <app-searchable-select
+            [options]="deptOptions()"
+            placeholder="Select department..."
+            [(ngModel)]="posForm.department_id"
+          ></app-searchable-select>
+        </div>
+
+        <!-- Designation with in-place "+ Add New" -->
+        <div class="space-y-1">
+          <div class="flex items-center justify-between">
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Job Designation *</label>
+            <button
+              type="button"
+              (click)="openCreateDesigModal()"
+              class="text-[11px] font-bold text-amber-600 dark:text-amber-400 hover:underline"
+            >
+              + Add Title
+            </button>
+          </div>
+          <app-searchable-select
+            [options]="desigOptions()"
+            placeholder="Select designation title..."
+            [(ngModel)]="posForm.designation_id"
+          ></app-searchable-select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Salary Grade -->
+        <div class="space-y-1">
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Salary Grade</label>
+          <app-searchable-select
+            [options]="gradeOptions()"
+            placeholder="Select salary grade scale..."
+            [(ngModel)]="posForm.salary_grade_id"
+          ></app-searchable-select>
+        </div>
+
+        <!-- Position Type -->
+        <div class="space-y-1">
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Position Type *</label>
+          <app-searchable-select
+            [options]="positionTypeOptions"
+            placeholder="Select position classification..."
+            [(ngModel)]="posForm.position_type"
+          ></app-searchable-select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Allocated Project (for site engineering) -->
+        <div class="space-y-1">
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Project Allocation (Site)</label>
+          <app-searchable-select
+            [options]="projectOptions()"
+            placeholder="Select real estate project site..."
+            [(ngModel)]="posForm.assigned_project_id"
+          ></app-searchable-select>
+        </div>
+
+        <!-- Allocated Branch (for corporate office) -->
+        <div class="space-y-1">
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Operating Branch / Head Office</label>
+          <app-searchable-select
+            [options]="branchOptions()"
+            placeholder="Select branch office..."
+            [(ngModel)]="posForm.assigned_branch_id"
+          ></app-searchable-select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <app-custom-input
+          label="Budgeted Monthly Salary (BDT) *"
+          type="number"
+          placeholder="60000"
+          [(ngModel)]="posForm.budgeted_salary"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Target Hire Date"
+          type="date"
+          [(ngModel)]="posForm.target_hire_date"
+        ></app-custom-input>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Status -->
+        <div class="space-y-1">
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Position Status</label>
+          <app-searchable-select
+            [options]="positionStatusOptions"
+            placeholder="Select status..."
+            [(ngModel)]="posForm.status"
+          ></app-searchable-select>
+        </div>
+
+        <!-- Incumbent Employee -->
+        <div class="space-y-1">
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Incumbent Employee (Optional)</label>
+          <app-searchable-select
+            [options]="employeeOptions()"
+            placeholder="Select incumbent employee..."
+            [(ngModel)]="posForm.occupied_employee_id"
+          ></app-searchable-select>
+        </div>
+      </div>
+
+      <app-custom-textarea
+        label="Remarks & Sanction Requisition Details"
+        placeholder="Reason for position sanction, reporting hierarchy..."
+        [(ngModel)]="posForm.remarks"
+        [rows]="2"
+      ></app-custom-textarea>
+    </div>
+
+    <div modal-actions class="flex items-center justify-end gap-2 pt-4 border-t border-slate-200 dark:border-slate-800">
+      <app-custom-button
+        variant="ghost"
+        size="sm"
+        label="Cancel"
+        (btnClick)="isPosModalOpen.set(false)"
+      ></app-custom-button>
+      <app-custom-button
+        variant="primary"
+        size="sm"
+        [label]="editingPosId() ? 'Update Position' : 'Sanction Position'"
+        (btnClick)="savePosition()"
+      ></app-custom-button>
+    </div>
+  </app-modal>
+
+  <!-- ====================================================================== -->
+  <!-- MODAL 4: Occupy / Assign Employee Modal -->
+  <!-- ====================================================================== -->
+  <app-modal
+    [isOpen]="isOccupyModalOpen()"
+    title="Occupy Position - Assign Employee"
+    size="md"
+    (close)="isOccupyModalOpen.set(false)"
+  >
+    @if (occupyingPos(); as pos) {
+      <div class="space-y-4">
+        <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs">
+          <div class="font-bold text-slate-900 dark:text-white">{{ pos.position_title }}</div>
+          <div class="text-slate-500 font-mono mt-0.5">{{ pos.position_code }} • {{ pos.department_name }}</div>
+          <div class="text-emerald-600 dark:text-emerald-400 font-bold font-mono mt-1">Budgeted Salary: ৳{{ pos.budgeted_salary | number:'1.0-0' }}</div>
+        </div>
+
+        <div class="space-y-1">
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Select Incumbent Employee *</label>
+          <app-searchable-select
+            [options]="employeeOptions()"
+            placeholder="Search employee by name or code..."
+            [(ngModel)]="occupyForm.employee_id"
+          ></app-searchable-select>
+        </div>
+
+        <app-custom-textarea
+          label="Assignment Remarks / Effective Date"
+          placeholder="e.g. Transferred from Tower A to Tower B..."
+          [(ngModel)]="occupyForm.remarks"
+          [rows]="2"
+        ></app-custom-textarea>
+      </div>
+    }
+
+    <div modal-actions class="flex items-center justify-end gap-2 pt-4 border-t border-slate-200 dark:border-slate-800">
+      <app-custom-button
+        variant="ghost"
+        size="sm"
+        label="Cancel"
+        (btnClick)="isOccupyModalOpen.set(false)"
+      ></app-custom-button>
+      <app-custom-button
+        variant="primary"
+        size="sm"
+        label="Confirm Assignment"
+        (btnClick)="confirmOccupy()"
+      ></app-custom-button>
+    </div>
+  </app-modal>
+
+  <!-- ====================================================================== -->
+  <!-- MODAL 5: Vacate Position Modal -->
+  <!-- ====================================================================== -->
+  <app-modal
+    [isOpen]="isVacateModalOpen()"
+    title="Vacate Position & Release Incumbent"
+    size="md"
+    (close)="isVacateModalOpen.set(false)"
+  >
+    @if (vacatingPos(); as pos) {
+      <div class="space-y-4">
+        <div class="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-xs">
+          <div class="font-bold text-amber-900 dark:text-amber-200">Release Incumbent: {{ pos.occupied_employee_name }}</div>
+          <div class="text-amber-700 dark:text-amber-400 font-mono mt-0.5">{{ pos.position_code }} • {{ pos.position_title }}</div>
+          <div class="text-amber-800 dark:text-amber-300 mt-2">
+            This will detach the employee from this position and mark the position as <strong>VACANT</strong> in the recruitment pipeline.
+          </div>
+        </div>
+
+        <app-custom-textarea
+          label="Reason for Vacating"
+          placeholder="e.g. Resignation, Transfer to other project, Promotion..."
+          [(ngModel)]="vacateRemarks"
+          [rows]="2"
+        ></app-custom-textarea>
+      </div>
+    }
+
+    <div modal-actions class="flex items-center justify-end gap-2 pt-4 border-t border-slate-200 dark:border-slate-800">
+      <app-custom-button
+        variant="ghost"
+        size="sm"
+        label="Cancel"
+        (btnClick)="isVacateModalOpen.set(false)"
+      ></app-custom-button>
+      <app-custom-button
+        variant="danger"
+        size="sm"
+        label="Confirm Vacate"
+        (btnClick)="confirmVacate()"
+      ></app-custom-button>
+    </div>
+  </app-modal>
+
+  <!-- ====================================================================== -->
+  <!-- MODAL 6: Quick Lookup Item Creation Modal -->
+  <!-- ====================================================================== -->
+  <app-modal
+    [isOpen]="isQuickLookupModalOpen()"
+    title="Add Dynamic Master Dropdown Option"
+    size="md"
+    (close)="isQuickLookupModalOpen.set(false)"
+  >
+    <div class="space-y-4">
+      <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-400">
+        Adding new item for category: <span class="font-bold text-amber-600 dark:text-amber-400 font-mono">{{ quickLookupCategory() }}</span>
+      </div>
+
+      <app-custom-input
+        label="English Name *"
+        placeholder="e.g. Lead Structural Consultant"
+        [(ngModel)]="quickItemNameEn"
+      ></app-custom-input>
+
+      <app-custom-input
+        label="Bangla Name (Optional)"
+        placeholder="e.g. প্রধান কাঠামোগত পরামর্শক"
+        [(ngModel)]="quickItemNameBn"
+      ></app-custom-input>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">Color Badge Theme</label>
+        <div class="flex items-center gap-3">
+          <input
+            type="color"
+            [(ngModel)]="quickColorBadge"
+            class="w-10 h-10 p-0 rounded-lg border border-slate-300 dark:border-slate-700 cursor-pointer"
+          >
+          <span class="text-xs font-mono font-bold text-slate-700 dark:text-slate-300">{{ quickColorBadge() }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div modal-actions class="flex items-center justify-end gap-2 pt-4 border-t border-slate-200 dark:border-slate-800">
+      <app-custom-button
+        variant="ghost"
+        size="sm"
+        label="Cancel"
+        (btnClick)="isQuickLookupModalOpen.set(false)"
+      ></app-custom-button>
+      <app-custom-button
+        variant="primary"
+        size="sm"
+        label="Save Dynamic Option"
+        (btnClick)="saveQuickLookup()"
+      ></app-custom-button>
+    </div>
+  </app-modal>
+
+  <!-- ====================================================================== -->
+  <!-- MODAL 7: Delete Confirmation Modal -->
+  <!-- ====================================================================== -->
+  <app-modal
+    [isOpen]="isDeleteModalOpen()"
+    title="Confirm Deletion"
+    size="sm"
+    (close)="isDeleteModalOpen.set(false)"
+  >
+    @if (itemToDelete(); as item) {
+      <div class="space-y-3 text-xs text-slate-700 dark:text-slate-300">
+        <p>Are you sure you want to delete <strong class="text-slate-900 dark:text-white">{{ item.name }}</strong>?</p>
+        <p class="text-rose-600 dark:text-rose-400 font-medium">This action cannot be undone if no active references exist.</p>
+      </div>
+    }
+
+    <div modal-actions class="flex items-center justify-end gap-2 pt-4 border-t border-slate-200 dark:border-slate-800">
+      <app-custom-button
+        variant="ghost"
+        size="sm"
+        label="Cancel"
+        (btnClick)="isDeleteModalOpen.set(false)"
+      ></app-custom-button>
+      <app-custom-button
+        variant="danger"
+        size="sm"
+        label="Delete Permanently"
+        (btnClick)="executeDelete()"
+      ></app-custom-button>
+    </div>
+  </app-modal>
+</div>

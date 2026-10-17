@@ -1,248 +1,1727 @@
 <div class="space-y-6">
-  <!-- Top Header with Actions -->
-  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
-    <div>
-      <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Attendance Logs & Leave Management</h1>
-      <p class="text-sm text-slate-500 dark:text-slate-400">Track daily biometric punches, GPS site geofences, and review employee leave requests.</p>
-    </div>
-
-    <button 
-      (click)="openLeaveModal()" 
-      class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm transition-all shadow-md shadow-indigo-600/20 active:scale-95 cursor-pointer">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-      <span>Apply for Leave</span>
-    </button>
-  </div>
-
-  <!-- Tabs & Filter Bar -->
-  <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-    <!-- Tabs -->
-    <div class="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl">
-      <button 
-        (click)="setTab('PUNCHES')" 
-        [class]="activeTab() === 'PUNCHES' ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 font-bold shadow-xs' : 'text-slate-600 dark:text-slate-400 font-medium'"
-        class="px-4 py-1.5 rounded-lg text-xs transition-all cursor-pointer">
-        Daily Punch Register
-      </button>
-
-      <button 
-        (click)="setTab('LEAVES')" 
-        [class]="activeTab() === 'LEAVES' ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 font-bold shadow-xs' : 'text-slate-600 dark:text-slate-400 font-medium'"
-        class="px-4 py-1.5 rounded-lg text-xs transition-all cursor-pointer">
-        Leave Applications ({{ hrmsService.leaves().length }})
-      </button>
-    </div>
-
-    <!-- Date or Status Filters -->
-    @if (activeTab() === 'PUNCHES') {
+  <!-- Feedback / Alert Notifications -->
+  @if (successMessage()) {
+    <div class="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 flex items-center justify-between text-emerald-800 dark:text-emerald-300 text-xs font-semibold animate-fadeIn shadow-2xs">
       <div class="flex items-center gap-2">
-        <label class="text-xs font-semibold text-slate-500">Punch Date:</label>
-        <input 
-          type="date" 
-          [ngModel]="selectedDate()" 
-          (ngModelChange)="selectedDate.set($event); refreshPunches()"
-          class="px-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-medium" />
+        <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        <span>{{ successMessage() }}</span>
       </div>
-    } @else {
-      <div class="flex items-center gap-2">
-        <label class="text-xs font-semibold text-slate-500">Filter Status:</label>
-        <select 
-          [ngModel]="leaveStatusFilter()" 
-          (ngModelChange)="leaveStatusFilter.set($event); refreshLeaves()"
-          class="px-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-medium">
-          <option value="ALL">All Applications</option>
-          <option value="PENDING">Pending Review</option>
-          <option value="APPROVED">Approved</option>
-          <option value="REJECTED">Rejected</option>
-        </select>
-      </div>
-    }
-  </div>
-
-  <!-- Tab 1: Daily Punches Table -->
-  @if (activeTab() === 'PUNCHES') {
-    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="w-full text-left text-xs">
-          <thead class="text-slate-500 dark:text-slate-400 uppercase bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200/60 dark:border-slate-800">
-            <tr>
-              <th class="py-3 px-4">Employee</th>
-              <th class="py-3 px-4">Department</th>
-              <th class="py-3 px-4">Date</th>
-              <th class="py-3 px-4">Clock In</th>
-              <th class="py-3 px-4">Clock Out</th>
-              <th class="py-3 px-4 text-center">Status</th>
-              <th class="py-3 px-4">Punch Source</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-            @for (att of hrmsService.attendances(); track att.id) {
-              <tr class="hover:bg-slate-50/40 dark:hover:bg-slate-800/30">
-                <td class="py-2.5 px-4">
-                  <div class="font-bold text-slate-900 dark:text-white">{{ att.employee_name }}</div>
-                  <div class="text-[10px] text-slate-400 font-mono">{{ att.employee_code }}</div>
-                </td>
-                <td class="py-2.5 px-4 text-slate-600 dark:text-slate-400">{{ att.department_name }}</td>
-                <td class="py-2.5 px-4 font-mono text-slate-700 dark:text-slate-300">{{ att.punch_date | date:'mediumDate' }}</td>
-                <td class="py-2.5 px-4 font-mono text-slate-900 dark:text-white font-medium">
-                  {{ att.clock_in ? (att.clock_in | date:'shortTime') : '--:--' }}
-                </td>
-                <td class="py-2.5 px-4 font-mono text-slate-900 dark:text-white font-medium">
-                  {{ att.clock_out ? (att.clock_out | date:'shortTime') : '--:--' }}
-                </td>
-                <td class="py-2.5 px-4 text-center">
-                  @if (att.status === 'PRESENT') {
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60">Present</span>
-                  } @else if (att.status === 'LATE') {
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200/60">Late ({{ att.late_minutes }}m)</span>
-                  } @else {
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 border border-rose-200/60">{{ att.status }}</span>
-                  }
-                </td>
-                <td class="py-2.5 px-4 text-slate-500 font-mono">
-                  {{ att.source }}
-                </td>
-              </tr>
-            } @empty {
-              <tr>
-                <td colspan="7" class="py-8 text-center text-slate-400">No attendance punches found for this date.</td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
+      <button type="button" (click)="clearAlerts()" class="text-emerald-600 hover:text-emerald-800 dark:hover:text-emerald-200">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
     </div>
   }
 
-  <!-- Tab 2: Leave Applications Table -->
-  @if (activeTab() === 'LEAVES') {
-    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="w-full text-left text-xs">
-          <thead class="text-slate-500 dark:text-slate-400 uppercase bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200/60 dark:border-slate-800">
-            <tr>
-              <th class="py-3 px-4">Employee</th>
-              <th class="py-3 px-4">Leave Type</th>
-              <th class="py-3 px-4">Duration</th>
-              <th class="py-3 px-4 text-center">Days</th>
-              <th class="py-3 px-4">Reason</th>
-              <th class="py-3 px-4 text-center">Status</th>
-              <th class="py-3 px-4 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-            @for (l of hrmsService.leaves(); track l.id) {
-              <tr class="hover:bg-slate-50/40 dark:hover:bg-slate-800/30">
-                <td class="py-2.5 px-4">
-                  <div class="font-bold text-slate-900 dark:text-white">{{ l.employee_name }}</div>
-                  <div class="text-[10px] text-slate-400 font-mono">{{ l.employee_code }}</div>
-                </td>
-                <td class="py-2.5 px-4 font-semibold text-indigo-600 dark:text-indigo-400">{{ l.leave_type }}</td>
-                <td class="py-2.5 px-4 font-mono text-slate-700 dark:text-slate-300">
-                  {{ l.start_date | date:'shortDate' }} to {{ l.end_date | date:'shortDate' }}
-                </td>
-                <td class="py-2.5 px-4 text-center font-bold">{{ l.total_days }} days</td>
-                <td class="py-2.5 px-4 text-slate-600 dark:text-slate-400 max-w-[220px] truncate">{{ l.reason }}</td>
-                <td class="py-2.5 px-4 text-center">
-                  @if (l.status === 'APPROVED') {
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60">Approved</span>
-                  } @else if (l.status === 'REJECTED') {
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 border border-rose-200/60">Rejected</span>
-                  } @else {
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200/60">Pending</span>
-                  }
-                </td>
-                <td class="py-2.5 px-4 text-right">
-                  @if (l.status === 'PENDING') {
+  @if (errorMessage()) {
+    <div class="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 flex items-center justify-between text-rose-800 dark:text-rose-300 text-xs font-semibold animate-fadeIn shadow-2xs">
+      <div class="flex items-center gap-2">
+        <svg class="w-4 h-4 text-rose-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+        <span>{{ errorMessage() }}</span>
+      </div>
+      <button type="button" (click)="clearAlerts()" class="text-rose-600 hover:text-rose-800 dark:hover:text-rose-200">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+  }
+
+  <!-- Unified Top Card Container (Consistent Spacing & Radius) -->
+  <app-card-container
+    title="Enterprise Attendance & Shift Management"
+    subtitle="Live Biometric Sync, GPS Site Geofencing, Multi-Tier Shifts, Anomaly Detection & Correction Approval Workflow"
+    badge="Attendance Core"
+    paddingClass="p-0"
+  >
+    <!-- Top Action Toolbar -->
+    <div card-actions class="flex flex-wrap items-center gap-2">
+      <app-custom-button
+        variant="outline"
+        size="sm"
+        label="Lookup Item"
+        (btnClick)="openQuickLookupModal('HR_ATTENDANCE_STATUS')"
+      >
+        <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+      </app-custom-button>
+
+      <app-custom-button
+        variant="secondary"
+        size="sm"
+        label="Export CSV"
+        (btnClick)="exportAttendanceCSV()"
+      >
+        <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+      </app-custom-button>
+
+      <app-custom-button
+        variant="outline"
+        size="sm"
+        label="Daily Processor"
+        (btnClick)="openProcessModal()"
+      >
+        <svg class="w-3.5 h-3.5 mr-1.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+      </app-custom-button>
+
+      <app-custom-button
+        variant="primary"
+        size="sm"
+        label="Record Punch"
+        (btnClick)="openPunchModal()"
+      >
+        <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </app-custom-button>
+    </div>
+
+    <!-- Modular Navigation Tabs -->
+    <div class="px-6 pt-2">
+      <app-custom-tabs
+        [tabs]="tabs"
+        [activeTabId]="activeTab()"
+        (tabChange)="setActiveTab($event)"
+      ></app-custom-tabs>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- TAB 1: ATTENDANCE REGISTER & LIVE PUNCHES (2.4, 2.5, 2.10) -->
+    <!-- ===================================================================== -->
+    @if (activeTab() === 'punches') {
+      <div class="p-6 space-y-6">
+        <!-- Daily Cockpit Stat Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <!-- Total Active -->
+          <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800">
+            <div class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Total Active</div>
+            <div class="mt-2 flex items-baseline justify-between">
+              <span class="text-2xl font-bold text-slate-900 dark:text-white">{{ attendanceService.dailySummary()?.total_employees || attendanceService.totalAttendance() }}</span>
+              <span class="text-xs font-medium text-emerald-600 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded-full">{{ attendanceService.dailySummary()?.attendance_rate || 0 }}% Rate</span>
+            </div>
+          </div>
+
+          <!-- Present -->
+          <div class="p-4 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-800/40">
+            <div class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Present</div>
+            <div class="mt-2 text-2xl font-bold text-emerald-700 dark:text-emerald-300">
+              {{ attendanceService.presentCount() }}
+            </div>
+          </div>
+
+          <!-- Late Arrival -->
+          <div class="p-4 rounded-xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-800/40">
+            <div class="text-[11px] font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider">Late Arrivals</div>
+            <div class="mt-2 text-2xl font-bold text-amber-700 dark:text-amber-300">
+              {{ attendanceService.lateCount() }}
+            </div>
+          </div>
+
+          <!-- Half Day -->
+          <div class="p-4 rounded-xl bg-purple-50/50 dark:bg-purple-950/20 border border-purple-200/60 dark:border-purple-800/40">
+            <div class="text-[11px] font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wider">Half Day</div>
+            <div class="mt-2 text-2xl font-bold text-purple-700 dark:text-purple-300">
+              {{ attendanceService.halfDayCount() }}
+            </div>
+          </div>
+
+          <!-- Absent -->
+          <div class="p-4 rounded-xl bg-rose-50/50 dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-800/40">
+            <div class="text-[11px] font-semibold text-rose-600 dark:text-rose-400 uppercase tracking-wider">Absent</div>
+            <div class="mt-2 text-2xl font-bold text-rose-700 dark:text-rose-300">
+              {{ attendanceService.absentCount() }}
+            </div>
+          </div>
+
+          <!-- Missing Punch Anomaly -->
+          <div class="p-4 rounded-xl bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-200/60 dark:border-indigo-800/40">
+            <div class="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">Missing Punches</div>
+            <div class="mt-2 text-2xl font-bold text-indigo-700 dark:text-indigo-300">
+              {{ attendanceService.missingPunchCount() }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Filter & Search Toolbar -->
+        <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
+          <!-- Date Filter -->
+          <div>
+            <app-custom-input
+              label="Punch Date"
+              type="date"
+              [ngModel]="selectedDate()"
+              (ngModelChange)="onDateChange($event)"
+            ></app-custom-input>
+          </div>
+
+          <!-- Department Filter -->
+          <div>
+            <app-searchable-select
+              label="Department"
+              placeholder="All Departments"
+              [options]="departmentOptions()"
+              [ngModel]="selectedDepartmentId()"
+              (ngModelChange)="selectedDepartmentId.set($event); onFilterChange()"
+              [allowCreateNew]="false"
+            ></app-searchable-select>
+          </div>
+
+          <!-- Shift Filter -->
+          <div>
+            <app-searchable-select
+              label="Shift"
+              placeholder="All Shifts"
+              [options]="shiftOptions()"
+              [ngModel]="selectedShiftId()"
+              (ngModelChange)="selectedShiftId.set($event); onFilterChange()"
+              [allowCreateNew]="false"
+            ></app-searchable-select>
+          </div>
+
+          <!-- Status Filter -->
+          <div>
+            <app-searchable-select
+              label="Attendance Status"
+              placeholder="All Statuses"
+              categoryCode="HR_ATTENDANCE_STATUS"
+              [ngModel]="selectedStatus()"
+              (ngModelChange)="selectedStatus.set($event); onFilterChange()"
+              [allowCreateNew]="true"
+            ></app-searchable-select>
+          </div>
+
+          <!-- Search Query -->
+          <div>
+            <app-custom-input
+              label="Employee Search"
+              placeholder="Name or Code..."
+              [ngModel]="searchQuery()"
+              (ngModelChange)="searchQuery.set($event); onFilterChange()"
+            ></app-custom-input>
+          </div>
+        </div>
+
+        <!-- Attendance Table -->
+        <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-slate-50 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-800 text-slate-500 font-semibold uppercase tracking-wider">
+                <th class="py-3 px-4">Employee</th>
+                <th class="py-3 px-4">Department & Role</th>
+                <th class="py-3 px-4">Shift</th>
+                <th class="py-3 px-4">Clock IN</th>
+                <th class="py-3 px-4">Clock OUT</th>
+                <th class="py-3 px-4 text-center">Work Hours</th>
+                <th class="py-3 px-4 text-center">Late (Min)</th>
+                <th class="py-3 px-4 text-center">Status</th>
+                <th class="py-3 px-4 text-center">Geofence</th>
+                <th class="py-3 px-4 text-center">Source</th>
+                <th class="py-3 px-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+              @for (att of attendanceService.attendanceRecords(); track att.id) {
+                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors">
+                  <td class="py-3 px-4">
+                    <div class="flex items-center gap-3">
+                      <div class="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center font-bold text-slate-600 dark:text-slate-300 shrink-0">
+                        {{ att.employee_name?.charAt(0) || 'E' }}
+                      </div>
+                      <div>
+                        <div class="font-semibold text-slate-900 dark:text-white">{{ att.employee_name }}</div>
+                        <div class="text-[10px] text-slate-400 font-mono">{{ att.employee_code }}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="py-3 px-4">
+                    <div class="text-slate-800 dark:text-slate-200 font-medium">{{ att.department_name || '—' }}</div>
+                    <div class="text-[10px] text-slate-400">{{ att.designation_title || 'Staff' }}</div>
+                  </td>
+                  <td class="py-3 px-4">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                      {{ att.shift_name || 'General' }}
+                    </span>
+                  </td>
+                  <td class="py-3 px-4">
+                    @if (att.clock_in) {
+                      <div class="font-mono text-slate-900 dark:text-white font-medium">{{ att.clock_in | date:'HH:mm:ss' }}</div>
+                    } @else {
+                      <span class="text-rose-500 font-mono font-medium">--:--:--</span>
+                    }
+                  </td>
+                  <td class="py-3 px-4">
+                    @if (att.clock_out) {
+                      <div class="font-mono text-slate-900 dark:text-white font-medium">{{ att.clock_out | date:'HH:mm:ss' }}</div>
+                    } @else {
+                      @if (att.clock_in) {
+                        <span class="text-amber-500 text-[11px] font-medium animate-pulse">Pending OUT</span>
+                      } @else {
+                        <span class="text-slate-400 font-mono">--:--:--</span>
+                      }
+                    }
+                  </td>
+                  <td class="py-3 px-4 text-center font-mono font-semibold text-slate-800 dark:text-slate-200">
+                    {{ att.working_hours }} hrs
+                  </td>
+                  <td class="py-3 px-4 text-center">
+                    @if (att.late_minutes > 0) {
+                      <span class="text-amber-600 dark:text-amber-400 font-bold font-mono">+{{ att.late_minutes }}m</span>
+                    } @else {
+                      <span class="text-emerald-500 font-mono">0</span>
+                    }
+                  </td>
+                  <td class="py-3 px-4 text-center">
+                    <app-status-badge [status]="att.status" [labelEn]="att.status"></app-status-badge>
+                  </td>
+                  <td class="py-3 px-4 text-center">
+                    @if (att.is_geofence_verified) {
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                        Verified
+                      </span>
+                    } @else {
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
+                        Out of Bound
+                      </span>
+                    }
+                  </td>
+                  <td class="py-3 px-4 text-center">
+                    <span class="text-[10px] uppercase font-mono text-slate-500">
+                      {{ att.source }}
+                    </span>
+                  </td>
+                  <td class="py-3 px-4 text-right">
                     <div class="flex items-center justify-end gap-1.5">
-                      <button 
-                        (click)="reviewLeave(l.id, 'APPROVED')" 
-                        class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold cursor-pointer">
-                        Approve
-                      </button>
-                      <button 
-                        (click)="reviewLeave(l.id, 'REJECTED')" 
-                        class="px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold cursor-pointer">
-                        Reject
+                      @if (att.clock_in && !att.clock_out) {
+                        <button
+                          type="button"
+                          (click)="openPunchModal(att.employee_id)"
+                          title="Punch OUT"
+                          class="p-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-600 hover:bg-amber-100 transition-colors"
+                        >
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                        </button>
+                      }
+                      <button
+                        type="button"
+                        (click)="openCorrectionModal(att)"
+                        title="Request Attendance Correction"
+                        class="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition-colors"
+                      >
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                       </button>
                     </div>
-                  } @else {
-                    <span class="text-slate-400 text-xs italic">Reviewed</span>
-                  }
-                </td>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="11" class="py-12 text-center text-slate-400">
+                    <svg class="w-10 h-10 mx-auto text-slate-300 dark:text-slate-700 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <div class="font-medium">No attendance records found for {{ selectedDate() }}</div>
+                    <div class="text-[11px] text-slate-400 mt-1">Use 'Record Punch' or run the 'Daily Processor' to generate records.</div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination Controls -->
+        <div class="flex items-center justify-between text-xs text-slate-500 pt-2">
+          <div>
+            Showing {{ attendanceService.attendanceRecords().length }} of {{ attendanceService.totalAttendance() }} records
+          </div>
+          <div class="flex items-center gap-2">
+            <app-custom-button
+              variant="outline"
+              size="sm"
+              label="Previous"
+              [disabled]="attPage() === 0"
+              (btnClick)="prevAttPage()"
+            ></app-custom-button>
+            <span class="px-2 font-mono">Page {{ attPage() + 1 }}</span>
+            <app-custom-button
+              variant="outline"
+              size="sm"
+              label="Next"
+              [disabled]="(attPage() + 1) * attLimit() >= attendanceService.totalAttendance()"
+              (btnClick)="nextAttPage()"
+            ></app-custom-button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- ===================================================================== -->
+    <!-- TAB 2: SHIFT MANAGEMENT & ASSIGNMENTS (2.1, 2.2) -->
+    <!-- ===================================================================== -->
+    @if (activeTab() === 'shifts') {
+      <div class="p-6 space-y-8">
+        <!-- 2.1 Shift Definitions Master -->
+        <div class="space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">2.1 Shift Definitions Master</h3>
+              <p class="text-xs text-slate-500">Configure shifts, work hours, lunch breaks, grace periods and day/night flags.</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <app-custom-input
+                placeholder="Search shifts..."
+                [ngModel]="shiftSearch()"
+                (ngModelChange)="shiftSearch.set($event); refreshShifts()"
+              ></app-custom-input>
+              <app-custom-button
+                variant="primary"
+                size="sm"
+                label="New Shift"
+                (btnClick)="openShiftModal()"
+              >
+                <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              </app-custom-button>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-50 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-800 text-slate-500 font-semibold uppercase tracking-wider">
+                  <th class="py-3 px-4">Shift Code</th>
+                  <th class="py-3 px-4">Shift Name</th>
+                  <th class="py-3 px-4">Timing (Start - End)</th>
+                  <th class="py-3 px-4">Lunch Break</th>
+                  <th class="py-3 px-4 text-center">Grace Period</th>
+                  <th class="py-3 px-4 text-center">Min (Half / Full)</th>
+                  <th class="py-3 px-4 text-center">Night Shift</th>
+                  <th class="py-3 px-4 text-center">Status</th>
+                  <th class="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+                @for (s of attendanceService.shifts(); track s.id) {
+                  <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors">
+                    <td class="py-3 px-4 font-mono font-bold text-slate-900 dark:text-white">{{ s.shift_code }}</td>
+                    <td class="py-3 px-4 font-semibold text-slate-800 dark:text-slate-200">{{ s.shift_name }}</td>
+                    <td class="py-3 px-4 font-mono text-slate-700 dark:text-slate-300">
+                      {{ s.start_time }} – {{ s.end_time }}
+                    </td>
+                    <td class="py-3 px-4 font-mono text-slate-500">
+                      {{ s.break_start_time || '—' }} – {{ s.break_end_time || '—' }} ({{ s.break_duration_minutes }}m)
+                    </td>
+                    <td class="py-3 px-4 text-center font-mono font-medium text-amber-600">
+                      {{ s.grace_period_minutes }} mins
+                    </td>
+                    <td class="py-3 px-4 text-center font-mono text-slate-600 dark:text-slate-400">
+                      {{ s.half_day_minimum_minutes / 60 }}h / {{ s.full_day_minimum_minutes / 60 }}h
+                    </td>
+                    <td class="py-3 px-4 text-center">
+                      @if (s.is_night_shift) {
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-purple-50 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300 border border-purple-200">Night</span>
+                      } @else {
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 border border-amber-200">Day</span>
+                      }
+                    </td>
+                    <td class="py-3 px-4 text-center">
+                      <app-status-badge [status]="s.is_active ? 'ACTIVE' : 'INACTIVE'" [labelEn]="s.is_active ? 'Active' : 'Inactive'"></app-status-badge>
+                    </td>
+                    <td class="py-3 px-4 text-right">
+                      <div class="flex items-center justify-end gap-1.5">
+                        <button
+                          type="button"
+                          (click)="openShiftModal(s)"
+                          title="Edit Shift"
+                          class="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 hover:bg-slate-200 transition-colors"
+                        >
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                        </button>
+                        <button
+                          type="button"
+                          (click)="deleteShift(s.id)"
+                          title="Delete Shift"
+                          class="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 text-rose-600 hover:bg-rose-100 transition-colors"
+                        >
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr><td colspan="9" class="py-8 text-center text-slate-400">No shifts defined yet.</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 2.2 Shift Schedules & Assignments -->
+        <div class="space-y-4 pt-4 border-t border-slate-200 dark:border-slate-800">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">2.2 Shift Schedule Assignments</h3>
+              <p class="text-xs text-slate-500">Assign schedules employee-wise, department-wise, or project-site-wise.</p>
+            </div>
+            <app-custom-button
+              variant="primary"
+              size="sm"
+              label="Assign Schedule"
+              (btnClick)="openAssignModal()"
+            >
+              <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            </app-custom-button>
+          </div>
+
+          <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-50 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-800 text-slate-500 font-semibold uppercase tracking-wider">
+                  <th class="py-3 px-4">Assignment Scope</th>
+                  <th class="py-3 px-4">Target Entity</th>
+                  <th class="py-3 px-4">Assigned Shift</th>
+                  <th class="py-3 px-4">Effective From</th>
+                  <th class="py-3 px-4">Effective To</th>
+                  <th class="py-3 px-4">Remarks</th>
+                  <th class="py-3 px-4 text-center">Status</th>
+                  <th class="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+                @for (sa of attendanceService.shiftAssignments(); track sa.id) {
+                  <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors">
+                    <td class="py-3 px-4">
+                      <span class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300 border border-indigo-200">
+                        {{ sa.assignment_type }}
+                      </span>
+                    </td>
+                    <td class="py-3 px-4">
+                      <div class="font-semibold text-slate-900 dark:text-white">{{ sa.target_name || 'All Members' }}</div>
+                      @if (sa.target_code) {
+                        <div class="text-[10px] text-slate-400 font-mono">{{ sa.target_code }}</div>
+                      }
+                    </td>
+                    <td class="py-3 px-4 font-semibold text-slate-800 dark:text-slate-200">
+                      {{ sa.shift_name }} ({{ sa.shift_code }})
+                    </td>
+                    <td class="py-3 px-4 font-mono text-slate-700 dark:text-slate-300">{{ sa.effective_from }}</td>
+                    <td class="py-3 px-4 font-mono text-slate-500">{{ sa.effective_to || 'Indefinite' }}</td>
+                    <td class="py-3 px-4 text-slate-500">{{ sa.remarks || '—' }}</td>
+                    <td class="py-3 px-4 text-center">
+                      <app-status-badge [status]="sa.is_active ? 'ACTIVE' : 'INACTIVE'" [labelEn]="sa.is_active ? 'Active' : 'Inactive'"></app-status-badge>
+                    </td>
+                    <td class="py-3 px-4 text-right">
+                      <button
+                        type="button"
+                        (click)="deleteShiftAssignment(sa.id)"
+                        title="Remove Assignment"
+                        class="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 text-rose-600 hover:bg-rose-100 transition-colors"
+                      >
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                      </button>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr><td colspan="8" class="py-8 text-center text-slate-400">No shift schedules assigned yet.</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- ===================================================================== -->
+    <!-- TAB 3: BIOMETRIC INTEGRATION (ZKTECO) (2.3) -->
+    <!-- ===================================================================== -->
+    @if (activeTab() === 'devices') {
+      <div class="p-6 space-y-6">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">2.3 ZKTeco Biometric Terminal Hub</h3>
+            <p class="text-xs text-slate-500">Manage hardware terminals, test live IP/port socket ping, and import real-time device logs.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <app-custom-input
+              placeholder="Search terminals..."
+              [ngModel]="deviceSearch()"
+              (ngModelChange)="deviceSearch.set($event); refreshDevices()"
+            ></app-custom-input>
+            <app-custom-button
+              variant="primary"
+              size="sm"
+              label="Register Terminal"
+              (btnClick)="openDeviceModal()"
+            >
+              <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            </app-custom-button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          @for (d of attendanceService.biometricDevices(); track d.id) {
+            <div class="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col justify-between shadow-2xs hover:border-slate-300 dark:hover:border-slate-700 transition-all">
+              <div>
+                <div class="flex items-start justify-between gap-2">
+                  <div>
+                    <h4 class="font-bold text-slate-900 dark:text-white text-sm">{{ d.device_name }}</h4>
+                    <span class="text-[10px] font-mono text-slate-400">SN: {{ d.device_serial }}</span>
+                  </div>
+                  <app-status-badge [status]="d.status" [labelEn]="d.status"></app-status-badge>
+                </div>
+
+                <div class="mt-4 space-y-2 text-xs">
+                  <div class="flex items-center justify-between text-slate-600 dark:text-slate-400">
+                    <span>Model:</span>
+                    <span class="font-mono font-medium text-slate-900 dark:text-white">{{ d.device_model }}</span>
+                  </div>
+                  <div class="flex items-center justify-between text-slate-600 dark:text-slate-400">
+                    <span>IP & Port:</span>
+                    <span class="font-mono font-medium text-indigo-600 dark:text-indigo-400">{{ d.ip_address }}:{{ d.port }}</span>
+                  </div>
+                  <div class="flex items-center justify-between text-slate-600 dark:text-slate-400">
+                    <span>Physical Location:</span>
+                    <span class="font-medium text-slate-800 dark:text-slate-200">{{ d.location }}</span>
+                  </div>
+                  <div class="flex items-center justify-between text-slate-600 dark:text-slate-400">
+                    <span>Branch / Project:</span>
+                    <span class="font-medium text-slate-800 dark:text-slate-200">{{ d.branch_name || d.project_name || 'Headquarters' }}</span>
+                  </div>
+                  <div class="flex items-center justify-between text-slate-600 dark:text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <span>Last Synced:</span>
+                    <span class="font-mono text-[11px] text-slate-500">{{ d.last_sync_at ? (d.last_sync_at | date:'short') : 'Never' }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-5 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
+                <div class="flex items-center gap-1.5">
+                  <app-custom-button
+                    variant="outline"
+                    size="sm"
+                    label="Test Ping"
+                    (btnClick)="testDeviceConnection(d.id)"
+                  ></app-custom-button>
+                  <app-custom-button
+                    variant="secondary"
+                    size="sm"
+                    label="Sync Logs"
+                    (btnClick)="openDeviceSyncModal(d.id)"
+                  ></app-custom-button>
+                </div>
+                <div class="flex items-center gap-1">
+                  <button
+                    type="button"
+                    (click)="openDeviceModal(d)"
+                    class="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 hover:bg-slate-200"
+                    title="Edit Terminal"
+                  >
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                  </button>
+                  <button
+                    type="button"
+                    (click)="deleteDevice(d.id)"
+                    class="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 text-rose-600 hover:bg-rose-100"
+                    title="Delete Terminal"
+                  >
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          } @empty {
+            <div class="col-span-full py-12 text-center text-slate-400">
+              <svg class="w-10 h-10 mx-auto text-slate-300 dark:text-slate-700 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/></svg>
+              <div class="font-medium">No biometric terminals connected yet.</div>
+              <div class="text-[11px] text-slate-400 mt-1">Click 'Register Terminal' to configure your ZKTeco INBIO/K40 hardware.</div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- ===================================================================== -->
+    <!-- TAB 4: MISSING PUNCH MANAGEMENT & CORRECTIONS (2.6, 2.7) -->
+    <!-- ===================================================================== -->
+    @if (activeTab() === 'corrections') {
+      <div class="p-6 space-y-8">
+        <!-- 2.6 Missing Punch Anomaly Box -->
+        <div class="p-4 rounded-xl bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 flex flex-wrap items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/40 text-amber-600 flex items-center justify-center shrink-0">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            </div>
+            <div>
+              <h4 class="text-xs font-bold text-amber-900 dark:text-amber-200 uppercase tracking-wider">2.6 Missing Punch Anomaly Alerts (Today: {{ selectedDate() }})</h4>
+              <p class="text-xs text-amber-700 dark:text-amber-300">Flagged records where employee clocked in without clock-out or missed daily biometric capture.</p>
+            </div>
+          </div>
+          <app-custom-button
+            variant="primary"
+            size="sm"
+            label="Submit Correction Request"
+            (btnClick)="openCorrectionModal()"
+          >
+            <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          </app-custom-button>
+        </div>
+
+        <!-- 2.7 Multi-Tier Attendance Correction Approvals Table -->
+        <div class="space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">2.7 Attendance Correction Approval Ledger</h3>
+              <p class="text-xs text-slate-500">Employee submission -> Manager verification -> HR final approval and automatic ledger sync.</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <app-searchable-select
+                placeholder="Filter by Status"
+                categoryCode="HR_CORRECTION_STATUS"
+                [ngModel]="correctionStatusFilter()"
+                (ngModelChange)="correctionStatusFilter.set($event); refreshCorrections()"
+                [allowCreateNew]="true"
+              ></app-searchable-select>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-50 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-800 text-slate-500 font-semibold uppercase tracking-wider">
+                  <th class="py-3 px-4">Req ID</th>
+                  <th class="py-3 px-4">Employee</th>
+                  <th class="py-3 px-4">Request Date</th>
+                  <th class="py-3 px-4">Original Clock Times</th>
+                  <th class="py-3 px-4">Requested Clock Times</th>
+                  <th class="py-3 px-4">Reason</th>
+                  <th class="py-3 px-4">Manager Verification</th>
+                  <th class="py-3 px-4">HR Approval</th>
+                  <th class="py-3 px-4 text-center">Status</th>
+                  <th class="py-3 px-4 text-right">Action Workflow</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+                @for (c of attendanceService.attendanceCorrections(); track c.id) {
+                  <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors">
+                    <td class="py-3 px-4 font-mono font-bold text-slate-900 dark:text-white">#{{ c.id }}</td>
+                    <td class="py-3 px-4">
+                      <div class="font-semibold text-slate-900 dark:text-white">{{ c.employee_name }}</div>
+                      <div class="text-[10px] text-slate-400 font-mono">{{ c.employee_code }} • {{ c.department_name }}</div>
+                    </td>
+                    <td class="py-3 px-4 font-mono font-medium text-slate-700 dark:text-slate-300">{{ c.request_date }}</td>
+                    <td class="py-3 px-4 font-mono text-[11px] text-slate-500">
+                      In: {{ c.original_clock_in ? (c.original_clock_in | date:'HH:mm') : '—' }} |
+                      Out: {{ c.original_clock_out ? (c.original_clock_out | date:'HH:mm') : '—' }}
+                    </td>
+                    <td class="py-3 px-4 font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                      {{ c.requested_clock_in | date:'HH:mm' }} – {{ c.requested_clock_out | date:'HH:mm' }}
+                    </td>
+                    <td class="py-3 px-4 text-slate-600 dark:text-slate-400 max-w-xs truncate" [title]="c.reason">
+                      {{ c.reason }}
+                    </td>
+                    <td class="py-3 px-4">
+                      @if (c.manager_verifier_name) {
+                        <div class="font-medium text-slate-800 dark:text-slate-200">{{ c.manager_verifier_name }}</div>
+                        <div class="text-[10px] text-slate-400">{{ c.manager_remarks || 'Verified' }}</div>
+                      } @else {
+                        <span class="text-slate-400 italic">Pending</span>
+                      }
+                    </td>
+                    <td class="py-3 px-4">
+                      @if (c.hr_approver_name) {
+                        <div class="font-medium text-slate-800 dark:text-slate-200">{{ c.hr_approver_name }}</div>
+                        <div class="text-[10px] text-slate-400">{{ c.hr_remarks || 'Approved' }}</div>
+                      } @else {
+                        <span class="text-slate-400 italic">Pending</span>
+                      }
+                    </td>
+                    <td class="py-3 px-4 text-center">
+                      <app-status-badge [status]="c.status" [labelEn]="c.status"></app-status-badge>
+                    </td>
+                    <td class="py-3 px-4 text-right">
+                      <div class="flex items-center justify-end gap-1.5">
+                        @if (c.status === 'PENDING_VERIFICATION') {
+                          <app-custom-button
+                            variant="outline"
+                            size="sm"
+                            label="Verify (Mgr)"
+                            (btnClick)="openVerifyModal(c)"
+                          ></app-custom-button>
+                        } @else if (c.status === 'VERIFIED') {
+                          <app-custom-button
+                            variant="primary"
+                            size="sm"
+                            label="Approve (HR)"
+                            (btnClick)="openApproveModal(c)"
+                          ></app-custom-button>
+                        } @else {
+                          <span class="text-[11px] text-slate-400 font-medium">Reconciled</span>
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr><td colspan="10" class="py-8 text-center text-slate-400">No attendance correction requests recorded.</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- ===================================================================== -->
+    <!-- TAB 5: HOLIDAY CALENDAR (2.8) -->
+    <!-- ===================================================================== -->
+    @if (activeTab() === 'holidays') {
+      <div class="p-6 space-y-6">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">2.8 Official Holiday Calendar</h3>
+            <p class="text-xs text-slate-500">Weekly holidays, statutory public holidays, religious festivals, and company declared leaves.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <app-custom-input
+              label="Calendar Year"
+              type="number"
+              [ngModel]="holidayYear()"
+              (ngModelChange)="holidayYear.set($event); refreshHolidays()"
+            ></app-custom-input>
+            <app-searchable-select
+              placeholder="Holiday Type"
+              categoryCode="HR_HOLIDAY_TYPE"
+              [ngModel]="holidayTypeFilter()"
+              (ngModelChange)="holidayTypeFilter.set($event); refreshHolidays()"
+              [allowCreateNew]="true"
+            ></app-searchable-select>
+            <app-custom-button
+              variant="primary"
+              size="sm"
+              label="Add Holiday"
+              (btnClick)="openHolidayModal()"
+            >
+              <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            </app-custom-button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-slate-50 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-800 text-slate-500 font-semibold uppercase tracking-wider">
+                <th class="py-3 px-4">Holiday Title</th>
+                <th class="py-3 px-4">Category Type</th>
+                <th class="py-3 px-4">Start Date</th>
+                <th class="py-3 px-4">End Date</th>
+                <th class="py-3 px-4 text-center">Duration</th>
+                <th class="py-3 px-4">Applicability</th>
+                <th class="py-3 px-4 text-center">Recurring Yearly</th>
+                <th class="py-3 px-4">Description</th>
+                <th class="py-3 px-4 text-right">Actions</th>
               </tr>
-            } @empty {
-              <tr>
-                <td colspan="7" class="py-8 text-center text-slate-400">No leave applications found.</td>
+            </thead>
+            <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+              @for (h of attendanceService.holidays(); track h.id) {
+                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors">
+                  <td class="py-3 px-4 font-bold text-slate-900 dark:text-white">{{ h.holiday_name }}</td>
+                  <td class="py-3 px-4">
+                    <span class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 border border-rose-200">
+                      {{ h.holiday_type }}
+                    </span>
+                  </td>
+                  <td class="py-3 px-4 font-mono font-medium text-slate-800 dark:text-slate-200">{{ h.start_date }}</td>
+                  <td class="py-3 px-4 font-mono font-medium text-slate-800 dark:text-slate-200">{{ h.end_date }}</td>
+                  <td class="py-3 px-4 text-center font-bold text-indigo-600 dark:text-indigo-400">
+                    {{ h.total_days }} {{ h.total_days === 1 ? 'day' : 'days' }}
+                  </td>
+                  <td class="py-3 px-4 text-slate-600 dark:text-slate-400">
+                    {{ h.branch_name || h.project_name || 'All Operating Branches & Sites' }}
+                  </td>
+                  <td class="py-3 px-4 text-center">
+                    @if (h.is_recurring_yearly) {
+                      <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">Yes</span>
+                    } @else {
+                      <span class="text-slate-400 font-medium">No</span>
+                    }
+                  </td>
+                  <td class="py-3 px-4 text-slate-500 max-w-xs truncate">{{ h.description || '—' }}</td>
+                  <td class="py-3 px-4 text-right">
+                    <div class="flex items-center justify-end gap-1.5">
+                      <button
+                        type="button"
+                        (click)="openHolidayModal(h)"
+                        title="Edit Holiday"
+                        class="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 hover:bg-slate-200 transition-colors"
+                      >
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                      </button>
+                      <button
+                        type="button"
+                        (click)="deleteHoliday(h.id)"
+                        title="Delete Holiday"
+                        class="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 text-rose-600 hover:bg-rose-100 transition-colors"
+                      >
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              } @empty {
+                <tr><td colspan="9" class="py-8 text-center text-slate-400">No holidays scheduled for {{ holidayYear() }}.</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    <!-- ===================================================================== -->
+    <!-- TAB 6: SITE ATTENDANCE & GEOFENCING (2.9) -->
+    <!-- ===================================================================== -->
+    @if (activeTab() === 'geofences') {
+      <div class="p-6 space-y-6">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">2.9 Project Site Geofencing & Perimeter Controls</h3>
+            <p class="text-xs text-slate-500">Configure GPS coordinate boundaries (latitude, longitude, radius in meters) for project site attendance validation.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <app-searchable-select
+              placeholder="Filter by Project"
+              [options]="projectOptions()"
+              [ngModel]="geofenceProjectId()"
+              (ngModelChange)="geofenceProjectId.set($event); refreshGeofences()"
+              [allowCreateNew]="false"
+            ></app-searchable-select>
+            <app-custom-button
+              variant="primary"
+              size="sm"
+              label="Add Geofence"
+              (btnClick)="openGeofenceModal()"
+            >
+              <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            </app-custom-button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          @for (g of attendanceService.siteGeofences(); track g.id) {
+            <div class="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col justify-between shadow-2xs hover:border-slate-300 dark:hover:border-slate-700 transition-all">
+              <div>
+                <div class="flex items-start justify-between gap-2">
+                  <div>
+                    <h4 class="font-bold text-slate-900 dark:text-white text-sm">{{ g.site_name }}</h4>
+                    <span class="text-[11px] font-medium text-indigo-600 dark:text-indigo-400">{{ g.project_name || 'Project Site' }}</span>
+                  </div>
+                  <app-status-badge [status]="g.is_active ? 'ACTIVE' : 'INACTIVE'" [labelEn]="g.is_active ? 'Active' : 'Inactive'"></app-status-badge>
+                </div>
+
+                <div class="mt-4 p-3 rounded-lg bg-slate-50 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-800 space-y-1.5 text-xs">
+                  <div class="flex items-center justify-between text-slate-600 dark:text-slate-400">
+                    <span>GPS Latitude:</span>
+                    <span class="font-mono font-medium text-slate-900 dark:text-white">{{ g.latitude }}</span>
+                  </div>
+                  <div class="flex items-center justify-between text-slate-600 dark:text-slate-400">
+                    <span>GPS Longitude:</span>
+                    <span class="font-mono font-medium text-slate-900 dark:text-white">{{ g.longitude }}</span>
+                  </div>
+                  <div class="flex items-center justify-between text-slate-600 dark:text-slate-400">
+                    <span>Perimeter Radius:</span>
+                    <span class="font-bold font-mono text-emerald-600 dark:text-emerald-400">{{ g.radius_meters }} meters</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-5 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  (click)="openGeofenceModal(g)"
+                  class="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 hover:bg-slate-200"
+                  title="Edit Geofence"
+                >
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                </button>
+                <button
+                  type="button"
+                  (click)="deleteGeofence(g.id)"
+                  class="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 text-rose-600 hover:bg-rose-100"
+                  title="Delete Geofence"
+                >
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                </button>
+              </div>
+            </div>
+          } @empty {
+            <div class="col-span-full py-12 text-center text-slate-400">
+              <svg class="w-10 h-10 mx-auto text-slate-300 dark:text-slate-700 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>
+              <div class="font-medium">No site geofences defined.</div>
+              <div class="text-[11px] text-slate-400 mt-1">Add coordinates and radius to enable geofenced mobile attendance capture.</div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- ===================================================================== -->
+    <!-- TAB 7: DYNAMIC LOOKUPS & PAGE SETTINGS (Commandment 1 & 2) -->
+    <!-- ===================================================================== -->
+    @if (activeTab() === 'settings') {
+      <div class="p-6 space-y-6">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Dynamic Attendance Lookups & Dropdown Setting</h3>
+            <p class="text-xs text-slate-500">Every dropdown is dynamic. Manage category options in-place or add new dropdown options here.</p>
+          </div>
+          <app-custom-button
+            variant="primary"
+            size="sm"
+            label="Add Option"
+            (btnClick)="openQuickLookupModal(selectedLookupCategory())"
+          >
+            <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          </app-custom-button>
+        </div>
+
+        <!-- Category Selector Pills -->
+        <div class="flex flex-wrap gap-2">
+          @for (cat of ['HR_ATTENDANCE_STATUS', 'HR_PUNCH_SOURCE', 'HR_HOLIDAY_TYPE', 'HR_CORRECTION_STATUS', 'HR_DEVICE_MODEL', 'HR_SHIFT_ASSIGNMENT_TYPE']; track cat) {
+            <button
+              type="button"
+              (click)="onLookupCategoryChange(cat)"
+              class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+              [ngClass]="selectedLookupCategory() === cat ? 'bg-indigo-600 text-white shadow-2xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'"
+            >
+              {{ cat }}
+            </button>
+          }
+        </div>
+
+        <!-- Lookup Items Table -->
+        <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-slate-50 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-800 text-slate-500 font-semibold uppercase tracking-wider">
+                <th class="py-3 px-4">Item Code</th>
+                <th class="py-3 px-4">English Label</th>
+                <th class="py-3 px-4">Bangla Label</th>
+                <th class="py-3 px-4 text-center">Status</th>
               </tr>
-            }
-          </tbody>
-        </table>
+            </thead>
+            <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+              @for (item of lookupItems(); track item.id) {
+                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors">
+                  <td class="py-3 px-4 font-mono font-bold text-slate-900 dark:text-white">{{ item.item_code }}</td>
+                  <td class="py-3 px-4 font-semibold text-slate-800 dark:text-slate-200">{{ item.item_name_en }}</td>
+                  <td class="py-3 px-4 text-slate-600 dark:text-slate-400">{{ item.item_name_bn || '—' }}</td>
+                  <td class="py-3 px-4 text-center">
+                    <app-status-badge [status]="item.is_active ? 'ACTIVE' : 'INACTIVE'" [labelEn]="item.is_active ? 'Active' : 'Inactive'"></app-status-badge>
+                  </td>
+                </tr>
+              } @empty {
+                <tr><td colspan="4" class="py-8 text-center text-slate-400">No lookup items defined for {{ selectedLookupCategory() }}.</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+  </app-card-container>
+
+  <!-- ===================================================================== -->
+  <!-- MODALS (Zero Forms Stacked Beneath Tables) -->
+  <!-- ===================================================================== -->
+
+  <!-- 1. Record Punch Modal -->
+  <app-modal
+    [isOpen]="isPunchModalOpen()"
+    title="Record Live Attendance Punch"
+    (close)="closePunchModal()"
+  >
+    <div class="space-y-4">
+      <app-searchable-select
+        label="Employee *"
+        placeholder="Select Employee..."
+        [options]="employeeOptions()"
+        [ngModel]="punchForm().employee_id"
+        (ngModelChange)="updatePunchField('employee_id', $event)"
+        [allowCreateNew]="false"
+      ></app-searchable-select>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Punch Action *</label>
+          <select
+            class="w-full text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-2.5 focus:ring-2 focus:ring-indigo-500"
+            [ngModel]="punchForm().punch_type"
+            (ngModelChange)="updatePunchField('punch_type', $event)"
+          >
+            <option value="IN">Clock IN</option>
+            <option value="OUT">Clock OUT</option>
+            <option value="PUNCH">Automatic Toggle</option>
+          </select>
+        </div>
+
+        <div>
+          <app-searchable-select
+            label="Punch Source *"
+            categoryCode="HR_PUNCH_SOURCE"
+            [ngModel]="punchForm().source"
+            (ngModelChange)="updatePunchField('source', $event)"
+            [allowCreateNew]="true"
+          ></app-searchable-select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <app-custom-input
+          label="Punch Date *"
+          type="date"
+          [ngModel]="punchForm().punch_date"
+          (ngModelChange)="updatePunchField('punch_date', $event)"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Timestamp *"
+          type="datetime-local"
+          [ngModel]="punchForm().punch_time"
+          (ngModelChange)="updatePunchField('punch_time', $event)"
+        ></app-custom-input>
+      </div>
+
+      <app-searchable-select
+        label="Site Geofence Location (Optional)"
+        placeholder="Select Project Site..."
+        [options]="geofenceOptions()"
+        [ngModel]="punchForm().site_id"
+        (ngModelChange)="updatePunchField('site_id', $event)"
+        [allowCreateNew]="false"
+      ></app-searchable-select>
+
+      <app-custom-textarea
+        label="Remarks / Notes"
+        placeholder="e.g. Authorized site travel, biometric machine maintenance..."
+        [ngModel]="punchForm().remarks"
+        (ngModelChange)="updatePunchField('remarks', $event)"
+      ></app-custom-textarea>
+    </div>
+
+    <div modal-actions class="flex items-center justify-end gap-2">
+      <app-custom-button variant="outline" size="sm" label="Cancel" (btnClick)="closePunchModal()"></app-custom-button>
+      <app-custom-button variant="primary" size="sm" label="Confirm Punch" (btnClick)="submitPunch()"></app-custom-button>
+    </div>
+  </app-modal>
+
+  <!-- 2. Daily Attendance Batch Processor Modal -->
+  <app-modal
+    [isOpen]="isProcessModalOpen()"
+    title="Run Daily Attendance Processor (2.5)"
+    (close)="closeProcessModal()"
+  >
+    <div class="space-y-4">
+      <div class="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 text-xs text-amber-800 dark:text-amber-300">
+        This processor calculates working hours, flags missing check-ins/outs, and marks absent records for unpunched active employees.
+      </div>
+
+      <app-custom-input
+        label="Target Process Date *"
+        type="date"
+        [ngModel]="processForm().process_date"
+        (ngModelChange)="updateProcessField('process_date', $event)"
+      ></app-custom-input>
+
+      <app-searchable-select
+        label="Department (Optional - Leave blank for All)"
+        placeholder="All Company Departments"
+        [options]="departmentOptions()"
+        [ngModel]="processForm().department_id"
+        (ngModelChange)="updateProcessField('department_id', $event)"
+        [allowCreateNew]="false"
+      ></app-searchable-select>
+    </div>
+
+    <div modal-actions class="flex items-center justify-end gap-2">
+      <app-custom-button variant="outline" size="sm" label="Cancel" (btnClick)="closeProcessModal()"></app-custom-button>
+      <app-custom-button variant="primary" size="sm" label="Execute Processing" (btnClick)="submitDailyProcess()"></app-custom-button>
+    </div>
+  </app-modal>
+
+  <!-- 3. Add / Edit Shift Modal (2.1) -->
+  <app-modal
+    [isOpen]="isShiftModalOpen()"
+    [title]="editingShiftId() ? 'Edit Shift Schedule' : 'Create New Shift (2.1)'"
+    (close)="closeShiftModal()"
+  >
+    <div class="space-y-4">
+      <div class="grid grid-cols-2 gap-4">
+        <app-custom-input
+          label="Shift Name *"
+          placeholder="e.g. Standard General Shift"
+          [ngModel]="shiftForm().shift_name"
+          (ngModelChange)="updateShiftField('shift_name', $event)"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Shift Code *"
+          placeholder="e.g. S-GEN, S-NIGHT"
+          [ngModel]="shiftForm().shift_code"
+          (ngModelChange)="updateShiftField('shift_code', $event)"
+        ></app-custom-input>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <app-custom-input
+          label="Start Time *"
+          type="time"
+          step="1"
+          [ngModel]="shiftForm().start_time"
+          (ngModelChange)="updateShiftField('start_time', $event)"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="End Time *"
+          type="time"
+          step="1"
+          [ngModel]="shiftForm().end_time"
+          (ngModelChange)="updateShiftField('end_time', $event)"
+        ></app-custom-input>
+      </div>
+
+      <div class="grid grid-cols-3 gap-4">
+        <app-custom-input
+          label="Break Start"
+          type="time"
+          step="1"
+          [ngModel]="shiftForm().break_start_time"
+          (ngModelChange)="updateShiftField('break_start_time', $event)"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Break End"
+          type="time"
+          step="1"
+          [ngModel]="shiftForm().break_end_time"
+          (ngModelChange)="updateShiftField('break_end_time', $event)"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Break (Mins)"
+          type="number"
+          [ngModel]="shiftForm().break_duration_minutes"
+          (ngModelChange)="updateShiftField('break_duration_minutes', +$event)"
+        ></app-custom-input>
+      </div>
+
+      <div class="grid grid-cols-3 gap-4">
+        <app-custom-input
+          label="Grace Period (Mins)"
+          type="number"
+          [ngModel]="shiftForm().grace_period_minutes"
+          (ngModelChange)="updateShiftField('grace_period_minutes', +$event)"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Half Day Min (Mins)"
+          type="number"
+          [ngModel]="shiftForm().half_day_minimum_minutes"
+          (ngModelChange)="updateShiftField('half_day_minimum_minutes', +$event)"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Full Day Min (Mins)"
+          type="number"
+          [ngModel]="shiftForm().full_day_minimum_minutes"
+          (ngModelChange)="updateShiftField('full_day_minimum_minutes', +$event)"
+        ></app-custom-input>
+      </div>
+
+      <div class="flex items-center gap-6 pt-2">
+        <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer">
+          <input
+            type="checkbox"
+            class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+            [checked]="shiftForm().is_night_shift"
+            (change)="updateShiftField('is_night_shift', !shiftForm().is_night_shift)"
+          />
+          <span>Night Shift Schedule</span>
+        </label>
+
+        <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer">
+          <input
+            type="checkbox"
+            class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+            [checked]="shiftForm().is_active"
+            (change)="updateShiftField('is_active', !shiftForm().is_active)"
+          />
+          <span>Active Shift</span>
+        </label>
       </div>
     </div>
-  }
+
+    <div modal-actions class="flex items-center justify-end gap-2">
+      <app-custom-button variant="outline" size="sm" label="Cancel" (btnClick)="closeShiftModal()"></app-custom-button>
+      <app-custom-button variant="primary" size="sm" label="Save Shift" (btnClick)="submitShift()"></app-custom-button>
+    </div>
+  </app-modal>
+
+  <!-- 4. Shift Assignment Modal (2.2) -->
+  <app-modal
+    [isOpen]="isAssignModalOpen()"
+    title="Assign Shift Schedule (2.2)"
+    (close)="closeAssignModal()"
+  >
+    <div class="space-y-4">
+      <app-searchable-select
+        label="Select Shift *"
+        placeholder="Choose Shift..."
+        [options]="shiftOptions()"
+        [ngModel]="assignForm().shift_id"
+        (ngModelChange)="updateAssignField('shift_id', $event)"
+        [allowCreateNew]="false"
+      ></app-searchable-select>
+
+      <app-searchable-select
+        label="Assignment Scope *"
+        categoryCode="HR_SHIFT_ASSIGNMENT_TYPE"
+        [ngModel]="assignForm().assignment_type"
+        (ngModelChange)="updateAssignField('assignment_type', $event)"
+        [allowCreateNew]="true"
+      ></app-searchable-select>
+
+      @if (assignForm().assignment_type === 'EMPLOYEE') {
+        <app-searchable-select
+          label="Target Employee *"
+          placeholder="Select Employee..."
+          [options]="employeeOptions()"
+          [ngModel]="assignForm().employee_id"
+          (ngModelChange)="updateAssignField('employee_id', $event)"
+          [allowCreateNew]="false"
+        ></app-searchable-select>
+      } @else if (assignForm().assignment_type === 'DEPARTMENT') {
+        <app-searchable-select
+          label="Target Department *"
+          placeholder="Select Department..."
+          [options]="departmentOptions()"
+          [ngModel]="assignForm().department_id"
+          (ngModelChange)="updateAssignField('department_id', $event)"
+          [allowCreateNew]="false"
+        ></app-searchable-select>
+      } @else if (assignForm().assignment_type === 'PROJECT_SITE') {
+        <app-searchable-select
+          label="Target Project Site *"
+          placeholder="Select Project..."
+          [options]="projectOptions()"
+          [ngModel]="assignForm().project_id"
+          (ngModelChange)="updateAssignField('project_id', $event)"
+          [allowCreateNew]="false"
+        ></app-searchable-select>
+      }
+
+      <div class="grid grid-cols-2 gap-4">
+        <app-custom-input
+          label="Effective From *"
+          type="date"
+          [ngModel]="assignForm().effective_from"
+          (ngModelChange)="updateAssignField('effective_from', $event)"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Effective To"
+          type="date"
+          [ngModel]="assignForm().effective_to"
+          (ngModelChange)="updateAssignField('effective_to', $event)"
+        ></app-custom-input>
+      </div>
+
+      <app-custom-textarea
+        label="Assignment Remarks"
+        placeholder="e.g. Assigned for Q4 Project RAMP construction shift..."
+        [ngModel]="assignForm().remarks"
+        (ngModelChange)="updateAssignField('remarks', $event)"
+      ></app-custom-textarea>
+    </div>
+
+    <div modal-actions class="flex items-center justify-end gap-2">
+      <app-custom-button variant="outline" size="sm" label="Cancel" (btnClick)="closeAssignModal()"></app-custom-button>
+      <app-custom-button variant="primary" size="sm" label="Confirm Schedule" (btnClick)="submitShiftAssignment()"></app-custom-button>
+    </div>
+  </app-modal>
+
+  <!-- 5. Add / Edit Biometric Device Modal (2.3) -->
+  <app-modal
+    [isOpen]="isDeviceModalOpen()"
+    [title]="editingDeviceId() ? 'Edit Biometric Device' : 'Register Biometric Terminal (2.3)'"
+    (close)="closeDeviceModal()"
+  >
+    <div class="space-y-4">
+      <div class="grid grid-cols-2 gap-4">
+        <app-custom-input
+          label="Device Name *"
+          placeholder="e.g. HQ-Main Entrance ZKTeco"
+          [ngModel]="deviceForm().device_name"
+          (ngModelChange)="updateDeviceField('device_name', $event)"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Serial Number *"
+          placeholder="e.g. ZK-INBIO-987654"
+          [ngModel]="deviceForm().device_serial"
+          (ngModelChange)="updateDeviceField('device_serial', $event)"
+        ></app-custom-input>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <app-searchable-select
+          label="Hardware Model *"
+          categoryCode="HR_DEVICE_MODEL"
+          [ngModel]="deviceForm().device_model"
+          (ngModelChange)="updateDeviceField('device_model', $event)"
+          [allowCreateNew]="true"
+        ></app-searchable-select>
+
+        <app-custom-input
+          label="Location Description *"
+          placeholder="e.g. Ground Floor Lobby, Site Gate A"
+          [ngModel]="deviceForm().location"
+          (ngModelChange)="updateDeviceField('location', $event)"
+        ></app-custom-input>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <app-custom-input
+          label="IP Address *"
+          placeholder="192.168.1.201"
+          [ngModel]="deviceForm().ip_address"
+          (ngModelChange)="updateDeviceField('ip_address', $event)"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Port *"
+          type="number"
+          [ngModel]="deviceForm().port"
+          (ngModelChange)="updateDeviceField('port', +$event)"
+        ></app-custom-input>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <app-searchable-select
+          label="Assigned Branch"
+          placeholder="Select Branch..."
+          [options]="branchOptions()"
+          [ngModel]="deviceForm().assigned_branch_id"
+          (ngModelChange)="updateDeviceField('assigned_branch_id', $event)"
+          [allowCreateNew]="false"
+        ></app-searchable-select>
+
+        <app-searchable-select
+          label="Assigned Project"
+          placeholder="Select Project..."
+          [options]="projectOptions()"
+          [ngModel]="deviceForm().assigned_project_id"
+          (ngModelChange)="updateDeviceField('assigned_project_id', $event)"
+          [allowCreateNew]="false"
+        ></app-searchable-select>
+      </div>
+    </div>
+
+    <div modal-actions class="flex items-center justify-end gap-2">
+      <app-custom-button variant="outline" size="sm" label="Cancel" (btnClick)="closeDeviceModal()"></app-custom-button>
+      <app-custom-button variant="primary" size="sm" label="Save Terminal" (btnClick)="submitDevice()"></app-custom-button>
+    </div>
+  </app-modal>
+
+  <!-- 6. Device Sync & Log Punch Simulation Modal (2.3) -->
+  <app-modal
+    [isOpen]="isDeviceSyncModalOpen()"
+    title="Biometric Device Sync & Raw Punch Import (2.3)"
+    (close)="closeDeviceSyncModal()"
+  >
+    <div class="space-y-4">
+      <div class="p-3 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 text-xs text-indigo-800 dark:text-indigo-300">
+        Trigger live TCP/IP socket sync with ZKTeco or paste device attendance logs in JSON format for instant bulk processing.
+      </div>
+
+      <app-custom-textarea
+        label="Raw Log Records JSON (Optional - Leave blank to pull from terminal buffer)"
+        rows="8"
+        [ngModel]="syncLogPunches()"
+        (ngModelChange)="syncLogPunches.set($event)"
+      ></app-custom-textarea>
+    </div>
+
+    <div modal-actions class="flex items-center justify-end gap-2">
+      <app-custom-button variant="outline" size="sm" label="Cancel" (btnClick)="closeDeviceSyncModal()"></app-custom-button>
+      <app-custom-button variant="primary" size="sm" label="Sync & Process" (btnClick)="triggerDeviceSync()"></app-custom-button>
+    </div>
+  </app-modal>
+
+  <!-- 7. Attendance Correction Request Modal (2.6, 2.7) -->
+  <app-modal
+    [isOpen]="isCorrectionModalOpen()"
+    title="Submit Attendance Correction Request (2.7)"
+    (close)="closeCorrectionModal()"
+  >
+    <div class="space-y-4">
+      <app-searchable-select
+        label="Employee *"
+        placeholder="Select Employee..."
+        [options]="employeeOptions()"
+        [ngModel]="correctionForm().employee_id"
+        (ngModelChange)="updateCorrectionField('employee_id', $event)"
+        [allowCreateNew]="false"
+      ></app-searchable-select>
+
+      <app-custom-input
+        label="Date of Attendance Incident *"
+        type="date"
+        [ngModel]="correctionForm().request_date"
+        (ngModelChange)="updateCorrectionField('request_date', $event)"
+      ></app-custom-input>
+
+      <div class="grid grid-cols-2 gap-4">
+        <app-custom-input
+          label="Corrected Clock IN *"
+          type="datetime-local"
+          [ngModel]="correctionForm().requested_clock_in"
+          (ngModelChange)="updateCorrectionField('requested_clock_in', $event)"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Corrected Clock OUT *"
+          type="datetime-local"
+          [ngModel]="correctionForm().requested_clock_out"
+          (ngModelChange)="updateCorrectionField('requested_clock_out', $event)"
+        ></app-custom-input>
+      </div>
+
+      <app-custom-textarea
+        label="Reason for Missing Punch / Discrepancy *"
+        placeholder="e.g. Biometric device fingerprint sensor failed, client site meeting directly from home..."
+        [ngModel]="correctionForm().reason"
+        (ngModelChange)="updateCorrectionField('reason', $event)"
+      ></app-custom-textarea>
+    </div>
+
+    <div modal-actions class="flex items-center justify-end gap-2">
+      <app-custom-button variant="outline" size="sm" label="Cancel" (btnClick)="closeCorrectionModal()"></app-custom-button>
+      <app-custom-button variant="primary" size="sm" label="Submit Request" (btnClick)="submitCorrectionRequest()"></app-custom-button>
+    </div>
+  </app-modal>
+
+  <!-- 8. Manager Verification Modal (2.7) -->
+  <app-modal
+    [isOpen]="isVerifyModalOpen()"
+    title="Manager Verification Workflow (Step 1)"
+    (close)="closeVerifyModal()"
+  >
+    <div class="space-y-4">
+      <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs space-y-1">
+        <div class="font-bold text-slate-800 dark:text-slate-200">Employee: {{ selectedCorrectionForVerify()?.employee_name }}</div>
+        <div>Date: {{ selectedCorrectionForVerify()?.request_date }}</div>
+        <div>Reason: {{ selectedCorrectionForVerify()?.reason }}</div>
+      </div>
+
+      <app-custom-textarea
+        label="Manager Verification Notes"
+        placeholder="Enter supervisor validation notes..."
+        [ngModel]="managerRemarks()"
+        (ngModelChange)="managerRemarks.set($event)"
+      ></app-custom-textarea>
+    </div>
+
+    <div modal-actions class="flex items-center justify-end gap-2">
+      <app-custom-button variant="outline" size="sm" label="Reject" (btnClick)="submitVerification(false)"></app-custom-button>
+      <app-custom-button variant="primary" size="sm" label="Verify & Forward to HR" (btnClick)="submitVerification(true)"></app-custom-button>
+    </div>
+  </app-modal>
+
+  <!-- 9. HR Approval Modal (2.7) -->
+  <app-modal
+    [isOpen]="isApproveModalOpen()"
+    title="HR Final Approval & Attendance Reconcile (Step 2)"
+    (close)="closeApproveModal()"
+  >
+    <div class="space-y-4">
+      <div class="p-3 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 text-xs space-y-1 text-indigo-900 dark:text-indigo-300">
+        <div class="font-bold">Employee: {{ selectedCorrectionForApprove()?.employee_name }}</div>
+        <div>Verified by Manager: {{ selectedCorrectionForApprove()?.manager_verifier_name }}</div>
+        <div>Manager Notes: {{ selectedCorrectionForApprove()?.manager_remarks }}</div>
+      </div>
+
+      <app-custom-textarea
+        label="HR Approval Remarks"
+        placeholder="Enter HR approval remarks..."
+        [ngModel]="hrRemarks()"
+        (ngModelChange)="hrRemarks.set($event)"
+      ></app-custom-textarea>
+    </div>
+
+    <div modal-actions class="flex items-center justify-end gap-2">
+      <app-custom-button variant="outline" size="sm" label="Reject" (btnClick)="submitHRApproval(false)"></app-custom-button>
+      <app-custom-button variant="primary" size="sm" label="Approve & Reconcile Ledger" (btnClick)="submitHRApproval(true)"></app-custom-button>
+    </div>
+  </app-modal>
+
+  <!-- 10. Add / Edit Holiday Modal (2.8) -->
+  <app-modal
+    [isOpen]="isHolidayModalOpen()"
+    [title]="editingHolidayId() ? 'Edit Holiday' : 'Add Holiday to Calendar (2.8)'"
+    (close)="closeHolidayModal()"
+  >
+    <div class="space-y-4">
+      <div class="grid grid-cols-2 gap-4">
+        <app-custom-input
+          label="Holiday Name *"
+          placeholder="e.g. Independence Day, Eid-ul-Fitr"
+          [ngModel]="holidayForm().holiday_name"
+          (ngModelChange)="updateHolidayField('holiday_name', $event)"
+        ></app-custom-input>
+
+        <app-searchable-select
+          label="Holiday Type *"
+          categoryCode="HR_HOLIDAY_TYPE"
+          [ngModel]="holidayForm().holiday_type"
+          (ngModelChange)="updateHolidayField('holiday_type', $event)"
+          [allowCreateNew]="true"
+        ></app-searchable-select>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <app-custom-input
+          label="Start Date *"
+          type="date"
+          [ngModel]="holidayForm().start_date"
+          (ngModelChange)="updateHolidayField('start_date', $event)"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="End Date *"
+          type="date"
+          [ngModel]="holidayForm().end_date"
+          (ngModelChange)="updateHolidayField('end_date', $event)"
+        ></app-custom-input>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <app-searchable-select
+          label="Branch (Optional)"
+          placeholder="All Branches"
+          [options]="branchOptions()"
+          [ngModel]="holidayForm().applicable_branch_id"
+          (ngModelChange)="updateHolidayField('applicable_branch_id', $event)"
+          [allowCreateNew]="false"
+        ></app-searchable-select>
+
+        <app-searchable-select
+          label="Project (Optional)"
+          placeholder="All Projects"
+          [options]="projectOptions()"
+          [ngModel]="holidayForm().applicable_project_id"
+          (ngModelChange)="updateHolidayField('applicable_project_id', $event)"
+          [allowCreateNew]="false"
+        ></app-searchable-select>
+      </div>
+
+      <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer pt-1">
+        <input
+          type="checkbox"
+          class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+          [checked]="holidayForm().is_recurring_yearly"
+          (change)="updateHolidayField('is_recurring_yearly', !holidayForm().is_recurring_yearly)"
+        />
+        <span>Recurring Yearly Holiday</span>
+      </label>
+
+      <app-custom-textarea
+        label="Description / Gazette Reference"
+        placeholder="e.g. Government Gazette Notification for Statutory Holidays..."
+        [ngModel]="holidayForm().description"
+        (ngModelChange)="updateHolidayField('description', $event)"
+      ></app-custom-textarea>
+    </div>
+
+    <div modal-actions class="flex items-center justify-end gap-2">
+      <app-custom-button variant="outline" size="sm" label="Cancel" (btnClick)="closeHolidayModal()"></app-custom-button>
+      <app-custom-button variant="primary" size="sm" label="Save Holiday" (btnClick)="submitHoliday()"></app-custom-button>
+    </div>
+  </app-modal>
+
+  <!-- 11. Add / Edit Site Geofence Modal (2.9) -->
+  <app-modal
+    [isOpen]="isGeofenceModalOpen()"
+    [title]="editingGeofenceId() ? 'Edit Site Geofence' : 'Establish Site Geofence (2.9)'"
+    (close)="closeGeofenceModal()"
+  >
+    <div class="space-y-4">
+      <app-searchable-select
+        label="Project *"
+        placeholder="Select Project..."
+        [options]="projectOptions()"
+        [ngModel]="geofenceForm().project_id"
+        (ngModelChange)="updateGeofenceField('project_id', $event)"
+        [allowCreateNew]="false"
+      ></app-searchable-select>
+
+      <app-custom-input
+        label="Site Perimeter Name *"
+        placeholder="e.g. Blue Ocean Tower - Construction Site Gate"
+        [ngModel]="geofenceForm().site_name"
+        (ngModelChange)="updateGeofenceField('site_name', $event)"
+      ></app-custom-input>
+
+      <div class="grid grid-cols-3 gap-4">
+        <app-custom-input
+          label="GPS Latitude *"
+          type="number"
+          step="0.000001"
+          [ngModel]="geofenceForm().latitude"
+          (ngModelChange)="updateGeofenceField('latitude', +$event)"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="GPS Longitude *"
+          type="number"
+          step="0.000001"
+          [ngModel]="geofenceForm().longitude"
+          (ngModelChange)="updateGeofenceField('longitude', +$event)"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Radius (Meters) *"
+          type="number"
+          [ngModel]="geofenceForm().radius_meters"
+          (ngModelChange)="updateGeofenceField('radius_meters', +$event)"
+        ></app-custom-input>
+      </div>
+    </div>
+
+    <div modal-actions class="flex items-center justify-end gap-2">
+      <app-custom-button variant="outline" size="sm" label="Cancel" (btnClick)="closeGeofenceModal()"></app-custom-button>
+      <app-custom-button variant="primary" size="sm" label="Save Geofence" (btnClick)="submitGeofence()"></app-custom-button>
+    </div>
+  </app-modal>
+
+  <!-- 12. In-Place Dynamic Lookup Item Quick Creation Modal (Commandment 2) -->
+  <app-modal
+    [isOpen]="isQuickLookupModalOpen()"
+    title="Create Dynamic Lookup Option"
+    (close)="closeQuickLookupModal()"
+  >
+    <div class="space-y-4">
+      <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs">
+        Adding option directly to category: <span class="font-mono font-bold text-indigo-600 dark:text-indigo-400">{{ quickLookupCategoryCode() }}</span>
+      </div>
+
+      <app-custom-input
+        label="English Name / Label *"
+        placeholder="e.g. Remote Authorized, Biometric Facial..."
+        [ngModel]="quickLookupEnglishName()"
+        (ngModelChange)="quickLookupEnglishName.set($event)"
+      ></app-custom-input>
+
+      <app-custom-input
+        label="Bangla Name / Label (Optional)"
+        placeholder="বাংলা নাম..."
+        [ngModel]="quickLookupBanglaName()"
+        (ngModelChange)="quickLookupBanglaName.set($event)"
+      ></app-custom-input>
+    </div>
+
+    <div modal-actions class="flex items-center justify-end gap-2">
+      <app-custom-button variant="outline" size="sm" label="Cancel" (btnClick)="closeQuickLookupModal()"></app-custom-button>
+      <app-custom-button variant="primary" size="sm" label="Create & Add to Dropdown" (btnClick)="submitQuickLookupItem()"></app-custom-button>
+    </div>
+  </app-modal>
 </div>
-
-<!-- Apply Leave Modal -->
-@if (isLeaveModalOpen()) {
-  <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
-    <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full border border-slate-200 dark:border-slate-800 shadow-xl p-6 relative">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800 mb-4">
-        <h3 class="text-lg font-bold text-slate-900 dark:text-white">Apply for Employee Leave</h3>
-        <button (click)="closeLeaveModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl font-bold cursor-pointer">&times;</button>
-      </div>
-
-      <div class="space-y-4 text-xs">
-        <div>
-          <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Employee</label>
-          <select 
-            [(ngModel)]="newLeave().employee_id" 
-            class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white">
-            @for (emp of hrmsService.employees(); track emp.id) {
-              <option [value]="emp.id">{{ emp.employee_code }} - {{ emp.first_name }} {{ emp.last_name }}</option>
-            }
-          </select>
-        </div>
-
-        <div>
-          <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Leave Type</label>
-          <select 
-            [(ngModel)]="newLeave().leave_type" 
-            class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-medium">
-            <option value="CASUAL">Casual Leave (নৈমিত্তিক ছুটি)</option>
-            <option value="SICK">Sick Leave (পীড়া ছুটি)</option>
-            <option value="EARNED">Earned / Annual Leave (অর্জিত ছুটি)</option>
-            <option value="MATERNITY">Maternity Leave (মাতৃত্বকালীন ছুটি)</option>
-          </select>
-        </div>
-
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Start Date</label>
-            <input type="date" [(ngModel)]="newLeave().start_date" class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white" />
-          </div>
-          <div>
-            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">End Date</label>
-            <input type="date" [(ngModel)]="newLeave().end_date" class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white" />
-          </div>
-        </div>
-
-        <div>
-          <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Reason for Leave *</label>
-          <textarea 
-            [(ngModel)]="newLeave().reason" 
-            rows="3" 
-            placeholder="Please detail the reason for leave..." 
-            class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"></textarea>
-        </div>
-
-        <div class="pt-3 flex justify-end gap-2 border-t border-slate-200 dark:border-slate-800">
-          <button (click)="closeLeaveModal()" class="px-4 py-2 font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl cursor-pointer">Cancel</button>
-          <button (click)="submitLeave()" [disabled]="isApplying()" class="px-5 py-2 font-medium bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-md cursor-pointer disabled:opacity-50">
-            {{ isApplying() ? 'Submitting...' : 'Submit Leave Request' }}
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-}

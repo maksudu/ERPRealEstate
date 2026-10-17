@@ -269,7 +269,7 @@ export class ExecutiveCockpitComponent implements OnInit, AfterViewInit, OnDestr
           legend: { display: false },
           tooltip: {
             callbacks: {
-              label: (context) => {
+              label: (context: any) => {
                 const val = Number(context.raw);
                 const prefix = val >= 0 ? 'Inflow: ৳ ' : 'Liability: ৳ ';
                 return prefix + Math.abs(val).toLocaleString('en-IN', { maximumFractionDigits: 0 });
@@ -280,7 +280,7 @@ export class ExecutiveCockpitComponent implements OnInit, AfterViewInit, OnDestr
         scales: {
           y: {
             ticks: {
-              callback: (value) => {
+              callback: (value: any) => {
                 const v = Number(value);
                 if (Math.abs(v) >= 10000000) {
                   return (v / 10000000).toFixed(1) + ' Cr';
@@ -357,7 +357,7 @@ export class ExecutiveCockpitComponent implements OnInit, AfterViewInit, OnDestr
           legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11 } } },
           tooltip: {
             callbacks: {
-              label: (context) => {
+              label: (context: any) => {
                 const label = context.dataset.label || '';
                 const val = Number(context.raw);
                 if (label.includes('%')) {

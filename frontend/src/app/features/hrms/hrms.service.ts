@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
+import { Observable, tap, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 export interface Department {
@@ -228,12 +228,13 @@ export class HrmsService {
 
   // Employees
   loadEmployees(category?: string, departmentId?: number, search?: string): Observable<Employee[]> {
-    let params = new HttpParams();
+    let params = new HttpParams().set('all', 'true');
     if (category) params = params.set('category', category);
     if (departmentId) params = params.set('department_id', departmentId);
     if (search) params = params.set('search', search);
 
-    return this.http.get<Employee[]>(`${this.apiUrl}/employees`, { params }).pipe(
+    return this.http.get<any>(`${this.apiUrl}/employees`, { params }).pipe(
+      map(res => (Array.isArray(res) ? res : (res?.items || [])) as Employee[]),
       tap(data => this.employees.set(data))
     );
   }

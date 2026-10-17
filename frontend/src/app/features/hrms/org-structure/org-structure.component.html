@@ -1,0 +1,1164 @@
+<div class="space-y-6">
+  <!-- Feedback / Alert Notifications -->
+  @if (successMessage()) {
+    <div class="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 flex items-center justify-between text-emerald-800 dark:text-emerald-300 text-xs font-semibold animate-fadeIn">
+      <div class="flex items-center gap-2">
+        <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        <span>{{ successMessage() }}</span>
+      </div>
+      <button type="button" (click)="clearAlerts()" class="text-emerald-600 hover:text-emerald-800 dark:hover:text-emerald-200">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+  }
+
+  @if (errorMessage()) {
+    <div class="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 flex items-center justify-between text-rose-800 dark:text-rose-300 text-xs font-semibold animate-fadeIn">
+      <div class="flex items-center gap-2">
+        <svg class="w-4 h-4 text-rose-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+        <span>{{ errorMessage() }}</span>
+      </div>
+      <button type="button" (click)="clearAlerts()" class="text-rose-600 hover:text-rose-800 dark:hover:text-rose-200">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+  }
+
+  <!-- Unified Top Card Container -->
+  <app-card-container
+    title="Organizational Structure & Company Master"
+    subtitle="Enterprise Holding Companies, Legal Entities, Operating Branches & Real Estate Project Site Offices"
+    badge="HRMS Structure"
+    paddingClass="p-0"
+  >
+    <!-- Top Action Toolbar -->
+    <div card-actions class="flex flex-wrap items-center gap-2">
+      <app-custom-button
+        variant="outline"
+        size="sm"
+        label="Quick Lookup Item"
+        (btnClick)="openQuickLookupModal('COMPANY_TYPE')"
+      >
+        <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+      </app-custom-button>
+
+      <app-custom-button
+        variant="primary"
+        size="sm"
+        label="+ Register Company"
+        (btnClick)="openCreateCompanyModal()"
+      >
+      </app-custom-button>
+    </div>
+
+    <!-- Quick Cockpit KPI Strip -->
+    <div class="px-6 py-4 bg-slate-50/60 dark:bg-slate-850/50 border-b border-slate-200 dark:border-slate-800 grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+        </div>
+        <div>
+          <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Registered Companies</div>
+          <div class="text-base font-bold text-slate-900 dark:text-slate-100">{{ orgService.companies().length }}</div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-purple-100 dark:bg-purple-950/80 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        </div>
+        <div>
+          <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Legal Entities (RJSC)</div>
+          <div class="text-base font-bold text-slate-900 dark:text-slate-100">{{ orgService.legalEntities().length }}</div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        </div>
+        <div>
+          <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Branches & Head Office</div>
+          <div class="text-base font-bold text-slate-900 dark:text-slate-100">{{ orgService.branches().length }}</div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-950/80 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+        </div>
+        <div>
+          <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Site Project Offices</div>
+          <div class="text-base font-bold text-slate-900 dark:text-slate-100">{{ orgService.projectOffices().length }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="px-6 bg-white dark:bg-slate-900">
+      <app-custom-tabs
+        [tabs]="tabs()"
+        [activeTabId]="activeTab()"
+        variant="emerald"
+        (tabChange)="onTabChange($event)"
+      ></app-custom-tabs>
+    </div>
+
+    <!-- TAB 1: VISUAL HIERARCHY TREE -->
+    @if (activeTab() === 'tree') {
+      <div class="p-6 bg-slate-50/50 dark:bg-slate-950/30">
+        <div class="mb-4 flex items-center justify-between">
+          <div>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100">Enterprise Corporate Hierarchy Tree</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Visual mapping of Corporate Group, Operating Companies, Legal Entities, Branches, and Site Offices.</p>
+          </div>
+          <app-custom-button variant="outline" size="sm" label="Refresh Tree" (btnClick)="orgService.loadOrgTree().subscribe()">
+            <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          </app-custom-button>
+        </div>
+
+        @if (orgService.orgHierarchy()?.root_nodes; as nodes) {
+          <div class="space-y-4">
+            @for (root of nodes; track root.id) {
+              <!-- Root Company / Group Node -->
+              <div class="border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 overflow-hidden shadow-xs">
+                <div class="p-4 bg-slate-100/70 dark:bg-slate-850 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                  <div class="flex items-center gap-3">
+                    <span class="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                      🏢
+                    </span>
+                    <div>
+                      <div class="flex items-center gap-2">
+                        <span class="text-sm font-bold text-slate-900 dark:text-slate-100">{{ root.label }}</span>
+                        <span class="px-2 py-0.5 text-[10px] font-bold rounded-md bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300">
+                          {{ root.code }}
+                        </span>
+                        @if (root.badge) {
+                          <span class="px-2 py-0.5 text-[10px] font-semibold rounded-md bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                            {{ root.badge }}
+                          </span>
+                        }
+                      </div>
+                      <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ root.subtitle }}</div>
+                    </div>
+                  </div>
+                  <app-status-badge [status]="root.status"></app-status-badge>
+                </div>
+
+                <!-- Children Elements -->
+                <div class="p-4 pl-8 border-l-2 border-indigo-400 dark:border-indigo-600 ml-6 my-2 space-y-3">
+                  @for (child of root.children; track child.id) {
+                    <div class="p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-850/60 flex items-center justify-between transition-all hover:border-slate-300 dark:hover:border-slate-700">
+                      <div class="flex items-center gap-3">
+                        <span class="w-7 h-7 rounded-lg text-xs flex items-center justify-center"
+                              [ngClass]="child.type === 'LEGAL_ENTITY' ? 'bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300' :
+                                         child.type === 'HEAD_OFFICE' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300' :
+                                         child.type === 'BRANCH' ? 'bg-teal-100 text-teal-700 dark:bg-teal-950 dark:text-teal-300' :
+                                         child.type === 'PROJECT_OFFICE' ? 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300' :
+                                         'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300'">
+                          {{ child.type === 'LEGAL_ENTITY' ? '⚖️' :
+                             child.type === 'HEAD_OFFICE' ? '⭐' :
+                             child.type === 'BRANCH' ? '📍' :
+                             child.type === 'PROJECT_OFFICE' ? '🏗️' : '🏢' }}
+                        </span>
+                        <div>
+                          <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold text-slate-800 dark:text-slate-200">{{ child.label }}</span>
+                            <span class="text-[10px] font-mono font-medium text-slate-500">{{ child.code }}</span>
+                            @if (child.badge) {
+                              <span class="px-1.5 py-0.5 text-[9px] font-semibold rounded bg-slate-200/70 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                                {{ child.badge }}
+                              </span>
+                            }
+                          </div>
+                          @if (child.subtitle) {
+                            <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{{ child.subtitle }}</div>
+                          }
+                        </div>
+                      </div>
+                      <app-status-badge [status]="child.status" size="sm"></app-status-badge>
+                    </div>
+                  }
+                  @if (!root.children || root.children.length === 0) {
+                    <div class="text-xs text-slate-500 dark:text-slate-400 italic">No legal entities, branches, or project offices assigned yet.</div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="p-8 text-center text-slate-500 text-xs">Loading organization structure hierarchy...</div>
+        }
+      </div>
+    }
+
+    <!-- TAB 2: COMPANY MASTER (3.1 & 3.2) -->
+    @if (activeTab() === 'companies') {
+      <div class="p-6">
+        <div class="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100">Company Master Registry (3.1 & 3.2)</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Configure corporate holding entities, currency, timezone, fiscal cycle, and company-specific numbering.</p>
+          </div>
+          <app-custom-button variant="primary" size="sm" label="+ Register Company" (btnClick)="openCreateCompanyModal()"></app-custom-button>
+        </div>
+
+        <div class="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-xl">
+          <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800 text-xs">
+            <thead class="bg-slate-50 dark:bg-slate-850 text-slate-700 dark:text-slate-300 font-semibold">
+              <tr>
+                <th class="px-4 py-3 text-left">Company Code</th>
+                <th class="px-4 py-3 text-left">Registered Name</th>
+                <th class="px-4 py-3 text-left">Short Name</th>
+                <th class="px-4 py-3 text-left">Company Type</th>
+                <th class="px-4 py-3 text-left">Parent Company</th>
+                <th class="px-4 py-3 text-left">Currency & Timezone</th>
+                <th class="px-4 py-3 text-center">Entities / Branches</th>
+                <th class="px-4 py-3 text-center">Status</th>
+                <th class="px-4 py-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
+              @for (c of orgService.companies(); track c.id) {
+                <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-850/50 transition-colors">
+                  <td class="px-4 py-3 font-mono font-bold text-indigo-600 dark:text-indigo-400">{{ c.company_code }}</td>
+                  <td class="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
+                    {{ c.company_name }}
+                    <div class="text-[10px] text-slate-500">Prefix: {{ c.employee_code_prefix }} • Lang: {{ c.default_language }}</div>
+                  </td>
+                  <td class="px-4 py-3 text-slate-700 dark:text-slate-300">{{ c.short_name }}</td>
+                  <td class="px-4 py-3">
+                    <span class="px-2 py-0.5 text-[10px] font-semibold rounded-md bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/50">
+                      {{ c.company_type.replace('_', ' ') }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 text-slate-600 dark:text-slate-400">{{ c.parent_company_name || '— (Top Group)' }}</td>
+                  <td class="px-4 py-3 font-mono text-[11px]">{{ c.currency }} • {{ c.time_zone }}</td>
+                  <td class="px-4 py-3 text-center font-medium">
+                    <span class="text-purple-600 font-bold">{{ c.legal_entities_count || 0 }}</span> Ent • 
+                    <span class="text-emerald-600 font-bold">{{ c.branches_count || 0 }}</span> Br • 
+                    <span class="text-amber-600 font-bold">{{ c.project_offices_count || 0 }}</span> PO
+                  </td>
+                  <td class="px-4 py-3 text-center">
+                    <app-status-badge [status]="c.status" size="sm"></app-status-badge>
+                  </td>
+                  <td class="px-4 py-3 text-right space-x-1.5 whitespace-nowrap">
+                    <button type="button" (click)="openEditCompanyModal(c)" class="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 font-medium text-xs">Edit</button>
+                    <span class="text-slate-300">|</span>
+                    <button type="button" (click)="toggleCompanyStatus(c)" class="text-amber-600 hover:text-amber-800 font-medium text-xs">
+                      {{ c.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
+                    </button>
+                    <span class="text-slate-300">|</span>
+                    <button type="button" (click)="promptDeleteCompany(c)" class="text-rose-600 hover:text-rose-800 font-medium text-xs">Delete</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    <!-- TAB 3: LEGAL ENTITY MANAGEMENT (4.1 & 4.2) -->
+    @if (activeTab() === 'legal-entities') {
+      <div class="p-6">
+        <div class="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100">Legal Entity Management (Section 4)</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Statutory incorporation records, RJSC certificates, 13-digit BIN/e-BIN, 12-digit e-TIN, and Trade License validity.</p>
+          </div>
+          <app-custom-button variant="primary" size="sm" label="+ Register Legal Entity" (btnClick)="openCreateLegalEntityModal()"></app-custom-button>
+        </div>
+
+        <div class="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-xl">
+          <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800 text-xs">
+            <thead class="bg-slate-50 dark:bg-slate-850 text-slate-700 dark:text-slate-300 font-semibold">
+              <tr>
+                <th class="px-4 py-3 text-left">Entity Code</th>
+                <th class="px-4 py-3 text-left">Registered Name</th>
+                <th class="px-4 py-3 text-left">Owning Company</th>
+                <th class="px-4 py-3 text-left">Legal Form</th>
+                <th class="px-4 py-3 text-left">TIN & BIN/e-BIN</th>
+                <th class="px-4 py-3 text-left">Trade License & Expiry</th>
+                <th class="px-4 py-3 text-left">Signatory</th>
+                <th class="px-4 py-3 text-center">Status</th>
+                <th class="px-4 py-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
+              @for (le of orgService.legalEntities(); track le.id) {
+                <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-850/50 transition-colors">
+                  <td class="px-4 py-3 font-mono font-bold text-purple-600 dark:text-purple-400">{{ le.entity_code }}</td>
+                  <td class="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
+                    {{ le.registered_name }}
+                    @if (le.is_default) {
+                      <span class="ml-1.5 px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">Default Entity</span>
+                    }
+                    <div class="text-[10px] text-slate-500 font-normal">RJSC: {{ le.registration_number || 'N/A' }}</div>
+                  </td>
+                  <td class="px-4 py-3 text-slate-700 dark:text-slate-300">{{ le.company_name }}</td>
+                  <td class="px-4 py-3">
+                    <span class="px-2 py-0.5 text-[10px] font-semibold rounded-md bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                      {{ le.legal_form.replace('_', ' ') }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 font-mono text-[11px]">
+                    <div>BIN: <span class="font-bold text-emerald-600">{{ le.bin_number || 'N/A' }}</span></div>
+                    <div>TIN: <span class="text-slate-600 dark:text-slate-400">{{ le.tin_number || 'N/A' }}</span></div>
+                  </td>
+                  <td class="px-4 py-3">
+                    <div>{{ le.trade_license_number || 'N/A' }}</div>
+                    <div class="text-[10px] text-slate-500">Exp: {{ le.trade_license_expiry || '—' }}</div>
+                  </td>
+                  <td class="px-4 py-3 text-slate-700 dark:text-slate-300">
+                    <div class="font-medium">{{ le.authorized_signatory_name || '—' }}</div>
+                    <div class="text-[10px] text-slate-500">{{ le.authorized_signatory_designation || '' }}</div>
+                  </td>
+                  <td class="px-4 py-3 text-center">
+                    <app-status-badge [status]="le.status" size="sm"></app-status-badge>
+                  </td>
+                  <td class="px-4 py-3 text-right space-x-1.5 whitespace-nowrap">
+                    <button type="button" (click)="openEditLegalEntityModal(le)" class="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 font-medium text-xs">Edit</button>
+                    <span class="text-slate-300">|</span>
+                    <button type="button" (click)="promptDeleteLegalEntity(le)" class="text-rose-600 hover:text-rose-800 font-medium text-xs">Delete</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    <!-- TAB 4: BRANCH MANAGEMENT (5.1, 5.2, 5.3) -->
+    @if (activeTab() === 'branches') {
+      <div class="p-6">
+        <div class="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100">Branch Management (Section 5)</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Head Office, Regional Offices, Sales Lounges, and Operating Locations with strict Head Office policy enforcement.</p>
+          </div>
+          <app-custom-button variant="primary" size="sm" label="+ Create Branch" (btnClick)="openCreateBranchModal()"></app-custom-button>
+        </div>
+
+        <div class="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-xl">
+          <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800 text-xs">
+            <thead class="bg-slate-50 dark:bg-slate-850 text-slate-700 dark:text-slate-300 font-semibold">
+              <tr>
+                <th class="px-4 py-3 text-left">Branch Code</th>
+                <th class="px-4 py-3 text-left">Branch Name</th>
+                <th class="px-4 py-3 text-left">Branch Type</th>
+                <th class="px-4 py-3 text-left">Owning Company</th>
+                <th class="px-4 py-3 text-left">Location / Thana</th>
+                <th class="px-4 py-3 text-left">Manager & Contact</th>
+                <th class="px-4 py-3 text-center">Cost Center</th>
+                <th class="px-4 py-3 text-center">Status</th>
+                <th class="px-4 py-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
+              @for (b of orgService.branches(); track b.id) {
+                <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-850/50 transition-colors">
+                  <td class="px-4 py-3 font-mono font-bold text-emerald-600 dark:text-emerald-400">{{ b.branch_code }}</td>
+                  <td class="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
+                    {{ b.branch_name }}
+                    @if (b.is_head_office) {
+                      <span class="ml-1.5 px-2 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-300 border border-amber-300">
+                        ⭐ Head Office
+                      </span>
+                    }
+                  </td>
+                  <td class="px-4 py-3">
+                    <span class="px-2 py-0.5 text-[10px] font-semibold rounded-md bg-slate-100 text-slate-700 dark:bg-slate-850 dark:text-slate-300">
+                      {{ b.branch_type.replace('_', ' ') }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 text-slate-700 dark:text-slate-300">{{ b.company_name }}</td>
+                  <td class="px-4 py-3 text-slate-600 dark:text-slate-400">
+                    <div>{{ b.upazila_thana || '' }}, {{ b.district || '' }}</div>
+                    <div class="text-[10px] text-slate-500">{{ b.division || '' }}</div>
+                  </td>
+                  <td class="px-4 py-3 text-slate-700 dark:text-slate-300">
+                    <div class="font-medium">{{ b.manager_name || '—' }}</div>
+                    <div class="text-[10px] text-slate-500 font-mono">{{ b.phone || '' }}</div>
+                  </td>
+                  <td class="px-4 py-3 text-center font-mono text-[11px]">{{ b.default_cost_center || '—' }}</td>
+                  <td class="px-4 py-3 text-center">
+                    <app-status-badge [status]="b.status" size="sm"></app-status-badge>
+                  </td>
+                  <td class="px-4 py-3 text-right space-x-1.5 whitespace-nowrap">
+                    <button type="button" (click)="openEditBranchModal(b)" class="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 font-medium text-xs">Edit</button>
+                    <span class="text-slate-300">|</span>
+                    <button type="button" (click)="toggleBranchStatus(b)" class="text-amber-600 hover:text-amber-800 font-medium text-xs">
+                      {{ b.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
+                    </button>
+                    <span class="text-slate-300">|</span>
+                    <button type="button" (click)="promptDeleteBranch(b)" class="text-rose-600 hover:text-rose-800 font-medium text-xs">Delete</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    <!-- TAB 5: PROJECT OFFICE MANAGEMENT (6.1 & 6.2) -->
+    @if (activeTab() === 'project-offices') {
+      <div class="p-6">
+        <div class="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100">Project Office Management (Section 6)</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Operational on-site construction offices, project site administration, and site sales lounges linked to master projects.</p>
+          </div>
+          <app-custom-button variant="primary" size="sm" label="+ Mobilize Project Office" (btnClick)="openCreateProjectOfficeModal()"></app-custom-button>
+        </div>
+
+        <div class="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-xl">
+          <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800 text-xs">
+            <thead class="bg-slate-50 dark:bg-slate-850 text-slate-700 dark:text-slate-300 font-semibold">
+              <tr>
+                <th class="px-4 py-3 text-left">Office Code</th>
+                <th class="px-4 py-3 text-left">Office Name</th>
+                <th class="px-4 py-3 text-left">Linked Project</th>
+                <th class="px-4 py-3 text-left">Office Type</th>
+                <th class="px-4 py-3 text-left">Site In-Charge Engineer</th>
+                <th class="px-4 py-3 text-left">Location</th>
+                <th class="px-4 py-3 text-center">Mobilization Status</th>
+                <th class="px-4 py-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
+              @for (po of orgService.projectOffices(); track po.id) {
+                <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-850/50 transition-colors">
+                  <td class="px-4 py-3 font-mono font-bold text-amber-600 dark:text-amber-400">{{ po.office_code }}</td>
+                  <td class="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
+                    {{ po.office_name }}
+                    <div class="text-[10px] text-slate-500">Owning: {{ po.company_name }}</div>
+                  </td>
+                  <td class="px-4 py-3 font-medium text-indigo-600 dark:text-indigo-400">
+                    {{ po.project_name || 'Project #' + po.project_id }}
+                  </td>
+                  <td class="px-4 py-3">
+                    <span class="px-2 py-0.5 text-[10px] font-semibold rounded-md bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                      {{ po.office_type.replace('_', ' ') }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 text-slate-700 dark:text-slate-300">
+                    <div class="font-medium">{{ po.site_in_charge_name || '—' }}</div>
+                    <div class="text-[10px] text-slate-500">{{ po.phone || '' }}</div>
+                  </td>
+                  <td class="px-4 py-3 text-slate-600 dark:text-slate-400">{{ po.upazila_thana || '' }}, {{ po.district || '' }}</td>
+                  <td class="px-4 py-3 text-center">
+                    <span class="px-2 py-0.5 text-[10px] font-bold rounded-full"
+                          [ngClass]="po.operational_status === 'ACTIVE_MOBILIZED' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' :
+                                     po.operational_status === 'PLANNING' ? 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300' :
+                                     'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'">
+                      {{ po.operational_status.replace('_', ' ') }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 text-right space-x-1.5 whitespace-nowrap">
+                    <button type="button" (click)="openEditProjectOfficeModal(po)" class="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 font-medium text-xs">Edit</button>
+                    <span class="text-slate-300">|</span>
+                    <button type="button" (click)="promptDeleteProjectOffice(po)" class="text-rose-600 hover:text-rose-800 font-medium text-xs">Decommission</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    <!-- TAB 6: DYNAMIC MASTER DROPDOWNS (REQUIREMENT 1 & 7) -->
+    @if (activeTab() === 'settings') {
+      <div class="p-6">
+        <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100">Dynamic Master Dropdowns & Geographic Lookups (Section 7)</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400">All dropdowns across the ERP are 100% dynamic without hardcoding. You can configure and add options directly below or in-place via dropdowns.</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <!-- Company Types -->
+          <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold text-slate-900 dark:text-slate-100">Company Types</span>
+              <button type="button" (click)="openQuickLookupModal('COMPANY_TYPE')" class="text-xs font-semibold text-emerald-600 hover:text-emerald-700">+ Add</button>
+            </div>
+            <p class="text-[11px] text-slate-500 mb-3">Parent, Operating, Subsidiary, SPV, Joint Venture</p>
+            <div class="text-[11px] text-slate-600 dark:text-slate-400 font-mono">Category Code: COMPANY_TYPE</div>
+          </div>
+
+          <!-- Legal Forms -->
+          <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold text-slate-900 dark:text-slate-100">Legal Entity Forms</span>
+              <button type="button" (click)="openQuickLookupModal('LEGAL_FORM')" class="text-xs font-semibold text-emerald-600 hover:text-emerald-700">+ Add</button>
+            </div>
+            <p class="text-[11px] text-slate-500 mb-3">Private Ltd, Public Ltd, Partnership, Proprietorship</p>
+            <div class="text-[11px] text-slate-600 dark:text-slate-400 font-mono">Category Code: LEGAL_FORM</div>
+          </div>
+
+          <!-- Branch Types -->
+          <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold text-slate-900 dark:text-slate-100">Branch Office Types</span>
+              <button type="button" (click)="openQuickLookupModal('BRANCH_TYPE')" class="text-xs font-semibold text-emerald-600 hover:text-emerald-700">+ Add</button>
+            </div>
+            <p class="text-[11px] text-slate-500 mb-3">Head Office, Regional, Sales Lounge, Warehouse</p>
+            <div class="text-[11px] text-slate-600 dark:text-slate-400 font-mono">Category Code: BRANCH_TYPE</div>
+          </div>
+
+          <!-- Project Office Types -->
+          <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold text-slate-900 dark:text-slate-100">Site Office Types</span>
+              <button type="button" (click)="openQuickLookupModal('PROJECT_OFFICE_TYPE')" class="text-xs font-semibold text-emerald-600 hover:text-emerald-700">+ Add</button>
+            </div>
+            <p class="text-[11px] text-slate-500 mb-3">Construction Site, Project Admin, Sales Gallery, Lab</p>
+            <div class="text-[11px] text-slate-600 dark:text-slate-400 font-mono">Category Code: PROJECT_OFFICE_TYPE</div>
+          </div>
+
+          <!-- BD Divisions -->
+          <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold text-slate-900 dark:text-slate-100">Bangladesh Divisions</span>
+              <button type="button" (click)="openQuickLookupModal('BD_DIVISION')" class="text-xs font-semibold text-emerald-600 hover:text-emerald-700">+ Add</button>
+            </div>
+            <p class="text-[11px] text-slate-500 mb-3">Dhaka, Chattogram, Rajshahi, Khulna, Sylhet, etc.</p>
+            <div class="text-[11px] text-slate-600 dark:text-slate-400 font-mono">Category Code: BD_DIVISION</div>
+          </div>
+
+          <!-- BD Districts & Upazilas -->
+          <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold text-slate-900 dark:text-slate-100">Districts & Upazilas/Thanas</span>
+              <button type="button" (click)="openQuickLookupModal('BD_UPAZILA')" class="text-xs font-semibold text-emerald-600 hover:text-emerald-700">+ Add</button>
+            </div>
+            <p class="text-[11px] text-slate-500 mb-3">Gulshan, Banani, Dhanmondi, Uttara, Mirpur, Savar</p>
+            <div class="text-[11px] text-slate-600 dark:text-slate-400 font-mono">Category Code: BD_UPAZILA</div>
+          </div>
+        </div>
+      </div>
+    }
+  </app-card-container>
+
+  <!-- ============================================================== -->
+  <!-- MODAL: REGISTER / EDIT COMPANY MASTER (3.1 & 3.2) -->
+  <!-- ============================================================== -->
+  <app-modal
+    [isOpen]="isCompanyModalOpen()"
+    [title]="editingCompanyId() ? 'Edit Company Configuration' : 'Register New Company Master'"
+    subtitle="Configure unique company identifiers, financial periods, numbering formats, and currency."
+    badge="Company Master"
+    maxWidthClass="max-w-3xl"
+    (closed)="isCompanyModalOpen.set(false)"
+  >
+    <div class="space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <app-custom-input
+          label="Company Code"
+          placeholder="e.g. BRE-01"
+          [required]="true"
+          [(ngModel)]="companyForm.company_code"
+          [disabled]="!!editingCompanyId()"
+          hint="Unique identifier (e.g. BRE-01)"
+        ></app-custom-input>
+
+        <div class="md:col-span-2">
+          <app-custom-input
+            label="Company Full Registered Name"
+            placeholder="e.g. ABC Real Estate Limited"
+            [required]="true"
+            [(ngModel)]="companyForm.company_name"
+          ></app-custom-input>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <app-custom-input
+          label="Short / Display Name"
+          placeholder="e.g. ABC Real Estate"
+          [required]="true"
+          [(ngModel)]="companyForm.short_name"
+        ></app-custom-input>
+
+        <!-- Dynamic Company Type -->
+        <app-searchable-select
+          categoryCode="COMPANY_TYPE"
+          label="Company Classification Type"
+          placeholder="Select Company Type..."
+          [required]="true"
+          [(ngModel)]="companyForm.company_type"
+        ></app-searchable-select>
+
+        <!-- Parent Company Select with In-Place Search -->
+        <app-searchable-select
+          [options]="companyOptions()"
+          label="Parent Company (Optional)"
+          placeholder="Select Parent Company (or Top Level)..."
+          [(ngModel)]="companyForm.parent_company_id"
+          hint="Leave blank if top holding group"
+        ></app-searchable-select>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <app-custom-input
+          label="Country"
+          placeholder="Bangladesh"
+          [(ngModel)]="companyForm.country"
+        ></app-custom-input>
+
+        <app-searchable-select
+          categoryCode="CURRENCY"
+          label="Operating Currency"
+          placeholder="Select Currency..."
+          [(ngModel)]="companyForm.currency"
+        ></app-searchable-select>
+
+        <app-searchable-select
+          categoryCode="TIMEZONE"
+          label="System Time Zone"
+          placeholder="Select Time Zone..."
+          [(ngModel)]="companyForm.time_zone"
+        ></app-searchable-select>
+      </div>
+
+      <!-- Section 3.2: Company Configuration Strip -->
+      <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-850/70 border border-slate-200 dark:border-slate-800 space-y-3">
+        <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">3.2 Accounting & Financial Configuration</h4>
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+          <app-searchable-select
+            categoryCode="FISCAL_YEAR_START"
+            label="Financial Year Start"
+            [(ngModel)]="companyForm.financial_year_start_month"
+          ></app-searchable-select>
+
+          <app-custom-input
+            label="Employee Prefix"
+            placeholder="e.g. BRE-"
+            [(ngModel)]="companyForm.employee_code_prefix"
+          ></app-custom-input>
+
+          <app-custom-input
+            label="Date Format"
+            placeholder="DD/MM/YYYY"
+            [(ngModel)]="companyForm.date_format"
+          ></app-custom-input>
+
+          <app-custom-input
+            label="Number Format"
+            placeholder="en-IN (Lakh/Cr)"
+            [(ngModel)]="companyForm.number_format"
+          ></app-custom-input>
+        </div>
+      </div>
+    </div>
+
+    <div modal-footer class="flex items-center gap-2">
+      <app-custom-button variant="secondary" label="Cancel" (btnClick)="isCompanyModalOpen.set(false)"></app-custom-button>
+      <app-custom-button variant="primary" label="Save Company Master" (btnClick)="saveCompany()"></app-custom-button>
+    </div>
+  </app-modal>
+
+  <!-- ============================================================== -->
+  <!-- MODAL: REGISTER / EDIT LEGAL ENTITY (SECTION 4) -->
+  <!-- ============================================================== -->
+  <app-modal
+    [isOpen]="isLegalEntityModalOpen()"
+    [title]="editingLegalEntityId() ? 'Edit Legal Entity' : 'Register Statutory Legal Entity'"
+    subtitle="RJSC registration, 13-digit BIN/e-BIN, 12-digit e-TIN, and Trade License information."
+    badge="Section 4"
+    maxWidthClass="max-w-3xl"
+    (closed)="isLegalEntityModalOpen.set(false)"
+  >
+    <div class="space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Owning Company -->
+        <app-searchable-select
+          [options]="companyOptions()"
+          label="Owning Company Master"
+          placeholder="Select Owning Company..."
+          [required]="true"
+          [(ngModel)]="legalEntityForm.company_id"
+        ></app-searchable-select>
+
+        <app-custom-input
+          label="Legal Entity Code"
+          placeholder="e.g. LE-001"
+          [required]="true"
+          [(ngModel)]="legalEntityForm.entity_code"
+          [disabled]="!!editingLegalEntityId()"
+        ></app-custom-input>
+
+        <!-- Dynamic Legal Form -->
+        <app-searchable-select
+          categoryCode="LEGAL_FORM"
+          label="Legal Form / Structure"
+          placeholder="Select Legal Form..."
+          [required]="true"
+          [(ngModel)]="legalEntityForm.legal_form"
+        ></app-searchable-select>
+      </div>
+
+      <app-custom-input
+        label="Full Registered Name (RJSC)"
+        placeholder="e.g. ABC Real Estate Holdings Limited"
+        [required]="true"
+        [(ngModel)]="legalEntityForm.registered_name"
+      ></app-custom-input>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <app-custom-input
+          label="RJSC Registration Number"
+          placeholder="e.g. C-98432/2014"
+          [(ngModel)]="legalEntityForm.registration_number"
+        ></app-custom-input>
+
+        <app-custom-input
+          type="date"
+          label="Registration Date"
+          [(ngModel)]="legalEntityForm.registration_date"
+        ></app-custom-input>
+
+        <app-custom-input
+          type="date"
+          label="Effective Date"
+          [(ngModel)]="legalEntityForm.effective_date"
+        ></app-custom-input>
+      </div>
+
+      <!-- Statutory Identifiers: BIN, TIN, Trade License -->
+      <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-850/70 border border-slate-200 dark:border-slate-800 space-y-3">
+        <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Statutory Bangladesh Identifiers</h4>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <app-custom-input
+            label="13-Digit BIN / e-BIN (VAT)"
+            placeholder="e.g. 002349182-0101"
+            [(ngModel)]="legalEntityForm.bin_number"
+            hint="National Board of Revenue Mushak 6.3 VAT BIN"
+          ></app-custom-input>
+
+          <app-custom-input
+            label="12-Digit e-TIN (TDS)"
+            placeholder="e.g. 482910394812"
+            [(ngModel)]="legalEntityForm.tin_number"
+            hint="NBR Electronic Taxpayer Identification"
+          ></app-custom-input>
+
+          <app-custom-input
+            label="Trade License Number"
+            placeholder="e.g. TRAD/DNCC/029182/2026"
+            [(ngModel)]="legalEntityForm.trade_license_number"
+          ></app-custom-input>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <app-custom-input
+            type="date"
+            label="Trade License Expiry Date"
+            [(ngModel)]="legalEntityForm.trade_license_expiry"
+          ></app-custom-input>
+
+          <app-custom-input
+            label="RJSC Office Details"
+            placeholder="e.g. Registrar of Joint Stock Companies, Dhaka"
+            [(ngModel)]="legalEntityForm.rjsc_registration_details"
+          ></app-custom-input>
+        </div>
+      </div>
+
+      <!-- Authorized Signatory -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <app-custom-input
+          label="Authorized Signatory Full Name"
+          placeholder="e.g. Engr. Maksudul Haque"
+          [(ngModel)]="legalEntityForm.authorized_signatory_name"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Signatory Designation"
+          placeholder="e.g. Managing Director & CEO"
+          [(ngModel)]="legalEntityForm.authorized_signatory_designation"
+        ></app-custom-input>
+      </div>
+
+      <app-custom-textarea
+        label="Registered Office Address"
+        placeholder="Plot, Road, Block, Area, City, Bangladesh"
+        [rows]="2"
+        [(ngModel)]="legalEntityForm.registered_office_address"
+      ></app-custom-textarea>
+
+      <div class="flex items-center gap-2">
+        <input
+          type="checkbox"
+          id="isDefaultEntity"
+          [(ngModel)]="legalEntityForm.is_default"
+          class="rounded text-emerald-600 focus:ring-emerald-500"
+        />
+        <label for="isDefaultEntity" class="text-xs text-slate-700 dark:text-slate-300 font-medium">
+          Set as Default Legal Entity for company sales bookings & transactions
+        </label>
+      </div>
+    </div>
+
+    <div modal-footer class="flex items-center gap-2">
+      <app-custom-button variant="secondary" label="Cancel" (btnClick)="isLegalEntityModalOpen.set(false)"></app-custom-button>
+      <app-custom-button variant="primary" label="Save Legal Entity" (btnClick)="saveLegalEntity()"></app-custom-button>
+    </div>
+  </app-modal>
+
+  <!-- ============================================================== -->
+  <!-- MODAL: REGISTER / EDIT BRANCH (SECTION 5) -->
+  <!-- ============================================================== -->
+  <app-modal
+    [isOpen]="isBranchModalOpen()"
+    [title]="editingBranchId() ? 'Edit Branch Office' : 'Register New Branch / Office'"
+    subtitle="Head Office, Regional Offices, Sales Lounges, and Operating Locations across Bangladesh."
+    badge="Section 5"
+    maxWidthClass="max-w-3xl"
+    (closed)="isBranchModalOpen.set(false)"
+  >
+    <div class="space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <app-searchable-select
+          [options]="companyOptions()"
+          label="Owning Company"
+          placeholder="Select Owning Company..."
+          [required]="true"
+          [(ngModel)]="branchForm.company_id"
+        ></app-searchable-select>
+
+        <app-custom-input
+          label="Branch Code"
+          placeholder="e.g. BR-HO-01"
+          [required]="true"
+          [(ngModel)]="branchForm.branch_code"
+          [disabled]="!!editingBranchId()"
+          hint="Unique within company"
+        ></app-custom-input>
+
+        <!-- Dynamic Branch Type -->
+        <app-searchable-select
+          categoryCode="BRANCH_TYPE"
+          label="Branch Operational Type"
+          placeholder="Select Branch Type..."
+          [required]="true"
+          [(ngModel)]="branchForm.branch_type"
+        ></app-searchable-select>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <app-custom-input
+          label="Branch Name"
+          placeholder="e.g. Corporate Head Office (Gulshan-2)"
+          [required]="true"
+          [(ngModel)]="branchForm.branch_name"
+        ></app-custom-input>
+
+        <app-searchable-select
+          [options]="legalEntityOptions()"
+          label="Associated Legal Entity"
+          placeholder="Select Legal Entity..."
+          [(ngModel)]="branchForm.legal_entity_id"
+        ></app-searchable-select>
+      </div>
+
+      <!-- Bangladesh Geographic Hierarchy: Division, District, Upazila/Thana -->
+      <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-850/70 border border-slate-200 dark:border-slate-800 space-y-3">
+        <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Bangladesh Administrative Hierarchy (Section 7)</h4>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <app-searchable-select
+            categoryCode="BD_DIVISION"
+            label="Division"
+            placeholder="Select Division..."
+            [(ngModel)]="branchForm.division"
+          ></app-searchable-select>
+
+          <app-searchable-select
+            categoryCode="BD_DISTRICT"
+            label="District"
+            placeholder="Select District..."
+            [(ngModel)]="branchForm.district"
+          ></app-searchable-select>
+
+          <app-searchable-select
+            categoryCode="BD_UPAZILA"
+            label="Upazila / Thana"
+            placeholder="Select Upazila/Thana..."
+            [(ngModel)]="branchForm.upazila_thana"
+          ></app-searchable-select>
+        </div>
+      </div>
+
+      <app-custom-textarea
+        label="Detailed Office Address"
+        placeholder="Building, Road, House, Floor, Suite..."
+        [rows]="2"
+        [(ngModel)]="branchForm.address"
+      ></app-custom-textarea>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <app-custom-input
+          label="Official Contact Phone"
+          placeholder="e.g. +880 2 9882341"
+          [(ngModel)]="branchForm.phone"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Official Email"
+          placeholder="e.g. gulshan@abcrealestatebd.com"
+          [(ngModel)]="branchForm.email"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Default Cost Center"
+          placeholder="e.g. CC-CORP-HQ"
+          [(ngModel)]="branchForm.default_cost_center"
+        ></app-custom-input>
+      </div>
+
+      <!-- Head Office Policy Checkbox -->
+      <div class="p-3 rounded-lg bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-900/40 flex items-start gap-2.5">
+        <input
+          type="checkbox"
+          id="isHeadOffice"
+          [(ngModel)]="branchForm.is_head_office"
+          class="mt-0.5 rounded text-amber-600 focus:ring-amber-500"
+        />
+        <div>
+          <label for="isHeadOffice" class="text-xs font-bold text-amber-900 dark:text-amber-200">
+            Is Company Head Office
+          </label>
+          <p class="text-[11px] text-amber-700 dark:text-amber-400">
+            Policy Rule: A company can have no more than one active head office. Selecting this will assign head office status.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div modal-footer class="flex items-center gap-2">
+      <app-custom-button variant="secondary" label="Cancel" (btnClick)="isBranchModalOpen.set(false)"></app-custom-button>
+      <app-custom-button variant="primary" label="Save Branch Record" (btnClick)="saveBranch()"></app-custom-button>
+    </div>
+  </app-modal>
+
+  <!-- ============================================================== -->
+  <!-- MODAL: REGISTER / EDIT PROJECT SITE OFFICE (SECTION 6) -->
+  <!-- ============================================================== -->
+  <app-modal
+    [isOpen]="isProjectOfficeModalOpen()"
+    [title]="editingProjectOfficeId() ? 'Edit Project Office' : 'Mobilize Project Site Office'"
+    subtitle="On-site real estate operational location linked to master project development."
+    badge="Section 6"
+    maxWidthClass="max-w-3xl"
+    (closed)="isProjectOfficeModalOpen.set(false)"
+  >
+    <div class="space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Linked Real Estate Project -->
+        <app-searchable-select
+          [options]="projectOptions()"
+          label="Linked Real Estate Project"
+          placeholder="Select Project..."
+          [required]="true"
+          [(ngModel)]="projectOfficeForm.project_id"
+        ></app-searchable-select>
+
+        <app-searchable-select
+          [options]="companyOptions()"
+          label="Owning Company"
+          placeholder="Select Owning Company..."
+          [required]="true"
+          [(ngModel)]="projectOfficeForm.company_id"
+        ></app-searchable-select>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <app-custom-input
+          label="Site Office Code"
+          placeholder="e.g. PO-SITE-01"
+          [required]="true"
+          [(ngModel)]="projectOfficeForm.office_code"
+          [disabled]="!!editingProjectOfficeId()"
+        ></app-custom-input>
+
+        <div class="md:col-span-2">
+          <app-custom-input
+            label="Site Office Name"
+            placeholder="e.g. Bay's Park Heights - Construction Site Office"
+            [required]="true"
+            [(ngModel)]="projectOfficeForm.office_name"
+          ></app-custom-input>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Dynamic Site Office Type -->
+        <app-searchable-select
+          categoryCode="PROJECT_OFFICE_TYPE"
+          label="Site Office Operational Type"
+          placeholder="Select Office Type..."
+          [required]="true"
+          [(ngModel)]="projectOfficeForm.office_type"
+        ></app-searchable-select>
+
+        <!-- Site In Charge Engineer -->
+        <app-searchable-select
+          [options]="employeeOptions()"
+          label="Site-in-Charge / Engineer"
+          placeholder="Select Employee..."
+          [(ngModel)]="projectOfficeForm.site_in_charge_employee_id"
+        ></app-searchable-select>
+
+        <!-- Operational Status -->
+        <app-searchable-select
+          categoryCode="PROJECT_OFFICE_STATUS"
+          label="Mobilization Status"
+          [(ngModel)]="projectOfficeForm.operational_status"
+        ></app-searchable-select>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <app-searchable-select
+          categoryCode="BD_DIVISION"
+          label="Division"
+          [(ngModel)]="projectOfficeForm.division"
+        ></app-searchable-select>
+
+        <app-searchable-select
+          categoryCode="BD_DISTRICT"
+          label="District"
+          [(ngModel)]="projectOfficeForm.district"
+        ></app-searchable-select>
+
+        <app-searchable-select
+          categoryCode="BD_UPAZILA"
+          label="Upazila / Thana"
+          [(ngModel)]="projectOfficeForm.upazila_thana"
+        ></app-searchable-select>
+      </div>
+
+      <app-custom-textarea
+        label="Site Office Location Address"
+        placeholder="Detailed site location coordinates or address..."
+        [rows]="2"
+        [(ngModel)]="projectOfficeForm.address"
+      ></app-custom-textarea>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <app-custom-input
+          type="date"
+          label="Mobilization Opening Date"
+          [(ngModel)]="projectOfficeForm.opening_date"
+        ></app-custom-input>
+
+        <app-custom-input
+          type="date"
+          label="Expected Handover Closing Date"
+          [(ngModel)]="projectOfficeForm.expected_closing_date"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Site Cost Center"
+          placeholder="e.g. CC-SITE-01"
+          [(ngModel)]="projectOfficeForm.default_cost_center"
+        ></app-custom-input>
+      </div>
+    </div>
+
+    <div modal-footer class="flex items-center gap-2">
+      <app-custom-button variant="secondary" label="Cancel" (btnClick)="isProjectOfficeModalOpen.set(false)"></app-custom-button>
+      <app-custom-button variant="primary" label="Save Project Office" (btnClick)="saveProjectOffice()"></app-custom-button>
+    </div>
+  </app-modal>
+
+  <!-- ============================================================== -->
+  <!-- MODAL: QUICK ADD DYNAMIC LOOKUP ITEM (REQUIREMENT 1 & 2) -->
+  <!-- ============================================================== -->
+  <app-modal
+    [isOpen]="isQuickLookupModalOpen()"
+    title="Add Dynamic Dropdown Option"
+    subtitle="Add a new item dynamically into any dropdown without code deployment."
+    badge="Dynamic Settings"
+    maxWidthClass="max-w-md"
+    (closed)="isQuickLookupModalOpen.set(false)"
+  >
+    <div class="space-y-4">
+      <div>
+        <label class="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1">Target Category</label>
+        <div class="px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs font-mono font-bold text-emerald-700 dark:text-emerald-400">
+          {{ quickLookupCategory() }}
+        </div>
+      </div>
+
+      <app-custom-input
+        label="English Option Label"
+        placeholder="e.g. Central Procurement Hub"
+        [required]="true"
+        [(ngModel)]="quickItemNameEn"
+      ></app-custom-input>
+
+      <app-custom-input
+        label="Bangla Option Label (ঐচ্ছিক)"
+        placeholder="e.g. কেন্দ্রীয় সংগ্রহ ডিপো"
+        [(ngModel)]="quickItemNameBn"
+      ></app-custom-input>
+
+      <app-custom-input
+        label="System Code (Optional)"
+        placeholder="Auto-generated if empty"
+        [(ngModel)]="quickItemCode"
+      ></app-custom-input>
+    </div>
+
+    <div modal-footer class="flex items-center gap-2">
+      <app-custom-button variant="secondary" label="Cancel" (btnClick)="isQuickLookupModalOpen.set(false)"></app-custom-button>
+      <app-custom-button variant="primary" label="Add to Dropdown" (btnClick)="saveQuickLookupItem()"></app-custom-button>
+    </div>
+  </app-modal>
+
+  <!-- ============================================================== -->
+  <!-- MODAL: DELETION & SAFE DEACTIVATION CONFIRMATION -->
+  <!-- ============================================================== -->
+  <app-modal
+    [isOpen]="isDeleteConfirmModalOpen()"
+    title="Confirm Action"
+    subtitle="Business Rule & Historical Integrity Guard"
+    badge="Audit Control"
+    maxWidthClass="max-w-md"
+    (closed)="isDeleteConfirmModalOpen.set(false)"
+  >
+    <div class="space-y-3">
+      <p class="text-xs text-slate-700 dark:text-slate-300">
+        You have requested to delete or deactivate:
+      </p>
+      <div class="p-3 rounded-lg bg-slate-100 dark:bg-slate-800 font-bold text-xs text-slate-900 dark:text-slate-100">
+        {{ itemToDelete()?.name }}
+      </div>
+
+      @if (deleteErrorMsg()) {
+        <div class="p-3 rounded-lg bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-xs text-rose-800 dark:text-rose-200">
+          {{ deleteErrorMsg() }}
+        </div>
+      }
+
+      <div class="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 text-amber-900 dark:text-amber-200 text-[11px] leading-relaxed">
+        <strong>Business Rule 4 & 5 Notice:</strong> Records with active employees or historical postings cannot be permanently wiped out. Choose <em>Deactivate</em> to preserve historical compliance.
+      </div>
+    </div>
+
+    <div modal-footer class="flex items-center gap-2">
+      <app-custom-button variant="secondary" label="Cancel" (btnClick)="isDeleteConfirmModalOpen.set(false)"></app-custom-button>
+      <app-custom-button variant="outline" label="Deactivate Safely" (btnClick)="confirmDeleteAction(false)"></app-custom-button>
+      <app-custom-button variant="danger" label="Permanent Delete" (btnClick)="confirmDeleteAction(true)"></app-custom-button>
+    </div>
+  </app-modal>
+</div>

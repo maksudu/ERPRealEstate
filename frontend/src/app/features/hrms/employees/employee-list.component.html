@@ -1,395 +1,1564 @@
 <div class="space-y-6">
-  <!-- Top Header with Actions -->
-  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
-    <div>
-      <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Employee Directory & Workforce Master</h1>
-      <p class="text-sm text-slate-500 dark:text-slate-400">Head-office corporate executives, engineers, project managers, and site supervisors.</p>
-    </div>
-
-    <button 
-      (click)="openAddModal()" 
-      class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm transition-all shadow-md shadow-indigo-600/20 active:scale-95 cursor-pointer">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-      <span>Add New Employee</span>
-    </button>
-  </div>
-
-  <!-- Filters & Workforce Tabs Bar -->
-  <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-    <!-- Workforce Segment Tabs -->
-    <div class="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl">
-      <button 
-        (click)="setTab('ALL')" 
-        [class]="activeTab() === 'ALL' ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 font-bold shadow-xs' : 'text-slate-600 dark:text-slate-400 font-medium'"
-        class="px-3.5 py-1.5 rounded-lg text-xs transition-all cursor-pointer">
-        All Workforce ({{ hrmsService.employees().length }})
-      </button>
-
-      <button 
-        (click)="setTab('CORPORATE')" 
-        [class]="activeTab() === 'CORPORATE' ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 font-bold shadow-xs' : 'text-slate-600 dark:text-slate-400 font-medium'"
-        class="px-3.5 py-1.5 rounded-lg text-xs transition-all cursor-pointer">
-        Corporate Head-Office
-      </button>
-
-      <button 
-        (click)="setTab('SITE_ENGINEERING')" 
-        [class]="activeTab() === 'SITE_ENGINEERING' ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 font-bold shadow-xs' : 'text-slate-600 dark:text-slate-400 font-medium'"
-        class="px-3.5 py-1.5 rounded-lg text-xs transition-all cursor-pointer">
-        Site Engineers & Foremen
-      </button>
-    </div>
-
-    <!-- Search & Filter Controls -->
-    <div class="flex items-center gap-3">
-      <div class="relative min-w-[220px]">
-        <input 
-          type="text" 
-          [ngModel]="searchQuery()" 
-          (ngModelChange)="searchQuery.set($event)"
-          placeholder="Search by name, code, phone..." 
-          class="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500" />
-        <svg class="w-4 h-4 absolute left-3 top-2.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+  <!-- Feedback / Alert Notifications -->
+  @if (successMessage()) {
+    <div class="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 flex items-center justify-between text-emerald-800 dark:text-emerald-300 text-xs font-semibold animate-fadeIn shadow-2xs">
+      <div class="flex items-center gap-2">
+        <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        <span>{{ successMessage() }}</span>
       </div>
-
-      <select 
-        [ngModel]="selectedDepartmentId()" 
-        (ngModelChange)="selectedDepartmentId.set($event)"
-        class="px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white">
-        <option [ngValue]="null">All Departments</option>
-        @for (d of hrmsService.departments(); track d.id) {
-          <option [value]="d.id">{{ d.name_en }}</option>
-        }
-      </select>
+      <button type="button" (click)="clearAlerts()" class="text-emerald-600 hover:text-emerald-800 dark:hover:text-emerald-200">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
     </div>
-  </div>
+  }
 
-  <!-- Employees Master Data Table -->
-  <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden">
-    <div class="overflow-x-auto">
-      <table class="w-full text-left text-sm">
-        <thead class="text-xs uppercase bg-slate-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 border-b border-slate-200/60 dark:border-slate-800">
-          <tr>
-            <th class="py-3.5 px-4">Employee</th>
-            <th class="py-3.5 px-4">Designation</th>
-            <th class="py-3.5 px-4">Department</th>
-            <th class="py-3.5 px-4">Workforce Role</th>
-            <th class="py-3.5 px-4">Contact</th>
-            <th class="py-3.5 px-4 text-right">Gross Salary (BDT)</th>
-            <th class="py-3.5 px-4 text-center">Status</th>
-            <th class="py-3.5 px-4 text-right">Action</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-          @for (emp of filteredEmployees(); track emp.id) {
-            <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
-              <!-- Name & Code -->
-              <td class="py-3 px-4">
-                <div class="flex items-center gap-3">
-                  <div class="w-9 h-9 rounded-full bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 font-bold text-xs flex items-center justify-center shrink-0 border border-indigo-200/60 dark:border-indigo-800/60">
-                    {{ emp.first_name[0] }}{{ emp.last_name[0] }}
-                  </div>
-                  <div>
-                    <div class="font-bold text-slate-900 dark:text-white">{{ emp.first_name }} {{ emp.last_name }}</div>
-                    <div class="text-xs text-slate-400 font-mono">{{ emp.employee_code }}</div>
-                  </div>
-                </div>
-              </td>
+  @if (errorMessage()) {
+    <div class="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 flex items-center justify-between text-rose-800 dark:text-rose-300 text-xs font-semibold animate-fadeIn shadow-2xs">
+      <div class="flex items-center gap-2">
+        <svg class="w-4 h-4 text-rose-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+        <span>{{ errorMessage() }}</span>
+      </div>
+      <button type="button" (click)="clearAlerts()" class="text-rose-600 hover:text-rose-800 dark:hover:text-rose-200">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+  }
 
-              <!-- Designation -->
-              <td class="py-3 px-4 text-slate-700 dark:text-slate-300 font-medium">
-                {{ emp.designation_title || '--' }}
-              </td>
+  <!-- Unified Top Card Container (Consistent Spacing & Radius) -->
+  <app-card-container
+    title="Employee Master Registry & Profile 360°"
+    subtitle="Enterprise Workforce Administration: KYC, Service Records, Station & Project Allocation, Bangladesh Labour Compliance, Compensation & Document Vault"
+    badge="HRMS Core"
+    paddingClass="p-0"
+  >
+    <!-- Top Action Toolbar -->
+    <div card-actions class="flex flex-wrap items-center gap-2">
+      <app-custom-button
+        variant="outline"
+        size="sm"
+        label="Lookup Settings"
+        (btnClick)="activeMainTab.set('settings')"
+      >
+        <svg class="w-4 h-4 mr-1 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+      </app-custom-button>
 
-              <!-- Department -->
-              <td class="py-3 px-4 text-slate-600 dark:text-slate-400 text-xs">
-                {{ emp.department_name || '--' }}
-              </td>
+      <app-custom-button
+        variant="outline"
+        size="sm"
+        label="Refresh"
+        (btnClick)="loadEmployeesList()"
+      >
+        <svg class="w-4 h-4 mr-1 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+      </app-custom-button>
 
-              <!-- Workforce Category -->
-              <td class="py-3 px-4">
-                @if (emp.workforce_category === 'CORPORATE') {
-                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-800/60">
-                    Corporate HQ
-                  </span>
+      <app-custom-button
+        variant="primary"
+        size="sm"
+        label="+ Register New Employee"
+        (btnClick)="openCreateModal()"
+      ></app-custom-button>
+    </div>
+
+    <!-- Main Navigation Tabs -->
+    <div class="px-6 pt-2">
+      <app-custom-tabs
+        [tabs]="mainTabs()"
+        [activeTabId]="activeMainTab()"
+        variant="emerald"
+        (tabChange)="activeMainTab.set($event)"
+      ></app-custom-tabs>
+    </div>
+
+    <!-- TAB 1: WORKFORCE DIRECTORY -->
+    @if (activeMainTab() === 'directory') {
+      <div class="p-6 space-y-5">
+        <!-- Category Segment Pills -->
+        <div class="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-slate-100 dark:border-slate-800">
+          <div class="flex flex-wrap items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl">
+            @for (tab of workforceTabs; track tab.id) {
+              <button
+                type="button"
+                (click)="setWorkforceTab(tab.id)"
+                class="px-3 py-1.5 text-xs font-semibold rounded-lg transition-all"
+                [ngClass]="workforceCategoryTab() === tab.id 
+                  ? 'bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-400 shadow-2xs' 
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'"
+              >
+                {{ tab.label }}
+              </button>
+            }
+          </div>
+
+          <div class="text-xs text-slate-500 font-medium">
+            Showing <span class="font-bold text-slate-800 dark:text-slate-200">{{ pageDisplayRange() }}</span>
+          </div>
+        </div>
+
+        <!-- Filter Controls Row -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 items-end">
+          <div class="lg:col-span-2">
+            <app-custom-input
+              label="Search Employee"
+              placeholder="Name, ID (EMP-1001), phone, NID..."
+              [(ngModel)]="searchQuery"
+              (ngModelChange)="onFilterChange()"
+            ></app-custom-input>
+          </div>
+
+          <div>
+            <app-searchable-select
+              [options]="departmentOptions()"
+              label="Department"
+              placeholder="All Departments"
+              [(ngModel)]="filterDepartmentId"
+              (selectionChange)="onFilterChange()"
+              [allowCreateNew]="false"
+            ></app-searchable-select>
+          </div>
+
+          <div>
+            <app-searchable-select
+              [options]="designationOptions()"
+              label="Designation"
+              placeholder="All Designations"
+              [(ngModel)]="filterDesignationId"
+              (selectionChange)="onFilterChange()"
+              [allowCreateNew]="false"
+            ></app-searchable-select>
+          </div>
+
+          <div>
+            <app-searchable-select
+              categoryCode="HR_EMPLOYMENT_TYPE"
+              label="Type"
+              placeholder="All Types"
+              [(ngModel)]="filterEmploymentType"
+              (selectionChange)="onFilterChange()"
+              [allowCreateNew]="false"
+            ></app-searchable-select>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <div class="flex-1">
+              <app-searchable-select
+                categoryCode="HR_EMPLOYEE_STATUS"
+                label="Status"
+                placeholder="All Status"
+                [(ngModel)]="filterStatus"
+                (selectionChange)="onFilterChange()"
+                [allowCreateNew]="false"
+              ></app-searchable-select>
+            </div>
+            <button
+              type="button"
+              (click)="resetFilters()"
+              title="Reset Filters"
+              class="h-[38px] px-3 mt-auto rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-semibold transition-colors flex items-center justify-center shrink-0"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Employee Directory Table -->
+        <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-white dark:bg-slate-900 shadow-2xs">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-600 dark:text-slate-300">
+              <thead class="bg-slate-50/80 dark:bg-slate-800/80 text-[11px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
+                <tr>
+                  <th scope="col" class="py-3 px-4">Employee</th>
+                  <th scope="col" class="py-3 px-4">Designation & Department</th>
+                  <th scope="col" class="py-3 px-4">Station & Allocation</th>
+                  <th scope="col" class="py-3 px-4">Contact</th>
+                  <th scope="col" class="py-3 px-4">Joining & Type</th>
+                  <th scope="col" class="py-3 px-4">Gross Salary (BDT)</th>
+                  <th scope="col" class="py-3 px-4 text-center">Status</th>
+                  <th scope="col" class="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80 font-normal">
+                @if (employeeService.isLoading()) {
+                  <tr>
+                    <td colspan="8" class="py-12 text-center text-slate-500">
+                      <div class="inline-flex items-center gap-2 text-xs font-semibold">
+                        <svg class="animate-spin h-5 w-5 text-emerald-600" fill="none" viewBox="0 0 24 24">
+                          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span>Loading employee directory...</span>
+                      </div>
+                    </td>
+                  </tr>
+                } @else if (employeeService.employees().length === 0) {
+                  <tr>
+                    <td colspan="8" class="py-12 text-center text-slate-500">
+                      <div class="flex flex-col items-center justify-center gap-2">
+                        <svg class="w-10 h-10 text-slate-300 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                        </svg>
+                        <span class="text-xs font-semibold text-slate-600 dark:text-slate-400">No employees match the selected criteria.</span>
+                        <app-custom-button variant="outline" size="sm" label="Register First Employee" (btnClick)="openCreateModal()"></app-custom-button>
+                      </div>
+                    </td>
+                  </tr>
                 } @else {
-                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/60">
-                    Site Field Ops
-                  </span>
+                  @for (emp of employeeService.employees(); track emp.id) {
+                    <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors group">
+                      <!-- Employee Info -->
+                      <td class="py-3 px-4">
+                        <div class="flex items-center gap-3">
+                          <div class="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 font-bold text-xs flex items-center justify-center shrink-0 border border-emerald-200/60 dark:border-emerald-800/60">
+                            {{ emp.first_name.charAt(0) }}{{ emp.last_name.charAt(0) }}
+                          </div>
+                          <div>
+                            <div class="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                              <span>{{ emp.first_name }} {{ emp.last_name }}</span>
+                              @if (emp.system_role) {
+                                <span class="px-1.5 py-0.2 rounded text-[9px] font-semibold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200/40 dark:border-indigo-800/40">
+                                  {{ emp.system_role }}
+                                </span>
+                              }
+                            </div>
+                            <div class="text-[11px] font-mono text-emerald-700 dark:text-emerald-400 font-semibold">
+                              {{ emp.employee_code }}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+
+                      <!-- Designation & Department -->
+                      <td class="py-3 px-4">
+                        <div class="font-semibold text-slate-800 dark:text-slate-200">
+                          {{ emp.designation_title || 'Unassigned Title' }}
+                        </div>
+                        <div class="text-[11px] text-slate-500">
+                          {{ emp.department_name || 'General Dept' }}
+                        </div>
+                      </td>
+
+                      <!-- Station & Allocation -->
+                      <td class="py-3 px-4">
+                        @if (emp.assigned_project_name) {
+                          <div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 text-[10px] font-semibold border border-amber-200/60 dark:border-amber-800/60">
+                            <svg class="w-3 h-3 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                            <span>{{ emp.assigned_project_name }}</span>
+                          </div>
+                        } @else if (emp.branch_name) {
+                          <div class="inline-flex items-center gap-1 text-[11px] text-slate-600 dark:text-slate-300">
+                            <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                            <span>{{ emp.branch_name }}</span>
+                          </div>
+                        } @else {
+                          <span class="text-[11px] text-slate-400 italic">Head-Office</span>
+                        }
+                      </td>
+
+                      <!-- Contact -->
+                      <td class="py-3 px-4">
+                        <div class="font-medium text-slate-800 dark:text-slate-200">
+                          {{ emp.phone }}
+                        </div>
+                        <div class="text-[11px] text-slate-500">
+                          {{ emp.official_email || 'No official email' }}
+                        </div>
+                      </td>
+
+                      <!-- Joining & Type -->
+                      <td class="py-3 px-4">
+                        <div class="text-[11px] text-slate-800 dark:text-slate-200 font-medium">
+                          {{ emp.joining_date | date:'dd MMM yyyy' }}
+                        </div>
+                        <div class="inline-block mt-0.5 px-1.5 py-0.2 rounded text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                          {{ emp.employment_type }}
+                        </div>
+                      </td>
+
+                      <!-- Gross Salary -->
+                      <td class="py-3 px-4 font-mono font-bold text-slate-900 dark:text-slate-100">
+                        ৳{{ emp.gross_salary | number:'1.2-2' }}
+                      </td>
+
+                      <!-- Status -->
+                      <td class="py-3 px-4 text-center">
+                        <app-status-badge [status]="emp.status"></app-status-badge>
+                      </td>
+
+                      <!-- Action Buttons -->
+                      <td class="py-3 px-4 text-right">
+                        <div class="flex items-center justify-end gap-1">
+                          <button
+                            type="button"
+                            (click)="openDrawer(emp)"
+                            class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-emerald-600 transition-colors"
+                            title="View 360° Profile"
+                          >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                          </button>
+                          <button
+                            type="button"
+                            (click)="openEditModal(emp)"
+                            class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-indigo-600 transition-colors"
+                            title="Edit Employee"
+                          >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                          </button>
+                          <button
+                            type="button"
+                            (click)="confirmDelete(emp)"
+                            class="p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40 text-slate-400 hover:text-rose-600 transition-colors"
+                            title="Delete Employee"
+                          >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  }
                 }
-              </td>
-
-              <!-- Contact -->
-              <td class="py-3 px-4 text-xs">
-                <div class="font-mono text-slate-700 dark:text-slate-300">{{ emp.phone }}</div>
-                <div class="text-slate-400 truncate max-w-[150px]">{{ emp.official_email || 'No email' }}</div>
-              </td>
-
-              <!-- Gross Salary -->
-              <td class="py-3 px-4 text-right font-mono font-bold text-slate-900 dark:text-white">
-                {{ emp.gross_salary | number:'1.2-2' }}
-              </td>
-
-              <!-- Status -->
-              <td class="py-3 px-4 text-center">
-                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/60">
-                  {{ emp.status }}
-                </span>
-              </td>
-
-              <!-- Action -->
-              <td class="py-3 px-4 text-right">
-                <button 
-                  (click)="viewEmployee(emp)" 
-                  class="px-2.5 py-1 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 rounded-lg transition-colors cursor-pointer">
-                  View 360°
-                </button>
-              </td>
-            </tr>
-          } @empty {
-            <tr>
-              <td colspan="8" class="py-8 text-center text-slate-400 text-sm">
-                No employees found matching the filters.
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
-
-<!-- Slide-over Employee 360 Detail Drawer -->
-@if (isDrawerOpen() && selectedEmployee(); as emp) {
-  <div class="fixed inset-0 z-50 overflow-hidden bg-slate-900/60 backdrop-blur-xs flex justify-end" (click)="closeDrawer()">
-    <div class="w-full max-w-lg bg-white dark:bg-slate-900 h-full shadow-2xl p-6 overflow-y-auto space-y-6" (click)="$event.stopPropagation()">
-      <!-- Drawer Header -->
-      <div class="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
-        <div class="flex items-center gap-3">
-          <div class="w-12 h-12 rounded-2xl bg-indigo-600 text-white font-bold text-base flex items-center justify-center">
-            {{ emp.first_name[0] }}{{ emp.last_name[0] }}
+              </tbody>
+            </table>
           </div>
-          <div>
-            <h2 class="text-lg font-bold text-slate-900 dark:text-white">{{ emp.first_name }} {{ emp.last_name }}</h2>
-            <div class="text-xs text-indigo-600 dark:text-indigo-400 font-mono">{{ emp.employee_code }} • {{ emp.designation_title }}</div>
-          </div>
-        </div>
-        <button (click)="closeDrawer()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-2xl font-bold cursor-pointer">&times;</button>
-      </div>
 
-      <!-- General Info -->
-      <div class="space-y-3">
-        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Personal & Employment Details</h3>
-        <div class="grid grid-cols-2 gap-3 text-xs">
-          <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
-            <span class="text-slate-400 block">Department</span>
-            <span class="font-bold text-slate-900 dark:text-white">{{ emp.department_name }}</span>
-          </div>
-          <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
-            <span class="text-slate-400 block">Joining Date</span>
-            <span class="font-bold text-slate-900 dark:text-white">{{ emp.joining_date | date }}</span>
-          </div>
-          <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
-            <span class="text-slate-400 block">Workforce Category</span>
-            <span class="font-bold text-slate-900 dark:text-white">{{ emp.workforce_category }}</span>
-          </div>
-          <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
-            <span class="text-slate-400 block">Employment Status</span>
-            <span class="font-bold text-emerald-600 dark:text-emerald-400">{{ emp.status }}</span>
+          <!-- Bottom Pagination Controls -->
+          <div class="px-4 py-3 bg-slate-50/70 dark:bg-slate-850/80 border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div class="flex items-center gap-2">
+              <span class="text-slate-500">Rows per page:</span>
+              <select
+                [ngModel]="pageSize()"
+                (ngModelChange)="changePageSize($event)"
+                class="px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none"
+              >
+                @for (size of pageSizeOptions; track size) {
+                  <option [value]="size">{{ size }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="flex items-center gap-1.5">
+              <button
+                type="button"
+                [disabled]="currentPage() === 1"
+                (click)="goToPage(currentPage() - 1)"
+                class="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+              </button>
+
+              <span class="px-2 font-semibold text-slate-700 dark:text-slate-300">
+                Page {{ currentPage() }} of {{ totalPages() }}
+              </span>
+
+              <button
+                type="button"
+                [disabled]="currentPage() >= totalPages()"
+                (click)="goToPage(currentPage() + 1)"
+                class="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              </button>
+            </div>
           </div>
         </div>
       </div>
+    }
 
-      <!-- Bangladesh Labour Act Salary Structure -->
-      <div class="space-y-3">
-        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Monthly Compensation Structure (BDT)</h3>
-        <div class="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl space-y-2.5 text-xs">
-          <div class="flex justify-between py-1 border-b border-slate-200/60 dark:border-slate-700/60">
-            <span class="text-slate-600 dark:text-slate-400">Basic Salary</span>
-            <span class="font-mono font-bold text-slate-900 dark:text-white">{{ emp.basic_salary | number:'1.2-2' }}</span>
-          </div>
-          <div class="flex justify-between py-1 border-b border-slate-200/60 dark:border-slate-700/60">
-            <span class="text-slate-600 dark:text-slate-400">House Rent Allowance (50%)</span>
-            <span class="font-mono font-bold text-slate-900 dark:text-white">{{ emp.house_rent_allowance | number:'1.2-2' }}</span>
-          </div>
-          <div class="flex justify-between py-1 border-b border-slate-200/60 dark:border-slate-700/60">
-            <span class="text-slate-600 dark:text-slate-400">Medical Allowance (10%)</span>
-            <span class="font-mono font-bold text-slate-900 dark:text-white">{{ emp.medical_allowance | number:'1.2-2' }}</span>
-          </div>
-          <div class="flex justify-between py-1 border-b border-slate-200/60 dark:border-slate-700/60">
-            <span class="text-slate-600 dark:text-slate-400">Conveyance Allowance</span>
-            <span class="font-mono font-bold text-slate-900 dark:text-white">{{ emp.conveyance_allowance | number:'1.2-2' }}</span>
-          </div>
-          <div class="flex justify-between py-1 border-b border-slate-200/60 dark:border-slate-700/60">
-            <span class="text-slate-600 dark:text-slate-400">Site Hazard Allowance</span>
-            <span class="font-mono font-bold text-amber-600 dark:text-amber-400">{{ emp.site_hazard_allowance | number:'1.2-2' }}</span>
-          </div>
-          <div class="flex justify-between py-1 border-b border-slate-200/60 dark:border-slate-700/60">
-            <span class="text-slate-600 dark:text-slate-400">Mobile & Internet Allowance</span>
-            <span class="font-mono font-bold text-slate-900 dark:text-white">{{ emp.mobile_allowance | number:'1.2-2' }}</span>
-          </div>
-          <div class="flex justify-between pt-2 text-sm font-extrabold text-indigo-600 dark:text-indigo-400">
-            <span>Total Gross Monthly Earnings</span>
-            <span class="font-mono">BDT {{ emp.gross_salary | number:'1.2-2' }}</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Statutory Deductions & Banking -->
-      <div class="space-y-3">
-        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Statutory Tax & Banking</h3>
-        <div class="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl space-y-2 text-xs">
-          <div class="flex justify-between">
-            <span class="text-slate-600 dark:text-slate-400">Bank Name</span>
-            <span class="font-bold text-slate-900 dark:text-white">{{ emp.bank_name || 'Not provided' }}</span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-slate-600 dark:text-slate-400">Bank Account No</span>
-            <span class="font-mono font-bold text-slate-900 dark:text-white">{{ emp.bank_account_no || '--' }}</span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-slate-600 dark:text-slate-400">Provident Fund (8.33%)</span>
-            <span class="font-bold text-emerald-600 dark:text-emerald-400">{{ emp.is_pf_eligible ? 'Eligible' : 'Exempt' }}</span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-slate-600 dark:text-slate-400">Income Tax TDS Deduction</span>
-            <span class="font-bold text-indigo-600 dark:text-indigo-400">{{ emp.is_tax_eligible ? 'Active TDS Slab' : 'Exempt' }}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-}
-
-<!-- Add Employee Modal -->
-@if (isAddModalOpen()) {
-  <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
-    <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-2xl w-full border border-slate-200 dark:border-slate-800 shadow-xl p-6 relative max-h-[90vh] overflow-y-auto">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800 mb-4">
-        <h3 class="text-lg font-bold text-slate-900 dark:text-white">Register New Employee</h3>
-        <button (click)="closeAddModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl font-bold cursor-pointer">&times;</button>
-      </div>
-
-      <div class="space-y-4 text-xs">
-        <!-- Name row -->
-        <div class="grid grid-cols-2 gap-3">
+    <!-- TAB 2: EMPLOYEE DOCUMENTS VAULT -->
+    @if (activeMainTab() === 'documents') {
+      <div class="p-6 space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
           <div>
-            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">First Name *</label>
-            <input 
-              type="text" 
-              [ngModel]="newEmp().first_name" 
-              (ngModelChange)="newEmp().first_name = $event"
-              placeholder="e.g. Engr. Tanvir" 
-              class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white" />
+            <h4 class="text-sm font-bold text-slate-900 dark:text-slate-100">Enterprise Compliance & Dossier Repository</h4>
+            <p class="text-xs text-slate-500">All appointment letters, NID copies, certificates, and contracts uploaded across all employees.</p>
           </div>
-          <div>
-            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Last Name *</label>
-            <input 
-              type="text" 
-              [ngModel]="newEmp().last_name" 
-              (ngModelChange)="newEmp().last_name = $event"
-              placeholder="e.g. Ahmed" 
-              class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white" />
-          </div>
+          <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300">
+            {{ vaultDocuments().length }} Attachments
+          </span>
         </div>
 
-        <!-- Contact row -->
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Official Email</label>
-            <input 
-              type="email" 
-              [ngModel]="newEmp().official_email" 
-              (ngModelChange)="newEmp().official_email = $event"
-              placeholder="tanvir@bengalre.com" 
-              class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white" />
-          </div>
-          <div>
-            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Primary Phone *</label>
-            <input 
-              type="text" 
-              [ngModel]="newEmp().phone" 
-              (ngModelChange)="newEmp().phone = $event"
-              placeholder="+88017XXXXXXXX" 
-              class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white" />
-          </div>
-        </div>
-
-        <!-- Role & Workforce Category -->
-        <div class="grid grid-cols-3 gap-3">
-          <div>
-            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Department</label>
-            <select 
-              [ngModel]="newEmp().department_id" 
-              (ngModelChange)="newEmp().department_id = $event"
-              class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white">
-              @for (d of hrmsService.departments(); track d.id) {
-                <option [value]="d.id">{{ d.name_en }}</option>
+        <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-white dark:bg-slate-900 shadow-2xs">
+          <table class="w-full text-left text-xs text-slate-600 dark:text-slate-300">
+            <thead class="bg-slate-50/80 dark:bg-slate-800/80 text-[11px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
+              <tr>
+                <th scope="col" class="py-3 px-4">Document Type</th>
+                <th scope="col" class="py-3 px-4">Title / Description</th>
+                <th scope="col" class="py-3 px-4">Employee</th>
+                <th scope="col" class="py-3 px-4">Department</th>
+                <th scope="col" class="py-3 px-4">Uploaded Date</th>
+                <th scope="col" class="py-3 px-4 text-right">File Reference</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80">
+              @if (vaultDocuments().length === 0) {
+                <tr>
+                  <td colspan="6" class="py-12 text-center text-slate-500 text-xs">
+                    No documents attached yet. Open an employee record to attach Appointment Letters, NID, or Certs.
+                  </td>
+                </tr>
+              } @else {
+                @for (doc of vaultDocuments(); track doc.file_url) {
+                  <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                    <td class="py-3 px-4">
+                      <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200/40">
+                        {{ doc.document_type }}
+                      </span>
+                    </td>
+                    <td class="py-3 px-4 font-semibold text-slate-900 dark:text-slate-100">
+                      {{ doc.title }}
+                      @if (doc.remarks) {
+                        <p class="text-[11px] font-normal text-slate-500">{{ doc.remarks }}</p>
+                      }
+                    </td>
+                    <td class="py-3 px-4">
+                      <div class="font-medium text-slate-800 dark:text-slate-200">{{ doc.employee_name }}</div>
+                      <div class="text-[10px] font-mono text-emerald-600">{{ doc.employee_code }}</div>
+                    </td>
+                    <td class="py-3 px-4 text-slate-500">{{ doc.department }}</td>
+                    <td class="py-3 px-4 text-slate-500">{{ doc.uploaded_at | date:'dd MMM yyyy' }}</td>
+                    <td class="py-3 px-4 text-right">
+                      <a
+                        [href]="doc.file_url"
+                        target="_blank"
+                        class="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 hover:underline font-semibold text-xs"
+                      >
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                        <span>{{ doc.file_name || 'View File' }}</span>
+                      </a>
+                    </td>
+                  </tr>
+                }
               }
-            </select>
-          </div>
-          <div>
-            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Designation</label>
-            <select 
-              [ngModel]="newEmp().designation_id" 
-              (ngModelChange)="newEmp().designation_id = $event"
-              class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white">
-              @for (des of hrmsService.designations(); track des.id) {
-                <option [value]="des.id">{{ des.title_en }} ({{ des.grade_level }})</option>
-              }
-            </select>
-          </div>
-          <div>
-            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Workforce Category</label>
-            <select 
-              [ngModel]="newEmp().workforce_category" 
-              (ngModelChange)="newEmp().workforce_category = $event"
-              class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white">
-              <option value="CORPORATE">Corporate Head-Office</option>
-              <option value="SITE_ENGINEERING">Site Engineering Staff</option>
-              <option value="SITE_SUPERVISION">Site Foreman / Supervisor</option>
-            </select>
-          </div>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    <!-- TAB 3: DYNAMIC SETTINGS & LOOKUPS -->
+    @if (activeMainTab() === 'settings') {
+      <div class="p-6 space-y-6">
+        <div class="border-b border-slate-100 dark:border-slate-800 pb-3">
+          <h4 class="text-sm font-bold text-slate-900 dark:text-slate-100">Dynamic Dropdown Architecture & KYC Configuration</h4>
+          <p class="text-xs text-slate-500">Every dropdown in the HRMS module is fully dynamic and backed by real database records without hardcoding.</p>
         </div>
 
-        <!-- Salary Breakdown Form -->
-        <div class="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-xl space-y-3">
-          <span class="font-bold text-slate-700 dark:text-slate-300 block">Monthly Salary Breakdown (BDT)</span>
-          <div class="grid grid-cols-3 gap-3">
-            <div>
-              <label class="block text-slate-500 mb-1">Basic Salary</label>
-              <input type="number" [ngModel]="newEmp().basic_salary" (ngModelChange)="newEmp().basic_salary = $event" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-mono" />
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <!-- Categories Sidebar -->
+          <div class="space-y-1.5 bg-slate-50 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-200/60 dark:border-slate-800">
+            <div class="text-[11px] font-bold uppercase text-slate-400 px-2 py-1 tracking-wider">
+              Lookup Categories
             </div>
-            <div>
-              <label class="block text-slate-500 mb-1">House Rent (50%)</label>
-              <input type="number" [ngModel]="newEmp().house_rent_allowance" (ngModelChange)="newEmp().house_rent_allowance = $event" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-mono" />
+            @for (cat of settingCategories; track cat.code) {
+              <button
+                type="button"
+                (click)="selectSettingCategory(cat.code)"
+                class="w-full text-left px-3 py-2 text-xs font-semibold rounded-lg transition-all flex items-center justify-between"
+                [ngClass]="activeSettingCategory() === cat.code 
+                  ? 'bg-emerald-600 text-white shadow-xs font-bold' 
+                  : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-700/50'"
+              >
+                <span>{{ cat.label }}</span>
+                <span class="text-[10px] opacity-75 font-mono">{{ cat.code }}</span>
+              </button>
+            }
+          </div>
+
+          <!-- Items Panel -->
+          <div class="md:col-span-3 space-y-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <h5 class="text-xs font-bold text-slate-800 dark:text-slate-200">
+                  Active Items in Category: <span class="text-emerald-600 font-mono">{{ activeSettingCategory() }}</span>
+                </h5>
+                <p class="text-[11px] text-slate-500">Manage selectable items and their visual badges</p>
+              </div>
+
+              <app-custom-button
+                variant="primary"
+                size="sm"
+                label="+ Add New Item"
+                (btnClick)="openQuickAddLookupModal()"
+              ></app-custom-button>
             </div>
-            <div>
-              <label class="block text-slate-500 mb-1">Medical Allowance (10%)</label>
-              <input type="number" [ngModel]="newEmp().medical_allowance" (ngModelChange)="newEmp().medical_allowance = $event" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-mono" />
-            </div>
-            <div>
-              <label class="block text-slate-500 mb-1">Conveyance</label>
-              <input type="number" [ngModel]="newEmp().conveyance_allowance" (ngModelChange)="newEmp().conveyance_allowance = $event" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-mono" />
-            </div>
-            <div>
-              <label class="block text-slate-500 mb-1">Site Hazard Allowance</label>
-              <input type="number" [ngModel]="newEmp().site_hazard_allowance" (ngModelChange)="newEmp().site_hazard_allowance = $event" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-mono" />
-            </div>
-            <div>
-              <label class="block text-slate-500 mb-1">Mobile Allowance</label>
-              <input type="number" [ngModel]="newEmp().mobile_allowance" (ngModelChange)="newEmp().mobile_allowance = $event" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-mono" />
+
+            <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-white dark:bg-slate-900 shadow-2xs">
+              <table class="w-full text-left text-xs text-slate-600 dark:text-slate-300">
+                <thead class="bg-slate-50/80 dark:bg-slate-800/80 text-[11px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
+                  <tr>
+                    <th scope="col" class="py-2.5 px-4">Item Code</th>
+                    <th scope="col" class="py-2.5 px-4">Name (English)</th>
+                    <th scope="col" class="py-2.5 px-4">Name (Bangla)</th>
+                    <th scope="col" class="py-2.5 px-4">Badge Preview</th>
+                    <th scope="col" class="py-2.5 px-4 text-center">Status</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80 font-normal">
+                  @if (isLoadingCategoryItems()) {
+                    <tr>
+                      <td colspan="5" class="py-8 text-center text-slate-400 text-xs">
+                        Loading lookup items...
+                      </td>
+                    </tr>
+                  } @else if (categoryItems().length === 0) {
+                    <tr>
+                      <td colspan="5" class="py-8 text-center text-slate-400 text-xs">
+                        No items found in this category. Click "+ Add New Item" to create one.
+                      </td>
+                    </tr>
+                  } @else {
+                    @for (item of categoryItems(); track item.item_code) {
+                      <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                        <td class="py-2.5 px-4 font-mono font-semibold text-slate-800 dark:text-slate-200">
+                          {{ item.item_code }}
+                        </td>
+                        <td class="py-2.5 px-4 font-bold text-slate-900 dark:text-slate-100">
+                          {{ item.item_name_en }}
+                        </td>
+                        <td class="py-2.5 px-4 text-slate-600 dark:text-slate-300">
+                          {{ item.item_name_bn || '-' }}
+                        </td>
+                        <td class="py-2.5 px-4">
+                          <span
+                            class="px-2 py-0.5 rounded text-[10px] font-bold border"
+                            [style.color]="item.color_badge"
+                            [style.borderColor]="item.color_badge + '40'"
+                            [style.backgroundColor]="item.color_badge + '15'"
+                          >
+                            {{ item.item_name_en }}
+                          </span>
+                        </td>
+                        <td class="py-2.5 px-4 text-center">
+                          <span class="inline-block px-1.5 py-0.2 rounded text-[10px] font-semibold bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300">
+                            ACTIVE
+                          </span>
+                        </td>
+                      </tr>
+                    }
+                  }
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
+      </div>
+    }
+  </app-card-container>
 
-        <div class="pt-3 flex justify-end gap-2 border-t border-slate-200 dark:border-slate-800">
-          <button (click)="closeAddModal()" class="px-4 py-2 font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl cursor-pointer">Cancel</button>
-          <button (click)="saveEmployee()" [disabled]="isSaving()" class="px-5 py-2 font-medium bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-md cursor-pointer disabled:opacity-50">
-            {{ isSaving() ? 'Saving...' : 'Register Employee' }}
+  <!-- ===================================================================== -->
+  <!-- MODAL: ADD / EDIT EMPLOYEE MASTER (Multi-Tab Sections 1.5 - 1.10) -->
+  <!-- ===================================================================== -->
+  <app-modal
+    [isOpen]="isModalOpen()"
+    [title]="modalMode() === 'create' ? 'Register New Employee' : 'Edit Employee: ' + formData().employee_code"
+    [subtitle]="'Comprehensive Enterprise HR Profile • ' + (formData().first_name ? formData().first_name + ' ' + formData().last_name : 'New Onboarding')"
+    badge="Sections 1.5 - 1.10"
+    size="2xl"
+    [showFooter]="true"
+    (closeModal)="closeModal()"
+  >
+    <div class="space-y-5">
+      <!-- Internal Modal Tabs -->
+      <div class="flex flex-wrap items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl border border-slate-200/60 dark:border-slate-800">
+        @for (mt of modalTabs; track mt.id) {
+          <button
+            type="button"
+            (click)="modalActiveTab.set(mt.id)"
+            class="px-3 py-1.5 text-xs font-semibold rounded-lg transition-all"
+            [ngClass]="modalActiveTab() === mt.id 
+              ? 'bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-400 shadow-2xs font-bold' 
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'"
+          >
+            {{ mt.label }}
           </button>
+        }
+      </div>
+
+      <!-- TAB 1: REGISTRATION (Section 1.5) -->
+      @if (modalActiveTab() === 'registration') {
+        <div class="space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <app-custom-input
+              label="First Name *"
+              placeholder="e.g. Engr. Tanvir"
+              [(ngModel)]="formData().first_name"
+              [required]="true"
+            ></app-custom-input>
+
+            <app-custom-input
+              label="Last Name *"
+              placeholder="e.g. Ahmed"
+              [(ngModel)]="formData().last_name"
+              [required]="true"
+            ></app-custom-input>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <app-custom-input
+              label="Employee Code / ID"
+              placeholder="Auto-generated if blank (e.g. EMP-1011)"
+              [(ngModel)]="formData().employee_code"
+            ></app-custom-input>
+
+            <app-custom-input
+              label="Official Email"
+              type="email"
+              placeholder="e.g. tanvir@bengalre.com"
+              [(ngModel)]="formData().official_email"
+            ></app-custom-input>
+
+            <app-custom-input
+              label="Primary Phone *"
+              type="tel"
+              placeholder="e.g. +88017XXXXXXXX"
+              [(ngModel)]="formData().phone"
+              [required]="true"
+            ></app-custom-input>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <app-custom-input
+              label="Joining Date *"
+              type="date"
+              [(ngModel)]="formData().joining_date"
+              [required]="true"
+            ></app-custom-input>
+
+            <app-searchable-select
+              categoryCode="HR_EMPLOYMENT_TYPE"
+              label="Employment Type *"
+              [(ngModel)]="formData().employment_type"
+              placeholder="Select Type..."
+              [allowCreateNew]="true"
+            ></app-searchable-select>
+
+            <app-custom-input
+              label="Probation Period (Months)"
+              type="number"
+              placeholder="6"
+              [(ngModel)]="formData().probation_months"
+            ></app-custom-input>
+          </div>
+        </div>
+      }
+
+      <!-- TAB 2: PROFILE & EMERGENCY (Section 1.6) -->
+      @if (modalActiveTab() === 'profile') {
+        <div class="space-y-5">
+          <!-- Personal KYC -->
+          <div class="text-xs font-bold text-slate-800 dark:text-slate-200 border-b border-slate-100 dark:border-slate-800 pb-1">
+            Personal Information & Statutory Identifiers
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <app-custom-input
+              label="Date of Birth"
+              type="date"
+              [(ngModel)]="formData().date_of_birth"
+            ></app-custom-input>
+
+            <app-searchable-select
+              categoryCode="HR_GENDER"
+              label="Gender"
+              [(ngModel)]="formData().gender"
+              [allowCreateNew]="true"
+            ></app-searchable-select>
+
+            <app-searchable-select
+              categoryCode="HR_MARITAL_STATUS"
+              label="Marital Status"
+              [(ngModel)]="formData().marital_status"
+              [allowCreateNew]="true"
+            ></app-searchable-select>
+
+            <app-searchable-select
+              categoryCode="HR_BLOOD_GROUP"
+              label="Blood Group"
+              [(ngModel)]="formData().blood_group"
+              [allowCreateNew]="true"
+            ></app-searchable-select>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <app-custom-input
+              label="Bangladesh National ID (NID)"
+              placeholder="10 or 17 digit Smart NID"
+              [(ngModel)]="formData().nid_number"
+            ></app-custom-input>
+
+            <app-custom-input
+              label="E-TIN Number"
+              placeholder="12-digit Tax Identification No"
+              [(ngModel)]="formData().tin_number"
+            ></app-custom-input>
+
+            <app-custom-input
+              label="Personal Phone (Alternate)"
+              placeholder="+88018XXXXXXXX"
+              [(ngModel)]="formData().personal_phone"
+            ></app-custom-input>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <app-custom-textarea
+              label="Present Address"
+              placeholder="House, Road, Area, Thana, District"
+              rows="2"
+              [(ngModel)]="formData().present_address"
+            ></app-custom-textarea>
+
+            <app-custom-textarea
+              label="Permanent Address"
+              placeholder="Village/Road, Post Office, Thana, District"
+              rows="2"
+              [(ngModel)]="formData().permanent_address"
+            ></app-custom-textarea>
+          </div>
+
+          <!-- Emergency Contact -->
+          <div class="text-xs font-bold text-slate-800 dark:text-slate-200 border-b border-slate-100 dark:border-slate-800 pb-1 pt-2">
+            Emergency Contact Person
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <app-custom-input
+              label="Contact Person Name"
+              placeholder="e.g. Mrs. Shamima Begum"
+              [(ngModel)]="formData().emergency_contact_name"
+            ></app-custom-input>
+
+            <app-searchable-select
+              categoryCode="HR_EMERGENCY_RELATION"
+              label="Relationship"
+              [(ngModel)]="formData().emergency_contact_relation"
+              [allowCreateNew]="true"
+            ></app-searchable-select>
+
+            <app-custom-input
+              label="Emergency Phone"
+              placeholder="+8801XXXXXXXXX"
+              [(ngModel)]="formData().emergency_contact_phone"
+            ></app-custom-input>
+          </div>
+
+          <!-- Education Records Table -->
+          <div class="text-xs font-bold text-slate-800 dark:text-slate-200 border-b border-slate-100 dark:border-slate-800 pb-1 pt-2 flex items-center justify-between">
+            <span>Academic Qualifications</span>
+          </div>
+
+          <div class="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200/60 dark:border-slate-800 space-y-3">
+            <div class="grid grid-cols-1 sm:grid-cols-5 gap-2">
+              <input
+                type="text"
+                placeholder="Degree (e.g. B.Sc in Civil)"
+                [(ngModel)]="newEducation().degree"
+                class="erp-input text-xs"
+              />
+              <input
+                type="text"
+                placeholder="Institution (e.g. BUET)"
+                [(ngModel)]="newEducation().institution"
+                class="erp-input text-xs"
+              />
+              <input
+                type="text"
+                placeholder="Major / Dept"
+                [(ngModel)]="newEducation().major"
+                class="erp-input text-xs"
+              />
+              <input
+                type="text"
+                placeholder="Passing Year"
+                [(ngModel)]="newEducation().passing_year"
+                class="erp-input text-xs"
+              />
+              <div class="flex items-center gap-1">
+                <input
+                  type="text"
+                  placeholder="Result / CGPA"
+                  [(ngModel)]="newEducation().result"
+                  class="erp-input text-xs flex-1"
+                />
+                <button
+                  type="button"
+                  (click)="addEducationRecord()"
+                  class="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs"
+                  title="Add Degree"
+                >
+                  + Add
+                </button>
+              </div>
+            </div>
+
+            @if (formData().education && formData().education!.length > 0) {
+              <div class="space-y-1.5 mt-2">
+                @for (edu of formData().education; track $index) {
+                  <div class="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 text-xs">
+                    <div>
+                      <span class="font-bold text-slate-800 dark:text-slate-200">{{ edu.degree }}</span>
+                      <span class="text-slate-500"> - {{ edu.institution }} ({{ edu.passing_year }})</span>
+                      @if (edu.result) {
+                        <span class="ml-2 px-1.5 py-0.5 rounded text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold">{{ edu.result }}</span>
+                      }
+                    </div>
+                    <button type="button" (click)="removeEducationRecord($index)" class="text-rose-500 hover:text-rose-700 text-xs font-bold">✕</button>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- Experience Records Table -->
+          <div class="text-xs font-bold text-slate-800 dark:text-slate-200 border-b border-slate-100 dark:border-slate-800 pb-1 pt-2">
+            Professional Experience History
+          </div>
+
+          <div class="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200/60 dark:border-slate-800 space-y-3">
+            <div class="grid grid-cols-1 sm:grid-cols-5 gap-2">
+              <input
+                type="text"
+                placeholder="Company / Employer"
+                [(ngModel)]="newExperience().company"
+                class="erp-input text-xs"
+              />
+              <input
+                type="text"
+                placeholder="Designation"
+                [(ngModel)]="newExperience().designation"
+                class="erp-input text-xs"
+              />
+              <input
+                type="text"
+                placeholder="From Date"
+                [(ngModel)]="newExperience().from_date"
+                class="erp-input text-xs"
+              />
+              <input
+                type="text"
+                placeholder="To Date"
+                [(ngModel)]="newExperience().to_date"
+                class="erp-input text-xs"
+              />
+              <div class="flex items-center gap-1">
+                <input
+                  type="text"
+                  placeholder="Key Responsibilities"
+                  [(ngModel)]="newExperience().responsibility"
+                  class="erp-input text-xs flex-1"
+                />
+                <button
+                  type="button"
+                  (click)="addExperienceRecord()"
+                  class="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs"
+                  title="Add Experience"
+                >
+                  + Add
+                </button>
+              </div>
+            </div>
+
+            @if (formData().experience && formData().experience!.length > 0) {
+              <div class="space-y-1.5 mt-2">
+                @for (exp of formData().experience; track $index) {
+                  <div class="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 text-xs">
+                    <div>
+                      <span class="font-bold text-slate-800 dark:text-slate-200">{{ exp.designation }}</span>
+                      <span class="text-slate-500"> at {{ exp.company }} ({{ exp.from_date }} - {{ exp.to_date }})</span>
+                    </div>
+                    <button type="button" (click)="removeExperienceRecord($index)" class="text-rose-500 hover:text-rose-700 text-xs font-bold">✕</button>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- TAB 3: EMPLOYMENT DETAILS (Section 1.7) -->
+      @if (modalActiveTab() === 'employment') {
+        <div class="space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <app-searchable-select
+              [options]="departmentOptions()"
+              label="Department *"
+              placeholder="Select Department..."
+              [(ngModel)]="formData().department_id"
+              [required]="true"
+              [allowCreateNew]="false"
+            ></app-searchable-select>
+
+            <app-searchable-select
+              [options]="designationOptions()"
+              label="Designation *"
+              placeholder="Select Designation..."
+              [(ngModel)]="formData().designation_id"
+              [required]="true"
+              [allowCreateNew]="false"
+            ></app-searchable-select>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <app-searchable-select
+              [options]="managerOptions()"
+              label="Reporting Manager (Supervisor)"
+              placeholder="Select Manager..."
+              [(ngModel)]="formData().reporting_to_id"
+              [allowCreateNew]="false"
+            ></app-searchable-select>
+
+            <app-searchable-select
+              categoryCode="HR_WORKFORCE_CATEGORY"
+              label="Workforce Category *"
+              [(ngModel)]="formData().workforce_category"
+              [allowCreateNew]="true"
+            ></app-searchable-select>
+          </div>
+
+          <div class="text-xs font-bold text-slate-800 dark:text-slate-200 border-b border-slate-100 dark:border-slate-800 pb-1 pt-2">
+            Location, Branch & Project Site Allocation
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <app-searchable-select
+              [options]="companyOptions()"
+              label="Operating Company"
+              placeholder="Select Company..."
+              [(ngModel)]="formData().company_id"
+              [allowCreateNew]="false"
+            ></app-searchable-select>
+
+            <app-searchable-select
+              [options]="branchOptions()"
+              label="Branch Office"
+              placeholder="Select Branch..."
+              [(ngModel)]="formData().branch_id"
+              [allowCreateNew]="false"
+            ></app-searchable-select>
+
+            <app-searchable-select
+              [options]="projectOptions()"
+              label="Assigned Project Site"
+              placeholder="Select Construction Project..."
+              [(ngModel)]="formData().assigned_project_id"
+              [allowCreateNew]="false"
+            ></app-searchable-select>
+          </div>
+        </div>
+      }
+
+      <!-- TAB 4: COMPENSATION & BANKING -->
+      @if (modalActiveTab() === 'compensation') {
+        <div class="space-y-5">
+          <!-- Live Calculated Gross Card -->
+          <div class="p-4 rounded-xl bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800 flex items-center justify-between">
+            <div>
+              <div class="text-[11px] font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-wider">Total Monthly Gross Salary</div>
+              <div class="text-2xl font-black font-mono text-emerald-900 dark:text-emerald-200 mt-0.5">
+                ৳{{ calculatedGrossSalary() | number:'1.2-2' }}
+              </div>
+            </div>
+            <div class="text-right text-xs text-slate-500">
+              Bangladesh Labour Act Compliant<br>
+              <span class="font-semibold text-emerald-700 dark:text-emerald-400">House Rent (50%) + Medical (10%) Auto-Applied</span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <app-custom-input
+              label="Basic Salary (BDT) *"
+              type="number"
+              placeholder="50000"
+              [(ngModel)]="formData().basic_salary"
+              (ngModelChange)="onBasicSalaryChange($event)"
+              [required]="true"
+            ></app-custom-input>
+
+            <app-custom-input
+              label="House Rent Allowance (50%)"
+              type="number"
+              placeholder="25000"
+              [(ngModel)]="formData().house_rent_allowance"
+            ></app-custom-input>
+
+            <app-custom-input
+              label="Medical Allowance (10%)"
+              type="number"
+              placeholder="5000"
+              [(ngModel)]="formData().medical_allowance"
+            ></app-custom-input>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <app-custom-input
+              label="Conveyance Allowance"
+              type="number"
+              placeholder="4000"
+              [(ngModel)]="formData().conveyance_allowance"
+            ></app-custom-input>
+
+            <app-custom-input
+              label="Site Hazard Allowance"
+              type="number"
+              placeholder="0 (Construction Site Engg)"
+              [(ngModel)]="formData().site_hazard_allowance"
+            ></app-custom-input>
+
+            <app-custom-input
+              label="Mobile & Communication Allowance"
+              type="number"
+              placeholder="2000"
+              [(ngModel)]="formData().mobile_allowance"
+            ></app-custom-input>
+          </div>
+
+          <div class="text-xs font-bold text-slate-800 dark:text-slate-200 border-b border-slate-100 dark:border-slate-800 pb-1 pt-2">
+            Disbursal Bank Details & Statutory Deductions
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <app-custom-input
+              label="Bank Name"
+              placeholder="e.g. City Bank PLC"
+              [(ngModel)]="formData().bank_name"
+            ></app-custom-input>
+
+            <app-custom-input
+              label="Branch Name"
+              placeholder="e.g. Gulshan Branch"
+              [(ngModel)]="formData().bank_branch"
+            ></app-custom-input>
+
+            <app-custom-input
+              label="Bank Account Number"
+              placeholder="13-16 digit account no"
+              [(ngModel)]="formData().bank_account_no"
+            ></app-custom-input>
+
+            <app-custom-input
+              label="Routing Number"
+              placeholder="9-digit routing no"
+              [(ngModel)]="formData().routing_no"
+            ></app-custom-input>
+          </div>
+
+          <div class="flex items-center gap-6 pt-2">
+            <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-800 dark:text-slate-200">
+              <input
+                type="checkbox"
+                [(ngModel)]="formData().is_pf_eligible"
+                class="rounded text-emerald-600 focus:ring-emerald-500 h-4 w-4"
+              />
+              <span>Provident Fund (PF) Eligible (8.33% deduction)</span>
+            </label>
+
+            <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-800 dark:text-slate-200">
+              <input
+                type="checkbox"
+                [(ngModel)]="formData().is_tax_eligible"
+                class="rounded text-emerald-600 focus:ring-emerald-500 h-4 w-4"
+              />
+              <span>Income Tax TDS Eligible (NBR Payroll Withholding)</span>
+            </label>
+          </div>
+        </div>
+      }
+
+      <!-- TAB 5: DOCUMENTS (Section 1.8) -->
+      @if (modalActiveTab() === 'documents') {
+        <div class="space-y-4">
+          <div class="text-xs text-slate-500">
+            Attach onboarding documentation: Appointment Letter, NID Copy, Academic Certificates, Contracts, and Photos.
+          </div>
+
+          <div class="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200/60 dark:border-slate-800 space-y-3">
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+              <app-searchable-select
+                categoryCode="HR_DOCUMENT_TYPE"
+                label="Document Type"
+                [(ngModel)]="newDocument().document_type"
+                [allowCreateNew]="true"
+              ></app-searchable-select>
+
+              <app-custom-input
+                label="Document Title *"
+                placeholder="e.g. Signed Appointment Letter"
+                [(ngModel)]="newDocument().title"
+              ></app-custom-input>
+
+              <app-custom-input
+                label="File URL / Path *"
+                placeholder="e.g. /uploads/docs/appt_tanvir.pdf"
+                [(ngModel)]="newDocument().file_url"
+              ></app-custom-input>
+
+              <div class="flex items-end">
+                <button
+                  type="button"
+                  (click)="addDocumentRecord()"
+                  class="w-full h-[38px] rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1 transition-colors"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                  <span>Attach Document</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Document List -->
+          <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-white dark:bg-slate-900 shadow-2xs">
+            <table class="w-full text-left text-xs text-slate-600 dark:text-slate-300">
+              <thead class="bg-slate-50/80 dark:bg-slate-800/80 text-[11px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
+                <tr>
+                  <th scope="col" class="py-2.5 px-3">Type</th>
+                  <th scope="col" class="py-2.5 px-3">Title</th>
+                  <th scope="col" class="py-2.5 px-3">File Reference</th>
+                  <th scope="col" class="py-2.5 px-3">Attached Date</th>
+                  <th scope="col" class="py-2.5 px-3 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80">
+                @if (!formData().documents || formData().documents!.length === 0) {
+                  <tr>
+                    <td colspan="5" class="py-6 text-center text-slate-400 text-xs">
+                      No documents attached for this employee yet.
+                    </td>
+                  </tr>
+                } @else {
+                  @for (doc of formData().documents; track $index) {
+                    <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
+                      <td class="py-2.5 px-3 font-semibold text-emerald-700 dark:text-emerald-400">
+                        {{ doc.document_type }}
+                      </td>
+                      <td class="py-2.5 px-3 font-bold text-slate-800 dark:text-slate-200">
+                        {{ doc.title }}
+                      </td>
+                      <td class="py-2.5 px-3 font-mono text-[11px] text-slate-500">
+                        {{ doc.file_url }}
+                      </td>
+                      <td class="py-2.5 px-3 text-slate-500">
+                        {{ doc.uploaded_at | date:'dd MMM yyyy' }}
+                      </td>
+                      <td class="py-2.5 px-3 text-right">
+                        <button
+                          type="button"
+                          (click)="removeDocumentRecord($index)"
+                          class="text-rose-500 hover:text-rose-700 font-bold text-xs"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  }
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+
+      <!-- TAB 6: SYSTEM USER & STATUS (Section 1.9 & 1.10) -->
+      @if (modalActiveTab() === 'system') {
+        <div class="space-y-4">
+          <div class="text-xs font-bold text-slate-800 dark:text-slate-200 border-b border-slate-100 dark:border-slate-800 pb-1">
+            Section 1.9: User & Role Management
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <app-searchable-select
+              categoryCode="HR_SYSTEM_ROLE"
+              label="ERP System Role *"
+              [(ngModel)]="formData().system_role"
+              [allowCreateNew]="true"
+            ></app-searchable-select>
+
+            <app-custom-input
+              label="Linked User Account ID"
+              type="number"
+              placeholder="e.g. 5 (Leave blank if not registered user)"
+              [(ngModel)]="formData().user_id"
+            ></app-custom-input>
+          </div>
+
+          <div class="text-xs font-bold text-slate-800 dark:text-slate-200 border-b border-slate-100 dark:border-slate-800 pb-1 pt-2">
+            Section 1.10: Employee Lifecycle Status
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <app-searchable-select
+              categoryCode="HR_EMPLOYEE_STATUS"
+              label="Employee Status *"
+              [(ngModel)]="formData().status"
+              [allowCreateNew]="true"
+            ></app-searchable-select>
+
+            <app-custom-input
+              label="Confirmation Date"
+              type="date"
+              [(ngModel)]="formData().confirmation_date"
+              hint="Set when employee successfully completes probation"
+            ></app-custom-input>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Modal Footer -->
+    <div modal-footer class="flex items-center gap-2">
+      <app-custom-button
+        variant="outline"
+        size="sm"
+        label="Cancel"
+        (btnClick)="closeModal()"
+      ></app-custom-button>
+
+      <app-custom-button
+        variant="primary"
+        size="sm"
+        [label]="isSaving() ? 'Saving...' : (modalMode() === 'create' ? 'Register Employee' : 'Update Profile')"
+        [disabled]="isSaving()"
+        (btnClick)="saveEmployee()"
+      ></app-custom-button>
+    </div>
+  </app-modal>
+
+  <!-- ===================================================================== -->
+  <!-- DRAWER: EMPLOYEE 360° PROFILE VIEW -->
+  <!-- ===================================================================== -->
+  <app-drawer
+    [isOpen]="isDrawerOpen()"
+    [title]="(selectedEmployee()?.first_name || '') + ' ' + (selectedEmployee()?.last_name || '')"
+    [subtitle]="(selectedEmployee()?.designation_title || 'Employee') + ' • ' + (selectedEmployee()?.department_name || '')"
+    [badge]="selectedEmployee()?.employee_code || ''"
+    maxWidthClass="max-w-2xl"
+    [showFooter]="true"
+    (closeDrawer)="closeDrawer()"
+  >
+    @if (selectedEmployee(); as emp) {
+      <div class="space-y-6">
+        <!-- Top Profile Banner -->
+        <div class="p-4 rounded-xl bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-indigo-500/10 border border-emerald-200/60 dark:border-emerald-800 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-full bg-emerald-600 text-white font-bold text-base flex items-center justify-center shrink-0 shadow-md">
+              {{ emp.first_name.charAt(0) }}{{ emp.last_name.charAt(0) }}
+            </div>
+            <div>
+              <h4 class="font-bold text-slate-900 dark:text-slate-100 text-sm">
+                {{ emp.first_name }} {{ emp.last_name }}
+              </h4>
+              <p class="text-xs text-slate-500">{{ emp.official_email || emp.phone }}</p>
+              <div class="flex items-center gap-2 mt-1">
+                <app-status-badge [status]="emp.status"></app-status-badge>
+                <span class="px-2 py-0.2 rounded text-[10px] font-semibold bg-indigo-100 dark:bg-indigo-950 text-indigo-800 dark:text-indigo-300">
+                  {{ emp.employment_type }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="text-right">
+            <div class="text-[10px] font-bold text-slate-400 uppercase">Gross Salary</div>
+            <div class="text-lg font-black font-mono text-emerald-700 dark:text-emerald-400">
+              ৳{{ emp.gross_salary | number:'1.2-2' }}
+            </div>
+          </div>
+        </div>
+
+        <!-- KPI Grid -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-800 text-center">
+            <div class="text-[10px] font-semibold text-slate-400 uppercase">Category</div>
+            <div class="text-xs font-bold text-slate-800 dark:text-slate-200 mt-0.5 truncate">{{ emp.workforce_category }}</div>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-800 text-center">
+            <div class="text-[10px] font-semibold text-slate-400 uppercase">Role</div>
+            <div class="text-xs font-bold text-slate-800 dark:text-slate-200 mt-0.5">{{ emp.system_role || 'EMPLOYEE' }}</div>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-800 text-center">
+            <div class="text-[10px] font-semibold text-slate-400 uppercase">Blood Group</div>
+            <div class="text-xs font-bold text-rose-600 mt-0.5">{{ emp.blood_group || '-' }}</div>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-800 text-center">
+            <div class="text-[10px] font-semibold text-slate-400 uppercase">Documents</div>
+            <div class="text-xs font-bold text-emerald-600 mt-0.5">{{ (emp.documents && emp.documents.length) || 0 }} Attached</div>
+          </div>
+        </div>
+
+        <!-- Section 1.5 & 1.6: Personal & KYC Details -->
+        <div class="space-y-3">
+          <h5 class="text-xs font-bold text-slate-800 dark:text-slate-200 border-b border-slate-100 dark:border-slate-800 pb-1 flex items-center justify-between">
+            <span>Sections 1.5 & 1.6: Personal & Statutory Profile</span>
+          </h5>
+
+          <div class="grid grid-cols-2 gap-3 text-xs">
+            <div>
+              <span class="text-slate-400">Date of Birth:</span>
+              <span class="font-semibold text-slate-800 dark:text-slate-200 ml-1">{{ emp.date_of_birth || '-' }}</span>
+            </div>
+            <div>
+              <span class="text-slate-400">Marital Status:</span>
+              <span class="font-semibold text-slate-800 dark:text-slate-200 ml-1">{{ emp.marital_status || '-' }}</span>
+            </div>
+            <div>
+              <span class="text-slate-400">Smart NID:</span>
+              <span class="font-semibold font-mono text-slate-800 dark:text-slate-200 ml-1">{{ emp.nid_number || '-' }}</span>
+            </div>
+            <div>
+              <span class="text-slate-400">E-TIN:</span>
+              <span class="font-semibold font-mono text-slate-800 dark:text-slate-200 ml-1">{{ emp.tin_number || '-' }}</span>
+            </div>
+            <div>
+              <span class="text-slate-400">Joining Date:</span>
+              <span class="font-semibold text-slate-800 dark:text-slate-200 ml-1">{{ emp.joining_date | date:'dd MMM yyyy' }}</span>
+            </div>
+            <div>
+              <span class="text-slate-400">Confirmation:</span>
+              <span class="font-semibold text-slate-800 dark:text-slate-200 ml-1">{{ emp.confirmation_date ? (emp.confirmation_date | date:'dd MMM yyyy') : 'Pending' }}</span>
+            </div>
+          </div>
+
+          @if (emp.present_address) {
+            <div class="text-xs">
+              <span class="text-slate-400">Present Address:</span>
+              <p class="font-medium text-slate-800 dark:text-slate-200 mt-0.5">{{ emp.present_address }}</p>
+            </div>
+          }
+
+          @if (emp.emergency_contact_name) {
+            <div class="p-3 rounded-xl bg-amber-50/60 dark:bg-amber-950/30 border border-amber-200/50 text-xs">
+              <div class="font-bold text-amber-900 dark:text-amber-200">Emergency Contact:</div>
+              <div class="text-slate-700 dark:text-slate-300 mt-0.5">
+                {{ emp.emergency_contact_name }} ({{ emp.emergency_contact_relation }}) • {{ emp.emergency_contact_phone }}
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Section 1.7: Employment & Allocation -->
+        <div class="space-y-3">
+          <h5 class="text-xs font-bold text-slate-800 dark:text-slate-200 border-b border-slate-100 dark:border-slate-800 pb-1">
+            Section 1.7: Department, Station & Supervision
+          </h5>
+
+          <div class="grid grid-cols-2 gap-3 text-xs">
+            <div>
+              <span class="text-slate-400">Department:</span>
+              <span class="font-semibold text-slate-800 dark:text-slate-200 ml-1">{{ emp.department_name || '-' }}</span>
+            </div>
+            <div>
+              <span class="text-slate-400">Designation:</span>
+              <span class="font-semibold text-slate-800 dark:text-slate-200 ml-1">{{ emp.designation_title || '-' }}</span>
+            </div>
+            <div>
+              <span class="text-slate-400">Reporting To:</span>
+              <span class="font-semibold text-slate-800 dark:text-slate-200 ml-1">{{ emp.reporting_to_name || 'Self / MD' }}</span>
+            </div>
+            <div>
+              <span class="text-slate-400">Project Assignment:</span>
+              <span class="font-semibold text-amber-700 dark:text-amber-400 ml-1">{{ emp.assigned_project_name || 'Corporate HQ' }}</span>
+            </div>
+            <div>
+              <span class="text-slate-400">Operating Branch:</span>
+              <span class="font-semibold text-slate-800 dark:text-slate-200 ml-1">{{ emp.branch_name || 'Main Office' }}</span>
+            </div>
+            <div>
+              <span class="text-slate-400">Company:</span>
+              <span class="font-semibold text-slate-800 dark:text-slate-200 ml-1">{{ emp.company_name || 'Bengal Real Estate Ltd' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Compensation Breakdown -->
+        <div class="space-y-3">
+          <h5 class="text-xs font-bold text-slate-800 dark:text-slate-200 border-b border-slate-100 dark:border-slate-800 pb-1">
+            Labour Law Salary Breakdown & Banking
+          </h5>
+
+          <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200/60 dark:border-slate-800 grid grid-cols-3 gap-2 text-xs">
+            <div>
+              <span class="text-[10px] text-slate-400">Basic Salary:</span>
+              <div class="font-bold font-mono">৳{{ emp.basic_salary | number:'1.2-2' }}</div>
+            </div>
+            <div>
+              <span class="text-[10px] text-slate-400">House Rent (50%):</span>
+              <div class="font-bold font-mono">৳{{ emp.house_rent_allowance | number:'1.2-2' }}</div>
+            </div>
+            <div>
+              <span class="text-[10px] text-slate-400">Medical (10%):</span>
+              <div class="font-bold font-mono">৳{{ emp.medical_allowance | number:'1.2-2' }}</div>
+            </div>
+            <div>
+              <span class="text-[10px] text-slate-400">Conveyance:</span>
+              <div class="font-bold font-mono">৳{{ emp.conveyance_allowance | number:'1.2-2' }}</div>
+            </div>
+            <div>
+              <span class="text-[10px] text-slate-400">Site Hazard:</span>
+              <div class="font-bold font-mono">৳{{ emp.site_hazard_allowance | number:'1.2-2' }}</div>
+            </div>
+            <div>
+              <span class="text-[10px] text-slate-400">Mobile:</span>
+              <div class="font-bold font-mono">৳{{ emp.mobile_allowance | number:'1.2-2' }}</div>
+            </div>
+          </div>
+
+          <div class="text-xs text-slate-600 dark:text-slate-300 flex items-center justify-between">
+            <span>Bank: <strong class="text-slate-800 dark:text-slate-100">{{ emp.bank_name || 'Cash Disbursal' }}</strong> ({{ emp.bank_branch }})</span>
+            <span class="font-mono">A/C: {{ emp.bank_account_no || 'N/A' }}</span>
+          </div>
+        </div>
+
+        <!-- Section 1.8: Documents List -->
+        @if (emp.documents && emp.documents.length > 0) {
+          <div class="space-y-3">
+            <h5 class="text-xs font-bold text-slate-800 dark:text-slate-200 border-b border-slate-100 dark:border-slate-800 pb-1">
+              Section 1.8: Attached Documents & Dossier
+            </h5>
+
+            <div class="space-y-1.5">
+              @for (d of emp.documents; track d.file_url) {
+                <div class="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-800 text-xs">
+                  <div>
+                    <span class="font-bold text-emerald-700 dark:text-emerald-400">{{ d.document_type }}:</span>
+                    <span class="font-medium text-slate-800 dark:text-slate-200 ml-1">{{ d.title }}</span>
+                  </div>
+                  <a [href]="d.file_url" target="_blank" class="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline">
+                    View
+                  </a>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Drawer Footer -->
+    <div drawer-footer class="flex items-center gap-2">
+      <app-custom-button
+        variant="outline"
+        size="sm"
+        label="Close"
+        (btnClick)="closeDrawer()"
+      ></app-custom-button>
+
+      @if (selectedEmployee(); as emp) {
+        <app-custom-button
+          variant="primary"
+          size="sm"
+          label="Edit Profile"
+          (btnClick)="closeDrawer(); openEditModal(emp)"
+        ></app-custom-button>
+      }
+    </div>
+  </app-drawer>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL: DELETE CONFIRMATION -->
+  <!-- ===================================================================== -->
+  <app-modal
+    [isOpen]="isDeleteModalOpen()"
+    title="Confirm Employee Deletion"
+    subtitle="Validation rules verify department head and position occupancy"
+    badge="Danger"
+    size="md"
+    [showFooter]="true"
+    (closeModal)="closeDeleteModal()"
+  >
+    <div class="space-y-3 text-xs text-slate-600 dark:text-slate-300">
+      <p>
+        Are you sure you want to permanently delete employee record
+        <strong class="text-slate-900 dark:text-slate-100">
+          {{ employeeToDelete()?.employee_code }} - {{ employeeToDelete()?.first_name }} {{ employeeToDelete()?.last_name }}
+        </strong>?
+      </p>
+      <div class="p-3 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-300">
+        <strong>Warning:</strong> Deletion is prevented if this employee is currently assigned as Head of Department or occupies an active sanctioned position.
+      </div>
+    </div>
+
+    <div modal-footer class="flex items-center gap-2">
+      <app-custom-button
+        variant="outline"
+        size="sm"
+        label="Cancel"
+        (btnClick)="closeDeleteModal()"
+      ></app-custom-button>
+
+      <app-custom-button
+        variant="danger"
+        size="sm"
+        [label]="isDeleting() ? 'Deleting...' : 'Delete Employee'"
+        [disabled]="isDeleting()"
+        (btnClick)="executeDelete()"
+      ></app-custom-button>
+    </div>
+  </app-modal>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL: QUICK ADD LOOKUP ITEM (Settings Tab) -->
+  <!-- ===================================================================== -->
+  <app-modal
+    [isOpen]="isQuickAddLookupModalOpen()"
+    [title]="'Add New Item to ' + activeSettingCategory()"
+    subtitle="Item will be persisted dynamically in the database and immediately available in dropdowns"
+    badge="Dynamic Lookups"
+    size="md"
+    [showFooter]="true"
+    (closeModal)="closeQuickAddLookupModal()"
+  >
+    <div class="space-y-4">
+      <app-custom-input
+        label="Item Name (English) *"
+        placeholder="e.g. Senior Project Manager"
+        [(ngModel)]="newLookupItem().name_en"
+        [required]="true"
+      ></app-custom-input>
+
+      <app-custom-input
+        label="Item Name (Bangla)"
+        placeholder="e.g. সিনিয়র প্রজেক্ট ম্যানেজার"
+        [(ngModel)]="newLookupItem().name_bn"
+      ></app-custom-input>
+
+      <app-custom-input
+        label="Item Code (Optional)"
+        placeholder="Auto-generated if empty (e.g. SENIOR_PM)"
+        [(ngModel)]="newLookupItem().code"
+      ></app-custom-input>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1.5">Badge Color</label>
+        <div class="flex items-center gap-2">
+          <input
+            type="color"
+            [(ngModel)]="newLookupItem().badge"
+            class="w-10 h-8 rounded border border-slate-200 dark:border-slate-800 cursor-pointer"
+          />
+          <span class="text-xs font-mono text-slate-500">{{ newLookupItem().badge }}</span>
         </div>
       </div>
     </div>
-  </div>
-}
+
+    <div modal-footer class="flex items-center gap-2">
+      <app-custom-button
+        variant="outline"
+        size="sm"
+        label="Cancel"
+        (btnClick)="closeQuickAddLookupModal()"
+      ></app-custom-button>
+
+      <app-custom-button
+        variant="primary"
+        size="sm"
+        label="Save Lookup Item"
+        (btnClick)="saveQuickLookupItem()"
+      ></app-custom-button>
+    </div>
+  </app-modal>
+</div>

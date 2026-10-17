@@ -8,8 +8,10 @@ export interface SubMenuItem {
   id: string;
   label: string;
   route: string;
+  queryParams?: { [key: string]: any };
   badge?: string;
 }
+
 
 export interface MenuGroup {
   id: string;
@@ -124,14 +126,21 @@ export class SidebarComponent implements OnInit {
     },
     {
       id: 'hrms',
-      title: 'HRMS & Site Labour',
+      title: 'HRMS & Organization',
       iconSvg: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z',
       items: [
+        { id: 'hrms-companies', label: 'Company Master', route: '/hrms/org-structure', queryParams: { tab: 'companies' }, badge: 'Holding' },
+        { id: 'hrms-entities', label: 'Legal Entities (RJSC)', route: '/hrms/org-structure', queryParams: { tab: 'legal-entities' }, badge: 'RJSC' },
+        { id: 'hrms-branches', label: 'Branches & Head Office', route: '/hrms/org-structure', queryParams: { tab: 'branches' }, badge: 'HO' },
+        { id: 'hrms-offices', label: 'Project Site Offices', route: '/hrms/org-structure', queryParams: { tab: 'project-offices' }, badge: 'Sites' },
+        { id: 'hrms-departments', label: 'Department Master & Hierarchy', route: '/hrms/departments', badge: 'Core' },
+        { id: 'hrms-designations', label: 'Designations & Positions', route: '/hrms/designations', badge: 'Manpower' },
         { id: 'hrms-dashboard', label: 'HRMS & Labour Cockpit', route: '/hrms/dashboard', badge: 'New' },
         { id: 'hrms-employees', label: 'Employee Directory 360°', route: '/hrms/employees' },
         { id: 'hrms-muster', label: 'Daily Labour Muster Roll', route: '/hrms/muster-roll' },
-        { id: 'hrms-payroll', label: 'Payroll & NBR TDS Engine', route: '/hrms/payroll' },
-        { id: 'hrms-attendance', label: 'Attendance & Leave Log', route: '/hrms/attendance' }
+        { id: 'hrms-attendance', label: 'Attendance & Punches', route: '/hrms/attendance' },
+        { id: 'hrms-leave-overtime', label: 'Leave & Overtime (2.11-2.20)', route: '/hrms/leave-overtime', badge: 'New' },
+        { id: 'hrms-payroll', label: 'Payroll & NBR TDS Engine', route: '/hrms/payroll' }
       ]
     },
     {
@@ -206,7 +215,7 @@ export class SidebarComponent implements OnInit {
     return this.menuGroups
       .map(group => {
         const matchesGroup = group.title.toLowerCase().includes(q);
-        const matchingItems = group.items.filter(item => 
+        const matchingItems = group.items.filter(item =>
           item.label.toLowerCase().includes(q)
         );
 

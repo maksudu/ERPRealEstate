@@ -23,7 +23,7 @@ export type StatusVariant = 'success' | 'warning' | 'danger' | 'info' | 'neutral
         ></span>
       }
       <span class="truncate">
-        {{ labelEn }}
+        {{ displayLabel }}
         @if (labelBn) {
           <span class="text-[10px] opacity-80 ml-0.5">({{ labelBn }})</span>
         }
@@ -32,6 +32,8 @@ export type StatusVariant = 'success' | 'warning' | 'danger' | 'info' | 'neutral
   `
 })
 export class StatusBadgeComponent {
+  @Input() status: string = '';
+  @Input() size: 'sm' | 'md' = 'md';
   @Input() labelEn: string = '';
   @Input() labelBn: string = '';
   @Input() variant: StatusVariant = 'neutral';
@@ -39,8 +41,33 @@ export class StatusBadgeComponent {
   @Input() showDot: boolean = true;
   @Input() pulse: boolean = false;
 
+  get displayLabel(): string {
+    if (this.labelEn) return this.labelEn;
+    if (this.status) return this.status.replace(/_/g, ' ');
+    return '';
+  }
+
+  get effectiveVariant(): StatusVariant {
+    if (this.variant !== 'neutral') return this.variant;
+    if (!this.status) return 'neutral';
+    const s = this.status.toUpperCase();
+    if (['ACTIVE', 'PRESENT', 'APPROVED', 'DISBURSED', 'ACTIVE_MOBILIZED', 'COMPLETED', 'VERIFIED'].includes(s)) {
+      return 'success';
+    }
+    if (['PENDING', 'DRAFT', 'PLANNING', 'PROBATION'].includes(s)) {
+      return 'warning';
+    }
+    if (['INACTIVE', 'CLOSED', 'REJECTED', 'TERMINATED', 'CANCELLED'].includes(s)) {
+      return 'danger';
+    }
+    if (['DEMOBILIZING'].includes(s)) {
+      return 'amber';
+    }
+    return 'neutral';
+  }
+
   get shouldPulse(): boolean {
-    return this.pulse || this.variant === 'live-lock';
+    return this.pulse || this.effectiveVariant === 'live-lock';
   }
 
   get badgeClasses(): string {
@@ -59,7 +86,7 @@ export class StatusBadgeComponent {
       luxury: 'bg-gradient-to-r from-amber-500/15 via-yellow-500/10 to-amber-500/15 text-amber-950 dark:text-amber-200 border-amber-400/50 shadow-xs',
       'live-lock': 'bg-amber-500/10 text-amber-800 dark:text-amber-300 border-amber-500/40 shadow-xs ring-1 ring-amber-500/20'
     };
-    return variants[this.variant] || variants.neutral;
+    return variants[this.effectiveVariant] || variants.neutral;
   }
 
   get dotColor(): string {
@@ -75,6 +102,6 @@ export class StatusBadgeComponent {
       luxury: '#D97706',
       'live-lock': '#F59E0B'
     };
-    return dots[this.variant] || '#64748B';
+    return dots[this.effectiveVariant] || '#64748B';
   }
 }

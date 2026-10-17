@@ -1,0 +1,1335 @@
+<div class="space-y-6">
+  <!-- Feedback / Alert Notifications -->
+  @if (successMessage()) {
+    <div class="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 flex items-center justify-between text-emerald-800 dark:text-emerald-300 text-xs font-semibold animate-fadeIn shadow-2xs">
+      <div class="flex items-center gap-2">
+        <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        <span>{{ successMessage() }}</span>
+      </div>
+      <button type="button" (click)="clearAlerts()" class="text-emerald-600 hover:text-emerald-800 dark:hover:text-emerald-200">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+  }
+
+  @if (errorMessage()) {
+    <div class="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 flex items-center justify-between text-rose-800 dark:text-rose-300 text-xs font-semibold animate-fadeIn shadow-2xs">
+      <div class="flex items-center gap-2">
+        <svg class="w-4 h-4 text-rose-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+        <span>{{ errorMessage() }}</span>
+      </div>
+      <button type="button" (click)="clearAlerts()" class="text-rose-600 hover:text-rose-800 dark:hover:text-rose-200">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+  }
+
+  <!-- Unified Top Card Container (Consistent Spacing & Radius) -->
+  <app-card-container
+    title="Department Master & Corporate Hierarchy"
+    subtitle="Enterprise Organizational Structure, Multi-Level Hierarchy, Head Management, Cost Centers & Project Mappings"
+    badge="HRMS Core"
+    paddingClass="p-0"
+  >
+    <!-- Top Action Toolbar -->
+    <div card-actions class="flex flex-wrap items-center gap-2">
+      <app-custom-button
+        variant="outline"
+        size="sm"
+        label="Quick Lookup Item"
+        (btnClick)="openQuickLookupModal('DEPARTMENT_STATUS')"
+      >
+        <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+      </app-custom-button>
+
+      <app-custom-button
+        variant="secondary"
+        size="sm"
+        label="Export CSV"
+        (btnClick)="exportDepartmentsCSV()"
+      >
+        <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+      </app-custom-button>
+
+      <app-custom-button
+        variant="primary"
+        size="sm"
+        label="+ Create Department"
+        (btnClick)="openCreateDeptModal()"
+      >
+      </app-custom-button>
+    </div>
+
+    <!-- Quick Cockpit KPI Strip -->
+    <div class="px-6 py-4 bg-slate-50/60 dark:bg-slate-850/50 border-b border-slate-200 dark:border-slate-800 grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+        </div>
+        <div>
+          <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Total Departments</div>
+          <div class="text-base font-bold text-slate-900 dark:text-slate-100">{{ deptService.departments().length }}</div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+        </div>
+        <div>
+          <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Total Workforce</div>
+          <div class="text-base font-bold text-slate-900 dark:text-slate-100">{{ employees().length }} Employees</div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-purple-100 dark:bg-purple-950/80 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/></svg>
+        </div>
+        <div>
+          <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Hierarchy Depth</div>
+          <div class="text-base font-bold text-slate-900 dark:text-slate-100">{{ rootTreeNodes().length }} Corporate Roots</div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-950/80 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+        </div>
+        <div>
+          <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Site Project Mappings</div>
+          <div class="text-base font-bold text-slate-900 dark:text-slate-100">{{ deptService.projectMappings().length }} Site Units</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Custom Navigation Tabs (Section 2 Structure) -->
+    <div class="px-6 pt-2">
+      <app-custom-tabs
+        [tabs]="tabs()"
+        [activeTabId]="activeTab()"
+        variant="gold"
+        (tabChange)="selectTab($event)"
+      ></app-custom-tabs>
+    </div>
+
+    <!-- TAB 1: Section 2.1 & 3.1 & 3.2 DEPARTMENT MASTER -->
+    @if (activeTab() === 'master') {
+      <div class="p-6 space-y-4">
+        <!-- Search & Dynamic Filter Bar -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 bg-slate-50 dark:bg-slate-850/60 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+          <div>
+            <app-custom-input
+              label="Search Departments"
+              placeholder="Code, name, cost center..."
+              [ngModel]="searchQuery()"
+              (ngModelChange)="searchQuery.set($event)"
+            ></app-custom-input>
+          </div>
+
+          <div>
+            <app-searchable-select
+              label="Filter by Company"
+              placeholder="All Companies"
+              [options]="companyOptions()"
+              [ngModel]="selectedCompanyFilter()"
+              (selectionChange)="selectedCompanyFilter.set($event ? +$event.item_code : null)"
+            ></app-searchable-select>
+          </div>
+
+          <div>
+            <app-searchable-select
+              label="Filter by Branch"
+              placeholder="All Operating Branches"
+              [options]="branchOptions()"
+              [ngModel]="selectedBranchFilter()"
+              (selectionChange)="selectedBranchFilter.set($event ? +$event.item_code : null)"
+            ></app-searchable-select>
+          </div>
+
+          <div>
+            <app-searchable-select
+              label="Status Filter"
+              categoryCode="DEPARTMENT_STATUS"
+              placeholder="All Statuses"
+              [allowCreateNew]="true"
+              [ngModel]="selectedStatusFilter()"
+              (selectionChange)="selectedStatusFilter.set($event ? $event.item_code : null)"
+            ></app-searchable-select>
+          </div>
+        </div>
+
+        <!-- Master Department Table -->
+        <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-100/80 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 font-semibold uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
+              <tr>
+                <th class="py-3 px-4">Code</th>
+                <th class="py-3 px-4">Department Name</th>
+                <th class="py-3 px-4">Parent Dept</th>
+                <th class="py-3 px-4">Department Head</th>
+                <th class="py-3 px-4">Operating Branch</th>
+                <th class="py-3 px-4 text-center">Headcount</th>
+                <th class="py-3 px-4">Cost Center</th>
+                <th class="py-3 px-4 text-center">Status</th>
+                <th class="py-3 px-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200 dark:divide-slate-800 font-medium">
+              @for (dept of filteredDepartments(); track dept.id) {
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                  <td class="py-3 px-4 font-mono font-bold text-amber-600 dark:text-amber-400">
+                    {{ dept.department_code }}
+                  </td>
+                  <td class="py-3 px-4">
+                    <div class="font-bold text-slate-900 dark:text-slate-100">{{ dept.name_en }}</div>
+                    @if (dept.name_bn) {
+                      <div class="text-[11px] text-slate-600 dark:text-slate-300">{{ dept.name_bn }}</div>
+                    }
+                  </td>
+                  <td class="py-3 px-4">
+                    @if (dept.parent_department_name) {
+                      <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                        {{ dept.parent_department_name }}
+                      </span>
+                    } @else {
+                      <span class="text-slate-600 dark:text-slate-300 italic">Top-Level Parent</span>
+                    }
+                  </td>
+                  <td class="py-3 px-4">
+                    @if (dept.head_of_dept_name) {
+                      <div class="flex items-center gap-2">
+                        <div class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 flex items-center justify-center text-[10px] font-bold">
+                          {{ dept.head_of_dept_name.substring(0, 1) }}
+                        </div>
+                        <div>
+                          <div class="font-semibold text-slate-800 dark:text-slate-200">{{ dept.head_of_dept_name }}</div>
+                          <div class="text-[10px] text-slate-600 dark:text-slate-300 font-mono">{{ dept.head_of_dept_code }}</div>
+                        </div>
+                      </div>
+                    } @else {
+                      <span class="text-amber-600 dark:text-amber-400 text-[11px] font-medium italic">Unassigned</span>
+                    }
+                  </td>
+                  <td class="py-3 px-4 text-slate-600 dark:text-slate-300">
+                    {{ dept.branch_name || dept.company_name || 'Corporate HQ' }}
+                  </td>
+                  <td class="py-3 px-4 text-center">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                      {{ dept.employee_count }} staff
+                    </span>
+                  </td>
+                  <td class="py-3 px-4 font-mono text-[11px] text-slate-700 dark:text-slate-300">
+                    {{ dept.cost_center_id || '—' }}
+                  </td>
+                  <td class="py-3 px-4 text-center">
+                    <app-status-badge [status]="dept.status"></app-status-badge>
+                  </td>
+                  <td class="py-3 px-4 text-right">
+                    <div class="flex items-center justify-end gap-1.5">
+                      <button
+                        type="button"
+                        title="Move Parent Department (2.2)"
+                        (click)="openMoveParentModal(dept)"
+                        class="p-1.5 rounded-lg text-slate-500 hover:text-amber-600 hover:bg-slate-100 dark:hover:bg-slate-800"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>
+                      </button>
+
+                      <button
+                        type="button"
+                        title="Assign Department Head (2.3)"
+                        (click)="openAssignHeadModal(dept)"
+                        class="p-1.5 rounded-lg text-slate-500 hover:text-emerald-600 hover:bg-slate-100 dark:hover:bg-slate-800"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                      </button>
+
+                      <button
+                        type="button"
+                        title="Edit Department Master"
+                        (click)="openEditDeptModal(dept)"
+                        class="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-800"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                      </button>
+
+                      <button
+                        type="button"
+                        title="Audit History (2.7)"
+                        (click)="viewAuditTrail(dept)"
+                        class="p-1.5 rounded-lg text-slate-500 hover:text-purple-600 hover:bg-slate-100 dark:hover:bg-slate-800"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                      </button>
+
+                      <button
+                        type="button"
+                        [title]="dept.status === 'ACTIVE' ? 'Deactivate Department' : 'Activate Department'"
+                        (click)="toggleDeptStatus(dept)"
+                        class="p-1.5 rounded-lg"
+                        [ngClass]="dept.status === 'ACTIVE' ? 'text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30' : 'text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30'"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="9" class="py-8 text-center text-slate-500 dark:text-slate-400">
+                    No departments found matching the filter criteria.
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    <!-- TAB 2: Section 2.2 & Section 4 DEPARTMENT HIERARCHY -->
+    @if (activeTab() === 'hierarchy') {
+      <div class="p-6 space-y-4">
+        <!-- Hierarchy Tree Navigation Toolbar -->
+        <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+          <div>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100">Multi-Level Department Hierarchy (Org Tree)</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Expandable reporting tree displaying sub-departments, reporting lines, and headcount.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <app-custom-button variant="outline" size="sm" label="Expand All" (btnClick)="expandAllTree()"></app-custom-button>
+            <app-custom-button variant="outline" size="sm" label="Collapse All" (btnClick)="collapseAllTree()"></app-custom-button>
+          </div>
+        </div>
+
+        <!-- Tree View Container -->
+        <div class="bg-slate-50/70 dark:bg-slate-900/60 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
+          @for (rootNode of rootTreeNodes(); track rootNode.id) {
+            <ng-container *ngTemplateOutlet="treeNodeTemplate; context: { node: rootNode, depth: 0 }"></ng-container>
+          } @empty {
+            <div class="p-8 text-center text-slate-500 text-xs">
+              No organization hierarchy defined yet.
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Recursive Tree Node Template -->
+      <ng-template #treeNodeTemplate let-node="node" let-depth="depth">
+        <div class="space-y-1">
+          <div
+            [style.padding-left.rem]="depth * 1.5"
+            class="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 shadow-2xs hover:border-amber-300 dark:hover:border-amber-700 transition-all"
+          >
+            <!-- Left: Toggle & Info -->
+            <div class="flex items-center gap-3">
+              @if (node.children && node.children.length > 0) {
+                <button
+                  type="button"
+                  (click)="toggleTreeNode(node.id, $event)"
+                  class="w-6 h-6 rounded flex items-center justify-center text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                >
+                  <svg
+                    class="w-4 h-4 transform transition-transform"
+                    [class.rotate-90]="expandedNodeIds().has(node.id)"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                  </svg>
+                </button>
+              } @else {
+                <div class="w-6 h-6 flex items-center justify-center text-slate-300 dark:text-slate-700">•</div>
+              }
+
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="font-mono text-xs font-bold text-amber-600 dark:text-amber-400">
+                    {{ node.department_code }}
+                  </span>
+                  <span class="font-bold text-sm text-slate-900 dark:text-slate-100">
+                    {{ node.name_en }}
+                  </span>
+                  @if (node.name_bn) {
+                    <span class="text-xs text-slate-600 dark:text-slate-300">({{ node.name_bn }})</span>
+                  }
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300">
+                    {{ node.employee_count }} Staff
+                  </span>
+                </div>
+
+                <div class="text-[11px] text-slate-600 dark:text-slate-300 flex items-center gap-3 mt-0.5">
+                  @if (node.head_name) {
+                    <span class="flex items-center gap-1 text-emerald-700 dark:text-emerald-400">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                      Head: {{ node.head_name }} ({{ node.head_title || 'Lead' }})
+                    </span>
+                  } @else {
+                    <span class="text-amber-600 dark:text-amber-400 italic">Head: Vacant / Unassigned</span>
+                  }
+
+                  @if (node.cost_center_id) {
+                    <span class="font-mono text-[10px] text-slate-600 dark:text-slate-300">
+                      Cost Center: {{ node.cost_center_id }}
+                    </span>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <!-- Right: Actions -->
+            <div class="flex items-center gap-2">
+              <app-custom-button
+                variant="outline"
+                size="sm"
+                label="Move Reporting Line"
+                (btnClick)="openMoveParentModal(node)"
+              >
+                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+              </app-custom-button>
+
+              <app-custom-button
+                variant="secondary"
+                size="sm"
+                label="Assign Head"
+                (btnClick)="openAssignHeadModal(node)"
+              ></app-custom-button>
+            </div>
+          </div>
+
+          <!-- Nested Children -->
+          @if (expandedNodeIds().has(node.id) && node.children && node.children.length > 0) {
+            <div class="space-y-1">
+              @for (child of node.children; track child.id) {
+                <ng-container *ngTemplateOutlet="treeNodeTemplate; context: { node: child, depth: depth + 1 }"></ng-container>
+              }
+            </div>
+          }
+        </div>
+      </ng-template>
+    }
+
+    <!-- TAB 3: Section 2.3 & 5.1 & 5.2 DEPARTMENT HEAD ASSIGNMENT & PERMISSIONS -->
+    @if (activeTab() === 'head-assignment') {
+      <div class="p-6 space-y-6">
+        <!-- Department Selector & Head Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="md:col-span-1 space-y-4">
+            <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100">Select Department</h3>
+            <div class="space-y-2 max-h-96 overflow-y-auto pr-1">
+              @for (d of deptService.departments(); track d.id) {
+                <div
+                  (click)="inspectDepartment(d)"
+                  class="p-3 rounded-xl border cursor-pointer transition-all flex items-center justify-between"
+                  [ngClass]="selectedDeptForDetails()?.id === d.id ? 'border-amber-500 bg-amber-50/50 dark:bg-amber-950/20 text-amber-900 dark:text-amber-200' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 hover:border-slate-300'"
+                >
+                  <div>
+                    <div class="font-bold text-xs">{{ d.name_en }}</div>
+                    <div class="text-[10px] text-slate-600 dark:text-slate-300 font-mono">{{ d.department_code }}</div>
+                  </div>
+                  <div class="text-right">
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full" [ngClass]="d.head_of_dept_name ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'">
+                      {{ d.head_of_dept_name ? 'Assigned' : 'Vacant' }}
+                    </span>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Active Head Profile & Permissions Card -->
+          <div class="md:col-span-2 space-y-4">
+            @if (selectedDeptForDetails(); as dept) {
+              <div class="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 shadow-2xs space-y-4">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 font-mono">
+                      {{ dept.department_code }}
+                    </span>
+                    <h3 class="text-base font-bold text-slate-900 dark:text-slate-100">{{ dept.name_en }}</h3>
+                  </div>
+                  <app-custom-button
+                    variant="primary"
+                    size="sm"
+                    label="+ Reassign / Appoint Head"
+                    (btnClick)="openAssignHeadModal(dept)"
+                  ></app-custom-button>
+                </div>
+
+                <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center gap-4">
+                  <div class="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 flex items-center justify-center font-bold text-lg">
+                    {{ dept.head_of_dept_name ? dept.head_of_dept_name.substring(0, 1) : '?' }}
+                  </div>
+                  <div class="flex-1">
+                    <div class="text-xs text-slate-600 dark:text-slate-300 font-medium">Current Department Head</div>
+                    <div class="text-base font-bold text-slate-900 dark:text-slate-100">
+                      {{ dept.head_of_dept_name || 'No Head Currently Assigned' }}
+                    </div>
+                    <div class="text-xs text-slate-600 dark:text-slate-300">
+                      ID: <span class="font-mono font-semibold">{{ dept.head_of_dept_code || 'N/A' }}</span> • Status: <span class="text-emerald-700 dark:text-emerald-400 font-semibold font-mono">ACTIVE</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Assignment History Timeline (Section 2.3 & 5.1) -->
+                <div>
+                  <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200 mb-2">Chronological Appointment History</h4>
+                  <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+                    <table class="w-full text-left text-xs">
+                      <thead class="bg-slate-100/70 dark:bg-slate-800/70 text-slate-600 dark:text-slate-300 font-semibold">
+                        <tr>
+                          <th class="py-2.5 px-3">Employee</th>
+                          <th class="py-2.5 px-3">Tenure Type</th>
+                          <th class="py-2.5 px-3">From Date</th>
+                          <th class="py-2.5 px-3">To Date</th>
+                          <th class="py-2.5 px-3">Current</th>
+                          <th class="py-2.5 px-3">Remarks</th>
+                        </tr>
+                      </thead>
+                      <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+                        @for (h of deptService.headHistory(); track h.id) {
+                          <tr>
+                            <td class="py-2.5 px-3 font-medium">
+                              <div>{{ h.employee_name }}</div>
+                              <div class="text-[10px] text-slate-600 dark:text-slate-300 font-mono">{{ h.employee_code }} • {{ h.designation_title }}</div>
+                            </td>
+                            <td class="py-2.5 px-3">
+                              <span class="inline-flex px-2 py-0.5 rounded text-[10px] font-bold" [ngClass]="h.assignment_type === 'PERMANENT' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'">
+                                {{ h.assignment_type }}
+                              </span>
+                            </td>
+                            <td class="py-2.5 px-3 font-mono text-slate-600 dark:text-slate-300">{{ h.effective_from }}</td>
+                            <td class="py-2.5 px-3 font-mono text-slate-600 dark:text-slate-300">{{ h.effective_to || 'Present' }}</td>
+                            <td class="py-2.5 px-3">
+                              @if (h.is_current) {
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">Active</span>
+                              } @else {
+                                <span class="text-slate-600 dark:text-slate-300 text-[10px]">Former</span>
+                              }
+                            </td>
+                            <td class="py-2.5 px-3 text-slate-600 dark:text-slate-300 text-[11px]">{{ h.remarks || '—' }}</td>
+                          </tr>
+                        } @empty {
+                          <tr>
+                            <td colspan="6" class="py-6 text-center text-slate-500 text-xs">No historical head assignments recorded.</td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            } @else {
+              <div class="p-8 text-center text-slate-500 text-xs">
+                Select a department from the left list to view head assignment and history.
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- TAB 4: Section 2.4 COMPANY & BRANCH MAPPING -->
+    @if (activeTab() === 'company-branch') {
+      <div class="p-6 space-y-4">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
+          <div>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100">Enterprise Company & Operating Branch Linkages</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Section 2.4 mapping: Link departments to the owning company and default operating branch.</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          @for (dept of deptService.departments(); track dept.id) {
+            <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 shadow-2xs space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="font-mono text-xs font-bold text-amber-600 dark:text-amber-400">{{ dept.department_code }}</span>
+                <app-status-badge [status]="dept.status"></app-status-badge>
+              </div>
+
+              <div>
+                <h4 class="font-bold text-sm text-slate-900 dark:text-slate-100">{{ dept.name_en }}</h4>
+                <div class="text-xs text-slate-600 dark:text-slate-300">{{ dept.name_bn || 'No Bangla title' }}</div>
+              </div>
+
+              <div class="space-y-1.5 pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
+                <div class="flex items-center justify-between">
+                  <span class="text-slate-600 dark:text-slate-300">Owning Company:</span>
+                  <span class="font-semibold text-slate-800 dark:text-slate-200">{{ dept.company_name || 'Primary Holding' }}</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-slate-600 dark:text-slate-300">Operating Branch:</span>
+                  <span class="font-semibold text-slate-800 dark:text-slate-200">{{ dept.branch_name || 'Head Office (Gulshan)' }}</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-slate-600 dark:text-slate-300">Default Cost Center:</span>
+                  <span class="font-mono font-semibold text-amber-600 dark:text-amber-400">{{ dept.cost_center_id || 'CC-CORP' }}</span>
+                </div>
+              </div>
+
+              <div class="pt-2">
+                <app-custom-button
+                  variant="outline"
+                  size="sm"
+                  [fullWidth]="true"
+                  label="Edit Mapping Alignment"
+                  (btnClick)="openEditDeptModal(dept)"
+                ></app-custom-button>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- TAB 5: Section 2.5 PROJECT DEPARTMENT MAPPING -->
+    @if (activeTab() === 'project-mapping') {
+      <div class="p-6 space-y-6">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+          <div>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100">Project Department Mapping (Site Operations & QA)</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Section 2.5: Assign functional departments to real estate project sites without creating duplicate departments.</p>
+          </div>
+          <app-custom-button
+            variant="primary"
+            size="sm"
+            label="+ Map Department to Project"
+            (btnClick)="openProjectMappingModal()"
+          ></app-custom-button>
+        </div>
+
+        <!-- Selected Department Project Mappings Table -->
+        <div class="space-y-4">
+          <div class="flex items-center gap-3">
+            <span class="text-xs font-semibold text-slate-700 dark:text-slate-300">Select Department:</span>
+            <div class="w-72">
+              <app-searchable-select
+                placeholder="Choose Department"
+                [options]="departmentOptions()"
+                [ngModel]="selectedDeptForDetails()?.id"
+                (selectionChange)="onProjectMappingDeptSelected($event)"
+              ></app-searchable-select>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-100/70 dark:bg-slate-800/70 text-slate-600 dark:text-slate-300 font-semibold">
+                <tr>
+                  <th class="py-3 px-4">Mapped Department</th>
+                  <th class="py-3 px-4">Real Estate Project</th>
+                  <th class="py-3 px-4">Site Lead / In-Charge</th>
+                  <th class="py-3 px-4">Effective Dates</th>
+                  <th class="py-3 px-4 text-center">Status</th>
+                  <th class="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+                @for (m of deptService.projectMappings(); track m.id) {
+                  <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                    <td class="py-3 px-4 font-bold text-slate-900 dark:text-slate-100">{{ m.department_name }}</td>
+                    <td class="py-3 px-4">
+                      <div class="font-semibold text-slate-800 dark:text-slate-200">{{ m.project_name }}</div>
+                      <div class="text-[10px] text-slate-600 dark:text-slate-300 font-mono">{{ m.project_code }}</div>
+                    </td>
+                    <td class="py-3 px-4">
+                      @if (m.site_lead_name) {
+                        <span class="font-semibold text-emerald-700 dark:text-emerald-400">{{ m.site_lead_name }}</span>
+                      } @else {
+                        <span class="text-slate-600 dark:text-slate-300 italic">Unassigned Lead</span>
+                      }
+                    </td>
+                    <td class="py-3 px-4 font-mono text-slate-600 dark:text-slate-300">
+                      {{ m.effective_from }} — {{ m.effective_to || 'Ongoing' }}
+                    </td>
+                    <td class="py-3 px-4 text-center">
+                      <app-status-badge [status]="m.status"></app-status-badge>
+                    </td>
+                    <td class="py-3 px-4 text-right">
+                      <button
+                        type="button"
+                        (click)="deleteProjectMapping(m.id)"
+                        class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                      </button>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="6" class="py-8 text-center text-slate-500 text-xs">
+                      No project mappings found for this department. Click '+ Map Department to Project' to attach site engineering or QA units.
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- TAB 6: Section 2.6 DEPARTMENT COST CENTERS -->
+    @if (activeTab() === 'cost-centers') {
+      <div class="p-6 space-y-4">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
+          <div>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100">Department Accounting Cost Centers & Budget Codes</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Section 2.6: Link departments to approved financial budget codes and accounting cost centers.</p>
+          </div>
+          <app-custom-button
+            variant="outline"
+            size="sm"
+            label="+ Add New Cost Center"
+            (btnClick)="openQuickLookupModal('COST_CENTER_CODE')"
+          ></app-custom-button>
+        </div>
+
+        <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-100/70 dark:bg-slate-800/70 text-slate-600 dark:text-slate-300 font-semibold uppercase">
+              <tr>
+                <th class="py-3 px-4">Cost Center Code</th>
+                <th class="py-3 px-4">Department Name</th>
+                <th class="py-3 px-4">Owning Company</th>
+                <th class="py-3 px-4">Operating Branch</th>
+                <th class="py-3 px-4">Approval Limit (BDT)</th>
+                <th class="py-3 px-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+              @for (d of deptService.departments(); track d.id) {
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                  <td class="py-3 px-4 font-mono font-bold text-amber-600 dark:text-amber-400">
+                    {{ d.cost_center_id || 'UNMAPPED' }}
+                  </td>
+                  <td class="py-3 px-4 font-bold text-slate-900 dark:text-slate-100">{{ d.name_en }}</td>
+                  <td class="py-3 px-4 text-slate-600 dark:text-slate-300">{{ d.company_name || 'Primary Group' }}</td>
+                  <td class="py-3 px-4 text-slate-600 dark:text-slate-300">{{ d.branch_name || 'Corporate HQ' }}</td>
+                  <td class="py-3 px-4 font-mono text-emerald-700 dark:text-emerald-400 font-semibold">
+                    ৳ {{ (d.approval_policies?.['financial_limit_bdt'] || 200000) | number:'1.2-2' }}
+                  </td>
+                  <td class="py-3 px-4 text-right">
+                    <app-custom-button
+                      variant="outline"
+                      size="sm"
+                      label="Configure Cost Center"
+                      (btnClick)="openEditDeptModal(d)"
+                    ></app-custom-button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    <!-- TAB 7: Section 2.7 DEPARTMENT HISTORY & AUDIT TRAIL -->
+    @if (activeTab() === 'history-audit') {
+      <div class="p-6 space-y-4">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
+          <div>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100">Department Audit Trail & Change Logs</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Section 2.7: Track structural modifications, reporting line transfers, status changes, and approvals.</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <span class="text-xs font-semibold text-slate-700 dark:text-slate-300">Select Department:</span>
+          <div class="w-72">
+            <app-searchable-select
+              placeholder="Choose Department"
+              [options]="departmentOptions()"
+              [ngModel]="selectedDeptForDetails()?.id"
+              (selectionChange)="onAuditDeptSelected($event)"
+            ></app-searchable-select>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-100/70 dark:bg-slate-800/70 text-slate-600 dark:text-slate-300 font-semibold">
+              <tr>
+                <th class="py-3 px-4">Action</th>
+                <th class="py-3 px-4">Performed By</th>
+                <th class="py-3 px-4">Timestamp</th>
+                <th class="py-3 px-4">Remarks</th>
+                <th class="py-3 px-4">Values Modified</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+              @for (log of deptService.auditLogs(); track log.id) {
+                <tr>
+                  <td class="py-3 px-4">
+                    <span class="inline-flex px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300">
+                      {{ log.action_type }}
+                    </span>
+                  </td>
+                  <td class="py-3 px-4 font-semibold text-slate-800 dark:text-slate-200">{{ log.performed_by_name || 'System' }}</td>
+                  <td class="py-3 px-4 font-mono text-slate-600 dark:text-slate-300">{{ log.created_at | date:'medium' }}</td>
+                  <td class="py-3 px-4 text-slate-600 dark:text-slate-300">{{ log.remarks || '—' }}</td>
+                  <td class="py-3 px-4 font-mono text-[10px] text-slate-600 dark:text-slate-300 max-w-xs truncate">
+                    {{ log.new_values ? (log.new_values | json) : '—' }}
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="5" class="py-8 text-center text-slate-500 text-xs">
+                    No audit records found for this department.
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    <!-- TAB 8: DYNAMIC MASTER DROPDOWNS SETTINGS (User Requirement 1 & 2) -->
+    @if (activeTab() === 'settings') {
+      <div class="p-6 space-y-6">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+          <div>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100">Dynamic Master Dropdowns & Lookups</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400">User Requirement 1 & 2: No hardcoded dropdowns. All dropdown items are dynamic and customizable in place.</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <!-- Department Status Category -->
+          <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 shadow-2xs space-y-3">
+            <div class="flex items-center justify-between">
+              <h4 class="font-bold text-xs text-slate-900 dark:text-slate-100">DEPARTMENT_STATUS</h4>
+              <app-custom-button variant="outline" size="sm" label="+ Add" (btnClick)="openQuickLookupModal('DEPARTMENT_STATUS')"></app-custom-button>
+            </div>
+            <p class="text-[11px] text-slate-500">Active, Inactive, Restructured lifecycle states.</p>
+            <app-searchable-select
+              categoryCode="DEPARTMENT_STATUS"
+              placeholder="Test Status Dropdown..."
+              [allowCreateNew]="true"
+            ></app-searchable-select>
+          </div>
+
+          <!-- Head Assignment Types Category -->
+          <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 shadow-2xs space-y-3">
+            <div class="flex items-center justify-between">
+              <h4 class="font-bold text-xs text-slate-900 dark:text-slate-100">HEAD_ASSIGNMENT_TYPE</h4>
+              <app-custom-button variant="outline" size="sm" label="+ Add" (btnClick)="openQuickLookupModal('HEAD_ASSIGNMENT_TYPE')"></app-custom-button>
+            </div>
+            <p class="text-[11px] text-slate-500">Permanent, Acting, Interim tenure types.</p>
+            <app-searchable-select
+              categoryCode="HEAD_ASSIGNMENT_TYPE"
+              placeholder="Test Assignment Type..."
+              [allowCreateNew]="true"
+            ></app-searchable-select>
+          </div>
+
+          <!-- Cost Center Codes Category -->
+          <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 shadow-2xs space-y-3">
+            <div class="flex items-center justify-between">
+              <h4 class="font-bold text-xs text-slate-900 dark:text-slate-100">COST_CENTER_CODE</h4>
+              <app-custom-button variant="outline" size="sm" label="+ Add" (btnClick)="openQuickLookupModal('COST_CENTER_CODE')"></app-custom-button>
+            </div>
+            <p class="text-[11px] text-slate-500">Accounting cost center chart codes.</p>
+            <app-searchable-select
+              categoryCode="COST_CENTER_CODE"
+              placeholder="Test Cost Center Dropdown..."
+              [allowCreateNew]="true"
+            ></app-searchable-select>
+          </div>
+        </div>
+      </div>
+    }
+  </app-card-container>
+
+  <!-- ==================== MODALS ==================== -->
+
+  <!-- 1. Department Create / Edit Modal (Section 3.1 & 3.2) -->
+  <app-modal
+    [isOpen]="isDepartmentModalOpen()"
+    [title]="editingDeptId() ? 'Edit Department Master' : 'Create Department Master'"
+    size="lg"
+    (close)="isDepartmentModalOpen.set(false)"
+  >
+    <div class="space-y-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <app-custom-input
+            label="Department Code"
+            placeholder="e.g. DEPT-FIN, DEPT-ENG"
+            [required]="true"
+            [ngModel]="deptForm.department_code"
+            (ngModelChange)="deptForm.department_code = $event"
+            hint="Unique code within company (Rule 1)"
+          ></app-custom-input>
+        </div>
+
+        <div>
+          <app-searchable-select
+            label="Owning Company"
+            placeholder="Select Company..."
+            [required]="true"
+            [options]="companyOptions()"
+            [ngModel]="deptForm.company_id"
+            (selectionChange)="deptForm.company_id = $event ? +$event.item_code : 1"
+          ></app-searchable-select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <app-custom-input
+            label="Department Name (English)"
+            placeholder="Official English name"
+            [required]="true"
+            [ngModel]="deptForm.name_en"
+            (ngModelChange)="deptForm.name_en = $event"
+          ></app-custom-input>
+        </div>
+
+        <div>
+          <app-custom-input
+            label="Department Name (Bangla)"
+            placeholder="বাংলা নাম (ঐচ্ছিক)"
+            [ngModel]="deptForm.name_bn"
+            (ngModelChange)="deptForm.name_bn = $event"
+          ></app-custom-input>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <app-searchable-select
+            label="Parent Department (Hierarchy)"
+            placeholder="Top-Level (No Parent)"
+            [options]="departmentOptions()"
+            [ngModel]="deptForm.parent_department_id"
+            (selectionChange)="deptForm.parent_department_id = $event ? +$event.item_code : null"
+            hint="Rule 3 & 4: Must belong to same company & no circular link"
+          ></app-searchable-select>
+        </div>
+
+        <div>
+          <app-searchable-select
+            label="Department Head (Employee Master)"
+            placeholder="Select Head from Employees..."
+            [options]="employeeOptions()"
+            [ngModel]="deptForm.head_of_dept_id"
+            (selectionChange)="deptForm.head_of_dept_id = $event ? +$event.item_code : null"
+          ></app-searchable-select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <app-searchable-select
+            label="Operating Branch"
+            placeholder="Select Branch..."
+            [options]="branchOptions()"
+            [ngModel]="deptForm.branch_id"
+            (selectionChange)="deptForm.branch_id = $event ? +$event.item_code : null"
+          ></app-searchable-select>
+        </div>
+
+        <div>
+          <app-searchable-select
+            label="Accounting Cost Center"
+            categoryCode="COST_CENTER_CODE"
+            placeholder="Select or Create Cost Center..."
+            [allowCreateNew]="true"
+            [ngModel]="deptForm.cost_center_id"
+            (selectionChange)="deptForm.cost_center_id = $event ? $event.item_code : null"
+          ></app-searchable-select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div>
+          <app-custom-input
+            type="date"
+            label="Effective From"
+            [ngModel]="deptForm.effective_from"
+            (ngModelChange)="deptForm.effective_from = $event"
+          ></app-custom-input>
+        </div>
+
+        <div>
+          <app-custom-input
+            type="date"
+            label="Effective To"
+            [ngModel]="deptForm.effective_to"
+            (ngModelChange)="deptForm.effective_to = $event"
+          ></app-custom-input>
+        </div>
+
+        <div>
+          <app-searchable-select
+            label="Status"
+            categoryCode="DEPARTMENT_STATUS"
+            [allowCreateNew]="true"
+            [ngModel]="deptForm.status"
+            (selectionChange)="deptForm.status = $event ? $event.item_code : 'ACTIVE'"
+          ></app-searchable-select>
+        </div>
+      </div>
+
+      <div>
+        <app-custom-textarea
+          label="Department Description & Functional Responsibilities"
+          placeholder="Brief description of department operational scope, responsibilities..."
+          rows="3"
+          [ngModel]="deptForm.description"
+          (ngModelChange)="deptForm.description = $event"
+        ></app-custom-textarea>
+      </div>
+    </div>
+
+    <div modal-footer class="flex items-center justify-end gap-2">
+      <app-custom-button variant="outline" label="Cancel" (btnClick)="isDepartmentModalOpen.set(false)"></app-custom-button>
+      <app-custom-button variant="primary" label="Save Department" (btnClick)="saveDepartment()"></app-custom-button>
+    </div>
+  </app-modal>
+
+  <!-- 2. Move Parent Department Modal (Section 4 Hierarchy) -->
+  <app-modal
+    [isOpen]="isMoveParentModalOpen()"
+    title="Move Department Hierarchy Parent"
+    size="md"
+    (close)="isMoveParentModalOpen.set(false)"
+  >
+    <div class="space-y-4">
+      <div class="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-xs text-amber-800 dark:text-amber-300">
+        <span class="font-bold">Hierarchy Validation Rule:</span> A department cannot report to itself or to any of its own child sub-departments (circular dependencies strictly prohibited).
+      </div>
+
+      <div>
+        <app-searchable-select
+          label="New Parent Department"
+          placeholder="Select Parent (or Top-Level Root)..."
+          [options]="departmentOptions()"
+          [ngModel]="moveParentForm.parent_department_id"
+          (selectionChange)="moveParentForm.parent_department_id = $event ? +$event.item_code : null"
+        ></app-searchable-select>
+      </div>
+
+      <div>
+        <app-custom-input
+          type="date"
+          label="Effective Restructuring Date"
+          [ngModel]="moveParentForm.effective_date"
+          (ngModelChange)="moveParentForm.effective_date = $event"
+        ></app-custom-input>
+      </div>
+
+      <div>
+        <app-custom-textarea
+          label="Restructuring Reason / Remarks"
+          placeholder="Reason for changing departmental reporting line..."
+          rows="2"
+          [ngModel]="moveParentForm.remarks"
+          (ngModelChange)="moveParentForm.remarks = $event"
+        ></app-custom-textarea>
+      </div>
+    </div>
+
+    <div modal-footer class="flex items-center justify-end gap-2">
+      <app-custom-button variant="outline" label="Cancel" (btnClick)="isMoveParentModalOpen.set(false)"></app-custom-button>
+      <app-custom-button variant="primary" label="Apply Hierarchy Change" (btnClick)="saveMoveParent()"></app-custom-button>
+    </div>
+  </app-modal>
+
+  <!-- 3. Assign Head & Permissions Modal (Section 5) -->
+  <app-modal
+    [isOpen]="isAssignHeadModalOpen()"
+    title="Assign Department Head & Configure Permissions"
+    size="lg"
+    (close)="isAssignHeadModalOpen.set(false)"
+  >
+    <div class="space-y-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <app-searchable-select
+            label="Select Employee from Directory"
+            placeholder="Search employee by name, code..."
+            [required]="true"
+            [options]="employeeOptions()"
+            [ngModel]="assignHeadForm.employee_id"
+            (selectionChange)="assignHeadForm.employee_id = $event ? +$event.item_code : 0"
+          ></app-searchable-select>
+        </div>
+
+        <div>
+          <app-searchable-select
+            label="Tenure / Assignment Type"
+            categoryCode="HEAD_ASSIGNMENT_TYPE"
+            [allowCreateNew]="true"
+            [ngModel]="assignHeadForm.assignment_type"
+            (selectionChange)="assignHeadForm.assignment_type = $event ? $event.item_code : 'PERMANENT'"
+          ></app-searchable-select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <app-custom-input
+            type="date"
+            label="Effective Start Date"
+            [ngModel]="assignHeadForm.effective_from"
+            (ngModelChange)="assignHeadForm.effective_from = $event"
+          ></app-custom-input>
+        </div>
+
+        <div>
+          <app-custom-input
+            type="date"
+            label="Effective End Date (Optional)"
+            [ngModel]="assignHeadForm.effective_to"
+            (ngModelChange)="assignHeadForm.effective_to = $event"
+          ></app-custom-input>
+        </div>
+      </div>
+
+      <!-- Granular Permissions Checklist (Section 5.2) -->
+      <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 space-y-3">
+        <h4 class="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
+          5.2 Department Head Delegated Permissions
+        </h4>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+          <label class="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+            <input type="checkbox" [(ngModel)]="headPermissions.view_employees" class="rounded text-emerald-600 focus:ring-emerald-500">
+            View Department Employee Records
+          </label>
+
+          <label class="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+            <input type="checkbox" [(ngModel)]="headPermissions.approve_leave" class="rounded text-emerald-600 focus:ring-emerald-500">
+            Approve Leave & Overtime Requests
+          </label>
+
+          <label class="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+            <input type="checkbox" [(ngModel)]="headPermissions.review_attendance" class="rounded text-emerald-600 focus:ring-emerald-500">
+            Review Attendance Exceptions & Muster Roll
+          </label>
+
+          <label class="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+            <input type="checkbox" [(ngModel)]="headPermissions.initiate_transfer" class="rounded text-emerald-600 focus:ring-emerald-500">
+            Initiate Employee Transfer / Promotion
+          </label>
+
+          <label class="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+            <input type="checkbox" [(ngModel)]="headPermissions.recommend_salary" class="rounded text-emerald-600 focus:ring-emerald-500">
+            Recommend Salary & Grade Revisions
+          </label>
+
+          <label class="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+            <input type="checkbox" [(ngModel)]="headPermissions.view_payroll_cost" class="rounded text-emerald-600 focus:ring-emerald-500">
+            View Departmental Payroll Cost Summaries
+          </label>
+
+          <label class="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+            <input type="checkbox" [(ngModel)]="headPermissions.approve_expenses" class="rounded text-emerald-600 focus:ring-emerald-500">
+            Approve Department Expenses up to Limit
+          </label>
+        </div>
+
+        <div class="pt-2">
+          <app-custom-input
+            type="number"
+            label="Single Expense Approval Limit (BDT)"
+            [ngModel]="headPermissions.expense_limit"
+            (ngModelChange)="headPermissions.expense_limit = +$event"
+          ></app-custom-input>
+        </div>
+      </div>
+
+      <div>
+        <app-custom-textarea
+          label="Appointment Remarks / Board Resolution"
+          placeholder="Appointment details or official order reference..."
+          rows="2"
+          [ngModel]="assignHeadForm.remarks"
+          (ngModelChange)="assignHeadForm.remarks = $event"
+        ></app-custom-textarea>
+      </div>
+    </div>
+
+    <div modal-footer class="flex items-center justify-end gap-2">
+      <app-custom-button variant="outline" label="Cancel" (btnClick)="isAssignHeadModalOpen.set(false)"></app-custom-button>
+      <app-custom-button variant="primary" label="Save Assignment & Permissions" (btnClick)="saveHeadAssignment()"></app-custom-button>
+    </div>
+  </app-modal>
+
+  <!-- 4. Project Department Mapping Modal (Section 2.5) -->
+  <app-modal
+    [isOpen]="isProjectMappingModalOpen()"
+    title="Map Department to Construction Project"
+    size="md"
+    (close)="isProjectMappingModalOpen.set(false)"
+  >
+    <div class="space-y-4">
+      <div>
+        <app-searchable-select
+          label="Select Construction Project"
+          placeholder="Choose Real Estate Project..."
+          [required]="true"
+          [options]="projectOptions()"
+          [ngModel]="projectMappingForm.project_id"
+          (selectionChange)="projectMappingForm.project_id = $event ? +$event.item_code : 0"
+        ></app-searchable-select>
+      </div>
+
+      <div>
+        <app-searchable-select
+          label="Site In-Charge / Lead Engineer"
+          placeholder="Select Site Lead..."
+          [options]="employeeOptions()"
+          [ngModel]="projectMappingForm.site_lead_employee_id"
+          (selectionChange)="projectMappingForm.site_lead_employee_id = $event ? +$event.item_code : null"
+        ></app-searchable-select>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <app-custom-input
+            type="date"
+            label="Effective From"
+            [ngModel]="projectMappingForm.effective_from"
+            (ngModelChange)="projectMappingForm.effective_from = $event"
+          ></app-custom-input>
+        </div>
+
+        <div>
+          <app-custom-input
+            type="date"
+            label="Effective To"
+            [ngModel]="projectMappingForm.effective_to"
+            (ngModelChange)="projectMappingForm.effective_to = $event"
+          ></app-custom-input>
+        </div>
+      </div>
+    </div>
+
+    <div modal-footer class="flex items-center justify-end gap-2">
+      <app-custom-button variant="outline" label="Cancel" (btnClick)="isProjectMappingModalOpen.set(false)"></app-custom-button>
+      <app-custom-button variant="primary" label="Save Project Mapping" (btnClick)="saveProjectMapping()"></app-custom-button>
+    </div>
+  </app-modal>
+
+  <!-- 5. Audit Trail Modal (Section 2.7) -->
+  <app-modal
+    [isOpen]="isAuditModalOpen()"
+    title="Department Audit Trail & Change Logs"
+    size="lg"
+    (close)="isAuditModalOpen.set(false)"
+  >
+    <div class="space-y-4 max-h-96 overflow-y-auto">
+      <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-100/70 dark:bg-slate-800/70 text-slate-600 dark:text-slate-300 font-semibold">
+            <tr>
+              <th class="py-2.5 px-3">Action</th>
+              <th class="py-2.5 px-3">By</th>
+              <th class="py-2.5 px-3">Time</th>
+              <th class="py-2.5 px-3">Remarks</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+            @for (item of deptService.auditLogs(); track item.id) {
+              <tr>
+                <td class="py-2.5 px-3">
+                  <span class="inline-flex px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300">
+                    {{ item.action_type }}
+                  </span>
+                </td>
+                <td class="py-2.5 px-3 font-semibold">{{ item.performed_by_name || 'System Admin' }}</td>
+                <td class="py-2.5 px-3 font-mono text-slate-500">{{ item.created_at | date:'medium' }}</td>
+                <td class="py-2.5 px-3 text-slate-600 dark:text-slate-400">{{ item.remarks }}</td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="4" class="py-6 text-center text-slate-500 text-xs">No audit logs for this department.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div modal-footer class="flex items-center justify-end">
+      <app-custom-button variant="outline" label="Close" (btnClick)="isAuditModalOpen.set(false)"></app-custom-button>
+    </div>
+  </app-modal>
+
+  <!-- 6. In-Place Quick Lookup Modal (User Requirement 1 & 2) -->
+  <app-modal
+    [isOpen]="isQuickLookupModalOpen()"
+    title="Quick Add Lookup Item"
+    size="sm"
+    (close)="isQuickLookupModalOpen.set(false)"
+  >
+    <div class="space-y-4">
+      <div class="text-xs text-slate-500">
+        Adding new item to category: <span class="font-mono font-bold text-amber-600 dark:text-amber-400">{{ quickLookupCategoryCode() }}</span>
+      </div>
+
+      <div>
+        <app-custom-input
+          label="Item English Name"
+          placeholder="e.g. Special Operations"
+          [required]="true"
+          [ngModel]="quickLookupEnName()"
+          (ngModelChange)="quickLookupEnName.set($event)"
+        ></app-custom-input>
+      </div>
+
+      <div>
+        <app-custom-input
+          label="Item Bangla Name"
+          placeholder="বাংলা নাম (ঐচ্ছিক)"
+          [ngModel]="quickLookupBnName()"
+          (ngModelChange)="quickLookupBnName.set($event)"
+        ></app-custom-input>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1.5">Color Badge</label>
+        <div class="flex items-center gap-2">
+          <input type="color" [ngModel]="quickLookupColor()" (ngModelChange)="quickLookupColor.set($event)" class="w-8 h-8 rounded border border-slate-300 cursor-pointer">
+          <span class="font-mono text-xs text-slate-600 dark:text-slate-400">{{ quickLookupColor() }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div modal-footer class="flex items-center justify-end gap-2">
+      <app-custom-button variant="outline" label="Cancel" (btnClick)="isQuickLookupModalOpen.set(false)"></app-custom-button>
+      <app-custom-button variant="primary" label="Create Item" [loading]="isSubmittingQuickLookup()" (btnClick)="submitQuickLookup()"></app-custom-button>
+    </div>
+  </app-modal>
+
+  <!-- 7. Delete Confirmation Modal -->
+  <app-modal
+    [isOpen]="isDeleteConfirmModalOpen()"
+    title="Confirm Department Deletion"
+    size="sm"
+    (close)="isDeleteConfirmModalOpen.set(false)"
+  >
+    <div class="space-y-3">
+      <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+        Are you sure you want to permanently delete department <strong class="text-slate-900 dark:text-slate-100 font-bold">"{{ itemToDelete()?.name }}"</strong>?
+      </p>
+      <div class="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-[11px] text-amber-800 dark:text-amber-300">
+        <strong>Validation Rule 6:</strong> A department with active employees cannot be deleted or deactivated without reassigning them first.
+      </div>
+    </div>
+
+    <div modal-footer class="flex items-center justify-end gap-2">
+      <app-custom-button variant="outline" label="Cancel" (btnClick)="isDeleteConfirmModalOpen.set(false)"></app-custom-button>
+      <app-custom-button variant="danger" label="Delete Department" (btnClick)="confirmDelete()"></app-custom-button>
+    </div>
+  </app-modal>
+</div>

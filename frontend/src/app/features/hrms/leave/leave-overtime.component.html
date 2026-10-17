@@ -1,0 +1,1743 @@
+<div class="p-6 space-y-6 max-w-7xl mx-auto">
+
+  <!-- Toast Notification Alerts -->
+  @if (successMessage()) {
+    <div class="flex items-center justify-between p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/80 border border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 text-xs shadow-sm transition-all animate-fadeIn">
+      <div class="flex items-center gap-2.5">
+        <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <span class="font-semibold">{{ successMessage() }}</span>
+      </div>
+      <button (click)="successMessage.set(null)" class="text-emerald-700 hover:text-emerald-900 dark:hover:text-emerald-100 p-1">✕</button>
+    </div>
+  }
+
+  @if (errorMessage()) {
+    <div class="flex items-center justify-between p-4 rounded-xl bg-rose-50 dark:bg-rose-950/80 border border-rose-300 dark:border-rose-800 text-rose-900 dark:text-rose-200 text-xs shadow-sm transition-all animate-fadeIn">
+      <div class="flex items-center gap-2.5">
+        <svg class="w-5 h-5 text-rose-600 dark:text-rose-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <span class="font-semibold">{{ errorMessage() }}</span>
+      </div>
+      <button (click)="errorMessage.set(null)" class="text-rose-700 hover:text-rose-900 dark:hover:text-rose-100 p-1">✕</button>
+    </div>
+  }
+
+  <!-- Single Master Card Container -->
+  <app-card-container
+    title="Leave & Overtime Management Engine"
+    subtitle="Modules 2.11 - 2.20: Statutory Entitlements, Accrual Policies, Multi-Tier Approval Workflow, Field Overtime, & Payroll Sync"
+    badge="HRMS Suite 2.0"
+    variant="default"
+    paddingClass="p-0"
+  >
+    <!-- Header Action Buttons -->
+    <div card-actions class="flex items-center flex-wrap gap-2.5">
+      <app-custom-button
+        label="Apply Leave"
+        variant="luxury"
+        size="sm"
+        (btnClick)="openApplyModal()"
+      >
+        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+      </app-custom-button>
+
+      <app-custom-button
+        label="Request Overtime"
+        variant="gold"
+        size="sm"
+        (btnClick)="openOtModal()"
+      >
+        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </app-custom-button>
+
+      <app-custom-button
+        label="Sync to Payroll"
+        variant="primary"
+        size="sm"
+        (btnClick)="openPayrollSyncModal()"
+      >
+        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+      </app-custom-button>
+
+      <app-custom-button
+        label="Refresh"
+        variant="secondary"
+        size="sm"
+        (btnClick)="refreshCurrentTab()"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+      </app-custom-button>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="px-6 pt-3 bg-slate-50/50 dark:bg-slate-850/50">
+      <app-custom-tabs
+        [tabs]="tabs"
+        [activeTabId]="activeTab()"
+        (tabChange)="onTabChange($event)"
+        variant="gold"
+      ></app-custom-tabs>
+    </div>
+
+    <!-- TAB 1: LEAVE APPLICATIONS -->
+    @if (activeTab() === 'applications') {
+      <div class="p-6 space-y-6">
+
+        <!-- KPI Summary Cards -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800">
+            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Applications</span>
+            <div class="text-2xl font-bold font-display text-slate-900 dark:text-white mt-1">
+              {{ totalApplicationsCount() }}
+            </div>
+          </div>
+          <div class="p-4 rounded-xl bg-amber-50/60 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/60">
+            <span class="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wider">Pending Manager</span>
+            <div class="text-2xl font-bold font-display text-amber-900 dark:text-amber-200 mt-1">
+              {{ pendingManagerCount() }}
+            </div>
+          </div>
+          <div class="p-4 rounded-xl bg-purple-50/60 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-900/60">
+            <span class="text-xs font-semibold text-purple-700 dark:text-purple-400 uppercase tracking-wider">Pending HR Review</span>
+            <div class="text-2xl font-bold font-display text-purple-900 dark:text-purple-200 mt-1">
+              {{ pendingHrCount() }}
+            </div>
+          </div>
+          <div class="p-4 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/60">
+            <span class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Approved Leaves</span>
+            <div class="text-2xl font-bold font-display text-emerald-900 dark:text-emerald-200 mt-1">
+              {{ approvedCount() }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Filter Row -->
+        <div class="p-4 rounded-xl bg-slate-50/80 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Employee Filter</label>
+            <app-searchable-select
+              [options]="employeeOptions()"
+              [placeholder]="'All Employees'"
+              [ngModel]="appEmployeeFilter()"
+              (selectionChange)="appEmployeeFilter.set($event); loadApplications()"
+            ></app-searchable-select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Status Filter</label>
+            <app-searchable-select
+              categoryCode="HR_LEAVE_STATUS"
+              [placeholder]="'All Statuses'"
+              [ngModel]="appStatusFilter()"
+              (selectionChange)="appStatusFilter.set($event); loadApplications()"
+            ></app-searchable-select>
+          </div>
+
+          <div>
+            <app-custom-input
+              label="From Date"
+              type="date"
+              [ngModel]="appStartDateFilter()"
+              (ngModelChange)="appStartDateFilter.set($event); loadApplications()"
+            ></app-custom-input>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <div class="flex-1">
+              <app-custom-input
+                label="To Date"
+                type="date"
+                [ngModel]="appEndDateFilter()"
+                (ngModelChange)="appEndDateFilter.set($event); loadApplications()"
+              ></app-custom-input>
+            </div>
+            <app-custom-button
+              label="Clear"
+              variant="secondary"
+              size="sm"
+              (btnClick)="appEmployeeFilter.set(null); appStatusFilter.set(''); appStartDateFilter.set(''); appEndDateFilter.set(''); loadApplications()"
+            ></app-custom-button>
+          </div>
+        </div>
+
+        <!-- Applications Table -->
+        <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-2xs">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs border-collapse">
+              <thead class="bg-slate-100/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-800 uppercase tracking-wider text-[11px]">
+                <tr>
+                  <th class="py-3 px-4">App ID</th>
+                  <th class="py-3 px-4">Employee</th>
+                  <th class="py-3 px-4">Leave Type</th>
+                  <th class="py-3 px-4">Period & Duration</th>
+                  <th class="py-3 px-4">Reason / Contact</th>
+                  <th class="py-3 px-4">Status</th>
+                  <th class="py-3 px-4">Manager Review</th>
+                  <th class="py-3 px-4">HR Action</th>
+                  <th class="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                @for (app of leaveService.leaveApplications(); track app.id) {
+                  <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                    <td class="py-3.5 px-4 font-mono font-medium text-slate-500">#{{ app.id }}</td>
+                    <td class="py-3.5 px-4">
+                      <div class="font-semibold text-slate-900 dark:text-white">{{ app.employee_name || 'Emp #' + app.employee_id }}</div>
+                      <div class="text-[10px] text-slate-400 font-mono">{{ app.employee_code }} • {{ app.department_name }}</div>
+                    </td>
+                    <td class="py-3.5 px-4">
+                      <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 dark:bg-amber-950/60 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
+                        {{ app.leave_type_name || app.leave_type || 'Leave' }}
+                      </span>
+                      @if (app.is_paid) {
+                        <span class="ml-1 text-[10px] text-emerald-600 font-bold">[Paid]</span>
+                      } @else {
+                        <span class="ml-1 text-[10px] text-rose-500 font-bold">[Unpaid]</span>
+                      }
+                    </td>
+                    <td class="py-3.5 px-4">
+                      <div class="font-medium text-slate-800 dark:text-slate-200">{{ app.start_date }} to {{ app.end_date }}</div>
+                      <div class="text-[11px] font-bold text-indigo-600 dark:text-indigo-400">{{ app.total_days }} day(s)</div>
+                    </td>
+                    <td class="py-3.5 px-4 max-w-xs">
+                      <div class="truncate text-slate-700 dark:text-slate-300" [title]="app.reason || ''">{{ app.reason || '—' }}</div>
+                      @if (app.emergency_contact) {
+                        <div class="text-[10px] text-slate-400">Emerg: {{ app.emergency_contact }}</div>
+                      }
+                    </td>
+                    <td class="py-3.5 px-4">
+                      <app-status-badge [status]="app.status"></app-status-badge>
+                    </td>
+                    <td class="py-3.5 px-4 max-w-[140px]">
+                      @if (app.manager_approver_name) {
+                        <div class="text-[11px] font-semibold text-slate-800 dark:text-slate-200">{{ app.manager_approver_name }}</div>
+                        <div class="text-[10px] text-slate-500 truncate" [title]="app.manager_remarks || ''">{{ app.manager_remarks || 'Recommended' }}</div>
+                      } @else {
+                        <span class="text-slate-400 italic text-[11px]">Pending</span>
+                      }
+                    </td>
+                    <td class="py-3.5 px-4 max-w-[140px]">
+                      @if (app.hr_approver_name) {
+                        <div class="text-[11px] font-semibold text-slate-800 dark:text-slate-200">{{ app.hr_approver_name }}</div>
+                        <div class="text-[10px] text-slate-500 truncate" [title]="app.hr_remarks || ''">{{ app.hr_remarks || 'Decided' }}</div>
+                      } @else {
+                        <span class="text-slate-400 italic text-[11px]">Pending HR</span>
+                      }
+                    </td>
+                    <td class="py-3.5 px-4 text-right whitespace-nowrap">
+                      <div class="flex items-center justify-end gap-1.5">
+                        @if (app.status === 'PENDING_MANAGER') {
+                          <app-custom-button
+                            label="Manager Review"
+                            variant="gold"
+                            size="sm"
+                            (btnClick)="openActionModal(app, 'RECOMMEND')"
+                          ></app-custom-button>
+                        } @else if (app.status === 'PENDING_HR') {
+                          <app-custom-button
+                            label="HR Approval"
+                            variant="primary"
+                            size="sm"
+                            (btnClick)="openActionModal(app, 'APPROVE')"
+                          ></app-custom-button>
+                        }
+
+                        @if (app.status !== 'APPROVED' && app.status !== 'CANCELLED') {
+                          <app-custom-button
+                            label="Cancel"
+                            variant="danger"
+                            size="sm"
+                            (btnClick)="cancelApplication(app)"
+                          ></app-custom-button>
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="9" class="py-12 text-center text-slate-400 text-xs">
+                      No leave applications found matching current criteria.
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination Bar -->
+          <div class="px-6 py-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850 flex items-center justify-between text-xs text-slate-500">
+            <span>Showing {{ leaveService.leaveApplications().length }} of {{ leaveService.totalLeaveApplications() }} records</span>
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                [disabled]="appOffset() === 0"
+                (click)="onAppPageChange(-1)"
+                class="px-2.5 py-1 rounded border border-slate-200 dark:border-slate-700 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-slate-800"
+              >Previous</button>
+              <button
+                type="button"
+                [disabled]="appOffset() + appLimit() >= leaveService.totalLeaveApplications()"
+                (click)="onAppPageChange(1)"
+                class="px-2.5 py-1 rounded border border-slate-200 dark:border-slate-700 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-slate-800"
+              >Next</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- TAB 2: LEAVE BALANCES -->
+    @if (activeTab() === 'balances') {
+      <div class="p-6 space-y-6">
+
+        <!-- Controls & Balance Import Trigger -->
+        <div class="p-4 rounded-xl bg-slate-50/80 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full md:w-auto">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Calendar Year</label>
+              <input
+                type="number"
+                [value]="balanceYearFilter()"
+                (input)="balanceYearFilter.set(+($any($event.target).value)); loadBalances()"
+                class="erp-input text-xs"
+              />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Employee</label>
+              <app-searchable-select
+                [options]="employeeOptions()"
+                [placeholder]="'All Employees'"
+                [ngModel]="balanceEmployeeFilter()"
+                (selectionChange)="balanceEmployeeFilter.set($event); loadBalances()"
+              ></app-searchable-select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Leave Type</label>
+              <app-searchable-select
+                [options]="leaveTypeOptions()"
+                [placeholder]="'All Leave Types'"
+                [ngModel]="balanceTypeFilter()"
+                (selectionChange)="balanceTypeFilter.set($event); loadBalances()"
+              ></app-searchable-select>
+            </div>
+          </div>
+
+          <div class="shrink-0">
+            <app-custom-button
+              label="+ Import / Adjust Balance"
+              variant="luxury"
+              size="sm"
+              (btnClick)="openBalanceModal()"
+            >
+              <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+              </svg>
+            </app-custom-button>
+          </div>
+        </div>
+
+        <!-- Balances Matrix Table -->
+        <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-2xs">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs border-collapse">
+              <thead class="bg-slate-100/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-800 uppercase tracking-wider text-[11px]">
+                <tr>
+                  <th class="py-3 px-4">Employee</th>
+                  <th class="py-3 px-4">Department</th>
+                  <th class="py-3 px-4">Leave Type</th>
+                  <th class="py-3 px-4 text-center">Year</th>
+                  <th class="py-3 px-4 text-center">Opening</th>
+                  <th class="py-3 px-4 text-center">Carried Fwd</th>
+                  <th class="py-3 px-4 text-center">Accrued</th>
+                  <th class="py-3 px-4 text-center">Used</th>
+                  <th class="py-3 px-4 text-center">Pending</th>
+                  <th class="py-3 px-4 text-center font-bold text-emerald-700 dark:text-emerald-400">Available</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                @for (b of leaveService.leaveBalances(); track b.id) {
+                  <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                    <td class="py-3.5 px-4 font-semibold text-slate-900 dark:text-white">
+                      {{ b.employee_name || 'Emp #' + b.employee_id }}
+                      <span class="block text-[10px] text-slate-400 font-mono">{{ b.employee_code }}</span>
+                    </td>
+                    <td class="py-3.5 px-4 text-slate-600 dark:text-slate-400">{{ b.department_name || '—' }}</td>
+                    <td class="py-3.5 px-4">
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-800 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                        {{ b.leave_type_name || 'Type #' + b.leave_type_id }}
+                      </span>
+                    </td>
+                    <td class="py-3.5 px-4 text-center font-mono font-medium text-slate-500">{{ b.year }}</td>
+                    <td class="py-3.5 px-4 text-center font-semibold text-slate-700 dark:text-slate-300">{{ b.opening_balance }}</td>
+                    <td class="py-3.5 px-4 text-center text-slate-600 dark:text-slate-400">{{ b.carried_forward }}</td>
+                    <td class="py-3.5 px-4 text-center font-semibold text-blue-600 dark:text-blue-400">+{{ b.accrued_days }}</td>
+                    <td class="py-3.5 px-4 text-center font-semibold text-rose-600 dark:text-rose-400">-{{ b.used_days }}</td>
+                    <td class="py-3.5 px-4 text-center font-semibold text-amber-600 dark:text-amber-400">{{ b.pending_days }}</td>
+                    <td class="py-3.5 px-4 text-center">
+                      <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-100 text-emerald-900 dark:bg-emerald-950/80 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-700">
+                        {{ b.available_days }} Days
+                      </span>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="10" class="py-12 text-center text-slate-400 text-xs">
+                      No leave balance records found for year {{ balanceYearFilter() }}.
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination Bar -->
+          <div class="px-6 py-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850 flex items-center justify-between text-xs text-slate-500">
+            <span>Showing {{ leaveService.leaveBalances().length }} of {{ leaveService.totalLeaveBalances() }} balance records</span>
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                [disabled]="balanceOffset() === 0"
+                (click)="onBalancePageChange(-1)"
+                class="px-2.5 py-1 rounded border border-slate-200 dark:border-slate-700 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-slate-800"
+              >Previous</button>
+              <button
+                type="button"
+                [disabled]="balanceOffset() + balanceLimit() >= leaveService.totalLeaveBalances()"
+                (click)="onBalancePageChange(1)"
+                class="px-2.5 py-1 rounded border border-slate-200 dark:border-slate-700 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-slate-800"
+              >Next</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- TAB 3: OVERTIME REQUESTS & VERIFICATION -->
+    @if (activeTab() === 'overtime') {
+      <div class="p-6 space-y-6">
+
+        <!-- KPI Cards -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800">
+            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total OT Requests</span>
+            <div class="text-2xl font-bold font-display text-slate-900 dark:text-white mt-1">
+              {{ totalOtRequestsCount() }}
+            </div>
+          </div>
+          <div class="p-4 rounded-xl bg-amber-50/60 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/60">
+            <span class="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wider">Submitted</span>
+            <div class="text-2xl font-bold font-display text-amber-900 dark:text-amber-200 mt-1">
+              {{ submittedOtCount() }}
+            </div>
+          </div>
+          <div class="p-4 rounded-xl bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-900/60">
+            <span class="text-xs font-semibold text-indigo-700 dark:text-indigo-400 uppercase tracking-wider">Supervisor Verified</span>
+            <div class="text-2xl font-bold font-display text-indigo-900 dark:text-indigo-200 mt-1">
+              {{ verifiedOtCount() }}
+            </div>
+          </div>
+          <div class="p-4 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/60">
+            <span class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Approved / Synced</span>
+            <div class="text-2xl font-bold font-display text-emerald-900 dark:text-emerald-200 mt-1">
+              {{ approvedOtCount() }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Filter Row -->
+        <div class="p-4 rounded-xl bg-slate-50/80 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Employee</label>
+            <app-searchable-select
+              [options]="employeeOptions()"
+              [placeholder]="'All Employees'"
+              [ngModel]="otEmployeeFilter()"
+              (selectionChange)="otEmployeeFilter.set($event); loadOvertime()"
+            ></app-searchable-select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Status</label>
+            <app-searchable-select
+              categoryCode="HR_OVERTIME_STATUS"
+              [placeholder]="'All Statuses'"
+              [ngModel]="otStatusFilter()"
+              (selectionChange)="otStatusFilter.set($event); loadOvertime()"
+            ></app-searchable-select>
+          </div>
+
+          <div>
+            <app-custom-input
+              label="OT Date"
+              type="date"
+              [ngModel]="otDateFilter()"
+              (ngModelChange)="otDateFilter.set($event); loadOvertime()"
+            ></app-custom-input>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <app-custom-button
+              label="Clear Filter"
+              variant="secondary"
+              size="sm"
+              (btnClick)="otEmployeeFilter.set(null); otStatusFilter.set(''); otDateFilter.set(''); loadOvertime()"
+            ></app-custom-button>
+            <app-custom-button
+              label="+ New OT Request"
+              variant="gold"
+              size="sm"
+              (btnClick)="openOtModal()"
+            ></app-custom-button>
+          </div>
+        </div>
+
+        <!-- Overtime Table -->
+        <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-2xs">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs border-collapse">
+              <thead class="bg-slate-100/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-800 uppercase tracking-wider text-[11px]">
+                <tr>
+                  <th class="py-3 px-4">OT #</th>
+                  <th class="py-3 px-4">Employee</th>
+                  <th class="py-3 px-4">Project / Site</th>
+                  <th class="py-3 px-4">OT Date</th>
+                  <th class="py-3 px-4">Type</th>
+                  <th class="py-3 px-4 text-center">Hours (Req/Ver)</th>
+                  <th class="py-3 px-4 text-right">Multiplier & BDT</th>
+                  <th class="py-3 px-4">Status</th>
+                  <th class="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                @for (ot of leaveService.overtimeRequests(); track ot.id) {
+                  <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                    <td class="py-3.5 px-4 font-mono font-medium text-slate-500">#{{ ot.id }}</td>
+                    <td class="py-3.5 px-4">
+                      <div class="font-semibold text-slate-900 dark:text-white">{{ ot.employee_name || 'Emp #' + ot.employee_id }}</div>
+                      <div class="text-[10px] text-slate-400 font-mono">{{ ot.employee_code }} • {{ ot.department_name }}</div>
+                    </td>
+                    <td class="py-3.5 px-4 text-slate-700 dark:text-slate-300">{{ ot.project_name || 'Head Office / General' }}</td>
+                    <td class="py-3.5 px-4 font-mono text-slate-600 dark:text-slate-400">{{ ot.ot_date }}</td>
+                    <td class="py-3.5 px-4">
+                      <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-300 dark:bg-amber-950 dark:text-amber-300">
+                        {{ ot.ot_type }}
+                      </span>
+                    </td>
+                    <td class="py-3.5 px-4 text-center">
+                      <span class="font-bold text-slate-800 dark:text-slate-200">{{ ot.requested_hours }}h req</span>
+                      @if (ot.verified_hours) {
+                        <span class="block text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold">{{ ot.verified_hours }}h ver</span>
+                      }
+                    </td>
+                    <td class="py-3.5 px-4 text-right">
+                      <div class="font-semibold text-slate-800 dark:text-slate-200">BDT {{ ot.calculated_amount | number:'1.2-2' }}</div>
+                      <div class="text-[10px] text-slate-400">{{ ot.hourly_rate_multiplier }}x rate</div>
+                    </td>
+                    <td class="py-3.5 px-4">
+                      <app-status-badge [status]="ot.status"></app-status-badge>
+                    </td>
+                    <td class="py-3.5 px-4 text-right whitespace-nowrap">
+                      <div class="flex items-center justify-end gap-1.5">
+                        @if (ot.status === 'SUBMITTED') {
+                          <app-custom-button
+                            label="Verify"
+                            variant="gold"
+                            size="sm"
+                            (btnClick)="openOtVerifyModal(ot)"
+                          ></app-custom-button>
+                        } @else if (ot.status === 'VERIFIED') {
+                          <app-custom-button
+                            label="Approve"
+                            variant="primary"
+                            size="sm"
+                            (btnClick)="openOtApproveModal(ot)"
+                          ></app-custom-button>
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="9" class="py-12 text-center text-slate-400 text-xs">
+                      No overtime requests recorded.
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination Bar -->
+          <div class="px-6 py-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850 flex items-center justify-between text-xs text-slate-500">
+            <span>Showing {{ leaveService.overtimeRequests().length }} of {{ leaveService.totalOvertimeRequests() }} requests</span>
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                [disabled]="otOffset() === 0"
+                (click)="onOtPageChange(-1)"
+                class="px-2.5 py-1 rounded border border-slate-200 dark:border-slate-700 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-slate-800"
+              >Previous</button>
+              <button
+                type="button"
+                [disabled]="otOffset() + otLimit() >= leaveService.totalOvertimeRequests()"
+                (click)="onOtPageChange(1)"
+                class="px-2.5 py-1 rounded border border-slate-200 dark:border-slate-700 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-slate-800"
+              >Next</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- TAB 4: LEAVE TYPES & POLICIES -->
+    @if (activeTab() === 'policies') {
+      <div class="p-6 space-y-8">
+
+        <!-- 2.11 Leave Types Setup Section -->
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                2.11 Statutory & Custom Leave Types Master
+              </h3>
+              <p class="text-xs text-slate-500 mt-0.5">Annual, casual, sick, maternity, compensatory, and unpaid leave categories.</p>
+            </div>
+            <app-custom-button
+              label="+ New Leave Type"
+              variant="luxury"
+              size="sm"
+              (btnClick)="openTypeModal()"
+            ></app-custom-button>
+          </div>
+
+          <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-2xs">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs border-collapse">
+                <thead class="bg-slate-100/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-800 uppercase tracking-wider text-[11px]">
+                  <tr>
+                    <th class="py-3 px-4">Code</th>
+                    <th class="py-3 px-4">Type Name (English / Bengali)</th>
+                    <th class="py-3 px-4">Compensation</th>
+                    <th class="py-3 px-4">Attachment Required</th>
+                    <th class="py-3 px-4">Color Tag</th>
+                    <th class="py-3 px-4">Status</th>
+                    <th class="py-3 px-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                  @for (t of leaveService.leaveTypes(); track t.id) {
+                    <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                      <td class="py-3.5 px-4 font-mono font-bold text-slate-800 dark:text-slate-200">{{ t.type_code }}</td>
+                      <td class="py-3.5 px-4">
+                        <div class="font-semibold text-slate-900 dark:text-white">{{ t.type_name }}</div>
+                        @if (t.type_name_bn) {
+                          <div class="text-[10px] text-slate-400">{{ t.type_name_bn }}</div>
+                        }
+                      </td>
+                      <td class="py-3.5 px-4">
+                        @if (t.is_paid) {
+                          <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">Paid Leave</span>
+                        } @else {
+                          <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-800 dark:bg-rose-950 dark:text-rose-300">Unpaid / LWP</span>
+                        }
+                      </td>
+                      <td class="py-3.5 px-4 text-slate-600 dark:text-slate-400">
+                        {{ t.requires_attachment ? 'Yes (Medical/Certificate)' : 'Optional' }}
+                      </td>
+                      <td class="py-3.5 px-4">
+                        <div class="flex items-center gap-2">
+                          <span class="w-3.5 h-3.5 rounded-full border border-slate-300" [style.backgroundColor]="t.color_code || '#10b981'"></span>
+                          <span class="font-mono text-[10px] text-slate-500">{{ t.color_code }}</span>
+                        </div>
+                      </td>
+                      <td class="py-3.5 px-4">
+                        <app-status-badge [status]="t.is_active ? 'ACTIVE' : 'INACTIVE'"></app-status-badge>
+                      </td>
+                      <td class="py-3.5 px-4 text-right">
+                        <div class="flex items-center justify-end gap-2">
+                          <button (click)="openTypeModal(t)" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400">Edit</button>
+                          <button (click)="deleteType(t.id)" class="text-xs font-semibold text-rose-600 hover:text-rose-800 dark:text-rose-400">Deactivate</button>
+                        </div>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2.12 Leave Policy Section -->
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                2.12 Statutory Accrual, Carry-Forward & Encashment Policies
+              </h3>
+              <p class="text-xs text-slate-500 mt-0.5">Annual entitlement rules per Bangladesh Labour Act 2006.</p>
+            </div>
+            <app-custom-button
+              label="+ New Leave Policy"
+              variant="gold"
+              size="sm"
+              (btnClick)="openPolicyModal()"
+            ></app-custom-button>
+          </div>
+
+          <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-2xs">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs border-collapse">
+                <thead class="bg-slate-100/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-800 uppercase tracking-wider text-[11px]">
+                  <tr>
+                    <th class="py-3 px-4">Policy Name</th>
+                    <th class="py-3 px-4">Leave Type</th>
+                    <th class="py-3 px-4 text-center">Entitlement</th>
+                    <th class="py-3 px-4">Accrual Mode</th>
+                    <th class="py-3 px-4 text-center">Carry Fwd Max</th>
+                    <th class="py-3 px-4 text-center">Expiry</th>
+                    <th class="py-3 px-4 text-center">Encashment</th>
+                    <th class="py-3 px-4">Gender</th>
+                    <th class="py-3 px-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                  @for (p of leaveService.leavePolicies(); track p.id) {
+                    <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                      <td class="py-3.5 px-4 font-semibold text-slate-900 dark:text-white">{{ p.policy_name }}</td>
+                      <td class="py-3.5 px-4 text-slate-700 dark:text-slate-300">{{ p.leave_type_name || 'Type #' + p.leave_type_id }}</td>
+                      <td class="py-3.5 px-4 text-center font-bold text-emerald-600 dark:text-emerald-400">{{ p.annual_entitlement_days }} Days/Yr</td>
+                      <td class="py-3.5 px-4 font-mono text-slate-600 dark:text-slate-400">{{ p.accrual_frequency }}</td>
+                      <td class="py-3.5 px-4 text-center text-slate-700 dark:text-slate-300">{{ p.max_carry_forward_days }}d max</td>
+                      <td class="py-3.5 px-4 text-center text-slate-500">{{ p.carry_forward_expiry_months }} mo</td>
+                      <td class="py-3.5 px-4 text-center">
+                        {{ p.allow_encashment ? 'Allowed (' + p.max_encashment_days + 'd)' : 'No' }}
+                      </td>
+                      <td class="py-3.5 px-4">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                          {{ p.gender_applicability }}
+                        </span>
+                      </td>
+                      <td class="py-3.5 px-4 text-right">
+                        <div class="flex items-center justify-end gap-2">
+                          <button (click)="openPolicyModal(p)" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400">Edit</button>
+                          <button (click)="deletePolicy(p.id)" class="text-xs font-semibold text-rose-600 hover:text-rose-800 dark:text-rose-400">Delete</button>
+                        </div>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    }
+
+    <!-- TAB 5: PAYROLL INTEGRATION -->
+    @if (activeTab() === 'payroll') {
+      <div class="p-6 space-y-6">
+
+        <!-- Sync Header & Controls -->
+        <div class="p-4 rounded-xl bg-slate-50/80 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div class="flex items-center gap-4 w-full md:w-auto">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Salary Month (YYYY-MM)</label>
+              <input
+                type="month"
+                [value]="payrollMonth()"
+                (input)="payrollMonth.set($any($event.target).value); loadPayroll()"
+                class="erp-input text-xs"
+              />
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Employee</label>
+              <app-searchable-select
+                [options]="employeeOptions()"
+                [placeholder]="'All Employees'"
+                [ngModel]="payrollEmployeeFilter()"
+                (selectionChange)="payrollEmployeeFilter.set($event); loadPayroll()"
+              ></app-searchable-select>
+            </div>
+          </div>
+
+          <div class="shrink-0">
+            <app-custom-button
+              label="Sync Approved OT & Leave to Payroll"
+              variant="luxury"
+              size="sm"
+              [loading]="isSyncingPayroll()"
+              (btnClick)="openPayrollSyncModal()"
+            >
+              <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+              </svg>
+            </app-custom-button>
+          </div>
+        </div>
+
+        <!-- Payroll Inputs Table -->
+        <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-2xs">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs border-collapse">
+              <thead class="bg-slate-100/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-800 uppercase tracking-wider text-[11px]">
+                <tr>
+                  <th class="py-3 px-4">Employee</th>
+                  <th class="py-3 px-4">Department</th>
+                  <th class="py-3 px-4 text-center">Salary Month</th>
+                  <th class="py-3 px-4 text-center">Approved OT Hours</th>
+                  <th class="py-3 px-4 text-right">Calculated OT BDT</th>
+                  <th class="py-3 px-4 text-center">Unpaid Leave (Deduction)</th>
+                  <th class="py-3 px-4 text-center">Paid Leave Days</th>
+                  <th class="py-3 px-4">Payroll Status</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                @for (p of leaveService.payrollInputs(); track p.id) {
+                  <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                    <td class="py-3.5 px-4 font-semibold text-slate-900 dark:text-white">
+                      {{ p.employee_name || 'Emp #' + p.employee_id }}
+                      <span class="block text-[10px] text-slate-400 font-mono">{{ p.employee_code }}</span>
+                    </td>
+                    <td class="py-3.5 px-4 text-slate-600 dark:text-slate-400">{{ p.department_name || '—' }}</td>
+                    <td class="py-3.5 px-4 text-center font-mono font-medium text-slate-500">{{ p.salary_month }}</td>
+                    <td class="py-3.5 px-4 text-center font-bold text-indigo-600 dark:text-indigo-400">{{ p.approved_ot_hours }} hrs</td>
+                    <td class="py-3.5 px-4 text-right font-semibold text-slate-800 dark:text-slate-200">
+                      BDT {{ p.calculated_ot_amount | number:'1.2-2' }}
+                    </td>
+                    <td class="py-3.5 px-4 text-center">
+                      @if (p.unpaid_leave_days > 0) {
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-800 dark:bg-rose-950 dark:text-rose-300">
+                          {{ p.unpaid_leave_days }} days ded.
+                        </span>
+                      } @else {
+                        <span class="text-slate-400">0</span>
+                      }
+                    </td>
+                    <td class="py-3.5 px-4 text-center text-slate-700 dark:text-slate-300">{{ p.paid_leave_days }} days</td>
+                    <td class="py-3.5 px-4">
+                      @if (p.is_processed_in_payroll) {
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">Processed</span>
+                      } @else {
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-300">Ready for Run</span>
+                      }
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="8" class="py-12 text-center text-slate-400 text-xs">
+                      No payroll inputs synced for month {{ payrollMonth() }}. Click "Sync to Payroll" above to batch calculate.
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination Bar -->
+          <div class="px-6 py-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850 flex items-center justify-between text-xs text-slate-500">
+            <span>Showing {{ leaveService.payrollInputs().length }} of {{ leaveService.totalPayrollInputs() }} records</span>
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                [disabled]="payrollOffset() === 0"
+                (click)="onPayrollPageChange(-1)"
+                class="px-2.5 py-1 rounded border border-slate-200 dark:border-slate-700 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-slate-800"
+              >Previous</button>
+              <button
+                type="button"
+                [disabled]="payrollOffset() + payrollLimit() >= leaveService.totalPayrollInputs()"
+                (click)="onPayrollPageChange(1)"
+                class="px-2.5 py-1 rounded border border-slate-200 dark:border-slate-700 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-slate-800"
+              >Next</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- TAB 6: SETTINGS DYNAMIC LOOKUPS -->
+    @if (activeTab() === 'settings') {
+      <div class="p-6 space-y-6">
+
+        <div class="p-4 rounded-xl bg-slate-50/80 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div class="flex items-center gap-3 w-full sm:w-auto">
+            <label class="text-xs font-semibold text-slate-700 dark:text-slate-300 shrink-0">Lookup Category:</label>
+            <select
+              [value]="selectedLookupCategory()"
+              (change)="onLookupCategoryChange($any($event.target).value)"
+              class="erp-input text-xs"
+            >
+              <option value="HR_LEAVE_STATUS">HR_LEAVE_STATUS (Application Statuses)</option>
+              <option value="HR_OVERTIME_TYPE">HR_OVERTIME_TYPE (Normal, Weekend, Holiday)</option>
+              <option value="HR_OVERTIME_STATUS">HR_OVERTIME_STATUS (Submitted, Verified, Approved)</option>
+              <option value="HR_LEAVE_ACCRUAL_FREQUENCY">HR_LEAVE_ACCRUAL_FREQUENCY (Yearly, Monthly)</option>
+            </select>
+          </div>
+
+          <app-custom-button
+            label="+ Add New Dynamic Code"
+            variant="luxury"
+            size="sm"
+            (btnClick)="openLookupItemModal()"
+          ></app-custom-button>
+        </div>
+
+        <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-2xs">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs border-collapse">
+              <thead class="bg-slate-100/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-800 uppercase tracking-wider text-[11px]">
+                <tr>
+                  <th class="py-3 px-4">Item Code</th>
+                  <th class="py-3 px-4">English Name</th>
+                  <th class="py-3 px-4">Bangla Name</th>
+                  <th class="py-3 px-4 text-center">Order</th>
+                  <th class="py-3 px-4">Status</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                @for (item of lookupItems(); track item.id) {
+                  <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                    <td class="py-3.5 px-4 font-mono font-bold text-slate-800 dark:text-slate-200">{{ item.item_code }}</td>
+                    <td class="py-3.5 px-4 font-semibold text-slate-900 dark:text-white">{{ item.item_name_en }}</td>
+                    <td class="py-3.5 px-4 text-slate-600 dark:text-slate-400">{{ item.item_name_bn || '—' }}</td>
+                    <td class="py-3.5 px-4 text-center text-slate-500 font-mono">{{ item.sort_order }}</td>
+                    <td class="py-3.5 px-4">
+                      <app-status-badge [status]="item.is_active ? 'ACTIVE' : 'INACTIVE'"></app-status-badge>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="5" class="py-12 text-center text-slate-400 text-xs">
+                      No lookup items found for this category.
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    }
+
+  </app-card-container>
+
+  <!-- ======================================================== -->
+  <!-- DEDICATED MODALS (Zero Forms Under Tables Rule)          -->
+  <!-- ======================================================== -->
+
+  <!-- 1. Apply Leave Modal -->
+  <app-modal
+    [isOpen]="isApplyModalOpen()"
+    title="Apply for Employee Leave"
+    subtitle="Submit official leave application for manager recommendation and HR balance check"
+    badge="2.14 Application"
+    size="lg"
+    (closed)="isApplyModalOpen.set(false)"
+  >
+    <div class="space-y-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+            Employee <span class="text-rose-500">*</span>
+          </label>
+          <app-searchable-select
+            [options]="employeeOptions()"
+            [placeholder]="'Select applicant employee...'"
+            [ngModel]="applyForm().employee_id"
+            (selectionChange)="updateApplyField('employee_id', $event)"
+          ></app-searchable-select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+            Leave Type <span class="text-rose-500">*</span>
+          </label>
+          <app-searchable-select
+            [options]="leaveTypeOptions()"
+            [placeholder]="'Select leave type...'"
+            [ngModel]="applyForm().leave_type_id"
+            (selectionChange)="updateApplyField('leave_type_id', $event)"
+          ></app-searchable-select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <app-custom-input
+          label="Start Date"
+          type="date"
+          [required]="true"
+          [ngModel]="applyForm().start_date"
+          (ngModelChange)="updateApplyField('start_date', $event)"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="End Date"
+          type="date"
+          [required]="true"
+          [ngModel]="applyForm().end_date"
+          (ngModelChange)="updateApplyField('end_date', $event)"
+        ></app-custom-input>
+      </div>
+
+      <app-custom-textarea
+        label="Reason for Leave"
+        placeholder="Provide comprehensive details or justification for this leave request..."
+        [rows]="3"
+        [ngModel]="applyForm().reason || ''"
+        (ngModelChange)="updateApplyField('reason', $event)"
+      ></app-custom-textarea>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <app-custom-input
+          label="Emergency Contact Phone"
+          placeholder="+880 1..."
+          [ngModel]="applyForm().emergency_contact || ''"
+          (ngModelChange)="updateApplyField('emergency_contact', $event)"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Document / Medical Certificate URL"
+          placeholder="https://... (Optional)"
+          [ngModel]="applyForm().document_url || ''"
+          (ngModelChange)="updateApplyField('document_url', $event)"
+        ></app-custom-input>
+      </div>
+    </div>
+
+    <div modal-footer class="flex items-center justify-end gap-2">
+      <app-custom-button
+        label="Cancel"
+        variant="secondary"
+        size="sm"
+        (btnClick)="isApplyModalOpen.set(false)"
+      ></app-custom-button>
+      <app-custom-button
+        label="Submit Leave Application"
+        variant="luxury"
+        size="sm"
+        (btnClick)="submitLeaveApplication()"
+      ></app-custom-button>
+    </div>
+  </app-modal>
+
+  <!-- 2. Action / Approval Modal -->
+  <app-modal
+    [isOpen]="isActionModalOpen()"
+    title="Leave Review & Approval Decision"
+    [subtitle]="selectedApplicationForAction() ? 'Reviewing Application #' + selectedApplicationForAction()!.id + ' for ' + selectedApplicationForAction()!.employee_name : ''"
+    badge="2.15 Approval Workflow"
+    size="md"
+    (closed)="isActionModalOpen.set(false)"
+  >
+    <div class="space-y-4">
+      <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs space-y-1.5">
+        <div class="flex justify-between">
+          <span class="text-slate-500">Duration:</span>
+          <span class="font-bold text-slate-800 dark:text-slate-200">{{ selectedApplicationForAction()?.start_date }} to {{ selectedApplicationForAction()?.end_date }} ({{ selectedApplicationForAction()?.total_days }} days)</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-slate-500">Reason:</span>
+          <span class="text-slate-800 dark:text-slate-200 italic">{{ selectedApplicationForAction()?.reason || 'None provided' }}</span>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Action Decision</label>
+        <div class="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            (click)="updateActionType('RECOMMEND')"
+            [class.ring-2]="actionPayload().action === 'RECOMMEND'"
+            class="p-2.5 rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-950 text-amber-900 dark:text-amber-200 text-xs font-bold text-center"
+          >
+            Manager: Recommend to HR
+          </button>
+          <button
+            type="button"
+            (click)="updateActionType('APPROVE')"
+            [class.ring-2]="actionPayload().action === 'APPROVE'"
+            class="p-2.5 rounded-lg border border-emerald-300 bg-emerald-50 dark:bg-emerald-950 text-emerald-900 dark:text-emerald-200 text-xs font-bold text-center"
+          >
+            HR: Final Approve
+          </button>
+          <button
+            type="button"
+            (click)="updateActionType('REJECT')"
+            [class.ring-2]="actionPayload().action === 'REJECT'"
+            class="p-2.5 rounded-lg border border-rose-300 bg-rose-50 dark:bg-rose-950 text-rose-900 dark:text-rose-200 text-xs font-bold text-center col-span-2"
+          >
+            Reject Request
+          </button>
+        </div>
+      </div>
+
+      <app-custom-textarea
+        label="Decision Remarks / Feedback"
+        placeholder="Add supervisor notes, coverage verification, or rejection rationale..."
+        [rows]="3"
+        [ngModel]="actionPayload().remarks || ''"
+        (ngModelChange)="updateActionRemarks($event)"
+      ></app-custom-textarea>
+    </div>
+
+    <div modal-footer class="flex items-center justify-end gap-2">
+      <app-custom-button
+        label="Cancel"
+        variant="secondary"
+        size="sm"
+        (btnClick)="isActionModalOpen.set(false)"
+      ></app-custom-button>
+      <app-custom-button
+        label="Execute Decision"
+        variant="luxury"
+        size="sm"
+        (btnClick)="executeApplicationAction()"
+      ></app-custom-button>
+    </div>
+  </app-modal>
+
+  <!-- 3. Import / Adjust Leave Balance Modal -->
+  <app-modal
+    [isOpen]="isBalanceModalOpen()"
+    title="Import / Adjust Employee Leave Balance"
+    subtitle="Configure opening, carried forward, and historical balances"
+    badge="2.13 Opening Balances"
+    size="md"
+    (closed)="isBalanceModalOpen.set(false)"
+  >
+    <div class="space-y-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+            Employee <span class="text-rose-500">*</span>
+          </label>
+          <app-searchable-select
+            [options]="employeeOptions()"
+            [placeholder]="'Select employee...'"
+            [ngModel]="balanceForm().employee_id"
+            (selectionChange)="updateBalanceField('employee_id', $event)"
+          ></app-searchable-select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+            Leave Type <span class="text-rose-500">*</span>
+          </label>
+          <app-searchable-select
+            [options]="leaveTypeOptions()"
+            [placeholder]="'Select leave type...'"
+            [ngModel]="balanceForm().leave_type_id"
+            (selectionChange)="updateBalanceField('leave_type_id', $event)"
+          ></app-searchable-select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <app-custom-input
+          label="Year"
+          type="number"
+          [ngModel]="balanceForm().year ? String(balanceForm().year) : ''"
+          (ngModelChange)="updateBalanceField('year', +$event)"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Opening Days"
+          type="number"
+          [ngModel]="String(balanceForm().opening_balance || 0)"
+          (ngModelChange)="updateBalanceField('opening_balance', +$event)"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Carried Fwd"
+          type="number"
+          [ngModel]="String(balanceForm().carried_forward || 0)"
+          (ngModelChange)="updateBalanceField('carried_forward', +$event)"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Accrued Days"
+          type="number"
+          [ngModel]="String(balanceForm().accrued_days || 0)"
+          (ngModelChange)="updateBalanceField('accrued_days', +$event)"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Used Days"
+          type="number"
+          [ngModel]="String(balanceForm().used_days || 0)"
+          (ngModelChange)="updateBalanceField('used_days', +$event)"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Pending Days"
+          type="number"
+          [ngModel]="String(balanceForm().pending_days || 0)"
+          (ngModelChange)="updateBalanceField('pending_days', +$event)"
+        ></app-custom-input>
+      </div>
+    </div>
+
+    <div modal-footer class="flex items-center justify-end gap-2">
+      <app-custom-button
+        label="Cancel"
+        variant="secondary"
+        size="sm"
+        (btnClick)="isBalanceModalOpen.set(false)"
+      ></app-custom-button>
+      <app-custom-button
+        label="Save Balance Record"
+        variant="luxury"
+        size="sm"
+        (btnClick)="submitBalanceImport()"
+      ></app-custom-button>
+    </div>
+  </app-modal>
+
+  <!-- 4. Overtime Request Modal -->
+  <app-modal
+    [isOpen]="isOtModalOpen()"
+    title="Submit Field / Site Overtime Request"
+    subtitle="2.17 Employee or supervisor overtime request for project/site extra hours"
+    badge="2.17 Overtime"
+    size="md"
+    (closed)="isOtModalOpen.set(false)"
+  >
+    <div class="space-y-4">
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+          Employee <span class="text-rose-500">*</span>
+        </label>
+        <app-searchable-select
+          [options]="employeeOptions()"
+          [placeholder]="'Select employee...'"
+          [ngModel]="otForm().employee_id"
+          (selectionChange)="updateOtField('employee_id', $event)"
+        ></app-searchable-select>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Project / Site</label>
+          <app-searchable-select
+            [options]="projectOptions()"
+            [placeholder]="'Select site/project...'"
+            [ngModel]="otForm().project_id"
+            (selectionChange)="updateOtField('project_id', $event)"
+          ></app-searchable-select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Overtime Category</label>
+          <app-searchable-select
+            categoryCode="HR_OVERTIME_TYPE"
+            [placeholder]="'Select OT type...'"
+            [ngModel]="otForm().ot_type"
+            (selectionChange)="updateOtField('ot_type', $event)"
+          ></app-searchable-select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <app-custom-input
+          label="OT Date"
+          type="date"
+          [required]="true"
+          [ngModel]="otForm().ot_date"
+          (ngModelChange)="updateOtField('ot_date', $event)"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Requested Hours"
+          type="number"
+          [required]="true"
+          [ngModel]="String(otForm().requested_hours)"
+          (ngModelChange)="updateOtField('requested_hours', +$event)"
+        ></app-custom-input>
+      </div>
+
+      <app-custom-textarea
+        label="Task Description & Site Justification"
+        placeholder="Detail emergency concrete casting, structural inspection, or deadline delivery..."
+        [rows]="3"
+        [ngModel]="otForm().task_description || ''"
+        (ngModelChange)="updateOtField('task_description', $event)"
+      ></app-custom-textarea>
+    </div>
+
+    <div modal-footer class="flex items-center justify-end gap-2">
+      <app-custom-button
+        label="Cancel"
+        variant="secondary"
+        size="sm"
+        (btnClick)="isOtModalOpen.set(false)"
+      ></app-custom-button>
+      <app-custom-button
+        label="Submit Overtime"
+        variant="gold"
+        size="sm"
+        (btnClick)="submitOtRequest()"
+      ></app-custom-button>
+    </div>
+  </app-modal>
+
+  <!-- 5. Overtime Verification Modal -->
+  <app-modal
+    [isOpen]="isOtVerifyModalOpen()"
+    title="Supervisor Overtime Verification"
+    [subtitle]="selectedOtForVerify() ? 'Cross-referencing punches for ' + selectedOtForVerify()!.employee_name + ' on ' + selectedOtForVerify()!.ot_date : ''"
+    badge="2.18 Verification"
+    size="md"
+    (closed)="isOtVerifyModalOpen.set(false)"
+  >
+    <div class="space-y-4">
+      <div class="p-3 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-xs space-y-1">
+        <div class="flex justify-between">
+          <span class="text-indigo-700 dark:text-indigo-300 font-semibold">Requested:</span>
+          <span class="font-bold text-slate-800 dark:text-slate-200">{{ selectedOtForVerify()?.requested_hours }} hours</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-indigo-700 dark:text-indigo-300 font-semibold">Category:</span>
+          <span class="font-bold text-slate-800 dark:text-slate-200">{{ selectedOtForVerify()?.ot_type }}</span>
+        </div>
+        <p class="text-[11px] text-slate-500 pt-1">Task: {{ selectedOtForVerify()?.task_description || '—' }}</p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <app-custom-input
+          label="Verified Hours (Punches Cross-checked)"
+          type="number"
+          [required]="true"
+          [ngModel]="String(otVerifyForm().verified_hours)"
+          (ngModelChange)="updateOtVerifyHours($event)"
+        ></app-custom-input>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Action</label>
+          <div class="flex gap-2">
+            <button
+              type="button"
+              (click)="updateOtVerifyAction('VERIFY')"
+              [class.ring-2]="otVerifyForm().action === 'VERIFY'"
+              class="flex-1 py-2 px-3 rounded-lg border border-indigo-300 bg-indigo-50 text-indigo-900 text-xs font-bold"
+            >Verify Hours</button>
+            <button
+              type="button"
+              (click)="updateOtVerifyAction('REJECT')"
+              [class.ring-2]="otVerifyForm().action === 'REJECT'"
+              class="flex-1 py-2 px-3 rounded-lg border border-rose-300 bg-rose-50 text-rose-900 text-xs font-bold"
+            >Reject</button>
+          </div>
+        </div>
+      </div>
+
+      <app-custom-textarea
+        label="Verification Remarks"
+        placeholder="Attested site supervisor verification notes..."
+        [rows]="2"
+        [ngModel]="otVerifyForm().remarks || ''"
+        (ngModelChange)="updateOtVerifyRemarks($event)"
+      ></app-custom-textarea>
+    </div>
+
+    <div modal-footer class="flex items-center justify-end gap-2">
+      <app-custom-button
+        label="Cancel"
+        variant="secondary"
+        size="sm"
+        (btnClick)="isOtVerifyModalOpen.set(false)"
+      ></app-custom-button>
+      <app-custom-button
+        label="Submit Verification"
+        variant="gold"
+        size="sm"
+        (btnClick)="submitOtVerification()"
+      ></app-custom-button>
+    </div>
+  </app-modal>
+
+  <!-- 6. Overtime Approval Modal -->
+  <app-modal
+    [isOpen]="isOtApproveModalOpen()"
+    title="Project Manager / Management Overtime Approval"
+    [subtitle]="selectedOtForApprove() ? 'Finalizing rate multiplier and BDT disbursal for ' + selectedOtForApprove()!.employee_name : ''"
+    badge="2.19 Approval"
+    size="md"
+    (closed)="isOtApproveModalOpen.set(false)"
+  >
+    <div class="space-y-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <app-custom-input
+          label="Approved Hours"
+          type="number"
+          [required]="true"
+          [ngModel]="String(otApproveForm().approved_hours || 0)"
+          (ngModelChange)="updateOtApproveHours($event)"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Hourly Multiplier (e.g. 1.5, 2.0)"
+          type="number"
+          [required]="true"
+          [ngModel]="String(otApproveForm().hourly_rate_multiplier || 1.5)"
+          (ngModelChange)="updateOtApproveMultiplier($event)"
+        ></app-custom-input>
+      </div>
+
+      <div class="flex gap-2">
+        <button
+          type="button"
+          (click)="updateOtApproveAction('APPROVE')"
+          [class.ring-2]="otApproveForm().action === 'APPROVE'"
+          class="flex-1 py-2.5 px-3 rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-900 text-xs font-bold"
+        >Approve for Payroll</button>
+        <button
+          type="button"
+          (click)="updateOtApproveAction('REJECT')"
+          [class.ring-2]="otApproveForm().action === 'REJECT'"
+          class="flex-1 py-2.5 px-3 rounded-lg border border-rose-300 bg-rose-50 text-rose-900 text-xs font-bold"
+        >Reject</button>
+      </div>
+
+      <app-custom-textarea
+        label="Approval Remarks"
+        placeholder="Authorized manager approval sign-off..."
+        [rows]="2"
+        [ngModel]="otApproveForm().remarks || ''"
+        (ngModelChange)="updateOtApproveRemarks($event)"
+      ></app-custom-textarea>
+    </div>
+
+    <div modal-footer class="flex items-center justify-end gap-2">
+      <app-custom-button
+        label="Cancel"
+        variant="secondary"
+        size="sm"
+        (btnClick)="isOtApproveModalOpen.set(false)"
+      ></app-custom-button>
+      <app-custom-button
+        label="Commit Approval"
+        variant="primary"
+        size="sm"
+        (btnClick)="submitOtApproval()"
+      ></app-custom-button>
+    </div>
+  </app-modal>
+
+  <!-- 7. Leave Type Modal -->
+  <app-modal
+    [isOpen]="isTypeModalOpen()"
+    [title]="selectedTypeId() ? 'Edit Leave Type' : 'Configure New Leave Type'"
+    subtitle="2.11 Statutory & configured leave categories"
+    badge="2.11 Setup"
+    size="md"
+    (closed)="isTypeModalOpen.set(false)"
+  >
+    <div class="space-y-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <app-custom-input
+          label="Type Code (e.g. ANNUAL, CASUAL)"
+          placeholder="ANNUAL"
+          [required]="true"
+          [ngModel]="typeForm().type_code"
+          (ngModelChange)="updateTypeField('type_code', $event)"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Color Code (Hex)"
+          placeholder="#10b981"
+          [ngModel]="typeForm().color_code || ''"
+          (ngModelChange)="updateTypeField('color_code', $event)"
+        ></app-custom-input>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <app-custom-input
+          label="Type Name (English)"
+          placeholder="Annual Leave"
+          [required]="true"
+          [ngModel]="typeForm().type_name"
+          (ngModelChange)="updateTypeField('type_name', $event)"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Type Name (Bangla)"
+          placeholder="বার্ষিক ছুটি"
+          [ngModel]="typeForm().type_name_bn || ''"
+          (ngModelChange)="updateTypeField('type_name_bn', $event)"
+        ></app-custom-input>
+      </div>
+
+      <div class="flex items-center gap-6 pt-2">
+        <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700 dark:text-slate-300">
+          <input
+            type="checkbox"
+            [checked]="typeForm().is_paid"
+            (change)="updateTypeField('is_paid', $any($event.target).checked)"
+            class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+          />
+          Paid Leave (Full Remuneration)
+        </label>
+
+        <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700 dark:text-slate-300">
+          <input
+            type="checkbox"
+            [checked]="typeForm().requires_attachment"
+            (change)="updateTypeField('requires_attachment', $any($event.target).checked)"
+            class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+          />
+          Requires Attachment
+        </label>
+      </div>
+
+      <app-custom-textarea
+        label="Description"
+        placeholder="Scope and statutory applicability notes..."
+        [rows]="2"
+        [ngModel]="typeForm().description || ''"
+        (ngModelChange)="updateTypeField('description', $event)"
+      ></app-custom-textarea>
+    </div>
+
+    <div modal-footer class="flex items-center justify-end gap-2">
+      <app-custom-button
+        label="Cancel"
+        variant="secondary"
+        size="sm"
+        (btnClick)="isTypeModalOpen.set(false)"
+      ></app-custom-button>
+      <app-custom-button
+        label="Save Leave Type"
+        variant="luxury"
+        size="sm"
+        (btnClick)="submitTypeForm()"
+      ></app-custom-button>
+    </div>
+  </app-modal>
+
+  <!-- 8. Leave Policy Modal -->
+  <app-modal
+    [isOpen]="isPolicyModalOpen()"
+    [title]="selectedPolicyId() ? 'Edit Leave Policy' : 'Create Leave Policy'"
+    subtitle="2.12 Accrual rules, carry-forward, and expiry configuration"
+    badge="2.12 Policy"
+    size="lg"
+    (closed)="isPolicyModalOpen.set(false)"
+  >
+    <div class="space-y-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Leave Type</label>
+          <app-searchable-select
+            [options]="leaveTypeOptions()"
+            [placeholder]="'Select leave type...'"
+            [ngModel]="policyForm().leave_type_id"
+            (selectionChange)="updatePolicyField('leave_type_id', $event)"
+          ></app-searchable-select>
+        </div>
+
+        <app-custom-input
+          label="Policy Name"
+          placeholder="e.g. Standard Statutory Annual Leave"
+          [required]="true"
+          [ngModel]="policyForm().policy_name"
+          (ngModelChange)="updatePolicyField('policy_name', $event)"
+        ></app-custom-input>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <app-custom-input
+          label="Annual Days"
+          type="number"
+          [required]="true"
+          [ngModel]="String(policyForm().annual_entitlement_days)"
+          (ngModelChange)="updatePolicyField('annual_entitlement_days', +$event)"
+        ></app-custom-input>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Accrual Mode</label>
+          <app-searchable-select
+            categoryCode="HR_LEAVE_ACCRUAL_FREQUENCY"
+            [placeholder]="'YEARLY'"
+            [ngModel]="policyForm().accrual_frequency"
+            (selectionChange)="updatePolicyField('accrual_frequency', $event)"
+          ></app-searchable-select>
+        </div>
+
+        <app-custom-input
+          label="Carry Fwd Max (Days)"
+          type="number"
+          [ngModel]="String(policyForm().max_carry_forward_days || 0)"
+          (ngModelChange)="updatePolicyField('max_carry_forward_days', +$event)"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Expiry (Months)"
+          type="number"
+          [ngModel]="String(policyForm().carry_forward_expiry_months || 0)"
+          (ngModelChange)="updatePolicyField('carry_forward_expiry_months', +$event)"
+        ></app-custom-input>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div class="flex items-center gap-2 pt-6">
+          <input
+            type="checkbox"
+            id="allowEncashment"
+            [checked]="policyForm().allow_encashment"
+            (change)="updatePolicyField('allow_encashment', $any($event.target).checked)"
+            class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+          />
+          <label for="allowEncashment" class="text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer">
+            Allow Encashment
+          </label>
+        </div>
+
+        <app-custom-input
+          label="Max Encashment Days"
+          type="number"
+          [ngModel]="String(policyForm().max_encashment_days || 0)"
+          (ngModelChange)="updatePolicyField('max_encashment_days', +$event)"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Min Service Days Required"
+          type="number"
+          [ngModel]="String(policyForm().min_service_days_required || 0)"
+          (ngModelChange)="updatePolicyField('min_service_days_required', +$event)"
+        ></app-custom-input>
+      </div>
+    </div>
+
+    <div modal-footer class="flex items-center justify-end gap-2">
+      <app-custom-button
+        label="Cancel"
+        variant="secondary"
+        size="sm"
+        (btnClick)="isPolicyModalOpen.set(false)"
+      ></app-custom-button>
+      <app-custom-button
+        label="Save Policy"
+        variant="luxury"
+        size="sm"
+        (btnClick)="submitPolicyForm()"
+      ></app-custom-button>
+    </div>
+  </app-modal>
+
+  <!-- 9. Payroll Sync Confirmation Modal -->
+  <app-modal
+    [isOpen]="isPayrollSyncModalOpen()"
+    title="Synchronize Approved Leaves & Overtime to Payroll"
+    subtitle="2.20 Push verified overtime and unpaid leave deductions into monthly payroll ledger"
+    badge="2.20 Payroll Engine"
+    size="md"
+    (closed)="isPayrollSyncModalOpen.set(false)"
+  >
+    <div class="space-y-4 text-xs">
+      <div class="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 space-y-2">
+        <div class="font-bold flex items-center gap-1.5">
+          <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          Salary Month: {{ payrollMonth() }}
+        </div>
+        <p>This automated batch pipeline will:</p>
+        <ul class="list-disc list-inside space-y-1 text-slate-700 dark:text-slate-300 pl-1">
+          <li>Aggregate all <strong>APPROVED</strong> Overtime Requests for {{ payrollMonth() }} and calculate exact gross OT amounts.</li>
+          <li>Aggregate all <strong>APPROVED Unpaid Leaves (LWP)</strong> to record statutory salary deduction days.</li>
+          <li>Update records into the <code>hr_payroll_inputs</code> table ready for monthly payroll disbursal.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div modal-footer class="flex items-center justify-end gap-2">
+      <app-custom-button
+        label="Cancel"
+        variant="secondary"
+        size="sm"
+        (btnClick)="isPayrollSyncModalOpen.set(false)"
+      ></app-custom-button>
+      <app-custom-button
+        label="Confirm & Sync to Payroll"
+        variant="luxury"
+        size="sm"
+        [loading]="isSyncingPayroll()"
+        (btnClick)="executePayrollSync()"
+      ></app-custom-button>
+    </div>
+  </app-modal>
+
+  <!-- 10. Dynamic Lookup Item Modal -->
+  <app-modal
+    [isOpen]="isLookupModalOpen()"
+    title="Create / Edit Dynamic Code"
+    [subtitle]="'Category: ' + selectedLookupCategory()"
+    badge="Settings"
+    size="sm"
+    (closed)="isLookupModalOpen.set(false)"
+  >
+    <div class="space-y-4">
+      <app-custom-input
+        label="Item Code (Key)"
+        placeholder="e.g. COMPENSATORY_LEAVE"
+        [required]="true"
+        [ngModel]="lookupForm().item_code"
+        (ngModelChange)="updateLookupField('item_code', $event)"
+      ></app-custom-input>
+
+      <app-custom-input
+        label="English Display Name"
+        placeholder="e.g. Compensatory Leave"
+        [required]="true"
+        [ngModel]="lookupForm().item_name_en"
+        (ngModelChange)="updateLookupField('item_name_en', $event)"
+      ></app-custom-input>
+
+      <app-custom-input
+        label="Bangla Display Name"
+        placeholder="e.g. ক্ষতিপূরণমূলক ছুটি"
+        [ngModel]="lookupForm().item_name_bn"
+        (ngModelChange)="updateLookupField('item_name_bn', $event)"
+      ></app-custom-input>
+
+      <app-custom-input
+        label="Sort Order"
+        type="number"
+        [ngModel]="String(lookupForm().sort_order)"
+        (ngModelChange)="updateLookupField('sort_order', +$event)"
+      ></app-custom-input>
+    </div>
+
+    <div modal-footer class="flex items-center justify-end gap-2">
+      <app-custom-button
+        label="Cancel"
+        variant="secondary"
+        size="sm"
+        (btnClick)="isLookupModalOpen.set(false)"
+      ></app-custom-button>
+      <app-custom-button
+        label="Save Item"
+        variant="luxury"
+        size="sm"
+        (btnClick)="submitLookupForm()"
+      ></app-custom-button>
+    </div>
+  </app-modal>
+
+</div>
