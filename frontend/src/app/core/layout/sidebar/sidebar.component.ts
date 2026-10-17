@@ -135,12 +135,12 @@ export class SidebarComponent implements OnInit {
         { id: 'hrms-offices', label: 'Project Site Offices', route: '/hrms/org-structure', queryParams: { tab: 'project-offices' }, badge: 'Sites' },
         { id: 'hrms-departments', label: 'Department Master & Hierarchy', route: '/hrms/departments', badge: 'Core' },
         { id: 'hrms-designations', label: 'Designations & Positions', route: '/hrms/designations', badge: 'Manpower' },
-        { id: 'hrms-dashboard', label: 'HRMS & Labour Cockpit', route: '/hrms/dashboard', badge: 'New' },
-        { id: 'hrms-employees', label: 'Employee Directory 360°', route: '/hrms/employees' },
+        { id: 'hrms-dashboard', label: 'HRMS', route: '/hrms/dashboard', badge: 'New' },
+        { id: 'hrms-employees', label: 'Employee', route: '/hrms/employees' },
         { id: 'hrms-muster', label: 'Daily Labour Muster Roll', route: '/hrms/muster-roll' },
         { id: 'hrms-attendance', label: 'Attendance & Punches', route: '/hrms/attendance' },
-        { id: 'hrms-leave-overtime', label: 'Leave & Overtime (2.11-2.20)', route: '/hrms/leave-overtime', badge: 'New' },
-        { id: 'hrms-payroll', label: 'Payroll & NBR TDS Engine', route: '/hrms/payroll' }
+        { id: 'hrms-payroll', label: 'Salary Engine', route: '/hrms/payroll' },
+        { id: 'hrms-payroll-approvals', label: 'Deductions & Approvals (3.11-3.20)', route: '/hrms/payroll-approvals', badge: 'Tier-3' }
       ]
     },
     {

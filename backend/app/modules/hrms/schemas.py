@@ -1440,3 +1440,436 @@ class PositionOccupyPayload(BaseModel):
     effective_date: Optional[date] = None
     remarks: Optional[str] = None
 
+
+# =====================================================================
+# --- Sections 3.1 - 3.20 Salary & Payroll Schemas ---
+# =====================================================================
+
+# 3.1 Salary Components
+class SalaryComponentCreate(BaseModel):
+    component_code: str
+    name_en: str
+    name_bn: Optional[str] = None
+    component_type: str = "EARNING" # EARNING, DEDUCTION, EMPLOYER_CONTRIBUTION
+    calculation_type: str = "PERCENTAGE_OF_BASIC" # PERCENTAGE_OF_BASIC, PERCENTAGE_OF_GROSS, FIXED_AMOUNT
+    default_value_or_percent: Decimal = Decimal("0.00")
+    is_taxable: bool = True
+    is_statutory: bool = False
+    sort_order: int = 10
+    is_active: bool = True
+
+class SalaryComponentOut(BaseModel):
+    id: int
+    organization_id: int
+    component_code: str
+    name_en: str
+    name_bn: Optional[str] = None
+    component_type: str
+    calculation_type: str
+    default_value_or_percent: Decimal
+    is_taxable: bool
+    is_statutory: bool
+    sort_order: int
+    is_active: bool
+    created_at: Optional[datetime] = None
+    model_config = ConfigDict(from_attributes=True)
+
+class SalaryComponentPaginatedOut(BaseModel):
+    items: List[SalaryComponentOut]
+    total: int
+    limit: int
+    offset: int
+
+# 3.2 Salary Structure
+class SalaryStructureItemCreate(BaseModel):
+    component_id: int
+    calculation_type: str = "PERCENTAGE_OF_BASIC"
+    value_or_percent: Decimal = Decimal("0.00")
+
+class SalaryStructureItemOut(BaseModel):
+    id: int
+    component_id: int
+    component_code: Optional[str] = None
+    component_name: Optional[str] = None
+    component_type: Optional[str] = None
+    calculation_type: str
+    value_or_percent: Decimal
+    model_config = ConfigDict(from_attributes=True)
+
+class SalaryStructureCreate(BaseModel):
+    structure_code: str
+    name_en: str
+    description: Optional[str] = None
+    is_active: bool = True
+    items: Optional[List[SalaryStructureItemCreate]] = None
+
+class SalaryStructureOut(BaseModel):
+    id: int
+    organization_id: int
+    structure_code: str
+    name_en: str
+    description: Optional[str] = None
+    is_active: bool
+    items_count: int = 0
+    items: Optional[List[SalaryStructureItemOut]] = None
+    created_at: Optional[datetime] = None
+    model_config = ConfigDict(from_attributes=True)
+
+class SalaryStructurePaginatedOut(BaseModel):
+    items: List[SalaryStructureOut]
+    total: int
+    limit: int
+    offset: int
+
+# 3.3 Employee Salary Assignment
+class EmployeeSalaryCreate(BaseModel):
+    employee_id: int
+    structure_id: int
+    gross_salary: Decimal
+    basic_salary: Optional[Decimal] = None
+    effective_from: date
+    effective_to: Optional[date] = None
+    is_active: bool = True
+    notes: Optional[str] = None
+
+class EmployeeSalaryOut(BaseModel):
+    id: int
+    organization_id: int
+    employee_id: int
+    employee_name: Optional[str] = None
+    employee_code: Optional[str] = None
+    department_name: Optional[str] = None
+    designation_title: Optional[str] = None
+    structure_id: int
+    structure_name: Optional[str] = None
+    gross_salary: Decimal
+    basic_salary: Decimal
+    effective_from: date
+    effective_to: Optional[date] = None
+    is_active: bool
+    notes: Optional[str] = None
+    created_at: Optional[datetime] = None
+    model_config = ConfigDict(from_attributes=True)
+
+class EmployeeSalaryPaginatedOut(BaseModel):
+    items: List[EmployeeSalaryOut]
+    total: int
+    limit: int
+    offset: int
+
+# 3.4 Salary Revision
+class SalaryRevisionCreate(BaseModel):
+    employee_id: int
+    revision_type: str = "INCREMENT"
+    effective_date: date
+    new_gross: Decimal
+    remarks: Optional[str] = None
+
+class SalaryRevisionOut(BaseModel):
+    id: int
+    organization_id: int
+    employee_id: int
+    employee_name: Optional[str] = None
+    employee_code: Optional[str] = None
+    revision_type: str
+    effective_date: date
+    previous_gross: Decimal
+    new_gross: Decimal
+    increment_amount: Decimal
+    increment_percent: Decimal
+    approved_by: Optional[int] = None
+    status: str
+    remarks: Optional[str] = None
+    created_at: Optional[datetime] = None
+    model_config = ConfigDict(from_attributes=True)
+
+class SalaryRevisionPaginatedOut(BaseModel):
+    items: List[SalaryRevisionOut]
+    total: int
+    limit: int
+    offset: int
+
+# 3.5 Payroll Period & Workflow
+class PayrollPeriodCreate(BaseModel):
+    period_code: str # 2026-10
+    period_name: str # October 2026
+    year: int
+    month: int
+    start_date: date
+    end_date: date
+    cut_off_date: date
+
+class PayrollPeriodOut(BaseModel):
+    id: int
+    organization_id: int
+    period_code: str
+    period_name: str
+    year: int
+    month: int
+    start_date: date
+    end_date: date
+    cut_off_date: date
+    status: str
+    total_employees: int
+    total_gross: Decimal
+    total_deductions: Decimal
+    total_net_payable: Decimal
+    total_employer_cost: Decimal
+    is_locked: bool
+    locked_at: Optional[datetime] = None
+    created_at: Optional[datetime] = None
+    model_config = ConfigDict(from_attributes=True)
+
+class PayrollPeriodPaginatedOut(BaseModel):
+    items: List[PayrollPeriodOut]
+    total: int
+    limit: int
+    offset: int
+
+# 3.7 - 3.10 & 3.20 Payroll Payslip / Register
+class PayrollPayslipDetailOut(BaseModel):
+    id: int
+    period_id: int
+    employee_id: int
+    employee_name: Optional[str] = None
+    employee_code: Optional[str] = None
+    department_name: Optional[str] = None
+    designation_title: Optional[str] = None
+    gross_salary: Decimal
+    basic_salary: Decimal
+    house_rent: Decimal
+    medical_allowance: Decimal
+    conveyance_allowance: Decimal
+    other_allowances: Decimal
+    overtime_hours: Decimal
+    overtime_amount: Decimal
+    bonus_amount: Decimal
+    arrears_amount: Decimal
+    total_earnings: Decimal
+    unpaid_leave_days: Decimal
+    unpaid_leave_deduction: Decimal
+    income_tax_deduction: Decimal
+    provident_fund_employee: Decimal
+    provident_fund_employer: Decimal
+    staff_loan_recovery: Decimal
+    salary_advance_recovery: Decimal
+    other_deductions: Decimal
+    total_deductions: Decimal
+    net_salary_payable: Decimal
+    bank_name: Optional[str] = None
+    bank_account_no: Optional[str] = None
+    payment_method: str
+    status: str
+    validation_warnings: Optional[Any] = None
+    is_disbursed: bool
+    model_config = ConfigDict(from_attributes=True)
+
+class PayrollPayslipPaginatedOut(BaseModel):
+    items: List[PayrollPayslipDetailOut]
+    total: int
+    limit: int
+    offset: int
+    summary_gross: Decimal = Decimal("0.00")
+    summary_deductions: Decimal = Decimal("0.00")
+    summary_net: Decimal = Decimal("0.00")
+
+# 3.14 Staff Loan
+class StaffLoanCreate(BaseModel):
+    employee_id: int
+    loan_code: str
+    loan_type: str = "EMERGENCY_LOAN"
+    principal_amount: Decimal
+    interest_rate: Decimal = Decimal("0.00")
+    tenure_months: int = 12
+    monthly_installment: Optional[Decimal] = None
+    disbursement_date: date
+    start_recovery_period: str # 2026-10
+
+class StaffLoanOut(BaseModel):
+    id: int
+    organization_id: int
+    employee_id: int
+    employee_name: Optional[str] = None
+    employee_code: Optional[str] = None
+    department_name: Optional[str] = None
+    loan_code: str
+    loan_type: str
+    principal_amount: Decimal
+    interest_rate: Decimal
+    tenure_months: int
+    monthly_installment: Decimal
+    disbursed_amount: Decimal
+    recovered_amount: Decimal
+    remaining_balance: Decimal
+    disbursement_date: date
+    start_recovery_period: str
+    status: str
+    created_at: Optional[datetime] = None
+    model_config = ConfigDict(from_attributes=True)
+
+class StaffLoanPaginatedOut(BaseModel):
+    items: List[StaffLoanOut]
+    total: int
+    limit: int
+    offset: int
+
+# 3.15 Salary Advance
+class SalaryAdvanceCreate(BaseModel):
+    employee_id: int
+    advance_amount: Decimal
+    requested_date: date
+    recovery_period: str
+    reason: Optional[str] = None
+
+class SalaryAdvanceOut(BaseModel):
+    id: int
+    organization_id: int
+    employee_id: int
+    employee_name: Optional[str] = None
+    employee_code: Optional[str] = None
+    advance_amount: Decimal
+    requested_date: date
+    recovery_period: str
+    recovered_amount: Decimal
+    status: str
+    reason: Optional[str] = None
+    created_at: Optional[datetime] = None
+    model_config = ConfigDict(from_attributes=True)
+
+class SalaryAdvancePaginatedOut(BaseModel):
+    items: List[SalaryAdvanceOut]
+    total: int
+    limit: int
+    offset: int
+
+# 3.16 Bonus & Incentives
+class BonusIncentiveCreate(BaseModel):
+    employee_id: int
+    bonus_type: str = "PERFORMANCE_BONUS"
+    period_code: str
+    bonus_amount: Decimal
+    is_taxable: bool = True
+    remarks: Optional[str] = None
+
+class BonusIncentiveOut(BaseModel):
+    id: int
+    organization_id: int
+    employee_id: int
+    employee_name: Optional[str] = None
+    employee_code: Optional[str] = None
+    bonus_type: str
+    period_code: str
+    bonus_amount: Decimal
+    is_taxable: bool
+    status: str
+    remarks: Optional[str] = None
+    created_at: Optional[datetime] = None
+    model_config = ConfigDict(from_attributes=True)
+
+class BonusIncentivePaginatedOut(BaseModel):
+    items: List[BonusIncentiveOut]
+    total: int
+    limit: int
+    offset: int
+
+# 3.11 Tax Configuration
+class TaxSlabCreate(BaseModel):
+    tax_year: str = "2025-2026"
+    slab_name: str
+    min_income: Decimal
+    max_income: Optional[Decimal] = None
+    tax_rate_percent: Decimal
+    gender_applicability: str = "ALL"
+    display_order: int = 10
+    is_active: bool = True
+
+class TaxSlabOut(BaseModel):
+    id: int
+    tax_year: str
+    slab_name: str
+    min_income: Decimal
+    max_income: Optional[Decimal] = None
+    tax_rate_percent: Decimal
+    gender_applicability: str
+    display_order: int
+    is_active: bool
+    model_config = ConfigDict(from_attributes=True)
+
+# 3.18 Workflow Action & Locking
+class PayrollWorkflowActionPayload(BaseModel):
+    action: str # PROCESS, SUBMIT, VERIFY, APPROVE, LOCK, UNLOCK
+    remarks: Optional[str] = None
+
+
+# 3.12 Provident Fund & 3.13 Gratuity & Benefits
+class BenefitPolicyCreate(BaseModel):
+    policy_code: str
+    policy_type: str = "PROVIDENT_FUND" # PROVIDENT_FUND, GRATUITY, HEALTH_INSURANCE, GROUP_LIFE
+    policy_name: str
+    eligibility_months: int = 6
+    employee_contribution_pct: Decimal = Decimal("0.00")
+    employer_contribution_pct: Decimal = Decimal("0.00")
+    vesting_years: Decimal = Decimal("0.0")
+    calculation_basis: str = "BASIC_SALARY"
+    multiplier_per_year: Decimal = Decimal("1.00")
+    is_statutory: bool = True
+    is_active: bool = True
+    description: Optional[str] = None
+
+class BenefitPolicyUpdate(BaseModel):
+    policy_name: Optional[str] = None
+    eligibility_months: Optional[int] = None
+    employee_contribution_pct: Optional[Decimal] = None
+    employer_contribution_pct: Optional[Decimal] = None
+    vesting_years: Optional[Decimal] = None
+    calculation_basis: Optional[str] = None
+    multiplier_per_year: Optional[Decimal] = None
+    is_statutory: Optional[bool] = None
+    is_active: Optional[bool] = None
+    description: Optional[str] = None
+
+class BenefitPolicyOut(BaseModel):
+    id: int
+    organization_id: int
+    policy_code: str
+    policy_type: str
+    policy_name: str
+    eligibility_months: int
+    employee_contribution_pct: Decimal
+    employer_contribution_pct: Decimal
+    vesting_years: Decimal
+    calculation_basis: str
+    multiplier_per_year: Decimal
+    is_statutory: bool
+    is_active: bool
+    description: Optional[str] = None
+    created_at: Optional[datetime] = None
+    model_config = ConfigDict(from_attributes=True)
+
+class BenefitPolicyPaginatedOut(BaseModel):
+    items: List[BenefitPolicyOut]
+    total: int
+    limit: int
+    offset: int
+
+# 3.17 Payroll Validation
+class PayrollValidationException(BaseModel):
+    employee_id: int
+    employee_code: Optional[str] = None
+    employee_name: str
+    department_name: Optional[str] = None
+    issue_type: str # MISSING_BANK_ACCOUNT, NEGATIVE_NET_PAY, UNUSUAL_VARIATION, MISSING_TAX_ID
+    severity: str # WARNING, ERROR, CRITICAL
+    description: str
+
+class PayrollValidationSummaryOut(BaseModel):
+    period_id: int
+    period_code: str
+    total_payslips_checked: int
+    has_blocking_errors: bool
+    error_count: int
+    warning_count: int
+    exceptions: List[PayrollValidationException]
+
+
+

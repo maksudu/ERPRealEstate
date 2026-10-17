@@ -1238,3 +1238,27 @@ class TaxSlab(Base):
     display_order = Column(Integer, nullable=False, default=10)
     is_active = Column(Boolean, nullable=False, default=True)
 
+
+class BenefitPolicy(Base):
+    """
+    3.12 Provident Fund & 3.13 Gratuity & Benefits configuration policies.
+    """
+    __tablename__ = "hr_benefit_policies"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    organization_id = Column(BigInteger, ForeignKey("sys_organizations.id", ondelete="RESTRICT"), nullable=False, default=1, index=True)
+    policy_code = Column(String(50), nullable=False, unique=True)
+    policy_type = Column(String(32), nullable=False, default="PROVIDENT_FUND") # PROVIDENT_FUND, GRATUITY, HEALTH_INSURANCE, GROUP_LIFE
+    policy_name = Column(String(150), nullable=False)
+    eligibility_months = Column(Integer, nullable=False, default=6)
+    employee_contribution_pct = Column(Numeric(5, 2), nullable=False, default=0.00)
+    employer_contribution_pct = Column(Numeric(5, 2), nullable=False, default=0.00)
+    vesting_years = Column(Numeric(4, 1), nullable=False, default=0.0)
+    calculation_basis = Column(String(32), nullable=False, default="BASIC_SALARY")
+    multiplier_per_year = Column(Numeric(4, 2), nullable=False, default=1.00)
+    is_statutory = Column(Boolean, nullable=False, default=True)
+    is_active = Column(Boolean, nullable=False, default=True)
+    description = Column(Text, nullable=True)
+
+    created_at = Column(TIMESTAMP, server_default=func.now())
+    updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())

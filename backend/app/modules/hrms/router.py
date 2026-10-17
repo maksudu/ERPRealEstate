@@ -16,7 +16,9 @@ from app.modules.hrms.models import (
     LabourMusterRoll, Attendance, LeaveApplication, PayrollRun, Payslip,
     DepartmentHeadHistory, DepartmentProjectMapping, DepartmentAuditLog,
     Shift, ShiftAssignment, BiometricDevice, SiteGeofence, HolidayCalendar, AttendanceCorrection,
-    LeaveType, LeavePolicy, LeaveBalance, OvertimeRequest, PayrollInput
+    LeaveType, LeavePolicy, LeaveBalance, OvertimeRequest, PayrollInput,
+    SalaryComponent, SalaryStructure, SalaryStructureItem, EmployeeSalary, SalaryRevision,
+    PayrollPeriod, PayrollPayslip, StaffLoan, SalaryAdvance, BonusIncentive, TaxSlab, BenefitPolicy
 )
 from app.modules.hrms.schemas import (
     CompanyCreate, CompanyUpdate, CompanyOut,
@@ -47,6 +49,18 @@ from app.modules.hrms.schemas import (
     OvertimeRequestCreate, OvertimeRequestUpdate, OvertimeVerify, OvertimeApprove, OvertimeRequestOut, OvertimeRequestPaginatedOut,
     PayrollInputOut, PayrollInputPaginatedOut, PayrollSyncLeaveOTRequest,
     PayrollGenerateRequest, PayrollRunOut, PayslipOut,
+    SalaryComponentCreate, SalaryComponentOut, SalaryComponentPaginatedOut,
+    SalaryStructureCreate, SalaryStructureOut, SalaryStructurePaginatedOut,
+    EmployeeSalaryCreate, EmployeeSalaryOut, EmployeeSalaryPaginatedOut,
+    SalaryRevisionCreate, SalaryRevisionOut, SalaryRevisionPaginatedOut,
+    PayrollPeriodCreate, PayrollPeriodOut, PayrollPeriodPaginatedOut,
+    PayrollPayslipDetailOut, PayrollPayslipPaginatedOut,
+    StaffLoanCreate, StaffLoanOut, StaffLoanPaginatedOut,
+    SalaryAdvanceCreate, SalaryAdvanceOut, SalaryAdvancePaginatedOut,
+    BonusIncentiveCreate, BonusIncentiveOut, BonusIncentivePaginatedOut,
+    TaxSlabCreate, TaxSlabOut, PayrollWorkflowActionPayload,
+    BenefitPolicyCreate, BenefitPolicyUpdate, BenefitPolicyOut, BenefitPolicyPaginatedOut,
+    PayrollValidationSummaryOut, PayrollValidationException,
     HRCockpitStats
 )
 from app.modules.hrms.services import HRMSService
@@ -5879,5 +5893,1359 @@ async def vacate_position(
     await db.commit()
     await db.refresh(pos)
     return await get_position_detail(pos.id, db, current_user)
+
+
+# =====================================================================
+# --- Sections 3.1 - 3.20 Salary Structure & Payroll Engine Endpoints ---
+# =====================================================================
+
+# --- 3.1 Salary Components Master ---
+@router.get("/salary-components", response_model=SalaryComponentPaginatedOut)
+async def list_salary_components(
+    component_type: Optional[str] = None,
+    is_active: Optional[bool] = None,
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    q = select(SalaryComponent).where(SalaryComponent.organization_id == org_id)
+    if component_type:
+        q = q.where(SalaryComponent.component_type == component_type)
+    if is_active is not None:
+        q = q.where(SalaryComponent.is_active == is_active)
+
+    cnt_q = select(func.count()).select_from(q.subquery())
+    total_res = await db.execute(cnt_q)
+    total = total_res.scalar_one() or 0
+
+    items_res = await db.execute(q.order_by(SalaryComponent.sort_order, SalaryComponent.id).limit(limit).offset(offset))
+    items = items_res.scalars().all()
+    return SalaryComponentPaginatedOut(items=items, total=total, limit=limit, offset=offset)
+
+
+@router.post("/salary-components", response_model=SalaryComponentOut, status_code=status.HTTP_201_CREATED)
+async def create_salary_component(
+    payload: SalaryComponentCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    existing = await db.execute(select(SalaryComponent).where(
+        SalaryComponent.organization_id == org_id,
+        SalaryComponent.component_code == payload.component_code.strip().upper()
+    ))
+    if existing.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail="Component code already exists in your organization.")
+
+    comp = SalaryComponent(
+        organization_id=org_id,
+        component_code=payload.component_code.strip().upper(),
+        name_en=payload.name_en,
+        name_bn=payload.name_bn,
+        component_type=payload.component_type,
+        calculation_type=payload.calculation_type,
+        default_value_or_percent=payload.default_value_or_percent,
+        is_taxable=payload.is_taxable,
+        is_statutory=payload.is_statutory,
+        sort_order=payload.sort_order,
+        is_active=payload.is_active
+    )
+    db.add(comp)
+    await db.commit()
+    await db.refresh(comp)
+    return comp
+
+
+@router.put("/salary-components/{id}", response_model=SalaryComponentOut)
+async def update_salary_component(
+    id: int,
+    payload: SalaryComponentCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    comp = await db.get(SalaryComponent, id)
+    if not comp or comp.organization_id != org_id:
+        raise HTTPException(status_code=404, detail="Salary component not found.")
+
+    comp.name_en = payload.name_en
+    comp.name_bn = payload.name_bn
+    comp.component_type = payload.component_type
+    comp.calculation_type = payload.calculation_type
+    comp.default_value_or_percent = payload.default_value_or_percent
+    comp.is_taxable = payload.is_taxable
+    comp.is_statutory = payload.is_statutory
+    comp.sort_order = payload.sort_order
+    comp.is_active = payload.is_active
+
+    await db.commit()
+    await db.refresh(comp)
+    return comp
+
+
+@router.delete("/salary-components/{id}")
+async def delete_salary_component(
+    id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    comp = await db.get(SalaryComponent, id)
+    if not comp or comp.organization_id != org_id:
+        raise HTTPException(status_code=404, detail="Salary component not found.")
+    comp.is_active = False
+    await db.commit()
+    return {"message": "Salary component deactivated successfully."}
+
+
+# --- 3.2 Salary Structure Master ---
+@router.get("/salary-structures", response_model=SalaryStructurePaginatedOut)
+async def list_salary_structures(
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    q = select(SalaryStructure).where(SalaryStructure.organization_id == org_id)
+
+    cnt_q = select(func.count()).select_from(q.subquery())
+    total_res = await db.execute(cnt_q)
+    total = total_res.scalar_one() or 0
+
+    items_res = await db.execute(q.order_by(SalaryStructure.id).limit(limit).offset(offset))
+    structures = items_res.scalars().all()
+
+    out_items = []
+    for s in structures:
+        # Load items
+        items_q = select(SalaryStructureItem).where(SalaryStructureItem.structure_id == s.id)
+        s_items_res = await db.execute(items_q)
+        s_items = s_items_res.scalars().all()
+
+        item_outs = []
+        for it in s_items:
+            comp = await db.get(SalaryComponent, it.component_id)
+            item_outs.append(SalaryStructureItemOut(
+                id=it.id,
+                component_id=it.component_id,
+                component_code=comp.component_code if comp else None,
+                component_name=comp.name_en if comp else None,
+                component_type=comp.component_type if comp else None,
+                calculation_type=it.calculation_type,
+                value_or_percent=it.value_or_percent
+            ))
+
+        out_items.append(SalaryStructureOut(
+            id=s.id,
+            organization_id=s.organization_id,
+            structure_code=s.structure_code,
+            name_en=s.name_en,
+            description=s.description,
+            is_active=s.is_active,
+            items_count=len(item_outs),
+            items=item_outs,
+            created_at=s.created_at
+        ))
+
+    return SalaryStructurePaginatedOut(items=out_items, total=total, limit=limit, offset=offset)
+
+
+@router.post("/salary-structures", response_model=SalaryStructureOut, status_code=status.HTTP_201_CREATED)
+async def create_salary_structure(
+    payload: SalaryStructureCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    struct = SalaryStructure(
+        organization_id=org_id,
+        structure_code=payload.structure_code.strip().upper(),
+        name_en=payload.name_en,
+        description=payload.description,
+        is_active=payload.is_active
+    )
+    db.add(struct)
+    await db.commit()
+    await db.refresh(struct)
+
+    if payload.items:
+        for it in payload.items:
+            db.add(SalaryStructureItem(
+                structure_id=struct.id,
+                component_id=it.component_id,
+                calculation_type=it.calculation_type,
+                value_or_percent=it.value_or_percent
+            ))
+        await db.commit()
+
+    return SalaryStructureOut(
+        id=struct.id,
+        organization_id=struct.organization_id,
+        structure_code=struct.structure_code,
+        name_en=struct.name_en,
+        description=struct.description,
+        is_active=struct.is_active,
+        items_count=len(payload.items or []),
+        created_at=struct.created_at
+    )
+
+
+# --- 3.3 Employee Salary Assignment ---
+@router.get("/employee-salaries", response_model=EmployeeSalaryPaginatedOut)
+async def list_employee_salaries(
+    employee_id: Optional[int] = None,
+    structure_id: Optional[int] = None,
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    q = select(EmployeeSalary).where(EmployeeSalary.organization_id == org_id)
+    if employee_id:
+        q = q.where(EmployeeSalary.employee_id == employee_id)
+    if structure_id:
+        q = q.where(EmployeeSalary.structure_id == structure_id)
+
+    cnt_q = select(func.count()).select_from(q.subquery())
+    total_res = await db.execute(cnt_q)
+    total = total_res.scalar_one() or 0
+
+    items_res = await db.execute(q.order_by(desc(EmployeeSalary.id)).limit(limit).offset(offset))
+    salaries = items_res.scalars().all()
+
+    out_items = []
+    for es in salaries:
+        emp = es.employee
+        struct = es.structure
+        out_items.append(EmployeeSalaryOut(
+            id=es.id,
+            organization_id=es.organization_id,
+            employee_id=es.employee_id,
+            employee_name=f"{emp.first_name} {emp.last_name or ''}".strip() if emp else None,
+            employee_code=emp.employee_code if emp else None,
+            department_name=emp.department.name_en if emp and emp.department else None,
+            designation_title=emp.designation.title_en if emp and emp.designation else None,
+            structure_id=es.structure_id,
+            structure_name=struct.name_en if struct else None,
+            gross_salary=es.gross_salary,
+            basic_salary=es.basic_salary,
+            effective_from=es.effective_from,
+            effective_to=es.effective_to,
+            is_active=es.is_active,
+            notes=es.notes,
+            created_at=es.created_at
+        ))
+
+    return EmployeeSalaryPaginatedOut(items=out_items, total=total, limit=limit, offset=offset)
+
+
+@router.post("/employee-salaries", response_model=EmployeeSalaryOut, status_code=status.HTTP_201_CREATED)
+async def assign_employee_salary(
+    payload: EmployeeSalaryCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    basic = payload.basic_salary or (payload.gross_salary * Decimal("0.50"))
+
+    # Deactivate previous active salary
+    prev_q = select(EmployeeSalary).where(
+        EmployeeSalary.organization_id == org_id,
+        EmployeeSalary.employee_id == payload.employee_id,
+        EmployeeSalary.is_active == True
+    )
+    prev_res = await db.execute(prev_q)
+    for p in prev_res.scalars().all():
+        p.is_active = False
+
+    es = EmployeeSalary(
+        organization_id=org_id,
+        employee_id=payload.employee_id,
+        structure_id=payload.structure_id,
+        gross_salary=payload.gross_salary,
+        basic_salary=basic,
+        effective_from=payload.effective_from,
+        effective_to=payload.effective_to,
+        is_active=payload.is_active,
+        notes=payload.notes
+    )
+    db.add(es)
+
+    # Also sync to Employee.basic_salary and gross_salary
+    emp = await db.get(Employee, payload.employee_id)
+    if emp:
+        emp.basic_salary = basic
+
+    await db.commit()
+    await db.refresh(es)
+
+    return EmployeeSalaryOut(
+        id=es.id,
+        organization_id=es.organization_id,
+        employee_id=es.employee_id,
+        employee_name=f"{emp.first_name} {emp.last_name or ''}".strip() if emp else None,
+        employee_code=emp.employee_code if emp else None,
+        structure_id=es.structure_id,
+        gross_salary=es.gross_salary,
+        basic_salary=es.basic_salary,
+        effective_from=es.effective_from,
+        effective_to=es.effective_to,
+        is_active=es.is_active,
+        notes=es.notes,
+        created_at=es.created_at
+    )
+
+
+# --- 3.4 Salary Revision ---
+@router.get("/salary-revisions", response_model=SalaryRevisionPaginatedOut)
+async def list_salary_revisions(
+    employee_id: Optional[int] = None,
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    q = select(SalaryRevision).where(SalaryRevision.organization_id == org_id)
+    if employee_id:
+        q = q.where(SalaryRevision.employee_id == employee_id)
+
+    cnt_q = select(func.count()).select_from(q.subquery())
+    total_res = await db.execute(cnt_q)
+    total = total_res.scalar_one() or 0
+
+    items_res = await db.execute(q.order_by(desc(SalaryRevision.id)).limit(limit).offset(offset))
+    revs = items_res.scalars().all()
+
+    out_items = []
+    for r in revs:
+        emp = r.employee
+        out_items.append(SalaryRevisionOut(
+            id=r.id,
+            organization_id=r.organization_id,
+            employee_id=r.employee_id,
+            employee_name=f"{emp.first_name} {emp.last_name or ''}".strip() if emp else None,
+            employee_code=emp.employee_code if emp else None,
+            revision_type=r.revision_type,
+            effective_date=r.effective_date,
+            previous_gross=r.previous_gross,
+            new_gross=r.new_gross,
+            increment_amount=r.increment_amount,
+            increment_percent=r.increment_percent,
+            approved_by=r.approved_by,
+            status=r.status,
+            remarks=r.remarks,
+            created_at=r.created_at
+        ))
+
+    return SalaryRevisionPaginatedOut(items=out_items, total=total, limit=limit, offset=offset)
+
+
+@router.post("/salary-revisions", response_model=SalaryRevisionOut, status_code=status.HTTP_201_CREATED)
+async def create_salary_revision(
+    payload: SalaryRevisionCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    # Find current active salary
+    cur_sal_q = select(EmployeeSalary).where(
+        EmployeeSalary.organization_id == org_id,
+        EmployeeSalary.employee_id == payload.employee_id,
+        EmployeeSalary.is_active == True
+    )
+    cur_res = await db.execute(cur_sal_q)
+    cur_sal = cur_res.scalar_one_or_none()
+
+    prev_gross = cur_sal.gross_salary if cur_sal else Decimal("0.00")
+    inc_amt = payload.new_gross - prev_gross
+    inc_pct = (inc_amt / prev_gross * Decimal("100.00")) if prev_gross > 0 else Decimal("0.00")
+
+    rev = SalaryRevision(
+        organization_id=org_id,
+        employee_id=payload.employee_id,
+        revision_type=payload.revision_type,
+        effective_date=payload.effective_date,
+        previous_gross=prev_gross,
+        new_gross=payload.new_gross,
+        increment_amount=inc_amt,
+        increment_percent=inc_pct,
+        approved_by=current_user.id if current_user else 1,
+        status="APPROVED",
+        remarks=payload.remarks
+    )
+    db.add(rev)
+
+    # Automatically update employee active salary
+    if cur_sal:
+        cur_sal.gross_salary = payload.new_gross
+        cur_sal.basic_salary = payload.new_gross * Decimal("0.50")
+    else:
+        struct_res = await db.execute(select(SalaryStructure.id).where(SalaryStructure.organization_id == org_id).limit(1))
+        sid = struct_res.scalar() or 1
+        new_es = EmployeeSalary(
+            organization_id=org_id,
+            employee_id=payload.employee_id,
+            structure_id=sid,
+            gross_salary=payload.new_gross,
+            basic_salary=payload.new_gross * Decimal("0.50"),
+            effective_from=payload.effective_date,
+            is_active=True
+        )
+        db.add(new_es)
+
+    emp = await db.get(Employee, payload.employee_id)
+    if emp:
+        emp.basic_salary = payload.new_gross * Decimal("0.50")
+
+    await db.commit()
+    await db.refresh(rev)
+
+    return SalaryRevisionOut(
+        id=rev.id,
+        organization_id=rev.organization_id,
+        employee_id=rev.employee_id,
+        employee_name=f"{emp.first_name} {emp.last_name or ''}".strip() if emp else None,
+        employee_code=emp.employee_code if emp else None,
+        revision_type=rev.revision_type,
+        effective_date=rev.effective_date,
+        previous_gross=rev.previous_gross,
+        new_gross=rev.new_gross,
+        increment_amount=rev.increment_amount,
+        increment_percent=rev.increment_percent,
+        approved_by=rev.approved_by,
+        status=rev.status,
+        remarks=rev.remarks,
+        created_at=rev.created_at
+    )
+
+
+# --- 3.5, 3.18, 3.19 Payroll Period & Workflow Engine ---
+@router.get("/payroll-periods", response_model=PayrollPeriodPaginatedOut)
+async def list_payroll_periods(
+    year: Optional[int] = None,
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    q = select(PayrollPeriod).where(PayrollPeriod.organization_id == org_id)
+    if year:
+        q = q.where(PayrollPeriod.year == year)
+
+    cnt_q = select(func.count()).select_from(q.subquery())
+    total_res = await db.execute(cnt_q)
+    total = total_res.scalar_one() or 0
+
+    items_res = await db.execute(q.order_by(desc(PayrollPeriod.year), desc(PayrollPeriod.month)).limit(limit).offset(offset))
+    items = items_res.scalars().all()
+    return PayrollPeriodPaginatedOut(items=items, total=total, limit=limit, offset=offset)
+
+
+@router.post("/payroll-periods", response_model=PayrollPeriodOut, status_code=status.HTTP_201_CREATED)
+async def create_payroll_period(
+    payload: PayrollPeriodCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    existing = await db.execute(select(PayrollPeriod).where(
+        PayrollPeriod.organization_id == org_id,
+        PayrollPeriod.period_code == payload.period_code
+    ))
+    if existing.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail=f"Payroll period {payload.period_code} already exists.")
+
+    period = PayrollPeriod(
+        organization_id=org_id,
+        period_code=payload.period_code,
+        period_name=payload.period_name,
+        year=payload.year,
+        month=payload.month,
+        start_date=payload.start_date,
+        end_date=payload.end_date,
+        cut_off_date=payload.cut_off_date,
+        status="DRAFT",
+        prepared_by=current_user.id if current_user else 1,
+        prepared_at=datetime.utcnow()
+    )
+    db.add(period)
+    await db.commit()
+    await db.refresh(period)
+    return period
+
+
+@router.post("/payroll-periods/{id}/workflow", response_model=PayrollPeriodOut)
+async def execute_payroll_workflow(
+    id: int,
+    payload: PayrollWorkflowActionPayload,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    period = await db.get(PayrollPeriod, id)
+    if not period or period.organization_id != org_id:
+        raise HTTPException(status_code=404, detail="Payroll period not found.")
+
+    if period.is_locked and payload.action not in ["UNLOCK"]:
+        raise HTTPException(status_code=400, detail="Period is locked. Unlock required to make changes.")
+
+    act = payload.action.upper()
+
+    if act == "PROCESS":
+        # 3.7 - 3.10 Engine Calculation
+        period.status = "PROCESSING"
+        
+        # Load all active employees
+        emps_q = select(Employee).where(Employee.organization_id == org_id)
+        emps_res = await db.execute(emps_q)
+        employees = emps_res.scalars().all()
+
+        tot_gross = Decimal("0.00")
+        tot_ded = Decimal("0.00")
+        tot_net = Decimal("0.00")
+        tot_employer = Decimal("0.00")
+        slip_count = 0
+
+        for emp in employees:
+            if emp.status in ["TERMINATED", "RESIGNED"]:
+                continue
+
+            # 1. Salary structure / base earnings
+            sal_q = select(EmployeeSalary).where(
+                EmployeeSalary.organization_id == org_id,
+                EmployeeSalary.employee_id == emp.id,
+                EmployeeSalary.is_active == True
+            )
+            sal_res = await db.execute(sal_q)
+            sal = sal_res.scalar_one_or_none()
+
+            gross = sal.gross_salary if sal else Decimal(emp.basic_salary or 50000) * Decimal("1.6")
+            basic = sal.basic_salary if sal else Decimal(emp.basic_salary or 50000)
+            house_rent = basic * Decimal("0.50")
+            medical = basic * Decimal("0.20")
+            conveyance = basic * Decimal("0.10")
+            other_allow = gross - (basic + house_rent + medical + conveyance)
+            if other_allow < 0:
+                other_allow = Decimal("0.00")
+
+            # 2. Overtime & Unpaid Leave from hr_payroll_inputs
+            pi_q = select(PayrollInput).where(
+                PayrollInput.organization_id == org_id,
+                PayrollInput.employee_id == emp.id,
+                PayrollInput.month == period.month,
+                PayrollInput.year == period.year
+            )
+            pi_res = await db.execute(pi_q)
+            pi = pi_res.scalar_one_or_none()
+
+            ot_hours = pi.approved_overtime_hours if pi else Decimal("0.00")
+            ot_amount = pi.overtime_amount if pi else Decimal("0.00")
+            unpaid_days = pi.unpaid_leave_days if pi else Decimal("0.00")
+            unpaid_ded = (gross / Decimal("30.00")) * unpaid_days
+
+            # 3. Bonuses & Incentives
+            bon_q = select(func.sum(BonusIncentive.bonus_amount)).where(
+                BonusIncentive.organization_id == org_id,
+                BonusIncentive.employee_id == emp.id,
+                BonusIncentive.period_code == period.period_code,
+                BonusIncentive.status == "APPROVED"
+            )
+            bon_res = await db.execute(bon_q)
+            bonus_amt = bon_res.scalar() or Decimal("0.00")
+
+            # 4. Total Earnings
+            earnings = gross + ot_amount + bonus_amt
+
+            # 5. Deductions
+            # Provident Fund: 10% basic
+            pf_emp = basic * Decimal("0.10")
+            pf_comp = basic * Decimal("0.10")
+
+            # Income Tax TDS
+            tax_tds = gross * Decimal("0.05") if gross > Decimal("30000.00") else Decimal("0.00")
+
+            # Staff Loan EMI
+            loan_q = select(StaffLoan).where(
+                StaffLoan.organization_id == org_id,
+                StaffLoan.employee_id == emp.id,
+                StaffLoan.status == "ACTIVE"
+            )
+            loan_res = await db.execute(loan_q)
+            loans = loan_res.scalars().all()
+            loan_ded = Decimal("0.00")
+            for l in loans:
+                installment = min(l.monthly_installment, l.remaining_balance)
+                loan_ded += installment
+
+            # Salary Advance
+            adv_q = select(SalaryAdvance).where(
+                SalaryAdvance.organization_id == org_id,
+                SalaryAdvance.employee_id == emp.id,
+                SalaryAdvance.recovery_period == period.period_code,
+                SalaryAdvance.status == "APPROVED"
+            )
+            adv_res = await db.execute(adv_q)
+            advs = adv_res.scalars().all()
+            adv_ded = sum((a.advance_amount - a.recovered_amount for a in advs), Decimal("0.00"))
+
+            total_deductions = unpaid_ded + pf_emp + tax_tds + loan_ded + adv_ded
+            net_payable = earnings - total_deductions
+
+            # Validation Warnings Check
+            warnings = []
+            if not emp.bank_account_no:
+                warnings.append("Missing Bank Account Details")
+            if net_payable <= 0:
+                warnings.append("Zero or Negative Net Salary Payable")
+
+            # Insert or update Payslip
+            ps_q = select(PayrollPayslip).where(
+                PayrollPayslip.period_id == period.id,
+                PayrollPayslip.employee_id == emp.id
+            )
+            ps_res = await db.execute(ps_q)
+            ps = ps_res.scalar_one_or_none()
+            if not ps:
+                ps = PayrollPayslip(
+                    organization_id=org_id,
+                    period_id=period.id,
+                    employee_id=emp.id
+                )
+                db.add(ps)
+
+            ps.gross_salary = gross
+            ps.basic_salary = basic
+            ps.house_rent = house_rent
+            ps.medical_allowance = medical
+            ps.conveyance_allowance = conveyance
+            ps.other_allowances = other_allow
+            ps.overtime_hours = ot_hours
+            ps.overtime_amount = ot_amount
+            ps.bonus_amount = bonus_amt
+            ps.total_earnings = earnings
+            ps.unpaid_leave_days = unpaid_days
+            ps.unpaid_leave_deduction = unpaid_ded
+            ps.income_tax_deduction = tax_tds
+            ps.provident_fund_employee = pf_emp
+            ps.provident_fund_employer = pf_comp
+            ps.staff_loan_recovery = loan_ded
+            ps.salary_advance_recovery = adv_ded
+            ps.total_deductions = total_deductions
+            ps.net_salary_payable = net_payable
+            ps.bank_name = emp.bank_name
+            ps.bank_account_no = emp.bank_account_no
+            ps.status = "CALCULATED"
+            ps.validation_warnings = warnings
+
+            tot_gross += earnings
+            tot_ded += total_deductions
+            tot_net += net_payable
+            tot_employer += pf_comp
+            slip_count += 1
+
+        period.total_employees = slip_count
+        period.total_gross = tot_gross
+        period.total_deductions = tot_ded
+        period.total_net_payable = tot_net
+        period.total_employer_cost = tot_employer
+        period.status = "SUBMITTED"
+
+    elif act == "SUBMIT":
+        period.status = "SUBMITTED"
+        period.prepared_by = current_user.id if current_user else 1
+        period.prepared_at = datetime.utcnow()
+
+    elif act == "VERIFY":
+        period.status = "VERIFIED"
+        period.verified_by = current_user.id if current_user else 1
+        period.verified_at = datetime.utcnow()
+
+    elif act == "APPROVE":
+        period.status = "APPROVED"
+        period.approved_by = current_user.id if current_user else 1
+        period.approved_at = datetime.utcnow()
+
+    elif act == "LOCK":
+        period.status = "LOCKED"
+        period.is_locked = True
+        period.locked_at = datetime.utcnow()
+
+    elif act == "UNLOCK":
+        period.status = "APPROVED"
+        period.is_locked = False
+        period.locked_at = None
+
+    await db.commit()
+    await db.refresh(period)
+    return period
+
+
+# --- 3.7 - 3.10 & 3.20 Payroll Register & Payslips ---
+@router.get("/payroll-periods/{period_id}/payslips", response_model=PayrollPayslipPaginatedOut)
+async def list_payroll_period_payslips(
+    period_id: int,
+    employee_id: Optional[int] = None,
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    q = select(PayrollPayslip).where(
+        PayrollPayslip.organization_id == org_id,
+        PayrollPayslip.period_id == period_id
+    )
+    if employee_id:
+        q = q.where(PayrollPayslip.employee_id == employee_id)
+
+    cnt_q = select(func.count()).select_from(q.subquery())
+    total_res = await db.execute(cnt_q)
+    total = total_res.scalar_one() or 0
+
+    items_res = await db.execute(q.order_by(PayrollPayslip.employee_id).limit(limit).offset(offset))
+    slips = items_res.scalars().all()
+
+    # Sum aggregates
+    agg_q = select(
+        func.sum(PayrollPayslip.total_earnings),
+        func.sum(PayrollPayslip.total_deductions),
+        func.sum(PayrollPayslip.net_salary_payable)
+    ).where(PayrollPayslip.period_id == period_id)
+    agg_res = await db.execute(agg_q)
+    s_gross, s_ded, s_net = agg_res.first() or (Decimal("0.00"), Decimal("0.00"), Decimal("0.00"))
+
+    out_items = []
+    for ps in slips:
+        emp = ps.employee
+        out_items.append(PayrollPayslipDetailOut(
+            id=ps.id,
+            period_id=ps.period_id,
+            employee_id=ps.employee_id,
+            employee_name=f"{emp.first_name} {emp.last_name or ''}".strip() if emp else None,
+            employee_code=emp.employee_code if emp else None,
+            department_name=emp.department.name_en if emp and emp.department else None,
+            designation_title=emp.designation.title_en if emp and emp.designation else None,
+            gross_salary=ps.gross_salary,
+            basic_salary=ps.basic_salary,
+            house_rent=ps.house_rent,
+            medical_allowance=ps.medical_allowance,
+            conveyance_allowance=ps.conveyance_allowance,
+            other_allowances=ps.other_allowances,
+            overtime_hours=ps.overtime_hours,
+            overtime_amount=ps.overtime_amount,
+            bonus_amount=ps.bonus_amount,
+            arrears_amount=ps.arrears_amount,
+            total_earnings=ps.total_earnings,
+            unpaid_leave_days=ps.unpaid_leave_days,
+            unpaid_leave_deduction=ps.unpaid_leave_deduction,
+            income_tax_deduction=ps.income_tax_deduction,
+            provident_fund_employee=ps.provident_fund_employee,
+            provident_fund_employer=ps.provident_fund_employer,
+            staff_loan_recovery=ps.staff_loan_recovery,
+            salary_advance_recovery=ps.salary_advance_recovery,
+            other_deductions=ps.other_deductions,
+            total_deductions=ps.total_deductions,
+            net_salary_payable=ps.net_salary_payable,
+            bank_name=ps.bank_name,
+            bank_account_no=ps.bank_account_no,
+            payment_method=ps.payment_method,
+            status=ps.status,
+            validation_warnings=ps.validation_warnings,
+            is_disbursed=ps.is_disbursed
+        ))
+
+    return PayrollPayslipPaginatedOut(
+        items=out_items,
+        total=total,
+        limit=limit,
+        offset=offset,
+        summary_gross=s_gross or Decimal("0.00"),
+        summary_deductions=s_ded or Decimal("0.00"),
+        summary_net=s_net or Decimal("0.00")
+    )
+
+
+@router.post("/payroll-periods/{period_id}/disburse")
+async def disburse_payroll_period(
+    period_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    period = await db.get(PayrollPeriod, period_id)
+    if not period or period.organization_id != org_id:
+        raise HTTPException(status_code=404, detail="Payroll period not found.")
+
+    slips_q = select(PayrollPayslip).where(PayrollPayslip.period_id == period_id)
+    slips_res = await db.execute(slips_q)
+    slips = slips_res.scalars().all()
+    for s in slips:
+        s.is_disbursed = True
+        s.status = "DISBURSED"
+        s.disbursed_at = datetime.utcnow()
+
+    period.status = "POSTED"
+    await db.commit()
+    return {"message": f"Successfully disbursed {len(slips)} payslips for {period.period_code}."}
+
+
+# --- 3.14 Staff Loans ---
+@router.get("/staff-loans", response_model=StaffLoanPaginatedOut)
+async def list_staff_loans(
+    employee_id: Optional[int] = None,
+    status: Optional[str] = None,
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    q = select(StaffLoan).where(StaffLoan.organization_id == org_id)
+    if employee_id:
+        q = q.where(StaffLoan.employee_id == employee_id)
+    if status:
+        q = q.where(StaffLoan.status == status)
+
+    cnt_q = select(func.count()).select_from(q.subquery())
+    total_res = await db.execute(cnt_q)
+    total = total_res.scalar_one() or 0
+
+    items_res = await db.execute(q.order_by(desc(StaffLoan.id)).limit(limit).offset(offset))
+    loans = items_res.scalars().all()
+
+    out_items = []
+    for l in loans:
+        emp = l.employee
+        out_items.append(StaffLoanOut(
+            id=l.id,
+            organization_id=l.organization_id,
+            employee_id=l.employee_id,
+            employee_name=f"{emp.first_name} {emp.last_name or ''}".strip() if emp else None,
+            employee_code=emp.employee_code if emp else None,
+            department_name=emp.department.name_en if emp and emp.department else None,
+            loan_code=l.loan_code,
+            loan_type=l.loan_type,
+            principal_amount=l.principal_amount,
+            interest_rate=l.interest_rate,
+            tenure_months=l.tenure_months,
+            monthly_installment=l.monthly_installment,
+            disbursed_amount=l.disbursed_amount,
+            recovered_amount=l.recovered_amount,
+            remaining_balance=l.remaining_balance,
+            disbursement_date=l.disbursement_date,
+            start_recovery_period=l.start_recovery_period,
+            status=l.status,
+            created_at=l.created_at
+        ))
+
+    return StaffLoanPaginatedOut(items=out_items, total=total, limit=limit, offset=offset)
+
+
+@router.post("/staff-loans", response_model=StaffLoanOut, status_code=status.HTTP_201_CREATED)
+async def create_staff_loan(
+    payload: StaffLoanCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    installment = payload.monthly_installment or (payload.principal_amount / Decimal(payload.tenure_months or 12))
+    loan = StaffLoan(
+        organization_id=org_id,
+        employee_id=payload.employee_id,
+        loan_code=payload.loan_code,
+        loan_type=payload.loan_type,
+        principal_amount=payload.principal_amount,
+        interest_rate=payload.interest_rate,
+        tenure_months=payload.tenure_months,
+        monthly_installment=installment,
+        disbursed_amount=payload.principal_amount,
+        recovered_amount=Decimal("0.00"),
+        remaining_balance=payload.principal_amount,
+        disbursement_date=payload.disbursement_date,
+        start_recovery_period=payload.start_recovery_period,
+        status="ACTIVE"
+    )
+    db.add(loan)
+    await db.commit()
+    await db.refresh(loan)
+    emp = await db.get(Employee, loan.employee_id)
+    return StaffLoanOut(
+        id=loan.id,
+        organization_id=loan.organization_id,
+        employee_id=loan.employee_id,
+        employee_name=f"{emp.first_name} {emp.last_name or ''}".strip() if emp else None,
+        employee_code=emp.employee_code if emp else None,
+        loan_code=loan.loan_code,
+        loan_type=loan.loan_type,
+        principal_amount=loan.principal_amount,
+        interest_rate=loan.interest_rate,
+        tenure_months=loan.tenure_months,
+        monthly_installment=loan.monthly_installment,
+        disbursed_amount=loan.disbursed_amount,
+        recovered_amount=loan.recovered_amount,
+        remaining_balance=loan.remaining_balance,
+        disbursement_date=loan.disbursement_date,
+        start_recovery_period=loan.start_recovery_period,
+        status=loan.status,
+        created_at=loan.created_at
+    )
+
+
+# --- 3.15 Salary Advances ---
+@router.get("/salary-advances", response_model=SalaryAdvancePaginatedOut)
+async def list_salary_advances(
+    employee_id: Optional[int] = None,
+    recovery_period: Optional[str] = None,
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    q = select(SalaryAdvance).where(SalaryAdvance.organization_id == org_id)
+    if employee_id:
+        q = q.where(SalaryAdvance.employee_id == employee_id)
+    if recovery_period:
+        q = q.where(SalaryAdvance.recovery_period == recovery_period)
+
+    cnt_q = select(func.count()).select_from(q.subquery())
+    total_res = await db.execute(cnt_q)
+    total = total_res.scalar_one() or 0
+
+    items_res = await db.execute(q.order_by(desc(SalaryAdvance.id)).limit(limit).offset(offset))
+    advs = items_res.scalars().all()
+
+    out_items = []
+    for a in advs:
+        emp = a.employee
+        out_items.append(SalaryAdvanceOut(
+            id=a.id,
+            organization_id=a.organization_id,
+            employee_id=a.employee_id,
+            employee_name=f"{emp.first_name} {emp.last_name or ''}".strip() if emp else None,
+            employee_code=emp.employee_code if emp else None,
+            advance_amount=a.advance_amount,
+            requested_date=a.requested_date,
+            recovery_period=a.recovery_period,
+            recovered_amount=a.recovered_amount,
+            status=a.status,
+            reason=a.reason,
+            created_at=a.created_at
+        ))
+
+    return SalaryAdvancePaginatedOut(items=out_items, total=total, limit=limit, offset=offset)
+
+
+@router.post("/salary-advances", response_model=SalaryAdvanceOut, status_code=status.HTTP_201_CREATED)
+async def create_salary_advance(
+    payload: SalaryAdvanceCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    adv = SalaryAdvance(
+        organization_id=org_id,
+        employee_id=payload.employee_id,
+        advance_amount=payload.advance_amount,
+        requested_date=payload.requested_date,
+        recovery_period=payload.recovery_period,
+        recovered_amount=Decimal("0.00"),
+        status="APPROVED",
+        reason=payload.reason
+    )
+    db.add(adv)
+    await db.commit()
+    await db.refresh(adv)
+    emp = await db.get(Employee, adv.employee_id)
+    return SalaryAdvanceOut(
+        id=adv.id,
+        organization_id=adv.organization_id,
+        employee_id=adv.employee_id,
+        employee_name=f"{emp.first_name} {emp.last_name or ''}".strip() if emp else None,
+        employee_code=emp.employee_code if emp else None,
+        advance_amount=adv.advance_amount,
+        requested_date=adv.requested_date,
+        recovery_period=adv.recovery_period,
+        recovered_amount=adv.recovered_amount,
+        status=adv.status,
+        reason=adv.reason,
+        created_at=adv.created_at
+    )
+
+
+# --- 3.16 Bonuses & Incentives ---
+@router.get("/bonuses-incentives", response_model=BonusIncentivePaginatedOut)
+async def list_bonuses_incentives(
+    period_code: Optional[str] = None,
+    bonus_type: Optional[str] = None,
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    q = select(BonusIncentive).where(BonusIncentive.organization_id == org_id)
+    if period_code:
+        q = q.where(BonusIncentive.period_code == period_code)
+    if bonus_type:
+        q = q.where(BonusIncentive.bonus_type == bonus_type)
+
+    cnt_q = select(func.count()).select_from(q.subquery())
+    total_res = await db.execute(cnt_q)
+    total = total_res.scalar_one() or 0
+
+    items_res = await db.execute(q.order_by(desc(BonusIncentive.id)).limit(limit).offset(offset))
+    bonuses = items_res.scalars().all()
+
+    out_items = []
+    for b in bonuses:
+        emp = b.employee
+        out_items.append(BonusIncentiveOut(
+            id=b.id,
+            organization_id=b.organization_id,
+            employee_id=b.employee_id,
+            employee_name=f"{emp.first_name} {emp.last_name or ''}".strip() if emp else None,
+            employee_code=emp.employee_code if emp else None,
+            bonus_type=b.bonus_type,
+            period_code=b.period_code,
+            bonus_amount=b.bonus_amount,
+            is_taxable=b.is_taxable,
+            status=b.status,
+            remarks=b.remarks,
+            created_at=b.created_at
+        ))
+
+    return BonusIncentivePaginatedOut(items=out_items, total=total, limit=limit, offset=offset)
+
+
+@router.post("/bonuses-incentives", response_model=BonusIncentiveOut, status_code=status.HTTP_201_CREATED)
+async def create_bonus_incentive(
+    payload: BonusIncentiveCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    bon = BonusIncentive(
+        organization_id=org_id,
+        employee_id=payload.employee_id,
+        bonus_type=payload.bonus_type,
+        period_code=payload.period_code,
+        bonus_amount=payload.bonus_amount,
+        is_taxable=payload.is_taxable,
+        status="APPROVED",
+        remarks=payload.remarks
+    )
+    db.add(bon)
+    await db.commit()
+    await db.refresh(bon)
+    emp = await db.get(Employee, bon.employee_id)
+    return BonusIncentiveOut(
+        id=bon.id,
+        organization_id=bon.organization_id,
+        employee_id=bon.employee_id,
+        employee_name=f"{emp.first_name} {emp.last_name or ''}".strip() if emp else None,
+        employee_code=emp.employee_code if emp else None,
+        bonus_type=bon.bonus_type,
+        period_code=bon.period_code,
+        bonus_amount=bon.bonus_amount,
+        is_taxable=bon.is_taxable,
+        status=bon.status,
+        remarks=bon.remarks,
+        created_at=bon.created_at
+    )
+
+
+# --- 3.11 Tax Configuration Slabs ---
+@router.get("/tax-slabs", response_model=List[TaxSlabOut])
+async def list_tax_slabs(
+    tax_year: str = Query("2025-2026"),
+    db: AsyncSession = Depends(get_db)
+):
+    q = select(TaxSlab).where(TaxSlab.tax_year == tax_year, TaxSlab.is_active == True).order_by(TaxSlab.display_order)
+    res = await db.execute(q)
+    return res.scalars().all()
+
+
+@router.post("/tax-slabs", response_model=TaxSlabOut, status_code=status.HTTP_201_CREATED)
+async def create_tax_slab(
+    payload: TaxSlabCreate,
+    db: AsyncSession = Depends(get_db)
+):
+    slab = TaxSlab(
+        tax_year=payload.tax_year,
+        slab_name=payload.slab_name,
+        min_income=payload.min_income,
+        max_income=payload.max_income,
+        tax_rate_percent=payload.tax_rate_percent,
+        gender_applicability=payload.gender_applicability,
+        display_order=payload.display_order,
+        is_active=payload.is_active
+    )
+    db.add(slab)
+    await db.commit()
+    await db.refresh(slab)
+    return slab
+
+
+@router.put("/tax-slabs/{slab_id}", response_model=TaxSlabOut)
+async def update_tax_slab(
+    slab_id: int,
+    payload: TaxSlabCreate,
+    db: AsyncSession = Depends(get_db)
+):
+    slab = await db.get(TaxSlab, slab_id)
+    if not slab:
+        raise HTTPException(status_code=404, detail="Tax slab not found")
+    slab.tax_year = payload.tax_year
+    slab.slab_name = payload.slab_name
+    slab.min_income = payload.min_income
+    slab.max_income = payload.max_income
+    slab.tax_rate_percent = payload.tax_rate_percent
+    slab.gender_applicability = payload.gender_applicability
+    slab.display_order = payload.display_order
+    slab.is_active = payload.is_active
+    await db.commit()
+    await db.refresh(slab)
+    return slab
+
+
+# --- 3.14 Staff Loan Update ---
+@router.put("/staff-loans/{loan_id}", response_model=StaffLoanOut)
+async def update_staff_loan(
+    loan_id: int,
+    payload: StaffLoanCreate,
+    db: AsyncSession = Depends(get_db)
+):
+    loan = await db.get(StaffLoan, loan_id)
+    if not loan:
+        raise HTTPException(status_code=404, detail="Staff loan not found")
+    loan.loan_type = payload.loan_type
+    loan.principal_amount = payload.principal_amount
+    loan.interest_rate = payload.interest_rate
+    loan.tenure_months = payload.tenure_months
+    if payload.monthly_installment:
+        loan.monthly_installment = payload.monthly_installment
+    loan.start_recovery_period = payload.start_recovery_period
+    await db.commit()
+    await db.refresh(loan)
+    emp = await db.get(Employee, loan.employee_id)
+    return StaffLoanOut(
+        id=loan.id,
+        organization_id=loan.organization_id,
+        employee_id=loan.employee_id,
+        employee_name=f"{emp.first_name} {emp.last_name or ''}".strip() if emp else None,
+        employee_code=emp.employee_code if emp else None,
+        loan_code=loan.loan_code,
+        loan_type=loan.loan_type,
+        principal_amount=loan.principal_amount,
+        interest_rate=loan.interest_rate,
+        tenure_months=loan.tenure_months,
+        monthly_installment=loan.monthly_installment,
+        disbursed_amount=loan.disbursed_amount,
+        recovered_amount=loan.recovered_amount,
+        remaining_balance=loan.remaining_balance,
+        disbursement_date=loan.disbursement_date,
+        start_recovery_period=loan.start_recovery_period,
+        status=loan.status,
+        created_at=loan.created_at
+    )
+
+
+# --- 3.15 Salary Advance Update ---
+@router.put("/salary-advances/{advance_id}", response_model=SalaryAdvanceOut)
+async def update_salary_advance(
+    advance_id: int,
+    payload: SalaryAdvanceCreate,
+    db: AsyncSession = Depends(get_db)
+):
+    adv = await db.get(SalaryAdvance, advance_id)
+    if not adv:
+        raise HTTPException(status_code=404, detail="Salary advance not found")
+    adv.advance_amount = payload.advance_amount
+    adv.recovery_period = payload.recovery_period
+    adv.reason = payload.reason
+    await db.commit()
+    await db.refresh(adv)
+    emp = await db.get(Employee, adv.employee_id)
+    return SalaryAdvanceOut(
+        id=adv.id,
+        organization_id=adv.organization_id,
+        employee_id=adv.employee_id,
+        employee_name=f"{emp.first_name} {emp.last_name or ''}".strip() if emp else None,
+        employee_code=emp.employee_code if emp else None,
+        advance_amount=adv.advance_amount,
+        requested_date=adv.requested_date,
+        recovery_period=adv.recovery_period,
+        recovered_amount=adv.recovered_amount,
+        status=adv.status,
+        reason=adv.reason,
+        created_at=adv.created_at
+    )
+
+
+# --- 3.12 & 3.13 Benefit & Gratuity Policies ---
+@router.get("/benefit-policies", response_model=BenefitPolicyPaginatedOut)
+async def list_benefit_policies(
+    policy_type: Optional[str] = None,
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    q = select(BenefitPolicy).where(BenefitPolicy.organization_id == org_id)
+    if policy_type:
+        q = q.where(BenefitPolicy.policy_type == policy_type)
+
+    cnt_q = select(func.count()).select_from(q.subquery())
+    total_res = await db.execute(cnt_q)
+    total = total_res.scalar_one() or 0
+
+    items_res = await db.execute(q.order_by(BenefitPolicy.id).limit(limit).offset(offset))
+    policies = items_res.scalars().all()
+    return BenefitPolicyPaginatedOut(items=policies, total=total, limit=limit, offset=offset)
+
+
+@router.post("/benefit-policies", response_model=BenefitPolicyOut, status_code=status.HTTP_201_CREATED)
+async def create_benefit_policy(
+    payload: BenefitPolicyCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    policy = BenefitPolicy(
+        organization_id=org_id,
+        policy_code=payload.policy_code,
+        policy_type=payload.policy_type,
+        policy_name=payload.policy_name,
+        eligibility_months=payload.eligibility_months,
+        employee_contribution_pct=payload.employee_contribution_pct,
+        employer_contribution_pct=payload.employer_contribution_pct,
+        vesting_years=payload.vesting_years,
+        calculation_basis=payload.calculation_basis,
+        multiplier_per_year=payload.multiplier_per_year,
+        is_statutory=payload.is_statutory,
+        is_active=payload.is_active,
+        description=payload.description
+    )
+    db.add(policy)
+    await db.commit()
+    await db.refresh(policy)
+    return policy
+
+
+@router.put("/benefit-policies/{policy_id}", response_model=BenefitPolicyOut)
+async def update_benefit_policy(
+    policy_id: int,
+    payload: BenefitPolicyUpdate,
+    db: AsyncSession = Depends(get_db)
+):
+    policy = await db.get(BenefitPolicy, policy_id)
+    if not policy:
+        raise HTTPException(status_code=404, detail="Benefit policy not found")
+    if payload.policy_name is not None:
+        policy.policy_name = payload.policy_name
+    if payload.eligibility_months is not None:
+        policy.eligibility_months = payload.eligibility_months
+    if payload.employee_contribution_pct is not None:
+        policy.employee_contribution_pct = payload.employee_contribution_pct
+    if payload.employer_contribution_pct is not None:
+        policy.employer_contribution_pct = payload.employer_contribution_pct
+    if payload.vesting_years is not None:
+        policy.vesting_years = payload.vesting_years
+    if payload.calculation_basis is not None:
+        policy.calculation_basis = payload.calculation_basis
+    if payload.multiplier_per_year is not None:
+        policy.multiplier_per_year = payload.multiplier_per_year
+    if payload.is_statutory is not None:
+        policy.is_statutory = payload.is_statutory
+    if payload.is_active is not None:
+        policy.is_active = payload.is_active
+    if payload.description is not None:
+        policy.description = payload.description
+    await db.commit()
+    await db.refresh(policy)
+    return policy
+
+
+# --- 3.17 Payroll Deep Validation ---
+@router.get("/payroll-periods/{period_id}/validation", response_model=PayrollValidationSummaryOut)
+async def validate_payroll_period(
+    period_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    period = await db.get(PayrollPeriod, period_id)
+    if not period:
+        raise HTTPException(status_code=404, detail="Payroll period not found")
+
+    ps_q = select(PayrollPayslip).where(PayrollPayslip.period_id == period_id)
+    ps_res = await db.execute(ps_q)
+    slips = ps_res.scalars().all()
+
+    exceptions: List[PayrollValidationException] = []
+    error_count = 0
+    warning_count = 0
+
+    for slip in slips:
+        emp = await db.get(Employee, slip.employee_id)
+        emp_name = f"{emp.first_name} {emp.last_name or ''}".strip() if emp else "Unknown"
+        dept_name = emp.department.name_en if emp and emp.department else None
+
+        # 1. Missing bank account
+        if not slip.bank_account_no or len(str(slip.bank_account_no).strip()) < 5:
+            exceptions.append(PayrollValidationException(
+                employee_id=slip.employee_id,
+                employee_code=emp.employee_code if emp else None,
+                employee_name=emp_name,
+                department_name=dept_name,
+                issue_type="MISSING_BANK_ACCOUNT",
+                severity="WARNING",
+                description=f"No verified bank account number configured. Payment method is {slip.payment_method}."
+            ))
+            warning_count += 1
+
+        # 2. Negative or zero net pay
+        if slip.net_salary_payable <= Decimal("0.00"):
+            exceptions.append(PayrollValidationException(
+                employee_id=slip.employee_id,
+                employee_code=emp.employee_code if emp else None,
+                employee_name=emp_name,
+                department_name=dept_name,
+                issue_type="NEGATIVE_NET_PAY",
+                severity="ERROR",
+                description=f"Calculated net salary payable is BDT {slip.net_salary_payable:,.2f} (Total Earnings: {slip.total_earnings:,.2f}, Total Deductions: {slip.total_deductions:,.2f})."
+            ))
+            error_count += 1
+
+        # 3. Unusual variations (deductions > 50% of gross)
+        if slip.gross_salary > 0 and (slip.total_deductions / slip.gross_salary) > Decimal("0.50"):
+            exceptions.append(PayrollValidationException(
+                employee_id=slip.employee_id,
+                employee_code=emp.employee_code if emp else None,
+                employee_name=emp_name,
+                department_name=dept_name,
+                issue_type="UNUSUAL_VARIATION",
+                severity="WARNING",
+                description=f"Excessive deductions of BDT {slip.total_deductions:,.2f} exceeding 50% of gross pay (BDT {slip.gross_salary:,.2f})."
+            ))
+            warning_count += 1
+
+    return PayrollValidationSummaryOut(
+        period_id=period.id,
+        period_code=period.period_code,
+        total_payslips_checked=len(slips),
+        has_blocking_errors=(error_count > 0),
+        error_count=error_count,
+        warning_count=warning_count,
+        exceptions=exceptions
+    )
+
+
 
 

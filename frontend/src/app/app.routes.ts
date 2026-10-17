@@ -346,7 +346,12 @@ export const routes: Routes = [
   {
     path: 'hrms/payroll',
     loadComponent: () => import('./features/hrms/payroll/payroll-management.component').then(m => m.PayrollManagementComponent),
-    title: 'Monthly Payroll & GL Disbursal - Bangladesh Real Estate ERP'
+    title: 'Salary Structure & Payroll Engine (3.1-3.10) - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'hrms/payroll-approvals',
+    loadComponent: () => import('./features/hrms/payroll-approvals/payroll-approvals.component').then(m => m.PayrollApprovalsComponent),
+    title: 'Deductions, Benefits & Payroll Approvals (3.11-3.20) - Bangladesh Real Estate ERP'
   },
   {
     path: 'hrms/attendance',

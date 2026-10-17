@@ -1,306 +1,1860 @@
-<div class="space-y-6">
-  <!-- Top Header with Generator Wizard -->
-  <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-      <div>
-        <div class="flex items-center gap-2">
-          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/60">
-            Automated Payroll Engine
-          </span>
-          <span class="text-xs text-slate-500 dark:text-slate-400">Section 50 Income Tax TDS & PF Integrated</span>
-        </div>
-        <h1 class="text-2xl font-bold text-slate-900 dark:text-white mt-1">Monthly Payroll & GL Disbursal Engine</h1>
-        <p class="text-sm text-slate-500 dark:text-slate-400">Generate monthly compensation runs, compute statutory deductions, and post auto-vouchers into General Ledger.</p>
+<div class="p-6 space-y-6 max-w-7xl mx-auto">
+
+  <!-- Toast Feedback Alerts -->
+  @if (successMessage()) {
+    <div class="flex items-center justify-between p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/80 border border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 text-xs shadow-sm transition-all animate-fadeIn">
+      <div class="flex items-center gap-2.5">
+        <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <span class="font-semibold">{{ successMessage() }}</span>
       </div>
-
-      <!-- Quick Run Generation Controls -->
-      <div class="flex flex-wrap items-center gap-3">
-        <!-- Month -->
-        <div>
-          <label class="block text-xs font-semibold text-slate-500 mb-1">Month</label>
-          <select 
-            [ngModel]="selectedMonth()" 
-            (ngModelChange)="selectedMonth.set($event)"
-            class="px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-medium">
-            @for (m of months; track m.num) {
-              <option [value]="m.num">{{ m.name }}</option>
-            }
-          </select>
-        </div>
-
-        <!-- Year -->
-        <div>
-          <label class="block text-xs font-semibold text-slate-500 mb-1">Year</label>
-          <input 
-            type="number" 
-            [ngModel]="selectedYear()" 
-            (ngModelChange)="selectedYear.set($event)"
-            class="w-20 px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-medium font-mono" />
-        </div>
-
-        <!-- Scope / Project -->
-        <div>
-          <label class="block text-xs font-semibold text-slate-500 mb-1">Workforce Scope</label>
-          <select 
-            [ngModel]="selectedProjectId()" 
-            (ngModelChange)="selectedProjectId.set($event)"
-            class="px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-medium">
-            <option [ngValue]="null">Corporate Head-Office</option>
-            @for (p of projects(); track p.id) {
-              <option [value]="p.id">{{ p.project_name }} (Site Staff)</option>
-            }
-          </select>
-        </div>
-
-        <!-- Action Button -->
-        <div class="self-end">
-          <button 
-            (click)="generatePayroll()" 
-            [disabled]="isGenerating()"
-            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-600/20 active:scale-95 transition-all cursor-pointer disabled:opacity-50">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-            <span>{{ isGenerating() ? 'Computing...' : 'Generate Payroll Batch' }}</span>
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Historical Runs Horizontal Selector -->
-    @if (hrmsService.payrollRuns().length > 0) {
-      <div class="flex items-center gap-2 pt-3 border-t border-slate-100 dark:border-slate-800 overflow-x-auto pb-1">
-        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider shrink-0">Batches:</span>
-        @for (r of hrmsService.payrollRuns(); track r.id) {
-          <button 
-            (click)="selectRun(r)" 
-            [class]="activeRun()?.id === r.id ? 'bg-emerald-50 dark:bg-emerald-950/80 border-emerald-500 text-emerald-800 dark:text-emerald-300 font-bold' : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300'"
-            class="px-3 py-1.5 rounded-xl border text-xs shrink-0 transition-all flex items-center gap-2 cursor-pointer">
-            <span>{{ r.month | number:'2.0-0' }}/{{ r.year }} • {{ r.project_name }}</span>
-            <span [class]="r.status === 'DISBURSED' ? 'bg-emerald-200 dark:bg-emerald-800 text-emerald-800 dark:text-emerald-200' : 'bg-amber-200 dark:bg-amber-800 text-amber-800 dark:text-amber-200'" class="px-1.5 py-0.2 rounded text-[10px]">
-              {{ r.status }}
-            </span>
-          </button>
-        }
-      </div>
-    }
-  </div>
-
-  <!-- Active Payroll Batch Dashboard -->
-  @if (activeRun(); as run) {
-    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm p-6 space-y-6">
-      <!-- Status & Financial Summary Banner -->
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-slate-100 dark:border-slate-800">
-        <div>
-          <div class="flex items-center gap-2">
-            <span class="text-xs font-mono uppercase font-bold text-indigo-600 dark:text-indigo-400">Batch #{{ run.id }}</span>
-            <span [class]="run.status === 'DISBURSED' ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border-emerald-200/60' : 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border-amber-200/60'" class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold border">
-              {{ run.status }}
-            </span>
-            @if (run.voucher_id) {
-              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-mono bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border border-blue-200/60">
-                GL Voucher #{{ run.voucher_id }}
-              </span>
-            }
-          </div>
-          <h2 class="text-xl font-bold text-slate-900 dark:text-white mt-1">{{ run.project_name }} — Payroll for {{ run.month | number:'2.0-0' }}/{{ run.year }}</h2>
-          <p class="text-xs text-slate-500">Processed for {{ activePayslips().length }} employees with full tax and PF breakdowns.</p>
-        </div>
-
-        <!-- Summary KPIs -->
-        <div class="flex items-center gap-4">
-          <div class="text-right">
-            <span class="text-xs text-slate-400 block">Gross Earnings</span>
-            <span class="font-mono font-bold text-slate-900 dark:text-white text-base">BDT {{ run.total_gross | number:'1.2-2' }}</span>
-          </div>
-
-          <div class="text-right">
-            <span class="text-xs text-slate-400 block">Total Deductions</span>
-            <span class="font-mono font-bold text-rose-600 dark:text-rose-400 text-base">BDT {{ run.total_deductions | number:'1.2-2' }}</span>
-          </div>
-
-          <div class="text-right p-3 bg-emerald-50 dark:bg-emerald-950/60 rounded-xl border border-emerald-200/60 dark:border-emerald-800/60">
-            <span class="text-xs font-bold text-emerald-700 dark:text-emerald-400 block">Net Disbursable</span>
-            <span class="font-mono font-extrabold text-emerald-800 dark:text-emerald-300 text-lg">BDT {{ run.total_net | number:'1.2-2' }}</span>
-          </div>
-
-          @if (run.status !== 'DISBURSED') {
-            <button 
-              (click)="disbursePayroll()" 
-              [disabled]="isDisbursing()"
-              class="px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md shadow-indigo-600/20 active:scale-95 transition-all cursor-pointer disabled:opacity-50 flex items-center gap-2">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-              <span>{{ isDisbursing() ? 'Disbursing...' : 'Disburse & Post GL Voucher' }}</span>
-            </button>
-          }
-        </div>
-      </div>
-
-      <!-- Payslips Table -->
-      <div class="overflow-x-auto">
-        <table class="w-full text-left text-xs">
-          <thead class="text-slate-500 dark:text-slate-400 uppercase bg-slate-50 dark:bg-slate-800/60 border-y border-slate-200/60 dark:border-slate-800">
-            <tr>
-              <th class="py-3 px-3">Employee</th>
-              <th class="py-3 px-3">Designation</th>
-              <th class="py-3 px-3 text-right">Basic (BDT)</th>
-              <th class="py-3 px-3 text-right">Allowances</th>
-              <th class="py-3 px-3 text-right">Gross Earnings</th>
-              <th class="py-3 px-3 text-right">PF (8.33%)</th>
-              <th class="py-3 px-3 text-right">Tax TDS</th>
-              <th class="py-3 px-3 text-right">Net Payable</th>
-              <th class="py-3 px-3 text-center">Status</th>
-              <th class="py-3 px-3 text-right">Slip</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-            @for (ps of activePayslips(); track ps.id) {
-              <tr class="hover:bg-slate-50/40 dark:hover:bg-slate-800/30">
-                <td class="py-2.5 px-3">
-                  <div class="font-bold text-slate-900 dark:text-white">{{ ps.employee_name }}</div>
-                  <div class="text-[10px] text-slate-400 font-mono">{{ ps.employee_code }}</div>
-                </td>
-                <td class="py-2.5 px-3 text-slate-600 dark:text-slate-400">{{ ps.designation_title }}</td>
-                <td class="py-2.5 px-3 text-right font-mono">{{ ps.basic_salary | number:'1.2-2' }}</td>
-                <td class="py-2.5 px-3 text-right font-mono text-slate-600 dark:text-slate-400">
-                  {{ (ps.house_rent + ps.medical + ps.conveyance + ps.site_hazard_allowance + ps.mobile_allowance) | number:'1.2-2' }}
-                </td>
-                <td class="py-2.5 px-3 text-right font-mono font-bold text-slate-900 dark:text-white">
-                  {{ ps.gross_earnings | number:'1.2-2' }}
-                </td>
-                <td class="py-2.5 px-3 text-right font-mono text-amber-600 dark:text-amber-400">
-                  {{ ps.pf_deduction | number:'1.2-2' }}
-                </td>
-                <td class="py-2.5 px-3 text-right font-mono text-rose-600 dark:text-rose-400">
-                  {{ ps.tax_tds_deduction | number:'1.2-2' }}
-                </td>
-                <td class="py-2.5 px-3 text-right font-mono font-bold text-emerald-700 dark:text-emerald-400">
-                  BDT {{ ps.net_payable | number:'1.2-2' }}
-                </td>
-                <td class="py-2.5 px-3 text-center">
-                  <span [class]="ps.payment_status === 'PAID' ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border-emerald-200/60' : 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border-amber-200/60'" class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border">
-                    {{ ps.payment_status }}
-                  </span>
-                </td>
-                <td class="py-2.5 px-3 text-right">
-                  <button 
-                    (click)="viewPayslip(ps)" 
-                    class="px-2.5 py-1 rounded-lg text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 font-semibold cursor-pointer">
-                    Payslip
-                  </button>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
+      <button (click)="successMessage.set(null)" class="text-emerald-700 hover:text-emerald-900 dark:hover:text-emerald-100 p-1">✕</button>
     </div>
   }
-</div>
 
-<!-- Official Bilingual Printable Payslip Modal -->
-@if (isPayslipModalOpen() && selectedPayslip(); as ps) {
-  <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 overflow-y-auto" (click)="closePayslipModal()">
-    <div class="bg-white text-slate-900 rounded-2xl max-w-2xl w-full p-8 shadow-2xl relative my-8" (click)="$event.stopPropagation()">
-      <!-- Modal Close Button -->
-      <button (click)="closePayslipModal()" class="absolute right-4 top-4 text-slate-400 hover:text-slate-600 text-2xl font-bold cursor-pointer print:hidden">&times;</button>
-
-      <!-- Company Letterhead -->
-      <div class="text-center pb-4 border-b-2 border-slate-900 mb-6">
-        <h2 class="text-xl font-extrabold uppercase tracking-widest text-slate-900">BENGAL REAL ESTATE DEVELOPERS LTD.</h2>
-        <p class="text-xs text-slate-600">Bengal Heights, Gulshan Avenue, Gulshan-2, Dhaka-1212, Bangladesh</p>
-        <div class="mt-2 inline-block px-4 py-1 bg-slate-900 text-white text-xs font-bold uppercase rounded-md tracking-wider">
-          Salary Payslip / বেতন রশিদ
-        </div>
+  @if (errorMessage()) {
+    <div class="flex items-center justify-between p-4 rounded-xl bg-rose-50 dark:bg-rose-950/80 border border-rose-300 dark:border-rose-800 text-rose-900 dark:text-rose-200 text-xs shadow-sm transition-all animate-fadeIn">
+      <div class="flex items-center gap-2.5">
+        <svg class="w-5 h-5 text-rose-600 dark:text-rose-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <span class="font-semibold">{{ errorMessage() }}</span>
       </div>
+      <button (click)="errorMessage.set(null)" class="text-rose-700 hover:text-rose-900 dark:hover:text-rose-100 p-1">✕</button>
+    </div>
+  }
 
-      <!-- Employee Details Header -->
-      <div class="grid grid-cols-2 gap-4 text-xs mb-6 p-3 bg-slate-50 rounded-xl border border-slate-200">
-        <div>
-          <div class="mb-1"><span class="font-bold text-slate-600">Employee Name:</span> <span class="font-bold">{{ ps.employee_name }}</span></div>
-          <div class="mb-1"><span class="font-bold text-slate-600">Employee ID:</span> <span class="font-mono font-bold">{{ ps.employee_code }}</span></div>
-          <div><span class="font-bold text-slate-600">Designation:</span> {{ ps.designation_title }}</div>
-        </div>
-        <div>
-          <div class="mb-1"><span class="font-bold text-slate-600">Department:</span> {{ ps.department_name }}</div>
-          <div class="mb-1"><span class="font-bold text-slate-600">Payment Status:</span> <span class="font-bold uppercase text-emerald-700">{{ ps.payment_status }}</span></div>
-          <div><span class="font-bold text-slate-600">Bank Disbursal:</span> Approved via City Bank PLC</div>
-        </div>
-      </div>
+  <!-- Master Card Container -->
+  <app-card-container
+    title="Salary Structure & Monthly Payroll Engine"
+    subtitle="Modules 3.1 - 3.20: Statutory Deductions, Benefits, Multi-tier Approvals, Maker-Checker, & Bank Disbursal Ledger"
+    badge="Payroll Core 3.0"
+    variant="default"
+    paddingClass="p-0"
+  >
+    <!-- Header Action Buttons -->
+    <div card-actions class="flex items-center flex-wrap gap-2">
+      <app-custom-button
+        label="+ New Period"
+        variant="gold"
+        size="sm"
+        (btnClick)="openPeriodModal()"
+      >
+        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+      </app-custom-button>
 
-      <!-- 2-Column Earnings & Deductions Table -->
-      <div class="grid grid-cols-2 gap-4 text-xs mb-6">
-        <!-- Earnings Column -->
-        <div class="border border-slate-200 rounded-xl overflow-hidden">
-          <div class="bg-slate-100 px-3 py-2 font-bold uppercase tracking-wider text-slate-700 border-b border-slate-200">Earnings (আয়)</div>
-          <div class="p-3 space-y-1.5 font-mono">
-            <div class="flex justify-between"><span>Basic Salary:</span> <span>{{ ps.basic_salary | number:'1.2-2' }}</span></div>
-            <div class="flex justify-between"><span>House Rent (50%):</span> <span>{{ ps.house_rent | number:'1.2-2' }}</span></div>
-            <div class="flex justify-between"><span>Medical (10%):</span> <span>{{ ps.medical | number:'1.2-2' }}</span></div>
-            <div class="flex justify-between"><span>Conveyance:</span> <span>{{ ps.conveyance | number:'1.2-2' }}</span></div>
-            @if (ps.site_hazard_allowance > 0) {
-              <div class="flex justify-between text-amber-700"><span>Site Hazard:</span> <span>{{ ps.site_hazard_allowance | number:'1.2-2' }}</span></div>
-            }
-            <div class="flex justify-between"><span>Mobile / Internet:</span> <span>{{ ps.mobile_allowance | number:'1.2-2' }}</span></div>
-            @if (ps.overtime_amount > 0) {
-              <div class="flex justify-between text-indigo-700"><span>Overtime Pay:</span> <span>{{ ps.overtime_amount | number:'1.2-2' }}</span></div>
-            }
-            <div class="flex justify-between pt-2 border-t font-bold text-slate-900"><span>Gross Earnings:</span> <span>BDT {{ ps.gross_earnings | number:'1.2-2' }}</span></div>
+      @if (payrollService.activePeriod()) {
+        <app-custom-button
+          label="Process Calculations"
+          variant="luxury"
+          size="sm"
+          [disabled]="!!payrollService.activePeriod()?.is_locked"
+          (btnClick)="executeWorkflow('PROCESS')"
+        >
+          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+          </svg>
+        </app-custom-button>
+
+        <app-custom-button
+          label="Submit (Maker)"
+          variant="secondary"
+          size="sm"
+          [disabled]="payrollService.activePeriod()?.status !== 'PROCESSING' && payrollService.activePeriod()?.status !== 'DRAFT'"
+          (btnClick)="executeWorkflow('SUBMIT')"
+        ></app-custom-button>
+
+        <app-custom-button
+          label="Verify (Checker)"
+          variant="secondary"
+          size="sm"
+          [disabled]="payrollService.activePeriod()?.status !== 'SUBMITTED'"
+          (btnClick)="executeWorkflow('VERIFY')"
+        ></app-custom-button>
+
+        <app-custom-button
+          label="Approve (Approver)"
+          variant="primary"
+          size="sm"
+          [disabled]="payrollService.activePeriod()?.status !== 'VERIFIED'"
+          (btnClick)="executeWorkflow('APPROVE')"
+        ></app-custom-button>
+
+        @if (!payrollService.activePeriod()?.is_locked) {
+          <app-custom-button
+            label="Lock Period"
+            variant="danger"
+            size="sm"
+            [disabled]="payrollService.activePeriod()?.status !== 'APPROVED' && payrollService.activePeriod()?.status !== 'POSTED'"
+            (btnClick)="executeWorkflow('LOCK')"
+          >
+            <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+            </svg>
+          </app-custom-button>
+        } @else {
+          <app-custom-button
+            label="Unlock Period"
+            variant="secondary"
+            size="sm"
+            (btnClick)="executeWorkflow('UNLOCK')"
+          >
+            <svg class="w-3.5 h-3.5 mr-1 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"/>
+            </svg>
+          </app-custom-button>
+        }
+
+        <app-custom-button
+          label="Disburse Bank Ledger"
+          variant="primary"
+          size="sm"
+          [disabled]="payrollService.activePeriod()?.status !== 'APPROVED' && payrollService.activePeriod()?.status !== 'LOCKED'"
+          (btnClick)="executeDisburse()"
+        >
+          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+          </svg>
+        </app-custom-button>
+      }
+
+      <app-custom-button
+        label="Refresh"
+        variant="secondary"
+        size="sm"
+        (btnClick)="refreshCurrentTab()"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+      </app-custom-button>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="px-6 pt-3 bg-slate-50/50 dark:bg-slate-850/50">
+      <app-custom-tabs
+        [tabs]="tabs"
+        [activeTabId]="activeTab()"
+        (tabChange)="onTabChange($event)"
+        variant="gold"
+      ></app-custom-tabs>
+    </div>
+
+    <!-- TAB 1: PAYROLL REGISTER & WORKFLOW -->
+    @if (activeTab() === 'register') {
+      <div class="p-6 space-y-6">
+
+        <!-- Active Period Ribbon & KPI Overview -->
+        @if (payrollService.activePeriod(); as p) {
+          <div class="p-4 rounded-xl bg-gradient-to-r from-amber-500/10 via-yellow-500/5 to-amber-500/10 border border-amber-300 dark:border-amber-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div class="space-y-1">
+              <div class="flex items-center gap-2">
+                <span class="text-base font-bold text-slate-900 dark:text-white font-display">{{ p.period_name }} ({{ p.period_code }})</span>
+                <app-status-badge [status]="p.status"></app-status-badge>
+                @if (p.is_locked) {
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 border border-rose-300">
+                    🔒 LOCKED
+                  </span>
+                }
+              </div>
+              <p class="text-xs text-slate-500">
+                Cycle: {{ p.start_date }} to {{ p.end_date }} • Cut-off Date: <span class="font-mono font-medium text-slate-700 dark:text-slate-300">{{ p.cut_off_date }}</span>
+              </p>
+            </div>
+
+            <!-- Periods Quick Selector Switcher -->
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-semibold text-slate-500">Periods:</span>
+              <div class="flex flex-wrap gap-1.5">
+                @for (period of payrollService.payrollPeriods(); track period.id) {
+                  <button
+                    type="button"
+                    (click)="selectPeriod(period)"
+                    [class.ring-2]="payrollService.activePeriod()?.id === period.id"
+                    [class.ring-amber-500]="payrollService.activePeriod()?.id === period.id"
+                    class="px-2.5 py-1 text-xs font-semibold rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 hover:bg-slate-50"
+                  >
+                    {{ period.period_code }}
+                  </button>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- KPI Aggregate Cards -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800">
+              <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Headcount</span>
+              <div class="text-2xl font-bold font-display text-slate-900 dark:text-white mt-1">
+                {{ p.total_employees }}
+              </div>
+            </div>
+            <div class="p-4 rounded-xl bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-900/60">
+              <span class="text-xs font-semibold text-indigo-700 dark:text-indigo-400 uppercase tracking-wider">Gross Payroll Earnings</span>
+              <div class="text-2xl font-bold font-display text-indigo-900 dark:text-indigo-200 mt-1">
+                BDT {{ p.total_gross | number:'1.2-2' }}
+              </div>
+            </div>
+            <div class="p-4 rounded-xl bg-rose-50/60 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/60">
+              <span class="text-xs font-semibold text-rose-700 dark:text-rose-400 uppercase tracking-wider">Total Deductions</span>
+              <div class="text-2xl font-bold font-display text-rose-900 dark:text-rose-200 mt-1">
+                BDT {{ p.total_deductions | number:'1.2-2' }}
+              </div>
+            </div>
+            <div class="p-4 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/60">
+              <span class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Net Salary Payable</span>
+              <div class="text-2xl font-bold font-display text-emerald-900 dark:text-emerald-200 mt-1">
+                BDT {{ p.total_net_payable | number:'1.2-2' }}
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- Filter Row -->
+        <div class="p-4 rounded-xl bg-slate-50/80 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div class="w-full sm:w-80">
+            <app-searchable-select
+              [options]="employeeOptions()"
+              [placeholder]="'Filter by employee...'"
+              [ngModel]="registerEmployeeFilter()"
+              (selectionChange)="registerEmployeeFilter.set($event); payrollService.activePeriod() && selectPeriod(payrollService.activePeriod()!)"
+            ></app-searchable-select>
+          </div>
+          <div class="flex items-center gap-2">
+            <app-custom-button
+              label="Clear Filter"
+              variant="secondary"
+              size="sm"
+              (btnClick)="registerEmployeeFilter.set(null); payrollService.activePeriod() && selectPeriod(payrollService.activePeriod()!)"
+            ></app-custom-button>
           </div>
         </div>
 
-        <!-- Deductions Column -->
-        <div class="border border-slate-200 rounded-xl overflow-hidden">
-          <div class="bg-slate-100 px-3 py-2 font-bold uppercase tracking-wider text-slate-700 border-b border-slate-200">Deductions (কর্তন)</div>
-          <div class="p-3 space-y-1.5 font-mono">
-            <div class="flex justify-between text-amber-700"><span>Provident Fund (8.33%):</span> <span>{{ ps.pf_deduction | number:'1.2-2' }}</span></div>
-            <div class="flex justify-between text-rose-700"><span>Income Tax (TDS Sec 50):</span> <span>{{ ps.tax_tds_deduction | number:'1.2-2' }}</span></div>
-            @if (ps.advance_salary_deduction > 0) {
-              <div class="flex justify-between"><span>Advance Salary:</span> <span>{{ ps.advance_salary_deduction | number:'1.2-2' }}</span></div>
-            }
-            @if (ps.loan_emi_deduction > 0) {
-              <div class="flex justify-between"><span>Company Loan EMI:</span> <span>{{ ps.loan_emi_deduction | number:'1.2-2' }}</span></div>
-            }
-            <div class="flex justify-between pt-2 border-t font-bold text-slate-900"><span>Total Deductions:</span> <span>BDT {{ ps.total_deductions | number:'1.2-2' }}</span></div>
+        <!-- 3.20 Payroll Register & Payslips Table -->
+        <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-2xs">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs border-collapse">
+              <thead class="bg-slate-100/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-800 uppercase tracking-wider text-[11px]">
+                <tr>
+                  <th class="py-3 px-4">Employee</th>
+                  <th class="py-3 px-4">Base Structure</th>
+                  <th class="py-3 px-4 text-right">Gross Salary</th>
+                  <th class="py-3 px-4 text-center">OT / Bonus</th>
+                  <th class="py-3 px-4 text-right font-bold text-slate-800 dark:text-slate-200">Total Earnings</th>
+                  <th class="py-3 px-4 text-center">Unpaid LWP</th>
+                  <th class="py-3 px-4 text-center">PF (10%) & Tax</th>
+                  <th class="py-3 px-4 text-center">Loan / Advance</th>
+                  <th class="py-3 px-4 text-right text-rose-600 dark:text-rose-400">Total Ded.</th>
+                  <th class="py-3 px-4 text-right font-bold text-emerald-700 dark:text-emerald-400">Net Payable</th>
+                  <th class="py-3 px-4">Bank Account</th>
+                  <th class="py-3 px-4">Status / Warning</th>
+                  <th class="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                @for (ps of payrollService.payslips(); track ps.id) {
+                  <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                    <td class="py-3.5 px-4 font-semibold text-slate-900 dark:text-white">
+                      {{ ps.employee_name }}
+                      <span class="block text-[10px] text-slate-400 font-mono">{{ ps.employee_code }} • {{ ps.department_name }}</span>
+                    </td>
+                    <td class="py-3.5 px-4">
+                      <div class="text-[11px] text-slate-700 dark:text-slate-300">Basic: {{ ps.basic_salary | number:'1.0-0' }}</div>
+                      <div class="text-[10px] text-slate-400">HR: {{ ps.house_rent | number:'1.0-0' }} • Med: {{ ps.medical_allowance | number:'1.0-0' }}</div>
+                    </td>
+                    <td class="py-3.5 px-4 text-right font-semibold text-slate-700 dark:text-slate-300">
+                      {{ ps.gross_salary | number:'1.2-2' }}
+                    </td>
+                    <td class="py-3.5 px-4 text-center">
+                      @if (ps.overtime_amount > 0 || ps.bonus_amount > 0) {
+                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-300">
+                          +{{ (ps.overtime_amount + ps.bonus_amount) | number:'1.0-0' }}
+                        </span>
+                        @if (ps.overtime_hours > 0) {
+                          <span class="block text-[9px] text-slate-400">({{ ps.overtime_hours }}h OT)</span>
+                        }
+                      } @else {
+                        <span class="text-slate-400">—</span>
+                      }
+                    </td>
+                    <td class="py-3.5 px-4 text-right font-bold text-slate-900 dark:text-white">
+                      {{ ps.total_earnings | number:'1.2-2' }}
+                    </td>
+                    <td class="py-3.5 px-4 text-center">
+                      @if (ps.unpaid_leave_days > 0) {
+                        <span class="text-rose-600 font-bold text-[11px]">-{{ ps.unpaid_leave_deduction | number:'1.0-0' }}</span>
+                        <span class="block text-[9px] text-slate-400">({{ ps.unpaid_leave_days }}d LWP)</span>
+                      } @else {
+                        <span class="text-slate-400">0</span>
+                      }
+                    </td>
+                    <td class="py-3.5 px-4 text-center text-[11px]">
+                      <span class="text-slate-700 dark:text-slate-300">PF: {{ ps.provident_fund_employee | number:'1.0-0' }}</span>
+                      <span class="block text-slate-500 text-[10px]">Tax: {{ ps.income_tax_deduction | number:'1.0-0' }}</span>
+                    </td>
+                    <td class="py-3.5 px-4 text-center text-[11px]">
+                      @if (ps.staff_loan_recovery > 0 || ps.salary_advance_recovery > 0) {
+                        <span class="text-rose-600 font-semibold">-{{ (ps.staff_loan_recovery + ps.salary_advance_recovery) | number:'1.0-0' }}</span>
+                      } @else {
+                        <span class="text-slate-400">—</span>
+                      }
+                    </td>
+                    <td class="py-3.5 px-4 text-right font-semibold text-rose-600 dark:text-rose-400">
+                      {{ ps.total_deductions | number:'1.2-2' }}
+                    </td>
+                    <td class="py-3.5 px-4 text-right font-bold text-emerald-600 dark:text-emerald-400 text-sm">
+                      {{ ps.net_salary_payable | number:'1.2-2' }}
+                    </td>
+                    <td class="py-3.5 px-4">
+                      @if (ps.bank_account_no) {
+                        <div class="text-[11px] font-mono text-slate-800 dark:text-slate-200">{{ ps.bank_account_no }}</div>
+                        <div class="text-[10px] text-slate-400">{{ ps.bank_name || 'BEFTN / EFT' }}</div>
+                      } @else {
+                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">Cash / Cheque</span>
+                      }
+                    </td>
+                    <td class="py-3.5 px-4">
+                      <app-status-badge [status]="ps.status"></app-status-badge>
+                      @if (ps.validation_warnings && ps.validation_warnings.length > 0) {
+                        <div class="mt-1 flex items-center gap-1 text-[10px] text-rose-600 font-bold" [title]="ps.validation_warnings.join(', ')">
+                          ⚠️ {{ ps.validation_warnings.length }} Flag(s)
+                        </div>
+                      }
+                    </td>
+                    <td class="py-3.5 px-4 text-right whitespace-nowrap">
+                      <app-custom-button
+                        label="Payslip"
+                        variant="secondary"
+                        size="sm"
+                        (btnClick)="viewPayslipModal(ps)"
+                      >
+                        <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                        </svg>
+                      </app-custom-button>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="13" class="py-12 text-center text-slate-400 text-xs">
+                      No payslips generated for this period yet. Click "Process Calculations" above to calculate all employee earnings and deductions.
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination Bar -->
+          <div class="px-6 py-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850 flex items-center justify-between text-xs text-slate-500">
+            <span>Showing {{ payrollService.payslips().length }} of {{ payrollService.totalPayslips() }} employee payslips</span>
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                [disabled]="payslipOffset() === 0"
+                (click)="onPayslipPageChange(-1)"
+                class="px-2.5 py-1 rounded border border-slate-200 dark:border-slate-700 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-slate-800"
+              >Previous</button>
+              <button
+                type="button"
+                [disabled]="payslipOffset() + payslipLimit() >= payrollService.totalPayslips()"
+                (click)="onPayslipPageChange(1)"
+                class="px-2.5 py-1 rounded border border-slate-200 dark:border-slate-700 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-slate-800"
+              >Next</button>
+            </div>
           </div>
         </div>
+
+      </div>
+    }
+
+    <!-- TAB 2: SALARY COMPONENTS & STRUCTURES -->
+    @if (activeTab() === 'structures') {
+      <div class="p-6 space-y-8">
+
+        <!-- 3.1 Salary Components Master -->
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                3.1 Salary Components Master
+              </h3>
+              <p class="text-xs text-slate-500 mt-0.5">Basic, house rent, medical, conveyance, mobile, hazard allowance, PF, and TDS.</p>
+            </div>
+            <app-custom-button
+              label="+ Add Component"
+              variant="luxury"
+              size="sm"
+              (btnClick)="openComponentModal()"
+            ></app-custom-button>
+          </div>
+
+          <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-2xs">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs border-collapse">
+                <thead class="bg-slate-100/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-800 uppercase tracking-wider text-[11px]">
+                  <tr>
+                    <th class="py-3 px-4">Code</th>
+                    <th class="py-3 px-4">Component Name (English / Bengali)</th>
+                    <th class="py-3 px-4">Type</th>
+                    <th class="py-3 px-4">Calculation Mode</th>
+                    <th class="py-3 px-4 text-center">Default Value / %</th>
+                    <th class="py-3 px-4 text-center">Taxable</th>
+                    <th class="py-3 px-4 text-center">Statutory</th>
+                    <th class="py-3 px-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                  @for (c of payrollService.salaryComponents(); track c.id) {
+                    <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                      <td class="py-3.5 px-4 font-mono font-bold text-slate-800 dark:text-slate-200">{{ c.component_code }}</td>
+                      <td class="py-3.5 px-4">
+                        <div class="font-semibold text-slate-900 dark:text-white">{{ c.name_en }}</div>
+                        @if (c.name_bn) {
+                          <div class="text-[10px] text-slate-400">{{ c.name_bn }}</div>
+                        }
+                      </td>
+                      <td class="py-3.5 px-4">
+                        @if (c.component_type === 'EARNING') {
+                          <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300">Earning</span>
+                        } @else if (c.component_type === 'DEDUCTION') {
+                          <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-800 border border-rose-300 dark:bg-rose-950 dark:text-rose-300">Deduction</span>
+                        } @else {
+                          <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-800 border border-indigo-300 dark:bg-indigo-950 dark:text-indigo-300">Employer Cost</span>
+                        }
+                      </td>
+                      <td class="py-3.5 px-4 font-mono text-slate-600 dark:text-slate-400">{{ c.calculation_type }}</td>
+                      <td class="py-3.5 px-4 text-center font-bold text-slate-800 dark:text-slate-200">{{ c.default_value_or_percent }}</td>
+                      <td class="py-3.5 px-4 text-center">{{ c.is_taxable ? 'Yes' : 'Exempt' }}</td>
+                      <td class="py-3.5 px-4 text-center">{{ c.is_statutory ? 'Statutory' : 'Custom' }}</td>
+                      <td class="py-3.5 px-4 text-right">
+                        <button (click)="openComponentModal(c)" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400">Edit</button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3.2 Salary Structures Matrix -->
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                3.2 Standard Salary Structures
+              </h3>
+              <p class="text-xs text-slate-500 mt-0.5">Fixed and variable component templates assigned to employee grades.</p>
+            </div>
+            <app-custom-button
+              label="+ New Structure"
+              variant="gold"
+              size="sm"
+              (btnClick)="openStructureModal()"
+            ></app-custom-button>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            @for (s of payrollService.salaryStructures(); track s.id) {
+              <div class="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs space-y-3">
+                <div class="flex items-start justify-between">
+                  <div>
+                    <h4 class="font-bold text-slate-900 dark:text-white text-sm">{{ s.name_en }}</h4>
+                    <span class="font-mono text-[10px] text-slate-400">{{ s.structure_code }}</span>
+                  </div>
+                  <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-300">
+                    {{ s.items_count || 0 }} Items
+                  </span>
+                </div>
+                <p class="text-xs text-slate-500">{{ s.description || 'Standard corporate structure template' }}</p>
+                <div class="pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-600 dark:text-slate-400 space-y-1">
+                  @for (it of s.items || []; track it.id) {
+                    <div class="flex justify-between">
+                      <span>{{ it.component_name || 'Component #' + it.component_id }}:</span>
+                      <span class="font-mono font-semibold">{{ it.value_or_percent }}% ({{ it.calculation_type }})</span>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+      </div>
+    }
+
+    <!-- TAB 3: EMPLOYEE SALARIES & INCREMENTS -->
+    @if (activeTab() === 'assignments') {
+      <div class="p-6 space-y-8">
+
+        <!-- 3.3 Employee Salary Assignments Table -->
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                3.3 Employee Salary Structure Assignments
+              </h3>
+              <p class="text-xs text-slate-500 mt-0.5">Assigned monthly gross and basic remuneration packages.</p>
+            </div>
+            <app-custom-button
+              label="+ Assign Salary Structure"
+              variant="luxury"
+              size="sm"
+              (btnClick)="openAssignModal()"
+            ></app-custom-button>
+          </div>
+
+          <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-2xs">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs border-collapse">
+                <thead class="bg-slate-100/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-800 uppercase tracking-wider text-[11px]">
+                  <tr>
+                    <th class="py-3 px-4">Employee</th>
+                    <th class="py-3 px-4">Department / Designation</th>
+                    <th class="py-3 px-4">Assigned Structure</th>
+                    <th class="py-3 px-4 text-right">Gross Salary (BDT)</th>
+                    <th class="py-3 px-4 text-right">Basic Salary (BDT)</th>
+                    <th class="py-3 px-4">Effective From</th>
+                    <th class="py-3 px-4">Status</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                  @for (sal of payrollService.employeeSalaries(); track sal.id) {
+                    <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                      <td class="py-3.5 px-4 font-semibold text-slate-900 dark:text-white">
+                        {{ sal.employee_name }}
+                        <span class="block text-[10px] text-slate-400 font-mono">{{ sal.employee_code }}</span>
+                      </td>
+                      <td class="py-3.5 px-4 text-slate-600 dark:text-slate-400">
+                        {{ sal.department_name || '—' }} • {{ sal.designation_title || '—' }}
+                      </td>
+                      <td class="py-3.5 px-4">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-indigo-50 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300 border border-indigo-200">
+                          {{ sal.structure_name || 'Structure #' + sal.structure_id }}
+                        </span>
+                      </td>
+                      <td class="py-3.5 px-4 text-right font-bold text-slate-900 dark:text-white text-sm">
+                        {{ sal.gross_salary | number:'1.2-2' }}
+                      </td>
+                      <td class="py-3.5 px-4 text-right font-semibold text-slate-700 dark:text-slate-300">
+                        {{ sal.basic_salary | number:'1.2-2' }}
+                      </td>
+                      <td class="py-3.5 px-4 font-mono text-slate-600 dark:text-slate-400">{{ sal.effective_from }}</td>
+                      <td class="py-3.5 px-4">
+                        <app-status-badge [status]="sal.is_active ? 'ACTIVE' : 'INACTIVE'"></app-status-badge>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3.4 Salary Revision & Increments Table -->
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                3.4 Salary Revisions, Promotions & Increments
+              </h3>
+              <p class="text-xs text-slate-500 mt-0.5">Historical record of merit increments and promotional pay raises.</p>
+            </div>
+            <app-custom-button
+              label="+ New Salary Revision"
+              variant="gold"
+              size="sm"
+              (btnClick)="openRevisionModal()"
+            ></app-custom-button>
+          </div>
+
+          <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-2xs">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs border-collapse">
+                <thead class="bg-slate-100/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-800 uppercase tracking-wider text-[11px]">
+                  <tr>
+                    <th class="py-3 px-4">Employee</th>
+                    <th class="py-3 px-4">Revision Reason</th>
+                    <th class="py-3 px-4">Effective Date</th>
+                    <th class="py-3 px-4 text-right">Previous Gross</th>
+                    <th class="py-3 px-4 text-right">New Gross</th>
+                    <th class="py-3 px-4 text-center">Increment Amount & %</th>
+                    <th class="py-3 px-4">Remarks</th>
+                    <th class="py-3 px-4">Status</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                  @for (rev of payrollService.salaryRevisions(); track rev.id) {
+                    <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                      <td class="py-3.5 px-4 font-semibold text-slate-900 dark:text-white">
+                        {{ rev.employee_name }}
+                        <span class="block text-[10px] text-slate-400 font-mono">{{ rev.employee_code }}</span>
+                      </td>
+                      <td class="py-3.5 px-4">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-300">
+                          {{ rev.revision_type }}
+                        </span>
+                      </td>
+                      <td class="py-3.5 px-4 font-mono text-slate-600 dark:text-slate-400">{{ rev.effective_date }}</td>
+                      <td class="py-3.5 px-4 text-right text-slate-600 dark:text-slate-400">{{ rev.previous_gross | number:'1.2-2' }}</td>
+                      <td class="py-3.5 px-4 text-right font-bold text-slate-900 dark:text-white">{{ rev.new_gross | number:'1.2-2' }}</td>
+                      <td class="py-3.5 px-4 text-center">
+                        <span class="font-bold text-emerald-600 dark:text-emerald-400">+{{ rev.increment_amount | number:'1.0-0' }}</span>
+                        <span class="block text-[10px] text-slate-400">({{ rev.increment_percent }}%)</span>
+                      </td>
+                      <td class="py-3.5 px-4 text-slate-500">{{ rev.remarks || '—' }}</td>
+                      <td class="py-3.5 px-4">
+                        <app-status-badge [status]="rev.status"></app-status-badge>
+                      </td>
+                    </tr>
+                  } @empty {
+                    <tr>
+                      <td colspan="8" class="py-8 text-center text-slate-400">No revision history recorded yet.</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    }
+
+    <!-- TAB 4: STAFF LOANS & ADVANCES -->
+    @if (activeTab() === 'loans_advances') {
+      <div class="p-6 space-y-8">
+
+        <!-- 3.14 Staff Loans Table -->
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                3.14 Company Staff Loans & Installment Ledger
+              </h3>
+              <p class="text-xs text-slate-500 mt-0.5">Emergency, housing, and medical loans with monthly payroll deductions.</p>
+            </div>
+            <app-custom-button
+              label="+ Apply Staff Loan"
+              variant="luxury"
+              size="sm"
+              (btnClick)="openLoanModal()"
+            ></app-custom-button>
+          </div>
+
+          <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-2xs">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs border-collapse">
+                <thead class="bg-slate-100/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-800 uppercase tracking-wider text-[11px]">
+                  <tr>
+                    <th class="py-3 px-4">Loan #</th>
+                    <th class="py-3 px-4">Employee</th>
+                    <th class="py-3 px-4">Type</th>
+                    <th class="py-3 px-4 text-right">Principal</th>
+                    <th class="py-3 px-4 text-center">Tenure (Mos)</th>
+                    <th class="py-3 px-4 text-right">Monthly EMI</th>
+                    <th class="py-3 px-4 text-right">Recovered</th>
+                    <th class="py-3 px-4 text-right font-bold text-rose-600 dark:text-rose-400">Remaining Balance</th>
+                    <th class="py-3 px-4">Status</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                  @for (l of payrollService.staffLoans(); track l.id) {
+                    <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                      <td class="py-3.5 px-4 font-mono font-bold text-slate-800 dark:text-slate-200">{{ l.loan_code }}</td>
+                      <td class="py-3.5 px-4 font-semibold text-slate-900 dark:text-white">
+                        {{ l.employee_name }}
+                        <span class="block text-[10px] text-slate-400 font-mono">{{ l.employee_code }}</span>
+                      </td>
+                      <td class="py-3.5 px-4">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-300">
+                          {{ l.loan_type }}
+                        </span>
+                      </td>
+                      <td class="py-3.5 px-4 text-right font-semibold">{{ l.principal_amount | number:'1.2-2' }}</td>
+                      <td class="py-3.5 px-4 text-center font-mono">{{ l.tenure_months }} mos</td>
+                      <td class="py-3.5 px-4 text-right font-bold text-indigo-600">{{ l.monthly_installment | number:'1.2-2' }}</td>
+                      <td class="py-3.5 px-4 text-right text-emerald-600">{{ l.recovered_amount | number:'1.2-2' }}</td>
+                      <td class="py-3.5 px-4 text-right font-bold text-rose-600 dark:text-rose-400">
+                        {{ l.remaining_balance | number:'1.2-2' }}
+                      </td>
+                      <td class="py-3.5 px-4">
+                        <app-status-badge [status]="l.status"></app-status-badge>
+                      </td>
+                    </tr>
+                  } @empty {
+                    <tr>
+                      <td colspan="9" class="py-8 text-center text-slate-400">No staff loans active.</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3.15 Salary Advances Table -->
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                3.15 Short-Term Salary Advances & Recovery
+              </h3>
+              <p class="text-xs text-slate-500 mt-0.5">Approved short-term advances deducted from designated monthly payroll.</p>
+            </div>
+            <app-custom-button
+              label="+ Request Salary Advance"
+              variant="gold"
+              size="sm"
+              (btnClick)="openAdvanceModal()"
+            ></app-custom-button>
+          </div>
+
+          <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-2xs">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs border-collapse">
+                <thead class="bg-slate-100/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-800 uppercase tracking-wider text-[11px]">
+                  <tr>
+                    <th class="py-3 px-4">Employee</th>
+                    <th class="py-3 px-4 text-right">Advance Amount (BDT)</th>
+                    <th class="py-3 px-4">Requested Date</th>
+                    <th class="py-3 px-4 text-center">Recovery Month</th>
+                    <th class="py-3 px-4">Reason</th>
+                    <th class="py-3 px-4">Status</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                  @for (a of payrollService.salaryAdvances(); track a.id) {
+                    <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                      <td class="py-3.5 px-4 font-semibold text-slate-900 dark:text-white">
+                        {{ a.employee_name }}
+                        <span class="block text-[10px] text-slate-400 font-mono">{{ a.employee_code }}</span>
+                      </td>
+                      <td class="py-3.5 px-4 text-right font-bold text-rose-600 dark:text-rose-400">{{ a.advance_amount | number:'1.2-2' }}</td>
+                      <td class="py-3.5 px-4 font-mono text-slate-600 dark:text-slate-400">{{ a.requested_date }}</td>
+                      <td class="py-3.5 px-4 text-center font-mono font-semibold text-indigo-600">{{ a.recovery_period }}</td>
+                      <td class="py-3.5 px-4 text-slate-500">{{ a.reason || '—' }}</td>
+                      <td class="py-3.5 px-4">
+                        <app-status-badge [status]="a.status"></app-status-badge>
+                      </td>
+                    </tr>
+                  } @empty {
+                    <tr>
+                      <td colspan="6" class="py-8 text-center text-slate-400">No salary advances recorded.</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    }
+
+    <!-- TAB 5: BONUSES & TAX SLABS -->
+    @if (activeTab() === 'bonuses_tax') {
+      <div class="p-6 space-y-8">
+
+        <!-- 3.16 Bonuses & Incentives -->
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                3.16 Festival Bonuses & Performance Incentives
+              </h3>
+              <p class="text-xs text-slate-500 mt-0.5">Eid-ul-Fitr, Eid-ul-Adha, and site milestone incentives.</p>
+            </div>
+            <app-custom-button
+              label="+ Grant Bonus / Incentive"
+              variant="luxury"
+              size="sm"
+              (btnClick)="openBonusModal()"
+            ></app-custom-button>
+          </div>
+
+          <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-2xs">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs border-collapse">
+                <thead class="bg-slate-100/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-800 uppercase tracking-wider text-[11px]">
+                  <tr>
+                    <th class="py-3 px-4">Employee</th>
+                    <th class="py-3 px-4">Bonus Category</th>
+                    <th class="py-3 px-4 text-center">Period</th>
+                    <th class="py-3 px-4 text-right">Amount (BDT)</th>
+                    <th class="py-3 px-4 text-center">Taxable</th>
+                    <th class="py-3 px-4">Remarks</th>
+                    <th class="py-3 px-4">Status</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                  @for (b of payrollService.bonusesIncentives(); track b.id) {
+                    <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                      <td class="py-3.5 px-4 font-semibold text-slate-900 dark:text-white">
+                        {{ b.employee_name }}
+                        <span class="block text-[10px] text-slate-400 font-mono">{{ b.employee_code }}</span>
+                      </td>
+                      <td class="py-3.5 px-4">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-300">
+                          {{ b.bonus_type }}
+                        </span>
+                      </td>
+                      <td class="py-3.5 px-4 text-center font-mono font-semibold">{{ b.period_code }}</td>
+                      <td class="py-3.5 px-4 text-right font-bold text-emerald-600 dark:text-emerald-400">{{ b.bonus_amount | number:'1.2-2' }}</td>
+                      <td class="py-3.5 px-4 text-center">{{ b.is_taxable ? 'Yes' : 'Exempt' }}</td>
+                      <td class="py-3.5 px-4 text-slate-500">{{ b.remarks || '—' }}</td>
+                      <td class="py-3.5 px-4">
+                        <app-status-badge [status]="b.status"></app-status-badge>
+                      </td>
+                    </tr>
+                  } @empty {
+                    <tr>
+                      <td colspan="7" class="py-8 text-center text-slate-400">No bonus records recorded.</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3.11 Tax Configuration Slabs -->
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                3.11 National Board of Revenue (NBR) Income Tax Slabs
+              </h3>
+              <p class="text-xs text-slate-500 mt-0.5">Statutory personal income tax brackets for salary TDS withholding.</p>
+            </div>
+            <app-custom-button
+              label="+ Add Tax Slab Rule"
+              variant="gold"
+              size="sm"
+              (btnClick)="openTaxSlabModal()"
+            ></app-custom-button>
+          </div>
+
+          <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-2xs">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs border-collapse">
+                <thead class="bg-slate-100/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-800 uppercase tracking-wider text-[11px]">
+                  <tr>
+                    <th class="py-3 px-4">Tax Year</th>
+                    <th class="py-3 px-4">Slab Name</th>
+                    <th class="py-3 px-4 text-right">Income From (BDT)</th>
+                    <th class="py-3 px-4 text-right">Income To (BDT)</th>
+                    <th class="py-3 px-4 text-center">Tax Rate %</th>
+                    <th class="py-3 px-4">Applicability</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                  @for (ts of payrollService.taxSlabs(); track ts.id) {
+                    <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                      <td class="py-3.5 px-4 font-mono font-bold text-slate-800 dark:text-slate-200">{{ ts.tax_year }}</td>
+                      <td class="py-3.5 px-4 font-semibold text-slate-900 dark:text-white">{{ ts.slab_name }}</td>
+                      <td class="py-3.5 px-4 text-right font-mono">{{ ts.min_income | number:'1.0-0' }}</td>
+                      <td class="py-3.5 px-4 text-right font-mono">
+                        {{ ts.max_income ? (ts.max_income | number:'1.0-0') : 'Above' }}
+                      </td>
+                      <td class="py-3.5 px-4 text-center font-bold text-emerald-600 dark:text-emerald-400">{{ ts.tax_rate_percent }}%</td>
+                      <td class="py-3.5 px-4">{{ ts.gender_applicability }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    }
+
+    <!-- TAB 6: SETTINGS DYNAMIC LOOKUPS -->
+    @if (activeTab() === 'settings') {
+      <div class="p-6 space-y-6">
+
+        <div class="p-4 rounded-xl bg-slate-50/80 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div class="flex items-center gap-3 w-full sm:w-auto">
+            <label class="text-xs font-semibold text-slate-700 dark:text-slate-300 shrink-0">Category:</label>
+            <select
+              [value]="selectedLookupCategory()"
+              (change)="onLookupCategoryChange($any($event.target).value)"
+              class="erp-input text-xs"
+            >
+              <option value="HR_PAYROLL_STATUS">HR_PAYROLL_STATUS (Draft, Processing, Submitted, Verified, Approved, Locked)</option>
+              <option value="HR_SALARY_COMPONENT_TYPE">HR_SALARY_COMPONENT_TYPE (Earning, Deduction, Employer Cost)</option>
+              <option value="HR_SALARY_REVISION_TYPE">HR_SALARY_REVISION_TYPE (Increment, Promotion, Transfer)</option>
+              <option value="HR_STAFF_LOAN_TYPE">HR_STAFF_LOAN_TYPE (Emergency, Housing, Medical)</option>
+              <option value="HR_BONUS_TYPE">HR_BONUS_TYPE (Eid-ul-Fitr, Eid-ul-Adha, Performance)</option>
+            </select>
+          </div>
+
+          <app-custom-button
+            label="+ Add Dynamic Code"
+            variant="luxury"
+            size="sm"
+            (btnClick)="openLookupItemModal()"
+          ></app-custom-button>
+        </div>
+
+        <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-2xs">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs border-collapse">
+              <thead class="bg-slate-100/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-800 uppercase tracking-wider text-[11px]">
+                <tr>
+                  <th class="py-3 px-4">Item Code</th>
+                  <th class="py-3 px-4">English Name</th>
+                  <th class="py-3 px-4">Bangla Name</th>
+                  <th class="py-3 px-4 text-center">Order</th>
+                  <th class="py-3 px-4">Status</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                @for (item of lookupItems(); track item.id) {
+                  <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                    <td class="py-3.5 px-4 font-mono font-bold text-slate-800 dark:text-slate-200">{{ item.item_code }}</td>
+                    <td class="py-3.5 px-4 font-semibold text-slate-900 dark:text-white">{{ item.item_name_en }}</td>
+                    <td class="py-3.5 px-4 text-slate-600 dark:text-slate-400">{{ item.item_name_bn || '—' }}</td>
+                    <td class="py-3.5 px-4 text-center text-slate-500 font-mono">{{ item.sort_order }}</td>
+                    <td class="py-3.5 px-4">
+                      <app-status-badge [status]="item.is_active ? 'ACTIVE' : 'INACTIVE'"></app-status-badge>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    }
+
+  </app-card-container>
+
+  <!-- ======================================================== -->
+  <!-- DEDICATED MODALS (Zero Forms Under Tables Rule)          -->
+  <!-- ======================================================== -->
+
+  <!-- 1. Create Period Modal -->
+  <app-modal
+    [isOpen]="isPeriodModalOpen()"
+    title="Create Monthly Payroll Period"
+    subtitle="3.5 Configure monthly payroll cycle and cut-off milestone dates"
+    badge="3.5 Period Setup"
+    size="md"
+    (closed)="isPeriodModalOpen.set(false)"
+  >
+    <div class="space-y-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <app-custom-input
+          label="Period Code (e.g. 2026-11)"
+          placeholder="2026-11"
+          [required]="true"
+          [ngModel]="periodForm().period_code"
+          (ngModelChange)="updatePeriodField('period_code', $event)"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Period Name"
+          placeholder="November 2026"
+          [required]="true"
+          [ngModel]="periodForm().period_name"
+          (ngModelChange)="updatePeriodField('period_name', $event)"
+        ></app-custom-input>
       </div>
 
-      <!-- Net Payable Highlight -->
-      <div class="p-4 bg-emerald-50 rounded-xl border border-emerald-300 flex items-center justify-between mb-8">
-        <div>
-          <span class="text-xs uppercase font-bold text-emerald-800 block">Net Payable Salary (নিট প্রদেয় বেতন)</span>
-          <span class="text-xs text-emerald-600">Directly transferred to designated bank account</span>
-        </div>
-        <div class="text-xl font-extrabold font-mono text-emerald-900">
-          BDT {{ ps.net_payable | number:'1.2-2' }}
-        </div>
-      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <app-custom-input
+          label="Cycle Start Date"
+          type="date"
+          [required]="true"
+          [ngModel]="periodForm().start_date"
+          (ngModelChange)="updatePeriodField('start_date', $event)"
+        ></app-custom-input>
 
-      <!-- Statutory Declaration -->
-      <p class="text-[10px] text-slate-500 mb-8 italic">
-        * This document is generated in full compliance with the Bangladesh Labour Act 2006 (as amended) and Section 50 of the Bangladesh Income Tax Act 2023. Provident Fund deductions have been transferred to the Bengal RE Trustee Fund.
-      </p>
+        <app-custom-input
+          label="Cycle End Date"
+          type="date"
+          [required]="true"
+          [ngModel]="periodForm().end_date"
+          (ngModelChange)="updatePeriodField('end_date', $event)"
+        ></app-custom-input>
 
-      <!-- Signatures Footer -->
-      <div class="grid grid-cols-3 gap-6 pt-6 text-center text-xs">
-        <div>
-          <div class="border-t border-slate-400 pt-1 font-bold text-slate-700">Prepared by (HR Executive)</div>
-        </div>
-        <div>
-          <div class="border-t border-slate-400 pt-1 font-bold text-slate-700">Checked by (Manager Accounts)</div>
-        </div>
-        <div>
-          <div class="border-t border-slate-400 pt-1 font-bold text-slate-700">Approved by (Managing Director)</div>
-        </div>
-      </div>
-
-      <!-- Print Button (Hidden in Print Mode) -->
-      <div class="mt-8 pt-4 border-t border-slate-200 flex justify-end gap-2 print:hidden">
-        <button (click)="closePayslipModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer">Close</button>
-        <button (click)="printPayslip()" class="px-5 py-2 text-xs font-bold bg-slate-900 hover:bg-black text-white rounded-xl shadow-md cursor-pointer flex items-center gap-1.5">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
-          <span>Print / Save PDF</span>
-        </button>
+        <app-custom-input
+          label="Cut-off Date"
+          type="date"
+          [required]="true"
+          [ngModel]="periodForm().cut_off_date"
+          (ngModelChange)="updatePeriodField('cut_off_date', $event)"
+        ></app-custom-input>
       </div>
     </div>
-  </div>
-}
+
+    <div modal-footer class="flex items-center justify-end gap-2">
+      <app-custom-button
+        label="Cancel"
+        variant="secondary"
+        size="sm"
+        (btnClick)="isPeriodModalOpen.set(false)"
+      ></app-custom-button>
+      <app-custom-button
+        label="Create Period"
+        variant="luxury"
+        size="sm"
+        (btnClick)="submitPeriodCreate()"
+      ></app-custom-button>
+    </div>
+  </app-modal>
+
+  <!-- 2. Printable Bilingual Payslip Modal -->
+  <app-modal
+    [isOpen]="isPayslipModalOpen()"
+    title="Employee Payslip (বেতন রসিদ)"
+    [subtitle]="selectedPayslip() ? selectedPayslip()!.employee_name + ' (' + selectedPayslip()!.employee_code + ')' : ''"
+    badge="Bangladesh Labour Act Compliant"
+    size="xl"
+    (closed)="isPayslipModalOpen.set(false)"
+  >
+    @if (selectedPayslip(); as ps) {
+      <div id="printablePayslip" class="p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl space-y-6">
+        <!-- Header -->
+        <div class="text-center pb-4 border-b border-slate-200 dark:border-slate-800">
+          <h2 class="text-lg font-bold text-slate-900 dark:text-white uppercase tracking-wider">Blue Oceans Real Estate & Developments Ltd.</h2>
+          <p class="text-xs text-slate-500">Corporate Head Office, Gulshan, Dhaka, Bangladesh</p>
+          <div class="mt-2 inline-block px-3 py-1 bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 rounded-lg text-xs font-bold">
+            MONTHLY SALARY SLIP (মাসিক বেতন বিবরণী) — {{ payrollService.activePeriod()?.period_name }}
+          </div>
+        </div>
+
+        <!-- Employee Info Grid -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-xs">
+          <div>
+            <span class="text-slate-400 block text-[10px]">Employee ID / নাম:</span>
+            <span class="font-bold text-slate-900 dark:text-white">{{ ps.employee_name }} ({{ ps.employee_code }})</span>
+          </div>
+          <div>
+            <span class="text-slate-400 block text-[10px]">Department / বিভাগ:</span>
+            <span class="font-semibold text-slate-800 dark:text-slate-200">{{ ps.department_name || 'General' }}</span>
+          </div>
+          <div>
+            <span class="text-slate-400 block text-[10px]">Designation / পদবী:</span>
+            <span class="font-semibold text-slate-800 dark:text-slate-200">{{ ps.designation_title || 'Officer' }}</span>
+          </div>
+          <div>
+            <span class="text-slate-400 block text-[10px]">Bank A/C / ব্যাংক হিসাব:</span>
+            <span class="font-mono font-semibold text-slate-800 dark:text-slate-200">{{ ps.bank_account_no || 'Cash / Cheque' }}</span>
+          </div>
+        </div>
+
+        <!-- Earnings vs Deductions Matrix -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Earnings -->
+          <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+            <div class="px-4 py-2 bg-emerald-50 dark:bg-emerald-950/60 font-bold text-emerald-900 dark:text-emerald-200 text-xs border-b border-slate-200 dark:border-slate-800">
+              EARNINGS & ALLOWANCES (আয় ও ভাতাসমূহ)
+            </div>
+            <div class="p-4 text-xs space-y-2">
+              <div class="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
+                <span class="text-slate-600 dark:text-slate-400">Basic Salary (মূল বেতন):</span>
+                <span class="font-mono font-semibold">BDT {{ ps.basic_salary | number:'1.2-2' }}</span>
+              </div>
+              <div class="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
+                <span class="text-slate-600 dark:text-slate-400">House Rent (বাড়ি ভাড়া):</span>
+                <span class="font-mono font-semibold">BDT {{ ps.house_rent | number:'1.2-2' }}</span>
+              </div>
+              <div class="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
+                <span class="text-slate-600 dark:text-slate-400">Medical Allowance (চিকিৎসা):</span>
+                <span class="font-mono font-semibold">BDT {{ ps.medical_allowance | number:'1.2-2' }}</span>
+              </div>
+              <div class="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
+                <span class="text-slate-600 dark:text-slate-400">Conveyance (যাতায়াত):</span>
+                <span class="font-mono font-semibold">BDT {{ ps.conveyance_allowance | number:'1.2-2' }}</span>
+              </div>
+              @if (ps.other_allowances > 0) {
+                <div class="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
+                  <span class="text-slate-600 dark:text-slate-400">Other Allowances (অন্যান্য):</span>
+                  <span class="font-mono font-semibold">BDT {{ ps.other_allowances | number:'1.2-2' }}</span>
+                </div>
+              }
+              @if (ps.overtime_amount > 0) {
+                <div class="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800 text-indigo-600 font-semibold">
+                  <span>Overtime (অতিরিক্ত কর্মসময় - {{ ps.overtime_hours }}h):</span>
+                  <span class="font-mono">+BDT {{ ps.overtime_amount | number:'1.2-2' }}</span>
+                </div>
+              }
+              @if (ps.bonus_amount > 0) {
+                <div class="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800 text-amber-600 font-semibold">
+                  <span>Festival / Incentive Bonus (বোনাস):</span>
+                  <span class="font-mono">+BDT {{ ps.bonus_amount | number:'1.2-2' }}</span>
+                </div>
+              }
+              <div class="flex justify-between pt-2 font-bold text-sm text-slate-900 dark:text-white">
+                <span>TOTAL GROSS EARNINGS:</span>
+                <span class="font-mono text-indigo-600">BDT {{ ps.total_earnings | number:'1.2-2' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Deductions -->
+          <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+            <div class="px-4 py-2 bg-rose-50 dark:bg-rose-950/60 font-bold text-rose-900 dark:text-rose-200 text-xs border-b border-slate-200 dark:border-slate-800">
+              DEDUCTIONS (কর্তনসমূহ)
+            </div>
+            <div class="p-4 text-xs space-y-2">
+              <div class="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
+                <span class="text-slate-600 dark:text-slate-400">Provident Fund 10% (ভবিষ্য তহবিল):</span>
+                <span class="font-mono font-semibold text-rose-600">-BDT {{ ps.provident_fund_employee | number:'1.2-2' }}</span>
+              </div>
+              <div class="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
+                <span class="text-slate-600 dark:text-slate-400">Income Tax TDS (আয়কর কর্তন):</span>
+                <span class="font-mono font-semibold text-rose-600">-BDT {{ ps.income_tax_deduction | number:'1.2-2' }}</span>
+              </div>
+              @if (ps.unpaid_leave_deduction > 0) {
+                <div class="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
+                  <span class="text-slate-600 dark:text-slate-400">Unpaid Leave LWP ({{ ps.unpaid_leave_days }}d):</span>
+                  <span class="font-mono font-semibold text-rose-600">-BDT {{ ps.unpaid_leave_deduction | number:'1.2-2' }}</span>
+                </div>
+              }
+              @if (ps.staff_loan_recovery > 0) {
+                <div class="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
+                  <span class="text-slate-600 dark:text-slate-400">Staff Loan Recovery (ঋণ কিস্তি):</span>
+                  <span class="font-mono font-semibold text-rose-600">-BDT {{ ps.staff_loan_recovery | number:'1.2-2' }}</span>
+                </div>
+              }
+              @if (ps.salary_advance_recovery > 0) {
+                <div class="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
+                  <span class="text-slate-600 dark:text-slate-400">Salary Advance Recovery (অগ্রিম বেতন):</span>
+                  <span class="font-mono font-semibold text-rose-600">-BDT {{ ps.salary_advance_recovery | number:'1.2-2' }}</span>
+                </div>
+              }
+              <div class="flex justify-between pt-2 font-bold text-sm text-rose-600">
+                <span>TOTAL DEDUCTIONS:</span>
+                <span class="font-mono">-BDT {{ ps.total_deductions | number:'1.2-2' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Net Salary Summary Banner -->
+        <div class="p-4 rounded-xl bg-emerald-100 dark:bg-emerald-950/80 border border-emerald-300 dark:border-emerald-700 flex items-center justify-between">
+          <div>
+            <span class="text-xs uppercase font-bold text-emerald-900 dark:text-emerald-200">NET SALARY PAYABLE (প্রদেয় নীট বেতন)</span>
+            <p class="text-[11px] text-emerald-700 dark:text-emerald-300">Transferred via bank payment / corporate payroll account</p>
+          </div>
+          <div class="text-2xl font-bold font-mono text-emerald-800 dark:text-emerald-200">
+            BDT {{ ps.net_salary_payable | number:'1.2-2' }}
+          </div>
+        </div>
+
+        <!-- Signatures Blocks -->
+        <div class="grid grid-cols-3 gap-8 pt-10 text-center text-xs text-slate-500">
+          <div class="border-t border-slate-300 dark:border-slate-700 pt-2 font-medium">Prepared By (HR Executive)</div>
+          <div class="border-t border-slate-300 dark:border-slate-700 pt-2 font-medium">Verified By (Accounts Manager)</div>
+          <div class="border-t border-slate-300 dark:border-slate-700 pt-2 font-medium">Authorized Signature (MD / CEO)</div>
+        </div>
+      </div>
+    }
+
+    <div modal-footer class="flex items-center justify-end gap-2">
+      <app-custom-button
+        label="Close"
+        variant="secondary"
+        size="sm"
+        (btnClick)="isPayslipModalOpen.set(false)"
+      ></app-custom-button>
+      <app-custom-button
+        label="Print Payslip"
+        variant="luxury"
+        size="sm"
+        (btnClick)="printPayslip()"
+      >
+        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+        </svg>
+      </app-custom-button>
+    </div>
+  </app-modal>
+
+  <!-- 3. Salary Component Modal -->
+  <app-modal
+    [isOpen]="isComponentModalOpen()"
+    [title]="selectedCompId() ? 'Edit Salary Component' : 'Add Salary Component'"
+    subtitle="3.1 Earnings, statutory deductions, and employer matching definitions"
+    badge="3.1 Components"
+    size="md"
+    (closed)="isComponentModalOpen.set(false)"
+  >
+    <div class="space-y-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <app-custom-input
+          label="Component Code (e.g. BASIC, MEDICAL)"
+          placeholder="BASIC"
+          [required]="true"
+          [ngModel]="componentForm().component_code"
+          (ngModelChange)="updateComponentField('component_code', $event)"
+        ></app-custom-input>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Component Type</label>
+          <app-searchable-select
+            categoryCode="HR_SALARY_COMPONENT_TYPE"
+            [placeholder]="'EARNING'"
+            [ngModel]="componentForm().component_type"
+            (selectionChange)="updateComponentField('component_type', $event)"
+          ></app-searchable-select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <app-custom-input
+          label="Name (English)"
+          placeholder="Basic Salary"
+          [required]="true"
+          [ngModel]="componentForm().name_en"
+          (ngModelChange)="updateComponentField('name_en', $event)"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Name (Bangla)"
+          placeholder="মূল বেতন"
+          [ngModel]="componentForm().name_bn || ''"
+          (ngModelChange)="updateComponentField('name_bn', $event)"
+        ></app-custom-input>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Calculation Type</label>
+          <select
+            [value]="componentForm().calculation_type"
+            (change)="updateComponentField('calculation_type', $any($event.target).value)"
+            class="erp-input text-xs"
+          >
+            <option value="PERCENTAGE_OF_BASIC">PERCENTAGE_OF_BASIC</option>
+            <option value="PERCENTAGE_OF_GROSS">PERCENTAGE_OF_GROSS</option>
+            <option value="FIXED_AMOUNT">FIXED_AMOUNT</option>
+          </select>
+        </div>
+
+        <app-custom-input
+          label="Default Value or %"
+          type="number"
+          [ngModel]="String(componentForm().default_value_or_percent)"
+          (ngModelChange)="updateComponentField('default_value_or_percent', +$event)"
+        ></app-custom-input>
+      </div>
+
+      <div class="flex items-center gap-6 pt-2">
+        <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700 dark:text-slate-300">
+          <input
+            type="checkbox"
+            [checked]="componentForm().is_taxable"
+            (change)="updateComponentField('is_taxable', $any($event.target).checked)"
+            class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+          />
+          Is Taxable
+        </label>
+
+        <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700 dark:text-slate-300">
+          <input
+            type="checkbox"
+            [checked]="componentForm().is_statutory"
+            (change)="updateComponentField('is_statutory', $any($event.target).checked)"
+            class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+          />
+          Is Statutory (Labour Act)
+        </label>
+      </div>
+    </div>
+
+    <div modal-footer class="flex items-center justify-end gap-2">
+      <app-custom-button
+        label="Cancel"
+        variant="secondary"
+        size="sm"
+        (btnClick)="isComponentModalOpen.set(false)"
+      ></app-custom-button>
+      <app-custom-button
+        label="Save Component"
+        variant="luxury"
+        size="sm"
+        (btnClick)="submitComponentForm()"
+      ></app-custom-button>
+    </div>
+  </app-modal>
+
+  <!-- 4. Salary Structure Modal -->
+  <app-modal
+    [isOpen]="isStructureModalOpen()"
+    title="Create Standard Salary Structure"
+    subtitle="3.2 Define corporate or site package template"
+    badge="3.2 Structure"
+    size="md"
+    (closed)="isStructureModalOpen.set(false)"
+  >
+    <div class="space-y-4">
+      <app-custom-input
+        label="Structure Code (e.g. CORP_HQ_EXEC)"
+        placeholder="CORP_HQ_EXEC"
+        [required]="true"
+        [ngModel]="structureForm().structure_code"
+        (ngModelChange)="updateStructureField('structure_code', $event)"
+      ></app-custom-input>
+
+      <app-custom-input
+        label="Structure Name"
+        placeholder="Corporate Executive Standard Package"
+        [required]="true"
+        [ngModel]="structureForm().name_en"
+        (ngModelChange)="updateStructureField('name_en', $event)"
+      ></app-custom-input>
+
+      <app-custom-textarea
+        label="Description / Scope"
+        placeholder="Applicable employee grades and allowances..."
+        [rows]="3"
+        [ngModel]="structureForm().description || ''"
+        (ngModelChange)="updateStructureField('description', $event)"
+      ></app-custom-textarea>
+    </div>
+
+    <div modal-footer class="flex items-center justify-end gap-2">
+      <app-custom-button
+        label="Cancel"
+        variant="secondary"
+        size="sm"
+        (btnClick)="isStructureModalOpen.set(false)"
+      ></app-custom-button>
+      <app-custom-button
+        label="Save Structure"
+        variant="luxury"
+        size="sm"
+        (btnClick)="submitStructureForm()"
+      ></app-custom-button>
+    </div>
+  </app-modal>
+
+  <!-- 5. Assign Salary Structure Modal -->
+  <app-modal
+    [isOpen]="isAssignModalOpen()"
+    title="Assign Salary Structure to Employee"
+    subtitle="3.3 Configure employee monthly gross and base packages"
+    badge="3.3 Assignment"
+    size="md"
+    (closed)="isAssignModalOpen.set(false)"
+  >
+    <div class="space-y-4">
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Employee</label>
+        <app-searchable-select
+          [options]="employeeOptions()"
+          [placeholder]="'Select employee...'"
+          [ngModel]="assignForm().employee_id"
+          (selectionChange)="updateAssignField('employee_id', $event)"
+        ></app-searchable-select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Salary Structure</label>
+        <app-searchable-select
+          [options]="structureOptions()"
+          [placeholder]="'Select salary structure...'"
+          [ngModel]="assignForm().structure_id"
+          (selectionChange)="updateAssignField('structure_id', $event)"
+        ></app-searchable-select>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <app-custom-input
+          label="Gross Salary (BDT)"
+          type="number"
+          [required]="true"
+          [ngModel]="String(assignForm().gross_salary)"
+          (ngModelChange)="updateAssignField('gross_salary', +$event)"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Basic Salary (BDT)"
+          type="number"
+          [ngModel]="String(assignForm().basic_salary || (assignForm().gross_salary * 0.5))"
+          (ngModelChange)="updateAssignField('basic_salary', +$event)"
+        ></app-custom-input>
+      </div>
+
+      <app-custom-input
+        label="Effective From Date"
+        type="date"
+        [required]="true"
+        [ngModel]="assignForm().effective_from"
+        (ngModelChange)="updateAssignField('effective_from', $event)"
+      ></app-custom-input>
+    </div>
+
+    <div modal-footer class="flex items-center justify-end gap-2">
+      <app-custom-button
+        label="Cancel"
+        variant="secondary"
+        size="sm"
+        (btnClick)="isAssignModalOpen.set(false)"
+      ></app-custom-button>
+      <app-custom-button
+        label="Commit Assignment"
+        variant="luxury"
+        size="sm"
+        (btnClick)="submitAssignSalary()"
+      ></app-custom-button>
+    </div>
+  </app-modal>
+
+  <!-- 6. Salary Revision / Increment Modal -->
+  <app-modal
+    [isOpen]="isRevisionModalOpen()"
+    title="Apply Salary Revision / Increment"
+    subtitle="3.4 Merit increments, promotional upgrades, and transfer adjustments"
+    badge="3.4 Revision"
+    size="md"
+    (closed)="isRevisionModalOpen.set(false)"
+  >
+    <div class="space-y-4">
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Employee</label>
+        <app-searchable-select
+          [options]="employeeOptions()"
+          [placeholder]="'Select employee...'"
+          [ngModel]="revisionForm().employee_id"
+          (selectionChange)="updateRevisionField('employee_id', $event)"
+        ></app-searchable-select>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Revision Type</label>
+          <app-searchable-select
+            categoryCode="HR_SALARY_REVISION_TYPE"
+            [placeholder]="'INCREMENT'"
+            [ngModel]="revisionForm().revision_type"
+            (selectionChange)="updateRevisionField('revision_type', $event)"
+          ></app-searchable-select>
+        </div>
+
+        <app-custom-input
+          label="Effective Date"
+          type="date"
+          [required]="true"
+          [ngModel]="revisionForm().effective_date"
+          (ngModelChange)="updateRevisionField('effective_date', $event)"
+        ></app-custom-input>
+      </div>
+
+      <app-custom-input
+        label="New Gross Salary (BDT)"
+        type="number"
+        [required]="true"
+        [ngModel]="String(revisionForm().new_gross)"
+        (ngModelChange)="updateRevisionField('new_gross', +$event)"
+      ></app-custom-input>
+
+      <app-custom-textarea
+        label="Increment Rationale / Approval Remarks"
+        placeholder="Performance rating justification, management approval ref..."
+        [rows]="2"
+        [ngModel]="revisionForm().remarks || ''"
+        (ngModelChange)="updateRevisionField('remarks', $event)"
+      ></app-custom-textarea>
+    </div>
+
+    <div modal-footer class="flex items-center justify-end gap-2">
+      <app-custom-button
+        label="Cancel"
+        variant="secondary"
+        size="sm"
+        (btnClick)="isRevisionModalOpen.set(false)"
+      ></app-custom-button>
+      <app-custom-button
+        label="Submit Increment"
+        variant="gold"
+        size="sm"
+        (btnClick)="submitRevision()"
+      ></app-custom-button>
+    </div>
+  </app-modal>
+
+  <!-- 7. Staff Loan Modal -->
+  <app-modal
+    [isOpen]="isLoanModalOpen()"
+    title="Apply Company Staff Loan"
+    subtitle="3.14 Loan application, approval, and installment schedule"
+    badge="3.14 Staff Loan"
+    size="md"
+    (closed)="isLoanModalOpen.set(false)"
+  >
+    <div class="space-y-4">
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Employee</label>
+        <app-searchable-select
+          [options]="employeeOptions()"
+          [placeholder]="'Select employee...'"
+          [ngModel]="loanForm().employee_id"
+          (selectionChange)="updateLoanField('employee_id', $event)"
+        ></app-searchable-select>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <app-custom-input
+          label="Loan Code"
+          [ngModel]="loanForm().loan_code"
+          (ngModelChange)="updateLoanField('loan_code', $event)"
+        ></app-custom-input>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Loan Category</label>
+          <app-searchable-select
+            categoryCode="HR_STAFF_LOAN_TYPE"
+            [placeholder]="'EMERGENCY_LOAN'"
+            [ngModel]="loanForm().loan_type"
+            (selectionChange)="updateLoanField('loan_type', $event)"
+          ></app-searchable-select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <app-custom-input
+          label="Principal Amount (BDT)"
+          type="number"
+          [required]="true"
+          [ngModel]="String(loanForm().principal_amount)"
+          (ngModelChange)="updateLoanField('principal_amount', +$event)"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Tenure (Months)"
+          type="number"
+          [required]="true"
+          [ngModel]="String(loanForm().tenure_months)"
+          (ngModelChange)="updateLoanField('tenure_months', +$event)"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Monthly EMI (BDT)"
+          type="number"
+          [ngModel]="String(loanForm().monthly_installment || (loanForm().principal_amount / (loanForm().tenure_months || 10)))"
+          (ngModelChange)="updateLoanField('monthly_installment', +$event)"
+        ></app-custom-input>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <app-custom-input
+          label="Disbursement Date"
+          type="date"
+          [ngModel]="loanForm().disbursement_date"
+          (ngModelChange)="updateLoanField('disbursement_date', $event)"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Start Recovery Period (YYYY-MM)"
+          placeholder="2026-10"
+          [ngModel]="loanForm().start_recovery_period"
+          (ngModelChange)="updateLoanField('start_recovery_period', $event)"
+        ></app-custom-input>
+      </div>
+    </div>
+
+    <div modal-footer class="flex items-center justify-end gap-2">
+      <app-custom-button
+        label="Cancel"
+        variant="secondary"
+        size="sm"
+        (btnClick)="isLoanModalOpen.set(false)"
+      ></app-custom-button>
+      <app-custom-button
+        label="Approve Loan"
+        variant="luxury"
+        size="sm"
+        (btnClick)="submitLoanForm()"
+      ></app-custom-button>
+    </div>
+  </app-modal>
+
+  <!-- 8. Salary Advance Modal -->
+  <app-modal
+    [isOpen]="isAdvanceModalOpen()"
+    title="Apply Salary Advance"
+    subtitle="3.15 Advance approval and automatic payroll recovery"
+    badge="3.15 Advance"
+    size="md"
+    (closed)="isAdvanceModalOpen.set(false)"
+  >
+    <div class="space-y-4">
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Employee</label>
+        <app-searchable-select
+          [options]="employeeOptions()"
+          [placeholder]="'Select employee...'"
+          [ngModel]="advanceForm().employee_id"
+          (selectionChange)="updateAdvanceField('employee_id', $event)"
+        ></app-searchable-select>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <app-custom-input
+          label="Advance Amount (BDT)"
+          type="number"
+          [required]="true"
+          [ngModel]="String(advanceForm().advance_amount)"
+          (ngModelChange)="updateAdvanceField('advance_amount', +$event)"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Recovery Period (YYYY-MM)"
+          placeholder="2026-10"
+          [required]="true"
+          [ngModel]="advanceForm().recovery_period"
+          (ngModelChange)="updateAdvanceField('recovery_period', $event)"
+        ></app-custom-input>
+      </div>
+
+      <app-custom-textarea
+        label="Reason for Advance"
+        placeholder="Emergency purpose or justification..."
+        [rows]="2"
+        [ngModel]="advanceForm().reason || ''"
+        (ngModelChange)="updateAdvanceField('reason', $event)"
+      ></app-custom-textarea>
+    </div>
+
+    <div modal-footer class="flex items-center justify-end gap-2">
+      <app-custom-button
+        label="Cancel"
+        variant="secondary"
+        size="sm"
+        (btnClick)="isAdvanceModalOpen.set(false)"
+      ></app-custom-button>
+      <app-custom-button
+        label="Grant Advance"
+        variant="gold"
+        size="sm"
+        (btnClick)="submitAdvanceForm()"
+      ></app-custom-button>
+    </div>
+  </app-modal>
+
+  <!-- 9. Grant Bonus Modal -->
+  <app-modal
+    [isOpen]="isBonusModalOpen()"
+    title="Grant Bonus / Incentive"
+    subtitle="3.16 Festival bonus, Eid incentive, or project completion reward"
+    badge="3.16 Bonus"
+    size="md"
+    (closed)="isBonusModalOpen.set(false)"
+  >
+    <div class="space-y-4">
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Employee</label>
+        <app-searchable-select
+          [options]="employeeOptions()"
+          [placeholder]="'Select employee...'"
+          [ngModel]="bonusForm().employee_id"
+          (selectionChange)="updateBonusField('employee_id', $event)"
+        ></app-searchable-select>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Bonus Category</label>
+          <app-searchable-select
+            categoryCode="HR_BONUS_TYPE"
+            [placeholder]="'PERFORMANCE_BONUS'"
+            [ngModel]="bonusForm().bonus_type"
+            (selectionChange)="updateBonusField('bonus_type', $event)"
+          ></app-searchable-select>
+        </div>
+
+        <app-custom-input
+          label="Payroll Period (YYYY-MM)"
+          placeholder="2026-10"
+          [required]="true"
+          [ngModel]="bonusForm().period_code"
+          (ngModelChange)="updateBonusField('period_code', $event)"
+        ></app-custom-input>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <app-custom-input
+          label="Bonus Amount (BDT)"
+          type="number"
+          [required]="true"
+          [ngModel]="String(bonusForm().bonus_amount)"
+          (ngModelChange)="updateBonusField('bonus_amount', +$event)"
+        ></app-custom-input>
+
+        <div class="flex items-center gap-2 pt-6">
+          <input
+            type="checkbox"
+            id="taxableBonus"
+            [checked]="bonusForm().is_taxable"
+            (change)="updateBonusField('is_taxable', $any($event.target).checked)"
+            class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+          />
+          <label for="taxableBonus" class="text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer">
+            Taxable Earning
+          </label>
+        </div>
+      </div>
+
+      <app-custom-textarea
+        label="Remarks / Milestone Justification"
+        placeholder="Details on handover milestone or performance rating..."
+        [rows]="2"
+        [ngModel]="bonusForm().remarks || ''"
+        (ngModelChange)="updateBonusField('remarks', $event)"
+      ></app-custom-textarea>
+    </div>
+
+    <div modal-footer class="flex items-center justify-end gap-2">
+      <app-custom-button
+        label="Cancel"
+        variant="secondary"
+        size="sm"
+        (btnClick)="isBonusModalOpen.set(false)"
+      ></app-custom-button>
+      <app-custom-button
+        label="Save Bonus"
+        variant="luxury"
+        size="sm"
+        (btnClick)="submitBonusForm()"
+      ></app-custom-button>
+    </div>
+  </app-modal>
+
+  <!-- 10. Tax Slab Modal -->
+  <app-modal
+    [isOpen]="isTaxSlabModalOpen()"
+    title="Configure NBR Tax Slab"
+    subtitle="3.11 Income tax withholding brackets"
+    badge="3.11 Tax"
+    size="md"
+    (closed)="isTaxSlabModalOpen.set(false)"
+  >
+    <div class="space-y-4">
+      <app-custom-input
+        label="Slab Name (e.g. Next Tk. 4,00,000)"
+        placeholder="Next Tk. 4,00,000"
+        [required]="true"
+        [ngModel]="taxSlabForm().slab_name"
+        (ngModelChange)="updateTaxSlabField('slab_name', $event)"
+      ></app-custom-input>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <app-custom-input
+          label="Min Income (BDT)"
+          type="number"
+          [ngModel]="String(taxSlabForm().min_income)"
+          (ngModelChange)="updateTaxSlabField('min_income', +$event)"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Max Income (BDT)"
+          type="number"
+          placeholder="Blank for above"
+          [ngModel]="taxSlabForm().max_income !== undefined ? String(taxSlabForm().max_income) : ''"
+          (ngModelChange)="updateTaxSlabField('max_income', $event ? +$event : undefined)"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Tax Rate %"
+          type="number"
+          [required]="true"
+          [ngModel]="String(taxSlabForm().tax_rate_percent)"
+          (ngModelChange)="updateTaxSlabField('tax_rate_percent', +$event)"
+        ></app-custom-input>
+      </div>
+    </div>
+
+    <div modal-footer class="flex items-center justify-end gap-2">
+      <app-custom-button
+        label="Cancel"
+        variant="secondary"
+        size="sm"
+        (btnClick)="isTaxSlabModalOpen.set(false)"
+      ></app-custom-button>
+      <app-custom-button
+        label="Save Tax Slab"
+        variant="luxury"
+        size="sm"
+        (btnClick)="submitTaxSlabForm()"
+      ></app-custom-button>
+    </div>
+  </app-modal>
+
+  <!-- 11. Dynamic Lookup Item Modal -->
+  <app-modal
+    [isOpen]="isLookupModalOpen()"
+    title="Create / Edit Dynamic Code"
+    [subtitle]="'Category: ' + selectedLookupCategory()"
+    badge="Settings"
+    size="sm"
+    (closed)="isLookupModalOpen.set(false)"
+  >
+    <div class="space-y-4">
+      <app-custom-input
+        label="Item Code (Key)"
+        placeholder="e.g. SPECIAL_INCENTIVE"
+        [required]="true"
+        [ngModel]="lookupForm().item_code"
+        (ngModelChange)="updateLookupField('item_code', $event)"
+      ></app-custom-input>
+
+      <app-custom-input
+        label="English Display Name"
+        placeholder="e.g. Special Incentive"
+        [required]="true"
+        [ngModel]="lookupForm().item_name_en"
+        (ngModelChange)="updateLookupField('item_name_en', $event)"
+      ></app-custom-input>
+
+      <app-custom-input
+        label="Bangla Display Name"
+        placeholder="e.g. বিশেষ প্রণোদনা"
+        [ngModel]="lookupForm().item_name_bn"
+        (ngModelChange)="updateLookupField('item_name_bn', $event)"
+      ></app-custom-input>
+
+      <app-custom-input
+        label="Sort Order"
+        type="number"
+        [ngModel]="String(lookupForm().sort_order)"
+        (ngModelChange)="updateLookupField('sort_order', +$event)"
+      ></app-custom-input>
+    </div>
+
+    <div modal-footer class="flex items-center justify-end gap-2">
+      <app-custom-button
+        label="Cancel"
+        variant="secondary"
+        size="sm"
+        (btnClick)="isLookupModalOpen.set(false)"
+      ></app-custom-button>
+      <app-custom-button
+        label="Save Item"
+        variant="luxury"
+        size="sm"
+        (btnClick)="submitLookupForm()"
+      ></app-custom-button>
+    </div>
+  </app-modal>
+
+</div>
