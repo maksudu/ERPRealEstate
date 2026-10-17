@@ -45,6 +45,7 @@ from app.modules.hrms.router import router as hrms_router
 from app.modules.tax.router import router as tax_router
 from app.modules.governance.router import router as governance_router
 from app.modules.bi.router import router as bi_router
+from app.modules.portal.router import router as portal_router
 
 
 
@@ -143,6 +144,7 @@ app.include_router(hrms_router, prefix=settings.API_V1_PREFIX)
 app.include_router(tax_router, prefix=settings.API_V1_PREFIX)
 app.include_router(governance_router, prefix=settings.API_V1_PREFIX)
 app.include_router(bi_router, prefix=settings.API_V1_PREFIX)
+app.include_router(portal_router, prefix=settings.API_V1_PREFIX)
 
 if __name__ == "__main__":
 

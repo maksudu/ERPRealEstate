@@ -346,6 +346,21 @@ export const routes: Routes = [
     path: 'executive/cockpit',
     redirectTo: 'bi/cockpit',
     pathMatch: 'full'
+  },
+  {
+    path: 'portal/customer',
+    loadComponent: () => import('./features/portal/customer-portal/customer-portal.component').then(m => m.CustomerPortalComponent),
+    title: 'Customer Self-Service Portal & Flat Owner Transparency - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'portal/dashboard',
+    redirectTo: 'portal/customer',
+    pathMatch: 'full'
+  },
+  {
+    path: 'portal',
+    redirectTo: 'portal/customer',
+    pathMatch: 'full'
   }
     ]
   },

@@ -9,3 +9,4 @@ export * from './status-badge/status-badge.component';
 export * from './modal/modal.component';
 export * from './drawer/drawer.component';
 export * from './data-table/data-table.component';
+export * from './skeleton-loader/skeleton-loader.component';

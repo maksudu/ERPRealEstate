@@ -69,6 +69,31 @@ module.exports = {
         slate: {
           850: '#151f32',
           950: '#0b1120',
+        },
+        gold: {
+          50: '#fffbeb',
+          100: '#fef3c7',
+          200: '#fde68a',
+          300: '#fcd34d',
+          400: '#fbbf24',
+          500: '#f59e0b',
+          600: '#d97706', // Primary luxury gold
+          700: '#b45309', // Real estate bronze/amber
+          800: '#92400e',
+          900: '#78350f',
+          950: '#451a03',
+        },
+        bronze: {
+          50: '#fdf8f6',
+          100: '#f2e8e5',
+          200: '#eaddd7',
+          300: '#e0cec7',
+          400: '#d2bab0',
+          500: '#b08968',
+          600: '#9c6644',
+          700: '#7f5539',
+          800: '#582f0e',
+          900: '#3d200a',
         }
       },
       borderRadius: {
@@ -76,7 +101,33 @@ module.exports = {
         'control': '0.5rem',   // rounded-lg for inputs, buttons, dropdowns
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        sans: ['Inter', 'Outfit', 'system-ui', '-apple-system', 'sans-serif'],
+        display: ['Outfit', 'Inter', 'system-ui', 'sans-serif'],
+      },
+      boxShadow: {
+        'luxury': '0 10px 30px -5px rgba(217, 119, 6, 0.15), 0 4px 6px -2px rgba(15, 23, 42, 0.05)',
+        'luxury-dark': '0 10px 30px -5px rgba(0, 0, 0, 0.6), 0 0 15px 1px rgba(217, 119, 6, 0.12)',
+        'glass': '0 8px 32px 0 rgba(15, 23, 42, 0.08)',
+        'glass-dark': '0 8px 32px 0 rgba(0, 0, 0, 0.45)',
+      },
+      animation: {
+        'pulse-gold': 'pulse-gold 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'shimmer': 'shimmer 2s infinite linear',
+        'glow': 'glow 3s ease-in-out infinite alternate',
+      },
+      keyframes: {
+        'pulse-gold': {
+          '0%, 100%': { opacity: 1, transform: 'scale(1)' },
+          '50%': { opacity: 0.5, transform: 'scale(1.1)' },
+        },
+        'shimmer': {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(100%)' },
+        },
+        'glow': {
+          '0%': { boxShadow: '0 0 5px rgba(217, 119, 6, 0.2)' },
+          '100%': { boxShadow: '0 0 20px rgba(217, 119, 6, 0.6)' },
+        }
       }
     },
   },

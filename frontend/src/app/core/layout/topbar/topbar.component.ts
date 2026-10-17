@@ -20,7 +20,7 @@ export interface NotificationItem {
   imports: [CommonModule, FormsModule, CommandPaletteComponent],
   templateUrl: './topbar.component.html',
   host: {
-    class: 'sticky top-0 z-40 block w-full bg-white dark:bg-slate-900'
+    class: 'sticky top-0 z-40 block w-full backdrop-blur-md bg-white/85 dark:bg-slate-900/85 border-b border-slate-200/80 dark:border-slate-800/80 shadow-xs'
   }
 })
 export class TopbarComponent {
