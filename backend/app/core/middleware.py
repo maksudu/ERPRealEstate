@@ -52,75 +52,80 @@ async def _record_audit_log(
         print(f"[AuditMiddleware Error]: Failed to write audit trail: {e}")
 
 
-class AuditLoggingMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next) -> Response:
-        # Only log mutating HTTP requests
-        if request.method not in MUTATING_METHODS:
-            return await call_next(request)
+class AuditLoggingMiddleware:
+    def __init__(self, app):
+        self.app = app
 
-        # Check if path is excluded (e.g. login to prevent logging passwords)
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        method = scope.get("method", "")
+        if method not in MUTATING_METHODS:
+            await self.app(scope, receive, send)
+            return
+
+        path = scope.get("path", "")
         for excluded in EXCLUDED_PATHS:
-            if request.url.path.startswith(excluded):
-                return await call_next(request)
+            if path.startswith(excluded):
+                await self.app(scope, receive, send)
+                return
 
-        # 1. Read request body and preserve stream for downstream handlers
-        body_bytes = await request.body()
-        has_sent = False
-        async def receive():
-            nonlocal has_sent
-            if not has_sent:
-                has_sent = True
-                return {"type": "http.request", "body": body_bytes, "more_body": False}
-            return {"type": "http.disconnect"}
-        request._receive = receive
+        body_chunks = []
+        async def custom_receive():
+            message = await receive()
+            if message["type"] == "http.request":
+                body = message.get("body", b"")
+                if body:
+                    body_chunks.append(body)
+            return message
 
-        # 2. Extract User ID from JWT Token if available
-        user_id: Optional[int] = None
-        auth_header = request.headers.get("Authorization")
-        if auth_header and auth_header.startswith("Bearer "):
-            token = auth_header[7:]
-            try:
-                payload = jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.ALGORITHM])
-                uid = payload.get("user_id")
-                if uid:
-                    user_id = int(uid)
-            except Exception:
-                pass
+        status_code = [200]
+        async def custom_send(message):
+            if message["type"] == "http.response.start":
+                status_code[0] = message.get("status", 200)
+            await send(message)
 
-        # 3. Extract IP Address
-        client_ip = request.headers.get("X-Forwarded-For")
-        if client_ip:
-            client_ip = client_ip.split(",")[0].strip()
-        elif request.client:
-            client_ip = request.client.host
+        await self.app(scope, custom_receive, custom_send)
 
-        # 4. Extract Entity Name from Path (e.g. /api/v1/lookups/LAND_CLASS -> 'lookups')
-        path_parts = [p for p in request.url.path.strip("/").split("/") if p]
-        entity_name = "system"
-        entity_id: Optional[str] = None
-        if len(path_parts) >= 3 and path_parts[0] == "api":
-            entity_name = path_parts[2] # e.g. lookups, parcels, sales
-            if len(path_parts) >= 4:
-                entity_id = path_parts[3]
+        if 200 <= status_code[0] < 300:
+            headers = dict(scope.get("headers", []))
+            auth_header = headers.get(b"authorization", b"").decode("latin-1")
+            user_id: Optional[int] = None
+            if auth_header.startswith("Bearer "):
+                token = auth_header[7:]
+                try:
+                    payload = jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.ALGORITHM])
+                    uid = payload.get("user_id")
+                    if uid:
+                        user_id = int(uid)
+                except Exception:
+                    pass
 
-        # 5. Parse and sanitize payload
-        payload_after: Optional[Dict[str, Any]] = None
-        if body_bytes:
-            try:
-                payload_after = json.loads(body_bytes.decode("utf-8"))
-                # Sanitize sensitive fields if any
-                if isinstance(payload_after, dict):
-                    for sensitive in ("password", "hashed_password", "token", "secret"):
-                        if sensitive in payload_after:
-                            payload_after[sensitive] = "******"
-            except Exception:
-                payload_after = {"raw_size_bytes": len(body_bytes)}
+            forwarded = headers.get(b"x-forwarded-for", b"").decode("latin-1")
+            client_ip = forwarded.split(",")[0].strip() if forwarded else (scope.get("client")[0] if scope.get("client") else None)
 
-        # 6. Execute downstream endpoint
-        response = await call_next(request)
+            path_parts = [p for p in path.strip("/").split("/") if p]
+            entity_name = "system"
+            entity_id: Optional[str] = None
+            if len(path_parts) >= 3 and path_parts[0] == "api":
+                entity_name = path_parts[2]
+                if len(path_parts) >= 4:
+                    entity_id = path_parts[3]
 
-        # 7. Asynchronously trigger audit logging for successful mutations (2xx status codes)
-        if 200 <= response.status_code < 300:
+            payload_after: Optional[Dict[str, Any]] = None
+            if body_chunks:
+                try:
+                    full_body = b"".join(body_chunks)
+                    payload_after = json.loads(full_body.decode("utf-8"))
+                    if isinstance(payload_after, dict):
+                        for sensitive in ("password", "hashed_password", "token", "secret"):
+                            if sensitive in payload_after:
+                                payload_after[sensitive] = "******"
+                except Exception:
+                    payload_after = None
+
             asyncio.create_task(
                 _record_audit_log(
                     user_id=user_id,
@@ -128,10 +133,8 @@ class AuditLoggingMiddleware(BaseHTTPMiddleware):
                     microservice_name="erp-core-gateway",
                     entity_name=entity_name,
                     entity_id=entity_id,
-                    action_type=request.method,
+                    action_type=method,
                     payload_before=None,
                     payload_after=payload_after
                 )
             )
-
-        return response

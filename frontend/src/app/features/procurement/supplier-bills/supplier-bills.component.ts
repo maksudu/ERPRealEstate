@@ -327,7 +327,7 @@ import {
             <div class="font-bold text-amber-900 dark:text-amber-300 uppercase tracking-wider text-[10px]">3. Expected Payable</div>
             <div class="text-slate-600 dark:text-slate-400">Base Goods Value:</div>
             <div class="text-base font-black text-amber-700 dark:text-amber-400 font-mono">
-              ৳{{ (selectedBill.accepted_quantity * (selectedBill.po_unit_price || 0)) | number:'1.2-2' }}
+              ৳{{ ((selectedBill.accepted_quantity || 0) * (selectedBill.po_unit_price || 0)) | number:'1.2-2' }}
             </div>
             <div class="text-[10px] text-slate-500">Subject to Tax, Freight & Discount</div>
           </div>

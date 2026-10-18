@@ -6,9 +6,9 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div [ngClass]="variant === 'glass' ? 'glass-card' : 'erp-card'" class="overflow-hidden">
+    <div [ngClass]="[variant === 'glass' ? 'glass-card' : 'erp-card', customClass]" class="overflow-hidden">
       <!-- Card Header (Optional) -->
-      @if (title || subtitle) {
+      @if (hasHeader && (title || subtitle)) {
         <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 bg-slate-50/70 dark:bg-slate-850/80">
           <div class="min-w-0 flex-1">
             @if (title) {
@@ -49,4 +49,6 @@ export class CardContainerComponent {
   @Input() badge: string = '';
   @Input() paddingClass: string = 'p-6';
   @Input() variant: string = 'default';
+  @Input() hasHeader: boolean = true;
+  @Input() customClass: string = '';
 }

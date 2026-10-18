@@ -13,7 +13,7 @@ import { CommonModule } from '@angular/common';
       >
         <div 
           class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl w-full overflow-hidden animate-scaleUp flex flex-col max-h-[90vh]"
-          [ngClass]="maxWidthClass"
+          [ngClass]="modalClass"
           (click)="$event.stopPropagation()"
         >
           <!-- Header -->
@@ -78,12 +78,20 @@ export class ModalComponent {
   @Input() subtitle: string = '';
   @Input() badge: string = '';
   @Input() size: 'sm' | 'md' | 'lg' | 'xl' | '2xl' = 'md';
+  @Input() maxWidth: string = '';
+  @Input() maxWidthClass: string = '';
   @Input() closeOnBackdrop: boolean = true;
   @Input() showFooter: boolean = true;
 
   @Output() closed = new EventEmitter<void>();
 
-  get maxWidthClass(): string {
+  get modalClass(): string {
+    if (this.maxWidth) {
+      return this.maxWidth;
+    }
+    if (this.maxWidthClass) {
+      return this.maxWidthClass;
+    }
     const map = {
       sm: 'max-w-md',
       md: 'max-w-lg',

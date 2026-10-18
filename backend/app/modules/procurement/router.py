@@ -249,6 +249,51 @@ async def list_site_stores(
     return resp_list
 
 
+@router.get("/stores/valuation-summary", response_model=List[StoreValuationResponse])
+async def get_store_valuation_summary(db: AsyncSession = Depends(get_db)):
+    """Real-time store stock inventory valuation breakdown across central & site stores."""
+    stmt = (
+        select(SiteStore)
+        .options(
+            selectinload(SiteStore.project),
+            selectinload(SiteStore.stocks).selectinload(StoreStock.material)
+        )
+        .where(SiteStore.is_active == True)
+        .order_by(SiteStore.is_central_warehouse.desc(), SiteStore.id.asc())
+    )
+    res = await db.execute(stmt)
+    stores = res.scalars().all()
+
+    summary: List[StoreValuationResponse] = []
+    for s in stores:
+        tot_val = 0.0
+        items: List[StoreValuationItem] = []
+        for stk in s.stocks:
+            qty = float(stk.current_stock_quantity)
+            rate = float(stk.weighted_avg_rate)
+            val = round(qty * rate, 2)
+            tot_val += val
+            if stk.material:
+                items.append(StoreValuationItem(
+                    material_id=stk.material_id,
+                    material_name=stk.material.material_name,
+                    category=stk.material.category,
+                    unit_of_measure=stk.material.unit_of_measure,
+                    current_stock_quantity=qty,
+                    weighted_avg_rate=rate,
+                    total_stock_value=val
+                ))
+        summary.append(StoreValuationResponse(
+            store_id=s.id,
+            store_name=s.store_name,
+            is_central_warehouse=s.is_central_warehouse,
+            project_name=s.project.project_name if s.project else None,
+            total_valuation=round(tot_val, 2),
+            items=items
+        ))
+    return summary
+
+
 @router.get("/stores/{store_id}", response_model=SiteStoreResponse)
 async def get_site_store(store_id: int, db: AsyncSession = Depends(get_db)):
     """Get single warehouse or project-site store by ID."""
@@ -477,51 +522,6 @@ async def create_site_store(payload: SiteStoreCreate, db: AsyncSession = Depends
     await db.commit()
 
     return await get_site_store(store_id=store.id, db=db)
-
-
-@router.get("/stores/valuation-summary", response_model=List[StoreValuationResponse])
-async def get_store_valuation_summary(db: AsyncSession = Depends(get_db)):
-    """Real-time store stock inventory valuation breakdown across central & site stores."""
-    stmt = (
-        select(SiteStore)
-        .options(
-            selectinload(SiteStore.project),
-            selectinload(SiteStore.stocks).selectinload(StoreStock.material)
-        )
-        .where(SiteStore.is_active == True)
-        .order_by(SiteStore.is_central_warehouse.desc(), SiteStore.id.asc())
-    )
-    res = await db.execute(stmt)
-    stores = res.scalars().all()
-
-    summary: List[StoreValuationResponse] = []
-    for s in stores:
-        tot_val = 0.0
-        items: List[StoreValuationItem] = []
-        for stk in s.stocks:
-            qty = float(stk.current_stock_quantity)
-            rate = float(stk.weighted_avg_rate)
-            val = round(qty * rate, 2)
-            tot_val += val
-            if stk.material:
-                items.append(StoreValuationItem(
-                    material_id=stk.material_id,
-                    material_name=stk.material.material_name,
-                    category=stk.material.category,
-                    unit_of_measure=stk.material.unit_of_measure,
-                    current_stock_quantity=qty,
-                    weighted_avg_rate=rate,
-                    total_stock_value=val
-                ))
-        summary.append(StoreValuationResponse(
-            store_id=s.id,
-            store_name=s.store_name,
-            is_central_warehouse=s.is_central_warehouse,
-            project_name=s.project.project_name if s.project else None,
-            total_valuation=round(tot_val, 2),
-            items=items
-        ))
-    return summary
 
 
 @router.get("/stores/{store_id}/ledger", response_model=List[StockLedgerResponse])
@@ -1736,6 +1736,15 @@ async def create_goods_receipt(
         inspection_remarks=payload.inspection_remarks
     )
     db.add(grn)
+
+    # Automatically track PO received status
+    tot_prev = (await db.execute(select(func.sum(GoodsReceipt.accepted_quantity)).where(GoodsReceipt.po_id == po.id))).scalar() or 0.0
+    tot_accepted = float(tot_prev) + accepted_qty
+    if tot_accepted >= float(po.ordered_quantity):
+        po.status = "FULLY_RECEIVED"
+    elif tot_accepted > 0:
+        po.status = "PARTIALLY_RECEIVED"
+
     await db.commit()
     await db.refresh(grn)
 
