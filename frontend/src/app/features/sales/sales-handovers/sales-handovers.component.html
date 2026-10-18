@@ -1,0 +1,277 @@
+<div class="flex flex-col gap-6 w-full max-w-7xl mx-auto pb-16">
+  <!-- Top Bar & Breadcrumb -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-border">
+    <div>
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-semibold text-muted-foreground">Sales & Allotments</span>
+        <span class="text-muted-foreground text-xs">/</span>
+        <span class="text-xs font-medium text-foreground">Property Handover & Possession (Spec 5.12)</span>
+      </div>
+      <h1 class="text-2xl font-bold font-display text-foreground mt-1">
+        Property Handover Management & Customer Possession
+      </h1>
+      <p class="text-xs text-muted-foreground mt-0.5">
+        Operational transition from booked unit to physical possession: prerequisites review, room inspection, defect rectification, utility meters, and handover certificates.
+      </p>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <a
+        routerLink="/sales/handovers/create"
+        class="px-4 py-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold inline-flex items-center gap-2 shadow-xs transition-colors"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        <span>+ Initiate Property Handover</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- KPI Overview Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="bg-card border border-border rounded-xl p-4 shadow-xs">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-bold uppercase tracking-wider text-muted-foreground">Units Handed Over</span>
+        <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">
+          ✓
+        </div>
+      </div>
+      <div class="text-2xl font-bold font-display text-foreground mt-2">
+        {{ handoverData()?.total_handed_over_count || 0 }}
+      </div>
+      <div class="text-[11px] text-muted-foreground mt-0.5">Physical possession completed & DLP active</div>
+    </div>
+
+    <div class="bg-card border border-border rounded-xl p-4 shadow-xs">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-bold uppercase tracking-wider text-muted-foreground">Active Snagging / Defects</span>
+        <div class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold">
+          !
+        </div>
+      </div>
+      <div class="text-2xl font-bold font-display text-amber-600 dark:text-amber-400 mt-2">
+        {{ handoverData()?.total_snagging_count || 0 }}
+      </div>
+      <div class="text-[11px] text-muted-foreground mt-0.5">Pre-possession rectification in progress</div>
+    </div>
+
+    <div class="bg-card border border-border rounded-xl p-4 shadow-xs">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-bold uppercase tracking-wider text-muted-foreground">Inspections Scheduled</span>
+        <div class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
+          ◷
+        </div>
+      </div>
+      <div class="text-2xl font-bold font-display text-blue-600 dark:text-blue-400 mt-2">
+        {{ handoverData()?.total_scheduled_count || 0 }}
+      </div>
+      <div class="text-[11px] text-muted-foreground mt-0.5">Joint site walkthrough with engineer & buyer</div>
+    </div>
+
+    <div class="bg-card border border-border rounded-xl p-4 shadow-xs">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-bold uppercase tracking-wider text-muted-foreground">Total Handover Dossiers</span>
+        <div class="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center font-bold">
+          #
+        </div>
+      </div>
+      <div class="text-2xl font-bold font-display text-foreground mt-2">
+        {{ handoverData()?.total || 0 }}
+      </div>
+      <div class="text-[11px] text-muted-foreground mt-0.5">Operational pipeline tracked under Spec 5.12</div>
+    </div>
+  </div>
+
+  <!-- Single Container Card for Filters & Table -->
+  <div class="bg-card border border-border rounded-xl shadow-xs overflow-hidden">
+    <!-- Filters Toolbar -->
+    <div class="p-4 border-b border-border bg-secondary/15 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div class="flex-1 max-w-md">
+        <app-custom-input
+          [ngModel]="searchQuery()"
+          (ngModelChange)="onSearch($event)"
+          placeholder="Search by tracking no, buyer name, phone, engineer or booking ref..."
+        ></app-custom-input>
+      </div>
+
+      <div class="flex items-center gap-3 flex-wrap">
+        <div class="w-56">
+          <app-searchable-select
+            categoryCode="HANDOVER_STATUSES"
+            [options]="statusOptions"
+            [ngModel]="selectedStatus()"
+            (ngModelChange)="onStatusChange($event)"
+            [allowCreateNew]="false"
+            placeholder="All Handover Stages"
+          ></app-searchable-select>
+        </div>
+
+        <div class="w-56">
+          <app-searchable-select
+            categoryCode="POSSESSION_STATUSES"
+            [options]="possessionOptions"
+            [ngModel]="selectedPossessionStatus()"
+            (ngModelChange)="onPossessionChange($event)"
+            [allowCreateNew]="false"
+            placeholder="All Possession Statuses"
+          ></app-searchable-select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table Section -->
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse text-xs">
+        <thead>
+          <tr class="border-b border-border bg-secondary/30 text-muted-foreground font-semibold uppercase tracking-wider text-[11px]">
+            <th class="py-3 px-4">Tracking & Certificate</th>
+            <th class="py-3 px-4">Buyer Allottee</th>
+            <th class="py-3 px-4">Unit & Project</th>
+            <th class="py-3 px-4">Handover Stage</th>
+            <th class="py-3 px-4">Physical Possession</th>
+            <th class="py-3 px-4">Prerequisites</th>
+            <th class="py-3 px-4 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border">
+          @if (isLoading()) {
+            <tr>
+              <td colspan="7" class="py-12 text-center text-muted-foreground">
+                <div class="inline-block animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full mb-2"></div>
+                <div>Loading property handover dossiers...</div>
+              </td>
+            </tr>
+          } @else if (!handoverData()?.items?.length) {
+            <tr>
+              <td colspan="7" class="py-12 text-center text-muted-foreground">
+                <div class="text-sm font-semibold text-foreground mb-1">No handover dossiers found</div>
+                <div class="text-xs">Initiate a new property handover dossier from an active booking allotment.</div>
+              </td>
+            </tr>
+          } @else {
+            @for (h of handoverData()?.items; track h.id) {
+              <tr class="hover:bg-secondary/20 transition-colors">
+                <!-- Tracking No & Certificate -->
+                <td class="py-3.5 px-4">
+                  <div class="font-mono font-bold text-foreground">{{ h.handover_tracking_no }}</div>
+                  @if (h.handover_certificate_no) {
+                    <div class="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono mt-0.5">
+                      Cert: {{ h.handover_certificate_no }}
+                    </div>
+                  } @else {
+                    <div class="text-[10px] text-muted-foreground mt-0.5">Booking: {{ h.booking_reference_no }}</div>
+                  }
+                </td>
+
+                <!-- Buyer Allottee -->
+                <td class="py-3.5 px-4">
+                  <div class="font-semibold text-foreground">{{ h.customer_name }}</div>
+                  <div class="text-muted-foreground text-[11px]">{{ h.customer_phone }}</div>
+                </td>
+
+                <!-- Unit & Project -->
+                <td class="py-3.5 px-4">
+                  <div class="font-bold text-foreground">Unit {{ h.unit_number }}</div>
+                  <div class="text-muted-foreground text-[11px]">{{ h.project_name }}</div>
+                </td>
+
+                <!-- Handover Stage Status -->
+                <td class="py-3.5 px-4">
+                  <span class="px-2 py-0.5 text-[11px] font-semibold rounded-full border inline-block" [ngClass]="getStatusBadgeClass(h.status)">
+                    {{ h.status.replace('_', ' ') }}
+                  </span>
+                  @if (h.appointment_date) {
+                    <div class="text-[10px] text-muted-foreground mt-1">
+                      Appt: {{ h.appointment_date }} ({{ h.appointment_time || 'Pending' }})
+                    </div>
+                  }
+                </td>
+
+                <!-- Physical Possession (Distinct Status) -->
+                <td class="py-3.5 px-4">
+                  <span class="px-2 py-0.5 text-[10px] rounded-full border inline-block" [ngClass]="getPossessionBadgeClass(h.physical_possession_status)">
+                    {{ h.physical_possession_status.replace('_', ' ') }}
+                  </span>
+                  @if (h.handover_date) {
+                    <div class="text-[10px] text-muted-foreground mt-1">Date: {{ h.handover_date }}</div>
+                  }
+                </td>
+
+                <!-- Prerequisites Progress -->
+                <td class="py-3.5 px-4">
+                  @let progress = getPrerequisiteCompletion(h);
+                  <div class="flex items-center gap-2">
+                    <div class="w-16 bg-secondary rounded-full h-1.5 overflow-hidden">
+                      <div class="bg-primary h-1.5 rounded-full" [style.width.%]="progress.percentage"></div>
+                    </div>
+                    <span class="text-[11px] font-semibold text-foreground">{{ progress.completed }}/{{ progress.total }}</span>
+                  </div>
+                  <div class="text-[10px] text-muted-foreground mt-0.5">
+                    @if (h.snag_items && h.snag_items.length > 0) {
+                      <span class="text-amber-600 font-semibold">{{ h.snag_items.length }} Snag(s)</span>
+                    } @else {
+                      <span>No snags logged</span>
+                    }
+                  </div>
+                </td>
+
+                <!-- Actions -->
+                <td class="py-3.5 px-4 text-right">
+                  <a
+                    [routerLink]="['/sales/handovers', h.id]"
+                    class="px-2.5 py-1 text-xs font-semibold rounded-lg border border-border bg-card hover:bg-secondary text-foreground inline-flex items-center gap-1 shadow-xs transition-colors"
+                  >
+                    <span>Open Dossier</span>
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                  </a>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Server-Side Pagination Footer -->
+    <div class="p-4 border-t border-border bg-secondary/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
+      <div>
+        Showing
+        <span class="font-semibold text-foreground">
+          {{ (handoverData()?.total || 0) === 0 ? 0 : offset() + 1 }}
+        </span>
+        to
+        <span class="font-semibold text-foreground">
+          {{ Math.min(offset() + limit(), handoverData()?.total || 0) }}
+        </span>
+        of
+        <span class="font-semibold text-foreground">{{ handoverData()?.total || 0 }}</span>
+        dossiers
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button
+          (click)="onPageChange(currentPage() - 1)"
+          [disabled]="currentPage() === 1"
+          class="px-3 py-1.5 rounded-lg border border-border bg-card text-foreground disabled:opacity-40 disabled:cursor-not-allowed hover:bg-secondary transition-colors"
+        >
+          Previous
+        </button>
+
+        <span class="px-2 font-semibold text-foreground">
+          Page {{ currentPage() }} of {{ totalPages() }}
+        </span>
+
+        <button
+          (click)="onPageChange(currentPage() + 1)"
+          [disabled]="currentPage() >= totalPages()"
+          class="px-3 py-1.5 rounded-lg border border-border bg-card text-foreground disabled:opacity-40 disabled:cursor-not-allowed hover:bg-secondary transition-colors"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

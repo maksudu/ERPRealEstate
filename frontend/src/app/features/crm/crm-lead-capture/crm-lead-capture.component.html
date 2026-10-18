@@ -1,0 +1,379 @@
+<div class="flex flex-col gap-6">
+  <!-- KPI Strip -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="erp-card p-4 flex items-center justify-between">
+      <div>
+        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Leads</p>
+        <h3 class="text-xl font-bold text-slate-900 dark:text-slate-100 mt-1">{{ total() | number }}</h3>
+      </div>
+      <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356.1857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+      </div>
+    </div>
+    <div class="erp-card p-4 flex items-center justify-between">
+      <div>
+        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">This Page</p>
+        <h3 class="text-xl font-bold text-slate-900 dark:text-slate-100 mt-1">{{ leads().length | number }}</h3>
+      </div>
+      <div class="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+      </div>
+    </div>
+    <div class="erp-card p-4 flex items-center justify-between">
+      <div>
+        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Pages</p>
+        <h3 class="text-xl font-bold text-slate-900 dark:text-slate-100 mt-1">{{ totalPages() | number }}</h3>
+      </div>
+      <div class="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-500">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+    </div>
+    <div class="erp-card p-4 flex items-center justify-between">
+      <div>
+        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Selected</p>
+        <h3 class="text-xl font-bold text-slate-900 dark:text-slate-100 mt-1">{{ selectedIds().size | number }}</h3>
+      </div>
+      <div class="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-600">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Unified Lead Capture Register -->
+  <app-card-container
+    title="Lead Capture & Source Management"
+    subtitle="Omnichannel lead register (Spec 4.2) — website, Facebook, WhatsApp, walk-in, broker, referral & campaign leads with server-side paging"
+    paddingClass="p-0"
+  >
+    <div card-actions class="flex flex-wrap items-center gap-2">
+      <app-custom-button variant="ghost" size="sm" (clicked)="refresh()" title="Refresh">
+        <span class="flex items-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+          Refresh
+        </span>
+      </app-custom-button>
+      <a
+        routerLink="/crm/lead-capture/import"
+        class="erp-button-secondary text-xs h-8 px-3"
+      >
+        <span class="flex items-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+          </svg>
+          Import Excel / CSV
+        </span>
+      </a>
+      <app-custom-button variant="primary" size="sm" (clicked)="goCreate()">
+        <span class="flex items-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+          </svg>
+          + New Lead
+        </span>
+      </app-custom-button>
+    </div>
+
+    <div class="flex flex-col">
+      <!-- Filters -->
+      <div class="px-3.5 sm:px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40">
+        <form [formGroup]="filterForm">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+          <div class="sm:col-span-2 lg:col-span-1">
+            <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1.5 tracking-wide">Search</label>
+            <app-custom-input
+              placeholder="Name, phone, email, lead code..."
+              formControlName="search"
+            ></app-custom-input>
+          </div>
+          <app-searchable-select
+            label="Lead Source"
+            [categoryCode]="LOOKUP.source"
+            formControlName="lead_source_id"
+            placeholder="All sources"
+            [allowCreateNew]="false"
+          ></app-searchable-select>
+          <app-searchable-select
+            label="Lead Stage"
+            [categoryCode]="LOOKUP.stage"
+            formControlName="lead_stage"
+            placeholder="All stages"
+            [allowCreateNew]="false"
+          ></app-searchable-select>
+          <app-searchable-select
+            label="Priority"
+            [categoryCode]="LOOKUP.priority"
+            formControlName="priority"
+            placeholder="All priorities"
+            [allowCreateNew]="false"
+          ></app-searchable-select>
+          <app-searchable-select
+            label="Property Type"
+            [categoryCode]="LOOKUP.propertyType"
+            formControlName="property_type"
+            placeholder="All types"
+            [allowCreateNew]="false"
+          ></app-searchable-select>
+          <app-searchable-select
+            label="Sales Representative"
+            [options]="salesRepOptions()"
+            formControlName="sales_rep_id"
+            placeholder="All representatives"
+            [allowCreateNew]="false"
+          ></app-searchable-select>
+          <app-searchable-select
+            label="Assignment"
+            [options]="unassignedOptions"
+            formControlName="assignment_status"
+            [allowCreateNew]="false"
+          ></app-searchable-select>
+          <app-searchable-select
+            label="Sort By"
+            [options]="sortOptions"
+            formControlName="sort_by"
+            [allowCreateNew]="false"
+          ></app-searchable-select>
+          <app-custom-input
+            label="Date From"
+            type="date"
+            formControlName="date_from"
+          ></app-custom-input>
+          <app-custom-input
+            label="Date To"
+            type="date"
+            formControlName="date_to"
+          ></app-custom-input>
+        </div>
+        </form>
+        <div class="mt-3 flex items-center justify-between gap-3">
+          <p class="text-[11px] text-slate-500 dark:text-slate-400">
+            Showing {{ fromRow() }}–{{ toRow() }} of {{ total() | number }} leads
+            @if (selectedIds().size > 0) {
+              <span class="font-semibold text-primary"> · {{ selectedIds().size }} selected</span>
+            }
+          </p>
+          <button
+            type="button"
+            (click)="resetFilters()"
+            class="text-[11px] font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 underline cursor-pointer"
+          >
+            Reset Filters
+          </button>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-100/80 dark:bg-slate-850 text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-200 dark:border-slate-800">
+            <tr>
+              <th class="px-4 py-3 w-10">
+                <input
+                  type="checkbox"
+                  [checked]="allSelected()"
+                  (change)="toggleSelectAll()"
+                  class="rounded border-slate-300 dark:border-slate-600 cursor-pointer"
+                />
+              </th>
+              <th class="px-4 py-3">Lead ID & Date</th>
+              <th class="px-4 py-3">Customer</th>
+              <th class="px-4 py-3">Source & Campaign</th>
+              <th class="px-4 py-3">Requirement</th>
+              <th class="px-4 py-3 text-right">Budget</th>
+              <th class="px-4 py-3">Assigned Rep</th>
+              <th class="px-4 py-3">Stage</th>
+              <th class="px-4 py-3">Priority</th>
+              <th class="px-4 py-3 text-right w-28">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-200/70 dark:divide-slate-800 bg-white dark:bg-slate-900">
+            @if (isLoading()) {
+              @for (i of [1, 2, 3, 4, 5, 6]; track i) {
+                <tr>
+                  <td colspan="10" class="px-4 py-4">
+                    <div class="h-4 bg-slate-200 dark:bg-slate-800 rounded animate-pulse w-full"></div>
+                  </td>
+                </tr>
+              }
+            } @else if (leads().length === 0) {
+              <tr>
+                <td colspan="10" class="px-4 py-16 text-center">
+                  <div class="flex flex-col items-center gap-2 text-slate-400 dark:text-slate-500">
+                    <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+                    </svg>
+                    <p class="text-sm font-medium">No leads found</p>
+                    <p class="text-xs">Create a new lead or adjust the filters.</p>
+                  </div>
+                </td>
+              </tr>
+            } @else {
+              @for (lead of leads(); track lead.id) {
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-850/60 transition-colors">
+                  <td class="px-4 py-3">
+                    <input
+                      type="checkbox"
+                      [checked]="isSelected(lead.id)"
+                      (change)="toggleSelect(lead.id)"
+                      class="rounded border-slate-300 dark:border-slate-600 cursor-pointer"
+                    />
+                  </td>
+                  <td class="px-4 py-3">
+                    <div class="font-semibold text-slate-900 dark:text-slate-100 font-mono text-[11px]">
+                      {{ lead.lead_code || 'LEAD-' + lead.id }}
+                    </div>
+                    <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      {{ lead.created_at ? (lead.created_at | date:'dd MMM yyyy, hh:mm a') : '—' }}
+                    </div>
+                  </td>
+                  <td class="px-4 py-3">
+                    <div class="font-semibold text-slate-900 dark:text-slate-100">{{ lead.lead_name }}</div>
+                    <div class="text-[11px] text-slate-500 dark:text-slate-400">{{ lead.primary_phone }}</div>
+                    @if (lead.email) {
+                      <div class="text-[11px] text-slate-400 dark:text-slate-500 truncate max-w-[160px]">{{ lead.email }}</div>
+                    }
+                    @if (lead.is_opted_out) {
+                      <span class="mt-1 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-500/10 text-rose-600 border border-rose-500/30">
+                        OPTED OUT
+                      </span>
+                    }
+                  </td>
+                  <td class="px-4 py-3">
+                    <div class="font-medium text-slate-700 dark:text-slate-200">{{ lead.lead_source_id | titlecase }}</div>
+                    @if (lead.campaign_name) {
+                      <div class="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-[140px]">{{ lead.campaign_name }}</div>
+                    }
+                    @if (lead.utm_source) {
+                      <div class="text-[10px] text-slate-400 dark:text-slate-500 font-mono">utm: {{ lead.utm_source }}</div>
+                    }
+                  </td>
+                  <td class="px-4 py-3">
+                    <div class="text-slate-700 dark:text-slate-200">{{ lead.property_type || '—' }}</div>
+                    <div class="text-[11px] text-slate-500 dark:text-slate-400">
+                      {{ getProjectName(lead.interested_project_id) }}
+                    </div>
+                    @if (lead.preferred_location) {
+                      <div class="text-[11px] text-slate-400 dark:text-slate-500">{{ lead.preferred_location }}</div>
+                    }
+                  </td>
+                  <td class="px-4 py-3 text-right text-slate-700 dark:text-slate-200 whitespace-nowrap">
+                    {{ formatBudget(lead) }}
+                  </td>
+                  <td class="px-4 py-3">
+                    @if (lead.assigned_sales_rep_id) {
+                      <span class="text-slate-700 dark:text-slate-200">{{ getRepName(lead.assigned_sales_rep_id) }}</span>
+                    } @else {
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 border border-amber-500/30">
+                        UNASSIGNED
+                      </span>
+                    }
+                    @if (lead.first_response_deadline) {
+                      <div class="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                        SLA: {{ lead.first_response_deadline | date:'dd MMM, h:mm a' }}
+                      </div>
+                    }
+                  </td>
+                  <td class="px-4 py-3">
+                    <app-status-badge
+                      [status]="lead.lead_stage"
+                      [variant]="stageVariant(lead.lead_stage)"
+                      size="sm"
+                    ></app-status-badge>
+                  </td>
+                  <td class="px-4 py-3">
+                    <span
+                      class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border"
+                      [ngClass]="priorityClasses(lead.priority)"
+                    >
+                      {{ lead.priority }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 text-right">
+                    <div class="flex items-center justify-end gap-1">
+                      <button
+                        type="button"
+                        (click)="goEdit(lead)"
+                        class="p-1.5 rounded-lg text-slate-500 hover:text-primary hover:bg-primary/10 transition-colors"
+                        title="Edit Lead"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        (click)="deleteLead(lead)"
+                        [disabled]="isDeleting() === lead.id"
+                        class="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-500/10 transition-colors disabled:opacity-40"
+                        title="Delete Lead"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination Footer -->
+      <div class="px-3.5 sm:px-6 py-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div class="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
+          <span>Rows per page</span>
+          <select
+            [value]="limit()"
+            (change)="onPageSizeChange($event)"
+            class="erp-input text-xs w-16 py-1 h-8"
+          >
+            <option [value]="10">10</option>
+            <option [value]="20">20</option>
+            <option [value]="50">50</option>
+            <option [value]="100">100</option>
+          </select>
+          <span class="ml-2">Page {{ currentPage() }} of {{ totalPages() }}</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            (click)="previousPage()"
+            [disabled]="offset() === 0 || isLoading()"
+            class="erp-button-secondary text-xs h-8 px-3 disabled:opacity-40"
+          >
+            <span class="flex items-center gap-1">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+              </svg>
+              Previous
+            </span>
+          </button>
+          <button
+            type="button"
+            (click)="nextPage()"
+            [disabled]="offset() + limit() >= total() || isLoading()"
+            class="erp-button-secondary text-xs h-8 px-3 disabled:opacity-40"
+          >
+            <span class="flex items-center gap-1">
+              Next
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+              </svg>
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </app-card-container>
+</div>

@@ -1,0 +1,279 @@
+<div class="flex flex-col gap-6 w-full max-w-7xl mx-auto pb-16">
+  <!-- Top Bar & Breadcrumbs -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
+    <div>
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+          Spec 5.11 · Registration & Deed Tracking
+        </span>
+        <span class="text-xs font-mono text-muted-foreground">Configurable 9-Stage Legal Compliance Lifecycle</span>
+      </div>
+      <h1 class="text-2xl font-bold font-display text-foreground mt-1">
+        Sub-Registry Registration, Deed Execution & Vault Archives
+      </h1>
+      <p class="text-xs text-muted-foreground mt-0.5">
+        Track legal documentation from preparation, vetting, fee payments, Sub-Registry appointment scheduling, submission, balam volume recording, to deed delivery.
+      </p>
+    </div>
+
+    <div class="flex items-center gap-2 flex-wrap">
+      <a
+        routerLink="/settings/lookups"
+        class="px-3 py-2 rounded-xl border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-secondary text-xs font-semibold inline-flex items-center gap-1.5 shadow-xs transition-colors"
+        title="Manage Sub-Registry Offices & Deed Types"
+      >
+        <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+        Lookup Settings
+      </a>
+
+      <button
+        (click)="navigateToCreate()"
+        class="px-4 py-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-semibold inline-flex items-center gap-1.5 shadow-xs transition-colors"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        + Initiate Registration Tracking
+      </button>
+    </div>
+  </div>
+
+  <!-- 4 Spec-Defined KPI Metric Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="bg-card border border-border rounded-xl p-4 shadow-xs">
+      <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">Total Tracked Registrations</span>
+      <div class="text-2xl font-bold font-display text-foreground mt-1">
+        {{ registrationData()?.total || 0 }}
+      </div>
+      <p class="text-[11px] text-muted-foreground mt-1">Property allotments in registration pipeline</p>
+    </div>
+
+    <div class="bg-card border border-border rounded-xl p-4 shadow-xs">
+      <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">Completed & Delivered</span>
+      <div class="text-2xl font-bold font-display text-emerald-600 dark:text-emerald-400 mt-1">
+        {{ registrationData()?.total_registered_count || 0 }}
+      </div>
+      <p class="text-[11px] text-muted-foreground mt-1">Saf Kabala deeds delivered / vaulted</p>
+    </div>
+
+    <div class="bg-card border border-border rounded-xl p-4 shadow-xs">
+      <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">In-Progress / Pending SRO</span>
+      <div class="text-2xl font-bold font-display text-amber-600 dark:text-amber-400 mt-1">
+        {{ registrationData()?.total_in_progress_count || 0 }}
+      </div>
+      <p class="text-[11px] text-muted-foreground mt-1">Drafting, vetting & appointment scheduling</p>
+    </div>
+
+    <div class="bg-card border border-border rounded-xl p-4 shadow-xs">
+      <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">Total Registration Costs</span>
+      <div class="text-2xl font-bold font-display text-primary mt-1">
+        ৳{{ (registrationData()?.total_costs_all || 0) | number:'1.2-2' }}
+      </div>
+      <p class="text-[11px] text-muted-foreground mt-1">Stamp duties, fees & AIT taxes tracked</p>
+    </div>
+  </div>
+
+  <!-- Single Container Card for Filters & Table -->
+  <div class="bg-card border border-border rounded-xl shadow-xs overflow-hidden">
+    <!-- Server-Side Filter Toolbar -->
+    <div class="p-4 border-b border-border bg-secondary/20 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+      <div class="flex-1 max-w-md">
+        <app-custom-input
+          type="text"
+          [value]="searchQuery()"
+          (valueChange)="onSearch($event)"
+          placeholder="Search by Tracking No, Booking Ref, Buyer, or Unit..."
+        ></app-custom-input>
+      </div>
+
+      <div class="flex items-center gap-3 flex-wrap">
+        <div class="w-56">
+          <app-searchable-select
+            [options]="statusOptions"
+            [ngModel]="selectedStatus()"
+            (selectionChange)="onStatusChange($event)"
+            placeholder="Filter by Stage"
+            [allowCreateNew]="false"
+          ></app-searchable-select>
+        </div>
+
+        <div class="w-56">
+          <app-searchable-select
+            [options]="deedTypeOptions"
+            [ngModel]="selectedDeedType()"
+            (selectionChange)="onDeedTypeChange($event)"
+            placeholder="Filter by Deed Type"
+            [allowCreateNew]="false"
+          ></app-searchable-select>
+        </div>
+
+        @if (searchQuery() || selectedStatus() || selectedDeedType()) {
+          <button
+            (click)="onSearch(''); onStatusChange(''); onDeedTypeChange('')"
+            class="text-xs text-muted-foreground hover:text-foreground font-medium underline px-2 py-1"
+          >
+            Reset Filters
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Table Container (Strictly No Form Under Table - Rule 10) -->
+    <div class="overflow-x-auto">
+      @if (isLoading()) {
+        <div class="p-12 text-center text-muted-foreground">
+          <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-2"></div>
+          <p class="text-xs">Loading deed registration records...</p>
+        </div>
+      } @else if (!registrationData()?.items?.length) {
+        <div class="p-12 text-center text-muted-foreground">
+          <svg class="w-12 h-12 mx-auto text-muted-foreground/40 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          <p class="text-sm font-semibold text-foreground">No Deed Registrations Found</p>
+          <p class="text-xs mt-1">No registration dossiers match the filter criteria.</p>
+          <button
+            (click)="navigateToCreate()"
+            class="mt-4 px-3.5 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-medium shadow-xs"
+          >
+            + Initiate Registration Tracking
+          </button>
+        </div>
+      } @else {
+        <table class="w-full text-left text-xs text-foreground border-collapse">
+          <thead>
+            <tr class="bg-secondary/40 border-b border-border font-semibold text-muted-foreground">
+              <th class="py-3 px-4">Tracking No & SRO</th>
+              <th class="py-3 px-4">Booking Ref & Property</th>
+              <th class="py-3 px-4">Allottee Buyer</th>
+              <th class="py-3 px-4">Deed Type & Advocate</th>
+              <th class="py-3 px-4">Checklist Progress</th>
+              <th class="py-3 px-4 text-center">Legal Vetting</th>
+              <th class="py-3 px-4 text-center">Status</th>
+              <th class="py-3 px-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border">
+            @for (reg of registrationData()?.items; track reg.id) {
+              <tr class="hover:bg-secondary/30 transition-colors">
+                <td class="py-3 px-4 whitespace-nowrap">
+                  <div class="font-bold text-foreground">{{ reg.registration_tracking_no }}</div>
+                  <div class="text-[11px] text-muted-foreground">{{ reg.sub_registry_office }}</div>
+                  @if (reg.appointment_date) {
+                    <div class="text-[10px] text-primary font-mono mt-0.5">Appt: {{ reg.appointment_date }}</div>
+                  }
+                </td>
+
+                <td class="py-3 px-4">
+                  <div class="font-mono font-semibold text-primary">{{ reg.booking_reference_no }}</div>
+                  <div class="text-[11px] text-muted-foreground">Unit {{ reg.unit_number || '—' }} · {{ reg.project_name }}</div>
+                  <div class="text-[10px] text-muted-foreground">Contract: ৳{{ (reg.final_contract_value || 0) | number:'1.0-0' }}</div>
+                </td>
+
+                <td class="py-3 px-4">
+                  <div class="font-semibold text-foreground">{{ reg.customer_name }}</div>
+                  <div class="text-[11px] text-muted-foreground">{{ reg.customer_phone || '—' }}</div>
+                </td>
+
+                <td class="py-3 px-4">
+                  <div class="font-medium text-foreground">{{ reg.deed_type.replace('_', ' ') }}</div>
+                  <div class="text-[11px] text-muted-foreground">{{ reg.conducting_advocate || 'Advocate unassigned' }}</div>
+                </td>
+
+                <td class="py-3 px-4">
+                  <div class="flex items-center gap-2">
+                    <div class="flex-1 bg-secondary rounded-full h-1.5 overflow-hidden w-24">
+                      <div
+                        class="bg-primary h-full transition-all duration-300"
+                        [style.width.%]="(getCompletedStepsCount(reg.checklist_status) / getTotalStepsCount(reg.checklist_status)) * 100"
+                      ></div>
+                    </div>
+                    <span class="text-[11px] font-mono font-semibold text-foreground">
+                      {{ getCompletedStepsCount(reg.checklist_status) }}/{{ getTotalStepsCount(reg.checklist_status) }}
+                    </span>
+                  </div>
+                  <div class="text-[10px] text-muted-foreground mt-0.5">
+                    {{ reg.template_name || 'Standard Checklist' }}
+                  </div>
+                </td>
+
+                <td class="py-3 px-4 text-center">
+                  <span
+                    class="px-2 py-0.5 rounded-full text-[10px] font-bold border"
+                    [ngClass]="{
+                      'bg-emerald-500/10 text-emerald-600 border-emerald-500/20': reg.legal_validation_status === 'VALIDATED',
+                      'bg-destructive/10 text-destructive border-destructive/20': reg.legal_validation_status === 'REJECTED',
+                      'bg-secondary text-muted-foreground border-border': reg.legal_validation_status === 'PENDING'
+                    }"
+                  >
+                    {{ reg.legal_validation_status }}
+                  </span>
+                </td>
+
+                <td class="py-3 px-4 text-center">
+                  <span
+                    class="px-2 py-0.5 rounded-full text-[10px] font-bold border tracking-wide uppercase inline-block"
+                    [ngClass]="{
+                      'bg-emerald-500/10 text-emerald-600 border-emerald-500/20': reg.status === 'REGISTERED' || reg.status === 'COMPLETED',
+                      'bg-sky-500/10 text-sky-600 border-sky-500/20': reg.status === 'DRAFT_PREPARED' || reg.status === 'SUBMITTED',
+                      'bg-amber-500/10 text-amber-600 border-amber-500/20': reg.status === 'DOCUMENTS_PENDING' || reg.status === 'UNDER_LEGAL_REVIEW' || reg.status === 'REGISTRATION_PENDING',
+                      'bg-secondary text-muted-foreground border-border': reg.status === 'NOT_STARTED'
+                    }"
+                  >
+                    {{ reg.status.replace('_', ' ') }}
+                  </span>
+                </td>
+
+                <td class="py-3 px-4 text-right whitespace-nowrap">
+                  <button
+                    (click)="viewDossier(reg.id)"
+                    class="px-2.5 py-1 rounded-lg border border-border bg-card hover:bg-secondary text-foreground text-xs font-semibold inline-flex items-center gap-1 shadow-xs transition-colors"
+                  >
+                    View Dossier
+                    <svg class="w-3.5 h-3.5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+
+    <!-- Server-Side Pagination Bar -->
+    @if (registrationData() && (registrationData()?.total || 0) > 0) {
+      <div class="p-4 border-t border-border bg-secondary/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
+        <div>
+          Showing <span class="font-semibold text-foreground">{{ offset() + 1 }}</span> to
+          <span class="font-semibold text-foreground">{{ Math.min(offset() + limit(), registrationData()?.total || 0) }}</span>
+          of <span class="font-semibold text-foreground">{{ registrationData()?.total }}</span> records
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button
+            [disabled]="currentPage() <= 1"
+            (click)="onPageChange(currentPage() - 1)"
+            class="px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-secondary text-foreground disabled:opacity-50 disabled:pointer-events-none transition-colors"
+          >
+            Previous
+          </button>
+
+          <span class="px-2 font-medium">Page {{ currentPage() }} of {{ totalPages() }}</span>
+
+          <button
+            [disabled]="currentPage() >= totalPages()"
+            (click)="onPageChange(currentPage() + 1)"
+            class="px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-secondary text-foreground disabled:opacity-50 disabled:pointer-events-none transition-colors"
+          >
+            Next
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+</div>

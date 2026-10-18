@@ -1,14 +1,15 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
 import { SalesService } from '../../../core/services/sales.service';
-import { Booking, BookingCancellation } from '../../../core/models/sales.model';
+import { BookingCancellation, PaginatedBookingCancellations } from '../../../core/models/sales.model';
 import {
   CardContainerComponent,
   CustomInputComponent,
-  CustomTextareaComponent,
   CustomButtonComponent,
-  SearchableSelectComponent
+  SearchableSelectComponent,
+  SelectOption
 } from '../../../shared/components';
 
 @Component({
@@ -17,10 +18,9 @@ import {
   imports: [
     CommonModule,
     FormsModule,
-    ReactiveFormsModule,
+    RouterLink,
     CardContainerComponent,
     CustomInputComponent,
-    CustomTextareaComponent,
     CustomButtonComponent,
     SearchableSelectComponent
   ],
@@ -28,86 +28,98 @@ import {
 })
 export class SalesCancellationsComponent implements OnInit {
   private salesService = inject(SalesService);
-  private fb = inject(FormBuilder);
+  private router = inject(Router);
 
-  cancellations = signal<BookingCancellation[]>([]);
-  activeBookings = signal<Booking[]>([]);
-  isLoading = signal<boolean>(false);
-  isSubmitting = signal<boolean>(false);
-  isCancelModalOpen = signal<boolean>(false);
+  // Data signals
+  cancellationData = signal<PaginatedBookingCancellations | null>(null);
+  isLoading = signal<boolean>(true);
+  actionMessage = signal<string>('');
 
-  cancelForm: FormGroup = this.fb.group({
-    booking_id: [null, Validators.required],
-    cancellation_reason: ['', Validators.required],
-    forfeiture_deduction_percentage: [10, [Validators.required, Validators.min(0), Validators.max(100)]],
-    refund_cheque_no: [''],
-    settlement_notes: ['']
+  // Filter signals
+  searchQuery = signal<string>('');
+  selectedStatus = signal<string>('');
+  selectedCategory = signal<string>('');
+
+  // Pagination signals
+  limit = signal<number>(20);
+  offset = signal<number>(0);
+  readonly Math = Math;
+
+  // Status Filter Options
+  statusOptions: SelectOption[] = [
+    { label: 'All Review & Refund Statuses', value: '' },
+    { label: 'Under Multi-Tier Review', value: 'UNDER_REVIEW' },
+    { label: 'Approved (Pending Refund)', value: 'APPROVED' },
+    { label: 'Partially Refunded', value: 'PARTIALLY_REFUNDED' },
+    { label: 'Fully Refunded & Settled', value: 'REFUNDED' },
+    { label: 'Rejected by Committee', value: 'REJECTED' }
+  ];
+
+  // Category Filter Options
+  categoryOptions: SelectOption[] = [
+    { label: 'All Cancellation Categories', value: '' },
+    { label: 'Buyer Default / Financial', value: 'BUYER_DEFAULT' },
+    { label: 'Mutual Surrender Deed', value: 'MUTUAL_SURRENDER' },
+    { label: 'Developer Project Handover Delay', value: 'DEVELOPER_DELAY' },
+    { label: 'Force Majeure Statutory', value: 'FORCE_MAJEURE' }
+  ];
+
+  currentPage = computed(() => Math.floor(this.offset() / this.limit()) + 1);
+  totalPages = computed(() => {
+    const tot = this.cancellationData()?.total || 0;
+    return Math.ceil(tot / this.limit()) || 1;
   });
 
   ngOnInit(): void {
     this.loadData();
-    this.loadActiveBookings();
   }
 
   loadData(): void {
     this.isLoading.set(true);
-    this.salesService.getCancellations().subscribe({
+    this.salesService.getCancellationsPaged({
+      search: this.searchQuery() || undefined,
+      status: this.selectedStatus() || undefined,
+      category: this.selectedCategory() || undefined,
+      limit: this.limit(),
+      offset: this.offset()
+    }).subscribe({
       next: (res) => {
-        this.cancellations.set(res);
+        this.cancellationData.set(res);
         this.isLoading.set(false);
       },
       error: () => this.isLoading.set(false)
     });
   }
 
-  loadActiveBookings(): void {
-    this.salesService.getBookings({ status: 'PROVISIONAL' }).subscribe({
-      next: (provisional) => {
-        this.salesService.getBookings({ status: 'AGREEMENT_SIGNED' }).subscribe({
-          next: (signed) => {
-            this.activeBookings.set([...provisional, ...signed]);
-          }
-        });
-      }
-    });
+  onSearch(query: string): void {
+    this.searchQuery.set(query);
+    this.offset.set(0);
+    this.loadData();
   }
 
-  get bookingOptions() {
-    return this.activeBookings().map(b => ({
-      value: b.id,
-      label: `${b.booking_reference_no} - ${b.customer_name} (Unit ${b.unit_number} - Paid: BDT ${(b.earnest_money_received + b.down_payment_total).toLocaleString()})`
-    }));
+  onStatusChange(val: string): void {
+    this.selectedStatus.set(val);
+    this.offset.set(0);
+    this.loadData();
   }
 
-  openCancelModal(): void {
-    this.cancelForm.reset({
-      booking_id: null,
-      cancellation_reason: '',
-      forfeiture_deduction_percentage: 10,
-      refund_cheque_no: '',
-      settlement_notes: 'REHAB Standard 10% Forfeiture Deduction Applied.'
-    });
-    this.isCancelModalOpen.set(true);
+  onCategoryChange(val: string): void {
+    this.selectedCategory.set(val);
+    this.offset.set(0);
+    this.loadData();
   }
 
-  closeCancelModal(): void {
-    this.isCancelModalOpen.set(false);
+  onPageChange(page: number): void {
+    const newOffset = (page - 1) * this.limit();
+    this.offset.set(newOffset);
+    this.loadData();
   }
 
-  submitCancellation(): void {
-    if (this.cancelForm.invalid) return;
-    this.isSubmitting.set(true);
-    this.salesService.createCancellation(this.cancelForm.value).subscribe({
-      next: (created) => {
-        this.cancellations.update(list => [created, ...list]);
-        this.isSubmitting.set(false);
-        this.closeCancelModal();
-        this.loadActiveBookings();
-      },
-      error: (err) => {
-        alert(err?.error?.detail || 'Cancellation failed');
-        this.isSubmitting.set(false);
-      }
-    });
+  viewDossier(cancellationId: number): void {
+    this.router.navigate(['/sales/cancellations', cancellationId]);
+  }
+
+  navigateToCreate(): void {
+    this.router.navigate(['/sales/cancellations/create']);
   }
 }

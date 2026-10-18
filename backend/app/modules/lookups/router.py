@@ -118,10 +118,16 @@ async def get_lookup_items_by_category(
     category = cat_result.scalar_one_or_none()
 
     if not category:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Lookup category '{cat_code}' does not exist."
+        category = LookupCategory(
+            category_code=cat_code,
+            category_name=cat_code.replace("_", " ").title(),
+            description=f"Auto-generated category for {cat_code}",
+            is_active=True
         )
+        db.add(category)
+        await db.commit()
+        await db.refresh(category)
+        return []
 
     items_stmt = (
         select(LookupItem)
@@ -162,10 +168,15 @@ async def quick_create_lookup_item(
     category = cat_result.scalar_one_or_none()
 
     if not category:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Lookup category '{cat_code}' does not exist."
+        category = LookupCategory(
+            category_code=cat_code,
+            category_name=cat_code.replace("_", " ").title(),
+            description=f"Auto-generated category for {cat_code}",
+            is_active=True
         )
+        db.add(category)
+        await db.commit()
+        await db.refresh(category)
 
     # Auto-generate a clean item_code if not supplied
     if not payload.item_code:

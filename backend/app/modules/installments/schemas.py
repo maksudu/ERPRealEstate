@@ -9,13 +9,27 @@ class CustomerInstallmentBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     booking_id: int
+    schedule_id: Optional[int] = None
     installment_no: int
+    installment_type: str = "MONTHLY_INSTALLMENT"
     title: str
+    percentage: Optional[float] = None
+    fixed_amount: Optional[float] = None
     due_date: date
     grace_period_days: int = 15
     payable_amount: float
     paid_amount: float = 0.00
     late_fee_accrued: float = 0.00
+    
+    invoice_date: Optional[date] = None
+    invoice_number: Optional[str] = None
+    amount_billed: float = 0.00
+    balance_due: float = 0.00
+    
+    schedule_version: str = "v1.0"
+    amendment_reference: Optional[str] = None
+    reminder_status: str = "SCHEDULED"
+    
     surcharge_percentage: float = 2.00
     overdue_days: int = 0
     sms_alert_sent: bool = False
@@ -23,29 +37,153 @@ class CustomerInstallmentBase(BaseModel):
     last_alert_sent_at: Optional[datetime] = None
     status: str = "UPCOMING"
     milestone_trigger: Optional[str] = None
+    notes: Optional[str] = None
 
 class CustomerInstallmentCreate(BaseModel):
     booking_id: int
+    schedule_id: Optional[int] = None
     installment_no: int
+    installment_type: Optional[str] = "MONTHLY_INSTALLMENT"
     title: str
+    percentage: Optional[float] = None
+    fixed_amount: Optional[float] = None
     due_date: date
     grace_period_days: Optional[int] = 15
     payable_amount: float
     milestone_trigger: Optional[str] = None
+    notes: Optional[str] = None
 
 class MilestoneItemConfig(BaseModel):
     title: str
     percentage: float # e.g. 10.0 for 10%
+    installment_type: Optional[str] = "CONSTRUCTION_MILESTONE"
     milestone_trigger: Optional[str] = None
+    due_date: Optional[date] = None
+
+class InstallmentSchedulePreviewItem(BaseModel):
+    installment_no: int
+    installment_type: str
+    title: str
+    percentage: Optional[float] = None
+    due_date: date
+    grace_period_days: int
+    payable_amount: float
+    is_rounding_adjusted: bool = False
+    rounding_adjustment: float = 0.00
+    milestone_trigger: Optional[str] = None
+
+class InstallmentSchedulePreviewRequest(BaseModel):
+    booking_id: int
+    plan_type: str = "MONTHLY" # 'MONTHLY', 'QUARTERLY', 'CONSTRUCTION_MILESTONE', 'CUSTOM'
+    total_installments: Optional[int] = 36
+    down_payment_percentage: Optional[float] = 15.00
+    start_date: Optional[date] = None
+    grace_period_days: Optional[int] = 15
+    custom_milestones: Optional[List[MilestoneItemConfig]] = None
+
+class InstallmentSchedulePreviewResponse(BaseModel):
+    booking_id: int
+    booking_reference_no: str
+    customer_name: str
+    project_name: str
+    unit_number: str
+    approved_contract_price: float
+    booking_money_amount: float
+    down_payment_percentage: float
+    down_payment_amount: float
+    net_down_payment_due: float
+    installment_balance_amount: float
+    total_installment_count: int
+    regular_installment_amount: float
+    rounding_adjustment_amount: float
+    rounding_adjusted_installment_no: int
+    calculated_total_sum: float
+    discrepancy_amount: float
+    is_validated: bool
+    installments: List[InstallmentSchedulePreviewItem]
 
 class InstallmentScheduleGenerateRequest(BaseModel):
     booking_id: int
-    plan_type: str # 'MONTHLY', 'QUARTERLY', 'CONSTRUCTION_MILESTONE', 'CUSTOM_MILESTONE'
-    total_installments: Optional[int] = 24
+    agreement_reference_no: Optional[str] = None
+    plan_type: str = "MONTHLY" # 'MONTHLY', 'QUARTERLY', 'CONSTRUCTION_MILESTONE', 'CUSTOM'
+    total_installments: Optional[int] = 36
     start_date: Optional[date] = None
-    down_payment_percentage: Optional[float] = 20.00
+    down_payment_percentage: Optional[float] = 15.00
     grace_period_days: Optional[int] = 15
     custom_milestones: Optional[List[MilestoneItemConfig]] = None
+    notes: Optional[str] = None
+
+class InstallmentScheduleAmendRequest(BaseModel):
+    amendment_reason: str
+    amendment_reference: Optional[str] = None
+    plan_type: str = "MONTHLY"
+    total_installments: Optional[int] = 36
+    down_payment_percentage: Optional[float] = 15.00
+    start_date: Optional[date] = None
+    grace_period_days: Optional[int] = 15
+    custom_milestones: Optional[List[MilestoneItemConfig]] = None
+    notes: Optional[str] = None
+
+class BookingInstallmentScheduleBase(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    schedule_code: str
+    booking_id: int
+    customer_id: int
+    agreement_reference_no: Optional[str] = None
+    version: str = "v1.0"
+    plan_type: str = "MONTHLY"
+    approved_contract_price: float
+    booking_money_amount: float = 0.00
+    down_payment_percentage: float = 15.00
+    down_payment_amount: float = 0.00
+    installment_balance_amount: float
+    total_installment_count: int
+    regular_installment_amount: float
+    rounding_adjustment_amount: float = 0.00
+    rounding_adjusted_installment_no: int = 1
+    start_date: date
+    grace_period_days: int = 15
+    late_surcharge_rate_monthly: float = 2.00
+    status: str = "ACTIVE"
+    amendment_reason: Optional[str] = None
+    notes: Optional[str] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+class BookingInstallmentScheduleResponse(BookingInstallmentScheduleBase):
+    booking_reference_no: Optional[str] = None
+    customer_name: Optional[str] = None
+    customer_phone: Optional[str] = None
+    project_name: Optional[str] = None
+    unit_number: Optional[str] = None
+    total_paid_amount: float = 0.00
+    total_balance_due: float = 0.00
+    total_overdue_amount: float = 0.00
+    installments: Optional[List['CustomerInstallmentResponse']] = None
+
+class PaginatedInstallmentSchedulesResponse(BaseModel):
+    items: List[BookingInstallmentScheduleResponse]
+    total: int
+    limit: int
+    offset: int
+
+class InstallmentInvoiceGenerateRequest(BaseModel):
+    invoice_date: Optional[date] = None
+    due_date: Optional[date] = None
+    notes: Optional[str] = None
+
+class InstallmentInvoiceResponse(BaseModel):
+    installment_id: int
+    invoice_number: str
+    invoice_date: date
+    booking_reference_no: str
+    customer_name: str
+    amount_billed: float
+    balance_due: float
+    due_date: date
+    status: str
 
 class InstallmentPaymentRequest(BaseModel):
     payment_amount: float

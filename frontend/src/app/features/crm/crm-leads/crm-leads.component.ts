@@ -255,7 +255,7 @@ export class CrmLeadsComponent implements OnInit {
           source_quality_score: 20,
           engagement_progression_score: 15,
           lead_stage: lead.lead_stage,
-          health_grade: lead.lead_score >= 80 ? 'A_HOT' : (lead.lead_score >= 50 ? 'B_WARM' : 'C_COLD'),
+          health_grade: lead.lead_score >= 80 ? 'HOT' : (lead.lead_score >= 50 ? 'WARM' : 'COLD'),
           recommended_action: 'Automated engagement in progress.'
         });
         this.isScoreModalOpen.set(true);

@@ -1,0 +1,197 @@
+<div class="flex flex-col gap-6 w-full max-w-5xl mx-auto pb-16">
+  <!-- Top Bar & Breadcrumb -->
+  <div class="flex items-center justify-between pb-4 border-b border-border">
+    <div>
+      <div class="flex items-center gap-2">
+        <button
+          (click)="cancel()"
+          class="text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1 transition-colors"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+          </svg>
+          Back to Handover Registry
+        </button>
+        <span class="text-muted-foreground text-xs">/</span>
+        <span class="text-xs font-medium text-primary">New Handover Dossier (Spec 5.12)</span>
+      </div>
+      <h1 class="text-2xl font-bold font-display text-foreground mt-1">
+        Initiate Property Handover & Possession Dossier
+      </h1>
+      <p class="text-xs text-muted-foreground mt-0.5">
+        Establish the operational handover pipeline, configure prerequisites, and schedule the joint pre-possession walkthrough.
+      </p>
+    </div>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="p-4 rounded-xl border border-destructive/20 bg-destructive/10 text-destructive text-sm flex items-center justify-between shadow-xs">
+      <div class="flex items-center gap-2">
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+        <span>{{ errorMessage() }}</span>
+      </div>
+      <button (click)="errorMessage.set('')" class="text-xs font-semibold hover:underline">Dismiss</button>
+    </div>
+  }
+
+  <!-- Single Container Card for All Form Sections -->
+  <div class="bg-card border border-border rounded-xl shadow-xs overflow-hidden divide-y divide-border">
+    <!-- Section 1: Target Booking Allotment -->
+    <div class="p-6">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="text-sm font-bold uppercase tracking-wider text-foreground">1. Select Target Property Booking</h2>
+          <p class="text-xs text-muted-foreground">Select the confirmed property allotment to initiate handover and transition to customer possession.</p>
+        </div>
+        <a
+          routerLink="/sales/bookings/create"
+          class="text-xs text-primary hover:underline font-semibold inline-flex items-center gap-1"
+        >
+          + Add New Booking
+        </a>
+      </div>
+
+      <div class="max-w-2xl">
+        <app-searchable-select
+          label="Confirmed Property Allotment"
+          [options]="bookingOptions()"
+          [ngModel]="selectedBookingId()"
+          (selectionChange)="onBookingSelect($event)"
+          placeholder="Search by booking reference, purchaser name, or apartment unit..."
+          [required]="true"
+        ></app-searchable-select>
+      </div>
+
+      <!-- Selected Booking Specs Preview Card -->
+      @if (selectedBooking()) {
+        <div class="mt-4 p-4 rounded-xl bg-secondary/30 border border-border grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div>
+            <span class="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block">Purchaser / Buyer</span>
+            <div class="font-bold text-foreground text-sm mt-0.5">{{ selectedBooking()?.customer_name }}</div>
+            <div class="text-xs text-muted-foreground">{{ selectedBooking()?.customer_phone }}</div>
+          </div>
+          <div>
+            <span class="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block">Property Unit & Project</span>
+            <div class="font-bold text-foreground text-sm mt-0.5">Unit {{ selectedBooking()?.unit_number }}</div>
+            <div class="text-xs text-muted-foreground">{{ selectedBooking()?.project_name }}</div>
+          </div>
+          <div>
+            <span class="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block">Contract Value</span>
+            <div class="font-bold text-foreground text-sm mt-0.5">৳{{ (selectedBooking()?.final_contract_value || 0) | number:'1.2-2' }}</div>
+            <div class="text-xs text-muted-foreground font-mono">Stage: {{ selectedBooking()?.workflow_stage }}</div>
+          </div>
+          <div class="border-l border-border pl-4">
+            <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block">Total Received</span>
+            <div class="font-bold text-emerald-600 dark:text-emerald-400 text-sm mt-0.5">
+              ৳{{ (selectedBooking()?.down_payment_received || selectedBooking()?.earnest_money_received || 0) | number:'1.2-2' }}
+            </div>
+            <div class="text-[11px] text-muted-foreground">Reconciliation required prior to possession</div>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Section 2: Handover Protocol & Engineering Staff Assignment -->
+    <div class="p-6">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="text-sm font-bold uppercase tracking-wider text-foreground">2. Responsible Handover & QA/QC Personnel</h2>
+          <p class="text-xs text-muted-foreground">Assign developer staff and site civil/MEP engineers responsible for walkthrough and quality clearance.</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <app-custom-input
+            label="Responsible Handover Staff / Manager"
+            [ngModel]="responsibleStaffName()"
+            (ngModelChange)="responsibleStaffName.set($event)"
+            placeholder="e.g. Head of Customer Experience"
+            [required]="true"
+          ></app-custom-input>
+          <span class="text-[11px] text-muted-foreground mt-1 block">Conducts customer orientation and possession sign-off.</span>
+        </div>
+
+        <div>
+          <app-custom-input
+            label="Responsible QA/QC Site Engineer"
+            [ngModel]="responsibleEngineerName()"
+            (ngModelChange)="responsibleEngineerName.set($event)"
+            placeholder="e.g. Lead QA/QC Site Engineer"
+            [required]="true"
+          ></app-custom-input>
+          <span class="text-[11px] text-muted-foreground mt-1 block">Conducts joint defect inspection and supervises rectification.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 3: Joint Walkthrough & Inspection Schedule -->
+    <div class="p-6">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="text-sm font-bold uppercase tracking-wider text-foreground">3. Scheduled Walkthrough & Possession Date</h2>
+          <p class="text-xs text-muted-foreground">Set provisional appointment for pre-handover joint inspection at the property site.</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <app-custom-input
+            label="Scheduled Inspection Date"
+            type="date"
+            [ngModel]="appointmentDate()"
+            (ngModelChange)="appointmentDate.set($event)"
+          ></app-custom-input>
+        </div>
+
+        <div>
+          <app-custom-input
+            label="Preferred Slot / Time"
+            [ngModel]="appointmentTime()"
+            (ngModelChange)="appointmentTime.set($event)"
+            placeholder="e.g. 11:00 AM"
+          ></app-custom-input>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 4: Operational Remarks -->
+    <div class="p-6">
+      <h2 class="text-sm font-bold uppercase tracking-wider text-foreground mb-4">4. Handover Directives & Special Notes</h2>
+      <app-custom-textarea
+        label="Operational Instructions"
+        [ngModel]="remarks()"
+        (ngModelChange)="remarks.set($event)"
+        rows="3"
+        placeholder="Enter special instructions regarding interior fit-out, utility sub-metering, or buyer requests..."
+      ></app-custom-textarea>
+    </div>
+
+    <!-- Bottom Action Bar -->
+    <div class="p-6 bg-secondary/20 flex items-center justify-between">
+      <app-custom-button
+        variant="outline"
+        (click)="cancel()"
+        [disabled]="isSubmitting()"
+      >
+        Cancel & Return
+      </app-custom-button>
+
+      <app-custom-button
+        variant="primary"
+        (click)="onSubmit()"
+        [loading]="isSubmitting()"
+        [disabled]="!selectedBookingId()"
+      >
+        <div class="flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <span>Initialize Property Handover Dossier</span>
+        </div>
+      </app-custom-button>
+    </div>
+  </div>
+</div>

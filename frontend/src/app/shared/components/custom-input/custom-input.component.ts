@@ -1,6 +1,7 @@
-import { Component, Input, forwardRef, signal } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnDestroy, forwardRef, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { FormsModule, ControlValueAccessor, NG_VALUE_ACCESSOR, AbstractControl } from '@angular/forms';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-input, app-custom-input',
@@ -26,7 +27,7 @@ import { FormsModule, ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/f
 
         <input
           [type]="type"
-          [value]="value()"
+          [value]="_value()"
           (input)="onInputChange($event)"
           (blur)="onBlur()"
           [placeholder]="placeholder"
@@ -59,7 +60,7 @@ import { FormsModule, ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/f
     }
   ]
 })
-export class CustomInputComponent implements ControlValueAccessor {
+export class CustomInputComponent implements ControlValueAccessor, OnDestroy {
   @Input() label: string = '';
   @Input() type: string = 'text';
   @Input() placeholder: string = '';
@@ -70,23 +71,58 @@ export class CustomInputComponent implements ControlValueAccessor {
   @Input() prefixIcon: string = '';
   @Input() suffixText: string = '';
 
-  value = signal<string>('');
+  /** One-way binding alternative to ngModel: [value] + (valueChange) */
+  @Input()
+  set value(val: any) {
+    this._value.set(val === null || val === undefined ? '' : String(val));
+  }
+  get value(): string {
+    return this._value();
+  }
+
+  /** Reactive-forms binding without formControlName: [control]="form.get('x')" */
+  @Input()
+  set control(ctrl: AbstractControl | null) {
+    this.controlSub?.unsubscribe();
+    this._control = ctrl;
+    if (ctrl) {
+      this.writeValue(ctrl.value);
+      this.controlSub = ctrl.valueChanges.subscribe(v => this.writeValue(v));
+    }
+  }
+
+  @Output() valueChange = new EventEmitter<any>();
+
+  _value = signal<string>('');
+  private _control: AbstractControl | null = null;
+  private controlSub?: Subscription;
 
   private onChange: (v: any) => void = () => {};
   private onTouched: () => void = () => {};
 
   onInputChange(event: Event): void {
     const input = event.target as HTMLInputElement;
-    this.value.set(input.value);
-    this.onChange(input.value);
+    this._value.set(input.value);
+    const emitted = this.type === 'number' ? (input.value === '' ? null : Number(input.value)) : input.value;
+    this.onChange(input.value); // ngModel behaviour unchanged (raw string)
+    this.valueChange.emit(emitted);
+    if (this._control) {
+      this._control.setValue(emitted);
+      this._control.markAsDirty();
+    }
   }
 
   onBlur(): void {
     this.onTouched();
+    this._control?.markAsTouched();
   }
 
   writeValue(val: any): void {
-    this.value.set(val || '');
+    this._value.set(val === null || val === undefined ? '' : String(val));
+  }
+
+  ngOnDestroy(): void {
+    this.controlSub?.unsubscribe();
   }
 
   registerOnChange(fn: any): void {

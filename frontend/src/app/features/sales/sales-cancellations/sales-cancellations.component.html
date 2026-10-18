@@ -1,156 +1,308 @@
-<div class="flex flex-col gap-6">
-  <!-- REHAB Statutory Cancellation Guidance Banner -->
-  <div class="bg-card border border-border rounded-xl p-5 shadow-sm">
-    <div class="flex items-start gap-4">
-      <div class="w-10 h-10 rounded-full bg-rose-500/10 flex items-center justify-center text-rose-500 shrink-0">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+<div class="flex flex-col gap-6 w-full max-w-7xl mx-auto pb-16">
+  <!-- Top Bar & Breadcrumbs -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
+    <div>
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-destructive/10 text-destructive border border-destructive/20">
+          Spec 5.9 · Cancellation & Refund Management
+        </span>
+        <span class="text-xs font-mono text-muted-foreground">3-Tier Approval Workflow (Legal / Sales / Finance)</span>
+      </div>
+      <h1 class="text-2xl font-bold font-display text-foreground mt-1">
+        Booking Cancellation, Forfeiture Deductions & Refund Controls
+      </h1>
+      <p class="text-xs text-muted-foreground mt-0.5">
+        Manage reservation releases, contractual termination, REHAB statutory deductions, authorized bank refunds, and unit inventory status release.
+      </p>
+    </div>
+
+    <div class="flex items-center gap-2 flex-wrap">
+      <a
+        routerLink="/settings/lookups"
+        class="px-3 py-2 rounded-xl border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-secondary text-xs font-semibold inline-flex items-center gap-1.5 shadow-xs transition-colors"
+        title="Manage Cancellation Reasons & Deduction Policies"
+      >
+        <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
         </svg>
-      </div>
-      <div>
-        <h3 class="font-bold text-base text-foreground">Real Estate Act & REHAB Statutory Allotment Cancellation Rules</h3>
-        <p class="text-xs text-muted-foreground mt-1 leading-relaxed">
-          Under Section 14 of the Real Estate Development and Management Act 2010 and REHAB statutory bylaws, upon unilateral cancellation by the allottee, the developer is entitled to deduct a maximum of <strong>10% (Ten Percent)</strong> of the total amount deposited as administrative forfeiture charge. The net balance is refunded via account payee cheque within the statutory period, and the allocated unit is automatically restored to <strong>AVAILABLE</strong> inventory status.
-        </p>
-      </div>
+        Lookup Settings
+      </a>
+
+      <button
+        (click)="navigateToCreate()"
+        class="px-4 py-2 rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90 text-xs font-semibold inline-flex items-center gap-1.5 shadow-xs transition-colors"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        + Initiate Cancellation Request
+      </button>
     </div>
   </div>
 
-  <!-- Unified Main Card Container -->
-  <app-card-container
-    title="Apartment Allotment Cancellations & Forfeiture Ledger"
-    subtitle="Forfeiture Deductions, Net Refund Audits & Re-allotment Processing"
-  >
-    <div class="flex items-center justify-between gap-4 mb-6">
-      <div>
-        <span class="text-xs text-muted-foreground font-mono">
-          Total Cancellation Settlements: {{ cancellations().length }}
-        </span>
+  <!-- 4 Spec-Defined KPI Metric Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="bg-card border border-border rounded-xl p-4 shadow-xs">
+      <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">Total Cancellation Requests</span>
+      <div class="text-2xl font-bold font-display text-foreground mt-1">
+        {{ cancellationData()?.total || 0 }}
+      </div>
+      <p class="text-[11px] text-muted-foreground mt-1">Formal requests in audit registry</p>
+    </div>
+
+    <div class="bg-card border border-border rounded-xl p-4 shadow-xs">
+      <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">Total Cleared Paid Subject</span>
+      <div class="text-2xl font-bold font-display text-foreground mt-1">
+        ৳{{ (cancellationData()?.total_paid_all || 0) | number:'1.2-2' }}
+      </div>
+      <p class="text-[11px] text-muted-foreground mt-1">Paid receipts prior to cancellation</p>
+    </div>
+
+    <div class="bg-card border border-border rounded-xl p-4 shadow-xs">
+      <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">Forfeiture & Deductions</span>
+      <div class="text-2xl font-bold font-display text-amber-600 dark:text-amber-400 mt-1">
+        ৳{{ (cancellationData()?.total_deductions_all || 0) | number:'1.2-2' }}
+      </div>
+      <p class="text-[11px] text-muted-foreground mt-1">REHAB statutory norms & service charges</p>
+    </div>
+
+    <div class="bg-card border border-border rounded-xl p-4 shadow-xs">
+      <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">Net Approved Refund Payable</span>
+      <div class="text-2xl font-bold font-display text-emerald-600 dark:text-emerald-400 mt-1">
+        ৳{{ (cancellationData()?.total_refunds_all || 0) | number:'1.2-2' }}
+      </div>
+      <p class="text-[11px] text-muted-foreground mt-1">Disbursable to customer bank accounts</p>
+    </div>
+  </div>
+
+  <!-- Single Container Card for Filters & Table -->
+  <div class="bg-card border border-border rounded-xl shadow-xs overflow-hidden">
+    <!-- Server-Side Filter Toolbar -->
+    <div class="p-4 border-b border-border bg-secondary/20 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+      <div class="flex-1 max-w-md">
+        <app-custom-input
+          type="text"
+          [value]="searchQuery()"
+          (valueChange)="onSearch($event)"
+          placeholder="Search by Code, Booking Ref, Buyer Name or Phone..."
+        ></app-custom-input>
       </div>
 
-      <app-custom-button variant="danger" (clicked)="openCancelModal()">
-        <span class="flex items-center gap-2">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-          </svg>
-          + Process Booking Cancellation
-        </span>
-      </app-custom-button>
-    </div>
-
-    <!-- Cancellations Table -->
-    <div class="overflow-x-auto border border-border rounded-xl">
-      <table class="w-full text-left text-sm text-foreground">
-        <thead class="bg-secondary/40 text-xs font-semibold uppercase text-muted-foreground border-b border-border">
-          <tr>
-            <th class="px-4 py-3">Booking Reference</th>
-            <th class="px-4 py-3">Customer & Unit</th>
-            <th class="px-4 py-3 text-right">Total Deposited</th>
-            <th class="px-4 py-3 text-right">Forfeiture Deduction (10%)</th>
-            <th class="px-4 py-3 text-right">Net Refund Due</th>
-            <th class="px-4 py-3 text-center">Settlement Status</th>
-            <th class="px-4 py-3">Refund Instrument / Cheque</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-border/60">
-          @for (c of cancellations(); track c.id) {
-            <tr class="hover:bg-secondary/20 transition-colors">
-              <td class="px-4 py-3.5 font-mono font-bold text-primary">
-                {{ c.booking_reference_no }}
-                <span class="block text-[11px] text-muted-foreground font-normal">{{ c.cancellation_date }}</span>
-              </td>
-              <td class="px-4 py-3.5">
-                <div class="font-semibold text-foreground">{{ c.customer_name }}</div>
-                <div class="text-xs text-muted-foreground">Unit {{ c.unit_number }}</div>
-              </td>
-              <td class="px-4 py-3.5 text-right font-mono font-medium">
-                BDT {{ c.total_paid | number:'1.0-0' }}
-              </td>
-              <td class="px-4 py-3.5 text-right font-mono font-bold text-rose-500">
-                -BDT {{ c.forfeiture_deduction_amount | number:'1.0-0' }}
-                <span class="block text-[11px] font-normal text-muted-foreground">({{ c.forfeiture_deduction_percentage }}%)</span>
-              </td>
-              <td class="px-4 py-3.5 text-right font-mono font-bold text-emerald-500 text-base">
-                BDT {{ c.net_refund_amount | number:'1.0-0' }}
-              </td>
-              <td class="px-4 py-3.5 text-center">
-                <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
-                  ✓ {{ c.status }}
-                </span>
-              </td>
-              <td class="px-4 py-3.5">
-                <span class="font-mono text-xs text-foreground font-medium block">{{ c.refund_cheque_no || 'Pending Issuance' }}</span>
-                <span class="text-[11px] text-muted-foreground line-clamp-1">{{ c.settlement_notes }}</span>
-              </td>
-            </tr>
-          } @empty {
-            <tr>
-              <td colspan="7" class="px-4 py-12 text-center text-muted-foreground">
-                No allotment cancellations recorded.
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-  </app-card-container>
-
-  <!-- Process Cancellation Modal -->
-  @if (isCancelModalOpen()) {
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div class="bg-card border border-border rounded-2xl w-full max-w-lg shadow-2xl p-6 flex flex-col gap-5">
-        <div class="flex items-center justify-between border-b border-border pb-3">
-          <div>
-            <h3 class="text-base font-bold text-foreground">Process Booking Cancellation</h3>
-            <p class="text-xs text-muted-foreground">Applies statutory 10% forfeiture and restores unit to available</p>
-          </div>
-          <button (click)="closeCancelModal()" class="text-muted-foreground hover:text-foreground">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-          </button>
+      <div class="flex items-center gap-3 flex-wrap">
+        <div class="w-48">
+          <app-searchable-select
+            [options]="statusOptions"
+            [ngModel]="selectedStatus()"
+            (selectionChange)="onStatusChange($event)"
+            placeholder="Filter by Status"
+            [allowCreateNew]="false"
+          ></app-searchable-select>
         </div>
 
-        <form [formGroup]="cancelForm" (ngSubmit)="submitCancellation()" class="flex flex-col gap-4">
+        <div class="w-52">
           <app-searchable-select
-            label="Select Active Booking to Cancel *"
-            [options]="bookingOptions"
-            [formGroup]="cancelForm"
-            controlName="booking_id"
-          />
+            [options]="categoryOptions"
+            [ngModel]="selectedCategory()"
+            (selectionChange)="onCategoryChange($event)"
+            placeholder="Filter by Category"
+            [allowCreateNew]="false"
+          ></app-searchable-select>
+        </div>
 
-          <app-custom-input
-            label="Forfeiture Deduction Percentage (%) *"
-            type="number"
-            placeholder="10"
-            [formGroup]="cancelForm"
-            controlName="forfeiture_deduction_percentage"
-          />
-
-          <app-custom-input
-            label="Refund Pay Order / Cheque No."
-            placeholder="CHQ-SCB-XXXXXXXX"
-            [formGroup]="cancelForm"
-            controlName="refund_cheque_no"
-          />
-
-          <app-custom-textarea
-            label="Cancellation Reason & Notes *"
-            placeholder="Formal cancellation letter received from customer..."
-            [formGroup]="cancelForm"
-            controlName="cancellation_reason"
-          />
-
-          <div class="flex justify-end gap-3 pt-3 border-t border-border">
-            <app-custom-button variant="outline" type="button" (clicked)="closeCancelModal()">
-              Cancel
-            </app-custom-button>
-            <app-custom-button variant="danger" type="submit" [disabled]="cancelForm.invalid || isSubmitting()">
-              {{ isSubmitting() ? 'Cancelling...' : 'Confirm Cancellation' }}
-            </app-custom-button>
-          </div>
-        </form>
+        @if (searchQuery() || selectedStatus() || selectedCategory()) {
+          <button
+            (click)="onSearch(''); onStatusChange(''); onCategoryChange('')"
+            class="text-xs text-muted-foreground hover:text-foreground font-medium underline px-2 py-1"
+          >
+            Reset Filters
+          </button>
+        }
       </div>
     </div>
-  }
+
+    <!-- Table Container (Strictly No Form Under Table - Rule 10) -->
+    <div class="overflow-x-auto">
+      @if (isLoading()) {
+        <div class="p-12 text-center text-muted-foreground">
+          <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-2"></div>
+          <p class="text-xs">Loading cancellations dossier registry...</p>
+        </div>
+      } @else if (!cancellationData()?.items?.length) {
+        <div class="p-12 text-center text-muted-foreground">
+          <svg class="w-12 h-12 mx-auto text-muted-foreground/40 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          <p class="text-sm font-semibold text-foreground">No Cancellation Records Found</p>
+          <p class="text-xs mt-1">No active booking cancellation requests match the selected filters.</p>
+          <button
+            (click)="navigateToCreate()"
+            class="mt-4 px-3.5 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-medium shadow-xs"
+          >
+            + Register New Cancellation
+          </button>
+        </div>
+      } @else {
+        <table class="w-full text-left text-xs text-foreground border-collapse">
+          <thead>
+            <tr class="bg-secondary/40 border-b border-border font-semibold text-muted-foreground">
+              <th class="py-3 px-4">Cancellation Ref & Date</th>
+              <th class="py-3 px-4">Booking & Allottee</th>
+              <th class="py-3 px-4">Project & Unit</th>
+              <th class="py-3 px-4 text-right">Total Paid</th>
+              <th class="py-3 px-4 text-right">Deductions</th>
+              <th class="py-3 px-4 text-right">Net Refund</th>
+              <th class="py-3 px-4 text-center">3-Tier Approvals</th>
+              <th class="py-3 px-4 text-center">Status</th>
+              <th class="py-3 px-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border">
+            @for (item of cancellationData()?.items; track item.id) {
+              <tr class="hover:bg-secondary/30 transition-colors">
+                <td class="py-3 px-4 whitespace-nowrap">
+                  <div class="font-bold text-foreground">{{ item.cancellation_code || ('CAN-2026-' + item.id) }}</div>
+                  <div class="text-[11px] text-muted-foreground">{{ item.cancellation_date || (item.created_at | date:'mediumDate') }}</div>
+                  <span class="inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded bg-secondary font-mono text-muted-foreground">
+                    {{ item.cancellation_category }}
+                  </span>
+                </td>
+
+                <td class="py-3 px-4">
+                  <div class="font-semibold text-foreground">{{ item.customer_name || 'Allottee' }}</div>
+                  <div class="text-[11px] text-muted-foreground">{{ item.customer_phone || '—' }}</div>
+                  <div class="text-[10px] font-mono text-primary font-semibold">{{ item.booking_reference_no }}</div>
+                </td>
+
+                <td class="py-3 px-4">
+                  <div class="font-medium text-foreground">{{ item.project_name || 'Project' }}</div>
+                  <div class="text-[11px] text-muted-foreground font-mono">Unit: {{ item.unit_number || '—' }}</div>
+                </td>
+
+                <td class="py-3 px-4 text-right font-mono font-medium">
+                  ৳{{ item.total_paid | number:'1.2-2' }}
+                </td>
+
+                <td class="py-3 px-4 text-right font-mono text-amber-600 dark:text-amber-400">
+                  -৳{{ item.forfeiture_deduction_amount | number:'1.2-2' }}
+                  <div class="text-[10px] text-muted-foreground">
+                    ({{ item.forfeiture_deduction_percentage }}% {{ item.deduction_type === 'REHAB_STATUTORY' ? 'REHAB' : '' }})
+                  </div>
+                </td>
+
+                <td class="py-3 px-4 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                  ৳{{ item.net_refund_amount | number:'1.2-2' }}
+                  @if (item.amount_refunded_so_far > 0) {
+                    <div class="text-[10px] text-primary">
+                      Disbursed: ৳{{ item.amount_refunded_so_far | number:'1.2-2' }}
+                    </div>
+                  }
+                </td>
+
+                <td class="py-3 px-4 text-center">
+                  <div class="inline-flex items-center gap-1.5 text-[10px]">
+                    <!-- Legal -->
+                    <span
+                      class="px-1.5 py-0.5 rounded font-bold border"
+                      [ngClass]="{
+                        'bg-emerald-500/10 text-emerald-600 border-emerald-500/20': item.legal_approval_status === 'APPROVED',
+                        'bg-destructive/10 text-destructive border-destructive/20': item.legal_approval_status === 'REJECTED',
+                        'bg-secondary text-muted-foreground border-border': item.legal_approval_status === 'PENDING'
+                      }"
+                      title="Legal Review"
+                    >
+                      L: {{ item.legal_approval_status === 'APPROVED' ? '✓' : item.legal_approval_status === 'REJECTED' ? '✕' : '⏳' }}
+                    </span>
+
+                    <!-- Sales -->
+                    <span
+                      class="px-1.5 py-0.5 rounded font-bold border"
+                      [ngClass]="{
+                        'bg-emerald-500/10 text-emerald-600 border-emerald-500/20': item.sales_approval_status === 'APPROVED',
+                        'bg-destructive/10 text-destructive border-destructive/20': item.sales_approval_status === 'REJECTED',
+                        'bg-secondary text-muted-foreground border-border': item.sales_approval_status === 'PENDING'
+                      }"
+                      title="Sales Review"
+                    >
+                      S: {{ item.sales_approval_status === 'APPROVED' ? '✓' : item.sales_approval_status === 'REJECTED' ? '✕' : '⏳' }}
+                    </span>
+
+                    <!-- Finance -->
+                    <span
+                      class="px-1.5 py-0.5 rounded font-bold border"
+                      [ngClass]="{
+                        'bg-emerald-500/10 text-emerald-600 border-emerald-500/20': item.finance_approval_status === 'APPROVED',
+                        'bg-destructive/10 text-destructive border-destructive/20': item.finance_approval_status === 'REJECTED',
+                        'bg-secondary text-muted-foreground border-border': item.finance_approval_status === 'PENDING'
+                      }"
+                      title="Finance Review"
+                    >
+                      F: {{ item.finance_approval_status === 'APPROVED' ? '✓' : item.finance_approval_status === 'REJECTED' ? '✕' : '⏳' }}
+                    </span>
+                  </div>
+                </td>
+
+                <td class="py-3 px-4 text-center">
+                  <span
+                    class="px-2 py-0.5 rounded-full text-[10px] font-bold border tracking-wide uppercase inline-block"
+                    [ngClass]="{
+                      'bg-emerald-500/10 text-emerald-600 border-emerald-500/20': item.status === 'REFUNDED',
+                      'bg-sky-500/10 text-sky-600 border-sky-500/20': item.status === 'APPROVED',
+                      'bg-amber-500/10 text-amber-600 border-amber-500/20': item.status === 'UNDER_REVIEW' || item.status === 'PARTIALLY_REFUNDED',
+                      'bg-destructive/10 text-destructive border-destructive/20': item.status === 'REJECTED'
+                    }"
+                  >
+                    {{ item.status.replace('_', ' ') }}
+                  </span>
+                </td>
+
+                <td class="py-3 px-4 text-right whitespace-nowrap">
+                  <button
+                    (click)="viewDossier(item.id)"
+                    class="px-2.5 py-1 rounded-lg border border-border bg-card hover:bg-secondary text-foreground text-xs font-semibold inline-flex items-center gap-1 shadow-xs transition-colors"
+                  >
+                    View Dossier
+                    <svg class="w-3.5 h-3.5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+
+    <!-- Server-Side Pagination Bar -->
+    @if (cancellationData() && (cancellationData()?.total || 0) > 0) {
+      <div class="p-4 border-t border-border bg-secondary/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
+        <div>
+          Showing <span class="font-semibold text-foreground">{{ offset() + 1 }}</span> to
+          <span class="font-semibold text-foreground">{{ Math.min(offset() + limit(), cancellationData()?.total || 0) }}</span>
+          of <span class="font-semibold text-foreground">{{ cancellationData()?.total }}</span> requests
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button
+            [disabled]="currentPage() <= 1"
+            (click)="onPageChange(currentPage() - 1)"
+            class="px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-secondary text-foreground disabled:opacity-50 disabled:pointer-events-none transition-colors"
+          >
+            Previous
+          </button>
+
+          <span class="px-2 font-medium">Page {{ currentPage() }} of {{ totalPages() }}</span>
+
+          <button
+            [disabled]="currentPage() >= totalPages()"
+            (click)="onPageChange(currentPage() + 1)"
+            class="px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-secondary text-foreground disabled:opacity-50 disabled:pointer-events-none transition-colors"
+          >
+            Next
+          </button>
+        </div>
+      </div>
+    }
+  </div>
 </div>

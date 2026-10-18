@@ -1,0 +1,552 @@
+<div class="flex flex-col gap-6 w-full max-w-7xl mx-auto pb-16">
+  <!-- Top Header & Actions -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
+    <div>
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+          Commercial Operations · Spec 5.5
+        </span>
+        <span class="text-xs text-muted-foreground font-mono">Treasury & Accounting</span>
+      </div>
+      <h1 class="text-xl sm:text-2xl font-bold font-display text-foreground mt-1">
+        Booking Money & Down Payment Collection
+      </h1>
+      <p class="text-xs text-muted-foreground mt-0.5">
+        Multi-instrument commercial collection, statutory money receipts, cheque clearance tracking, and bank reconciliation.
+      </p>
+    </div>
+
+    <div class="flex items-center gap-2.5">
+      <a
+        routerLink="/sales/collections/create"
+        class="px-4 py-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-semibold inline-flex items-center gap-1.5 shadow-xs transition-colors"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        + Issue Collection Receipt
+      </a>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  @if (alertSentMessage()) {
+    <div class="p-3.5 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-xs text-emerald-500 font-semibold flex items-center justify-between shadow-xs">
+      <div class="flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        <span>{{ alertSentMessage() }}</span>
+      </div>
+      <button (click)="alertSentMessage.set(null)" class="text-emerald-500 hover:text-emerald-400">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+  }
+
+  <!-- KPI Metrics Banner -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="bg-card border border-border rounded-xl p-4 flex items-center justify-between shadow-xs">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Cleared Collections</p>
+        <h3 class="text-xl font-bold font-mono text-primary mt-1">BDT {{ totalClearedAmount() | number:'1.0-0' }}</h3>
+        <span class="text-[11px] text-emerald-500 font-medium">Realized Cash in Bank</span>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+    </div>
+
+    <div class="bg-card border border-border rounded-xl p-4 flex items-center justify-between shadow-xs">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Pending Cheque Realization</p>
+        <h3 class="text-xl font-bold font-mono text-amber-500 mt-1">BDT {{ pendingChequeAmount() | number:'1.0-0' }}</h3>
+        <span class="text-[11px] text-muted-foreground">{{ pendingChequeCount() }} instruments awaiting deposit</span>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500 border border-amber-500/20">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+    </div>
+
+    <div class="bg-card border border-border rounded-xl p-4 flex items-center justify-between shadow-xs">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Outstanding DP Notices</p>
+        <h3 class="text-xl font-bold font-mono text-foreground mt-1">{{ notices().length }} Bookings</h3>
+        <span class="text-[11px] text-muted-foreground">Pending 15% Down Payment</span>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center text-foreground border border-border">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+        </svg>
+      </div>
+    </div>
+
+    <div class="bg-card border border-border rounded-xl p-4 flex items-center justify-between shadow-xs">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Cheque Dishonours</p>
+        <h3 class="text-xl font-bold font-mono text-rose-500 mt-1">{{ dishonouredCount() }}</h3>
+        <span class="text-[11px] text-rose-500 font-medium">NI Act Sec 138 Notice Risk</span>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-rose-500/10 flex items-center justify-center text-rose-500 border border-rose-500/20">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Spec 5.5 Illustrative Calculation Rule Ribbon -->
+  <div class="bg-card border border-border rounded-xl p-4 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 text-xs">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+      <div>
+        <strong class="text-foreground">Spec 5.5 Calculation Rule:</strong>
+        <span class="text-muted-foreground ml-1">
+          For a ৳1,20,00,000 apartment, the ৳6,00,000 (5%) booking money is <em>included within</em> the ৳18,00,000 (15%) total down payment, not added on top of it. Remaining balance after down payment: ৳1,02,00,000.
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navigation Tabs -->
+  <div class="flex items-center gap-2 border-b border-border pb-2">
+    <button
+      (click)="activeTab.set('LEDGER')"
+      class="px-4 py-2 rounded-xl text-xs font-bold transition-colors inline-flex items-center gap-2"
+      [ngClass]="activeTab() === 'LEDGER' ? 'bg-primary text-primary-foreground shadow-xs' : 'bg-card text-muted-foreground hover:text-foreground border border-border'"
+    >
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+      </svg>
+      Collections & Money Receipts Ledger
+      <span class="px-1.5 py-0.2 rounded-full text-[10px]" [ngClass]="activeTab() === 'LEDGER' ? 'bg-primary-foreground/20 text-primary-foreground' : 'bg-secondary text-muted-foreground'">
+        {{ collections().length }}
+      </span>
+    </button>
+
+    <button
+      (click)="activeTab.set('CHEQUES')"
+      class="px-4 py-2 rounded-xl text-xs font-bold transition-colors inline-flex items-center gap-2"
+      [ngClass]="activeTab() === 'CHEQUES' ? 'bg-primary text-primary-foreground shadow-xs' : 'bg-card text-muted-foreground hover:text-foreground border border-border'"
+    >
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+      </svg>
+      Cheque Clearance Vault
+      <span class="px-1.5 py-0.2 rounded-full text-[10px]" [ngClass]="activeTab() === 'CHEQUES' ? 'bg-primary-foreground/20 text-primary-foreground' : 'bg-amber-500/20 text-amber-500'">
+        {{ pendingCheques().length }}
+      </span>
+    </button>
+
+    <button
+      (click)="activeTab.set('NOTICES')"
+      class="px-4 py-2 rounded-xl text-xs font-bold transition-colors inline-flex items-center gap-2"
+      [ngClass]="activeTab() === 'NOTICES' ? 'bg-primary text-primary-foreground shadow-xs' : 'bg-card text-muted-foreground hover:text-foreground border border-border'"
+    >
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+      </svg>
+      Outstanding Down Payment Notices
+      <span class="px-1.5 py-0.2 rounded-full text-[10px]" [ngClass]="activeTab() === 'NOTICES' ? 'bg-primary-foreground/20 text-primary-foreground' : 'bg-secondary text-muted-foreground'">
+        {{ notices().length }}
+      </span>
+    </button>
+  </div>
+
+  <!-- TAB 1: ALL COLLECTIONS LEDGER -->
+  @if (activeTab() === 'LEDGER') {
+    <!-- Search & Filters -->
+    <div class="bg-card border border-border rounded-xl p-4 shadow-xs flex flex-col md:flex-row items-center justify-between gap-3">
+      <div class="flex-1 w-full md:w-auto relative">
+        <svg class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+        <input
+          type="text"
+          placeholder="Search by MR No, Cheque No, Bank, or Transaction Reference..."
+          [value]="searchTerm()"
+          (input)="onSearch($any($event.target).value)"
+          class="w-full pl-10 pr-4 py-2 bg-secondary/40 border border-border rounded-xl text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+        />
+      </div>
+
+      <div class="flex items-center gap-2 w-full md:w-auto flex-wrap sm:flex-nowrap">
+        <!-- Collection Type Filter -->
+        <select
+          [value]="selectedType()"
+          (change)="onTypeFilter($any($event.target).value)"
+          class="px-3 py-2 bg-secondary/40 border border-border rounded-xl text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+        >
+          @for (opt of collectionTypeOptions; track opt.value) {
+            <option [value]="opt.value">{{ opt.label }}</option>
+          }
+        </select>
+
+        <!-- Payment Mode Filter -->
+        <select
+          [value]="selectedMode()"
+          (change)="onModeFilter($any($event.target).value)"
+          class="px-3 py-2 bg-secondary/40 border border-border rounded-xl text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+        >
+          @for (opt of paymentModeOptions; track opt.value) {
+            <option [value]="opt.value">{{ opt.label }}</option>
+          }
+        </select>
+
+        <!-- Clearance Status Filter -->
+        <select
+          [value]="selectedClearance()"
+          (change)="onClearanceFilter($any($event.target).value)"
+          class="px-3 py-2 bg-secondary/40 border border-border rounded-xl text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+        >
+          @for (opt of clearanceOptions; track opt.value) {
+            <option [value]="opt.value">{{ opt.label }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <!-- Collections Master Table -->
+    <app-card-container
+      title="Commercial Money Receipts Ledger"
+      subtitle="Complete accounting records with payment instrument numbers, clearance verification, and GL voucher links"
+    >
+      <div class="overflow-x-auto border border-border rounded-xl">
+        <table class="w-full text-left text-sm text-foreground">
+          <thead class="bg-secondary/50 text-xs font-semibold uppercase text-muted-foreground border-b border-border">
+            <tr>
+              <th class="px-4 py-3">MR Number & Date</th>
+              <th class="px-4 py-3">Customer & Unit</th>
+              <th class="px-4 py-3">Category</th>
+              <th class="px-4 py-3">Payment Mode & Instrument</th>
+              <th class="px-4 py-3 text-right">Amount Received</th>
+              <th class="px-4 py-3 text-center">Clearance Status</th>
+              <th class="px-4 py-3 text-center">Bank Recon</th>
+              <th class="px-4 py-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border/60">
+            @for (c of collections(); track c.id) {
+              <tr class="hover:bg-secondary/20 transition-colors">
+                <td class="px-4 py-3.5 font-mono">
+                  <span class="font-bold text-primary">{{ c.receipt_number }}</span>
+                  <span class="block text-[11px] text-muted-foreground font-normal">{{ c.payment_date }}</span>
+                </td>
+
+                <td class="px-4 py-3.5">
+                  <div class="font-semibold text-foreground">{{ c.customer_name }}</div>
+                  <div class="text-xs text-muted-foreground">{{ c.project_name }} (Unit {{ c.unit_number }})</div>
+                  <div class="text-[10px] text-muted-foreground font-mono">Ref: {{ c.booking_reference_no }}</div>
+                </td>
+
+                <td class="px-4 py-3.5">
+                  <span class="text-xs font-medium px-2 py-0.5 rounded-md bg-secondary text-foreground border border-border">
+                    {{ c.collection_type }}
+                  </span>
+                </td>
+
+                <td class="px-4 py-3.5 text-xs">
+                  <div class="font-semibold text-foreground">{{ c.payment_mode }}</div>
+                  @if (c.instrument_number) {
+                    <div class="text-[11px] text-muted-foreground font-mono">Inst: {{ c.instrument_number }}</div>
+                  }
+                  @if (c.drawn_bank_name) {
+                    <div class="text-[10px] text-muted-foreground">{{ c.drawn_bank_name }}</div>
+                  }
+                </td>
+
+                <td class="px-4 py-3.5 text-right font-mono font-bold text-foreground">
+                  BDT {{ c.amount | number:'1.0-0' }}
+                </td>
+
+                <td class="px-4 py-3.5 text-center">
+                  <span class="text-[11px] font-semibold px-2.5 py-0.5 rounded-full"
+                    [ngClass]="{
+                      'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20': c.clearance_status === 'CLEARED',
+                      'bg-amber-500/10 text-amber-500 border border-amber-500/20': c.clearance_status === 'PENDING_CLEARANCE',
+                      'bg-rose-500/10 text-rose-500 border border-rose-500/20': c.clearance_status === 'DISHONOURED'
+                    }">
+                    {{ c.clearance_status }}
+                  </span>
+                </td>
+
+                <td class="px-4 py-3.5 text-center">
+                  <span class="text-[11px] font-medium px-2 py-0.5 rounded-md"
+                    [ngClass]="c.bank_reconciliation_status === 'RECONCILED' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-secondary text-muted-foreground'">
+                    {{ c.bank_reconciliation_status }}
+                  </span>
+                </td>
+
+                <td class="px-4 py-3.5 text-right whitespace-nowrap">
+                  <div class="flex items-center justify-end gap-1.5">
+                    <a
+                      [routerLink]="['/sales/collections', c.id]"
+                      class="h-8 px-2.5 text-xs rounded-lg border border-border bg-card text-foreground hover:bg-secondary font-medium inline-flex items-center gap-1 transition-colors"
+                      title="View Money Receipt Dossier"
+                    >
+                      <svg class="w-3.5 h-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                      </svg>
+                      MR Dossier
+                    </a>
+
+                    @if (c.clearance_status === 'PENDING_CLEARANCE') {
+                      <button
+                        (click)="quickClearCheque(c)"
+                        class="h-8 px-2 text-xs rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-xs inline-flex items-center gap-1 transition-colors"
+                        title="Mark Cheque Cleared"
+                      >
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        Clear
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="8" class="px-4 py-12 text-center text-muted-foreground">
+                  No collection records match the current filters.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination Footer Controls (Rule 10) -->
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-border text-xs text-muted-foreground">
+        <div>
+          Showing <strong class="text-foreground">{{ offset() + 1 }}</strong> to
+          <strong class="text-foreground">{{ offset() + collections().length }}</strong> collections
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button
+            (click)="prevPage()"
+            [disabled]="offset() === 0"
+            class="px-3 py-1.5 rounded-lg border border-border bg-card text-foreground hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            Previous
+          </button>
+          <button
+            (click)="nextPage()"
+            [disabled]="collections().length < limit()"
+            class="px-3 py-1.5 rounded-lg border border-border bg-card text-foreground hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            Next
+          </button>
+        </div>
+      </div>
+    </app-card-container>
+  }
+
+  <!-- TAB 2: CHEQUE CLEARANCE VAULT -->
+  @if (activeTab() === 'CHEQUES') {
+    <app-card-container
+      title="Cheque Clearance & Deposit Vault"
+      subtitle="Accounting Control: Instruments remain pending clearance until verified by bank deposit statement"
+    >
+      <div class="overflow-x-auto border border-border rounded-xl">
+        <table class="w-full text-left text-sm text-foreground">
+          <thead class="bg-secondary/50 text-xs font-semibold uppercase text-muted-foreground border-b border-border">
+            <tr>
+              <th class="px-4 py-3">MR Number</th>
+              <th class="px-4 py-3">Customer & Unit</th>
+              <th class="px-4 py-3">Cheque Details</th>
+              <th class="px-4 py-3">Drawn Bank & Branch</th>
+              <th class="px-4 py-3 text-right">Cheque Value</th>
+              <th class="px-4 py-3 text-center">Status</th>
+              <th class="px-4 py-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border/60">
+            @for (chq of pendingCheques(); track chq.id) {
+              <tr class="hover:bg-secondary/20 transition-colors">
+                <td class="px-4 py-3.5 font-mono">
+                  <span class="font-bold text-primary">{{ chq.receipt_number }}</span>
+                  <span class="block text-[11px] text-muted-foreground">{{ chq.payment_date }}</span>
+                </td>
+
+                <td class="px-4 py-3.5">
+                  <div class="font-semibold text-foreground">{{ chq.customer_name }}</div>
+                  <div class="text-xs text-muted-foreground">{{ chq.project_name }} (Unit {{ chq.unit_number }})</div>
+                </td>
+
+                <td class="px-4 py-3.5 font-mono text-xs">
+                  <span class="font-bold text-foreground">{{ chq.instrument_number || 'CHQ-N/A' }}</span>
+                  <span class="block text-[11px] text-muted-foreground">Dated: {{ chq.instrument_date || chq.payment_date }}</span>
+                </td>
+
+                <td class="px-4 py-3.5 text-xs">
+                  <div class="text-foreground font-medium">{{ chq.drawn_bank_name || 'Commercial Bank' }}</div>
+                  <div class="text-[11px] text-muted-foreground">{{ chq.branch_name || 'Main Branch' }}</div>
+                </td>
+
+                <td class="px-4 py-3.5 text-right font-mono font-bold text-foreground">
+                  BDT {{ chq.amount | number:'1.0-0' }}
+                </td>
+
+                <td class="px-4 py-3.5 text-center">
+                  <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                    PENDING REALIZATION
+                  </span>
+                </td>
+
+                <td class="px-4 py-3.5 text-right whitespace-nowrap">
+                  <div class="flex items-center justify-end gap-1.5">
+                    <button
+                      (click)="quickClearCheque(chq)"
+                      class="px-2.5 py-1 text-xs rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-xs inline-flex items-center gap-1 transition-colors"
+                    >
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                      </svg>
+                      Confirm Cleared
+                    </button>
+
+                    <a
+                      [routerLink]="['/sales/collections', chq.id]"
+                      class="px-2.5 py-1 text-xs rounded-lg border border-border bg-card text-foreground hover:bg-secondary transition-colors"
+                    >
+                      Details
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="7" class="px-4 py-12 text-center text-muted-foreground">
+                  🎉 All customer cheques and instruments are currently cleared and realized in the bank.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </app-card-container>
+  }
+
+  <!-- TAB 3: OUTSTANDING DOWN PAYMENT NOTICES (Spec 5.5) -->
+  @if (activeTab() === 'NOTICES') {
+    <app-card-container
+      title="Outstanding Down Payment Tracking & Automated Notifications"
+      subtitle="Spec 5.5: Identifies buyers pending completion of 15% total down payment target with automated SMS reminder dispatch"
+    >
+      <div class="overflow-x-auto border border-border rounded-xl">
+        <table class="w-full text-left text-sm text-foreground">
+          <thead class="bg-secondary/50 text-xs font-semibold uppercase text-muted-foreground border-b border-border">
+            <tr>
+              <th class="px-4 py-3">Booking Ref</th>
+              <th class="px-4 py-3">Buyer KYC & Phone</th>
+              <th class="px-4 py-3 text-right">Contract Price</th>
+              <th class="px-4 py-3 text-right">Booking Money (5%)</th>
+              <th class="px-4 py-3 text-right">Down Payment (15%)</th>
+              <th class="px-4 py-3 text-right">Net DP Due</th>
+              <th class="px-4 py-3 text-right">Remaining Balance</th>
+              <th class="px-4 py-3 text-center">Status & Overdue</th>
+              <th class="px-4 py-3 text-right">Dispatch Action</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border/60">
+            @for (n of notices(); track n.booking_id) {
+              <tr class="hover:bg-secondary/20 transition-colors">
+                <td class="px-4 py-3.5 font-mono">
+                  <a [routerLink]="['/sales/bookings', n.booking_id]" class="font-bold text-primary hover:underline">
+                    {{ n.booking_reference_no }}
+                  </a>
+                  <span class="block text-[11px] text-muted-foreground">{{ n.project_name }} (Unit {{ n.unit_number }})</span>
+                </td>
+
+                <td class="px-4 py-3.5">
+                  <div class="font-semibold text-foreground">{{ n.customer_name }}</div>
+                  <div class="text-xs text-muted-foreground font-mono">{{ n.customer_phone }}</div>
+                </td>
+
+                <td class="px-4 py-3.5 text-right font-mono">
+                  BDT {{ n.final_contract_value | number:'1.0-0' }}
+                </td>
+
+                <td class="px-4 py-3.5 text-right font-mono text-xs">
+                  <span class="text-emerald-500 font-bold">BDT {{ n.booking_money_received | number:'1.0-0' }}</span>
+                  <span class="block text-[10px] text-muted-foreground">Tgt: {{ n.booking_money_target | number:'1.0-0' }}</span>
+                </td>
+
+                <td class="px-4 py-3.5 text-right font-mono text-xs">
+                  <span class="text-foreground font-bold">BDT {{ n.down_payment_received | number:'1.0-0' }}</span>
+                  <span class="block text-[10px] text-muted-foreground">Tgt: {{ n.down_payment_target | number:'1.0-0' }}</span>
+                </td>
+
+                <td class="px-4 py-3.5 text-right font-mono font-bold text-amber-500">
+                  BDT {{ n.net_down_payment_due | number:'1.0-0' }}
+                </td>
+
+                <td class="px-4 py-3.5 text-right font-mono text-xs text-muted-foreground">
+                  BDT {{ n.remaining_balance | number:'1.0-0' }}
+                </td>
+
+                <td class="px-4 py-3.5 text-center">
+                  @if (n.status === 'OVERDUE') {
+                    <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-500 border border-rose-500/20 block">
+                      {{ n.days_overdue }} DAYS OVERDUE
+                    </span>
+                  } @else if (n.status === 'PARTIAL') {
+                    <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20 block">
+                      PARTIAL DP
+                    </span>
+                  } @else {
+                    <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-secondary text-muted-foreground block">
+                      PENDING DP
+                    </span>
+                  }
+                </td>
+
+                <td class="px-4 py-3.5 text-right whitespace-nowrap">
+                  <div class="flex items-center justify-end gap-1.5">
+                    <button
+                      (click)="sendReminderAlert(n)"
+                      class="px-2.5 py-1 text-xs rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-medium shadow-xs inline-flex items-center gap-1 transition-colors"
+                      title="Dispatch SMS Reminder"
+                    >
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                      </svg>
+                      Send SMS Reminder
+                    </button>
+
+                    <a
+                      [routerLink]="['/sales/collections/create']"
+                      [queryParams]="{ booking_id: n.booking_id }"
+                      class="px-2.5 py-1 text-xs rounded-lg border border-border bg-card text-foreground hover:bg-secondary font-medium transition-colors"
+                    >
+                      Receive
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="9" class="px-4 py-12 text-center text-muted-foreground">
+                  🎉 No overdue down payment balances found across active apartment bookings.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </app-card-container>
+  }
+</div>

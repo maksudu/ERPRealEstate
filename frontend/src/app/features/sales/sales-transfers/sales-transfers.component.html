@@ -1,0 +1,278 @@
+<div class="flex flex-col gap-6 w-full max-w-7xl mx-auto pb-16">
+  <!-- Top Bar & Breadcrumbs -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
+    <div>
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+          Spec 5.10 · Property Transfer & Buyer Change
+        </span>
+        <span class="text-xs font-mono text-muted-foreground">Legal Mutation & Payment History Preservation</span>
+      </div>
+      <h1 class="text-2xl font-bold font-display text-foreground mt-1">
+        Property Transfer, Buyer Substitution & Co-Buyer Mutations
+      </h1>
+      <p class="text-xs text-muted-foreground mt-0.5">
+        Manage authorized buyer substitution, co-buyer addition/removal, share amendments, transfer fee calculation, and customer subledger continuity.
+      </p>
+    </div>
+
+    <div class="flex items-center gap-2 flex-wrap">
+      <a
+        routerLink="/settings/lookups"
+        class="px-3 py-2 rounded-xl border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-secondary text-xs font-semibold inline-flex items-center gap-1.5 shadow-xs transition-colors"
+        title="Manage Transfer Types & Co-Buyer Relations"
+      >
+        <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+        Lookup Settings
+      </a>
+
+      <button
+        (click)="navigateToCreate()"
+        class="px-4 py-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-semibold inline-flex items-center gap-1.5 shadow-xs transition-colors"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        + Initiate Property Transfer
+      </button>
+    </div>
+  </div>
+
+  <!-- 4 Spec-Defined KPI Metric Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="bg-card border border-border rounded-xl p-4 shadow-xs">
+      <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">Total Transfer Dossiers</span>
+      <div class="text-2xl font-bold font-display text-foreground mt-1">
+        {{ transferData()?.total || 0 }}
+      </div>
+      <p class="text-[11px] text-muted-foreground mt-1">All registered ownership mutations</p>
+    </div>
+
+    <div class="bg-card border border-border rounded-xl p-4 shadow-xs">
+      <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">Completed Mutations</span>
+      <div class="text-2xl font-bold font-display text-emerald-600 dark:text-emerald-400 mt-1">
+        {{ transferData()?.total_completed_transfers || 0 }}
+      </div>
+      <p class="text-[11px] text-muted-foreground mt-1">Executed agreements & ledger linked</p>
+    </div>
+
+    <div class="bg-card border border-border rounded-xl p-4 shadow-xs">
+      <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">Transfer Fees Collected</span>
+      <div class="text-2xl font-bold font-display text-primary mt-1">
+        ৳{{ (transferData()?.total_transfer_fees || 0) | number:'1.2-2' }}
+      </div>
+      <p class="text-[11px] text-muted-foreground mt-1">Developer administrative transfer NOC fees</p>
+    </div>
+
+    <div class="bg-card border border-border rounded-xl p-4 shadow-xs">
+      <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">History Preservation</span>
+      <div class="text-2xl font-bold font-display text-emerald-600 dark:text-emerald-400 mt-1">
+        100% Immutable
+      </div>
+      <p class="text-[11px] text-muted-foreground mt-1">Source receipts archived without deletion</p>
+    </div>
+  </div>
+
+  <!-- Single Container Card for Filters & Table -->
+  <div class="bg-card border border-border rounded-xl shadow-xs overflow-hidden">
+    <!-- Server-Side Filter Toolbar -->
+    <div class="p-4 border-b border-border bg-secondary/20 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+      <div class="flex-1 max-w-md">
+        <app-custom-input
+          type="text"
+          [value]="searchQuery()"
+          (valueChange)="onSearch($event)"
+          placeholder="Search by Transfer No (TRF-...), Booking Ref, or Customer..."
+        ></app-custom-input>
+      </div>
+
+      <div class="flex items-center gap-3 flex-wrap">
+        <div class="w-56">
+          <app-searchable-select
+            [options]="transferTypeOptions"
+            [ngModel]="selectedTransferType()"
+            (selectionChange)="onTypeChange($event)"
+            placeholder="Filter by Transfer Type"
+            [allowCreateNew]="false"
+          ></app-searchable-select>
+        </div>
+
+        <div class="w-56">
+          <app-searchable-select
+            [options]="statusOptions"
+            [ngModel]="selectedStatus()"
+            (selectionChange)="onStatusChange($event)"
+            placeholder="Filter by Status"
+            [allowCreateNew]="false"
+          ></app-searchable-select>
+        </div>
+
+        @if (searchQuery() || selectedTransferType() || selectedStatus()) {
+          <button
+            (click)="onSearch(''); onTypeChange(''); onStatusChange('')"
+            class="text-xs text-muted-foreground hover:text-foreground font-medium underline px-2 py-1"
+          >
+            Reset Filters
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Table Container (Strictly No Form Under Table - Rule 10) -->
+    <div class="overflow-x-auto">
+      @if (isLoading()) {
+        <div class="p-12 text-center text-muted-foreground">
+          <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-2"></div>
+          <p class="text-xs">Loading property transfer dossiers...</p>
+        </div>
+      } @else if (!transferData()?.items?.length) {
+        <div class="p-12 text-center text-muted-foreground">
+          <svg class="w-12 h-12 mx-auto text-muted-foreground/40 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+          </svg>
+          <p class="text-sm font-semibold text-foreground">No Property Transfers Found</p>
+          <p class="text-xs mt-1">No property transfer or co-buyer change requests match the criteria.</p>
+          <button
+            (click)="navigateToCreate()"
+            class="mt-4 px-3.5 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-medium shadow-xs"
+          >
+            + Register New Transfer Request
+          </button>
+        </div>
+      } @else {
+        <table class="w-full text-left text-xs text-foreground border-collapse">
+          <thead>
+            <tr class="bg-secondary/40 border-b border-border font-semibold text-muted-foreground">
+              <th class="py-3 px-4">Transfer Number & Date</th>
+              <th class="py-3 px-4">Booking Ref & Unit</th>
+              <th class="py-3 px-4">Transfer Type</th>
+              <th class="py-3 px-4">Original Customer (Source)</th>
+              <th class="py-3 px-4">Transferee / Co-Buyer</th>
+              <th class="py-3 px-4 text-right">Transfer Fee</th>
+              <th class="py-3 px-4 text-center">Compliance Dues</th>
+              <th class="py-3 px-4 text-center">Approval Status</th>
+              <th class="py-3 px-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border">
+            @for (t of transferData()?.items; track t.id) {
+              <tr class="hover:bg-secondary/30 transition-colors">
+                <td class="py-3 px-4 whitespace-nowrap">
+                  <div class="font-bold text-foreground">{{ t.transfer_number }}</div>
+                  <div class="text-[11px] text-muted-foreground">{{ t.transfer_date || (t.created_at | date:'mediumDate') }}</div>
+                </td>
+
+                <td class="py-3 px-4">
+                  <div class="font-mono font-semibold text-primary">{{ t.booking_reference_no }}</div>
+                  <div class="text-[11px] text-muted-foreground">Unit {{ t.unit_number || '—' }} · {{ t.project_name }}</div>
+                </td>
+
+                <td class="py-3 px-4">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-secondary text-foreground border border-border inline-block">
+                    {{ t.transfer_type.replace('_', ' ') }}
+                  </span>
+                </td>
+
+                <td class="py-3 px-4">
+                  <div class="font-semibold text-foreground">{{ t.from_customer_name || 'Buyer #' + t.from_customer_id }}</div>
+                  <div class="text-[11px] text-muted-foreground">{{ t.from_customer_phone || '—' }}</div>
+                </td>
+
+                <td class="py-3 px-4">
+                  @if (t.transfer_type === 'FULL_BUYER_SUBSTITUTION') {
+                    <div class="font-semibold text-foreground">{{ t.to_customer_name || 'Buyer #' + t.to_customer_id }}</div>
+                    <div class="text-[11px] text-muted-foreground">{{ t.to_customer_phone || '—' }}</div>
+                  } @else if (t.co_buyer_name) {
+                    <div class="font-semibold text-foreground">{{ t.co_buyer_name }}</div>
+                    <div class="text-[11px] text-muted-foreground">{{ t.co_buyer_relation }} · {{ t.new_share_percent }}% Share</div>
+                  } @else {
+                    <span class="text-muted-foreground font-mono">Share: {{ t.new_share_percent }}%</span>
+                  }
+                </td>
+
+                <td class="py-3 px-4 text-right font-mono font-semibold">
+                  ৳{{ t.transfer_fee_bdt | number:'1.2-2' }}
+                  <div class="text-[10px] text-muted-foreground">
+                    {{ t.is_fee_paid ? 'Paid ✓' : 'Unpaid' }}
+                  </div>
+                </td>
+
+                <td class="py-3 px-4 text-center">
+                  @if (t.is_dues_cleared) {
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                      Dues Cleared ✓
+                    </span>
+                  } @else {
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 border border-amber-500/20" title="Outstanding balance requires NOC clearance">
+                      ৳{{ t.outstanding_balance_at_transfer | number:'1.0-0' }} Due
+                    </span>
+                  }
+                </td>
+
+                <td class="py-3 px-4 text-center">
+                  <span
+                    class="px-2 py-0.5 rounded-full text-[10px] font-bold border tracking-wide uppercase inline-block"
+                    [ngClass]="{
+                      'bg-emerald-500/10 text-emerald-600 border-emerald-500/20': t.approval_status === 'EXECUTED_COMPLETED',
+                      'bg-sky-500/10 text-sky-600 border-sky-500/20': t.approval_status === 'MANAGEMENT_APPROVED' || t.approval_status === 'LEGAL_APPROVED',
+                      'bg-amber-500/10 text-amber-600 border-amber-500/20': t.approval_status === 'PENDING_COMPLIANCE',
+                      'bg-destructive/10 text-destructive border-destructive/20': t.approval_status === 'REJECTED'
+                    }"
+                  >
+                    {{ t.approval_status.replace('_', ' ') }}
+                  </span>
+                </td>
+
+                <td class="py-3 px-4 text-right whitespace-nowrap">
+                  <button
+                    (click)="viewDossier(t.id)"
+                    class="px-2.5 py-1 rounded-lg border border-border bg-card hover:bg-secondary text-foreground text-xs font-semibold inline-flex items-center gap-1 shadow-xs transition-colors"
+                  >
+                    View Dossier
+                    <svg class="w-3.5 h-3.5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+
+    <!-- Server-Side Pagination Bar -->
+    @if (transferData() && (transferData()?.total || 0) > 0) {
+      <div class="p-4 border-t border-border bg-secondary/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
+        <div>
+          Showing <span class="font-semibold text-foreground">{{ offset() + 1 }}</span> to
+          <span class="font-semibold text-foreground">{{ Math.min(offset() + limit(), transferData()?.total || 0) }}</span>
+          of <span class="font-semibold text-foreground">{{ transferData()?.total }}</span> records
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button
+            [disabled]="currentPage() <= 1"
+            (click)="onPageChange(currentPage() - 1)"
+            class="px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-secondary text-foreground disabled:opacity-50 disabled:pointer-events-none transition-colors"
+          >
+            Previous
+          </button>
+
+          <span class="px-2 font-medium">Page {{ currentPage() }} of {{ totalPages() }}</span>
+
+          <button
+            [disabled]="currentPage() >= totalPages()"
+            (click)="onPageChange(currentPage() + 1)"
+            class="px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-secondary text-foreground disabled:opacity-50 disabled:pointer-events-none transition-colors"
+          >
+            Next
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+</div>

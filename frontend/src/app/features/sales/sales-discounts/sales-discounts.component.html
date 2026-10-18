@@ -1,133 +1,434 @@
-<div class="flex flex-col gap-6">
-  <!-- Governance Matrix Card Banner -->
-  <div class="bg-card border border-border rounded-xl p-5 shadow-sm">
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+<div class="flex flex-col gap-6 w-full max-w-7xl mx-auto pb-16">
+  <!-- Governance Header & Navigation -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
+    <div>
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+          Commercial Operations · Spec 5.4
+        </span>
+        <span class="text-xs text-muted-foreground font-mono">Governance Matrix</span>
+      </div>
+      <h1 class="text-xl sm:text-2xl font-bold font-display text-foreground mt-1">
+        Price Negotiation & Discount Approvals
+      </h1>
+      <p class="text-xs text-muted-foreground mt-0.5">
+        Controlled commercial approval workflow ensuring sales staff cannot bypass minimum project floor prices or delegated limits.
+      </p>
+    </div>
+
+    <div class="flex items-center gap-2.5">
+      <button
+        (click)="openPolicyModal()"
+        class="px-3.5 py-2 rounded-xl border border-border bg-card hover:bg-secondary text-foreground text-xs font-semibold inline-flex items-center gap-1.5 shadow-xs transition-colors"
+      >
+        <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+        Configure Policy Limit
+      </button>
+
+      <a
+        routerLink="/sales/discounts/create"
+        class="px-4 py-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-semibold inline-flex items-center gap-1.5 shadow-xs transition-colors"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        + Submit Price Negotiation
+      </a>
+    </div>
+  </div>
+
+  <!-- Multi-Level Delegation Matrix Banner -->
+  <div class="bg-card border border-border rounded-xl p-5 shadow-xs">
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
       <div>
-        <h3 class="font-bold text-base text-foreground">Multi-Level Discount Approval Matrix</h3>
+        <h3 class="font-bold text-sm text-foreground">Statutory Multi-Level Commercial Escalation Matrix</h3>
         <p class="text-xs text-muted-foreground mt-0.5">
-          Statutory executive threshold limits governing commercial deductions under Board Resolution 2026.
+          Board Resolution 2026: Automatic role-based escalation rules applied across all residential and commercial inventory.
         </p>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div class="p-3 bg-secondary/50 rounded-lg border border-border">
-          <span class="text-[11px] font-semibold text-muted-foreground uppercase block">Tier 1 (&le; 1.0%)</span>
-          <span class="text-xs font-bold text-emerald-500">Sales Manager Authority</span>
+      <div class="grid grid-cols-1 sm:grid-cols-4 gap-2.5">
+        <div class="p-2.5 bg-secondary/50 rounded-xl border border-border">
+          <span class="text-[10px] font-semibold text-muted-foreground uppercase block">Floor Limit (&le; 1.0%)</span>
+          <span class="text-xs font-bold text-emerald-500">Sales Rep Auto-pass</span>
         </div>
-        <div class="p-3 bg-secondary/50 rounded-lg border border-border">
-          <span class="text-[11px] font-semibold text-muted-foreground uppercase block">Tier 2 (1.0% - 3.0%)</span>
-          <span class="text-xs font-bold text-amber-500">Director Sign-Off Required</span>
+        <div class="p-2.5 bg-secondary/50 rounded-xl border border-border">
+          <span class="text-[10px] font-semibold text-muted-foreground uppercase block">Tier 1 (1.0% - 3.0%)</span>
+          <span class="text-xs font-bold text-teal-500">Sales Manager Authority</span>
         </div>
-        <div class="p-3 bg-secondary/50 rounded-lg border border-border">
-          <span class="text-[11px] font-semibold text-muted-foreground uppercase block">Tier 3 (&gt; 3.0%)</span>
-          <span class="text-xs font-bold text-purple-500">MD Biometric 1-Tap Mobile</span>
+        <div class="p-2.5 bg-secondary/50 rounded-xl border border-border">
+          <span class="text-[10px] font-semibold text-muted-foreground uppercase block">Tier 2 (3.0% - 7.0%)</span>
+          <span class="text-xs font-bold text-amber-500">Head of Sales Sign-off</span>
+        </div>
+        <div class="p-2.5 bg-secondary/50 rounded-xl border border-border">
+          <span class="text-[10px] font-semibold text-muted-foreground uppercase block">Tier 3 (> 7.0%)</span>
+          <span class="text-xs font-bold text-purple-500">MD Biometric (1-Tap)</span>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Unified Main Card Container -->
-  <app-card-container
-    title="Pending Discount Authorizations Queue"
-    subtitle="Real-time Authorizations for Executive Commercial Deductions"
-  >
-    <div class="overflow-x-auto border border-border rounded-xl">
-      <table class="w-full text-left text-sm text-foreground">
-        <thead class="bg-secondary/40 text-xs font-semibold uppercase text-muted-foreground border-b border-border">
-          <tr>
-            <th class="px-4 py-3">Booking Ref</th>
-            <th class="px-4 py-3">Buyer & Project</th>
-            <th class="px-4 py-3 text-right">Base Price</th>
-            <th class="px-4 py-3 text-right">Discount Requested</th>
-            <th class="px-4 py-3 text-right">Final Value</th>
-            <th class="px-4 py-3 text-center">Required Tier</th>
-            <th class="px-4 py-3 text-right">Decision Actions</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-border/60">
-          @for (b of pendingBookings(); track b.id) {
-            <tr class="hover:bg-secondary/20 transition-colors">
-              <td class="px-4 py-3.5 font-mono font-bold text-primary">
-                {{ b.booking_reference_no }}
-                <span class="block text-[11px] text-muted-foreground font-normal">{{ b.booking_date }}</span>
-              </td>
-              <td class="px-4 py-3.5">
-                <div class="font-semibold text-foreground">{{ b.customer_name }}</div>
-                <div class="text-xs text-muted-foreground">{{ b.project_name }} (Unit {{ b.unit_number }})</div>
-              </td>
-              <td class="px-4 py-3.5 text-right font-mono">
-                BDT {{ b.base_unit_price | number:'1.0-0' }}
-              </td>
-              <td class="px-4 py-3.5 text-right font-mono font-bold text-amber-500">
-                -{{ b.discount_percentage }}%
-                <span class="block text-[11px] font-normal text-muted-foreground">BDT {{ b.discount_amount | number:'1.0-0' }}</span>
-              </td>
-              <td class="px-4 py-3.5 text-right font-mono font-bold text-foreground">
-                BDT {{ b.final_contract_value | number:'1.0-0' }}
-              </td>
-              <td class="px-4 py-3.5 text-center">
-                @if (b.required_approval_tier === 'MANAGING_DIRECTOR') {
-                  <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-purple-500/10 text-purple-500 border border-purple-500/20 inline-flex items-center gap-1">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 004 11m0 0a8 8 0 008 8m0 0a8 8 0 008-8"/>
-                    </svg>
-                    MD Biometric (1-Tap)
-                  </span>
-                } @else {
-                  <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20">
-                    Director Sign-off
-                  </span>
-                }
-              </td>
-              <td class="px-4 py-3.5 text-right whitespace-nowrap">
-                <div class="flex items-center justify-end gap-2 whitespace-nowrap flex-nowrap">
-                  <button 
-                    (click)="openActionModal(b, 'REJECTED')"
-                    class="h-8 px-3 text-xs rounded-lg bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 border border-rose-500/20 font-medium whitespace-nowrap inline-flex items-center justify-center flex-shrink-0 transition-colors"
-                  >
-                    Reject
-                  </button>
-                  <button 
-                    (click)="openActionModal(b, 'APPROVED')"
-                    class="h-8 px-3 text-xs rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-sm whitespace-nowrap inline-flex items-center justify-center flex-shrink-0 transition-colors"
-                  >
-                    Authorize
-                  </button>
-                </div>
-              </td>
-            </tr>
-          } @empty {
-            <tr>
-              <td colspan="7" class="px-4 py-12 text-center text-muted-foreground">
-                🎉 No discount authorizations pending. All bookings comply with standard pricing rules.
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-  </app-card-container>
+  <!-- Navigation Tabs (Proposals vs Policies) -->
+  <div class="flex items-center gap-2 border-b border-border pb-2">
+    <button
+      (click)="activeTab.set('PROPOSALS')"
+      class="px-4 py-2 rounded-xl text-xs font-bold transition-colors inline-flex items-center gap-2"
+      [ngClass]="activeTab() === 'PROPOSALS' ? 'bg-primary text-primary-foreground shadow-xs' : 'bg-card text-muted-foreground hover:text-foreground border border-border'"
+    >
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+      </svg>
+      Commercial Proposals & Negotiations
+      <span class="px-1.5 py-0.2 rounded-full text-[10px]" [ngClass]="activeTab() === 'PROPOSALS' ? 'bg-primary-foreground/20 text-primary-foreground' : 'bg-secondary text-muted-foreground'">
+        {{ proposals().length }}
+      </span>
+    </button>
 
-  <!-- Authorization Action Modal -->
-  @if (isActionModalOpen()) {
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+    <button
+      (click)="activeTab.set('POLICIES')"
+      class="px-4 py-2 rounded-xl text-xs font-bold transition-colors inline-flex items-center gap-2"
+      [ngClass]="activeTab() === 'POLICIES' ? 'bg-primary text-primary-foreground shadow-xs' : 'bg-card text-muted-foreground hover:text-foreground border border-border'"
+    >
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+      </svg>
+      Delegation of Authority Policies
+      <span class="px-1.5 py-0.2 rounded-full text-[10px]" [ngClass]="activeTab() === 'POLICIES' ? 'bg-primary-foreground/20 text-primary-foreground' : 'bg-secondary text-muted-foreground'">
+        {{ policies().length }}
+      </span>
+    </button>
+  </div>
+
+  <!-- TAB 1: PROPOSALS & NEGOTIATION QUEUE -->
+  @if (activeTab() === 'PROPOSALS') {
+    <!-- Search & Filter Controls -->
+    <div class="bg-card border border-border rounded-xl p-4 shadow-xs flex flex-col md:flex-row items-center justify-between gap-3">
+      <div class="flex-1 w-full md:w-auto relative">
+        <svg class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+        <input
+          type="text"
+          placeholder="Search by proposal ref, sales rep, customer or reason..."
+          [value]="searchTerm()"
+          (input)="onSearch($any($event.target).value)"
+          class="w-full pl-10 pr-4 py-2 bg-secondary/40 border border-border rounded-xl text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+        />
+      </div>
+
+      <div class="flex items-center gap-2 w-full md:w-auto flex-wrap sm:flex-nowrap">
+        <!-- Project Filter -->
+        <select
+          [value]="selectedProjectId() || ''"
+          (change)="onProjectFilterChange($any($event.target).value)"
+          class="px-3 py-2 bg-secondary/40 border border-border rounded-xl text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+        >
+          @for (opt of projectOptions(); track opt.value) {
+            <option [value]="opt.value || ''">{{ opt.label }}</option>
+          }
+        </select>
+
+        <!-- Status Filter -->
+        <select
+          [value]="selectedStatus()"
+          (change)="onStatusFilterChange($any($event.target).value)"
+          class="px-3 py-2 bg-secondary/40 border border-border rounded-xl text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+        >
+          <option value="">All Statuses</option>
+          <option value="PENDING_REVIEW">Pending Review</option>
+          <option value="APPROVED">Approved</option>
+          <option value="REJECTED">Rejected</option>
+        </select>
+
+        <!-- Tier Filter -->
+        <select
+          [value]="selectedTier()"
+          (change)="onTierFilterChange($any($event.target).value)"
+          class="px-3 py-2 bg-secondary/40 border border-border rounded-xl text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+        >
+          <option value="">All Tiers</option>
+          <option value="SALES_MANAGER">Sales Manager</option>
+          <option value="HEAD_OF_SALES">Head of Sales</option>
+          <option value="MANAGING_DIRECTOR">MD Biometric</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Proposals Table Container -->
+    <app-card-container
+      title="Commercial Price Negotiation Requests"
+      subtitle="Complete itemized pricing components, requested concessions, and multi-tier approval trail"
+    >
+      <div class="overflow-x-auto border border-border rounded-xl">
+        <table class="w-full text-left text-sm text-foreground">
+          <thead class="bg-secondary/50 text-xs font-semibold uppercase text-muted-foreground border-b border-border">
+            <tr>
+              <th class="px-4 py-3">Proposal Ref & Date</th>
+              <th class="px-4 py-3">Customer & Unit</th>
+              <th class="px-4 py-3 text-right">Gross List Price</th>
+              <th class="px-4 py-3 text-right">Requested Concession</th>
+              <th class="px-4 py-3 text-right">Proposed Price</th>
+              <th class="px-4 py-3 text-center">Required Tier</th>
+              <th class="px-4 py-3 text-center">Status</th>
+              <th class="px-4 py-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border/60">
+            @for (p of proposals(); track p.id) {
+              <tr class="hover:bg-secondary/20 transition-colors">
+                <td class="px-4 py-3.5 font-mono">
+                  <span class="font-bold text-primary">{{ p.proposal_reference_no }}</span>
+                  <span class="block text-[11px] text-muted-foreground font-normal">{{ p.created_at | date:'mediumDate' }}</span>
+                  <span class="text-[10px] text-muted-foreground">Rep: {{ p.submitted_by_rep_name }}</span>
+                </td>
+
+                <td class="px-4 py-3.5">
+                  <div class="font-semibold text-foreground">{{ p.customer_name }}</div>
+                  <div class="text-xs text-muted-foreground">{{ p.project_name }} (Unit {{ p.unit_number }})</div>
+                  @if (p.chargeable_area_sqft) {
+                    <div class="text-[11px] text-muted-foreground">{{ p.chargeable_area_sqft }} sqft</div>
+                  }
+                </td>
+
+                <td class="px-4 py-3.5 text-right font-mono">
+                  BDT {{ p.gross_list_price | number:'1.0-0' }}
+                  <span class="block text-[10px] text-muted-foreground font-normal">Base: {{ p.base_unit_price | number:'1.0-0' }}</span>
+                </td>
+
+                <td class="px-4 py-3.5 text-right font-mono font-bold text-amber-500">
+                  -{{ p.requested_discount_percentage }}%
+                  <span class="block text-[11px] font-normal text-muted-foreground">BDT {{ p.requested_discount_amount | number:'1.0-0' }}</span>
+                </td>
+
+                <td class="px-4 py-3.5 text-right font-mono font-bold text-foreground">
+                  BDT {{ (p.status === 'APPROVED' && p.approved_final_price ? p.approved_final_price : p.proposed_final_price) | number:'1.0-0' }}
+                </td>
+
+                <td class="px-4 py-3.5 text-center">
+                  @if (p.required_approval_tier === 'MANAGING_DIRECTOR') {
+                    <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-500 border border-purple-500/20 inline-flex items-center gap-1">
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 004 11m0 0a8 8 0 008 8m0 0a8 8 0 008-8"/>
+                      </svg>
+                      MD Biometric
+                    </span>
+                  } @else if (p.required_approval_tier === 'HEAD_OF_SALES') {
+                    <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-500 border border-blue-500/20">
+                      Head of Sales
+                    </span>
+                  } @else {
+                    <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                      Sales Manager
+                    </span>
+                  }
+                </td>
+
+                <td class="px-4 py-3.5 text-center">
+                  <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                    [ngClass]="{
+                      'bg-amber-500/10 text-amber-500 border border-amber-500/20': p.status === 'PENDING_REVIEW',
+                      'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20': p.status === 'APPROVED',
+                      'bg-rose-500/10 text-rose-500 border border-rose-500/20': p.status === 'REJECTED'
+                    }">
+                    {{ p.status }}
+                  </span>
+                </td>
+
+                <td class="px-4 py-3.5 text-right whitespace-nowrap">
+                  <div class="flex items-center justify-end gap-1.5">
+                    <a
+                      [routerLink]="['/sales/discounts', p.id]"
+                      class="h-8 px-2.5 text-xs rounded-lg border border-border bg-card text-foreground hover:bg-secondary font-medium inline-flex items-center gap-1 transition-colors"
+                      title="View Dossier & Decision History"
+                    >
+                      <svg class="w-3.5 h-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                      </svg>
+                      Dossier
+                    </a>
+
+                    @if (p.status === 'PENDING_REVIEW') {
+                      <button
+                        (click)="openQuickActionModal(p, 'APPROVED')"
+                        class="h-8 px-2.5 text-xs rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-xs inline-flex items-center gap-1 transition-colors"
+                        title="Authorize Concession"
+                      >
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        Approve
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="8" class="px-4 py-12 text-center text-muted-foreground">
+                  No price negotiation proposals match the current query.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination Footer Controls (Rule 10) -->
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-border text-xs text-muted-foreground">
+        <div>
+          Showing <strong class="text-foreground">{{ offset() + 1 }}</strong> to
+          <strong class="text-foreground">{{ offset() + proposals().length }}</strong> proposals
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button
+            (click)="prevPage()"
+            [disabled]="offset() === 0"
+            class="px-3 py-1.5 rounded-lg border border-border bg-card text-foreground hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            Previous
+          </button>
+          <button
+            (click)="nextPage()"
+            [disabled]="proposals().length < limit()"
+            class="px-3 py-1.5 rounded-lg border border-border bg-card text-foreground hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            Next
+          </button>
+        </div>
+      </div>
+    </app-card-container>
+  }
+
+  <!-- TAB 2: DELEGATION OF AUTHORITY POLICIES (Spec 5.4 Controls) -->
+  @if (activeTab() === 'POLICIES') {
+    <app-card-container
+      title="Discount Limits by Employee Role & Project"
+      subtitle="Spec 5.4 Control: Configure delegated discount ceilings to prevent unauthorized bypass of minimum prices"
+    >
+      <div class="overflow-x-auto border border-border rounded-xl">
+        <table class="w-full text-left text-sm text-foreground">
+          <thead class="bg-secondary/50 text-xs font-semibold uppercase text-muted-foreground border-b border-border">
+            <tr>
+              <th class="px-4 py-3">Employee Role</th>
+              <th class="px-4 py-3">Project Scope</th>
+              <th class="px-4 py-3 text-right">Max Discount Limit (%)</th>
+              <th class="px-4 py-3 text-right">Max Concession (BDT)</th>
+              <th class="px-4 py-3 text-center">Justification Mandatory</th>
+              <th class="px-4 py-3 text-center">Attachment Required</th>
+              <th class="px-4 py-3 text-center">Status</th>
+              <th class="px-4 py-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border/60">
+            @for (pol of policies(); track pol.id) {
+              <tr class="hover:bg-secondary/20 transition-colors">
+                <td class="px-4 py-3.5 font-bold text-foreground">
+                  {{ pol.role_name }}
+                </td>
+
+                <td class="px-4 py-3.5">
+                  @if (pol.project_name) {
+                    <span class="text-xs font-medium text-primary">{{ pol.project_name }}</span>
+                  } @else {
+                    <span class="text-xs font-normal text-muted-foreground italic">All Projects (Global Ceiling)</span>
+                  }
+                </td>
+
+                <td class="px-4 py-3.5 text-right font-mono font-bold text-emerald-500">
+                  &le; {{ pol.max_discount_percentage }}%
+                </td>
+
+                <td class="px-4 py-3.5 text-right font-mono">
+                  @if (pol.max_discount_amount) {
+                    BDT {{ pol.max_discount_amount | number:'1.0-0' }}
+                  } @else {
+                    <span class="text-muted-foreground text-xs">&infin; No cap</span>
+                  }
+                </td>
+
+                <td class="px-4 py-3.5 text-center">
+                  @if (pol.requires_justification) {
+                    <span class="text-[11px] font-semibold text-emerald-500 inline-flex items-center gap-1">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                      </svg>
+                      Mandatory
+                    </span>
+                  } @else {
+                    <span class="text-[11px] text-muted-foreground">Optional</span>
+                  }
+                </td>
+
+                <td class="px-4 py-3.5 text-center">
+                  @if (pol.requires_attachment) {
+                    <span class="text-[11px] font-semibold text-amber-500 inline-flex items-center gap-1">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
+                      </svg>
+                      Required
+                    </span>
+                  } @else {
+                    <span class="text-[11px] text-muted-foreground">Optional</span>
+                  }
+                </td>
+
+                <td class="px-4 py-3.5 text-center">
+                  <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                    [ngClass]="pol.is_active ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-muted text-muted-foreground'">
+                    {{ pol.is_active ? 'ACTIVE' : 'INACTIVE' }}
+                  </span>
+                </td>
+
+                <td class="px-4 py-3.5 text-right">
+                  <button
+                    (click)="deletePolicy(pol.id)"
+                    class="h-8 w-8 rounded-lg border border-border text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10 inline-flex items-center justify-center transition-colors"
+                    title="Delete Delegated Policy"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="8" class="px-4 py-12 text-center text-muted-foreground">
+                  No delegation of authority policies defined. Click "+ Configure Policy Limit" to define rules by role & project.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </app-card-container>
+  }
+
+  <!-- Quick Authorize / Reject Modal -->
+  @if (isQuickModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
       <div class="bg-card border border-border rounded-2xl w-full max-w-md shadow-2xl p-6 flex flex-col gap-5">
         <div class="flex items-center justify-between border-b border-border pb-3">
           <div>
             <h3 class="text-base font-bold text-foreground">
-              {{ modalDecision() === 'APPROVED' ? 'Confirm Discount Authorization' : 'Reject Discount Request' }}
+              {{ quickDecision() === 'APPROVED' ? 'Confirm Price Concession' : 'Reject Negotiation Request' }}
             </h3>
-            <p class="text-xs text-muted-foreground">{{ selectedBooking()?.booking_reference_no }} (-{{ selectedBooking()?.discount_percentage }}% Discount)</p>
+            <p class="text-xs text-muted-foreground">{{ selectedProposal()?.proposal_reference_no }} (-{{ selectedProposal()?.requested_discount_percentage }}% Concession)</p>
           </div>
-          <button (click)="closeActionModal()" class="text-muted-foreground hover:text-foreground">
+          <button (click)="closeQuickModal()" class="text-muted-foreground hover:text-foreground">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
             </svg>
           </button>
         </div>
 
-        <form [formGroup]="actionForm" (ngSubmit)="submitAction()" class="flex flex-col gap-4">
-          @if (selectedBooking()?.required_approval_tier === 'MANAGING_DIRECTOR' && modalDecision() === 'APPROVED') {
+        <form [formGroup]="quickActionForm" (ngSubmit)="submitQuickAction()" class="flex flex-col gap-4">
+          @if (selectedProposal()?.required_approval_tier === 'MANAGING_DIRECTOR' && quickDecision() === 'APPROVED') {
             <div class="p-3 bg-purple-500/10 border border-purple-500/20 rounded-xl flex items-center gap-3">
               <div class="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-500 shrink-0">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -135,30 +436,131 @@
                 </svg>
               </div>
               <div class="text-xs">
-                <span class="font-bold text-purple-500 block">MD Biometric 1-Tap Authorization</span>
-                <span class="text-muted-foreground">Mobile biometric signature hardware key cryptographically verified.</span>
+                <span class="font-bold text-purple-500 block">MD Biometric Authorization Required</span>
+                <span class="text-muted-foreground">Tier exceeds 7.0%. Biometric token key will be cryptographically bound.</span>
               </div>
             </div>
           }
 
-          <app-custom-textarea
-            label="Executive Approval Remarks *"
-            placeholder="Commercial justification or feedback..."
-            [formGroup]="actionForm"
-            controlName="approval_notes"
+          <app-custom-input
+            label="Approver / Authority Name *"
+            placeholder="e.g. Executive Committee"
+            [formGroup]="quickActionForm"
+            controlName="approved_by_name"
           />
 
-          <div class="flex justify-end gap-3 pt-3 border-t border-border">
-            <app-custom-button variant="outline" type="button" (clicked)="closeActionModal()">
-              Cancel
-            </app-custom-button>
-            <app-custom-button 
-              [variant]="modalDecision() === 'APPROVED' ? 'primary' : 'danger'" 
-              type="submit" 
-              [disabled]="isSubmitting()"
+          <app-custom-textarea
+            label="Executive Remarks & Conditions *"
+            placeholder="Commercial justification or conditions..."
+            [formGroup]="quickActionForm"
+            controlName="approval_comments"
+          />
+
+          <div class="flex items-center justify-end gap-2 pt-2 border-t border-border">
+            <button
+              type="button"
+              (click)="closeQuickModal()"
+              class="px-4 py-2 text-xs font-semibold rounded-xl border border-border hover:bg-secondary text-foreground"
             >
-              {{ isSubmitting() ? 'Processing...' : (modalDecision() === 'APPROVED' ? 'Confirm Approval' : 'Confirm Rejection') }}
-            </app-custom-button>
+              Cancel
+            </button>
+            <button
+              type="submit"
+              [disabled]="isQuickSubmitting() || quickActionForm.invalid"
+              class="px-4 py-2 text-xs font-semibold rounded-xl text-white shadow-xs"
+              [ngClass]="quickDecision() === 'APPROVED' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-rose-600 hover:bg-rose-700'"
+            >
+              {{ isQuickSubmitting() ? 'Recording...' : (quickDecision() === 'APPROVED' ? 'Confirm Authorize' : 'Confirm Rejection') }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- Configure Policy Modal -->
+  @if (isPolicyModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+      <div class="bg-card border border-border rounded-2xl w-full max-w-lg shadow-2xl p-6 flex flex-col gap-5">
+        <div class="flex items-center justify-between border-b border-border pb-3">
+          <div>
+            <h3 class="text-base font-bold text-foreground">Configure Delegated Discount Limit Policy</h3>
+            <p class="text-xs text-muted-foreground">Spec 5.4 Control: Bound negotiation authorities by role & project</p>
+          </div>
+          <button (click)="closePolicyModal()" class="text-muted-foreground hover:text-foreground">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
+        <form [formGroup]="policyForm" (ngSubmit)="submitPolicy()" class="flex flex-col gap-4">
+          <app-searchable-select
+            label="Employee Role *"
+            [options]="roleOptions"
+            [formGroup]="policyForm"
+            controlName="role_name"
+            placeholder="Select authority role..."
+          />
+
+          <app-searchable-select
+            label="Target Project (Leave empty for All Projects)"
+            [options]="projectOptions()"
+            [formGroup]="policyForm"
+            controlName="project_id"
+            placeholder="Select project..."
+          />
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <app-custom-input
+              label="Maximum Discount Ceiling (%) *"
+              type="number"
+              placeholder="e.g. 3.0"
+              [formGroup]="policyForm"
+              controlName="max_discount_percentage"
+            />
+
+            <app-custom-input
+              label="Maximum Concession Amount (BDT)"
+              type="number"
+              placeholder="e.g. 500000"
+              [formGroup]="policyForm"
+              controlName="max_discount_amount"
+            />
+          </div>
+
+          <div class="flex flex-col gap-2.5 p-3.5 bg-secondary/30 rounded-xl border border-border text-xs">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" formControlName="requires_justification" class="rounded border-border text-primary focus:ring-primary"/>
+              <span class="text-foreground font-medium">Require Written Justification for any concession</span>
+            </label>
+
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" formControlName="requires_attachment" class="rounded border-border text-primary focus:ring-primary"/>
+              <span class="text-foreground font-medium">Require Supporting Exception Document Upload</span>
+            </label>
+
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" formControlName="is_active" class="rounded border-border text-primary focus:ring-primary"/>
+              <span class="text-foreground font-medium">Active Policy Rule</span>
+            </label>
+          </div>
+
+          <div class="flex items-center justify-end gap-2 pt-2 border-t border-border">
+            <button
+              type="button"
+              (click)="closePolicyModal()"
+              class="px-4 py-2 text-xs font-semibold rounded-xl border border-border hover:bg-secondary text-foreground"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              [disabled]="isPolicySubmitting() || policyForm.invalid"
+              class="px-4 py-2 text-xs font-semibold rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 shadow-xs"
+            >
+              {{ isPolicySubmitting() ? 'Saving Policy...' : 'Save Delegated Policy' }}
+            </button>
           </div>
         </form>
       </div>

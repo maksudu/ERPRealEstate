@@ -4,35 +4,58 @@
     title="Subcontractor Master Registry & Daily Labor Muster Roll"
     subtitle="Multi-trade Labor Headcounts, Wage Ledgers & Civil Subcontractor Verification"
   >
-    <div class="flex items-center justify-between gap-4 mb-6">
+    <!-- Top Action Buttons & Metrics Overview -->
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
       <div>
         <span class="text-xs text-muted-foreground font-mono">
-          Enlisted Contractors: {{ contractors().length }} | Today's Muster Records: {{ getAllLaborEntries().length }}
+          Enlisted Contractors: <strong class="text-foreground">{{ contractors().length }}</strong> | Loaded Muster Records: <strong class="text-foreground">{{ laborEntries().length }}</strong>
         </span>
       </div>
 
-      <app-custom-button variant="primary" (clicked)="openContractorModal()">
-        <span class="flex items-center gap-2">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
-          </svg>
-          + Enlist Subcontractor
-        </span>
-      </app-custom-button>
+      <div class="flex items-center gap-3">
+        <app-custom-button variant="secondary" (clicked)="navigateToEnlistContractor()">
+          <span class="flex items-center gap-1.5">
+            <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+            </svg>
+            + Enlist Subcontractor
+          </span>
+        </app-custom-button>
+
+        <app-custom-button variant="primary" (clicked)="navigateToCreateMuster()">
+          <span class="flex items-center gap-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            + Record Labor Muster
+          </span>
+        </app-custom-button>
+      </div>
     </div>
 
-    <!-- Subcontractors Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+    <!-- Enlisted Subcontractors Cards Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
       @for (c of contractors(); track c.id) {
-        <div class="bg-card border border-border rounded-xl p-4 shadow-sm flex flex-col justify-between">
+        <div class="bg-card border border-border rounded-xl p-4 shadow-xs flex flex-col justify-between hover:border-primary/50 transition-colors">
           <div>
             <div class="flex items-center justify-between mb-2">
               <span class="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-secondary text-primary border border-border">
                 {{ c.contractor_code }}
               </span>
-              <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
-                Active Enlistment
-              </span>
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                  Active
+                </span>
+                <button
+                  (click)="navigateToEditContractor(c.id)"
+                  class="text-muted-foreground hover:text-foreground p-1 rounded hover:bg-secondary transition-colors"
+                  title="Edit Subcontractor"
+                >
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                  </svg>
+                </button>
+              </div>
             </div>
 
             <h4 class="font-bold text-sm text-foreground mb-1">{{ c.company_name }}</h4>
@@ -43,11 +66,11 @@
             <div class="grid grid-cols-2 gap-2 text-xs bg-secondary/30 p-2.5 rounded-lg border border-border">
               <div>
                 <span class="text-muted-foreground block text-[10px]">Contact Person:</span>
-                <span class="font-medium text-foreground">{{ c.contact_person }}</span>
+                <span class="font-medium text-foreground truncate block">{{ c.contact_person }}</span>
               </div>
               <div>
-                <span class="text-muted-foreground block text-[10px]">Primary Mobile:</span>
-                <span class="font-mono text-foreground">{{ c.primary_phone }}</span>
+                <span class="text-muted-foreground block text-[10px]">Mobile:</span>
+                <span class="font-mono text-foreground truncate block">{{ c.primary_phone }}</span>
               </div>
             </div>
           </div>
@@ -55,131 +78,170 @@
       }
     </div>
 
-    <!-- Labor Muster Ledger -->
-    <div class="border-t border-border pt-4">
-      <h4 class="text-sm font-bold text-foreground mb-3">Recent Daily Labor Muster Ledger</h4>
+    <!-- Labor Muster Ledger Table Section -->
+    <div class="border-t border-border pt-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+        <div>
+          <h4 class="text-sm font-bold text-foreground">Subcontractor Labor Muster Roll Ledger</h4>
+          <p class="text-xs text-muted-foreground">Historical records of daily headcount deployments and wage rolls</p>
+        </div>
 
+        <!-- Filter Bar -->
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="relative w-full sm:w-56">
+            <svg class="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <input
+              type="text"
+              [(ngModel)]="searchQuery"
+              (ngModelChange)="onSearch()"
+              placeholder="Search trade..."
+              class="w-full pl-9 pr-3 py-1.5 text-xs bg-card border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+            />
+          </div>
+
+          <div class="w-full sm:w-56">
+            <app-searchable-select
+              [options]="contractorOptions"
+              [ngModel]="selectedContractorId()"
+              (selectionChange)="onContractorFilter($event)"
+              placeholder="Filter by Subcontractor..."
+              [allowCreateNew]="false"
+            >
+            </app-searchable-select>
+          </div>
+
+          @if (selectedContractorId() || searchQuery()) {
+            <button
+              (click)="clearFilters()"
+              class="text-xs text-muted-foreground hover:text-foreground underline cursor-pointer"
+            >
+              Clear
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Paginated Table -->
       <div class="overflow-x-auto border border-border rounded-xl">
-        <table class="w-full text-left text-sm text-foreground">
-          <thead class="bg-secondary/40 text-xs font-semibold uppercase text-muted-foreground border-b border-border">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-secondary/60 text-muted-foreground uppercase tracking-wider font-semibold border-b border-border">
             <tr>
-              <th class="px-4 py-3">Report Date</th>
-              <th class="px-4 py-3">Project & Subcontractor</th>
-              <th class="px-4 py-3">Trade Category</th>
-              <th class="px-4 py-3 text-center">Headcount</th>
-              <th class="px-4 py-3 text-right">Daily Rate</th>
-              <th class="px-4 py-3 text-right">Total Wage</th>
+              <th class="px-4 py-3.5">Muster # / DPR Diary</th>
+              <th class="px-4 py-3.5">Subcontractor</th>
+              <th class="px-4 py-3.5">Trade Category</th>
+              <th class="px-4 py-3.5 text-center">Worker Count</th>
+              <th class="px-4 py-3.5 text-right">Daily Wage Rate</th>
+              <th class="px-4 py-3.5 text-right">Total Wage Bill</th>
+              <th class="px-4 py-3.5 text-right w-24">Actions</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-border/60">
-            @for (lab of getAllLaborEntries(); track lab.id) {
-              <tr class="hover:bg-secondary/20 transition-colors">
-                <td class="px-4 py-3.5 font-mono text-xs font-bold text-primary">
-                  {{ lab.report_date }}
-                </td>
-                <td class="px-4 py-3.5">
-                  <div class="font-semibold text-foreground">{{ lab.contractor_name || 'Direct Site Labor' }}</div>
-                  <div class="text-xs text-muted-foreground">{{ lab.project_name }}</div>
-                </td>
-                <td class="px-4 py-3.5">
-                  <span class="font-medium text-xs px-2 py-0.5 rounded bg-secondary text-foreground border border-border">
-                    {{ lab.trade_category }}
-                  </span>
-                </td>
-                <td class="px-4 py-3.5 text-center font-mono font-bold text-foreground">
-                  {{ lab.worker_count }}
-                </td>
-                <td class="px-4 py-3.5 text-right font-mono text-muted-foreground">
-                  BDT {{ lab.daily_wage_rate | number:'1.0-0' }}
-                </td>
-                <td class="px-4 py-3.5 text-right font-mono font-bold text-emerald-500">
-                  BDT {{ lab.total_wage | number:'1.0-0' }}
-                </td>
-              </tr>
-            } @empty {
-              <tr>
-                <td colspan="6" class="px-4 py-10 text-center text-muted-foreground">
-                  No labor muster entries recorded in recent DPR reports.
-                </td>
-              </tr>
+          <tbody class="divide-y divide-border bg-card">
+            @if (isLoading()) {
+              @for (i of [1, 2, 3, 4, 5]; track i) {
+                <tr>
+                  <td colspan="7" class="px-4 py-4">
+                    <div class="h-4 bg-secondary animate-pulse rounded"></div>
+                  </td>
+                </tr>
+              }
+            } @else {
+              @for (l of laborEntries(); track l.id) {
+                <tr class="hover:bg-secondary/40 transition-colors">
+                  <td class="px-4 py-3.5 font-mono text-muted-foreground">
+                    <span class="font-bold text-foreground">#{{ l.id }}</span>
+                    <span class="text-[10px] ml-1.5 px-1.5 py-0.5 rounded bg-secondary text-primary">DPR #{{ l.dpr_id }}</span>
+                  </td>
+                  <td class="px-4 py-3.5 font-medium text-foreground">
+                    {{ l.contractor_name || 'Subcontractor #' + l.contractor_id }}
+                  </td>
+                  <td class="px-4 py-3.5">
+                    <span class="px-2 py-0.5 rounded text-[11px] font-medium bg-primary/10 text-primary border border-primary/20">
+                      {{ l.trade_category.replace('_', ' ') }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3.5 text-center font-bold text-foreground">
+                    {{ l.worker_count }}
+                  </td>
+                  <td class="px-4 py-3.5 text-right font-mono text-muted-foreground">
+                    BDT {{ l.daily_wage_rate | number:'1.2-2' }}
+                  </td>
+                  <td class="px-4 py-3.5 text-right font-mono font-bold text-emerald-500">
+                    BDT {{ l.total_wage | number:'1.2-2' }}
+                  </td>
+                  <td class="px-4 py-3.5 text-right">
+                    <div class="flex items-center justify-end gap-1.5">
+                      <button
+                        (click)="navigateToEditMuster(l.id!)"
+                        class="p-1.5 rounded-lg bg-secondary hover:bg-secondary/80 text-foreground border border-border transition-colors"
+                        title="Edit Muster Record"
+                      >
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                        </svg>
+                      </button>
+                      <button
+                        (click)="deleteMuster(l.id!)"
+                        class="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 text-rose-600 hover:bg-rose-100 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-800 transition-colors"
+                        title="Delete Record"
+                      >
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="7" class="px-4 py-12 text-center text-muted-foreground">
+                    No labor muster entries found. Click "+ Record Labor Muster" above to add records.
+                  </td>
+                </tr>
+              }
             }
           </tbody>
+          @if (laborEntries().length > 0) {
+            <tfoot class="bg-secondary/40 font-semibold text-xs border-t border-border">
+              <tr>
+                <td colspan="3" class="px-4 py-2 text-muted-foreground">Page Totals:</td>
+                <td class="px-4 py-2 text-center font-mono text-primary font-bold">{{ getTotalWorkers() }} Workers</td>
+                <td></td>
+                <td class="px-4 py-2 text-right font-mono text-emerald-500 font-bold">BDT {{ getTotalWage() | number:'1.2-2' }}</td>
+                <td></td>
+              </tr>
+            </tfoot>
+          }
         </table>
+      </div>
+
+      <!-- Pagination Footer -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-4 text-xs text-muted-foreground">
+        <div class="flex items-center gap-2">
+          <span>Showing Page {{ currentPage() }} ({{ laborEntries().length }} muster records loaded)</span>
+        </div>
+
+        <div class="flex items-center gap-1">
+          <button
+            type="button"
+            [disabled]="currentPage() === 1"
+            (click)="prevPage()"
+            class="px-3 py-1 rounded-lg border border-border bg-card text-foreground hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            Previous
+          </button>
+          <span class="px-3 py-1 font-semibold text-foreground">Page {{ currentPage() }}</span>
+          <button
+            type="button"
+            [disabled]="laborEntries().length < pageSize()"
+            (click)="nextPage()"
+            class="px-3 py-1 rounded-lg border border-border bg-card text-foreground hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            Next
+          </button>
+        </div>
       </div>
     </div>
   </app-card-container>
-
-  <!-- Modal: Enlist Subcontractor -->
-  @if (isContractorModalOpen()) {
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div class="bg-card border border-border rounded-2xl w-full max-w-lg shadow-2xl p-6 flex flex-col gap-5">
-        <div class="flex items-center justify-between border-b border-border pb-3">
-          <div>
-            <h3 class="text-base font-bold text-foreground">Enlist Subcontractor Partner</h3>
-            <p class="text-xs text-muted-foreground">Master record for work orders, muster rolls & RA billing</p>
-          </div>
-          <button (click)="closeContractorModal()" class="text-muted-foreground hover:text-foreground">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-          </button>
-        </div>
-
-        <form [formGroup]="contractorForm" (ngSubmit)="submitContractor()" class="flex flex-col gap-4">
-          <app-custom-input
-            label="Contractor / Firm Name *"
-            placeholder="e.g. M/S Standard Civil Builders"
-            [formGroup]="contractorForm"
-            controlName="company_name"
-          />
-
-          <app-searchable-select
-            label="Trade Specialization *"
-            [options]="tradeOptions"
-            [formGroup]="contractorForm"
-            controlName="trade_specialization"
-          />
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <app-custom-input
-              label="Contact Person Name *"
-              placeholder="e.g. Mokbul Hossain"
-              [formGroup]="contractorForm"
-              controlName="contact_person"
-            />
-            <app-custom-input
-              label="Primary Phone Number *"
-              placeholder="+88017XXXXXXXX"
-              [formGroup]="contractorForm"
-              controlName="primary_phone"
-            />
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <app-custom-input
-              label="e-TIN Number"
-              placeholder="12 digit TIN"
-              [formGroup]="contractorForm"
-              controlName="tin_number"
-            />
-            <app-custom-input
-              label="BIN / VAT Reg Number"
-              placeholder="BIN Number"
-              [formGroup]="contractorForm"
-              controlName="bin_number"
-            />
-          </div>
-
-          <div class="flex justify-end gap-3 pt-3 border-t border-border">
-            <app-custom-button variant="outline" type="button" (clicked)="closeContractorModal()">
-              Cancel
-            </app-custom-button>
-            <app-custom-button variant="primary" type="submit" [disabled]="contractorForm.invalid || isSubmitting()">
-              {{ isSubmitting() ? 'Enlisting...' : 'Enlist Subcontractor' }}
-            </app-custom-button>
-          </div>
-        </form>
-      </div>
-    </div>
-  }
 </div>

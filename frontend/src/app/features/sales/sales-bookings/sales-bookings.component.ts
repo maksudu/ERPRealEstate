@@ -1,18 +1,14 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
 import { SalesService } from '../../../core/services/sales.service';
 import { ProjectService } from '../../../core/services/project.service';
-import { InventoryService } from '../../../core/services/inventory.service';
-import { CrmService } from '../../../core/services/crm.service';
-import { Booking, BookingJointBuyer, SalesMetrics } from '../../../core/models/sales.model';
+import { Booking, SalesMetrics } from '../../../core/models/sales.model';
 import { Project } from '../../../core/models/project.model';
-import { Unit } from '../../../core/models/inventory.model';
-import { Customer } from '../../../core/models/crm.model';
 import {
   CardContainerComponent,
   CustomInputComponent,
-  CustomTextareaComponent,
   CustomButtonComponent,
   SearchableSelectComponent
 } from '../../../shared/components';
@@ -24,98 +20,92 @@ import {
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
+    RouterLink,
     CardContainerComponent,
     CustomInputComponent,
-    CustomTextareaComponent,
     CustomButtonComponent,
     SearchableSelectComponent
   ],
   templateUrl: './sales-bookings.component.html'
 })
 export class SalesBookingsComponent implements OnInit {
+  protected readonly Math = Math;
   private salesService = inject(SalesService);
   private projectService = inject(ProjectService);
-  private inventoryService = inject(InventoryService);
-  private crmService = inject(CrmService);
-  private fb = inject(FormBuilder);
+  private router = inject(Router);
 
   bookings = signal<Booking[]>([]);
   projects = signal<Project[]>([]);
-  units = signal<Unit[]>([]);
-  customers = signal<Customer[]>([]);
   metrics = signal<SalesMetrics | null>(null);
 
   isLoading = signal<boolean>(false);
-  isSubmitting = signal<boolean>(false);
+  isActionLoading = signal<boolean>(false);
+
+  // Filters & Search
   searchQuery = signal<string>('');
-  
-  // Create Booking Modal State
-  isCreateModalOpen = signal<boolean>(false);
-  tempJointBuyers = signal<BookingJointBuyer[]>([]);
-  isAddingJointBuyer = signal<boolean>(false);
+  selectedProjectFilter = signal<string>('ALL');
+  selectedStatusFilter = signal<string>('ALL');
+  selectedStageFilter = signal<string>('ALL');
+  selectedDiscountFilter = signal<string>('ALL');
 
-  // KYC & Pricing Breakdown Modal State
-  isKYCModalOpen = signal<boolean>(false);
-  selectedBookingForKYC = signal<Booking | null>(null);
-  isAddingJointBuyerToExisting = signal<boolean>(false);
+  // Pagination State (Limit & Offset)
+  currentPage = signal<number>(1);
+  pageSize = signal<number>(10);
 
-  // Transfer Modal
-  isTransferModalOpen = signal<boolean>(false);
-  selectedBookingForTransfer = signal<Booking | null>(null);
-
-  bookingForm: FormGroup = this.fb.group({
-    project_id: [null, Validators.required],
-    unit_id: [null, Validators.required],
-    primary_customer_id: [null, Validators.required],
-    parking_slot_number: [''],
-    parking_charge: [350000, [Validators.min(0)]],
-    utility_charge: [250000, [Validators.min(0)]],
-    documentation_charge: [50000, [Validators.min(0)]],
-    discount_amount: [0, [Validators.min(0)]],
-    earnest_money_received: [500000, [Validators.required, Validators.min(100000)]],
-    down_payment_total: [0],
-    notes: ['']
-  });
-
-  jointBuyerForm: FormGroup = this.fb.group({
-    full_name_en: ['', Validators.required],
-    full_name_bn: [''],
-    relation_to_primary: ['SPOUSE', Validators.required],
-    primary_phone: ['', Validators.required],
-    email: [''],
-    nid_number: [''],
-    passport_number: [''],
-    tin_number: [''],
-    share_percentage: [50, [Validators.required, Validators.min(1), Validators.max(100)]],
-    present_address: ['']
-  });
-
-  transferForm: FormGroup = this.fb.group({
-    to_customer_id: [null, Validators.required],
-    transfer_fee_bdt: [50000, [Validators.required, Validators.min(0)]],
-    transfer_memo_no: [''],
-    remarks: ['']
-  });
-
-  relationOptions = [
-    { value: 'SPOUSE', label: 'Spouse (স্ত্রী / স্বামী)' },
-    { value: 'SON', label: 'Son (পুত্র)' },
-    { value: 'DAUGHTER', label: 'Daughter (কন্যা)' },
-    { value: 'BROTHER', label: 'Brother (ভাই)' },
-    { value: 'SISTER', label: 'Sister (বোন)' },
-    { value: 'FATHER', label: 'Father (পিতা)' },
-    { value: 'MOTHER', label: 'Mother (মাতা)' },
-    { value: 'BUSINESS_PARTNER', label: 'Business Partner (ব্যবসায়িক অংশীদার)' }
+  // Workflow Stages Definition (Spec 5.1 & 5.2)
+  workflowStages = [
+    { id: 'ALL', code: 'ALL', name: 'All Bookings' },
+    { id: '01_CUSTOMER_VERIFICATION', code: '01', name: 'Lead & KYC' },
+    { id: '02_UNIT_RESERVATION', code: '02', name: 'Reservation Hold' },
+    { id: '03_PRICE_APPROVAL', code: '03', name: 'Price & Discount' },
+    { id: '04_BOOKING_MONEY', code: '04', name: 'Earnest Dep.' },
+    { id: '05_BOOKING_CONFIRMED', code: '05', name: 'Confirmed Allotment' },
+    { id: '06_AGREEMENT_SIGNING', code: '06', name: 'Deed Signing' },
+    { id: '07_INSTALLMENT_SCHEDULE', code: '07', name: 'Schedules' },
+    { id: '08_COLLECTION_LEDGER', code: '08', name: 'Customer Ledger' },
+    { id: '09_REGISTRATION_DEED', code: '09', name: 'Sub-Registry' },
+    { id: '10_FINAL_HANDOVER', code: '10', name: 'Handover & NOC' }
   ];
+
+  statusOptions = [
+    { value: 'ALL', label: 'All Allotment Statuses' },
+    { value: 'PROVISIONAL', label: 'Provisional (Reservation Hold)' },
+    { value: 'AGREEMENT_SIGNED', label: 'Agreement Signed' },
+    { value: 'REGISTRATION_DONE', label: 'Registration Done' },
+    { value: 'TRANSFERRED', label: 'Transferred (Mutation)' },
+    { value: 'CANCELLED', label: 'Cancelled (Statutory)' }
+  ];
+
+  discountFilterOptions = [
+    { value: 'ALL', label: 'All Discount Statuses' },
+    { value: 'APPROVED', label: 'Approved Pricing' },
+    { value: 'PENDING_APPROVAL', label: 'Pending Multi-Tier Escalation' },
+    { value: 'REJECTED', label: 'Rejected' }
+  ];
+
+  pageSizeOptions = [
+    { value: 10, label: '10 rows per page' },
+    { value: 20, label: '20 rows per page' },
+    { value: 50, label: '50 rows per page' },
+    { value: 100, label: '100 rows per page' }
+  ];
+
+  projectFilterOptions = computed(() => {
+    const list = [{ value: 'ALL', label: 'All Projects' }];
+    this.projects().forEach(p => {
+      list.push({ value: String(p.id), label: `${p.project_name} (${p.project_code})` });
+    });
+    return list;
+  });
 
   ngOnInit(): void {
     this.loadData();
-    this.loadDropdownData();
+    this.projectService.getProjects().subscribe(p => this.projects.set(p));
   }
 
   loadData(): void {
     this.isLoading.set(true);
-    this.salesService.getBookings().subscribe({
+    this.salesService.getBookings({ limit: 100, offset: 0 }).subscribe({
       next: (res) => {
         this.bookings.set(res);
         this.isLoading.set(false);
@@ -129,223 +119,117 @@ export class SalesBookingsComponent implements OnInit {
     });
   }
 
-  loadDropdownData(): void {
-    this.projectService.getProjects().subscribe(p => this.projects.set(p));
-    this.crmService.getCustomers().subscribe(c => this.customers.set(c));
-    this.inventoryService.getUnits().subscribe(u => {
-      this.units.set(u.filter(item => item.status_id === 'AVAILABLE' || item.status_id === 'ON_HOLD'));
-    });
-  }
-
-  get projectOptions() {
-    return this.projects().map(p => ({
-      value: p.id,
-      label: `${p.project_name} (${p.project_code})`
-    }));
-  }
-
-  get unitOptions() {
-    return this.units().map(u => ({
-      value: u.id,
-      label: `Unit ${u.unit_number} (Floor ${u.floor_number}) - BDT ${Number(u.total_unit_price || 0).toLocaleString()}`
-    }));
-  }
-
-  get customerOptions() {
-    return this.customers().map(c => ({
-      value: c.id,
-      label: `${c.full_name_en} (${c.customer_code} - NID: ${c.nid_number || 'N/A'})`
-    }));
-  }
-
-  // Selected Unit Price Calculation
-  getSelectedUnit(): Unit | undefined {
-    const unitId = this.bookingForm.get('unit_id')?.value;
-    if (!unitId) return undefined;
-    return this.units().find(u => u.id === Number(unitId));
-  }
-
-  getBaseUnitPrice(): number {
-    const unit = this.getSelectedUnit();
-    return Number(unit?.total_unit_price || 0);
-  }
-
-  getGrossContractValue(): number {
-    const base = this.getBaseUnitPrice();
-    const parking = Number(this.bookingForm.get('parking_charge')?.value || 0);
-    const utility = Number(this.bookingForm.get('utility_charge')?.value || 0);
-    const docs = Number(this.bookingForm.get('documentation_charge')?.value || 0);
-    return base + parking + utility + docs;
-  }
-
-  getDiscountPercentage(): number {
-    const gross = this.getGrossContractValue();
-    const discount = Number(this.bookingForm.get('discount_amount')?.value || 0);
-    if (gross <= 0 || discount <= 0) return 0;
-    return Number(((discount / gross) * 100).toFixed(2));
-  }
-
-  getNetContractValue(): number {
-    const gross = this.getGrossContractValue();
-    const discount = Number(this.bookingForm.get('discount_amount')?.value || 0);
-    return Math.max(0, gross - discount);
-  }
-
-  getDiscountEscalationTier(): { tier: string; badgeClass: string; description: string } {
-    const pct = this.getDiscountPercentage();
-    if (pct <= 0) {
-      return { tier: 'NO_DISCOUNT', badgeClass: 'bg-secondary text-muted-foreground', description: 'Standard Catalog Pricing' };
-    }
-    if (pct <= 1.0) {
-      return { tier: 'SALES_MANAGER', badgeClass: 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20', description: 'Within 1.0% - Sales Manager Discretion (Auto-Approved)' };
-    }
-    if (pct <= 3.0) {
-      return { tier: 'SALES_MANAGER_ESCALATED', badgeClass: 'bg-blue-500/10 text-blue-500 border border-blue-500/20', description: '1.0% to 3.0% - Requires Sales Manager Authorization' };
-    }
-    if (pct <= 7.0) {
-      return { tier: 'HEAD_OF_SALES', badgeClass: 'bg-amber-500/10 text-amber-500 border border-amber-500/20', description: '3.0% to 7.0% - Requires Head of Sales Approval' };
-    }
-    return { tier: 'MANAGING_DIRECTOR', badgeClass: 'bg-rose-500/10 text-rose-500 border border-rose-500/20 font-bold', description: '> 7.0% - Mandatory Managing Director (MD) Direct Clearance' };
-  }
-
-  filteredBookings(): Booking[] {
+  // Filtered Bookings Computed
+  filteredBookings = computed(() => {
     const q = this.searchQuery().toLowerCase().trim();
-    if (!q) return this.bookings();
-    return this.bookings().filter(b =>
-      b.booking_reference_no.toLowerCase().includes(q) ||
-      (b.customer_name && b.customer_name.toLowerCase().includes(q)) ||
-      (b.unit_number && b.unit_number.toLowerCase().includes(q)) ||
-      (b.project_name && b.project_name.toLowerCase().includes(q))
-    );
-  }
+    const proj = this.selectedProjectFilter();
+    const status = this.selectedStatusFilter();
+    const stage = this.selectedStageFilter();
+    const discount = this.selectedDiscountFilter();
 
-  openCreateModal(): void {
-    this.tempJointBuyers.set([]);
-    this.isAddingJointBuyer.set(false);
-    this.bookingForm.reset({
-      project_id: this.projects()[0]?.id || null,
-      unit_id: null,
-      primary_customer_id: null,
-      parking_slot_number: 'B1-P' + Math.floor(10 + Math.random() * 80),
-      parking_charge: 350000,
-      utility_charge: 250000,
-      documentation_charge: 50000,
-      discount_amount: 0,
-      earnest_money_received: 500000,
-      down_payment_total: 0,
-      notes: ''
+    return this.bookings().filter(b => {
+      // Query filter
+      if (q) {
+        const matchesQ =
+          b.booking_reference_no.toLowerCase().includes(q) ||
+          (b.customer_name && b.customer_name.toLowerCase().includes(q)) ||
+          (b.unit_number && b.unit_number.toLowerCase().includes(q)) ||
+          (b.project_name && b.project_name.toLowerCase().includes(q)) ||
+          (b.sales_rep_name && b.sales_rep_name.toLowerCase().includes(q));
+        if (!matchesQ) return false;
+      }
+
+      // Project filter
+      if (proj !== 'ALL' && String(b.project_id) !== proj) {
+        return false;
+      }
+
+      // Status filter
+      if (status !== 'ALL' && b.status !== status) {
+        return false;
+      }
+
+      // Workflow Stage filter
+      if (stage !== 'ALL' && b.workflow_stage !== stage) {
+        return false;
+      }
+
+      // Discount filter
+      if (discount !== 'ALL' && b.discount_approval_status !== discount) {
+        return false;
+      }
+
+      return true;
     });
-    this.isCreateModalOpen.set(true);
+  });
+
+  // Paginated List
+  paginatedBookings = computed(() => {
+    const items = this.filteredBookings();
+    const start = (this.currentPage() - 1) * this.pageSize();
+    return items.slice(start, start + this.pageSize());
+  });
+
+  totalPages = computed(() => {
+    return Math.max(1, Math.ceil(this.filteredBookings().length / this.pageSize()));
+  });
+
+  setWorkflowFilter(stageId: string): void {
+    this.selectedStageFilter.set(stageId);
+    this.currentPage.set(1);
   }
 
-  closeCreateModal(): void {
-    this.isCreateModalOpen.set(false);
-  }
-
-  // Temporary Joint Buyers in Create Form
-  toggleAddJointBuyer(): void {
-    this.isAddingJointBuyer.update(v => !v);
-    if (this.isAddingJointBuyer()) {
-      this.jointBuyerForm.reset({
-        full_name_en: '',
-        full_name_bn: '',
-        relation_to_primary: 'SPOUSE',
-        primary_phone: '',
-        email: '',
-        nid_number: '',
-        passport_number: '',
-        tin_number: '',
-        share_percentage: 50,
-        present_address: ''
-      });
+  setPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages()) {
+      this.currentPage.set(page);
     }
   }
 
-  saveTempJointBuyer(): void {
-    if (this.jointBuyerForm.invalid) return;
-    this.tempJointBuyers.update(list => [...list, this.jointBuyerForm.value]);
-    this.isAddingJointBuyer.set(false);
+  onPageSizeChange(val: any): void {
+    const size = typeof val === 'object' ? Number(val.value) : Number(val);
+    if (size) {
+      this.pageSize.set(size);
+      this.currentPage.set(1);
+    }
   }
 
-  removeTempJointBuyer(index: number): void {
-    this.tempJointBuyers.update(list => list.filter((_, i) => i !== index));
-  }
-
-  submitBooking(): void {
-    if (this.bookingForm.invalid) return;
-    this.isSubmitting.set(true);
-    const payload = {
-      ...this.bookingForm.value,
-      joint_buyers: this.tempJointBuyers()
-    };
-    this.salesService.createBooking(payload).subscribe({
-      next: (created) => {
-        this.bookings.update(list => [created, ...list]);
-        this.isSubmitting.set(false);
-        this.closeCreateModal();
-        this.loadData();
+  // Quick Action: Confirm Booking
+  confirmBooking(b: Booking): void {
+    if (!confirm(`Confirm allotment for ${b.booking_reference_no} (Unit ${b.unit_number})? This will lock the unit in Property Inventory.`)) {
+      return;
+    }
+    this.isActionLoading.set(true);
+    this.salesService.confirmBooking(b.id).subscribe({
+      next: (updated) => {
+        this.bookings.update(list => list.map(item => item.id === b.id ? updated : item));
+        this.isActionLoading.set(false);
       },
       error: (err) => {
-        alert(err?.error?.detail || 'Booking execution failed');
-        this.isSubmitting.set(false);
+        alert(err?.error?.detail || 'Failed to confirm booking');
+        this.isActionLoading.set(false);
       }
     });
   }
 
-  // View / Manage KYC & Breakdown Modal
-  openKYCModal(b: Booking): void {
-    this.selectedBookingForKYC.set(b);
-    this.isAddingJointBuyerToExisting.set(false);
-    this.isKYCModalOpen.set(true);
-  }
-
-  closeKYCModal(): void {
-    this.isKYCModalOpen.set(false);
-    this.selectedBookingForKYC.set(null);
-  }
-
-  toggleAddJointBuyerToExisting(): void {
-    this.isAddingJointBuyerToExisting.update(v => !v);
-    if (this.isAddingJointBuyerToExisting()) {
-      this.jointBuyerForm.reset({
-        full_name_en: '',
-        full_name_bn: '',
-        relation_to_primary: 'SPOUSE',
-        primary_phone: '',
-        email: '',
-        nid_number: '',
-        passport_number: '',
-        tin_number: '',
-        share_percentage: 50,
-        present_address: ''
-      });
+  // Quick Action: Delete / Archive
+  deleteBooking(b: Booking): void {
+    if (!confirm(`Are you sure you want to delete/archive booking ${b.booking_reference_no}? The unit will be released back to AVAILABLE.`)) {
+      return;
     }
-  }
-
-  saveJointBuyerToExisting(): void {
-    const booking = this.selectedBookingForKYC();
-    if (!booking || this.jointBuyerForm.invalid) return;
-    this.isSubmitting.set(true);
-    this.salesService.addJointBuyer(booking.id, this.jointBuyerForm.value).subscribe({
-      next: (jb) => {
-        this.isSubmitting.set(false);
-        this.isAddingJointBuyerToExisting.set(false);
-        // Update booking in local list
-        const updated = {
-          ...booking,
-          joint_buyers: [...(booking.joint_buyers || []), jb]
-        };
-        this.selectedBookingForKYC.set(updated);
-        this.bookings.update(list => list.map(item => item.id === booking.id ? updated : item));
+    this.isActionLoading.set(true);
+    this.salesService.deleteBooking(b.id).subscribe({
+      next: () => {
+        this.bookings.update(list => list.filter(item => item.id !== b.id));
+        this.isActionLoading.set(false);
       },
       error: (err) => {
-        alert(err?.error?.detail || 'Failed to add joint buyer');
-        this.isSubmitting.set(false);
+        alert(err?.error?.detail || 'Failed to delete booking');
+        this.isActionLoading.set(false);
       }
     });
   }
 
-  // WeasyPrint Deed Download
+  // WeasyPrint Bilingual PDF Generator Download
   downloadDeed(b: Booking): void {
     this.salesService.downloadDeedPdf(b.id).subscribe({
       next: (blob) => {
@@ -360,42 +244,19 @@ export class SalesBookingsComponent implements OnInit {
     });
   }
 
-  // Unit Mutation Transfer
-  openTransferModal(b: Booking): void {
-    this.selectedBookingForTransfer.set(b);
-    this.transferForm.reset({
-      to_customer_id: null,
-      transfer_fee_bdt: 50000,
-      transfer_memo_no: `TRF-${b.booking_reference_no}`,
-      remarks: ''
-    });
-    this.isTransferModalOpen.set(true);
+  getStageName(stageId: string): string {
+    const s = this.workflowStages.find(x => x.id === stageId);
+    return s ? s.name : (stageId || 'Confirmed');
   }
 
-  closeTransferModal(): void {
-    this.isTransferModalOpen.set(false);
-    this.selectedBookingForTransfer.set(null);
-  }
-
-  submitTransfer(): void {
-    const booking = this.selectedBookingForTransfer();
-    if (!booking || this.transferForm.invalid) return;
-
-    this.isSubmitting.set(true);
-    const payload = {
-      booking_id: booking.id,
-      ...this.transferForm.value
-    };
-    this.salesService.processTransfer(payload).subscribe({
-      next: () => {
-        this.isSubmitting.set(false);
-        this.closeTransferModal();
-        this.loadData();
-      },
-      error: (err) => {
-        alert(err?.error?.detail || 'Transfer failed');
-        this.isSubmitting.set(false);
-      }
-    });
+  getStageBadgeClass(stageId: string): string {
+    if (stageId === '05_BOOKING_CONFIRMED' || stageId === '06_AGREEMENT_SIGNING' || stageId === '10_FINAL_HANDOVER') {
+      return 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20';
+    } else if (stageId === '02_UNIT_RESERVATION') {
+      return 'bg-blue-500/10 text-blue-500 border border-blue-500/20';
+    } else if (stageId === '03_PRICE_APPROVAL') {
+      return 'bg-amber-500/10 text-amber-500 border border-amber-500/20';
+    }
+    return 'bg-secondary text-muted-foreground border border-border';
   }
 }

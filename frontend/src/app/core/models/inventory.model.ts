@@ -8,6 +8,7 @@ export interface Unit {
   facing_id: string; // SOUTH_FACING, NORTH_FACING, LAKE_VIEW, CORNER_PLOT, ROAD_FACING, NORTH_EAST
   net_carpet_area_sqft: number;
   gross_saleable_area_sqft: number;
+  unit_size_sqft?: number;
   bed_count?: number;
   bath_count?: number;
   balcony_count?: number;

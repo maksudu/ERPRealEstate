@@ -1,0 +1,322 @@
+<div class="flex flex-col gap-6 w-full max-w-5xl mx-auto pb-16">
+  <!-- Top Bar & Breadcrumb -->
+  <div class="flex items-center justify-between pb-4 border-b border-border">
+    <div>
+      <div class="flex items-center gap-2">
+        <button
+          (click)="cancel()"
+          class="text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1 transition-colors"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+          </svg>
+          Back to Cancellations Registry
+        </button>
+        <span class="text-muted-foreground text-xs">/</span>
+        <span class="text-xs font-medium text-destructive">New Cancellation Request (Spec 5.9)</span>
+      </div>
+      <h1 class="text-2xl font-bold font-display text-foreground mt-1">
+        Initiate Booking Cancellation & Net Refund Dossier
+      </h1>
+      <p class="text-xs text-muted-foreground mt-0.5">
+        Register customer cancellation, evaluate contractual forfeiture deductions under REHAB norms, and configure multi-tier review.
+      </p>
+    </div>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="p-4 rounded-xl border border-destructive/20 bg-destructive/10 text-destructive text-sm flex items-center justify-between shadow-xs">
+      <div class="flex items-center gap-2">
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+        <span>{{ errorMessage() }}</span>
+      </div>
+      <button (click)="errorMessage.set('')" class="text-xs font-semibold hover:underline">Dismiss</button>
+    </div>
+  }
+
+  <!-- Single Container Card for All Form Sections -->
+  <div class="bg-card border border-border rounded-xl shadow-xs overflow-hidden divide-y divide-border">
+    <!-- Section 1: Booking Selection -->
+    <div class="p-6">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="text-sm font-bold uppercase tracking-wider text-foreground">1. Select Target Booking & Property Allotment</h2>
+          <p class="text-xs text-muted-foreground">Choose the provisional or confirmed property booking to cancel.</p>
+        </div>
+        <a
+          routerLink="/sales/bookings/create"
+          class="text-xs text-primary hover:underline font-semibold inline-flex items-center gap-1"
+        >
+          + Add New Booking
+        </a>
+      </div>
+
+      <div class="max-w-2xl">
+        <app-searchable-select
+          label="Target Property Booking"
+          [options]="bookingOptions()"
+          [ngModel]="selectedBookingId()"
+          (selectionChange)="onBookingSelect($event)"
+          placeholder="Search booking by reference, buyer name, or unit number..."
+          [required]="true"
+        ></app-searchable-select>
+      </div>
+
+      <!-- Selected Booking Specs Card -->
+      @if (selectedBooking()) {
+        <div class="mt-4 p-4 rounded-xl bg-secondary/30 border border-border grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div>
+            <span class="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block">Allottee Customer</span>
+            <div class="font-bold text-foreground text-sm mt-0.5">{{ selectedBooking()?.customer_name }}</div>
+            <div class="text-xs text-muted-foreground">{{ selectedBooking()?.customer_phone }}</div>
+          </div>
+          <div>
+            <span class="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block">Allotted Unit & Project</span>
+            <div class="font-bold text-foreground text-sm mt-0.5">Unit {{ selectedBooking()?.unit_number }}</div>
+            <div class="text-xs text-muted-foreground">{{ selectedBooking()?.project_name }}</div>
+          </div>
+          <div>
+            <span class="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block">Contract Value</span>
+            <div class="font-bold text-foreground text-sm mt-0.5">৳{{ (selectedBooking()?.final_contract_value || 0) | number:'1.2-2' }}</div>
+            <div class="text-xs text-muted-foreground font-mono">Stage: {{ selectedBooking()?.workflow_stage }}</div>
+          </div>
+          <div class="border-l border-border pl-4">
+            <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block">Cleared Cash Paid</span>
+            <div class="font-bold text-emerald-600 dark:text-emerald-400 text-lg mt-0.5">
+              ৳{{ totalPaid() | number:'1.2-2' }}
+            </div>
+            <div class="text-[11px] text-muted-foreground">Eligible for forfeiture calculation</div>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Section 2: Cancellation Reason & Contractual Conditions -->
+    <div class="p-6">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="text-sm font-bold uppercase tracking-wider text-foreground">2. Cancellation Reason & Statutory Basis</h2>
+          <p class="text-xs text-muted-foreground">Select reasons from dynamic lookups or define custom reasons.</p>
+        </div>
+        <a
+          routerLink="/settings/lookups"
+          class="text-xs text-primary hover:underline font-semibold inline-flex items-center gap-1"
+        >
+          Lookup Settings
+        </a>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <app-searchable-select
+            label="Cancellation Category"
+            categoryCode="CANCELLATION_CATEGORIES"
+            [ngModel]="cancellationCategory()"
+            (selectionChange)="cancellationCategory.set($event)"
+            placeholder="Select category..."
+            [allowCreateNew]="true"
+            [required]="true"
+          ></app-searchable-select>
+        </div>
+
+        <div>
+          <app-searchable-select
+            label="Cancellation Reason (Dynamic Lookups)"
+            categoryCode="CANCELLATION_REASONS"
+            [ngModel]="cancellationReason()"
+            (selectionChange)="cancellationReason.set($event)"
+            placeholder="Select reason..."
+            [allowCreateNew]="true"
+            [required]="true"
+          ></app-searchable-select>
+        </div>
+      </div>
+
+      <div class="mt-4">
+        <app-custom-input
+          label="Specific Reason Details / Customer Stated Explanation"
+          type="text"
+          [value]="customReasonText()"
+          (valueChange)="customReasonText.set($event)"
+          placeholder="E.g., Customer relocating to Canada permanently, unable to continue installment commitments."
+        ></app-custom-input>
+      </div>
+    </div>
+
+    <!-- Section 3: Deductions & Net Refund Calculation Engine -->
+    <div class="p-6">
+      <div class="mb-4">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-foreground">3. Contractual Forfeiture & Net Refund Engine</h2>
+        <p class="text-xs text-muted-foreground">Calculates eligible deduction based on REHAB convention or developer terms.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="md:col-span-2">
+          <app-searchable-select
+            label="Deduction Policy"
+            [options]="deductionTypeOptions"
+            [ngModel]="deductionType()"
+            (selectionChange)="onDeductionTypeChange($event)"
+            placeholder="Select policy..."
+            [allowCreateNew]="false"
+            [required]="true"
+          ></app-searchable-select>
+        </div>
+
+        @if (deductionType() === 'REHAB_STATUTORY' || deductionType() === 'CUSTOM_FORFEITURE') {
+          <div>
+            <app-custom-input
+              label="Forfeiture Deduction Percentage (%)"
+              type="number"
+              [value]="deductionPercentage()"
+              (valueChange)="deductionPercentage.set($event)"
+              placeholder="10"
+              hint="Statutory norm is 10% under REHAB bylaws."
+            ></app-custom-input>
+          </div>
+        } @else if (deductionType() === 'FIXED_SERVICE_CHARGE') {
+          <div>
+            <app-custom-input
+              label="Fixed Service Charge (BDT)"
+              type="number"
+              [value]="fixedServiceCharge()"
+              (valueChange)="fixedServiceCharge.set($event)"
+              placeholder="25000"
+              hint="Fixed file processing and legal deduction."
+            ></app-custom-input>
+          </div>
+        }
+      </div>
+
+      <!-- Live Calculation Card -->
+      <div class="mt-5 p-5 rounded-xl border border-border bg-secondary/20 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div class="w-full md:w-auto flex items-center justify-between md:justify-start gap-6 text-center md:text-left">
+          <div>
+            <span class="text-[10px] uppercase font-bold text-muted-foreground tracking-wider block">Total Paid Subject</span>
+            <div class="text-lg font-bold font-mono text-foreground mt-0.5">৳{{ totalPaid() | number:'1.2-2' }}</div>
+          </div>
+          <span class="text-muted-foreground font-bold text-lg">−</span>
+          <div>
+            <span class="text-[10px] uppercase font-bold text-amber-600 dark:text-amber-400 tracking-wider block">Deduction / Forfeiture</span>
+            <div class="text-lg font-bold font-mono text-amber-600 dark:text-amber-400 mt-0.5">
+              ৳{{ (deductionAmount() + serviceChargeAmount()) | number:'1.2-2' }}
+            </div>
+          </div>
+          <span class="text-muted-foreground font-bold text-lg">=</span>
+        </div>
+
+        <div class="w-full md:w-auto p-4 rounded-xl bg-card border border-emerald-500/30 text-center md:text-right shadow-xs">
+          <span class="text-xs uppercase font-extrabold text-emerald-600 dark:text-emerald-400 tracking-wider block">
+            Net Eligible Refund Payable
+          </span>
+          <div class="text-2xl font-black font-mono text-emerald-600 dark:text-emerald-400 mt-0.5">
+            ৳{{ netRefundAmount() | number:'1.2-2' }}
+          </div>
+          <span class="text-[10px] text-muted-foreground">Subject to 3-tier committee approval</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 4: Refund Bank Details -->
+    <div class="p-6">
+      <div class="mb-4">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-foreground">4. Customer Bank Refund Disbursement Details</h2>
+        <p class="text-xs text-muted-foreground">Record allottee bank details for crossed cheque or direct BEFTN transfer.</p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div>
+          <app-searchable-select
+            label="Disbursement Mode"
+            categoryCode="REFUND_PAYMENT_MODES"
+            [options]="refundModeOptions"
+            [ngModel]="refundPaymentMode()"
+            (selectionChange)="refundPaymentMode.set($event)"
+            placeholder="Select mode..."
+            [allowCreateNew]="true"
+          ></app-searchable-select>
+        </div>
+
+        <div>
+          <app-custom-input
+            label="Bank Name"
+            type="text"
+            [value]="refundBankName()"
+            (valueChange)="refundBankName.set($event)"
+            placeholder="E.g., Eastern Bank PLC"
+          ></app-custom-input>
+        </div>
+
+        <div>
+          <app-custom-input
+            label="Account Beneficiary Name"
+            type="text"
+            [value]="refundAccountName()"
+            (valueChange)="refundAccountName.set($event)"
+            placeholder="Name on bank account"
+          ></app-custom-input>
+        </div>
+
+        <div>
+          <app-custom-input
+            label="Bank Account Number"
+            type="text"
+            [value]="refundAccountNumber()"
+            (valueChange)="refundAccountNumber.set($event)"
+            placeholder="Account number"
+          ></app-custom-input>
+        </div>
+
+        <div>
+          <app-custom-input
+            label="Routing Number"
+            type="text"
+            [value]="refundRoutingNumber()"
+            (valueChange)="refundRoutingNumber.set($event)"
+            placeholder="9-digit routing number"
+          ></app-custom-input>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 5: Settlement Notes & Terms -->
+    <div class="p-6">
+      <div class="mb-3">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-foreground">5. Commercial Settlement & Legal Covenants</h2>
+        <p class="text-xs text-muted-foreground">Document contractual clauses, penalty justifications, or customer notices.</p>
+      </div>
+
+      <app-custom-textarea
+        [value]="settlementNotes()"
+        (valueChange)="settlementNotes.set($event)"
+        placeholder="Enter settlement notes..."
+        rows="3"
+      ></app-custom-textarea>
+    </div>
+
+    <!-- Actions Footer -->
+    <div class="p-6 bg-secondary/10 flex items-center justify-between gap-4">
+      <button
+        type="button"
+        (click)="cancel()"
+        class="px-4 py-2 rounded-xl border border-border bg-card hover:bg-secondary text-foreground text-xs font-semibold shadow-xs transition-colors"
+      >
+        Cancel & Return
+      </button>
+
+      <button
+        type="button"
+        (click)="submit()"
+        [disabled]="isSubmitting() || !selectedBookingId()"
+        class="px-5 py-2.5 rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90 text-xs font-semibold inline-flex items-center gap-2 shadow-xs transition-colors disabled:opacity-50"
+      >
+        <svg class="w-4 h-4" [ngClass]="{'animate-spin': isSubmitting()}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        {{ isSubmitting() ? 'Submitting Request...' : 'Submit Cancellation Request' }}
+      </button>
+    </div>
+  </div>
+</div>

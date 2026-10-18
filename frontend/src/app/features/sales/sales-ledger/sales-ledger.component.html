@@ -1,0 +1,326 @@
+<div class="flex flex-col gap-6 w-full max-w-7xl mx-auto pb-16">
+  <!-- Top Bar & Breadcrumb -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
+    <div>
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+          Spec 5.8 · Accounts Receivable & Sales Subledger
+        </span>
+        <span class="text-xs font-mono text-muted-foreground">GL Subledger: 1200-AR-FLAT-SALES</span>
+      </div>
+      <h1 class="text-2xl font-bold font-display text-foreground mt-1">
+        Customer-Wise Sales Ledger & Financial Statements
+      </h1>
+      <p class="text-xs text-muted-foreground mt-0.5">
+        Consolidated multi-property account statements, contract obligations, cleared receipts, aging analysis, and GL reconciliation.
+      </p>
+    </div>
+
+    <div class="flex items-center gap-2 flex-wrap">
+      <button
+        (click)="syncSubledger()"
+        [disabled]="isSyncing()"
+        class="px-3.5 py-2 rounded-xl border border-border bg-card text-foreground hover:bg-secondary text-xs font-semibold inline-flex items-center gap-1.5 shadow-xs transition-colors disabled:opacity-50"
+        title="Synchronize Subledger from active bookings & collections"
+      >
+        <svg class="w-4 h-4 text-primary" [ngClass]="{'animate-spin': isSyncing()}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+        {{ isSyncing() ? 'Synchronizing...' : 'Sync Subledger' }}
+      </button>
+
+      <a
+        routerLink="/sales/ledger/adjustments/create"
+        class="px-3.5 py-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-semibold inline-flex items-center gap-1.5 shadow-xs transition-colors"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        + Record Adjustment / Credit Note
+      </a>
+    </div>
+  </div>
+
+  <!-- Notification Banner -->
+  @if (actionMessage()) {
+    <div class="p-4 rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-sm flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        <span>{{ actionMessage() }}</span>
+      </div>
+      <button (click)="actionMessage.set('')" class="text-xs hover:underline">Dismiss</button>
+    </div>
+  }
+
+  <!-- 4 Spec-Defined Financial Subledger KPIs -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="bg-card border border-border rounded-xl p-4 shadow-xs">
+      <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">Total Billed Charges</span>
+      <div class="text-xl font-bold font-mono text-foreground mt-1">
+        ৳{{ formatCurrency(ledgerData()?.total_debits || 0) }}
+      </div>
+      <span class="text-[11px] text-muted-foreground mt-0.5 block">Contract charges, invoices & debit adjustments</span>
+    </div>
+
+    <div class="bg-card border border-border rounded-xl p-4 shadow-xs">
+      <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">Cleared Collections</span>
+      <div class="text-xl font-bold font-mono text-emerald-600 dark:text-emerald-400 mt-1">
+        ৳{{ formatCurrency(ledgerData()?.total_credits || 0) }}
+      </div>
+      <span class="text-[11px] text-muted-foreground mt-0.5 block">Booking money, down payments & credit receipts</span>
+    </div>
+
+    <div class="bg-card border border-border rounded-xl p-4 shadow-xs">
+      <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">Net Accounts Receivable</span>
+      <div class="text-xl font-bold font-mono text-amber-600 dark:text-amber-400 mt-1">
+        ৳{{ formatCurrency(ledgerData()?.net_balance_due || 0) }}
+      </div>
+      <span class="text-[11px] text-muted-foreground mt-0.5 block">Outstanding customer balance due</span>
+    </div>
+
+    <div class="bg-card border border-border rounded-xl p-4 shadow-xs">
+      <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">Overdue Aging Summary</span>
+      <div class="flex items-center gap-1.5 mt-2 flex-wrap">
+        <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 border border-emerald-500/20" title="Current Not Due">
+          Cur: ৳{{ formatCurrency(ledgerData()?.aging_summary?.current_not_due || 0) }}
+        </span>
+        <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 border border-amber-500/20" title="1-30 Days Overdue">
+          1-30d: ৳{{ formatCurrency(ledgerData()?.aging_summary?.overdue_1_30 || 0) }}
+        </span>
+        <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-600 border border-rose-500/20" title="90+ Days Overdue">
+          90+d: ৳{{ formatCurrency(ledgerData()?.aging_summary?.overdue_over_90 || 0) }}
+        </span>
+      </div>
+      <span class="text-[11px] text-muted-foreground mt-1 block">Due date aging buckets</span>
+    </div>
+  </div>
+
+  <!-- Server-Side Filter Bar -->
+  <div class="bg-card border border-border rounded-xl p-4 shadow-xs">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+      <!-- Search Input -->
+      <div>
+        <label class="text-[11px] font-semibold text-muted-foreground block mb-1">Search Customer / Booking / Ref</label>
+        <div class="relative">
+          <input
+            type="text"
+            [ngModel]="searchQuery()"
+            (ngModelChange)="onSearch($event)"
+            placeholder="Search name, phone, ref, unit..."
+            class="w-full pl-8 pr-3 py-1.5 text-xs bg-background border border-border rounded-lg text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+          />
+          <svg class="w-4 h-4 text-muted-foreground absolute left-2.5 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Transaction Type Dropdown -->
+      <div>
+        <div class="flex items-center justify-between mb-1">
+          <label class="text-[11px] font-semibold text-muted-foreground">Transaction Type</label>
+          <a routerLink="/settings/lookups" class="text-[10px] text-primary hover:underline font-medium inline-flex items-center gap-0.5">
+            + Add New
+          </a>
+        </div>
+        <app-searchable-select
+          [options]="transactionTypeOptions"
+          [ngModel]="selectedTransactionType()"
+          (ngModelChange)="selectedTransactionType.set($event); onFilterChange()"
+          placeholder="Filter by transaction type"
+        />
+      </div>
+
+      <!-- GL Reconciliation Status -->
+      <div>
+        <label class="text-[11px] font-semibold text-muted-foreground block mb-1">GL Subledger Status</label>
+        <app-searchable-select
+          [options]="reconciliationStatusOptions"
+          [ngModel]="selectedReconciliationStatus()"
+          (ngModelChange)="selectedReconciliationStatus.set($event); onFilterChange()"
+          placeholder="Filter by reconciliation status"
+        />
+      </div>
+
+      <!-- Date Range -->
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <label class="text-[11px] font-semibold text-muted-foreground block mb-1">From Date</label>
+          <input
+            type="date"
+            [ngModel]="fromDate()"
+            (ngModelChange)="fromDate.set($event); onFilterChange()"
+            class="w-full px-2 py-1.5 text-xs bg-background border border-border rounded-lg text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+          />
+        </div>
+        <div>
+          <label class="text-[11px] font-semibold text-muted-foreground block mb-1">To Date</label>
+          <input
+            type="date"
+            [ngModel]="toDate()"
+            (ngModelChange)="toDate.set($event); onFilterChange()"
+            class="w-full px-2 py-1.5 text-xs bg-background border border-border rounded-lg text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Subledger Transaction Registry Table (Strictly ZERO forms beneath) -->
+  <app-card title="Sales Subledger Entries" subtitle="Chronological double-entry debit charges and cleared credit receipts">
+    @if (isLoading()) {
+      <div class="p-12 text-center text-muted-foreground">
+        <svg class="w-8 h-8 animate-spin mx-auto text-primary mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+        Loading customer sales subledger...
+      </div>
+    } @else if (ledgerData()?.items?.length === 0) {
+      <div class="p-12 text-center text-muted-foreground">
+        <svg class="w-10 h-10 mx-auto text-muted-foreground/50 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+        <p class="font-medium text-foreground">No ledger transactions found</p>
+        <p class="text-xs mt-1">Try adjusting your search criteria or click 'Sync Subledger'.</p>
+      </div>
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs text-foreground border-collapse">
+          <thead>
+            <tr class="border-b border-border bg-secondary/30 text-muted-foreground uppercase tracking-wider text-[11px]">
+              <th class="py-3 px-3">Date</th>
+              <th class="py-3 px-3">Entry No</th>
+              <th class="py-3 px-4">Customer & Property Allocation</th>
+              <th class="py-3 px-3">Transaction Type</th>
+              <th class="py-3 px-3">Description & Ref</th>
+              <th class="py-3 px-3 text-right">Debit / Charge (৳)</th>
+              <th class="py-3 px-3 text-right">Credit / Receipt (৳)</th>
+              <th class="py-3 px-3 text-right">Running Balance (৳)</th>
+              <th class="py-3 px-3 text-center">GL Status</th>
+              <th class="py-3 px-3 text-center">Action</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border">
+            @for (row of ledgerData()?.items; track row.id) {
+              <tr class="hover:bg-secondary/20 transition-colors">
+                <td class="py-3 px-3 font-mono text-muted-foreground whitespace-nowrap">
+                  {{ row.transaction_date | date:'dd MMM yyyy' }}
+                </td>
+
+                <td class="py-3 px-3 font-mono font-bold text-foreground whitespace-nowrap">
+                  {{ row.entry_number }}
+                </td>
+
+                <td class="py-3 px-4">
+                  <div class="font-bold text-foreground">{{ row.customer_name }}</div>
+                  <div class="text-[11px] text-muted-foreground">
+                    {{ row.project_name || 'Project' }} &bull; Unit: <strong class="text-foreground">{{ row.unit_number || 'N/A' }}</strong>
+                  </div>
+                  @if (row.booking_reference_no) {
+                    <a [routerLink]="['/sales/bookings', row.booking_id]" class="text-[10px] font-mono text-primary hover:underline">
+                      {{ row.booking_reference_no }}
+                    </a>
+                  }
+                </td>
+
+                <td class="py-3 px-3 whitespace-nowrap">
+                  <span class="text-[10px] px-2 py-0.5 rounded-full font-semibold"
+                    [ngClass]="{
+                      'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20': row.transaction_type === 'CONTRACT_CHARGE' || row.transaction_type === 'INSTALLMENT_INVOICE',
+                      'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20': row.transaction_type === 'BOOKING_MONEY' || row.transaction_type === 'DOWN_PAYMENT' || row.transaction_type === 'RECEIPT',
+                      'bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20': row.transaction_type === 'CREDIT_NOTE' || row.transaction_type === 'ADJUSTMENT',
+                      'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20': row.transaction_type === 'REFUND_REVERSAL' || row.transaction_type === 'LATE_FEE'
+                    }">
+                    {{ formatTransactionType(row.transaction_type) }}
+                  </span>
+                </td>
+
+                <td class="py-3 px-3 max-w-xs">
+                  <div class="text-xs text-foreground truncate" [title]="row.description">{{ row.description }}</div>
+                  @if (row.reference_no) {
+                    <span class="text-[10px] font-mono text-muted-foreground block">Ref: {{ row.reference_no }}</span>
+                  }
+                </td>
+
+                <td class="py-3 px-3 text-right font-mono font-bold text-foreground whitespace-nowrap">
+                  @if (row.debit_amount > 0) {
+                    ৳{{ formatCurrency(row.debit_amount) }}
+                  } @else {
+                    <span class="text-muted-foreground">—</span>
+                  }
+                </td>
+
+                <td class="py-3 px-3 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+                  @if (row.credit_amount > 0) {
+                    ৳{{ formatCurrency(row.credit_amount) }}
+                  } @else {
+                    <span class="text-muted-foreground">—</span>
+                  }
+                </td>
+
+                <td class="py-3 px-3 text-right font-mono font-bold whitespace-nowrap"
+                  [ngClass]="row.running_balance > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600'">
+                  ৳{{ formatCurrency(row.running_balance) }}
+                </td>
+
+                <td class="py-3 px-3 text-center whitespace-nowrap">
+                  <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                    [ngClass]="{
+                      'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20': row.reconciliation_status === 'RECONCILED',
+                      'bg-amber-500/10 text-amber-600 border border-amber-500/20': row.reconciliation_status === 'PENDING_POSTING',
+                      'bg-rose-500/10 text-rose-600 border border-rose-500/20': row.reconciliation_status === 'DISCREPANCY'
+                    }">
+                    {{ row.reconciliation_status }}
+                  </span>
+                </td>
+
+                <td class="py-3 px-3 text-center whitespace-nowrap">
+                  <a
+                    [routerLink]="['/sales/ledger/customers', row.customer_id]"
+                    [queryParams]="row.booking_id ? { booking_id: row.booking_id } : {}"
+                    class="px-2.5 py-1 text-[11px] rounded-lg bg-card border border-border hover:bg-secondary text-primary font-medium transition-colors inline-flex items-center gap-1 shadow-2xs"
+                    title="View Consolidated Customer Statement Dossier"
+                  >
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    Statement
+                  </a>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination Footer -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-4 border-t border-border text-xs text-muted-foreground mt-4">
+        <div>
+          Showing <strong>{{ offset() + 1 }}</strong> to
+          <strong>{{ (offset() + limit()) > (ledgerData()?.total || 0) ? (ledgerData()?.total || 0) : (offset() + limit()) }}</strong>
+          of <strong>{{ ledgerData()?.total || 0 }}</strong> entries
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button
+            (click)="prevPage()"
+            [disabled]="offset() === 0"
+            class="px-3 py-1.5 rounded-lg border border-border bg-card text-foreground hover:bg-secondary disabled:opacity-40 transition-colors"
+          >
+            Previous
+          </button>
+          <span class="px-2 py-1 font-mono">Page {{ currentPage() }} of {{ totalPages() }}</span>
+          <button
+            (click)="nextPage()"
+            [disabled]="offset() + limit() >= (ledgerData()?.total || 0)"
+            class="px-3 py-1.5 rounded-lg border border-border bg-card text-foreground hover:bg-secondary disabled:opacity-40 transition-colors"
+          >
+            Next
+          </button>
+        </div>
+      </div>
+    }
+  </app-card>
+</div>

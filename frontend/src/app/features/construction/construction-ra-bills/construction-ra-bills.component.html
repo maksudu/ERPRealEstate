@@ -1,685 +1,339 @@
-<app-card-container [paddingClass]="'p-6'">
-  <!-- Top Header & Tabs Bar -->
-  <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b border-slate-200 dark:border-slate-800">
-    <div class="flex items-center gap-3">
-      <div class="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
-        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+<div class="flex flex-col gap-6">
+  <!-- Operations Financial KPI Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <div class="bg-card border border-border rounded-xl p-4 flex items-center justify-between shadow-xs">
+      <div>
+        <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Gross Work Certified</p>
+        <h3 class="text-xl font-bold text-foreground mt-1">BDT {{ getTotalCertified() | number:'1.2-2' }}</h3>
+      </div>
+      <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
         </svg>
       </div>
+    </div>
+
+    <div class="bg-card border border-border rounded-xl p-4 flex items-center justify-between shadow-xs">
       <div>
-        <h1 class="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
-          Subcontractor RA Billing Engine & JMS
-        </h1>
-        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-          Joint Measurement Sheets, statutory deduction calculations (Retention, Advance, Store, TDS, VDS) & 4-tier signature chain
-        </p>
+        <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Retention Money Withheld (5%)</p>
+        <h3 class="text-xl font-bold text-amber-500 mt-1">BDT {{ getTotalRetention() | number:'1.2-2' }}</h3>
+      </div>
+      <div class="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-500">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+        </svg>
       </div>
     </div>
 
-    <!-- Actions -->
-    <div class="flex flex-wrap items-center gap-3">
-      @if (currentTab() === 'BILLS') {
-        <app-custom-button variant="primary" (btnClick)="openCreateBillModal()">
-          <svg class="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-          </svg>
-          + Prepare New RA Bill
-        </app-custom-button>
-      }
-
-      @if (currentTab() === 'JMS') {
-        <app-custom-button variant="primary" (btnClick)="openCreateJMSModal()">
-          <svg class="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-          </svg>
-          + New Joint Measurement (JMS)
-        </app-custom-button>
-      }
-
-      @if (currentTab() === 'WORK_ORDERS') {
-        <app-custom-button variant="secondary" (btnClick)="openCreateWOModal()">
-          <svg class="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-          </svg>
-          + Issue Work Order
-        </app-custom-button>
-      }
+    <div class="bg-card border border-border rounded-xl p-4 flex items-center justify-between shadow-xs">
+      <div>
+        <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total Net Payable Certified</p>
+        <h3 class="text-xl font-bold text-emerald-500 mt-1">BDT {{ getTotalNetPayable() | number:'1.2-2' }}</h3>
+      </div>
+      <div class="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
     </div>
   </div>
 
-  <!-- Statutory Deductions Formula Banner -->
-  <div class="my-5 p-4 rounded-xl border border-indigo-200 dark:border-indigo-900/50 bg-indigo-50/40 dark:bg-indigo-950/20 flex items-center justify-between text-xs">
-    <div class="flex items-center gap-3">
-      <span class="p-2 rounded-lg bg-indigo-500/10 text-indigo-600 font-bold font-mono">FORMULA</span>
-      <span class="text-slate-700 dark:text-slate-300 font-medium">
-        <strong>Net Payable</strong> = Gross Work Certified - Retention (5% to 10%) - Advance Recovery - Developer Store Material Recovery - TDS (Sec 52) - VDS
-      </span>
+  <!-- Unified Main Card Container -->
+  <app-card-container
+    title="Subcontractor RA Billing, Contracts & Joint Measurement Sheets"
+    subtitle="Manage running account certifications, statutory deductions (TDS/VDS), formal work orders, and measurement verification"
+  >
+    <!-- View Switcher Tabs & Actions Toolbar -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border mb-6">
+      <div class="flex items-center gap-2 p-1 bg-secondary/50 rounded-xl border border-border w-fit">
+        <button
+          type="button"
+          (click)="setTab('BILLS')"
+          [ngClass]="{
+            'bg-card text-foreground shadow-xs font-bold': currentTab() === 'BILLS',
+            'text-muted-foreground hover:text-foreground font-medium': currentTab() !== 'BILLS'
+          }"
+          class="px-4 py-1.5 text-xs rounded-lg transition-all cursor-pointer"
+        >
+          Running Account (RA) Bills ({{ raBills().length }})
+        </button>
+        <button
+          type="button"
+          (click)="setTab('WORK_ORDERS')"
+          [ngClass]="{
+            'bg-card text-foreground shadow-xs font-bold': currentTab() === 'WORK_ORDERS',
+            'text-muted-foreground hover:text-foreground font-medium': currentTab() !== 'WORK_ORDERS'
+          }"
+          class="px-4 py-1.5 text-xs rounded-lg transition-all cursor-pointer"
+        >
+          Subcontractor Work Orders ({{ workOrders().length }})
+        </button>
+        <button
+          type="button"
+          (click)="setTab('JMS')"
+          [ngClass]="{
+            'bg-card text-foreground shadow-xs font-bold': currentTab() === 'JMS',
+            'text-muted-foreground hover:text-foreground font-medium': currentTab() !== 'JMS'
+          }"
+          class="px-4 py-1.5 text-xs rounded-lg transition-all cursor-pointer"
+        >
+          Joint Measurement Sheets (JMS)
+        </button>
+      </div>
+
+      <div class="flex items-center gap-3">
+        @if (currentTab() === 'BILLS') {
+          <app-custom-button variant="primary" (clicked)="navigateToCreateBill()">
+            <span class="flex items-center gap-1.5">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+              </svg>
+              + Generate RA Bill
+            </span>
+          </app-custom-button>
+        } @else if (currentTab() === 'WORK_ORDERS') {
+          <app-custom-button variant="primary" (clicked)="navigateToCreateWorkOrder()">
+            <span class="flex items-center gap-1.5">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+              </svg>
+              + Issue Work Order
+            </span>
+          </app-custom-button>
+        }
+      </div>
     </div>
-    <span class="text-[11px] font-mono text-indigo-600 dark:text-indigo-400 font-semibold uppercase">
-      IFRS & NBR Compliant
-    </span>
-  </div>
 
-  <!-- Navigation Tabs -->
-  <div class="flex border-b border-slate-200 dark:border-slate-800 mb-6">
-    <button
-      (click)="currentTab.set('BILLS')"
-      [class]="currentTab() === 'BILLS' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400 font-semibold' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'"
-      class="py-3 px-5 border-b-2 text-sm flex items-center gap-2 cursor-pointer transition-all">
-      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-      </svg>
-      Contractor Running Account (RA) Bills
-      <span class="px-2 py-0.5 rounded-full text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-        {{ raBills().length }}
-      </span>
-    </button>
+    <!-- TAB 1: RA Bills List Table -->
+    @if (currentTab() === 'BILLS') {
+      <div class="space-y-4">
+        <!-- Search Toolbar -->
+        <div class="flex items-center justify-between gap-4">
+          <div class="relative w-full sm:w-72">
+            <svg class="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <input
+              type="text"
+              [(ngModel)]="searchQuery"
+              (ngModelChange)="onSearch()"
+              placeholder="Search memo number or status..."
+              class="w-full pl-9 pr-3 py-1.5 text-xs bg-card border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+            />
+          </div>
 
-    <button
-      (click)="currentTab.set('JMS')"
-      [class]="currentTab() === 'JMS' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400 font-semibold' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'"
-      class="py-3 px-5 border-b-2 text-sm flex items-center gap-2 cursor-pointer transition-all">
-      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-      </svg>
-      Joint Measurement Sheets (JMS)
-      <span class="px-2 py-0.5 rounded-full text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-        {{ jointMeasurements().length }}
-      </span>
-    </button>
+          @if (searchQuery()) {
+            <button (click)="clearSearch()" class="text-xs text-muted-foreground hover:text-foreground underline cursor-pointer">
+              Clear Search
+            </button>
+          }
+        </div>
 
-    <button
-      (click)="currentTab.set('WORK_ORDERS')"
-      [class]="currentTab() === 'WORK_ORDERS' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400 font-semibold' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'"
-      class="py-3 px-5 border-b-2 text-sm flex items-center gap-2 cursor-pointer transition-all">
-      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-      </svg>
-      Subcontractor Work Orders
-      <span class="px-2 py-0.5 rounded-full text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-        {{ workOrders().length }}
-      </span>
-    </button>
-  </div>
+        <div class="overflow-x-auto border border-border rounded-xl">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-secondary/60 text-muted-foreground uppercase tracking-wider font-semibold border-b border-border">
+              <tr>
+                <th class="px-4 py-3.5">RA Bill Memo & Work Order</th>
+                <th class="px-4 py-3.5">Contractor & Project</th>
+                <th class="px-4 py-3.5 text-right">Gross Work Certified</th>
+                <th class="px-4 py-3.5 text-right">Retention (5%)</th>
+                <th class="px-4 py-3.5 text-right">TDS / VDS</th>
+                <th class="px-4 py-3.5 text-right">Net Payable Amount</th>
+                <th class="px-4 py-3.5 text-center">Approval Status</th>
+                <th class="px-4 py-3.5 text-right w-24">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border bg-card">
+              @if (isLoading()) {
+                @for (i of [1, 2, 3, 4, 5]; track i) {
+                  <tr>
+                    <td colspan="8" class="px-4 py-4">
+                      <div class="h-4 bg-secondary animate-pulse rounded"></div>
+                    </td>
+                  </tr>
+                }
+              } @else {
+                @for (b of raBills(); track b.id) {
+                  <tr class="hover:bg-secondary/40 transition-colors">
+                    <td class="px-4 py-3.5 align-top">
+                      <div class="font-bold text-foreground font-mono">{{ b.ra_bill_number }}</div>
+                      <div class="text-[11px] text-primary font-mono mt-0.5">{{ b.work_order_no || 'WO #' + b.work_order_id }}</div>
+                      <div class="text-[10px] text-muted-foreground mt-0.5">{{ b.bill_date | date:'dd MMM yyyy' }}</div>
+                    </td>
 
-  <!-- TAB 1: RA BILLS -->
-  @if (currentTab() === 'BILLS') {
-    <div class="space-y-4">
-      <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+                    <td class="px-4 py-3.5 align-top">
+                      <div class="font-medium text-foreground">{{ b.contractor_name || 'Subcontractor' }}</div>
+                      <div class="text-[11px] text-muted-foreground mt-0.5">{{ b.project_name || 'Site Project' }}</div>
+                    </td>
+
+                    <td class="px-4 py-3.5 align-top text-right font-mono font-semibold text-foreground">
+                      BDT {{ b.gross_work_certified_amount | number:'1.2-2' }}
+                    </td>
+
+                    <td class="px-4 py-3.5 align-top text-right font-mono text-amber-500">
+                      - BDT {{ b.retention_money_deducted | number:'1.2-2' }}
+                    </td>
+
+                    <td class="px-4 py-3.5 align-top text-right font-mono text-rose-500 text-[11px]">
+                      <div>TDS: - BDT {{ b.tds_withheld_amount | number:'1.2-2' }}</div>
+                      <div>VDS: - BDT {{ b.vds_withheld_amount | number:'1.2-2' }}</div>
+                    </td>
+
+                    <td class="px-4 py-3.5 align-top text-right font-mono font-bold text-emerald-500 text-sm">
+                      BDT {{ b.net_payable_amount | number:'1.2-2' }}
+                    </td>
+
+                    <td class="px-4 py-3.5 align-top text-center">
+                      <span
+                        class="text-[10px] font-semibold px-2.5 py-1 rounded-full uppercase"
+                        [ngClass]="{
+                          'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20': b.status === 'ACCOUNTS_VOUCHER_POSTED' || b.status === 'APPROVED_BY_PD',
+                          'bg-blue-500/10 text-blue-500 border border-blue-500/20': b.status === 'VERIFIED_BY_ENGINEER' || b.status === 'VERIFIED_BY_QS',
+                          'bg-amber-500/10 text-amber-500 border border-amber-500/20': b.status === 'DRAFT'
+                        }"
+                      >
+                        {{ b.status.replace('_', ' ') }}
+                      </span>
+                    </td>
+
+                    <td class="px-4 py-3.5 align-top text-right">
+                      <button
+                        (click)="navigateToViewBill(b.id)"
+                        class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-secondary hover:bg-secondary/80 text-foreground border border-border transition-colors cursor-pointer"
+                      >
+                        Review
+                      </button>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="8" class="px-4 py-12 text-center text-muted-foreground">
+                      No Running Account (RA) bills found. Click "+ Generate RA Bill" to record a new certification.
+                    </td>
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination Footer -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-4 text-xs text-muted-foreground">
+          <div class="flex items-center gap-2">
+            <span>Showing Page {{ currentPage() }} ({{ raBills().length }} bills loaded)</span>
+          </div>
+
+          <div class="flex items-center gap-1">
+            <button
+              type="button"
+              [disabled]="currentPage() === 1"
+              (click)="prevPage()"
+              class="px-3 py-1 rounded-lg border border-border bg-card text-foreground hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              Previous
+            </button>
+            <span class="px-3 py-1 font-semibold text-foreground">Page {{ currentPage() }}</span>
+            <button
+              type="button"
+              [disabled]="raBills().length < pageSize()"
+              (click)="nextPage()"
+              class="px-3 py-1 rounded-lg border border-border bg-card text-foreground hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- TAB 2: Subcontractor Work Orders Table -->
+    @if (currentTab() === 'WORK_ORDERS') {
+      <div class="overflow-x-auto border border-border rounded-xl">
         <table class="w-full text-left text-xs">
-          <thead class="bg-slate-50 dark:bg-slate-800/80 text-slate-500 uppercase border-b border-slate-200 dark:border-slate-800 font-semibold tracking-wider">
+          <thead class="bg-secondary/60 text-muted-foreground uppercase tracking-wider font-semibold border-b border-border">
             <tr>
-              <th class="py-3 px-4">Bill # & Period</th>
-              <th class="py-3 px-3">Contractor & Work Order</th>
-              <th class="py-3 px-3 text-right">Gross Certified</th>
-              <th class="py-3 px-3 text-right">Retention (5-10%)</th>
-              <th class="py-3 px-3 text-right">Store & Advance</th>
-              <th class="py-3 px-3 text-right">TDS & VDS (10%)</th>
-              <th class="py-3 px-3 text-right">Net Payable</th>
-              <th class="py-3 px-4 text-center">4-Tier Sign Chain</th>
-              <th class="py-3 px-4 text-center">Actions</th>
+              <th class="px-4 py-3.5">Work Order #</th>
+              <th class="px-4 py-3.5">Contractor & Trade</th>
+              <th class="px-4 py-3.5">Project</th>
+              <th class="px-4 py-3.5">Contract Type</th>
+              <th class="px-4 py-3.5 text-right">Contract Value</th>
+              <th class="px-4 py-3.5 text-center">Retention %</th>
+              <th class="px-4 py-3.5 text-center">Status</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
-            @for (bill of raBills(); track bill.id) {
-              <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
-                <td class="py-3.5 px-4">
-                  <div class="font-bold text-slate-900 dark:text-white font-mono">{{ bill.ra_bill_number }}</div>
-                  <div class="text-[11px] text-slate-400 mt-0.5">Bill Date: {{ bill.bill_date }}</div>
-                  @if (bill.billing_period_start) {
-                    <div class="text-[10px] text-slate-400">Period: {{ bill.billing_period_start }} to {{ bill.billing_period_end }}</div>
-                  }
-                </td>
-                <td class="py-3.5 px-3">
-                  <div class="font-semibold text-slate-800 dark:text-slate-100">{{ bill.contractor_name || 'Subcontractor' }}</div>
-                  <div class="text-[11px] text-indigo-500 font-mono mt-0.5">{{ bill.work_order_no }} ({{ bill.project_name }})</div>
-                </td>
-                <td class="py-3.5 px-3 text-right font-mono font-bold text-slate-900 dark:text-white">
-                  BDT {{ bill.gross_work_certified_amount | number:'1.2-2' }}
-                </td>
-                <td class="py-3.5 px-3 text-right font-mono text-amber-600 dark:text-amber-400">
-                  -{{ bill.retention_money_deducted | number:'1.2-2' }}
-                  <span class="block text-[10px] text-slate-400 font-normal">({{ bill.retention_percent || 5 }}% DLP)</span>
-                </td>
-                <td class="py-3.5 px-3 text-right font-mono text-slate-600 dark:text-slate-300">
-                  -{{ (bill.advance_recovery_deducted + (bill.material_store_recovery_amount || 0)) | number:'1.2-2' }}
-                  <span class="block text-[10px] text-slate-400 font-normal">Store: {{ bill.material_store_recovery_amount || 0 | number:'1.0-0' }}</span>
-                </td>
-                <td class="py-3.5 px-3 text-right font-mono text-rose-500">
-                  -{{ (bill.tds_withheld_amount + bill.vds_withheld_amount) | number:'1.2-2' }}
-                  <span class="block text-[10px] text-slate-400 font-normal">TDS: {{ bill.tds_withheld_amount | number:'1.0-0' }} | VDS: {{ bill.vds_withheld_amount | number:'1.0-0' }}</span>
-                </td>
-                <td class="py-3.5 px-3 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400 text-sm">
-                  BDT {{ bill.net_payable_amount | number:'1.2-2' }}
-                </td>
-                <td class="py-3.5 px-4 text-center">
-                  <!-- Stepper dots for 4 tiers -->
-                  <div class="flex items-center justify-center gap-1.5">
-                    @for (step of (bill.approval_signature_chain || []); track step.role) {
-                      <div
-                        class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold"
-                        [class.bg-emerald-500]="step.status === 'APPROVED' || step.status === 'VERIFIED'"
-                        [class.text-white]="step.status === 'APPROVED' || step.status === 'VERIFIED'"
-                        [class.bg-amber-500]="step.status === 'PENDING' && bill.status !== 'ACCOUNTS_VOUCHER_POSTED'"
-                        [class.text-slate-900]="step.status === 'PENDING' && bill.status !== 'ACCOUNTS_VOUCHER_POSTED'"
-                        [class.bg-slate-200]="step.status === 'PENDING' && bill.status === 'ACCOUNTS_VOUCHER_POSTED'"
-                        [class.text-slate-500]="step.status === 'PENDING' && bill.status === 'ACCOUNTS_VOUCHER_POSTED'"
-                        [title]="step.title + ': ' + step.status + (step.signed_by ? ' by ' + step.signed_by : '')">
-                        {{ step.role === 'SITE_ENGINEER' ? 'SE' : step.role === 'QUANTITY_SURVEYOR' ? 'QS' : step.role === 'PROJECT_DIRECTOR' ? 'PD' : 'AC' }}
-                      </div>
-                    }
-                  </div>
-                  <span class="block text-[10px] mt-1 font-semibold text-slate-500">
-                    {{ formatStatus(bill.status) }}
+          <tbody class="divide-y divide-border bg-card">
+            @for (wo of workOrders(); track wo.id) {
+              <tr class="hover:bg-secondary/40 transition-colors">
+                <td class="px-4 py-3.5 font-bold font-mono text-primary">{{ wo.work_order_no }}</td>
+                <td class="px-4 py-3.5 font-medium text-foreground">{{ wo.contractor_name || 'Subcontractor #' + wo.contractor_id }}</td>
+                <td class="px-4 py-3.5 text-muted-foreground">{{ wo.project_name || 'Project #' + wo.project_id }}</td>
+                <td class="px-4 py-3.5">
+                  <span class="px-2 py-0.5 rounded text-[11px] bg-secondary text-foreground border border-border">
+                    {{ wo.contract_type }}
                   </span>
                 </td>
-                <td class="py-3.5 px-4 text-center">
-                  @if (bill.status === 'ACCOUNTS_VOUCHER_POSTED') {
-                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-mono font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                      ✓ {{ bill.accounts_journal_voucher_ref }}
-                    </span>
-                  } @else {
-                    <button
-                      (click)="openSignModal(bill)"
-                      class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition-colors cursor-pointer shadow-xs">
-                      Digital Sign
-                    </button>
-                  }
+                <td class="px-4 py-3.5 text-right font-mono font-bold text-foreground">
+                  BDT {{ wo.total_contract_value | number:'1.2-2' }}
+                </td>
+                <td class="px-4 py-3.5 text-center font-mono font-semibold text-amber-500">
+                  {{ wo.retention_money_percent }}%
+                </td>
+                <td class="px-4 py-3.5 text-center">
+                  <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                    {{ wo.status }}
+                  </span>
                 </td>
               </tr>
             } @empty {
               <tr>
-                <td colspan="9" class="py-12 text-center text-slate-400">
-                  No Running Account (RA) bills logged yet. Click "+ Prepare New RA Bill" to start.
+                <td colspan="7" class="px-4 py-12 text-center text-muted-foreground">
+                  No Subcontractor Work Orders found. Click "+ Issue Work Order" to create one.
                 </td>
               </tr>
             }
           </tbody>
         </table>
       </div>
-    </div>
-  }
+    }
 
-  <!-- TAB 2: JOINT MEASUREMENT SHEETS (JMS) -->
-  @if (currentTab() === 'JMS') {
-    <div class="space-y-4">
-      <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+    <!-- TAB 3: Joint Measurement Sheets Table -->
+    @if (currentTab() === 'JMS') {
+      <div class="overflow-x-auto border border-border rounded-xl">
         <table class="w-full text-left text-xs">
-          <thead class="bg-slate-50 dark:bg-slate-800/80 text-slate-500 uppercase border-b border-slate-200 dark:border-slate-800 font-semibold tracking-wider">
+          <thead class="bg-secondary/60 text-muted-foreground uppercase tracking-wider font-semibold border-b border-border">
             <tr>
-              <th class="py-3 px-4">JMS # & Date</th>
-              <th class="py-3 px-3">Location & Floor</th>
-              <th class="py-3 px-3">Trade Item</th>
-              <th class="py-3 px-3 text-right">Dimensions (L x B x D)</th>
-              <th class="py-3 px-3 text-right">Measured Qty</th>
-              <th class="py-3 px-3 text-right">Unit Rate</th>
-              <th class="py-3 px-3 text-right">Certified Amount</th>
-              <th class="py-3 px-4 text-center">Signoff Authorities</th>
+              <th class="px-4 py-3.5">JMS Sheet #</th>
+              <th class="px-4 py-3.5">Measurement Date</th>
+              <th class="px-4 py-3.5">Work Order #</th>
+              <th class="px-4 py-3.5 text-right">Certified Quantity</th>
+              <th class="px-4 py-3.5 text-right">Agreed Amount</th>
+              <th class="px-4 py-3.5 text-center">Status</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
-            @for (jms of jointMeasurements(); track jms.id) {
-              <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
-                <td class="py-3.5 px-4 font-mono">
-                  <div class="font-bold text-slate-900 dark:text-white">{{ jms.jms_number }}</div>
-                  <div class="text-[11px] text-slate-400 mt-0.5">{{ jms.measurement_date }}</div>
-                </td>
-                <td class="py-3.5 px-3 font-medium text-slate-800 dark:text-slate-200">
-                  {{ jms.location_floor }}
-                </td>
-                <td class="py-3.5 px-3">
-                  <div class="font-semibold text-slate-900 dark:text-white">{{ jms.trade_item }}</div>
-                  <div class="text-[11px] font-mono text-slate-400">UOM: {{ jms.unit_of_measure }}</div>
-                </td>
-                <td class="py-3.5 px-3 text-right font-mono text-slate-600 dark:text-slate-300">
-                  {{ jms.measured_length }}ft × {{ jms.measured_breadth }}ft
-                  @if (jms.measured_depth > 0) {
-                    × {{ jms.measured_depth }}ft
-                  }
-                </td>
-                <td class="py-3.5 px-3 text-right font-mono font-bold text-slate-800 dark:text-slate-200">
-                  {{ jms.measured_quantity | number:'1.2-2' }} {{ jms.unit_of_measure }}
-                </td>
-                <td class="py-3.5 px-3 text-right font-mono">
-                  BDT {{ jms.unit_rate | number:'1.2-2' }}
-                </td>
-                <td class="py-3.5 px-3 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                  BDT {{ jms.total_amount | number:'1.2-2' }}
-                </td>
-                <td class="py-3.5 px-4 text-center text-[11px]">
-                  <div class="text-slate-800 dark:text-slate-200 font-medium">✓ {{ jms.verified_by_site_engineer }}</div>
-                  <div class="text-slate-400 mt-0.5">Contr: {{ jms.subcontractor_representative }}</div>
+          <tbody class="divide-y divide-border bg-card">
+            @for (j of jointMeasurements(); track j.id) {
+              <tr class="hover:bg-secondary/40 transition-colors">
+                <td class="px-4 py-3.5 font-mono font-bold text-foreground">{{ j.jms_number }}</td>
+                <td class="px-4 py-3.5 text-muted-foreground">{{ j.measurement_date | date:'dd MMM yyyy' }}</td>
+                <td class="px-4 py-3.5 font-mono text-primary">WO #{{ j.work_order_id }}</td>
+                <td class="px-4 py-3.5 text-right font-mono">{{ j.measured_quantity }}</td>
+                <td class="px-4 py-3.5 text-right font-mono font-bold text-emerald-500">BDT {{ j.total_amount | number:'1.2-2' }}</td>
+                <td class="px-4 py-3.5 text-center">
+                  <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                    {{ j.status }}
+                  </span>
                 </td>
               </tr>
             } @empty {
               <tr>
-                <td colspan="8" class="py-12 text-center text-slate-400">
-                  No Joint Measurement Sheets recorded. Click "+ New Joint Measurement (JMS)" to add.
+                <td colspan="6" class="px-4 py-12 text-center text-muted-foreground">
+                  No Joint Measurement Sheets logged yet.
                 </td>
               </tr>
             }
           </tbody>
         </table>
       </div>
-    </div>
-  }
-
-  <!-- TAB 3: WORK ORDERS -->
-  @if (currentTab() === 'WORK_ORDERS') {
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      @for (wo of workOrders(); track wo.id) {
-        <div class="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/40 shadow-xs">
-          <div class="flex items-start justify-between gap-3">
-            <div>
-              <span class="text-xs font-mono font-bold px-2.5 py-1 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
-                {{ wo.work_order_no }}
-              </span>
-              <h3 class="text-base font-bold text-slate-900 dark:text-white mt-2">
-                {{ wo.contractor_name }}
-              </h3>
-              <p class="text-xs text-slate-400 mt-0.5">{{ wo.project_name }} | {{ wo.contract_type }}</p>
-            </div>
-            <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-600">
-              {{ wo.status }}
-            </span>
-          </div>
-
-          <div class="my-4 p-3 rounded-lg bg-slate-50 dark:bg-slate-900/60 grid grid-cols-3 gap-2 text-center text-xs">
-            <div>
-              <span class="text-slate-400 text-[11px] block">Contract Value</span>
-              <span class="font-bold text-slate-800 dark:text-slate-100 font-mono">BDT {{ wo.total_contract_value | number:'1.0-0' }}</span>
-            </div>
-            <div>
-              <span class="text-slate-400 text-[11px] block">Retention Money</span>
-              <span class="font-bold text-amber-600 font-mono">{{ wo.retention_money_percent }}%</span>
-            </div>
-            <div>
-              <span class="text-slate-400 text-[11px] block">DLP Warranty</span>
-              <span class="font-bold text-slate-800 dark:text-slate-100 font-mono">{{ wo.defect_liability_months }} Months</span>
-            </div>
-          </div>
-
-          <p class="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
-            Scope: {{ wo.scope_of_work || 'Civil construction & reinforcement execution.' }}
-          </p>
-        </div>
-      }
-    </div>
-  }
-</app-card-container>
-
-<!-- MODAL: PREPARE RA BILL -->
-@if (isCreateBillModalOpen()) {
-  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 overflow-y-auto">
-    <div class="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-2xl p-6 shadow-2xl border border-slate-200 dark:border-slate-700 max-h-[92vh] overflow-y-auto">
-      <div class="flex justify-between items-center pb-4 border-b border-slate-200 dark:border-slate-700">
-        <div>
-          <h3 class="text-base font-bold text-slate-900 dark:text-white">Prepare Contractor RA Bill</h3>
-          <p class="text-xs text-slate-400 mt-0.5">Automated statutory deduction formula & accounts integration</p>
-        </div>
-        <button (click)="closeCreateBillModal()" class="text-slate-400 hover:text-slate-600 cursor-pointer">&times;</button>
-      </div>
-
-      <form [formGroup]="billForm" (ngSubmit)="submitRABill()" class="space-y-4 mt-4">
-        <app-searchable-select
-          [options]="workOrderOptions"
-          [label]="'Subcontractor Work Order *'"
-          [required]="true"
-          formControlName="work_order_id">
-        </app-searchable-select>
-
-        <div class="grid grid-cols-2 gap-3">
-          <app-custom-input
-            label="RA Bill Number *"
-            [required]="true"
-            formControlName="ra_bill_number">
-          </app-custom-input>
-
-          <app-custom-input
-            label="Bill Date *"
-            type="date"
-            [required]="true"
-            formControlName="bill_date">
-          </app-custom-input>
-        </div>
-
-        <div class="grid grid-cols-2 gap-3">
-          <app-custom-input
-            label="Billing Period Start"
-            type="date"
-            formControlName="billing_period_start">
-          </app-custom-input>
-
-          <app-custom-input
-            label="Billing Period End"
-            type="date"
-            formControlName="billing_period_end">
-          </app-custom-input>
-        </div>
-
-        <app-custom-input
-          label="Gross Work Certified Amount (BDT) *"
-          type="number"
-          [required]="true"
-          formControlName="gross_work_certified_amount">
-        </app-custom-input>
-
-        <!-- Deductions Grid -->
-        <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 space-y-3">
-          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500">Statutory Deductions & Recoveries</h4>
-
-          <div class="grid grid-cols-2 gap-3">
-            <app-custom-input
-              label="Retention Money % (5% to 10%)"
-              type="number"
-              formControlName="retention_percent">
-            </app-custom-input>
-
-            <app-custom-input
-              label="Mobilization Advance Recovery (BDT)"
-              type="number"
-              formControlName="advance_recovery_deducted">
-            </app-custom-input>
-          </div>
-
-          <div class="grid grid-cols-3 gap-3">
-            <app-custom-input
-              label="Developer Store Recovery (Diesel/Steel/Cement)"
-              type="number"
-              formControlName="material_store_recovery_amount">
-            </app-custom-input>
-
-            <app-custom-input
-              label="Income Tax TDS Rate % (Sec 52)"
-              type="number"
-              formControlName="tds_rate">
-            </app-custom-input>
-
-            <app-custom-input
-              label="VDS Rate % (VAT Act 2012)"
-              type="number"
-              formControlName="vds_rate">
-            </app-custom-input>
-          </div>
-        </div>
-
-        <!-- Real-Time Calculation Preview -->
-        <div class="p-4 rounded-xl bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-900/60 text-xs space-y-1.5">
-          <div class="flex justify-between font-medium">
-            <span>Gross Certified Amount:</span>
-            <span class="font-mono">BDT {{ computedDeductions()().gross | number:'1.2-2' }}</span>
-          </div>
-          <div class="flex justify-between text-amber-600">
-            <span>Less: Retention Money:</span>
-            <span class="font-mono">-BDT {{ computedDeductions()().retAmt | number:'1.2-2' }}</span>
-          </div>
-          <div class="flex justify-between text-slate-600 dark:text-slate-400">
-            <span>Less: Advance Recovery:</span>
-            <span class="font-mono">-BDT {{ computedDeductions()().adv | number:'1.2-2' }}</span>
-          </div>
-          <div class="flex justify-between text-slate-600 dark:text-slate-400">
-            <span>Less: Store Material Recovery:</span>
-            <span class="font-mono">-BDT {{ computedDeductions()().store | number:'1.2-2' }}</span>
-          </div>
-          <div class="flex justify-between text-rose-500">
-            <span>Less: TDS & VDS Withholding:</span>
-            <span class="font-mono">-BDT {{ (computedDeductions()().tdsAmt + computedDeductions()().vdsAmt) | number:'1.2-2' }}</span>
-          </div>
-          <div class="pt-2 border-t border-indigo-200 dark:border-indigo-800 flex justify-between font-bold text-sm text-emerald-600 dark:text-emerald-400">
-            <span>Estimated Net Payable:</span>
-            <span class="font-mono">BDT {{ computedDeductions()().net | number:'1.2-2' }}</span>
-          </div>
-        </div>
-
-        <app-custom-textarea
-          label="Remarks / Reference JMS Sheets"
-          formControlName="remarks"
-          [rows]="2">
-        </app-custom-textarea>
-
-        <div class="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
-          <app-custom-button variant="secondary" (btnClick)="closeCreateBillModal()">Cancel</app-custom-button>
-          <app-custom-button variant="primary" type="submit" [disabled]="isSubmitting()">Submit RA Bill</app-custom-button>
-        </div>
-      </form>
-    </div>
-  </div>
-}
-
-<!-- MODAL: RECORD JOINT MEASUREMENT SHEET (JMS) -->
-@if (isCreateJMSModalOpen()) {
-  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 overflow-y-auto">
-    <div class="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-xl p-6 shadow-2xl border border-slate-200 dark:border-slate-700">
-      <div class="flex justify-between items-center pb-4 border-b border-slate-200 dark:border-slate-700">
-        <div>
-          <h3 class="text-base font-bold text-slate-900 dark:text-white">Record Joint Measurement Sheet (JMS)</h3>
-          <p class="text-xs text-slate-400 mt-0.5">Physical field dimensions verified jointly by Site Engineer & Contractor</p>
-        </div>
-        <button (click)="closeCreateJMSModal()" class="text-slate-400 hover:text-slate-600 cursor-pointer">&times;</button>
-      </div>
-
-      <form [formGroup]="jmsForm" (ngSubmit)="submitJMS()" class="space-y-4 mt-4">
-        <app-searchable-select
-          [options]="workOrderOptions"
-          [label]="'Contractor Work Order *'"
-          [required]="true"
-          formControlName="work_order_id">
-        </app-searchable-select>
-
-        <div class="grid grid-cols-2 gap-3">
-          <app-custom-input
-            label="JMS Number *"
-            [required]="true"
-            formControlName="jms_number">
-          </app-custom-input>
-
-          <app-custom-input
-            label="Measurement Date *"
-            type="date"
-            [required]="true"
-            formControlName="measurement_date">
-          </app-custom-input>
-        </div>
-
-        <div class="grid grid-cols-2 gap-3">
-          <app-custom-input
-            label="Location / Floor Structure *"
-            placeholder="e.g. Tower 1 - Floor 4 Beam & Slab B4-S4"
-            [required]="true"
-            formControlName="location_floor">
-          </app-custom-input>
-
-          <app-custom-input
-            label="Trade Item *"
-            placeholder="e.g. Shuttering, Centering & Reinforcement"
-            [required]="true"
-            formControlName="trade_item">
-          </app-custom-input>
-        </div>
-
-        <app-searchable-select
-          [options]="uomOptions"
-          [label]="'Unit of Measure (UOM) *'"
-          [allowCreateNew]="false"
-          formControlName="unit_of_measure">
-        </app-searchable-select>
-
-        <!-- Dimensional Inputs -->
-        <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 space-y-3">
-          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500">Dimensions Calculator (L × B × D)</h4>
-          <div class="grid grid-cols-3 gap-3">
-            <app-custom-input
-              label="Length (ft)"
-              type="number"
-              formControlName="measured_length"
-              (input)="calculateJMSQuantity()">
-            </app-custom-input>
-
-            <app-custom-input
-              label="Breadth (ft)"
-              type="number"
-              formControlName="measured_breadth"
-              (input)="calculateJMSQuantity()">
-            </app-custom-input>
-
-            <app-custom-input
-              label="Depth / Height (ft)"
-              type="number"
-              formControlName="measured_depth"
-              (input)="calculateJMSQuantity()">
-            </app-custom-input>
-          </div>
-
-          <div class="grid grid-cols-2 gap-3 pt-2">
-            <app-custom-input
-              label="Measured Total Quantity *"
-              type="number"
-              [required]="true"
-              formControlName="measured_quantity">
-            </app-custom-input>
-
-            <app-custom-input
-              label="Contract Unit Rate (BDT) *"
-              type="number"
-              [required]="true"
-              formControlName="unit_rate">
-            </app-custom-input>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-3">
-          <app-custom-input
-            label="Verified by Site Engineer *"
-            [required]="true"
-            formControlName="verified_by_site_engineer">
-          </app-custom-input>
-
-          <app-custom-input
-            label="Subcontractor Representative *"
-            [required]="true"
-            formControlName="subcontractor_representative">
-          </app-custom-input>
-        </div>
-
-        <div class="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
-          <app-custom-button variant="secondary" (btnClick)="closeCreateJMSModal()">Cancel</app-custom-button>
-          <app-custom-button variant="primary" type="submit" [disabled]="isSubmitting()">Save Joint Measurement</app-custom-button>
-        </div>
-      </form>
-    </div>
-  </div>
-}
-
-<!-- MODAL: DIGITAL SIGNATURE & APPROVAL CHAIN -->
-@if (isSignModalOpen()) {
-  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-    <div class="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl border border-slate-200 dark:border-slate-700">
-      <div class="flex justify-between items-center pb-3 border-b border-slate-200 dark:border-slate-700">
-        <div>
-          <h3 class="text-base font-bold text-slate-900 dark:text-white">Digital Signoff & Approval</h3>
-          <p class="text-xs text-slate-400 mt-0.5">{{ selectedBill()?.ra_bill_number }} - BDT {{ selectedBill()?.net_payable_amount | number:'1.2-2' }}</p>
-        </div>
-        <button (click)="closeSignModal()" class="text-slate-400 hover:text-slate-600 cursor-pointer">&times;</button>
-      </div>
-
-      <form [formGroup]="signForm" (ngSubmit)="submitSignature()" class="space-y-4 mt-4">
-        <app-searchable-select
-          [options]="roleOptions"
-          [label]="'Signatory Role *'"
-          [allowCreateNew]="false"
-          formControlName="role">
-        </app-searchable-select>
-
-        <app-custom-input
-          label="Signatory Officer Name *"
-          [required]="true"
-          formControlName="signatory_name"
-          placeholder="e.g. Engr. Mostofa Kamal (PD)">
-        </app-custom-input>
-
-        <app-custom-textarea
-          label="Verification / Approval Notes"
-          formControlName="approval_notes"
-          [rows]="2"
-          placeholder="Notes on quantity reconciliation, concrete strength checks, etc.">
-        </app-custom-textarea>
-
-        <div class="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
-          <app-custom-button variant="secondary" (btnClick)="closeSignModal()">Cancel</app-custom-button>
-          <app-custom-button variant="primary" type="submit" [disabled]="isSubmitting()">Apply Digital Signoff</app-custom-button>
-        </div>
-      </form>
-    </div>
-  </div>
-}
-
-<!-- MODAL: ISSUE WORK ORDER -->
-@if (isCreateWOModalOpen()) {
-  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 overflow-y-auto">
-    <div class="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-lg p-6 shadow-2xl border border-slate-200 dark:border-slate-700">
-      <div class="flex justify-between items-center pb-4 border-b border-slate-200 dark:border-slate-700">
-        <div>
-          <h3 class="text-base font-bold text-slate-900 dark:text-white">Issue Subcontractor Work Order</h3>
-          <p class="text-xs text-slate-400 mt-0.5">Enforces statutory 5% to 10% retention and 12-month DLP warranty</p>
-        </div>
-        <button (click)="closeCreateWOModal()" class="text-slate-400 hover:text-slate-600 cursor-pointer">&times;</button>
-      </div>
-
-      <form [formGroup]="woForm" (ngSubmit)="submitWorkOrder()" class="space-y-4 mt-4">
-        <app-searchable-select
-          [options]="projectOptions"
-          [label]="'Project *'"
-          [required]="true"
-          formControlName="project_id">
-        </app-searchable-select>
-
-        <app-searchable-select
-          [options]="contractorOptions"
-          [label]="'Subcontractor Trade Company *'"
-          [required]="true"
-          formControlName="contractor_id">
-        </app-searchable-select>
-
-        <app-searchable-select
-          [options]="contractTypeOptions"
-          [label]="'Trade Contract Scope *'"
-          [allowCreateNew]="false"
-          formControlName="contract_type">
-        </app-searchable-select>
-
-        <app-custom-input
-          label="Total Contract Value (BDT) *"
-          type="number"
-          [required]="true"
-          formControlName="total_contract_value">
-        </app-custom-input>
-
-        <div class="grid grid-cols-2 gap-3">
-          <app-custom-input
-            label="Retention Money %"
-            type="number"
-            formControlName="retention_money_percent">
-          </app-custom-input>
-
-          <app-custom-input
-            label="Defect Liability Period (Months)"
-            type="number"
-            formControlName="defect_liability_months">
-          </app-custom-input>
-        </div>
-
-        <app-custom-textarea
-          label="Scope of Work"
-          formControlName="scope_of_work"
-          [rows]="2">
-        </app-custom-textarea>
-
-        <div class="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
-          <app-custom-button variant="secondary" (btnClick)="closeCreateWOModal()">Cancel</app-custom-button>
-          <app-custom-button variant="primary" type="submit" [disabled]="isSubmitting()">Issue Work Order</app-custom-button>
-        </div>
-      </form>
-    </div>
-  </div>
-}
+    }
+  </app-card-container>
+</div>

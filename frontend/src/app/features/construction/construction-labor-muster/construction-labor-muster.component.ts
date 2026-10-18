@@ -1,11 +1,11 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
 import { ConstructionService } from '../../../core/services/construction.service';
-import { Subcontractor, DPRReport } from '../../../core/models/construction.model';
+import { Subcontractor, LaborMuster } from '../../../core/models/construction.model';
 import {
   CardContainerComponent,
-  CustomInputComponent,
   CustomButtonComponent,
   SearchableSelectComponent
 } from '../../../shared/components';
@@ -16,9 +16,8 @@ import {
   imports: [
     CommonModule,
     FormsModule,
-    ReactiveFormsModule,
+    RouterLink,
     CardContainerComponent,
-    CustomInputComponent,
     CustomButtonComponent,
     SearchableSelectComponent
   ],
@@ -26,95 +25,122 @@ import {
 })
 export class ConstructionLaborMusterComponent implements OnInit {
   private constructionService = inject(ConstructionService);
-  private fb = inject(FormBuilder);
+  private router = inject(Router);
 
   contractors = signal<Subcontractor[]>([]);
-  dprReports = signal<DPRReport[]>([]);
+  laborEntries = signal<LaborMuster[]>([]);
   isLoading = signal<boolean>(false);
-  isSubmitting = signal<boolean>(false);
-  isContractorModalOpen = signal<boolean>(false);
 
-  contractorForm: FormGroup = this.fb.group({
-    company_name: ['', Validators.required],
-    trade_specialization: ['CIVIL_STRUCTURE', Validators.required],
-    contact_person: ['', Validators.required],
-    primary_phone: ['', [Validators.required, Validators.pattern(/^\+?[0-9]{10,15}$/)]],
-    tin_number: [''],
-    bin_number: ['']
-  });
+  // Filters
+  searchQuery = signal<string>('');
+  selectedContractorId = signal<number | null>(null);
 
-  tradeOptions = [
-    { value: 'CIVIL_STRUCTURE', label: 'Civil Super-Structure (কংক্রিট ও কাঠামোগত নির্মাণ)' },
-    { value: 'ROD_BINDING', label: 'Steel Reinforcement / Rod Binding (রড বাইন্ডিং)' },
-    { value: 'SANITARY_PLUMBING', label: 'Sanitary & Plumbing (প্লাম্বিং ও পাইপলাইন)' },
-    { value: 'ELECTRICAL', label: 'Electrical Wiring & Substation (ইলেকট্রিক্যাল)' },
-    { value: 'TILES_MASONRY', label: 'Tiles, Marble & Masonry (টাইলস ও রাজমিস্ত্রি)' }
-  ];
+  // Pagination
+  currentPage = signal<number>(1);
+  pageSize = signal<number>(10);
+  totalRecords = signal<number>(0);
+
+  contractorOptions: { value: any; label: string }[] = [];
 
   ngOnInit(): void {
-    this.loadData();
+    this.loadContractors();
+    this.loadLaborMuster();
   }
 
-  loadData(): void {
-    this.isLoading.set(true);
+  loadContractors(): void {
     this.constructionService.getContractors().subscribe({
-      next: (c) => this.contractors.set(c),
-      error: () => {}
+      next: (data) => {
+        this.contractors.set(data);
+        this.contractorOptions = [
+          { value: null, label: 'All Subcontractors' },
+          ...data.map(c => ({
+            value: c.id,
+            label: `${c.company_name} (${c.contractor_code})`
+          }))
+        ];
+      }
     });
+  }
 
-    this.constructionService.getDPRReports().subscribe({
-      next: (dprs) => {
-        this.dprReports.set(dprs);
+  loadLaborMuster(): void {
+    this.isLoading.set(true);
+    const offset = (this.currentPage() - 1) * this.pageSize();
+    const filters: any = {
+      limit: this.pageSize(),
+      offset: offset
+    };
+    if (this.selectedContractorId()) filters.contractor_id = this.selectedContractorId();
+    if (this.searchQuery().trim()) filters.search = this.searchQuery().trim();
+
+    this.constructionService.getLaborMusterList(filters).subscribe({
+      next: (entries) => {
+        this.laborEntries.set(entries);
+        this.totalRecords.set(entries.length < this.pageSize() && this.currentPage() === 1 ? entries.length : 100);
         this.isLoading.set(false);
       },
       error: () => this.isLoading.set(false)
     });
   }
 
-  // Flattened labor entries across all DPRs
-  getAllLaborEntries() {
-    const list: any[] = [];
-    for (const d of this.dprReports()) {
-      for (const l of d.labor_entries) {
-        list.push({
-          ...l,
-          report_date: d.report_date,
-          project_name: d.project_name
-        });
-      }
+  onContractorFilter(contractorId: any): void {
+    this.selectedContractorId.set(contractorId ? Number(contractorId) : null);
+    this.currentPage.set(1);
+    this.loadLaborMuster();
+  }
+
+  onSearch(): void {
+    this.currentPage.set(1);
+    this.loadLaborMuster();
+  }
+
+  clearFilters(): void {
+    this.selectedContractorId.set(null);
+    this.searchQuery.set('');
+    this.currentPage.set(1);
+    this.loadLaborMuster();
+  }
+
+  nextPage(): void {
+    this.currentPage.update(p => p + 1);
+    this.loadLaborMuster();
+  }
+
+  prevPage(): void {
+    if (this.currentPage() > 1) {
+      this.currentPage.update(p => p - 1);
+      this.loadLaborMuster();
     }
-    return list;
   }
 
-  openContractorModal(): void {
-    this.contractorForm.reset({
-      company_name: '',
-      trade_specialization: 'CIVIL_STRUCTURE',
-      contact_person: '',
-      primary_phone: '',
-      tin_number: '',
-      bin_number: ''
-    });
-    this.isContractorModalOpen.set(true);
+  navigateToEnlistContractor(): void {
+    this.router.navigate(['/construction/contractors/create']);
   }
 
-  closeContractorModal(): void {
-    this.isContractorModalOpen.set(false);
+  navigateToEditContractor(id: number): void {
+    this.router.navigate(['/construction/contractors/edit', id]);
   }
 
-  submitContractor(): void {
-    if (this.contractorForm.invalid) return;
-    this.isSubmitting.set(true);
-    this.constructionService.createContractor(this.contractorForm.value).subscribe({
-      next: (created) => {
-        this.contractors.update(list => [...list, created]);
-        this.isSubmitting.set(false);
-        this.closeContractorModal();
-      },
-      error: (err) => {
-        alert(err?.error?.detail || 'Contractor registration failed');
-        this.isSubmitting.set(false);
-      }
-    });
+  navigateToCreateMuster(): void {
+    this.router.navigate(['/construction/labor-muster/create']);
+  }
+
+  navigateToEditMuster(id: number): void {
+    this.router.navigate(['/construction/labor-muster/edit', id]);
+  }
+
+  deleteMuster(id: number): void {
+    if (confirm(`Delete labor muster record #${id}?`)) {
+      this.constructionService.deleteLaborMuster(id).subscribe({
+        next: () => this.loadLaborMuster()
+      });
+    }
+  }
+
+  getTotalWorkers(): number {
+    return this.laborEntries().reduce((acc, curr) => acc + (curr.worker_count || 0), 0);
+  }
+
+  getTotalWage(): number {
+    return this.laborEntries().reduce((acc, curr) => acc + (curr.total_wage || 0), 0);
   }
 }

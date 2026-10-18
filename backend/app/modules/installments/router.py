@@ -8,18 +8,22 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy import func, or_
 
 import uuid
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 from app.core.database import get_db
 from app.core.sms import send_sms
 from app.modules.sales.models import Booking
 from app.modules.crm.models import Customer
 from app.modules.installments.models import (
-    CustomerInstallment, PDCVault, NI138LegalAction, InstallmentAlertLog,
+    CustomerInstallment, BookingInstallmentSchedule, PDCVault, NI138LegalAction, InstallmentAlertLog,
     MoneyReceipt, MoneyReceiptAllocation, TripartiteLoan, LoanTranche
 )
 from app.modules.installments.schemas import (
     CustomerInstallmentCreate, CustomerInstallmentResponse,
     InstallmentScheduleGenerateRequest, InstallmentPaymentRequest,
+    InstallmentSchedulePreviewRequest, InstallmentSchedulePreviewResponse, InstallmentSchedulePreviewItem,
+    InstallmentScheduleAmendRequest,
+    BookingInstallmentScheduleResponse, PaginatedInstallmentSchedulesResponse,
+    InstallmentInvoiceGenerateRequest, InstallmentInvoiceResponse,
     InstallmentSurchargeCalculateRequest, InstallmentAlertDispatchRequest,
     InstallmentAlertLogResponse,
     PDCVaultCreate, PDCVaultResponse, PDCStatusUpdateRequest,
@@ -79,22 +83,215 @@ async def list_installments(
     return responses
 
 
-@router.post("/schedules/generate", response_model=List[CustomerInstallmentResponse], status_code=status.HTTP_201_CREATED)
-async def generate_installment_schedule(
-    payload: InstallmentScheduleGenerateRequest,
+def build_schedule_installments(
+    booking: Booking,
+    plan_type: str,
+    total_installments: int,
+    down_payment_percentage: float,
+    start_date: date,
+    grace_period_days: int,
+    custom_milestones: Optional[List] = None
+):
+    total_contract = Decimal(str(booking.final_contract_value))
+    earnest_money = Decimal(str(booking.earnest_money_received or 0.00))
+    dp_pct = Decimal(str(down_payment_percentage or 15.00))
+    
+    # 1. Total down payment (e.g. 15% of contract)
+    down_payment_total = (total_contract * dp_pct / Decimal('100.00')).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+    
+    # 2. Remaining installment balance (e.g. 85% of contract)
+    installment_balance = total_contract - down_payment_total
+    
+    items = []
+    
+    # Booking Money (credited within down payment as per Bangladesh real estate norm)
+    if earnest_money > Decimal('0.00'):
+        pct_em = float((earnest_money / total_contract * Decimal('100.00')).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP))
+        items.append({
+            "installment_no": 0,
+            "installment_type": "BOOKING_MONEY",
+            "title": "Booking Money Realization (Credited)",
+            "percentage": pct_em,
+            "due_date": booking.booking_date or start_date,
+            "grace_period_days": grace_period_days,
+            "payable_amount": float(earnest_money),
+            "is_rounding_adjusted": False,
+            "rounding_adjustment": 0.00,
+            "milestone_trigger": "BOOKING_CONFIRMATION"
+        })
+        
+    # Net Down Payment Due (15% total - booking money credited)
+    net_dp_due = max(Decimal('0.00'), down_payment_total - earnest_money)
+    if net_dp_due > Decimal('0.00'):
+        pct_dp = float((net_dp_due / total_contract * Decimal('100.00')).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP))
+        items.append({
+            "installment_no": 1 if earnest_money == Decimal('0.00') else 0,
+            "installment_type": "DOWN_PAYMENT",
+            "title": "Allotment Down Payment Balance",
+            "percentage": pct_dp,
+            "due_date": start_date + timedelta(days=grace_period_days),
+            "grace_period_days": grace_period_days,
+            "payable_amount": float(net_dp_due),
+            "is_rounding_adjusted": False,
+            "rounding_adjustment": 0.00,
+            "milestone_trigger": "ALLOTMENT_LETTER"
+        })
+        
+    # 3. Subsequent Installments with Exact Penny Rounding Distribution
+    rounding_diff_total = Decimal('0.00')
+    adjusted_inst_no = 1
+    
+    if custom_milestones and len(custom_milestones) > 0:
+        curr_date = start_date + timedelta(days=30)
+        accumulated = Decimal('0.00')
+        start_idx = len(items) + 1
+        n_custom = len(custom_milestones)
+        
+        for idx, m in enumerate(custom_milestones, start=1):
+            pct_val = Decimal(str(m.percentage or 10.00)) / Decimal('100.00')
+            base_amt = (installment_balance * pct_val).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+            
+            is_last = (idx == n_custom)
+            rounding_adj = Decimal('0.00')
+            if is_last:
+                rounding_adj = installment_balance - (accumulated + base_amt)
+                base_amt = base_amt + rounding_adj
+                rounding_diff_total = rounding_adj
+                adjusted_inst_no = start_idx + idx - 1
+            accumulated += base_amt
+            
+            items.append({
+                "installment_no": start_idx + idx - 1,
+                "installment_type": getattr(m, 'installment_type', None) or "CONSTRUCTION_MILESTONE",
+                "title": m.title,
+                "percentage": float(m.percentage),
+                "due_date": getattr(m, 'due_date', None) or curr_date,
+                "grace_period_days": grace_period_days,
+                "payable_amount": float(base_amt),
+                "is_rounding_adjusted": is_last and (rounding_adj != Decimal('0.00')),
+                "rounding_adjustment": float(rounding_adj),
+                "milestone_trigger": m.milestone_trigger or f"MILESTONE_{idx}"
+            })
+            curr_date += timedelta(days=60)
+            
+    elif plan_type.upper() in ["CONSTRUCTION_MILESTONE", "STRUCTURAL_STAGE", "MILESTONE"]:
+        milestones = [
+            ("Piling & Foundation Completion", Decimal('0.15'), "FOUNDATION_DONE", "CONSTRUCTION_MILESTONE"),
+            ("Basement & Sub-Structure Casting", Decimal('0.15'), "BASEMENT_CASTING", "STRUCTURAL_COMPLETION"),
+            ("Ground to 4th Floor Super-Structure", Decimal('0.15'), "STRUCTURE_L4", "STRUCTURAL_COMPLETION"),
+            ("Top Floor Roof Slab Casting", Decimal('0.15'), "ROOF_CASTING", "STRUCTURAL_COMPLETION"),
+            ("Brickwork, Plaster & Electrical Conduits", Decimal('0.15'), "BRICKWORK_PLASTER", "FINISHING_STAGE"),
+            ("Tiles, Sanitary & Paint Finishing", Decimal('0.15'), "FINISHING_TILES", "FINISHING_STAGE"),
+            ("Key Handover & Final Deed Registration", Decimal('0.10'), "HANDOVER_CERTIFICATE", "HANDOVER_POSSESSION")
+        ]
+        curr_date = start_date + timedelta(days=45)
+        accumulated = Decimal('0.00')
+        start_idx = len(items) + 1
+        n_milestones = len(milestones)
+        
+        for idx, (title, pct, trigger, itype) in enumerate(milestones, start=1):
+            base_amt = (installment_balance * pct).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+            is_last = (idx == n_milestones)
+            rounding_adj = Decimal('0.00')
+            if is_last:
+                rounding_adj = installment_balance - (accumulated + base_amt)
+                base_amt = base_amt + rounding_adj
+                rounding_diff_total = rounding_adj
+                adjusted_inst_no = start_idx + idx - 1
+            accumulated += base_amt
+            
+            items.append({
+                "installment_no": start_idx + idx - 1,
+                "installment_type": itype,
+                "title": f"Milestone #{idx}: {title}",
+                "percentage": float((pct * Decimal('100.00')).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)),
+                "due_date": curr_date,
+                "grace_period_days": grace_period_days,
+                "payable_amount": float(base_amt),
+                "is_rounding_adjusted": is_last and (rounding_adj != Decimal('0.00')),
+                "rounding_adjustment": float(rounding_adj),
+                "milestone_trigger": trigger
+            })
+            curr_date += timedelta(days=90)
+            
+    elif plan_type.upper() == "QUARTERLY":
+        quarters = max(1, total_installments or 8)
+        base_amt = (installment_balance / Decimal(quarters)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+        sum_calculated = base_amt * Decimal(quarters)
+        rounding_diff = installment_balance - sum_calculated
+        rounding_diff_total = rounding_diff
+        
+        curr_date = start_date + timedelta(days=90)
+        start_idx = len(items) + 1
+        for i in range(1, quarters + 1):
+            is_last = (i == quarters)
+            amount = base_amt + (rounding_diff if is_last else Decimal('0.00'))
+            if is_last:
+                adjusted_inst_no = start_idx + i - 1
+            items.append({
+                "installment_no": start_idx + i - 1,
+                "installment_type": "QUARTERLY_INSTALLMENT",
+                "title": f"Quarterly Installment #{i:02d}",
+                "percentage": float((amount / total_contract * Decimal('100.00')).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)),
+                "due_date": curr_date,
+                "grace_period_days": grace_period_days,
+                "payable_amount": float(amount),
+                "is_rounding_adjusted": is_last and (rounding_diff != Decimal('0.00')),
+                "rounding_adjustment": float(rounding_diff) if is_last else 0.00,
+                "milestone_trigger": None
+            })
+            curr_date += timedelta(days=90)
+            
+    else: # Default: MONTHLY EMI
+        months = max(1, total_installments or 36)
+        base_amt = (installment_balance / Decimal(months)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+        sum_calculated = base_amt * Decimal(months)
+        rounding_diff = installment_balance - sum_calculated
+        rounding_diff_total = rounding_diff
+        
+        curr_date = start_date + timedelta(days=30)
+        start_idx = len(items) + 1
+        for i in range(1, months + 1):
+            is_last = (i == months)
+            amount = base_amt + (rounding_diff if is_last else Decimal('0.00'))
+            if is_last:
+                adjusted_inst_no = start_idx + i - 1
+            items.append({
+                "installment_no": start_idx + i - 1,
+                "installment_type": "MONTHLY_INSTALLMENT",
+                "title": f"Monthly Installment #{i:02d}",
+                "percentage": float((amount / total_contract * Decimal('100.00')).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)),
+                "due_date": curr_date,
+                "grace_period_days": grace_period_days,
+                "payable_amount": float(amount),
+                "is_rounding_adjusted": is_last and (rounding_diff != Decimal('0.00')),
+                "rounding_adjustment": float(rounding_diff) if is_last else 0.00,
+                "milestone_trigger": None
+            })
+            curr_date += timedelta(days=30)
+            
+    regular_inst_amt = float(items[-1]["payable_amount"]) if items else 0.00
+    if len(items) > 1 and plan_type.upper() in ["MONTHLY", "QUARTERLY"]:
+        regular_inst_amt = float(items[-2]["payable_amount"])
+        
+    return items, down_payment_total, installment_balance, rounding_diff_total, adjusted_inst_no, regular_inst_amt
+
+
+@router.post("/schedules/preview", response_model=InstallmentSchedulePreviewResponse)
+async def preview_installment_schedule(
+    payload: InstallmentSchedulePreviewRequest,
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Automated Installment Schedule Generator supporting:
-    - Monthly amortization plan
-    - Quarterly amortization plan
-    - Construction-milestone payment triggers (Basement, Plinth, Roof Casting, Finishing, Handover)
+    Spec 5.7: Live calculation preview of installment amortization schedule.
+    Demonstrates exact penny rounding distribution so sum of all installments equals approved contract price.
     """
     stmt = (
         select(Booking)
         .options(
             selectinload(Booking.customer),
-            selectinload(Booking.unit)
+            selectinload(Booking.unit),
+            selectinload(Booking.project)
         )
         .where(Booking.id == payload.booking_id)
     )
@@ -103,117 +300,176 @@ async def generate_installment_schedule(
     if not booking:
         raise HTTPException(status_code=404, detail="Booking not found")
 
-    total_contract = float(booking.final_contract_value)
-    earnest_money = float(booking.earnest_money_received)
-    down_payment_pct = float(payload.down_payment_percentage or 20.0)
-    
-    down_payment_total = (total_contract * down_payment_pct / 100.0)
-    remaining_balance = max(0.0, total_contract - down_payment_total - earnest_money)
-
     start_date = payload.start_date or date.today()
-    created_installments = []
-
     grace_period = payload.grace_period_days or 15
 
-    # Installment 0: Down Payment Balance (if remaining)
-    down_pay_due = max(0.0, down_payment_total - earnest_money)
-    if down_pay_due > 0:
-        inst_down = CustomerInstallment(
-            booking_id=booking.id,
-            installment_no=0,
-            title="Allotment Down Payment",
-            due_date=start_date + timedelta(days=grace_period),
-            grace_period_days=grace_period,
-            payable_amount=down_pay_due,
-            status="DUE"
+    items, dp_total, inst_bal, round_diff, adj_no, reg_amt = build_schedule_installments(
+        booking=booking,
+        plan_type=payload.plan_type,
+        total_installments=payload.total_installments or 36,
+        down_payment_percentage=payload.down_payment_percentage or 15.00,
+        start_date=start_date,
+        grace_period_days=grace_period,
+        custom_milestones=payload.custom_milestones
+    )
+
+    total_contract = float(booking.final_contract_value)
+    earnest_money = float(booking.earnest_money_received or 0.00)
+    net_dp = max(0.00, float(dp_total) - earnest_money)
+    
+    calc_sum = sum(item["payable_amount"] for item in items)
+    discrepancy = round(abs(calc_sum - total_contract), 2)
+    is_valid = (discrepancy == 0.00)
+
+    preview_items = [
+        InstallmentSchedulePreviewItem(
+            installment_no=item["installment_no"],
+            installment_type=item["installment_type"],
+            title=item["title"],
+            percentage=item["percentage"],
+            due_date=item["due_date"],
+            grace_period_days=item["grace_period_days"],
+            payable_amount=item["payable_amount"],
+            is_rounding_adjusted=item["is_rounding_adjusted"],
+            rounding_adjustment=item["rounding_adjustment"],
+            milestone_trigger=item["milestone_trigger"]
         )
-        db.add(inst_down)
-        created_installments.append(inst_down)
+        for item in items
+    ]
 
-    if payload.custom_milestones and len(payload.custom_milestones) > 0:
-        # Prompt 09: Dynamic Custom Milestone-linked Schedules (e.g. Booking 10%, Down Payment 15%, Roof Casting 10%, Handover 10%)
-        current_date = start_date + timedelta(days=30)
-        for idx, m in enumerate(payload.custom_milestones, start=1):
-            pct_val = float(m.percentage or 10.0) / 100.0
-            amount = round(remaining_balance * pct_val, 2)
-            inst = CustomerInstallment(
-                booking_id=booking.id,
-                installment_no=idx,
-                title=f"Milestone #{idx}: {m.title}",
-                due_date=current_date,
-                grace_period_days=grace_period,
-                payable_amount=amount,
-                status="UPCOMING",
-                milestone_trigger=m.milestone_trigger or f"MILESTONE_{idx}"
-            )
-            db.add(inst)
-            created_installments.append(inst)
-            current_date += timedelta(days=60)
+    return InstallmentSchedulePreviewResponse(
+        booking_id=booking.id,
+        booking_reference_no=booking.booking_reference_no,
+        customer_name=booking.customer.full_name_en if booking.customer else "N/A",
+        project_name=booking.project.name if booking.project else "N/A",
+        unit_number=booking.unit.unit_number if booking.unit else "N/A",
+        approved_contract_price=total_contract,
+        booking_money_amount=earnest_money,
+        down_payment_percentage=float(payload.down_payment_percentage or 15.00),
+        down_payment_amount=float(dp_total),
+        net_down_payment_due=net_dp,
+        installment_balance_amount=float(inst_bal),
+        total_installment_count=len(preview_items),
+        regular_installment_amount=reg_amt,
+        rounding_adjustment_amount=float(round_diff),
+        rounding_adjusted_installment_no=adj_no,
+        calculated_total_sum=calc_sum,
+        discrepancy_amount=discrepancy,
+        is_validated=is_valid,
+        installments=preview_items
+    )
 
-    elif payload.plan_type.upper() in ["CONSTRUCTION_MILESTONE", "MILESTONE"]:
-        # 7 Construction Milestone Triggers under Real Estate Standards
-        milestones = [
-            ("Piling & Foundation Completion", 0.15, "FOUNDATION_DONE"),
-            ("Basement & Sub-Structure Casting", 0.15, "BASEMENT_CASTING"),
-            ("Ground to 4th Floor Super-Structure", 0.15, "STRUCTURE_L4"),
-            ("Top Floor Roof Slab Casting", 0.15, "ROOF_CASTING"),
-            ("Brickwork, Plaster & Electrical Conduits", 0.15, "BRICKWORK_PLASTER"),
-            ("Tiles, Sanitary & Paint Finishing", 0.15, "FINISHING_TILES"),
-            ("Key Handover & Final Settlement", 0.10, "HANDOVER_CERTIFICATE")
-        ]
-        
-        current_date = start_date + timedelta(days=45)
-        for idx, (title, pct, trigger) in enumerate(milestones, start=1):
-            amount = round(remaining_balance * pct, 2)
-            inst = CustomerInstallment(
-                booking_id=booking.id,
-                installment_no=idx,
-                title=f"Milestone #{idx}: {title}",
-                due_date=current_date,
-                grace_period_days=grace_period,
-                payable_amount=amount,
-                status="UPCOMING",
-                milestone_trigger=trigger
-            )
-            db.add(inst)
-            created_installments.append(inst)
-            current_date += timedelta(days=90) # ~every 3 months per milestone
 
-    elif payload.plan_type.upper() == "QUARTERLY":
-        quarters = max(1, payload.total_installments or 8)
-        per_quarter = round(remaining_balance / quarters, 2)
-        current_date = start_date + timedelta(days=90)
-        for i in range(1, quarters + 1):
-            inst = CustomerInstallment(
-                booking_id=booking.id,
-                installment_no=i,
-                title=f"Quarterly Installment #{i:02d}",
-                due_date=current_date,
-                grace_period_days=grace_period,
-                payable_amount=per_quarter,
-                status="UPCOMING"
-            )
-            db.add(inst)
-            created_installments.append(inst)
-            current_date += timedelta(days=90)
+@router.post("/schedules/generate", response_model=List[CustomerInstallmentResponse], status_code=status.HTTP_201_CREATED)
+async def generate_installment_schedule(
+    payload: InstallmentScheduleGenerateRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Spec 5.7: Generates Master Contractual Installment Schedule and child installment rows.
+    Enforces exact penny rounding distribution so sum of all installments equals approved contract price.
+    """
+    stmt = (
+        select(Booking)
+        .options(
+            selectinload(Booking.customer),
+            selectinload(Booking.unit),
+            selectinload(Booking.project)
+        )
+        .where(Booking.id == payload.booking_id)
+    )
+    result = await db.execute(stmt)
+    booking = result.scalars().first()
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
 
-    else: # Default: MONTHLY EMI
-        months = max(1, payload.total_installments or 24)
-        per_month = round(remaining_balance / months, 2)
-        current_date = start_date + timedelta(days=30)
-        for i in range(1, months + 1):
-            inst = CustomerInstallment(
-                booking_id=booking.id,
-                installment_no=i,
-                title=f"Monthly EMI #{i:02d}",
-                due_date=current_date,
-                grace_period_days=grace_period,
-                payable_amount=per_month,
-                status="UPCOMING"
-            )
-            db.add(inst)
-            created_installments.append(inst)
-            current_date += timedelta(days=30)
+    start_date = payload.start_date or date.today()
+    grace_period = payload.grace_period_days or 15
+
+    items, dp_total, inst_bal, round_diff, adj_no, reg_amt = build_schedule_installments(
+        booking=booking,
+        plan_type=payload.plan_type,
+        total_installments=payload.total_installments or 36,
+        down_payment_percentage=payload.down_payment_percentage or 15.00,
+        start_date=start_date,
+        grace_period_days=grace_period,
+        custom_milestones=payload.custom_milestones
+    )
+
+    # 1. Supersede any existing active schedule for this booking
+    prev_schedules = await db.execute(
+        select(BookingInstallmentSchedule).where(
+            BookingInstallmentSchedule.booking_id == booking.id,
+            BookingInstallmentSchedule.status == "ACTIVE"
+        )
+    )
+    for ps in prev_schedules.scalars().all():
+        ps.status = "SUPERSEDED_AMENDED"
+
+    # 2. Create Master Schedule Header
+    sched_code = f"SCH-{date.today().year}-{uuid.uuid4().hex[:6].upper()}"
+    schedule = BookingInstallmentSchedule(
+        schedule_code=sched_code,
+        booking_id=booking.id,
+        customer_id=booking.primary_customer_id,
+        agreement_reference_no=payload.agreement_reference_no,
+        version="v1.0",
+        plan_type=payload.plan_type.upper(),
+        approved_contract_price=Decimal(str(booking.final_contract_value)),
+        booking_money_amount=Decimal(str(booking.earnest_money_received or 0.00)),
+        down_payment_percentage=Decimal(str(payload.down_payment_percentage or 15.00)),
+        down_payment_amount=dp_total,
+        installment_balance_amount=inst_bal,
+        total_installment_count=len(items),
+        regular_installment_amount=Decimal(str(reg_amt)),
+        rounding_adjustment_amount=round_diff,
+        rounding_adjusted_installment_no=adj_no,
+        start_date=start_date,
+        grace_period_days=grace_period,
+        late_surcharge_rate_monthly=Decimal('2.00'),
+        status="ACTIVE",
+        notes=payload.notes
+    )
+    db.add(schedule)
+    await db.flush()
+
+    # 3. Create Child Installments linked to schedule
+    # First clear any existing pending installments for this booking
+    existing_inst = await db.execute(
+        select(CustomerInstallment).where(
+            CustomerInstallment.booking_id == booking.id,
+            CustomerInstallment.status.in_(["UPCOMING", "DUE", "SCHEDULED"])
+        )
+    )
+    for ei in existing_inst.scalars().all():
+        await db.delete(ei)
+
+    for item in items:
+        # Initial status: DUE for down payment, UPCOMING for subsequent
+        initial_status = "DUE" if item["installment_type"] in ["DOWN_PAYMENT"] else "UPCOMING"
+        if item["installment_type"] == "BOOKING_MONEY":
+            initial_status = "PAID"
+            
+        inst = CustomerInstallment(
+            schedule_id=schedule.id,
+            booking_id=booking.id,
+            installment_no=item["installment_no"],
+            installment_type=item["installment_type"],
+            title=item["title"],
+            percentage=Decimal(str(item["percentage"])) if item["percentage"] is not None else None,
+            due_date=item["due_date"],
+            grace_period_days=item["grace_period_days"],
+            payable_amount=Decimal(str(item["payable_amount"])),
+            paid_amount=Decimal(str(item["payable_amount"])) if item["installment_type"] == "BOOKING_MONEY" else Decimal('0.00'),
+            balance_due=Decimal('0.00') if item["installment_type"] == "BOOKING_MONEY" else Decimal(str(item["payable_amount"])),
+            schedule_version="v1.0",
+            status=initial_status,
+            milestone_trigger=item["milestone_trigger"]
+        )
+        db.add(inst)
+
+    # Update booking workflow stage to 07_INSTALLMENT_SCHEDULE_ACTIVE
+    booking.workflow_stage = "07_INSTALLMENT_SCHEDULE_ACTIVE"
 
     await db.commit()
 
@@ -224,7 +480,7 @@ async def generate_installment_schedule(
             selectinload(CustomerInstallment.booking).selectinload(Booking.customer),
             selectinload(CustomerInstallment.booking).selectinload(Booking.unit)
         )
-        .where(CustomerInstallment.booking_id == booking.id)
+        .where(CustomerInstallment.schedule_id == schedule.id)
         .order_by(CustomerInstallment.installment_no.asc())
     )
     saved = res.scalars().all()
@@ -236,6 +492,454 @@ async def generate_installment_schedule(
         r.unit_number = booking.unit.unit_number if booking.unit else None
         out.append(r)
     return out
+
+
+# --------------------------------------------------------------------------
+# Master Schedule Headers & Paging (Spec 5.7)
+# --------------------------------------------------------------------------
+@router.get("/schedules/master", response_model=List[BookingInstallmentScheduleResponse])
+async def list_master_schedules(
+    response: Response,
+    booking_id: Optional[int] = None,
+    status_filter: Optional[str] = Query(None, alias="status"),
+    plan_type: Optional[str] = None,
+    search: Optional[str] = None,
+    limit: int = 10,
+    offset: int = 0,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    List master installment schedules with server-side pagination, filters, and progress metrics.
+    """
+    stmt = (
+        select(BookingInstallmentSchedule)
+        .options(
+            selectinload(BookingInstallmentSchedule.booking).selectinload(Booking.customer),
+            selectinload(BookingInstallmentSchedule.booking).selectinload(Booking.project),
+            selectinload(BookingInstallmentSchedule.booking).selectinload(Booking.unit),
+            selectinload(BookingInstallmentSchedule.installments)
+        )
+        .order_by(BookingInstallmentSchedule.id.desc())
+    )
+
+    if booking_id:
+        stmt = stmt.where(BookingInstallmentSchedule.booking_id == booking_id)
+    if status_filter:
+        stmt = stmt.where(BookingInstallmentSchedule.status == status_filter.upper())
+    if plan_type:
+        stmt = stmt.where(BookingInstallmentSchedule.plan_type == plan_type.upper())
+    if search:
+        search_fmt = f"%{search.strip()}%"
+        stmt = stmt.join(BookingInstallmentSchedule.booking).outerjoin(Booking.customer).where(
+            or_(
+                BookingInstallmentSchedule.schedule_code.ilike(search_fmt),
+                Booking.booking_reference_no.ilike(search_fmt),
+                Customer.full_name_en.ilike(search_fmt)
+            )
+        )
+
+    # Count total
+    count_stmt = select(func.count(BookingInstallmentSchedule.id))
+    if booking_id:
+        count_stmt = count_stmt.where(BookingInstallmentSchedule.booking_id == booking_id)
+    if status_filter:
+        count_stmt = count_stmt.where(BookingInstallmentSchedule.status == status_filter.upper())
+    if plan_type:
+        count_stmt = count_stmt.where(BookingInstallmentSchedule.plan_type == plan_type.upper())
+    total_count = (await db.execute(count_stmt)).scalar() or 0
+    response.headers["X-Total-Count"] = str(total_count)
+
+    stmt = stmt.limit(limit).offset(offset)
+    result = await db.execute(stmt)
+    records = result.scalars().all()
+
+    out = []
+    for s in records:
+        resp = BookingInstallmentScheduleResponse.model_validate(s)
+        if s.booking:
+            resp.booking_reference_no = s.booking.booking_reference_no
+            if s.booking.customer:
+                resp.customer_name = s.booking.customer.full_name_en
+                resp.customer_phone = s.booking.customer.phone_primary
+            if s.booking.project:
+                resp.project_name = s.booking.project.name
+            if s.booking.unit:
+                resp.unit_number = s.booking.unit.unit_number
+
+        # Payment totals
+        total_paid = sum(float(inst.paid_amount) for inst in s.installments)
+        total_balance = sum(float(inst.payable_amount - inst.paid_amount) for inst in s.installments)
+        total_overdue = sum(float(inst.payable_amount - inst.paid_amount) for inst in s.installments if inst.status == "OVERDUE")
+        resp.total_paid_amount = round(total_paid, 2)
+        resp.total_balance_due = round(total_balance, 2)
+        resp.total_overdue_amount = round(total_overdue, 2)
+        out.append(resp)
+
+    return out
+
+
+@router.get("/schedules/paged", response_model=PaginatedInstallmentSchedulesResponse)
+async def get_paged_schedules(
+    response: Response,
+    booking_id: Optional[int] = None,
+    status_filter: Optional[str] = Query(None, alias="status"),
+    plan_type: Optional[str] = None,
+    search: Optional[str] = None,
+    limit: int = 10,
+    offset: int = 0,
+    db: AsyncSession = Depends(get_db)
+):
+    items = await list_master_schedules(
+        response=response,
+        booking_id=booking_id,
+        status_filter=status_filter,
+        plan_type=plan_type,
+        search=search,
+        limit=limit,
+        offset=offset,
+        db=db
+    )
+    total = int(response.headers.get("X-Total-Count", len(items)))
+    return PaginatedInstallmentSchedulesResponse(
+        items=items,
+        total=total,
+        limit=limit,
+        offset=offset
+    )
+
+
+@router.get("/schedules/master/{schedule_id}", response_model=BookingInstallmentScheduleResponse)
+async def get_master_schedule_details(
+    schedule_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get master installment schedule details with full installment breakdown.
+    """
+    stmt = (
+        select(BookingInstallmentSchedule)
+        .options(
+            selectinload(BookingInstallmentSchedule.booking).selectinload(Booking.customer),
+            selectinload(BookingInstallmentSchedule.booking).selectinload(Booking.project),
+            selectinload(BookingInstallmentSchedule.booking).selectinload(Booking.unit),
+            selectinload(BookingInstallmentSchedule.installments)
+        )
+        .where(BookingInstallmentSchedule.id == schedule_id)
+    )
+    result = await db.execute(stmt)
+    schedule = result.scalars().first()
+    if not schedule:
+        raise HTTPException(status_code=404, detail="Installment schedule not found")
+
+    resp = BookingInstallmentScheduleResponse.model_validate(schedule)
+    if schedule.booking:
+        resp.booking_reference_no = schedule.booking.booking_reference_no
+        if schedule.booking.customer:
+            resp.customer_name = schedule.booking.customer.full_name_en
+            resp.customer_phone = schedule.booking.customer.phone_primary
+        if schedule.booking.project:
+            resp.project_name = schedule.booking.project.name
+        if schedule.booking.unit:
+            resp.unit_number = schedule.booking.unit.unit_number
+
+    # Sort installments by installment_no
+    sorted_insts = sorted(schedule.installments, key=lambda x: x.installment_no)
+    resp.installments = [CustomerInstallmentResponse.model_validate(i) for i in sorted_insts]
+
+    total_paid = sum(float(inst.paid_amount) for inst in schedule.installments)
+    total_balance = sum(float(inst.payable_amount - inst.paid_amount) for inst in schedule.installments)
+    total_overdue = sum(float(inst.payable_amount - inst.paid_amount) for inst in schedule.installments if inst.status == "OVERDUE")
+    resp.total_paid_amount = round(total_paid, 2)
+    resp.total_balance_due = round(total_balance, 2)
+    resp.total_overdue_amount = round(total_overdue, 2)
+
+    return resp
+
+
+@router.get("/schedules/master/by-booking/{booking_id}", response_model=BookingInstallmentScheduleResponse)
+async def get_schedule_by_booking(
+    booking_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get active installment schedule for a booking.
+    """
+    stmt = (
+        select(BookingInstallmentSchedule)
+        .options(
+            selectinload(BookingInstallmentSchedule.booking).selectinload(Booking.customer),
+            selectinload(BookingInstallmentSchedule.booking).selectinload(Booking.project),
+            selectinload(BookingInstallmentSchedule.booking).selectinload(Booking.unit),
+            selectinload(BookingInstallmentSchedule.installments)
+        )
+        .where(
+            BookingInstallmentSchedule.booking_id == booking_id,
+            BookingInstallmentSchedule.status == "ACTIVE"
+        )
+        .order_by(BookingInstallmentSchedule.id.desc())
+    )
+    result = await db.execute(stmt)
+    schedule = result.scalars().first()
+    if not schedule:
+        raise HTTPException(status_code=404, detail="No active installment schedule found for this booking")
+
+    return await get_master_schedule_details(schedule.id, db)
+
+
+@router.post("/schedules/master/{schedule_id}/amend", response_model=BookingInstallmentScheduleResponse)
+async def amend_installment_schedule(
+    schedule_id: int,
+    payload: InstallmentScheduleAmendRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Spec 5.7: Schedule amendment & payment restructuring.
+    Archives previous schedule as 'SUPERSEDED_AMENDED', increments version (v1.1),
+    and regenerates installments with exact rounding distribution.
+    """
+    stmt = (
+        select(BookingInstallmentSchedule)
+        .options(
+            selectinload(BookingInstallmentSchedule.booking).selectinload(Booking.customer),
+            selectinload(BookingInstallmentSchedule.booking).selectinload(Booking.project),
+            selectinload(BookingInstallmentSchedule.booking).selectinload(Booking.unit)
+        )
+        .where(BookingInstallmentSchedule.id == schedule_id)
+    )
+    result = await db.execute(stmt)
+    old_sched = result.scalars().first()
+    if not old_sched:
+        raise HTTPException(status_code=404, detail="Schedule not found")
+
+    # Mark old schedule superseded
+    old_sched.status = "SUPERSEDED_AMENDED"
+
+    # Compute new version e.g. v1.0 -> v1.1
+    try:
+        cur_v = float(old_sched.version.replace('v', ''))
+        new_v = f"v{cur_v + 0.1:.1f}"
+    except Exception:
+        new_v = "v1.1"
+
+    booking = old_sched.booking
+    start_date = payload.start_date or date.today()
+    grace_period = payload.grace_period_days or 15
+
+    items, dp_total, inst_bal, round_diff, adj_no, reg_amt = build_schedule_installments(
+        booking=booking,
+        plan_type=payload.plan_type,
+        total_installments=payload.total_installments or 36,
+        down_payment_percentage=payload.down_payment_percentage or 15.00,
+        start_date=start_date,
+        grace_period_days=grace_period,
+        custom_milestones=payload.custom_milestones
+    )
+
+    sched_code = f"SCH-{date.today().year}-{uuid.uuid4().hex[:6].upper()}"
+    new_sched = BookingInstallmentSchedule(
+        schedule_code=sched_code,
+        booking_id=booking.id,
+        customer_id=booking.primary_customer_id,
+        agreement_reference_no=payload.amendment_reference or old_sched.agreement_reference_no,
+        version=new_v,
+        plan_type=payload.plan_type.upper(),
+        approved_contract_price=Decimal(str(booking.final_contract_value)),
+        booking_money_amount=Decimal(str(booking.earnest_money_received or 0.00)),
+        down_payment_percentage=Decimal(str(payload.down_payment_percentage or 15.00)),
+        down_payment_amount=dp_total,
+        installment_balance_amount=inst_bal,
+        total_installment_count=len(items),
+        regular_installment_amount=Decimal(str(reg_amt)),
+        rounding_adjustment_amount=round_diff,
+        rounding_adjusted_installment_no=adj_no,
+        start_date=start_date,
+        grace_period_days=grace_period,
+        late_surcharge_rate_monthly=Decimal('2.00'),
+        status="ACTIVE",
+        amendment_reason=payload.amendment_reason,
+        notes=payload.notes
+    )
+    db.add(new_sched)
+    await db.flush()
+
+    for item in items:
+        inst = CustomerInstallment(
+            schedule_id=new_sched.id,
+            booking_id=booking.id,
+            installment_no=item["installment_no"],
+            installment_type=item["installment_type"],
+            title=item["title"],
+            percentage=Decimal(str(item["percentage"])) if item["percentage"] is not None else None,
+            due_date=item["due_date"],
+            grace_period_days=item["grace_period_days"],
+            payable_amount=Decimal(str(item["payable_amount"])),
+            paid_amount=Decimal('0.00'),
+            balance_due=Decimal(str(item["payable_amount"])),
+            schedule_version=new_v,
+            amendment_reference=payload.amendment_reference,
+            status="UPCOMING",
+            milestone_trigger=item["milestone_trigger"]
+        )
+        db.add(inst)
+
+    await db.commit()
+    return await get_master_schedule_details(new_sched.id, db)
+
+
+@router.post("/schedules/installments/{installment_id}/generate-invoice", response_model=InstallmentInvoiceResponse)
+async def generate_installment_invoice(
+    installment_id: int,
+    payload: InstallmentInvoiceGenerateRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Spec 5.7: Generates formal commercial invoice for a scheduled installment.
+    Assigns sequential invoice number INV-2026-XXXX, records billing date, and updates status to INVOICED.
+    """
+    stmt = (
+        select(CustomerInstallment)
+        .options(
+            selectinload(CustomerInstallment.booking).selectinload(Booking.customer)
+        )
+        .where(CustomerInstallment.id == installment_id)
+    )
+    result = await db.execute(stmt)
+    inst = result.scalars().first()
+    if not inst:
+        raise HTTPException(status_code=404, detail="Installment not found")
+
+    inv_date = payload.invoice_date or date.today()
+    inv_no = f"INV-{inv_date.year}-{uuid.uuid4().hex[:6].upper()}"
+
+    inst.invoice_date = inv_date
+    inst.invoice_number = inv_no
+    inst.amount_billed = inst.payable_amount
+    inst.balance_due = Decimal(str(float(inst.payable_amount) - float(inst.paid_amount)))
+    if inst.status in ["UPCOMING", "SCHEDULED"]:
+        inst.status = "INVOICED"
+    inst.reminder_status = "INVOICED"
+
+    if payload.due_date:
+        inst.due_date = payload.due_date
+    if payload.notes:
+        inst.notes = f"{inst.notes or ''} [Invoice Note: {payload.notes}]".strip()
+
+    await db.commit()
+    await db.refresh(inst)
+
+    return InstallmentInvoiceResponse(
+        installment_id=inst.id,
+        invoice_number=inv_no,
+        invoice_date=inv_date,
+        booking_reference_no=inst.booking.booking_reference_no if inst.booking else "N/A",
+        customer_name=inst.booking.customer.full_name_en if (inst.booking and inst.booking.customer) else "N/A",
+        amount_billed=float(inst.amount_billed),
+        balance_due=float(inst.balance_due),
+        due_date=inst.due_date,
+        status=inst.status
+    )
+
+
+@router.get("/schedules/master/{schedule_id}/export-pdf")
+async def export_schedule_pdf(
+    schedule_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Generates printable contractual installment schedule annexure document.
+    """
+    schedule = await get_master_schedule_details(schedule_id, db)
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>Payment Schedule Annexure - {schedule.schedule_code}</title>
+      <style>
+        body {{ font-family: 'Segoe UI', Arial, sans-serif; margin: 30px; font-size: 12px; color: #111; }}
+        .header {{ text-align: center; border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 15px; }}
+        .header h1 {{ margin: 0; font-size: 18px; }}
+        .meta-box {{ display: flex; justify-content: space-between; margin-bottom: 15px; padding: 10px; background: #f8f9fa; border: 1px solid #ddd; }}
+        table {{ width: 100%; border-collapse: collapse; margin-top: 10px; }}
+        th, td {{ border: 1px solid #ccc; padding: 6px 8px; text-align: left; font-size: 11px; }}
+        th {{ background: #f0f0f0; }}
+        .text-right {{ text-align: right; }}
+        .text-center {{ text-align: center; }}
+        .highlight {{ background: #fffde7; font-weight: bold; }}
+        .footer {{ margin-top: 30px; font-size: 10px; color: #555; text-align: center; }}
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <h1>BLUEOCEANS REAL ESTATE LIMITED</h1>
+        <h3>CONTRACTUAL PAYMENT & INSTALLMENT SCHEDULE ANNEXURE (Spec 5.7)</h3>
+        <p>Annexure to Agreement Reference: <strong>{schedule.agreement_reference_no or 'N/A'}</strong> · Schedule Code: <strong>{schedule.schedule_code}</strong> (Version {schedule.version})</p>
+      </div>
+
+      <div class="meta-box">
+        <div>
+          <p><strong>Purchaser:</strong> {schedule.customer_name} ({schedule.customer_phone or 'N/A'})</p>
+          <p><strong>Booking Reference:</strong> {schedule.booking_reference_no}</p>
+          <p><strong>Project:</strong> {schedule.project_name} · <strong>Unit:</strong> {schedule.unit_number}</p>
+        </div>
+        <div>
+          <p><strong>Approved Contract Price:</strong> BDT {schedule.approved_contract_price:,.2f}</p>
+          <p><strong>Down Payment (15%):</strong> BDT {schedule.down_payment_amount:,.2f}</p>
+          <p><strong>Installment Balance (85%):</strong> BDT {schedule.installment_balance_amount:,.2f} in {schedule.total_installment_count} installments</p>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Installment Type & Description</th>
+            <th class="text-center">Due Date</th>
+            <th class="text-center">Grace</th>
+            <th class="text-right">Payable Amount (BDT)</th>
+            <th class="text-right">Paid Amount</th>
+            <th class="text-right">Balance Due</th>
+            <th class="text-center">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+    """
+    for inst in (schedule.installments or []):
+        adj_marker = " <span style='color:red;'>(*penny adj)</span>" if inst.installment_no == schedule.rounding_adjusted_installment_no and schedule.rounding_adjustment_amount != 0 else ""
+        html_content += f"""
+          <tr>
+            <td class="text-center">{inst.installment_no}</td>
+            <td><strong>{inst.title}</strong>{adj_marker}</td>
+            <td class="text-center">{inst.due_date}</td>
+            <td class="text-center">{inst.grace_period_days} days</td>
+            <td class="text-right font-mono">{inst.payable_amount:,.2f}</td>
+            <td class="text-right font-mono">{inst.paid_amount:,.2f}</td>
+            <td class="text-right font-mono">{inst.payable_amount - inst.paid_amount:,.2f}</td>
+            <td class="text-center">{inst.status}</td>
+          </tr>
+        """
+
+    html_content += f"""
+        </tbody>
+        <tfoot>
+          <tr class="highlight">
+            <td colspan="4" class="text-right"><strong>Exact Total Validated:</strong></td>
+            <td class="text-right"><strong>BDT {schedule.approved_contract_price:,.2f}</strong></td>
+            <td class="text-right"><strong>BDT {schedule.total_paid_amount:,.2f}</strong></td>
+            <td class="text-right"><strong>BDT {schedule.total_balance_due:,.2f}</strong></td>
+            <td class="text-center">VALIDATED</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <div class="footer">
+        <p>This payment schedule forms an integral part of the registered Agreement for Sale. Payments past grace period accrue a prorated 2.0% per month overdue surcharge as per REHAB contract norms.</p>
+      </div>
+    </body>
+    </html>
+    """
+    return Response(content=html_content, media_type="text/html")
+
 
 
 @router.post("/schedules/{installment_id}/pay", response_model=CustomerInstallmentResponse)

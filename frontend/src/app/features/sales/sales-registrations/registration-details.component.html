@@ -1,0 +1,960 @@
+<div class="flex flex-col gap-6 w-full max-w-7xl mx-auto pb-16">
+  <!-- Top Navigation & Breadcrumb -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-border">
+    <div>
+      <div class="flex items-center gap-2">
+        <a
+          routerLink="/sales/registrations"
+          class="text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1 transition-colors"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+          </svg>
+          Back to Registration Registry
+        </a>
+        <span class="text-muted-foreground text-xs">/</span>
+        <span class="text-xs font-mono font-medium text-foreground">{{ registration()?.registration_tracking_no }}</span>
+      </div>
+      <div class="flex items-center gap-3 mt-1.5 flex-wrap">
+        <h1 class="text-2xl font-bold font-display text-foreground">
+          {{ registration()?.registration_tracking_no }}
+        </h1>
+        @if (registration()) {
+          <span class="px-2.5 py-1 text-xs font-semibold rounded-full border" [ngClass]="getStatusBadgeClass(registration()!.status)">
+            {{ registration()!.status.replace('_', ' ') }}
+          </span>
+          <span class="px-2.5 py-1 text-xs font-semibold rounded-full border"
+            [ngClass]="registration()!.legal_validation_status === 'VALIDATED' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'">
+            Legal Sign-off: {{ registration()!.legal_validation_status }}
+          </span>
+        }
+      </div>
+    </div>
+
+    <!-- Quick Actions Bar -->
+    <div class="flex items-center gap-2 flex-wrap">
+      <button
+        (click)="openAppointmentModal()"
+        class="px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-secondary/50 text-xs font-semibold text-foreground inline-flex items-center gap-1.5 shadow-xs transition-colors"
+      >
+        <svg class="w-3.5 h-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
+        <span>Schedule SRO Appointment</span>
+      </button>
+
+      <button
+        (click)="openSubmissionModal()"
+        class="px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-secondary/50 text-xs font-semibold text-foreground inline-flex items-center gap-1.5 shadow-xs transition-colors"
+      >
+        <svg class="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+        <span>Record Deed Submission</span>
+      </button>
+
+      <button
+        (click)="openValidationModal()"
+        class="px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-secondary/50 text-xs font-semibold text-foreground inline-flex items-center gap-1.5 shadow-xs transition-colors"
+      >
+        <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+        </svg>
+        <span>Legal Validation</span>
+      </button>
+
+      <button
+        (click)="openIssueModal()"
+        class="px-3 py-1.5 rounded-lg border border-destructive/30 bg-destructive/10 hover:bg-destructive/20 text-xs font-semibold text-destructive inline-flex items-center gap-1.5 shadow-xs transition-colors"
+      >
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+        <span>+ Log Legal Issue</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- User Feedback & Alerts -->
+  @if (feedbackMessage()) {
+    <div class="p-4 rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-sm flex items-center justify-between shadow-xs">
+      <div class="flex items-center gap-2">
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        <span>{{ feedbackMessage() }}</span>
+      </div>
+      <button (click)="feedbackMessage.set('')" class="text-xs font-semibold hover:underline">Dismiss</button>
+    </div>
+  }
+
+  @if (errorMessage()) {
+    <div class="p-4 rounded-xl border border-destructive/20 bg-destructive/10 text-destructive text-sm flex items-center justify-between shadow-xs">
+      <div class="flex items-center gap-2">
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+        <span>{{ errorMessage() }}</span>
+      </div>
+      <button (click)="errorMessage.set('')" class="text-xs font-semibold hover:underline">Dismiss</button>
+    </div>
+  }
+
+  <!-- Loading State -->
+  @if (isLoading()) {
+    <div class="p-12 text-center bg-card border border-border rounded-xl">
+      <div class="inline-block animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mb-3"></div>
+      <div class="text-sm font-semibold text-foreground">Loading deed registration dossier...</div>
+    </div>
+  } @else if (registration()) {
+    <!-- Main Dossier Card Container -->
+    <div class="bg-card border border-border rounded-xl shadow-xs overflow-hidden divide-y divide-border">
+      <!-- Section A: Key Summary Metrics & Property Specs -->
+      <div class="p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div>
+            <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Buyer / Purchaser</span>
+            <div class="font-bold text-foreground text-sm mt-1">{{ registration()?.customer_name }}</div>
+            <div class="text-xs text-muted-foreground">{{ registration()?.customer_phone }}</div>
+            <div class="text-[11px] text-muted-foreground mt-0.5">Booking Ref: {{ registration()?.booking_reference_no }}</div>
+          </div>
+
+          <div>
+            <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Property Identification</span>
+            <div class="font-bold text-foreground text-sm mt-1">Unit {{ registration()?.unit_number }}</div>
+            <div class="text-xs text-muted-foreground">{{ registration()?.project_name }} ({{ registration()?.project_code }})</div>
+            <div class="text-[11px] text-muted-foreground mt-0.5">Contract Value: ৳{{ (registration()?.final_contract_value || 0) | number:'1.2-2' }}</div>
+          </div>
+
+          <div>
+            <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Jurisdiction & Legal Counsel</span>
+            <div class="font-bold text-foreground text-sm mt-1">{{ registration()?.sub_registry_office }}</div>
+            <div class="text-xs text-muted-foreground">Deed: {{ registration()?.deed_type?.replace('_', ' ') }}</div>
+            <div class="text-[11px] text-muted-foreground mt-0.5">Advocate: {{ registration()?.conducting_advocate || 'Unassigned' }}</div>
+          </div>
+
+          <div class="border-l border-border pl-4">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-[10px] font-bold text-primary uppercase tracking-wider block">Checklist Completion</span>
+              <span class="text-xs font-bold text-foreground">{{ checklistProgress().completed }} of {{ checklistProgress().total }}</span>
+            </div>
+            <div class="w-full bg-secondary rounded-full h-2 overflow-hidden mb-2">
+              <div class="bg-primary h-2 rounded-full transition-all duration-300" [style.width.%]="checklistProgress().percentage"></div>
+            </div>
+            <div class="flex items-center justify-between text-[11px]">
+              <span class="text-muted-foreground font-medium">{{ checklistProgress().percentage }}% Verified</span>
+              <span class="font-bold" [ngClass]="openIssues().length > 0 ? 'text-destructive' : 'text-emerald-600 dark:text-emerald-400'">
+                {{ openIssues().length }} Open Impediment(s)
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section B: Tab Navigation Bar -->
+      <div class="px-6 bg-secondary/15 flex items-center gap-2 overflow-x-auto border-b border-border">
+        <button
+          (click)="activeTab.set('checklist')"
+          class="py-3 px-4 text-xs font-bold border-b-2 transition-colors whitespace-nowrap flex items-center gap-2"
+          [ngClass]="activeTab() === 'checklist' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+          </svg>
+          <span>Statutory Legal Checklist ({{ checklistProgress().completed }}/{{ checklistProgress().total }})</span>
+        </button>
+
+        <button
+          (click)="activeTab.set('appointment')"
+          class="py-3 px-4 text-xs font-bold border-b-2 transition-colors whitespace-nowrap flex items-center gap-2"
+          [ngClass]="activeTab() === 'appointment' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          </svg>
+          <span>Sub-Registry Schedule & Appointment</span>
+        </button>
+
+        <button
+          (click)="activeTab.set('submission')"
+          class="py-3 px-4 text-xs font-bold border-b-2 transition-colors whitespace-nowrap flex items-center gap-2"
+          [ngClass]="activeTab() === 'submission' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+          </svg>
+          <span>Submission, Balam & Vault Archive</span>
+        </button>
+
+        <button
+          (click)="activeTab.set('issues')"
+          class="py-3 px-4 text-xs font-bold border-b-2 transition-colors whitespace-nowrap flex items-center gap-2"
+          [ngClass]="activeTab() === 'issues' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+          <span>Legal Issues & Corrective Actions</span>
+          @if (openIssues().length > 0) {
+            <span class="px-1.5 py-0.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold">
+              {{ openIssues().length }}
+            </span>
+          }
+        </button>
+
+        <button
+          (click)="activeTab.set('financials')"
+          class="py-3 px-4 text-xs font-bold border-b-2 transition-colors whitespace-nowrap flex items-center gap-2"
+          [ngClass]="activeTab() === 'financials' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+          </svg>
+          <span>Statutory Fees & Stamp Schedule</span>
+        </button>
+      </div>
+
+      <!-- Tab 1: Statutory Legal Checklist (Spec 5.11 - 9 Checklist Items) -->
+      @if (activeTab() === 'checklist') {
+        <div class="p-6">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="text-sm font-bold text-foreground">Legal Documentation & Statutory Registration Checklist</h3>
+              <p class="text-xs text-muted-foreground">Configured by developer's legal team. Verify title deeds, clearance porchas, advocate review, and official filings.</p>
+            </div>
+            <span class="text-xs text-muted-foreground font-mono">
+              Template: {{ registration()?.template_name || 'Standard Real Estate Deed' }}
+            </span>
+          </div>
+
+          <div class="space-y-3">
+            @for (item of checklistEntries(); track item.key) {
+              <div
+                class="p-4 rounded-xl border transition-all"
+                [ngClass]="item.completed ? 'bg-card border-border/80' : 'bg-secondary/20 border-border'"
+              >
+                <div class="flex items-start justify-between gap-4">
+                  <div class="flex items-start gap-3">
+                    <button
+                      (click)="openChecklistModal(item.key, item)"
+                      class="mt-0.5 w-6 h-6 rounded-lg border flex items-center justify-center transition-colors cursor-pointer"
+                      [ngClass]="item.completed ? 'bg-primary border-primary text-primary-foreground' : 'border-border bg-card hover:border-primary/50 text-transparent'"
+                      title="Click to verify or update item"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                      </svg>
+                    </button>
+
+                    <div>
+                      <div class="flex items-center gap-2 flex-wrap">
+                        <span class="text-xs font-bold text-foreground">
+                          {{ item.step_number }}. {{ item.title }}
+                        </span>
+                        @if (item.mandatory) {
+                          <span class="text-[9px] px-1.5 py-0.5 rounded bg-destructive/10 text-destructive font-bold uppercase tracking-wider">
+                            Mandatory
+                          </span>
+                        }
+                        @if (item.completed) {
+                          <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold inline-flex items-center gap-1">
+                            Verified on {{ item.completion_date || 'N/A' }} by {{ item.verified_by || 'Legal Advocate' }}
+                          </span>
+                        } @else {
+                          <span class="text-[10px] px-2 py-0.5 rounded-full bg-secondary text-muted-foreground font-medium">
+                            Pending Verification
+                          </span>
+                        }
+                      </div>
+
+                      <p class="text-xs text-muted-foreground mt-1">{{ item.description }}</p>
+
+                      @if (item.required_docs && item.required_docs.length > 0) {
+                        <div class="flex items-center gap-1.5 mt-2 flex-wrap">
+                          <span class="text-[10px] font-semibold text-muted-foreground uppercase">Required:</span>
+                          @for (doc of item.required_docs; track doc) {
+                            <span class="text-[11px] px-2 py-0.5 rounded bg-secondary/80 text-foreground/80 border border-border">
+                              {{ doc }}
+                            </span>
+                          }
+                        </div>
+                      }
+
+                      @if (item.notes) {
+                        <div class="mt-2 text-xs bg-secondary/30 p-2 rounded-lg border border-border/50 text-muted-foreground">
+                          <span class="font-semibold text-foreground">Advocate Note:</span> {{ item.notes }}
+                        </div>
+                      }
+                    </div>
+                  </div>
+
+                  <div class="flex items-center gap-2">
+                    <button
+                      (click)="openChecklistModal(item.key, item)"
+                      class="px-2.5 py-1 text-xs font-semibold rounded-lg border border-border bg-card hover:bg-secondary text-foreground inline-flex items-center gap-1 shadow-xs"
+                    >
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                      </svg>
+                      <span>Update</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Tab 2: Sub-Registry Schedule & Appointment -->
+      @if (activeTab() === 'appointment') {
+        <div class="p-6">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="text-sm font-bold text-foreground">Sub-Registry Office Appointment & Execution Logistics</h3>
+              <p class="text-xs text-muted-foreground">Coordinate buyer, developer signatory, and advocate attendance at the Sub-Registry.</p>
+            </div>
+            <button
+              (click)="openAppointmentModal()"
+              class="px-3 py-1.5 rounded-lg border border-primary bg-primary/10 hover:bg-primary/20 text-xs font-bold text-primary inline-flex items-center gap-1.5 shadow-xs"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+              </svg>
+              <span>Reschedule / Update Appointment</span>
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div class="p-4 rounded-xl bg-secondary/30 border border-border">
+              <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Appointed Date</span>
+              <div class="text-sm font-bold text-foreground mt-1">{{ registration()?.appointment_date || 'Not Scheduled' }}</div>
+              <span class="text-xs text-muted-foreground">Time: {{ registration()?.appointment_time || 'Pending slot' }}</span>
+            </div>
+
+            <div class="p-4 rounded-xl bg-secondary/30 border border-border">
+              <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Sub-Registry Office</span>
+              <div class="text-sm font-bold text-foreground mt-1">{{ registration()?.sub_registry_office }}</div>
+              <span class="text-xs text-muted-foreground">Jurisdiction confirmed</span>
+            </div>
+
+            <div class="p-4 rounded-xl bg-secondary/30 border border-border">
+              <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Conducting Advocate</span>
+              <div class="text-sm font-bold text-foreground mt-1">{{ registration()?.conducting_advocate || 'Legal Panel Counsel' }}</div>
+              <span class="text-xs text-muted-foreground">Execution & Identification</span>
+            </div>
+
+            <div class="p-4 rounded-xl bg-secondary/30 border border-border">
+              <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Sub-Registry Stage</span>
+              <div class="text-sm font-bold text-primary mt-1">{{ registration()?.status?.replace('_', ' ') }}</div>
+              <span class="text-xs text-muted-foreground">Workflow progression active</span>
+            </div>
+          </div>
+
+          <div class="p-4 rounded-xl bg-card border border-border">
+            <h4 class="text-xs font-bold text-foreground uppercase tracking-wider mb-2">Standard Registry Protocols</h4>
+            <ul class="text-xs text-muted-foreground space-y-1.5 list-disc list-inside">
+              <li>Both Purchaser and Developer's Authorized Signatory must appear in person before the Sub-Registrar.</li>
+              <li>Original NID/Smart Card of buyer and witnesses must be presented with verified thumbprints.</li>
+              <li>Pay orders for Non-Judicial Stamps, Registration Fee, and AIT u/s 53FF must be submitted at the fee counter.</li>
+              <li>I-Form token receipt must be received immediately following photo and signature capture.</li>
+            </ul>
+          </div>
+        </div>
+      }
+
+      <!-- Tab 3: Submission, Balam & Vault Archive -->
+      @if (activeTab() === 'submission') {
+        <div class="p-6">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="text-sm font-bold text-foreground">Official Submission, Balam Book Reference & Certified Deed</h3>
+              <p class="text-xs text-muted-foreground">Record official I-Form token, Balam Volume/Page number, and track secure archive in document vault.</p>
+            </div>
+            <button
+              (click)="openSubmissionModal()"
+              class="px-3 py-1.5 rounded-lg border border-blue-500 bg-blue-500/10 hover:bg-blue-500/20 text-xs font-bold text-blue-600 dark:text-blue-400 inline-flex items-center gap-1.5 shadow-xs"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+              </svg>
+              <span>Record / Edit Balam Ledger Reference</span>
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div class="p-4 rounded-xl bg-secondary/30 border border-border">
+              <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">I-Form Receipt No</span>
+              <div class="text-sm font-mono font-bold text-foreground mt-1">{{ registration()?.deed_receipt_number || 'Pending Submission' }}</div>
+              <span class="text-xs text-muted-foreground">Original deposit token</span>
+            </div>
+
+            <div class="p-4 rounded-xl bg-secondary/30 border border-border">
+              <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Registered Deed No</span>
+              <div class="text-sm font-mono font-bold text-primary mt-1">{{ registration()?.registered_deed_number || 'Awaiting Execution' }}</div>
+              <span class="text-xs text-muted-foreground">Permanent deed serial</span>
+            </div>
+
+            <div class="p-4 rounded-xl bg-secondary/30 border border-border">
+              <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Balam Ledger Ref</span>
+              <div class="text-sm font-bold text-foreground mt-1">
+                Book {{ registration()?.balam_book_no || '-' }}, Vol {{ registration()?.volume_no || '-' }}
+              </div>
+              <span class="text-xs text-muted-foreground">Page No: {{ registration()?.page_no || '-' }}</span>
+            </div>
+
+            <div class="p-4 rounded-xl bg-secondary/30 border border-border">
+              <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Deed Delivery & Vault</span>
+              <div class="text-sm font-bold text-foreground mt-1">{{ registration()?.deed_delivery_date || 'Pending Delivery' }}</div>
+              <span class="text-xs text-muted-foreground">Vault: {{ registration()?.vault_location || 'Unassigned' }}</span>
+            </div>
+          </div>
+
+          <div class="p-4 rounded-xl bg-card border border-border flex items-center justify-between">
+            <div>
+              <h4 class="text-xs font-bold text-foreground uppercase tracking-wider">Booking Milestone Integration</h4>
+              <p class="text-xs text-muted-foreground mt-0.5">Recording deed submission or delivery automatically synchronizes Booking Workflow Stage to 09_REGISTRATION_DONE.</p>
+            </div>
+            <span class="text-xs px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold">
+              Automatic Sync Active
+            </span>
+          </div>
+        </div>
+      }
+
+      <!-- Tab 4: Legal Issues & Corrective Actions -->
+      @if (activeTab() === 'issues') {
+        <div class="p-6">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="text-sm font-bold text-foreground">Outstanding Legal Issues & Corrective Actions Log</h3>
+              <p class="text-xs text-muted-foreground">Track title objections, boundary discrepancies, missing Bia deeds, or Sub-Registry requisition notices.</p>
+            </div>
+            <button
+              (click)="openIssueModal()"
+              class="px-3 py-1.5 rounded-lg border border-destructive/30 bg-destructive/10 hover:bg-destructive/20 text-xs font-bold text-destructive inline-flex items-center gap-1.5 shadow-xs"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+              </svg>
+              <span>+ Log New Legal Impediment</span>
+            </button>
+          </div>
+
+          <!-- Open Issues List -->
+          <div class="mb-6">
+            <h4 class="text-xs font-bold text-destructive uppercase tracking-wider mb-3">
+              Active Legal Impediments ({{ openIssues().length }})
+            </h4>
+
+            @if (openIssues().length === 0) {
+              <div class="p-6 rounded-xl bg-secondary/20 border border-border text-center">
+                <svg class="w-8 h-8 text-emerald-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <div class="text-xs font-bold text-foreground">No Outstanding Legal Impediments</div>
+                <div class="text-[11px] text-muted-foreground mt-0.5">The deed registration dossier has clear title clearance and no open objections.</div>
+              </div>
+            } @else {
+              <div class="space-y-3">
+                @for (issue of openIssues(); track issue.id) {
+                  <div class="p-4 rounded-xl border border-destructive/30 bg-destructive/5 flex items-start justify-between gap-4">
+                    <div>
+                      <div class="flex items-center gap-2 flex-wrap">
+                        <span class="text-xs font-bold text-foreground">{{ issue.title }}</span>
+                        <span class="text-[10px] px-2 py-0.5 rounded-full border" [ngClass]="getSeverityBadgeClass(issue.severity)">
+                          {{ issue.severity }}
+                        </span>
+                        <span class="text-[10px] text-muted-foreground">Logged at: {{ issue.logged_at }}</span>
+                      </div>
+                      <p class="text-xs text-foreground/80 mt-1">{{ issue.description }}</p>
+                      @if (issue.corrective_action) {
+                        <div class="mt-2 text-xs bg-card p-2 rounded-lg border border-border">
+                          <span class="font-bold text-foreground">Corrective Action Directive:</span> {{ issue.corrective_action }}
+                        </div>
+                      }
+                    </div>
+
+                    <button
+                      (click)="openResolveModal(issue.id)"
+                      class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white inline-flex items-center gap-1 shadow-xs whitespace-nowrap"
+                    >
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                      </svg>
+                      <span>Resolve</span>
+                    </button>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- Resolved History -->
+          @if (resolvedIssues().length > 0) {
+            <div>
+              <h4 class="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">
+                Resolved Issues History ({{ resolvedIssues().length }})
+              </h4>
+              <div class="space-y-2">
+                @for (issue of resolvedIssues(); track issue.id) {
+                  <div class="p-3 rounded-xl bg-card border border-border flex items-start justify-between gap-4 opacity-75">
+                    <div>
+                      <div class="flex items-center gap-2">
+                        <span class="text-xs font-bold text-foreground line-through">{{ issue.title }}</span>
+                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold">
+                          Resolved on {{ issue.resolved_at }}
+                        </span>
+                      </div>
+                      @if (issue.resolution_notes) {
+                        <div class="text-[11px] text-muted-foreground mt-1">Resolution: {{ issue.resolution_notes }}</div>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Tab 5: Statutory Fees & Stamp Schedule -->
+      @if (activeTab() === 'financials') {
+        <div class="p-6">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="text-sm font-bold text-foreground">Statutory Government Fees & Registration Costs</h3>
+              <p class="text-xs text-muted-foreground">Itemized breakdown of Non-Judicial Stamps, Registration Fee, AIT u/s 53FF, and local government levies.</p>
+            </div>
+            <div class="text-right">
+              <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Total Statutory Cost</span>
+              <span class="text-lg font-bold text-primary font-mono">৳{{ (registration()?.total_registration_costs || 0) | number:'1.2-2' }}</span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div class="p-4 rounded-xl bg-secondary/30 border border-border">
+              <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Stamp Duty (1.5%)</span>
+              <div class="text-base font-bold text-foreground font-mono mt-1">
+                ৳{{ (registration()?.stamp_duty_amount || 0) | number:'1.2-2' }}
+              </div>
+              <span class="text-[11px] text-muted-foreground">Non-Judicial Stamps</span>
+            </div>
+
+            <div class="p-4 rounded-xl bg-secondary/30 border border-border">
+              <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Registration Fee (1.0%)</span>
+              <div class="text-base font-bold text-foreground font-mono mt-1">
+                ৳{{ (registration()?.registration_fee_amount || 0) | number:'1.2-2' }}
+              </div>
+              <span class="text-[11px] text-muted-foreground">Sub-Registry Treasury Challan</span>
+            </div>
+
+            <div class="p-4 rounded-xl bg-secondary/30 border border-border">
+              <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Advance Income Tax (3.0%)</span>
+              <div class="text-base font-bold text-foreground font-mono mt-1">
+                ৳{{ (registration()?.ait_tax_amount || 0) | number:'1.2-2' }}
+              </div>
+              <span class="text-[11px] text-muted-foreground">AIT u/s 53FF on Real Estate</span>
+            </div>
+
+            <div class="p-4 rounded-xl bg-secondary/30 border border-border">
+              <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Local Govt Tax (1.5%)</span>
+              <div class="text-base font-bold text-foreground font-mono mt-1">
+                ৳{{ (registration()?.local_gov_tax_amount || 0) | number:'1.2-2' }}
+              </div>
+              <span class="text-[11px] text-muted-foreground">City Corporation / Municipality</span>
+            </div>
+          </div>
+
+          <div class="p-4 rounded-xl bg-card border border-border flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold">
+                ৳
+              </div>
+              <div>
+                <span class="text-xs font-bold text-foreground">Buyer Dues Clearance Status</span>
+                <p class="text-xs text-muted-foreground">Full contractual price and statutory registration charges cleared prior to Sub-Registry execution.</p>
+              </div>
+            </div>
+            <span class="text-xs px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold">
+              Fees Verified Cleared
+            </span>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<!-- ================= MODALS ================= -->
+
+<!-- 1. Checklist Step Verification Modal -->
+@if (isChecklistModalOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+    <div class="bg-card border border-border rounded-xl shadow-lg w-full max-w-lg overflow-hidden">
+      <div class="p-4 border-b border-border flex items-center justify-between">
+        <h3 class="text-sm font-bold text-foreground">Verify Statutory Checklist Item</h3>
+        <button (click)="closeChecklistModal()" class="text-muted-foreground hover:text-foreground text-sm font-bold">✕</button>
+      </div>
+
+      <div class="p-6 space-y-4">
+        <div>
+          <span class="text-xs font-bold text-primary block mb-1">
+            Step {{ selectedStep()?.step_number }}: {{ selectedStep()?.title }}
+          </span>
+          <p class="text-xs text-muted-foreground">{{ selectedStep()?.description }}</p>
+        </div>
+
+        <div class="p-3 rounded-lg bg-secondary/30 border border-border flex items-center gap-3">
+          <input
+            type="checkbox"
+            id="stepCompletedCheckbox"
+            [checked]="stepCompleted()"
+            (change)="stepCompleted.set(!stepCompleted())"
+            class="w-4 h-4 rounded border-border text-primary focus:ring-primary cursor-pointer"
+          />
+          <label for="stepCompletedCheckbox" class="text-xs font-bold text-foreground cursor-pointer">
+            Mark this requirement as Completed & Legally Verified
+          </label>
+        </div>
+
+        <app-custom-input
+          label="Verified By (Legal Advocate / Officer)"
+          [ngModel]="stepVerifiedBy()"
+          (ngModelChange)="stepVerifiedBy.set($event)"
+          placeholder="e.g. Barrister / Advocate M. Rahman"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Supporting Document URL / Reference"
+          [ngModel]="stepDocumentUrl()"
+          (ngModelChange)="stepDocumentUrl.set($event)"
+          placeholder="e.g. https://vault/documents/porcha-bia-2026.pdf"
+        ></app-custom-input>
+
+        <app-custom-textarea
+          label="Verification Notes & Legal Clearance Remarks"
+          [ngModel]="stepNotes()"
+          (ngModelChange)="stepNotes.set($event)"
+          rows="2"
+          placeholder="Confirm Khatian volume, seal match, or fee receipt voucher reference..."
+        ></app-custom-textarea>
+      </div>
+
+      <div class="p-4 bg-secondary/20 border-t border-border flex items-center justify-end gap-2">
+        <app-custom-button variant="outline" (click)="closeChecklistModal()" [disabled]="isActionLoading()">
+          Cancel
+        </app-custom-button>
+        <app-custom-button variant="primary" (click)="saveChecklistStep()" [loading]="isActionLoading()">
+          Save Verification
+        </app-custom-button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- 2. Sub-Registry Appointment Modal -->
+@if (isAppointmentModalOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+    <div class="bg-card border border-border rounded-xl shadow-lg w-full max-w-lg overflow-hidden">
+      <div class="p-4 border-b border-border flex items-center justify-between">
+        <h3 class="text-sm font-bold text-foreground">Schedule Sub-Registry Office Appointment</h3>
+        <button (click)="closeAppointmentModal()" class="text-muted-foreground hover:text-foreground text-sm font-bold">✕</button>
+      </div>
+
+      <div class="p-6 space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <app-custom-input
+            label="Appointment Date"
+            type="date"
+            [ngModel]="appointmentDate()"
+            (ngModelChange)="appointmentDate.set($event)"
+            [required]="true"
+          ></app-custom-input>
+
+          <app-custom-input
+            label="Slot / Time"
+            type="time"
+            [ngModel]="appointmentTime()"
+            (ngModelChange)="appointmentTime.set($event)"
+          ></app-custom-input>
+        </div>
+
+        <app-searchable-select
+          label="Sub-Registry Office Jurisdiction"
+          categoryCode="SUB_REGISTRY_OFFICES"
+          [options]="subRegistryOptions"
+          [ngModel]="appointmentSubRegistry()"
+          (ngModelChange)="appointmentSubRegistry.set($event)"
+          [allowCreateNew]="true"
+          placeholder="Select or add Sub-Registry Office..."
+        ></app-searchable-select>
+
+        <app-custom-input
+          label="Conducting Advocate / Counsel"
+          [ngModel]="appointmentAdvocate()"
+          (ngModelChange)="appointmentAdvocate.set($event)"
+          placeholder="e.g. Advocate M. Rahman"
+        ></app-custom-input>
+
+        <app-custom-textarea
+          label="Logistics & Attendance Notes"
+          [ngModel]="appointmentNotes()"
+          (ngModelChange)="appointmentNotes.set($event)"
+          rows="2"
+          placeholder="Notify buyer of photo requirements, NID originals, and company signatory presence..."
+        ></app-custom-textarea>
+      </div>
+
+      <div class="p-4 bg-secondary/20 border-t border-border flex items-center justify-end gap-2">
+        <app-custom-button variant="outline" (click)="closeAppointmentModal()" [disabled]="isActionLoading()">
+          Cancel
+        </app-custom-button>
+        <app-custom-button variant="primary" (click)="saveAppointment()" [loading]="isActionLoading()">
+          Save Appointment
+        </app-custom-button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- 3. Record Deed Submission & Balam Reference Modal -->
+@if (isSubmissionModalOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+    <div class="bg-card border border-border rounded-xl shadow-lg w-full max-w-lg overflow-hidden">
+      <div class="p-4 border-b border-border flex items-center justify-between">
+        <h3 class="text-sm font-bold text-foreground">Record Official Deed Submission & Balam Ledger</h3>
+        <button (click)="closeSubmissionModal()" class="text-muted-foreground hover:text-foreground text-sm font-bold">✕</button>
+      </div>
+
+      <div class="p-6 space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <app-custom-input
+            label="I-Form / Submission Receipt No"
+            [ngModel]="deedReceiptNumber()"
+            (ngModelChange)="deedReceiptNumber.set($event)"
+            placeholder="e.g. I-FORM-2026-9912"
+          ></app-custom-input>
+
+          <app-custom-input
+            label="Registered Deed Serial No"
+            [ngModel]="registeredDeedNumber()"
+            (ngModelChange)="registeredDeedNumber.set($event)"
+            placeholder="e.g. DEED-88219/2026"
+          ></app-custom-input>
+        </div>
+
+        <div class="grid grid-cols-3 gap-3">
+          <app-custom-input
+            label="Balam Book"
+            [ngModel]="balamBookNo()"
+            (ngModelChange)="balamBookNo.set($event)"
+            placeholder="Book 1"
+          ></app-custom-input>
+
+          <app-custom-input
+            label="Volume No"
+            [ngModel]="volumeNo()"
+            (ngModelChange)="volumeNo.set($event)"
+            placeholder="Vol 44"
+          ></app-custom-input>
+
+          <app-custom-input
+            label="Page No"
+            [ngModel]="pageNo()"
+            (ngModelChange)="pageNo.set($event)"
+            placeholder="pp 110-128"
+          ></app-custom-input>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <app-custom-input
+            label="Deed Delivery Date"
+            type="date"
+            [ngModel]="deedDeliveryDate()"
+            (ngModelChange)="deedDeliveryDate.set($event)"
+          ></app-custom-input>
+
+          <app-custom-input
+            label="Document Vault Box / Location"
+            [ngModel]="vaultLocation()"
+            (ngModelChange)="vaultLocation.set($event)"
+            placeholder="e.g. Vault Box #104"
+          ></app-custom-input>
+        </div>
+
+        <app-custom-textarea
+          label="Archival Remarks"
+          [ngModel]="submissionNotes()"
+          (ngModelChange)="submissionNotes.set($event)"
+          rows="2"
+          placeholder="Certified copy filed with legal archives, original handed over to purchaser..."
+        ></app-custom-textarea>
+      </div>
+
+      <div class="p-4 bg-secondary/20 border-t border-border flex items-center justify-end gap-2">
+        <app-custom-button variant="outline" (click)="closeSubmissionModal()" [disabled]="isActionLoading()">
+          Cancel
+        </app-custom-button>
+        <app-custom-button variant="primary" (click)="saveSubmission()" [loading]="isActionLoading()">
+          Save Submission & Balam References
+        </app-custom-button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- 4. Legal Validation Sign-Off Modal -->
+@if (isValidationModalOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+    <div class="bg-card border border-border rounded-xl shadow-lg w-full max-w-lg overflow-hidden">
+      <div class="p-4 border-b border-border flex items-center justify-between">
+        <h3 class="text-sm font-bold text-foreground">Legal Team Formal Validation Sign-Off</h3>
+        <button (click)="closeValidationModal()" class="text-muted-foreground hover:text-foreground text-sm font-bold">✕</button>
+      </div>
+
+      <div class="p-6 space-y-4">
+        <app-custom-input
+          label="Authorized Legal Officer / Advocate"
+          [ngModel]="validationOfficer()"
+          (ngModelChange)="validationOfficer.set($event)"
+          placeholder="e.g. Chief Legal Counsel"
+          [required]="true"
+        ></app-custom-input>
+
+        <div>
+          <label class="text-xs font-semibold text-foreground block mb-2">Legal Validation Decision</label>
+          <div class="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              (click)="validationStatus.set('VALIDATED')"
+              class="p-3 rounded-lg border text-xs font-bold transition-all text-center"
+              [ngClass]="validationStatus() === 'VALIDATED' ? 'bg-emerald-500/10 border-emerald-500 text-emerald-600 dark:text-emerald-400' : 'border-border bg-card text-muted-foreground hover:bg-secondary'"
+            >
+              ✓ VALIDATED & CLEARED
+            </button>
+            <button
+              type="button"
+              (click)="validationStatus.set('REJECTED')"
+              class="p-3 rounded-lg border text-xs font-bold transition-all text-center"
+              [ngClass]="validationStatus() === 'REJECTED' ? 'bg-destructive/10 border-destructive text-destructive' : 'border-border bg-card text-muted-foreground hover:bg-secondary'"
+            >
+              ✕ OBJECTION / REJECTED
+            </button>
+          </div>
+        </div>
+
+        <app-custom-textarea
+          label="Validation Certification Notes"
+          [ngModel]="validationNotes()"
+          (ngModelChange)="validationNotes.set($event)"
+          rows="3"
+          placeholder="State full title scrutiny, non-encumbrance certificate inspection, and Sub-Registrar seal clearance..."
+        ></app-custom-textarea>
+      </div>
+
+      <div class="p-4 bg-secondary/20 border-t border-border flex items-center justify-end gap-2">
+        <app-custom-button variant="outline" (click)="closeValidationModal()" [disabled]="isActionLoading()">
+          Cancel
+        </app-custom-button>
+        <app-custom-button variant="primary" (click)="saveValidation()" [loading]="isActionLoading()">
+          Confirm Legal Sign-Off
+        </app-custom-button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- 5. Log Legal Issue Modal -->
+@if (isIssueModalOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+    <div class="bg-card border border-border rounded-xl shadow-lg w-full max-w-lg overflow-hidden">
+      <div class="p-4 border-b border-border flex items-center justify-between">
+        <h3 class="text-sm font-bold text-destructive">Log Legal Issue or Registration Impediment</h3>
+        <button (click)="closeIssueModal()" class="text-muted-foreground hover:text-foreground text-sm font-bold">✕</button>
+      </div>
+
+      <div class="p-6 space-y-4">
+        <app-custom-input
+          label="Impediment Title / Objection Headline"
+          [ngModel]="issueTitle()"
+          (ngModelChange)="issueTitle.set($event)"
+          placeholder="e.g. Missing Bia deed chain porcha or Khajna variance"
+          [required]="true"
+        ></app-custom-input>
+
+        <app-searchable-select
+          label="Severity Level"
+          categoryCode="LEGAL_ISSUE_SEVERITY"
+          [options]="severityOptions"
+          [ngModel]="issueSeverity()"
+          (ngModelChange)="issueSeverity.set($event)"
+          [allowCreateNew]="true"
+          placeholder="Select severity..."
+        ></app-searchable-select>
+
+        <app-custom-textarea
+          label="Detailed Description of Legal Requisition"
+          [ngModel]="issueDescription()"
+          (ngModelChange)="issueDescription.set($event)"
+          rows="3"
+          placeholder="Explain the specific discrepancy, missing record, or Sub-Registry objection..."
+          [required]="true"
+        ></app-custom-textarea>
+
+        <app-custom-textarea
+          label="Prescribed Corrective Action"
+          [ngModel]="issueCorrectiveAction()"
+          (ngModelChange)="issueCorrectiveAction.set($event)"
+          rows="2"
+          placeholder="e.g. Request Certified Copy from Land Office; procure indemnity affidavit..."
+        ></app-custom-textarea>
+      </div>
+
+      <div class="p-4 bg-secondary/20 border-t border-border flex items-center justify-end gap-2">
+        <app-custom-button variant="outline" (click)="closeIssueModal()" [disabled]="isActionLoading()">
+          Cancel
+        </app-custom-button>
+        <app-custom-button variant="primary" (click)="saveIssue()" [loading]="isActionLoading()">
+          Log Legal Impediment
+        </app-custom-button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- 6. Resolve Legal Issue Modal -->
+@if (isResolveModalOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+    <div class="bg-card border border-border rounded-xl shadow-lg w-full max-w-lg overflow-hidden">
+      <div class="p-4 border-b border-border flex items-center justify-between">
+        <h3 class="text-sm font-bold text-emerald-600 dark:text-emerald-400">Resolve Legal Impediment</h3>
+        <button (click)="closeResolveModal()" class="text-muted-foreground hover:text-foreground text-sm font-bold">✕</button>
+      </div>
+
+      <div class="p-6 space-y-4">
+        <p class="text-xs text-muted-foreground">
+          Confirm that the corrective action has been performed, required records have been retrieved, and the title impediment is cleared.
+        </p>
+
+        <app-custom-textarea
+          label="Resolution Notes & Attestation Reference"
+          [ngModel]="resolutionNotes()"
+          (ngModelChange)="resolutionNotes.set($event)"
+          rows="3"
+          placeholder="e.g. Certified Porcha retrieved and vetted by advocate. SRO objection cleared."
+          [required]="true"
+        ></app-custom-textarea>
+      </div>
+
+      <div class="p-4 bg-secondary/20 border-t border-border flex items-center justify-end gap-2">
+        <app-custom-button variant="outline" (click)="closeResolveModal()" [disabled]="isActionLoading()">
+          Cancel
+        </app-custom-button>
+        <app-custom-button variant="primary" (click)="saveResolveIssue()" [loading]="isActionLoading()">
+          Mark as Resolved
+        </app-custom-button>
+      </div>
+    </div>
+  </div>
+}

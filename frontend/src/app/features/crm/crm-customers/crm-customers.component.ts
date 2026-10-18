@@ -1,15 +1,19 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
-import { CrmService } from '../../../core/services/crm.service';
-import { Customer, Nominee } from '../../../core/models/crm.model';
+import { FormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { debounceTime, distinctUntilChanged } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { LucideAngularModule, Plus, RefreshCw, Eye, Edit3, Trash2, Merge, AlertTriangle } from 'lucide-angular';
 import {
   CardContainerComponent,
   CustomInputComponent,
-  CustomTextareaComponent,
   CustomButtonComponent,
   SearchableSelectComponent
 } from '../../../shared/components';
+import { CrmService, CustomerTableFilters } from '../../../core/services/crm.service';
+import { Customer } from '../../../core/models/crm.model';
 
 @Component({
   selector: 'app-crm-customers',
@@ -18,198 +22,216 @@ import {
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
+    LucideAngularModule,
     CardContainerComponent,
     CustomInputComponent,
-    CustomTextareaComponent,
     CustomButtonComponent,
     SearchableSelectComponent
   ],
   templateUrl: './crm-customers.component.html'
 })
 export class CrmCustomersComponent implements OnInit {
-  private crmService = inject(CrmService);
   private fb = inject(FormBuilder);
+  private crmService = inject(CrmService);
+  private router = inject(Router);
+  private destroyRef = inject(DestroyRef);
+
+  readonly Plus = Plus;
+  readonly RefreshCw = RefreshCw;
+  readonly Eye = Eye;
+  readonly Edit3 = Edit3;
+  readonly Trash2 = Trash2;
+  readonly Merge = Merge;
+  readonly AlertTriangle = AlertTriangle;
 
   customers = signal<Customer[]>([]);
-  isLoading = signal<boolean>(false);
-  isSubmitting = signal<boolean>(false);
-  searchQuery = signal<string>('');
+  total = signal(0);
+  limit = signal(20);
+  offset = signal(0);
+  isLoading = signal(false);
+  isDeleting = signal<number | null>(null);
 
-  // Modals
-  isCreateModalOpen = signal<boolean>(false);
-  isNomineeModalOpen = signal<boolean>(false);
-  selectedCustomerForNominee = signal<Customer | null>(null);
+  // Merge modal
+  mergeModalOpen = signal(false);
+  mergeSource = signal<Customer | null>(null);
+  mergeTargetId = signal<number | null>(null);
+  mergeReason = signal('');
+  mergeError = signal<string | null>(null);
+  isMerging = signal(false);
 
-  // Form for New Customer with Nominees
-  customerForm: FormGroup = this.fb.group({
-    full_name_en: ['', Validators.required],
-    full_name_bn: [''],
-    father_husband_name: [''],
-    mother_name: [''],
-    nid_number: ['', [Validators.required, Validators.pattern(/^[0-9]{10,17}$/)]],
-    tin_number: [''],
-    primary_phone: ['', [Validators.required, Validators.pattern(/^\+?[0-9]{10,15}$/)]],
-    email: ['', [Validators.email]],
-    present_address: ['', Validators.required],
-    permanent_address: ['', Validators.required],
-    is_nrb: [false],
-    passport_number: [''],
-    nominees: this.fb.array([])
-  });
+  deleteModalOpen = signal(false);
+  deleteTarget = signal<Customer | null>(null);
 
-  // Nominee Form for quick append
-  nomineeForm: FormGroup = this.fb.group({
-    nominee_name: ['', Validators.required],
-    relationship: ['SPOUSE', Validators.required],
-    nid_number: [''],
-    share_percentage: [100, [Validators.required, Validators.min(1), Validators.max(100)]]
-  });
+  readonly LOOKUP = {
+    customerType: 'CRM_CUSTOMER_TYPE',
+    language: 'CRM_LANGUAGE',
+    contactMethod: 'CRM_CONTACT_METHOD'
+  };
 
-  relationshipOptions = [
-    { value: 'SPOUSE', label: 'Spouse (স্বামী / স্ত্রী)' },
-    { value: 'SON', label: 'Son (ছেলে)' },
-    { value: 'DAUGHTER', label: 'Daughter (মেয়ে)' },
-    { value: 'FATHER', label: 'Father (পিতা)' },
-    { value: 'MOTHER', label: 'Mother (মাতা)' },
-    { value: 'BROTHER', label: 'Brother (ভাই)' }
+  readonly typeOptions = [
+    { value: 'ALL', label: 'All Types' },
+    { value: 'INDIVIDUAL', label: 'Individual' },
+    { value: 'COMPANY', label: 'Company' },
+    { value: 'INVESTOR', label: 'Investor' },
+    { value: 'NRB', label: 'NRB' },
+    { value: 'OTHER', label: 'Other' }
   ];
 
+  readonly nrbOptions = [
+    { value: 'ALL', label: 'All Customers' },
+    { value: 'true', label: 'NRB Only' },
+    { value: 'false', label: 'Residents Only' }
+  ];
+
+  readonly sortOptions = [
+    { value: 'created_at_desc', label: 'Newest First' },
+    { value: 'created_at_asc', label: 'Oldest First' },
+    { value: 'full_name_en_asc', label: 'Name (A-Z)' },
+    { value: 'customer_code_asc', label: 'Code (A-Z)' }
+  ];
+
+  filterForm: FormGroup = this.fb.group({
+    search: [''],
+    customer_type: ['ALL'],
+    is_nrb: ['ALL'],
+    sort_by: ['created_at_desc']
+  });
+
+  currentPage = computed(() => Math.floor(this.offset() / this.limit()) + 1);
+  totalPages = computed(() => Math.max(1, Math.ceil(this.total() / this.limit())));
+  fromRow = computed(() => (this.total() === 0 ? 0 : this.offset() + 1));
+  toRow = computed(() => Math.min(this.offset() + this.limit(), this.total()));
+
+  // Candidate targets for merge (same phone/email/nid matches not used here — plain list)
+  mergeTargets = computed(() => this.customers().filter(c => c.id !== this.mergeSource()?.id));
+
   ngOnInit(): void {
-    this.loadCustomers();
+    this.loadTable();
+
+    this.filterForm.valueChanges.pipe(
+      debounceTime(300),
+      distinctUntilChanged(),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => this.applyFilters());
+
+    this.filterForm.get('search')!.valueChanges.pipe(
+      debounceTime(400),
+      distinctUntilChanged(),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => this.applyFilters());
   }
 
-  loadCustomers(): void {
+  private buildFilters(): CustomerTableFilters {
+    const v = this.filterForm.value;
+    const filters: CustomerTableFilters = {
+      limit: this.limit(),
+      offset: this.offset(),
+      sort_by: v.sort_by || 'created_at_desc'
+    };
+    if (v.search?.trim()) filters.search = v.search.trim();
+    if (v.customer_type && v.customer_type !== 'ALL') filters.customer_type = v.customer_type;
+    if (v.is_nrb === 'true') filters.is_nrb = true;
+    else if (v.is_nrb === 'false') filters.is_nrb = false;
+    return filters;
+  }
+
+  loadTable(): void {
     this.isLoading.set(true);
-    this.crmService.getCustomers().subscribe({
+    this.crmService.loadCustomersTable(this.buildFilters()).subscribe({
       next: (res) => {
-        this.customers.set(res);
+        this.customers.set(res.items || []);
+        this.total.set(res.total || 0);
+        this.limit.set(res.limit || 20);
+        this.offset.set(res.offset || 0);
         this.isLoading.set(false);
       },
       error: () => this.isLoading.set(false)
     });
   }
 
-  get nomineesArray(): FormArray {
-    return this.customerForm.get('nominees') as FormArray;
+  applyFilters(): void {
+    this.offset.set(0);
+    this.loadTable();
   }
 
-  addNomineeField(): void {
-    const nomineeGroup = this.fb.group({
-      nominee_name: ['', Validators.required],
-      relationship: ['SPOUSE', Validators.required],
-      nid_number: [''],
-      share_percentage: [50, [Validators.required, Validators.min(1), Validators.max(100)]]
+  setPage(page: number): void {
+    const newOffset = (page - 1) * this.limit();
+    if (newOffset < 0 || newOffset >= this.total()) return;
+    this.offset.set(newOffset);
+    this.loadTable();
+  }
+
+  createCustomer(): void {
+    this.router.navigate(['/crm/customers/new']);
+  }
+
+  viewDossier(c: Customer): void {
+    this.router.navigate(['/crm/customers', c.id]);
+  }
+
+  editCustomer(c: Customer): void {
+    this.router.navigate(['/crm/customers', c.id, 'edit']);
+  }
+
+  openDelete(c: Customer): void {
+    this.deleteTarget.set(c);
+    this.deleteModalOpen.set(true);
+  }
+
+  confirmDelete(): void {
+    const c = this.deleteTarget();
+    if (!c) return;
+    this.isDeleting.set(c.id);
+    this.crmService.deleteCustomer(c.id).subscribe({
+      next: () => {
+        this.isDeleting.set(null);
+        this.deleteModalOpen.set(false);
+        this.deleteTarget.set(null);
+        this.loadTable();
+      },
+      error: () => this.isDeleting.set(null)
     });
-    this.nomineesArray.push(nomineeGroup);
   }
 
-  removeNomineeField(index: number): void {
-    this.nomineesArray.removeAt(index);
+  openMerge(c: Customer): void {
+    this.mergeSource.set(c);
+    this.mergeTargetId.set(null);
+    this.mergeReason.set('');
+    this.mergeError.set(null);
+    this.mergeModalOpen.set(true);
   }
 
-  openCreateModal(): void {
-    this.customerForm.reset({
-      full_name_en: '',
-      full_name_bn: '',
-      father_husband_name: '',
-      mother_name: '',
-      nid_number: '',
-      tin_number: '',
-      primary_phone: '',
-      email: '',
-      present_address: '',
-      permanent_address: '',
-      is_nrb: false,
-      passport_number: ''
-    });
-    this.nomineesArray.clear();
-    // Default 1 nominee with 100% share
-    this.nomineesArray.push(this.fb.group({
-      nominee_name: ['', Validators.required],
-      relationship: ['SPOUSE', Validators.required],
-      nid_number: [''],
-      share_percentage: [100, [Validators.required, Validators.min(1), Validators.max(100)]]
-    }));
-    this.isCreateModalOpen.set(true);
-  }
-
-  closeCreateModal(): void {
-    this.isCreateModalOpen.set(false);
-  }
-
-  submitCustomer(): void {
-    if (this.customerForm.invalid) return;
-
-    // Validate nominee shares sum to <= 100%
-    const nominees = this.nomineesArray.value;
-    const totalShare = nominees.reduce((acc: number, cur: any) => acc + Number(cur.share_percentage || 0), 0);
-    if (totalShare > 100) {
-      alert(`Nominee share percentages sum to ${totalShare}%, which exceeds 100%. Please adjust.`);
+  confirmMerge(): void {
+    const src = this.mergeSource();
+    const tgt = this.mergeTargetId();
+    if (!src || !tgt) {
+      this.mergeError.set('Select a target (survivor) customer.');
       return;
     }
-
-    this.isSubmitting.set(true);
-    this.crmService.createCustomer(this.customerForm.value).subscribe({
-      next: (created) => {
-        this.customers.update(cur => [created, ...cur]);
-        this.isSubmitting.set(false);
-        this.closeCreateModal();
-      },
-      error: () => this.isSubmitting.set(false)
-    });
-  }
-
-  // Quick Nominee Appending
-  openNomineeModal(customer: Customer): void {
-    this.selectedCustomerForNominee.set(customer);
-    const existingTotal = customer.nominees.reduce((a, b) => a + Number(b.share_percentage || 0), 0);
-    const remaining = Math.max(0, 100 - existingTotal);
-    this.nomineeForm.reset({
-      nominee_name: '',
-      relationship: 'SPOUSE',
-      nid_number: '',
-      share_percentage: remaining
-    });
-    this.isNomineeModalOpen.set(true);
-  }
-
-  closeNomineeModal(): void {
-    this.isNomineeModalOpen.set(false);
-    this.selectedCustomerForNominee.set(null);
-  }
-
-  submitNominee(): void {
-    const cust = this.selectedCustomerForNominee();
-    if (!cust || this.nomineeForm.invalid) return;
-
-    this.isSubmitting.set(true);
-    this.crmService.addNominee(cust.id, this.nomineeForm.value).subscribe({
-      next: (nom) => {
-        this.customers.update(list => list.map(c => {
-          if (c.id === cust.id) {
-            return { ...c, nominees: [...c.nominees, nom] };
-          }
-          return c;
-        }));
-        this.isSubmitting.set(false);
-        this.closeNomineeModal();
+    this.isMerging.set(true);
+    this.mergeError.set(null);
+    this.crmService.mergeCustomers({
+      source_customer_id: src.id,
+      target_customer_id: tgt,
+      merge_reason: this.mergeReason() || undefined
+    }).subscribe({
+      next: () => {
+        this.isMerging.set(false);
+        this.mergeModalOpen.set(false);
+        this.loadTable();
       },
       error: (err) => {
-        alert(err?.error?.detail || 'Failed to add nominee');
-        this.isSubmitting.set(false);
+        this.isMerging.set(false);
+        this.mergeError.set(err?.error?.detail || 'Merge failed.');
       }
     });
   }
 
-  filteredCustomers(): Customer[] {
-    const q = this.searchQuery().toLowerCase().trim();
-    if (!q) return this.customers();
-    return this.customers().filter(c =>
-      c.customer_code.toLowerCase().includes(q) ||
-      c.full_name_en.toLowerCase().includes(q) ||
-      (c.nid_number && c.nid_number.includes(q)) ||
-      c.primary_phone.includes(q) ||
-      (c.email && c.email.toLowerCase().includes(q))
-    );
+  refresh(): void {
+    this.loadTable();
+  }
+
+  nomineeShareTotal(c: Customer): number {
+    return (c.nominees || []).reduce((sum, n) => sum + (Number(n.share_percentage) || 0), 0);
   }
 }

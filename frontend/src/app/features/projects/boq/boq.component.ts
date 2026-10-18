@@ -95,7 +95,7 @@ export class BOQComponent implements OnInit {
     });
 
     this.projectService.getDrawings({ project_id: pId }).subscribe({
-      next: (draws) => this.drawings.set(draws)
+      next: (res: any) => this.drawings.set(res?.items || res || [])
     });
   }
 

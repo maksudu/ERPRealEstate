@@ -6,25 +6,98 @@ from app.core.database import Base
 from app.modules.sales.models import Booking
 from app.modules.crm.models import Customer
 
+class BookingInstallmentSchedule(Base):
+    """
+    Spec 5.7: Master Contractual Installment Schedule generated from approved sales agreements.
+    Manages payment obligations, monthly/quarterly amortization, construction milestone triggers,
+    exact penny rounding distribution, and schedule revision versions.
+    """
+    __tablename__ = "sls_installment_schedules"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    schedule_code = Column(String(64), unique=True, nullable=False, index=True) # e.g. "SCH-2026-0001"
+    booking_id = Column(BigInteger, ForeignKey("sls_bookings.id", ondelete="CASCADE"), nullable=False, index=True)
+    customer_id = Column(BigInteger, ForeignKey("crm_customers.id", ondelete="RESTRICT"), nullable=False, index=True)
+    agreement_reference_no = Column(String(64), nullable=True, index=True) # Reference to Spec 5.6 agreement/deed
+    version = Column(String(32), nullable=False, default="v1.0") # "v1.0", "v1.1", etc.
+    
+    # Supported plan types: 'MONTHLY', 'QUARTERLY', 'CONSTRUCTION_MILESTONE', 'STRUCTURAL_STAGE', 'CUSTOM'
+    plan_type = Column(String(64), nullable=False, default="MONTHLY")
+    
+    approved_contract_price = Column(Numeric(14, 2), nullable=False)
+    booking_money_amount = Column(Numeric(14, 2), nullable=False, default=0.00)
+    down_payment_percentage = Column(Numeric(5, 2), nullable=False, default=15.00)
+    down_payment_amount = Column(Numeric(14, 2), nullable=False, default=0.00)
+    installment_balance_amount = Column(Numeric(14, 2), nullable=False) # e.g. 85% remaining
+    total_installment_count = Column(Integer, nullable=False, default=24)
+    regular_installment_amount = Column(Numeric(14, 2), nullable=False)
+    
+    # Exact rounding difference distribution engine
+    rounding_adjustment_amount = Column(Numeric(14, 2), nullable=False, default=0.00)
+    rounding_adjusted_installment_no = Column(Integer, nullable=False, default=1)
+    
+    start_date = Column(Date, nullable=False)
+    grace_period_days = Column(Integer, nullable=False, default=15)
+    late_surcharge_rate_monthly = Column(Numeric(5, 2), nullable=False, default=2.00) # 2%/month
+    
+    # Status: 'DRAFT', 'ACTIVE', 'SUPERSEDED_AMENDED', 'COMPLETED', 'TERMINATED'
+    status = Column(String(32), nullable=False, default="ACTIVE", index=True)
+    amendment_reason = Column(Text, nullable=True)
+    notes = Column(Text, nullable=True)
+
+    created_at = Column(TIMESTAMP, server_default=func.now())
+    updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
+
+    booking = relationship("Booking")
+    customer = relationship("Customer")
+    installments = relationship("CustomerInstallment", back_populates="schedule", cascade="all, delete-orphan")
+
+
 class CustomerInstallment(Base):
     """
     Installment Schedule milestones for property buyers.
     Supports monthly, quarterly, and construction-milestone payment triggers with late fee accrual.
+    Spec 5.7: Configured with installment type, billing dates, invoice generation, and balances.
     """
     __tablename__ = "sls_customer_installments"
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
+    schedule_id = Column(BigInteger, ForeignKey("sls_installment_schedules.id", ondelete="CASCADE"), nullable=True, index=True)
     booking_id = Column(BigInteger, ForeignKey("sls_bookings.id", ondelete="CASCADE"), nullable=False, index=True)
     installment_no = Column(Integer, nullable=False)
+    
+    # Spec 5.7: Supported installment types:
+    # 'BOOKING_MONEY', 'DOWN_PAYMENT', 'MONTHLY_INSTALLMENT', 'QUARTERLY_INSTALLMENT',
+    # 'CONSTRUCTION_MILESTONE', 'STRUCTURAL_COMPLETION', 'FINISHING_STAGE',
+    # 'DEED_REGISTRATION', 'HANDOVER_POSSESSION', 'OTHER_CHARGES'
+    installment_type = Column(String(64), nullable=False, default="MONTHLY_INSTALLMENT", index=True)
+    
     title = Column(String(191), nullable=False) # e.g. "Down Payment", "1st Floor Roof Casting", "Installment #04"
+    percentage = Column(Numeric(5, 2), nullable=True) # Percentage of contract or remaining
+    fixed_amount = Column(Numeric(14, 2), nullable=True)
+    
     due_date = Column(Date, nullable=False, index=True)
     grace_period_days = Column(Integer, nullable=False, default=15)
+    
     payable_amount = Column(Numeric(14, 2), nullable=False)
     paid_amount = Column(Numeric(14, 2), nullable=False, default=0.00)
     late_fee_accrued = Column(Numeric(14, 2), nullable=False, default=0.00)
-    # Status: 'UPCOMING', 'DUE', 'PAID', 'OVERDUE'
+    
+    # Billing & Invoicing
+    invoice_date = Column(Date, nullable=True)
+    invoice_number = Column(String(64), nullable=True, index=True)
+    amount_billed = Column(Numeric(14, 2), nullable=False, default=0.00)
+    balance_due = Column(Numeric(14, 2), nullable=False, default=0.00)
+    
+    # Versioning & Revision References
+    schedule_version = Column(String(32), nullable=False, default="v1.0")
+    amendment_reference = Column(String(64), nullable=True)
+    reminder_status = Column(String(32), nullable=False, default="SCHEDULED") # 'SCHEDULED', 'INVOICED', 'DISPATCHED'
+    
+    # Status: 'SCHEDULED', 'UPCOMING', 'INVOICED', 'DUE', 'PAID', 'PARTIALLY_PAID', 'OVERDUE'
     status = Column(String(32), nullable=False, default="UPCOMING", index=True)
     milestone_trigger = Column(String(128), nullable=True) # e.g. "ROOF_CASTING_L4", "PLASTER_WORK"
+    notes = Column(Text, nullable=True)
 
     # Automated Surcharge & Alert Dispatch under Prompt 09
     surcharge_percentage = Column(Numeric(5, 2), nullable=False, default=2.00) # 2.0% per month on overdue
@@ -37,6 +110,7 @@ class CustomerInstallment(Base):
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
 
     booking = relationship("Booking")
+    schedule = relationship("BookingInstallmentSchedule", back_populates="installments")
     alerts = relationship("InstallmentAlertLog", back_populates="installment", cascade="all, delete-orphan")
 
 

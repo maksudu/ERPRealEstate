@@ -1,6 +1,7 @@
-import { Component, Input, forwardRef, signal } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnDestroy, forwardRef, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { FormsModule, ControlValueAccessor, NG_VALUE_ACCESSOR, AbstractControl } from '@angular/forms';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-textarea, app-custom-textarea',
@@ -18,7 +19,7 @@ import { FormsModule, ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/f
           </label>
           @if (maxLength) {
             <span class="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
-              {{ value().length }} / {{ maxLength }}
+              {{ _value().length }} / {{ maxLength }}
             </span>
           }
         </div>
@@ -26,7 +27,7 @@ import { FormsModule, ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/f
 
       <textarea
         [rows]="rows"
-        [value]="value()"
+        [value]="_value()"
         (input)="onInputChange($event)"
         (blur)="onBlur()"
         [placeholder]="placeholder"
@@ -51,7 +52,7 @@ import { FormsModule, ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/f
     }
   ]
 })
-export class CustomTextareaComponent implements ControlValueAccessor {
+export class CustomTextareaComponent implements ControlValueAccessor, OnDestroy {
   @Input() label: string = '';
   @Input() placeholder: string = '';
   @Input() rows: number | string = 3;
@@ -61,23 +62,56 @@ export class CustomTextareaComponent implements ControlValueAccessor {
   @Input() hint: string = '';
   @Input() errorMessage: string = '';
 
-  value = signal<string>('');
+  @Input()
+  set value(val: string) {
+    this._value.set(val || '');
+  }
+  get value(): string {
+    return this._value();
+  }
+
+  @Output() valueChange = new EventEmitter<string>();
+
+  /** Reactive-forms binding without formControlName: [control]="form.get('x')" */
+  @Input()
+  set control(ctrl: AbstractControl | null) {
+    this.controlSub?.unsubscribe();
+    this._control = ctrl;
+    if (ctrl) {
+      this.writeValue(ctrl.value);
+      this.controlSub = ctrl.valueChanges.subscribe(v => this.writeValue(v));
+    }
+  }
+
+  _value = signal<string>('');
+  private _control: AbstractControl | null = null;
+  private controlSub?: Subscription;
 
   private onChange: (v: any) => void = () => {};
   private onTouched: () => void = () => {};
 
   onInputChange(event: Event): void {
     const input = event.target as HTMLTextAreaElement;
-    this.value.set(input.value);
+    this._value.set(input.value);
     this.onChange(input.value);
+    this.valueChange.emit(input.value);
+    if (this._control) {
+      this._control.setValue(input.value);
+      this._control.markAsDirty();
+    }
   }
 
   onBlur(): void {
     this.onTouched();
+    this._control?.markAsTouched();
+  }
+
+  ngOnDestroy(): void {
+    this.controlSub?.unsubscribe();
   }
 
   writeValue(val: any): void {
-    this.value.set(val || '');
+    this._value.set(val || '');
   }
 
   registerOnChange(fn: any): void {

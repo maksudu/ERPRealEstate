@@ -1,0 +1,295 @@
+<div class="flex flex-col gap-6 w-full max-w-5xl mx-auto pb-16">
+  <!-- Top Bar & Breadcrumb -->
+  <div class="flex items-center justify-between pb-4 border-b border-border">
+    <div>
+      <div class="flex items-center gap-2">
+        <button
+          (click)="cancel()"
+          class="text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1 transition-colors"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+          </svg>
+          Back to Registration Registry
+        </button>
+        <span class="text-muted-foreground text-xs">/</span>
+        <span class="text-xs font-medium text-primary">New Deed Dossier (Spec 5.11)</span>
+      </div>
+      <h1 class="text-2xl font-bold font-display text-foreground mt-1">
+        Initialize Registration & Deed Tracking Dossier
+      </h1>
+      <p class="text-xs text-muted-foreground mt-0.5">
+        Establish legal documentation workflow, assign Sub-Registry jurisdiction, configure statutory fees, and link legal checklist templates.
+      </p>
+    </div>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="p-4 rounded-xl border border-destructive/20 bg-destructive/10 text-destructive text-sm flex items-center justify-between shadow-xs">
+      <div class="flex items-center gap-2">
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+        <span>{{ errorMessage() }}</span>
+      </div>
+      <button (click)="errorMessage.set('')" class="text-xs font-semibold hover:underline">Dismiss</button>
+    </div>
+  }
+
+  <!-- Single Container Card for All Form Sections -->
+  <div class="bg-card border border-border rounded-xl shadow-xs overflow-hidden divide-y divide-border">
+    <!-- Section 1: Booking Selection -->
+    <div class="p-6">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="text-sm font-bold uppercase tracking-wider text-foreground">1. Select Target Property Booking</h2>
+          <p class="text-xs text-muted-foreground">Select the confirmed property allotment to prepare deed and track registration.</p>
+        </div>
+        <a
+          routerLink="/sales/bookings/create"
+          class="text-xs text-primary hover:underline font-semibold inline-flex items-center gap-1"
+        >
+          + Add New Booking
+        </a>
+      </div>
+
+      <div class="max-w-2xl">
+        <app-searchable-select
+          label="Confirmed Booking Allotment"
+          [options]="bookingOptions()"
+          [ngModel]="selectedBookingId()"
+          (selectionChange)="onBookingSelect($event)"
+          placeholder="Search booking by reference, purchaser name, or apartment unit..."
+          [required]="true"
+        ></app-searchable-select>
+      </div>
+
+      <!-- Selected Booking Specs Preview Card -->
+      @if (selectedBooking()) {
+        <div class="mt-4 p-4 rounded-xl bg-secondary/30 border border-border grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div>
+            <span class="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block">Purchaser / Buyer</span>
+            <div class="font-bold text-foreground text-sm mt-0.5">{{ selectedBooking()?.customer_name }}</div>
+            <div class="text-xs text-muted-foreground">{{ selectedBooking()?.customer_phone }}</div>
+          </div>
+          <div>
+            <span class="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block">Property Unit & Project</span>
+            <div class="font-bold text-foreground text-sm mt-0.5">Unit {{ selectedBooking()?.unit_number }}</div>
+            <div class="text-xs text-muted-foreground">{{ selectedBooking()?.project_name }}</div>
+          </div>
+          <div>
+            <span class="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block">Approved Contract Value</span>
+            <div class="font-bold text-foreground text-sm mt-0.5">৳{{ (selectedBooking()?.final_contract_value || 0) | number:'1.2-2' }}</div>
+            <div class="text-xs text-muted-foreground font-mono">Stage: {{ selectedBooking()?.workflow_stage }}</div>
+          </div>
+          <div class="border-l border-border pl-4">
+            <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block">Dues & Payment Status</span>
+            <div class="font-bold text-emerald-600 dark:text-emerald-400 text-sm mt-0.5">
+              Paid: ৳{{ (selectedBooking()?.down_payment_received || selectedBooking()?.earnest_money_received || 0) | number:'1.2-2' }}
+            </div>
+            <div class="text-[11px] text-muted-foreground">Clearance verified for deed registration</div>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Section 2: Configurable Legal Checklist Template -->
+    <div class="p-6">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="text-sm font-bold uppercase tracking-wider text-foreground">2. Configurable Legal Checklist Template</h2>
+          <p class="text-xs text-muted-foreground">Select the legal team-validated statutory checklist template tailored to the transaction & property type.</p>
+        </div>
+        <span class="text-xs px-2.5 py-1 rounded-full bg-primary/10 text-primary font-semibold">
+          Legal Team Validated
+        </span>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+        <div>
+          <app-searchable-select
+            label="Checklist Configuration Template"
+            [options]="templateOptions()"
+            [ngModel]="selectedTemplateId()"
+            (selectionChange)="onTemplateSelect($event)"
+            placeholder="Select statutory checklist template..."
+            [required]="true"
+          ></app-searchable-select>
+          <p class="text-[11px] text-muted-foreground mt-1">
+            Dynamic template cloned to this dossier. Allows custom item status without mutating the master legal rule.
+          </p>
+        </div>
+
+        @if (selectedTemplate()) {
+          <div class="p-4 rounded-xl bg-card border border-border">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold text-foreground">{{ selectedTemplate()?.template_name }}</span>
+              <span class="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-secondary text-muted-foreground">
+                {{ selectedTemplate()?.property_type }}
+              </span>
+            </div>
+            <p class="text-xs text-muted-foreground mb-3">{{ selectedTemplate()?.description }}</p>
+            <div class="text-[11px] text-muted-foreground font-medium">Included Verification Steps:</div>
+            <div class="mt-2 space-y-1">
+              @for (step of selectedTemplate()?.checklist_schema; track step.step_number) {
+                <div class="flex items-center gap-2 text-xs text-foreground/80">
+                  <span class="w-4 h-4 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-[10px]">
+                    {{ step.step_number }}
+                  </span>
+                  <span class="truncate">{{ step.title }}</span>
+                  @if (step.mandatory) {
+                    <span class="text-[9px] text-destructive font-bold uppercase tracking-wider">Required</span>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Section 3: Legal Jurisdiction & Deed Configuration -->
+    <div class="p-6">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="text-sm font-bold uppercase tracking-wider text-foreground">3. Deed Type & Registration Office</h2>
+          <p class="text-xs text-muted-foreground">Specify the exact deed classification, Sub-Registry Office, and legal advocate.</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div>
+          <app-searchable-select
+            label="Deed Type / Classification"
+            categoryCode="REGISTRATION_DEED_TYPES"
+            [options]="deedTypeOptions"
+            [ngModel]="deedType()"
+            (ngModelChange)="deedType.set($event)"
+            [allowCreateNew]="true"
+            placeholder="Select or add deed type..."
+            [required]="true"
+          ></app-searchable-select>
+        </div>
+
+        <div>
+          <app-searchable-select
+            label="Sub-Registry Office Jurisdiction"
+            categoryCode="SUB_REGISTRY_OFFICES"
+            [options]="subRegistryOptions"
+            [ngModel]="subRegistryOffice()"
+            (ngModelChange)="subRegistryOffice.set($event)"
+            [allowCreateNew]="true"
+            placeholder="Select or add Sub-Registry Office..."
+            [required]="true"
+          ></app-searchable-select>
+        </div>
+
+        <div>
+          <app-custom-input
+            label="Conducting Advocate / Legal Counsel"
+            [ngModel]="conductingAdvocate()"
+            (ngModelChange)="conductingAdvocate.set($event)"
+            placeholder="e.g. Barrister / Advocate M. Rahman"
+          ></app-custom-input>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 4: Statutory Government Taxes & Registration Fees -->
+    <div class="p-6">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="text-sm font-bold uppercase tracking-wider text-foreground">4. Statutory Fees & Stamp Duty Schedule</h2>
+          <p class="text-xs text-muted-foreground">Bangladesh Registration Act & Stamp Duty schedules automatically estimated from contract price.</p>
+        </div>
+        <div class="text-right">
+          <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Estimated Total Cost</span>
+          <span class="text-lg font-bold text-primary font-mono">৳{{ totalRegistrationCosts() | number:'1.2-2' }}</span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="p-3 rounded-xl bg-secondary/30 border border-border">
+          <span class="text-xs font-semibold text-foreground block mb-2">Stamp Duty (1.5%)</span>
+          <app-custom-input
+            type="number"
+            [ngModel]="stampDuty()"
+            (ngModelChange)="stampDuty.set($event)"
+            placeholder="0.00"
+          ></app-custom-input>
+          <span class="text-[10px] text-muted-foreground mt-1 block">Payable via Non-Judicial Stamps</span>
+        </div>
+
+        <div class="p-3 rounded-xl bg-secondary/30 border border-border">
+          <span class="text-xs font-semibold text-foreground block mb-2">Registration Fee (1.0%)</span>
+          <app-custom-input
+            type="number"
+            [ngModel]="registrationFee()"
+            (ngModelChange)="registrationFee.set($event)"
+            placeholder="0.00"
+          ></app-custom-input>
+          <span class="text-[10px] text-muted-foreground mt-1 block">Paid via Pay Order / Treasury Challan</span>
+        </div>
+
+        <div class="p-3 rounded-xl bg-secondary/30 border border-border">
+          <span class="text-xs font-semibold text-foreground block mb-2">AIT / Tax (u/s 53FF - 3.0%)</span>
+          <app-custom-input
+            type="number"
+            [ngModel]="aitTax()"
+            (ngModelChange)="aitTax.set($event)"
+            placeholder="0.00"
+          ></app-custom-input>
+          <span class="text-[10px] text-muted-foreground mt-1 block">Advance Income Tax on Real Estate</span>
+        </div>
+
+        <div class="p-3 rounded-xl bg-secondary/30 border border-border">
+          <span class="text-xs font-semibold text-foreground block mb-2">Local Govt Tax (1.5%)</span>
+          <app-custom-input
+            type="number"
+            [ngModel]="localGovTax()"
+            (ngModelChange)="localGovTax.set($event)"
+            placeholder="0.00"
+          ></app-custom-input>
+          <span class="text-[10px] text-muted-foreground mt-1 block">City Corp / Municipality / Zilla Parishad</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 5: Legal Remarks -->
+    <div class="p-6">
+      <h2 class="text-sm font-bold uppercase tracking-wider text-foreground mb-4">5. Legal Directives & Dossier Notes</h2>
+      <app-custom-textarea
+        label="Legal Instructions & Documentation Directives"
+        [ngModel]="remarks()"
+        (ngModelChange)="remarks.set($event)"
+        rows="3"
+        placeholder="Enter notes on Bia deeds, Khatian clearance, Rajuk approval or advocate instructions..."
+      ></app-custom-textarea>
+    </div>
+
+    <!-- Bottom Action Bar -->
+    <div class="p-6 bg-secondary/20 flex items-center justify-between">
+      <app-custom-button
+        variant="outline"
+        (click)="cancel()"
+        [disabled]="isSubmitting()"
+      >
+        Cancel & Return
+      </app-custom-button>
+
+      <app-custom-button
+        variant="primary"
+        (click)="onSubmit()"
+        [loading]="isSubmitting()"
+        [disabled]="!selectedBookingId()"
+      >
+        <div class="flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <span>Initialize Deed Registration Dossier</span>
+        </div>
+      </app-custom-button>
+    </div>
+  </div>
+</div>

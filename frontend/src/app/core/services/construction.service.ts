@@ -26,24 +26,78 @@ export class ConstructionService {
   private baseUrl = `${environment.apiUrl}/construction`;
 
   // 1. Subcontractors Master
-  getContractors(): Observable<Subcontractor[]> {
-    return this.http.get<Subcontractor[]>(`${this.baseUrl}/contractors`);
+  getContractors(filters?: { search?: string; limit?: number; offset?: number }): Observable<Subcontractor[]> {
+    let params = new HttpParams();
+    if (filters?.search) params = params.set('search', filters.search);
+    if (filters?.limit) params = params.set('limit', filters.limit);
+    if (filters?.offset) params = params.set('offset', filters.offset);
+    return this.http.get<Subcontractor[]>(`${this.baseUrl}/contractors`, { params });
+  }
+
+  getContractorById(id: number): Observable<Subcontractor> {
+    return this.http.get<Subcontractor>(`${this.baseUrl}/contractors/${id}`);
   }
 
   createContractor(payload: any): Observable<Subcontractor> {
     return this.http.post<Subcontractor>(`${this.baseUrl}/contractors`, payload);
   }
 
+  updateContractor(id: number, payload: any): Observable<Subcontractor> {
+    return this.http.put<Subcontractor>(`${this.baseUrl}/contractors/${id}`, payload);
+  }
+
   // 2. DPR Site Diary
-  getDPRReports(filters?: { project_id?: number; report_date?: string }): Observable<DPRReport[]> {
+  getDPRReports(filters?: { project_id?: number; report_date?: string; search?: string; limit?: number; offset?: number }): Observable<DPRReport[]> {
     let params = new HttpParams();
     if (filters?.project_id) params = params.set('project_id', filters.project_id);
     if (filters?.report_date) params = params.set('report_date', filters.report_date);
+    if (filters?.search) params = params.set('search', filters.search);
+    if (filters?.limit) params = params.set('limit', filters.limit);
+    if (filters?.offset) params = params.set('offset', filters.offset);
     return this.http.get<DPRReport[]>(`${this.baseUrl}/dpr`, { params });
+  }
+
+  getDPRReportById(id: number): Observable<DPRReport> {
+    return this.http.get<DPRReport>(`${this.baseUrl}/dpr/${id}`);
   }
 
   createDPRReport(payload: any): Observable<DPRReport> {
     return this.http.post<DPRReport>(`${this.baseUrl}/dpr`, payload);
+  }
+
+  updateDPRReport(id: number, payload: any): Observable<DPRReport> {
+    return this.http.put<DPRReport>(`${this.baseUrl}/dpr/${id}`, payload);
+  }
+
+  deleteDPRReport(id: number): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/dpr/${id}`);
+  }
+
+  // 2.1 Subcontractor Labor Muster Roll
+  getLaborMusterList(filters?: { dpr_id?: number; contractor_id?: number; search?: string; limit?: number; offset?: number }): Observable<LaborMuster[]> {
+    let params = new HttpParams();
+    if (filters?.dpr_id) params = params.set('dpr_id', filters.dpr_id);
+    if (filters?.contractor_id) params = params.set('contractor_id', filters.contractor_id);
+    if (filters?.search) params = params.set('search', filters.search);
+    if (filters?.limit) params = params.set('limit', filters.limit);
+    if (filters?.offset) params = params.set('offset', filters.offset);
+    return this.http.get<LaborMuster[]>(`${this.baseUrl}/labor-muster`, { params });
+  }
+
+  getLaborMusterById(id: number): Observable<LaborMuster> {
+    return this.http.get<LaborMuster>(`${this.baseUrl}/labor-muster/${id}`);
+  }
+
+  createLaborMuster(payload: any): Observable<LaborMuster> {
+    return this.http.post<LaborMuster>(`${this.baseUrl}/labor-muster`, payload);
+  }
+
+  updateLaborMuster(id: number, payload: any): Observable<LaborMuster> {
+    return this.http.put<LaborMuster>(`${this.baseUrl}/labor-muster/${id}`, payload);
+  }
+
+  deleteLaborMuster(id: number): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/labor-muster/${id}`);
   }
 
   // 3. Work Orders
@@ -58,10 +112,17 @@ export class ConstructionService {
   }
 
   // 4. RA Bills & Digital Signatures
-  getRABills(workOrderId?: number): Observable<RABill[]> {
+  getRABills(filters?: { workOrderId?: number; search?: string; limit?: number; offset?: number }): Observable<RABill[]> {
     let params = new HttpParams();
-    if (workOrderId) params = params.set('work_order_id', workOrderId);
+    if (filters?.workOrderId) params = params.set('work_order_id', filters.workOrderId);
+    if (filters?.search) params = params.set('search', filters.search);
+    if (filters?.limit) params = params.set('limit', filters.limit);
+    if (filters?.offset) params = params.set('offset', filters.offset);
     return this.http.get<RABill[]>(`${this.baseUrl}/ra-bills`, { params });
+  }
+
+  getRABillById(id: number): Observable<RABill> {
+    return this.http.get<RABill>(`${this.baseUrl}/ra-bills/${id}`);
   }
 
   createRABill(payload: any): Observable<RABill> {
@@ -82,11 +143,18 @@ export class ConstructionService {
   }
 
   // 6. Concrete Cube Crushing Tests
-  getCubeTests(filters?: { project_id?: number; verdict?: string }): Observable<ConcreteCubeTest[]> {
+  getCubeTests(filters?: { project_id?: number; verdict?: string; search?: string; limit?: number; offset?: number }): Observable<ConcreteCubeTest[]> {
     let params = new HttpParams();
     if (filters?.project_id) params = params.set('project_id', filters.project_id);
     if (filters?.verdict) params = params.set('verdict', filters.verdict);
+    if (filters?.search) params = params.set('search', filters.search);
+    if (filters?.limit) params = params.set('limit', filters.limit);
+    if (filters?.offset) params = params.set('offset', filters.offset);
     return this.http.get<ConcreteCubeTest[]>(`${this.baseUrl}/cube-tests`, { params });
+  }
+
+  getCubeTestById(id: number): Observable<ConcreteCubeTest> {
+    return this.http.get<ConcreteCubeTest>(`${this.baseUrl}/cube-tests/${id}`);
   }
 
   createCubeTest(payload: any): Observable<ConcreteCubeTest> {
@@ -102,12 +170,19 @@ export class ConstructionService {
   }
 
   // 7. Safety NCRs
-  getSafetyNCRs(filters?: { project_id?: number; status_filter?: string; category_filter?: string }): Observable<SafetyNCR[]> {
+  getSafetyNCRs(filters?: { project_id?: number; status_filter?: string; category_filter?: string; search?: string; limit?: number; offset?: number }): Observable<SafetyNCR[]> {
     let params = new HttpParams();
     if (filters?.project_id) params = params.set('project_id', filters.project_id);
     if (filters?.status_filter) params = params.set('status_filter', filters.status_filter);
     if (filters?.category_filter) params = params.set('category_filter', filters.category_filter);
+    if (filters?.search) params = params.set('search', filters.search);
+    if (filters?.limit) params = params.set('limit', filters.limit);
+    if (filters?.offset) params = params.set('offset', filters.offset);
     return this.http.get<SafetyNCR[]>(`${this.baseUrl}/safety-ncrs`, { params });
+  }
+
+  getSafetyNCRById(id: number): Observable<SafetyNCR> {
+    return this.http.get<SafetyNCR>(`${this.baseUrl}/safety-ncrs/${id}`);
   }
 
   createSafetyNCR(payload: any): Observable<SafetyNCR> {

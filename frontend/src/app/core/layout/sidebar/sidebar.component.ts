@@ -39,7 +39,7 @@ export class SidebarComponent implements OnInit {
   filterQuery = signal<string>('');
 
   // Expanded menu groups state (persisted as Set of IDs, auto-expands active route)
-  expandedGroupIds = signal<Set<string>>(new Set(['land', 'procurement']));
+  expandedGroupIds = signal<Set<string>>(new Set(['land', 'procurement', 'projects']));
   expandedSubItemIds = signal<Set<string>>(new Set(['land-reports-sub']));
 
   // =========================================================================
@@ -403,13 +403,26 @@ export class SidebarComponent implements OnInit {
       ]
     },
     {
-      id: 'approvals',
-      title: 'Spatial Projects & Permits',
-      iconSvg: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
+      id: 'projects',
+      title: '2. Project Development & Management',
+      iconSvg: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4',
+      badge: '15 Modules',
       items: [
-        { id: 'projects-master', label: 'Spatial Projects & FAR', route: '/projects/list' },
-        { id: 'statutory', label: 'Statutory Permits & Vault', route: '/legal/compliance-vault' },
-        { id: 'boq', label: 'BOQ Estimation & IFC Drawings', route: '/projects/boq' }
+        { id: 'prj-master', label: 'Project Registration & Master Setup', route: '/projects/master', badge: 'Core' },
+        { id: 'prj-feasibility', label: 'Project Feasibility & Investment Analysis', route: '/projects/feasibility', badge: 'Viability' },
+        { id: 'prj-land-alloc', label: 'Project-wise Land Allocation', route: '/projects/land-allocation', badge: 'Parcel' },
+        { id: 'prj-building-setup', label: 'Building, Tower, Floor & Unit Setup', route: '/projects/towers-units', badge: 'Towers' },
+        { id: 'prj-budget-planning', label: 'Project Budget & Cost Planning', route: '/projects/budget-planning', badge: 'Cost' },
+        { id: 'prj-profitability-roi', label: 'Estimated Profitability & ROI', route: '/projects/profitability-roi', badge: 'ROI' },
+        { id: 'prj-timeline-milestones', label: 'Project Timeline & Milestones', route: '/projects/timeline-milestones', badge: 'Gantt' },
+        { id: 'prj-regulatory-approvals', label: 'Regulatory Approvals & Compliance', route: '/projects/regulatory-approvals', badge: 'RAJUK' },
+        { id: 'prj-drawings-docs', label: 'Architectural Drawings & Documents', route: '/projects/drawings-documents', badge: 'IFC' },
+        { id: 'prj-construction-monitoring', label: 'Construction Progress Monitoring', route: '/projects/construction-monitoring', badge: 'Site' },
+        { id: 'prj-risk-issues', label: 'Project Risk & Issue Management', route: '/projects/risk-issues', badge: 'Risk' },
+        { id: 'prj-change-orders', label: 'Project Change Orders & Variations', route: '/projects/change-orders', badge: 'Change' },
+        { id: 'prj-fin-perf', label: 'Project-wise Financial Performance', route: '/projects/financial-performance', badge: 'Finance' },
+        { id: 'prj-reports-dash', label: 'Project Reports & Executive Dashboard', route: '/projects/reports-dashboard', badge: 'KPIs' },
+        { id: 'prj-handover-closure', label: 'Project Handover & Closure', route: '/projects/handover-closure', badge: 'Closure' }
       ]
     },
     {
@@ -464,8 +477,11 @@ export class SidebarComponent implements OnInit {
       title: 'CRM & Prospects',
       iconSvg: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z',
       items: [
+        { id: 'lead-capture', label: 'Lead Capture & Sources', route: '/crm/lead-capture', badge: '4.2' },
+        { id: 'lead-assignments', label: 'Lead Assignment & Distribution', route: '/crm/lead-assignments', badge: '4.3' },
+        { id: 'lead-qualification', label: 'Lead Qualification & Scoring', route: '/crm/lead-qualification', badge: '4.4' },
         { id: 'leads', label: 'Omnichannel Leads & Pipeline', route: '/crm/leads' },
-        { id: 'customers', label: 'Buyer Profiles & KYC', route: '/crm/customers' },
+        { id: 'customers', label: 'Buyer Profiles & KYC', route: '/crm/customers', badge: '4.5' },
         { id: 'customer-portal', label: 'Flat Owner Self-Service Portal', route: '/portal/customer', badge: 'Portal' }
       ]
     },
@@ -476,7 +492,15 @@ export class SidebarComponent implements OnInit {
       items: [
         { id: 'bookings', label: 'Apartment Bookings', route: '/sales/bookings' },
         { id: 'discounts', label: 'Discount Level Approvals', route: '/sales/discounts' },
-        { id: 'cancellations', label: 'REHAB Cancellations & Refunds', route: '/sales/cancellations' },
+        { id: 'collections', label: 'Booking & Down Payments', route: '/sales/collections', badge: 'Spec' },
+        { id: 'documents', label: 'Sales Agreements & Deeds', route: '/sales/documents', badge: 'Spec' },
+        { id: 'schedules', label: 'Installment Schedules', route: '/sales/schedules', badge: 'Spec' },
+        { id: 'sales-ledger', label: 'Customer Sales Ledger', route: '/sales/ledger', badge: 'Spec' },
+        { id: 'cancellations', label: 'Cancellations & Refunds', route: '/sales/cancellations', badge: 'Spec' },
+        { id: 'transfers', label: 'Property Transfers & Mutation', route: '/sales/transfers', badge: 'Spec' },
+        { id: 'registrations', label: 'Registration & Deed Tracking', route: '/sales/registrations', badge: '5.11' },
+        { id: 'handovers', label: 'Handover & Possession', route: '/sales/handovers', badge: '5.12' },
+        { id: 'property-report', label: 'Property Portfolio Report', route: '/sales/reports/property-report', badge: 'Excel/PDF' },
         { id: 'brokers', label: 'Broker Commissions & TDS', route: '/brokers/commissions' }
       ]
     },

@@ -4,6 +4,10 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   CustomerInstallment,
+  BookingInstallmentSchedule,
+  PaginatedInstallmentSchedules,
+  InstallmentSchedulePreviewResponse,
+  InstallmentInvoiceResponse,
   PDCVaultItem,
   NI138LegalAction,
   InstallmentAlertLog,
@@ -32,14 +36,100 @@ export class InstallmentService {
 
   generateSchedule(payload: {
     booking_id: number;
+    agreement_reference_no?: string;
     plan_type: string;
     total_installments?: number;
     start_date?: string;
     down_payment_percentage?: number;
     grace_period_days?: number;
     custom_milestones?: CustomMilestoneItem[];
+    notes?: string;
   }): Observable<CustomerInstallment[]> {
     return this.http.post<CustomerInstallment[]>(`${this.baseUrl}/schedules/generate`, payload);
+  }
+
+  // Spec 5.7: Preview Amortization Schedule
+  previewSchedule(payload: {
+    booking_id: number;
+    plan_type: string;
+    total_installments?: number;
+    start_date?: string;
+    down_payment_percentage?: number;
+    grace_period_days?: number;
+    custom_milestones?: CustomMilestoneItem[];
+  }): Observable<InstallmentSchedulePreviewResponse> {
+    return this.http.post<InstallmentSchedulePreviewResponse>(`${this.baseUrl}/schedules/preview`, payload);
+  }
+
+  // Spec 5.7: Master Schedule Registry & Paging
+  getMasterSchedules(filters?: {
+    booking_id?: number;
+    status?: string;
+    plan_type?: string;
+    search?: string;
+    limit?: number;
+    offset?: number;
+  }): Observable<BookingInstallmentSchedule[]> {
+    let params = new HttpParams();
+    if (filters?.booking_id) params = params.set('booking_id', filters.booking_id);
+    if (filters?.status) params = params.set('status', filters.status);
+    if (filters?.plan_type) params = params.set('plan_type', filters.plan_type);
+    if (filters?.search) params = params.set('search', filters.search);
+    if (filters?.limit) params = params.set('limit', filters.limit);
+    if (filters?.offset !== undefined) params = params.set('offset', filters.offset);
+    return this.http.get<BookingInstallmentSchedule[]>(`${this.baseUrl}/schedules/master`, { params });
+  }
+
+  getMasterSchedulesPaged(filters?: {
+    booking_id?: number;
+    status?: string;
+    plan_type?: string;
+    search?: string;
+    limit?: number;
+    offset?: number;
+  }): Observable<PaginatedInstallmentSchedules> {
+    let params = new HttpParams();
+    if (filters?.booking_id) params = params.set('booking_id', filters.booking_id);
+    if (filters?.status) params = params.set('status', filters.status);
+    if (filters?.plan_type) params = params.set('plan_type', filters.plan_type);
+    if (filters?.search) params = params.set('search', filters.search);
+    if (filters?.limit) params = params.set('limit', filters.limit);
+    if (filters?.offset !== undefined) params = params.set('offset', filters.offset);
+    return this.http.get<PaginatedInstallmentSchedules>(`${this.baseUrl}/schedules/paged`, { params });
+  }
+
+  getMasterScheduleDetails(scheduleId: number): Observable<BookingInstallmentSchedule> {
+    return this.http.get<BookingInstallmentSchedule>(`${this.baseUrl}/schedules/master/${scheduleId}`);
+  }
+
+  getActiveScheduleByBooking(bookingId: number): Observable<BookingInstallmentSchedule> {
+    return this.http.get<BookingInstallmentSchedule>(`${this.baseUrl}/schedules/master/by-booking/${bookingId}`);
+  }
+
+  amendSchedule(scheduleId: number, payload: {
+    amendment_reason: string;
+    amendment_reference?: string;
+    plan_type: string;
+    total_installments?: number;
+    down_payment_percentage?: number;
+    start_date?: string;
+    grace_period_days?: number;
+    custom_milestones?: CustomMilestoneItem[];
+    notes?: string;
+  }): Observable<BookingInstallmentSchedule> {
+    return this.http.post<BookingInstallmentSchedule>(`${this.baseUrl}/schedules/master/${scheduleId}/amend`, payload);
+  }
+
+  generateInstallmentInvoice(installmentId: number, payload: {
+    invoice_date?: string;
+    due_date?: string;
+    notes?: string;
+  }): Observable<InstallmentInvoiceResponse> {
+    return this.http.post<InstallmentInvoiceResponse>(`${this.baseUrl}/schedules/installments/${installmentId}/generate-invoice`, payload);
+  }
+
+  exportSchedulePdf(scheduleId: number): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/schedules/master/${scheduleId}/export-pdf`, { responseType: 'blob' });
   }
 
   // 2. Surcharge & Late Fee Calculation Engine (Prompt 09)

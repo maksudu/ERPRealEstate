@@ -17,6 +17,10 @@ export const routes: Routes = [
         redirectTo: 'settings/lookups',
         pathMatch: 'full'
       },
+      {
+        path: 'construction',
+        loadChildren: () => import('./features/construction/construction.routes').then(m => m.CONSTRUCTION_ROUTES)
+      },
   {
     path: 'settings/lookups',
     loadComponent: () => import('./features/settings/lookups/lookup-management.component').then(m => m.LookupManagementComponent),
@@ -108,6 +112,136 @@ export const routes: Routes = [
     title: 'Joint Venture (JV) Agreements - Bangladesh Real Estate ERP'
   },
   {
+    path: 'projects',
+    redirectTo: 'projects/master',
+    pathMatch: 'full'
+  },
+  {
+    path: 'projects/master',
+    loadComponent: () => import('./features/projects/project-master/project-master.component').then(m => m.ProjectMasterComponent),
+    title: '2.1 Project Registration & Master Setup - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'projects/feasibility',
+    loadComponent: () => import('./features/projects/feasibility/feasibility.component').then(m => m.ProjectFeasibilityComponent),
+    title: '2.2 Project Feasibility & Investment Analysis - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'projects/land-allocation',
+    loadComponent: () => import('./features/projects/land-allocation/land-allocation.component').then(m => m.ProjectLandAllocationComponent),
+    title: '2.3 Project-wise Land Allocation - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'projects/towers-units',
+    loadComponent: () => import('./features/projects/towers-units/towers-units.component').then(m => m.ProjectTowersUnitsComponent),
+    title: '2.4 Building, Tower, Floor & Unit Setup - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'projects/budget-planning',
+    loadComponent: () => import('./features/projects/budget-planning/budget-planning.component').then(m => m.ProjectBudgetPlanningComponent),
+    title: '2.5 Project Budget & Cost Planning - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'projects/profitability-roi',
+    loadComponent: () => import('./features/projects/profitability-roi/profitability-roi.component').then(m => m.ProjectProfitabilityRoiComponent),
+    title: '2.6 Estimated Profitability & ROI - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'projects/profitability-roi/create',
+    loadComponent: () => import('./features/projects/profitability-roi/profitability-form.component').then(m => m.ProfitabilityFormComponent),
+    title: 'Create Profitability & ROI Forecast - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'projects/profitability-roi/edit/:id',
+    loadComponent: () => import('./features/projects/profitability-roi/profitability-form.component').then(m => m.ProfitabilityFormComponent),
+    title: 'Edit Profitability & ROI Forecast - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'projects/timeline-milestones',
+    loadComponent: () => import('./features/projects/timeline-milestones/timeline-milestones.component').then(m => m.ProjectTimelineMilestonesComponent),
+    title: '2.7 Project Timeline & Milestones - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'projects/timeline-milestones/create',
+    loadComponent: () => import('./features/projects/timeline-milestones/milestone-form.component').then(m => m.MilestoneFormComponent),
+    title: 'Add Project Milestone - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'projects/timeline-milestones/edit/:id',
+    loadComponent: () => import('./features/projects/timeline-milestones/milestone-form.component').then(m => m.MilestoneFormComponent),
+    title: 'Edit Project Milestone - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'projects/regulatory-approvals',
+    loadComponent: () => import('./features/projects/regulatory-approvals/regulatory-approvals.component').then(m => m.ProjectRegulatoryApprovalsComponent),
+    title: '2.8 Regulatory Approvals & Compliance - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'projects/regulatory-approvals/create',
+    loadComponent: () => import('./features/projects/regulatory-approvals/approval-form.component').then(m => m.ApprovalFormComponent),
+    title: 'Record Regulatory Approval - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'projects/regulatory-approvals/edit/:id',
+    loadComponent: () => import('./features/projects/regulatory-approvals/approval-form.component').then(m => m.ApprovalFormComponent),
+    title: 'Edit Regulatory Approval - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'projects/drawings-documents',
+    loadComponent: () => import('./features/projects/drawings-documents/drawings-documents.component').then(m => m.ProjectDrawingsDocumentsComponent),
+    title: '2.9 Architectural Drawings & Documents - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'projects/drawings-documents/create',
+    loadComponent: () => import('./features/projects/drawings-documents/drawing-form.component').then(m => m.DrawingFormComponent),
+    title: 'Register Drawing & Document - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'projects/drawings-documents/edit/:id',
+    loadComponent: () => import('./features/projects/drawings-documents/drawing-form.component').then(m => m.DrawingFormComponent),
+    title: 'Edit Drawing & Document - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'projects/construction-monitoring',
+    loadComponent: () => import('./features/projects/construction-monitoring/construction-monitoring.component').then(m => m.ProjectConstructionMonitoringComponent),
+    title: '2.10 Construction Progress Monitoring - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'projects/risk-issues',
+    loadComponent: () => import('./features/projects/risk-issues/risk-issues.component').then(m => m.ProjectRiskIssuesComponent),
+    title: '2.11 Project Risk & Issue Management - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'projects/change-orders',
+    loadComponent: () => import('./features/projects/change-orders/change-orders.component').then(m => m.ProjectChangeOrdersComponent),
+    title: '2.12 Project Change Orders & Variations - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'projects/financial-performance',
+    loadComponent: () => import('./features/projects/financial-performance/financial-performance.component').then(m => m.ProjectFinancialPerformanceComponent),
+    title: '2.13 Project-wise Financial Performance - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'projects/financial-performance/create',
+    loadComponent: () => import('./features/projects/financial-performance/financial-form.component').then(m => m.FinancialFormComponent),
+    title: 'Record Project Financial P&L - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'projects/financial-performance/edit/:id',
+    loadComponent: () => import('./features/projects/financial-performance/financial-form.component').then(m => m.FinancialFormComponent),
+    title: 'Edit Project Financial P&L - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'projects/reports-dashboard',
+    loadComponent: () => import('./features/projects/reports-dashboard/reports-dashboard.component').then(m => m.ProjectReportsDashboardComponent),
+    title: '2.14 Project Reports & Executive Dashboard - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'projects/handover-closure',
+    loadComponent: () => import('./features/projects/handover-closure/handover-closure.component').then(m => m.ProjectHandoverClosureComponent),
+    title: '2.15 Project Handover & Closure - Bangladesh Real Estate ERP'
+  },
+  {
     path: 'projects/list',
     loadComponent: () => import('./features/projects/projects-list/projects-list.component').then(m => m.ProjectsListComponent),
     title: 'Project Spatial Modeling (FAR & Towers) - Bangladesh Real Estate ERP'
@@ -148,24 +282,234 @@ export const routes: Routes = [
     title: 'Omnichannel CRM Leads & Kanban - Bangladesh Real Estate ERP'
   },
   {
+    path: 'crm/lead-capture',
+    loadComponent: () => import('./features/crm/crm-lead-capture/crm-lead-capture.component').then(m => m.CrmLeadCaptureComponent),
+    title: 'Lead Capture & Source Management - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'crm/lead-capture/new',
+    loadComponent: () => import('./features/crm/crm-lead-capture/lead-capture-form.component').then(m => m.LeadCaptureFormComponent),
+    title: 'Capture New Lead - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'crm/lead-capture/import',
+    loadComponent: () => import('./features/crm/crm-lead-capture/lead-import.component').then(m => m.LeadImportComponent),
+    title: 'Lead Bulk Import & History - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'crm/lead-capture/:id/edit',
+    loadComponent: () => import('./features/crm/crm-lead-capture/lead-capture-form.component').then(m => m.LeadCaptureFormComponent),
+    title: 'Edit Lead - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'crm/lead-assignments',
+    loadComponent: () => import('./features/crm/crm-lead-assignments/crm-lead-assignments.component').then(m => m.CrmLeadAssignmentsComponent),
+    title: 'Lead Assignment & Distribution - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'crm/lead-assignments/rules/new',
+    loadComponent: () => import('./features/crm/crm-lead-assignments/assignment-rule-form.component').then(m => m.AssignmentRuleFormComponent),
+    title: 'Create Assignment Rule - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'crm/lead-assignments/rules/:id/edit',
+    loadComponent: () => import('./features/crm/crm-lead-assignments/assignment-rule-form.component').then(m => m.AssignmentRuleFormComponent),
+    title: 'Edit Assignment Rule - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'crm/lead-qualification',
+    loadComponent: () => import('./features/crm/crm-lead-qualification/crm-lead-qualification.component').then(m => m.CrmLeadQualificationComponent),
+    title: 'Lead Qualification & Scoring - Bangladesh Real Estate ERP'
+  },
+  {
     path: 'crm/customers',
     loadComponent: () => import('./features/crm/crm-customers/crm-customers.component').then(m => m.CrmCustomersComponent),
     title: 'Customer KYC & Nominee Profiles - Bangladesh Real Estate ERP'
   },
   {
+    path: 'crm/customers/new',
+    loadComponent: () => import('./features/crm/crm-customers/customer-form.component').then(m => m.CustomerFormComponent),
+    title: 'Register New Customer - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'crm/customers/:id',
+    loadComponent: () => import('./features/crm/crm-customers/customer-dossier.component').then(m => m.CustomerDossierComponent),
+    title: 'Customer Dossier - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'crm/customers/:id/edit',
+    loadComponent: () => import('./features/crm/crm-customers/customer-form.component').then(m => m.CustomerFormComponent),
+    title: 'Edit Customer KYC - Bangladesh Real Estate ERP'
+  },
+  {
     path: 'sales/bookings',
     loadComponent: () => import('./features/sales/sales-bookings/sales-bookings.component').then(m => m.SalesBookingsComponent),
-    title: 'Apartment Bookings & Bilingual Deeds - Bangladesh Real Estate ERP'
+    title: 'Apartment Bookings & Sales Workflow - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'sales/bookings/create',
+    loadComponent: () => import('./features/sales/sales-bookings/booking-form.component').then(m => m.BookingFormComponent),
+    title: 'Execute Apartment Booking & Reservation - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'sales/bookings/:id/edit',
+    loadComponent: () => import('./features/sales/sales-bookings/booking-form.component').then(m => m.BookingFormComponent),
+    title: 'Edit Apartment Booking & Pricing - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'sales/bookings/:id',
+    loadComponent: () => import('./features/sales/sales-bookings/booking-details.component').then(m => m.BookingDetailsComponent),
+    title: 'Booking Details & 10-Stage Lifecycle - Bangladesh Real Estate ERP'
   },
   {
     path: 'sales/discounts',
     loadComponent: () => import('./features/sales/sales-discounts/sales-discounts.component').then(m => m.SalesDiscountsComponent),
-    title: 'Multi-Level Discount Approvals - Bangladesh Real Estate ERP'
+    title: '5.4 Price Negotiation & Discount Approvals - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'sales/discounts/create',
+    loadComponent: () => import('./features/sales/sales-discounts/discount-proposal-form.component').then(m => m.DiscountProposalFormComponent),
+    title: 'Submit Price Negotiation & Concession - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'sales/discounts/:id',
+    loadComponent: () => import('./features/sales/sales-discounts/discount-proposal-details.component').then(m => m.DiscountProposalDetailsComponent),
+    title: 'Commercial Proposal Dossier & Authorization - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'sales/collections',
+    loadComponent: () => import('./features/sales/sales-collections/sales-collections.component').then(m => m.SalesCollectionsComponent),
+    title: '5.5 Booking Money & Down Payment Collection - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'sales/collections/create',
+    loadComponent: () => import('./features/sales/sales-collections/collection-form.component').then(m => m.CollectionFormComponent),
+    title: 'Record Commercial Payment Collection - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'sales/collections/:id',
+    loadComponent: () => import('./features/sales/sales-collections/collection-details.component').then(m => m.CollectionDetailsComponent),
+    title: 'Money Receipt Dossier & Accounting Control - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'sales/documents',
+    loadComponent: () => import('./features/sales/sales-documents/sales-documents.component').then(m => m.SalesDocumentsComponent),
+    title: '5.6 Sales Agreements & Deed Preparation - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'sales/documents/create',
+    loadComponent: () => import('./features/sales/sales-documents/document-form.component').then(m => m.DocumentFormComponent),
+    title: 'Generate Legal Document & Agreement - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'sales/documents/:id',
+    loadComponent: () => import('./features/sales/sales-documents/document-details.component').then(m => m.DocumentDetailsComponent),
+    title: 'Legal Instrument Dossier & Execution - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'sales/schedules',
+    loadComponent: () => import('./features/sales/sales-schedules/sales-schedules.component').then(m => m.SalesSchedulesComponent),
+    title: '5.7 Installment Schedule Generation & Amortization - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'sales/schedules/create',
+    loadComponent: () => import('./features/sales/sales-schedules/schedule-form.component').then(m => m.ScheduleFormComponent),
+    title: 'Generate Installment Schedule - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'sales/schedules/:id/amend',
+    loadComponent: () => import('./features/sales/sales-schedules/schedule-amend.component').then(m => m.ScheduleAmendComponent),
+    title: 'Restructure & Amend Installment Schedule - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'sales/schedules/:id',
+    loadComponent: () => import('./features/sales/sales-schedules/schedule-details.component').then(m => m.ScheduleDetailsComponent),
+    title: 'Installment Schedule Dossier & Milestones - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'sales/ledger',
+    loadComponent: () => import('./features/sales/sales-ledger/sales-ledger.component').then(m => m.SalesLedgerComponent),
+    title: '5.8 Customer Sales Ledger & Subledger Statements - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'sales/ledger/customers/:id',
+    loadComponent: () => import('./features/sales/sales-ledger/statement-details.component').then(m => m.StatementDetailsComponent),
+    title: 'Customer Sales Statement Dossier - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'sales/ledger/adjustments/create',
+    loadComponent: () => import('./features/sales/sales-ledger/adjustment-form.component').then(m => m.AdjustmentFormComponent),
+    title: 'Post Commercial Adjustment & Credit Note - Bangladesh Real Estate ERP'
   },
   {
     path: 'sales/cancellations',
     loadComponent: () => import('./features/sales/sales-cancellations/sales-cancellations.component').then(m => m.SalesCancellationsComponent),
-    title: 'Statutory Allotment Cancellations - Bangladesh Real Estate ERP'
+    title: '5.9 Cancellation & Refund Management - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'sales/cancellations/create',
+    loadComponent: () => import('./features/sales/sales-cancellations/cancellation-form.component').then(m => m.CancellationFormComponent),
+    title: 'Initiate Booking Cancellation & Refund - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'sales/cancellations/:id',
+    loadComponent: () => import('./features/sales/sales-cancellations/cancellation-details.component').then(m => m.CancellationDetailsComponent),
+    title: 'Cancellation Dossier & Multi-Tier Approvals - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'sales/transfers',
+    loadComponent: () => import('./features/sales/sales-transfers/sales-transfers.component').then(m => m.SalesTransfersComponent),
+    title: '5.10 Property Transfer & Buyer Change - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'sales/transfers/create',
+    loadComponent: () => import('./features/sales/sales-transfers/transfer-form.component').then(m => m.TransferFormComponent),
+    title: 'Initiate Property Transfer & Mutation - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'sales/transfers/:id',
+    loadComponent: () => import('./features/sales/sales-transfers/transfer-details.component').then(m => m.TransferDetailsComponent),
+    title: 'Ownership Transfer Dossier & Mutation - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'sales/registrations',
+    loadComponent: () => import('./features/sales/sales-registrations/sales-registrations.component').then(m => m.SalesRegistrationsComponent),
+    title: '5.11 Registration & Deed Tracking - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'sales/registrations/create',
+    loadComponent: () => import('./features/sales/sales-registrations/registration-form.component').then(m => m.RegistrationFormComponent),
+    title: 'Initialize Deed Registration Dossier - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'sales/registrations/:id',
+    loadComponent: () => import('./features/sales/sales-registrations/registration-details.component').then(m => m.RegistrationDetailsComponent),
+    title: 'Registration Dossier & Deed Tracking - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'sales/handovers',
+    loadComponent: () => import('./features/sales/sales-handovers/sales-handovers.component').then(m => m.SalesHandoversComponent),
+    title: '5.12 Property Handover Management - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'sales/handovers/create',
+    loadComponent: () => import('./features/sales/sales-handovers/handover-form.component').then(m => m.HandoverFormComponent),
+    title: 'Initiate Property Handover Dossier - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'sales/handovers/:id',
+    loadComponent: () => import('./features/sales/sales-handovers/handover-details.component').then(m => m.HandoverDetailsComponent),
+    title: 'Property Handover Dossier & Possession - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'sales/reports/property-report',
+    loadComponent: () => import('./features/sales/property-reports/property-report.component').then(m => m.PropertyReportComponent),
+    title: 'Property & Portfolio Intelligence Report - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'sales/reports',
+    redirectTo: 'sales/reports/property-report',
+    pathMatch: 'full'
   },
   {
     path: 'installments/schedules',

@@ -1,0 +1,620 @@
+<div class="flex flex-col gap-6 w-full max-w-7xl mx-auto pb-16">
+
+  <!-- Top Bar & Breadcrumb -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-border">
+    <div>
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-semibold text-muted-foreground">Sales & Allotments</span>
+        <span class="text-muted-foreground text-xs">/</span>
+        <span class="text-xs font-medium text-foreground">Analytics & Portfolio Reporting</span>
+      </div>
+      <h1 class="text-2xl font-bold font-display text-foreground mt-1">
+        Property & Sales Portfolio Intelligence Report
+      </h1>
+      <p class="text-xs text-muted-foreground mt-0.5">
+        Multi-dimensional inventory analysis: real-time sales progress, cash collection milestones, deed status, and possession delivery tracking.
+      </p>
+    </div>
+
+    <!-- Export Action Buttons -->
+    <div class="flex items-center gap-2 flex-wrap">
+      <!-- Refresh Button -->
+      <button
+        (click)="loadReport()"
+        [disabled]="isLoading()"
+        class="px-3 py-2 rounded-xl border border-border bg-card hover:bg-muted text-foreground text-xs font-medium inline-flex items-center gap-1.5 transition-colors disabled:opacity-50"
+        title="Refresh dataset"
+      >
+        <svg class="w-3.5 h-3.5" [class.animate-spin]="isLoading()" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+        <span>Refresh</span>
+      </button>
+
+      <!-- Excel Export Button -->
+      <button
+        (click)="exportExcel()"
+        [disabled]="isExportingExcel() || isLoading()"
+        class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold inline-flex items-center gap-2 shadow-xs transition-colors disabled:opacity-50"
+      >
+        @if (isExportingExcel()) {
+          <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+          </svg>
+          <span>Generating Excel...</span>
+        } @else {
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          <span>Export Excel (.xlsx)</span>
+        }
+      </button>
+
+      <!-- PDF Export Button -->
+      <button
+        (click)="exportPdf()"
+        [disabled]="isExportingPdf() || isLoading()"
+        class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold inline-flex items-center gap-2 shadow-xs transition-colors disabled:opacity-50"
+      >
+        @if (isExportingPdf()) {
+          <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+          </svg>
+          <span>Generating PDF...</span>
+        } @else {
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+          </svg>
+          <span>Export PDF (.pdf)</span>
+        }
+      </button>
+    </div>
+  </div>
+
+  <!-- Executive KPI Overview Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- Card 1: Total Units & Inventory Breakdown -->
+    <div class="bg-card border border-border rounded-xl p-4 shadow-xs">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-bold uppercase tracking-wider text-muted-foreground">Portfolio Units</span>
+        <div class="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold text-xs">
+          🏢
+        </div>
+      </div>
+      <div class="text-2xl font-bold font-display text-foreground mt-2">
+        {{ formatNumber(reportData()?.total_units || reportData()?.total) }}
+      </div>
+      <div class="flex items-center gap-2 text-[11px] text-muted-foreground mt-1 flex-wrap">
+        <span class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ reportData()?.total_available_count || 0 }} Available</span>
+        <span>•</span>
+        <span class="text-blue-600 dark:text-blue-400 font-semibold">{{ reportData()?.total_booked_count || 0 }} Booked/Sold</span>
+      </div>
+    </div>
+
+    <!-- Card 2: Total Portfolio Value -->
+    <div class="bg-card border border-border rounded-xl p-4 shadow-xs">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-bold uppercase tracking-wider text-muted-foreground">Total Valuation</span>
+        <div class="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-xs">
+          ৳
+        </div>
+      </div>
+      <div class="text-2xl font-bold font-display text-foreground mt-2">
+        {{ formatCurrency(reportData()?.total_portfolio_value) }}
+      </div>
+      <div class="text-[11px] text-muted-foreground mt-1">
+        Gross asset value across filtered inventory
+      </div>
+    </div>
+
+    <!-- Card 3: Realized Collections -->
+    <div class="bg-card border border-border rounded-xl p-4 shadow-xs">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-bold uppercase tracking-wider text-muted-foreground">Realized Collections</span>
+        <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-xs">
+          ✓
+        </div>
+      </div>
+      <div class="text-2xl font-bold font-display text-emerald-600 dark:text-emerald-400 mt-2">
+        {{ formatCurrency(reportData()?.total_collected_amount) }}
+      </div>
+      <div class="text-[11px] text-muted-foreground mt-1 flex items-center justify-between">
+        <span>Collection Rate:</span>
+        <span class="font-bold text-foreground">
+          {{ (reportData()?.kpis?.overall_collection_rate || 0).toFixed(1) }}%
+        </span>
+      </div>
+    </div>
+
+    <!-- Card 4: Outstanding Receivables & Handover -->
+    <div class="bg-card border border-border rounded-xl p-4 shadow-xs">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-bold uppercase tracking-wider text-muted-foreground">Outstanding Balance</span>
+        <div class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold text-xs">
+          ⏳
+        </div>
+      </div>
+      <div class="text-2xl font-bold font-display text-amber-600 dark:text-amber-400 mt-2">
+        {{ formatCurrency(reportData()?.total_outstanding_amount) }}
+      </div>
+      <div class="text-[11px] text-muted-foreground mt-1 flex items-center justify-between">
+        <span>Handovers Completed:</span>
+        <span class="font-bold text-emerald-600 dark:text-emerald-400">
+          {{ reportData()?.total_handed_over_count || 0 }} Units
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Master Filter & Query Bar -->
+  <div class="bg-card border border-border rounded-xl p-4 shadow-xs flex flex-col gap-3">
+    <!-- Primary Filter Row -->
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+      <!-- Search Bar (5 cols) -->
+      <div class="md:col-span-5">
+        <label class="block text-xs font-medium text-foreground mb-1">Quick Search</label>
+        <div class="relative">
+          <input
+            type="text"
+            [ngModel]="searchQuery()"
+            (ngModelChange)="onSearch($event)"
+            placeholder="Search unit #, project, customer name, mobile, booking ref..."
+            class="w-full pl-9 pr-4 py-2 rounded-xl bg-background border border-border text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-foreground placeholder:text-muted-foreground"
+          />
+          <svg class="w-4 h-4 absolute left-3 top-2.5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Project Filter (3 cols) -->
+      <div class="md:col-span-3">
+        <label class="block text-xs font-medium text-foreground mb-1">Project</label>
+        <app-searchable-select
+          [options]="projectOptions()"
+          [value]="selectedProjectId()"
+          placeholder="Filter by Project"
+          [allowCreateNew]="false"
+          (valueChange)="selectedProjectId.set($event || ''); onFilterChange()"
+        ></app-searchable-select>
+      </div>
+
+      <!-- Inventory Status (2 cols) -->
+      <div class="md:col-span-2">
+        <label class="block text-xs font-medium text-foreground mb-1">Unit Status</label>
+        <app-searchable-select
+          [options]="inventoryStatusOptions"
+          [value]="selectedInventoryStatus()"
+          placeholder="Inventory Status"
+          [allowCreateNew]="false"
+          (valueChange)="selectedInventoryStatus.set($event || ''); onFilterChange()"
+        ></app-searchable-select>
+      </div>
+
+      <!-- Actions: Toggle Advanced & Reset (2 cols) -->
+      <div class="md:col-span-2 flex items-center gap-2">
+        <button
+          type="button"
+          (click)="toggleAdvancedFilters()"
+          class="flex-1 px-3 py-2 rounded-xl border border-border bg-background hover:bg-muted text-foreground text-xs font-medium inline-flex items-center justify-center gap-1.5 transition-colors"
+          [ngClass]="showAdvancedFilters() ? 'bg-primary/10 text-primary' : ''"
+        >
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+          </svg>
+          <span>Filters</span>
+          @if (activeFilterCount() > 0) {
+            <span class="w-4 h-4 rounded-full bg-primary text-primary-foreground text-[10px] flex items-center justify-center font-bold">
+              {{ activeFilterCount() }}
+            </span>
+          }
+        </button>
+
+        @if (activeFilterCount() > 0) {
+          <button
+            type="button"
+            (click)="resetFilters()"
+            class="px-2.5 py-2 rounded-xl border border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground text-xs transition-colors"
+            title="Reset all filters"
+          >
+            ✕
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Advanced Collapsible Filter Drawer -->
+    @if (showAdvancedFilters()) {
+      <div class="pt-3 border-t border-border grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 bg-muted/20 p-3 rounded-lg">
+        <!-- Unit Type -->
+        <div>
+          <label class="block text-[11px] font-medium text-muted-foreground mb-1">Unit Type</label>
+          <app-searchable-select
+            [options]="unitTypeOptions"
+            [value]="selectedUnitType()"
+            placeholder="All Types"
+            [allowCreateNew]="false"
+            (valueChange)="selectedUnitType.set($event || ''); onFilterChange()"
+          ></app-searchable-select>
+        </div>
+
+        <!-- Sales Workflow Stage -->
+        <div>
+          <label class="block text-[11px] font-medium text-muted-foreground mb-1">Sales Workflow Stage</label>
+          <app-searchable-select
+            [options]="workflowStageOptions"
+            [value]="selectedWorkflowStage()"
+            placeholder="All Stages"
+            [allowCreateNew]="false"
+            (valueChange)="selectedWorkflowStage.set($event || ''); onFilterChange()"
+          ></app-searchable-select>
+        </div>
+
+        <!-- Possession Status -->
+        <div>
+          <label class="block text-[11px] font-medium text-muted-foreground mb-1">Possession Status</label>
+          <app-searchable-select
+            [options]="possessionStatusOptions"
+            [value]="selectedPossessionStatus()"
+            placeholder="All Possession"
+            [allowCreateNew]="false"
+            (valueChange)="selectedPossessionStatus.set($event || ''); onFilterChange()"
+          ></app-searchable-select>
+        </div>
+
+        <!-- Facing -->
+        <div>
+          <label class="block text-[11px] font-medium text-muted-foreground mb-1">Facing Orientation</label>
+          <app-searchable-select
+            [options]="facingOptions"
+            [value]="selectedFacing()"
+            placeholder="All Facings"
+            [allowCreateNew]="false"
+            (valueChange)="selectedFacing.set($event || ''); onFilterChange()"
+          ></app-searchable-select>
+        </div>
+
+        <!-- Min Price -->
+        <div>
+          <label class="block text-[11px] font-medium text-muted-foreground mb-1">Min Price (৳)</label>
+          <input
+            type="number"
+            [ngModel]="minPrice()"
+            (ngModelChange)="minPrice.set($event); onFilterChange()"
+            placeholder="e.g. 5000000"
+            class="w-full px-3 py-1.5 rounded-lg bg-background border border-border text-xs text-foreground focus:ring-1 focus:ring-primary"
+          />
+        </div>
+
+        <!-- Max Price -->
+        <div>
+          <label class="block text-[11px] font-medium text-muted-foreground mb-1">Max Price (৳)</label>
+          <input
+            type="number"
+            [ngModel]="maxPrice()"
+            (ngModelChange)="maxPrice.set($event); onFilterChange()"
+            placeholder="e.g. 25000000"
+            class="w-full px-3 py-1.5 rounded-lg bg-background border border-border text-xs text-foreground focus:ring-1 focus:ring-primary"
+          />
+        </div>
+
+        <!-- Min Area -->
+        <div>
+          <label class="block text-[11px] font-medium text-muted-foreground mb-1">Min Area (Sq. Ft.)</label>
+          <input
+            type="number"
+            [ngModel]="minArea()"
+            (ngModelChange)="minArea.set($event); onFilterChange()"
+            placeholder="e.g. 1000"
+            class="w-full px-3 py-1.5 rounded-lg bg-background border border-border text-xs text-foreground focus:ring-1 focus:ring-primary"
+          />
+        </div>
+
+        <!-- Max Area -->
+        <div>
+          <label class="block text-[11px] font-medium text-muted-foreground mb-1">Max Area (Sq. Ft.)</label>
+          <input
+            type="number"
+            [ngModel]="maxArea()"
+            (ngModelChange)="maxArea.set($event); onFilterChange()"
+            placeholder="e.g. 3500"
+            class="w-full px-3 py-1.5 rounded-lg bg-background border border-border text-xs text-foreground focus:ring-1 focus:ring-primary"
+          />
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Master Data Table Card -->
+  <div class="bg-card border border-border rounded-xl shadow-xs overflow-hidden">
+    <!-- Table Header Info Bar -->
+    <div class="px-5 py-3.5 border-b border-border flex items-center justify-between flex-wrap gap-2 bg-muted/10">
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-semibold text-foreground">Matching Units:</span>
+        <span class="px-2 py-0.5 rounded-md bg-primary/10 text-primary text-xs font-bold">
+          {{ reportData()?.total || 0 }} Units
+        </span>
+      </div>
+
+      <!-- Page Size Selector -->
+      <div class="flex items-center gap-2">
+        <span class="text-xs text-muted-foreground">Rows per page:</span>
+        <select
+          [value]="limit()"
+          (change)="onPageSizeChange($any($event.target).value)"
+          class="px-2 py-1 rounded-lg border border-border bg-background text-xs text-foreground"
+        >
+          <option [value]="10">10</option>
+          <option [value]="20">20</option>
+          <option [value]="50">50</option>
+          <option [value]="100">100</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Table Container -->
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs text-foreground border-collapse">
+        <thead class="bg-muted/40 text-[11px] uppercase tracking-wider text-muted-foreground font-semibold border-b border-border">
+          <tr>
+            <th class="px-4 py-3">Unit & Location</th>
+            <th class="px-4 py-3">Project</th>
+            <th class="px-4 py-3">Type & Status</th>
+            <th class="px-4 py-3">Booking & Customer</th>
+            <th class="px-4 py-3 text-right">Valuation / Contract</th>
+            <th class="px-4 py-3 text-right">Collected / Due</th>
+            <th class="px-4 py-3">Legal & Handover</th>
+            <th class="px-4 py-3 text-center">Action</th>
+          </tr>
+        </thead>
+
+        <tbody class="divide-y divide-border/60">
+          <!-- Loading State -->
+          @if (isLoading()) {
+            <tr>
+              <td colspan="8" class="text-center py-16 text-muted-foreground">
+                <div class="flex flex-col items-center justify-center gap-3">
+                  <svg class="w-8 h-8 animate-spin text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                  </svg>
+                  <span class="text-xs font-medium">Aggregating portfolio intelligence data...</span>
+                </div>
+              </td>
+            </tr>
+          } @else if (!reportData()?.items || reportData()?.items?.length === 0) {
+            <!-- Empty State -->
+            <tr>
+              <td colspan="8" class="text-center py-16 text-muted-foreground">
+                <div class="flex flex-col items-center justify-center gap-2 max-w-sm mx-auto">
+                  <div class="w-12 h-12 rounded-full bg-muted flex items-center justify-center text-xl mb-1">
+                    🔍
+                  </div>
+                  <div class="text-sm font-semibold text-foreground">No matching properties found</div>
+                  <p class="text-xs text-muted-foreground">
+                    Try adjusting or resetting your search keywords and filter parameters.
+                  </p>
+                  @if (activeFilterCount() > 0) {
+                    <button
+                      (click)="resetFilters()"
+                      class="mt-2 px-3 py-1.5 rounded-lg border border-border bg-background hover:bg-muted text-xs font-semibold text-foreground transition-colors"
+                    >
+                      Reset All Filters
+                    </button>
+                  }
+                </div>
+              </td>
+            </tr>
+          } @else {
+            <!-- Data Rows -->
+            @for (row of reportData()?.items; track row.unit_id) {
+              <tr class="hover:bg-muted/20 transition-colors">
+                <!-- 1. Unit & Location -->
+                <td class="px-4 py-3.5">
+                  <div class="flex items-center gap-2">
+                    <span class="font-bold text-foreground text-sm font-display">{{ row.unit_number }}</span>
+                    <span class="px-1.5 py-0.5 rounded text-[10px] bg-muted text-muted-foreground font-mono">
+                      Fl {{ row.floor_number }}
+                    </span>
+                  </div>
+                  <div class="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1.5">
+                    <span>{{ formatNumber(row.area_sft) }} sft</span>
+                    <span>•</span>
+                    <span>{{ row.bed_count }}B / {{ row.bath_count }}T</span>
+                    <span>•</span>
+                    <span class="font-medium text-foreground/80">{{ row.facing || 'Standard' }}</span>
+                  </div>
+                </td>
+
+                <!-- 2. Project -->
+                <td class="px-4 py-3.5">
+                  <div class="font-semibold text-foreground">{{ row.project_name }}</div>
+                  <div class="text-[11px] text-muted-foreground font-mono">{{ row.project_code }}</div>
+                </td>
+
+                <!-- 3. Type & Status -->
+                <td class="px-4 py-3.5">
+                  <div class="flex flex-col gap-1 items-start">
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold border uppercase tracking-wider" [ngClass]="getInventoryStatusBadgeClass(row.inventory_status)">
+                      {{ row.inventory_status }}
+                    </span>
+                    <span class="text-[11px] text-muted-foreground">
+                      {{ row.unit_type }}
+                    </span>
+                  </div>
+                </td>
+
+                <!-- 4. Booking & Customer -->
+                <td class="px-4 py-3.5">
+                  @if (row.booking_reference_no) {
+                    <div class="flex flex-col gap-0.5">
+                      <div class="flex items-center gap-1.5">
+                        <span class="font-semibold text-foreground">{{ row.customer_name }}</span>
+                      </div>
+                      <div class="text-[11px] text-muted-foreground font-mono">
+                        {{ row.booking_reference_no }}
+                      </div>
+                      @if (row.workflow_stage) {
+                        <div class="mt-0.5">
+                          <span class="px-1.5 py-0.5 rounded text-[9px] font-semibold border" [ngClass]="getWorkflowBadgeClass(row.workflow_stage)">
+                            {{ row.workflow_stage.replace('_', ' ') }}
+                          </span>
+                        </div>
+                      }
+                    </div>
+                  } @else {
+                    <span class="text-xs text-muted-foreground italic">— Not Booked —</span>
+                  }
+                </td>
+
+                <!-- 5. Valuation / Contract -->
+                <td class="px-4 py-3.5 text-right">
+                  <div class="font-bold text-foreground">
+                    {{ formatCurrency(row.contract_value || row.list_price) }}
+                  </div>
+                  @if (row.contract_value && row.contract_value !== row.list_price) {
+                    <div class="text-[10px] text-muted-foreground line-through">
+                      List: {{ formatCurrency(row.list_price) }}
+                    </div>
+                  }
+                </td>
+
+                <!-- 6. Collected / Due -->
+                <td class="px-4 py-3.5 text-right">
+                  @if (row.booking_id) {
+                    <div class="font-bold text-emerald-600 dark:text-emerald-400">
+                      {{ formatCurrency(row.amount_collected) }}
+                    </div>
+                    <div class="text-[11px] text-amber-600 dark:text-amber-400 font-medium">
+                      Due: {{ formatCurrency(row.balance_due) }}
+                    </div>
+                    <!-- Mini progress bar -->
+                    <div class="w-20 ml-auto bg-muted rounded-full h-1 mt-1 overflow-hidden">
+                      <div
+                        class="bg-emerald-500 h-1 rounded-full transition-all"
+                        [style.width.%]="Math.min(100, row.collection_percentage)"
+                      ></div>
+                    </div>
+                    <div class="text-[9px] text-muted-foreground mt-0.5">
+                      {{ row.collection_percentage.toFixed(0) }}% collected
+                    </div>
+                  } @else {
+                    <span class="text-muted-foreground">—</span>
+                  }
+                </td>
+
+                <!-- 7. Legal & Handover -->
+                <td class="px-4 py-3.5">
+                  <div class="flex flex-col gap-1">
+                    <!-- Deed Badge -->
+                    <div class="flex items-center gap-1.5 text-[11px]">
+                      <span class="text-muted-foreground font-medium">Deed:</span>
+                      @if (row.deed_status === 'COMPLETED') {
+                        <span class="px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold text-[10px]">
+                          ✓ {{ row.deed_number || 'Registered' }}
+                        </span>
+                      } @else if (row.deed_status) {
+                        <span class="px-1.5 py-0.2 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px]">
+                          {{ row.deed_status }}
+                        </span>
+                      } @else {
+                        <span class="text-muted-foreground text-[10px] italic">Pending</span>
+                      }
+                    </div>
+
+                    <!-- Handover Badge -->
+                    <div class="flex items-center gap-1.5 text-[11px]">
+                      <span class="text-muted-foreground font-medium">Possession:</span>
+                      @if (row.possession_status === 'FULL_PHYSICAL_POSSESSION') {
+                        <span class="px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold text-[10px]">
+                          ✓ Handed Over
+                        </span>
+                      } @else if (row.handover_status) {
+                        <span class="px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px]">
+                          {{ row.handover_status }}
+                        </span>
+                      } @else {
+                        <span class="text-muted-foreground text-[10px] italic">Not Initiated</span>
+                      }
+                    </div>
+                  </div>
+                </td>
+
+                <!-- 8. Action Links -->
+                <td class="px-4 py-3.5 text-center">
+                  @if (row.booking_id) {
+                    <div class="flex items-center justify-center gap-1.5">
+                      <a
+                        [routerLink]="['/sales/bookings', row.booking_id]"
+                        class="p-1 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                        title="View Booking Agreement"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                        </svg>
+                      </a>
+
+                      <a
+                        [routerLink]="['/sales/ledger']"
+                        [queryParams]="{ search: row.booking_reference_no }"
+                        class="p-1 rounded-lg hover:bg-muted text-muted-foreground hover:text-primary transition-colors"
+                        title="View Customer Sales Ledger"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                      </a>
+                    </div>
+                  } @else {
+                    <span class="text-muted-foreground text-xs">—</span>
+                  }
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Table Footer / Pagination Controls -->
+    @if (reportData() && (reportData()?.total || 0) > 0) {
+      <div class="px-5 py-3 border-t border-border flex items-center justify-between flex-wrap gap-3 bg-muted/5">
+        <div class="text-xs text-muted-foreground">
+          Showing
+          <span class="font-bold text-foreground">{{ offset() + 1 }}</span>
+          to
+          <span class="font-bold text-foreground">{{ Math.min(offset() + limit(), reportData()?.total || 0) }}</span>
+          of
+          <span class="font-bold text-foreground">{{ reportData()?.total || 0 }}</span>
+          Properties
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button
+            (click)="prevPage()"
+            [disabled]="offset() === 0 || isLoading()"
+            class="px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-medium disabled:opacity-40 transition-colors"
+          >
+            ← Previous
+          </button>
+
+          <span class="text-xs text-muted-foreground font-medium px-2">
+            Page {{ currentPage() }} of {{ totalPages() }}
+          </span>
+
+          <button
+            (click)="nextPage()"
+            [disabled]="offset() + limit() >= (reportData()?.total || 0) || isLoading()"
+            class="px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-medium disabled:opacity-40 transition-colors"
+          >
+            Next →
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+
+</div>

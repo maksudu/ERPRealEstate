@@ -17,6 +17,12 @@ import { FormsModule, ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/f
 import { LookupService } from '../../../core/services/lookup.service';
 import { LookupItem, QuickCreateLookupPayload } from '../../../core/models/lookup.model';
 
+export interface SelectOption {
+  value: any;
+  label: string;
+  subLabel?: string;
+}
+
 @Component({
   selector: 'app-searchable-select',
   standalone: true,
@@ -36,15 +42,29 @@ export class SearchableSelectComponent implements OnInit, ControlValueAccessor {
   private elementRef = inject(ElementRef);
 
   @Input() categoryCode: string = '';
-  @Input() options: { value: any; label: string; subLabel?: string }[] = [];
+  @Input() options: SelectOption[] = [];
   @Input() label: string = '';
   @Input() placeholder: string = 'Select an option...';
   @Input() allowCreateNew: boolean = true;
+  @Input() searchable: boolean = true;
   @Input() required: boolean = false;
   @Input() disabled: boolean = false;
   @Input() hint: string = '';
 
+  /** One-way value binding alternative to ngModel: [value] + (valueChange) */
+  @Input()
+  set value(val: any) {
+    this.selectedValue.set(val === null || val === undefined || val === '' ? null : String(val));
+  }
+
+  /** Alias for allowCreateNew */
+  @Input()
+  set showAddButton(val: boolean) {
+    this.allowCreateNew = val;
+  }
+
   @Output() selectionChange = new EventEmitter<any>();
+  @Output() valueChange = new EventEmitter<any>();
 
   // State Signals
   items = signal<LookupItem[]>([]);
@@ -151,6 +171,7 @@ export class SearchableSelectComponent implements OnInit, ControlValueAccessor {
     this.selectedValue.set(item.item_code);
     this.onChange(item.item_code);
     this.selectionChange.emit(item);
+    this.valueChange.emit(item.item_code);
     this.isOpen.set(false);
     this.searchTerm.set('');
     this.onTouched();
@@ -162,6 +183,7 @@ export class SearchableSelectComponent implements OnInit, ControlValueAccessor {
     this.selectedValue.set(null);
     this.onChange(null);
     this.selectionChange.emit(null);
+    this.valueChange.emit(null);
     this.onTouched();
   }
 

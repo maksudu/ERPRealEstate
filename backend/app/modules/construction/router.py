@@ -41,12 +41,37 @@ router = APIRouter(prefix="/construction", tags=["Construction Operations, QA & 
 # 1. Subcontractors Master
 # --------------------------------------------------------------------------
 @router.get("/contractors", response_model=List[SubcontractorResponse])
-async def list_contractors(db: AsyncSession = Depends(get_db)):
+async def list_contractors(
+    search: Optional[str] = Query(None),
+    limit: int = Query(50, ge=1, le=500),
+    offset: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_db)
+):
     """
-    Returns list of registered trade contractors (Civil, Masonry, Plumbing, etc.).
+    Returns paginated list of registered trade contractors (Civil, Masonry, Plumbing, etc.).
     """
-    result = await db.execute(select(Subcontractor).order_by(Subcontractor.company_name.asc()))
+    stmt = select(Subcontractor).order_by(Subcontractor.company_name.asc())
+    if search:
+        s = f"%{search.strip()}%"
+        stmt = stmt.where(or_(
+            Subcontractor.company_name.ilike(s),
+            Subcontractor.contractor_code.ilike(s),
+            Subcontractor.trade_specialization.ilike(s),
+            Subcontractor.contact_person.ilike(s)
+        ))
+    stmt = stmt.limit(limit).offset(offset)
+    result = await db.execute(stmt)
     return result.scalars().all()
+
+
+@router.get("/contractors/{contractor_id}", response_model=SubcontractorResponse)
+async def get_contractor(contractor_id: int, db: AsyncSession = Depends(get_db)):
+    """Fetches a single subcontractor by ID."""
+    res = await db.execute(select(Subcontractor).where(Subcontractor.id == contractor_id))
+    contractor = res.scalar_one_or_none()
+    if not contractor:
+        raise HTTPException(status_code=404, detail="Subcontractor not found")
+    return contractor
 
 
 @router.post("/contractors", response_model=SubcontractorResponse, status_code=status.HTTP_201_CREATED)
@@ -76,6 +101,30 @@ async def create_contractor(
     return contractor
 
 
+@router.put("/contractors/{contractor_id}", response_model=SubcontractorResponse)
+async def update_contractor(
+    contractor_id: int,
+    payload: SubcontractorCreate,
+    db: AsyncSession = Depends(get_db)
+):
+    """Updates an existing trade subcontractor."""
+    res = await db.execute(select(Subcontractor).where(Subcontractor.id == contractor_id))
+    contractor = res.scalar_one_or_none()
+    if not contractor:
+        raise HTTPException(status_code=404, detail="Subcontractor not found")
+
+    contractor.company_name = payload.company_name
+    contractor.trade_specialization = payload.trade_specialization
+    contractor.contact_person = payload.contact_person
+    contractor.primary_phone = payload.primary_phone
+    contractor.tin_number = payload.tin_number
+    contractor.bin_number = payload.bin_number
+
+    await db.commit()
+    await db.refresh(contractor)
+    return contractor
+
+
 # --------------------------------------------------------------------------
 # 2. Daily Progress Report (DPR) Site Diary
 # --------------------------------------------------------------------------
@@ -83,10 +132,13 @@ async def create_contractor(
 async def list_dpr_reports(
     project_id: Optional[int] = None,
     report_date: Optional[date] = None,
+    search: Optional[str] = Query(None),
+    limit: int = Query(50, ge=1, le=500),
+    offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Returns list of Daily Progress Reports (DPR) with labor muster roll records.
+    Returns list of Daily Progress Reports (DPR) with labor muster roll records, supports pagination and search.
     """
     stmt = (
         select(DPRReport)
@@ -103,7 +155,15 @@ async def list_dpr_reports(
         stmt = stmt.where(DPRReport.project_id == project_id)
     if report_date:
         stmt = stmt.where(DPRReport.report_date == report_date)
+    if search:
+        s = f"%{search.strip()}%"
+        stmt = stmt.where(or_(
+            DPRReport.structural_activity_summary.ilike(s),
+            DPRReport.floor_unit_location.ilike(s),
+            DPRReport.machinery_deployed.ilike(s)
+        ))
 
+    stmt = stmt.limit(limit).offset(offset)
     result = await db.execute(stmt)
     reports = result.scalars().all()
 
@@ -126,6 +186,37 @@ async def list_dpr_reports(
     return responses
 
 
+@router.get("/dpr/{dpr_id}", response_model=DPRReportResponse)
+async def get_dpr_report(dpr_id: int, db: AsyncSession = Depends(get_db)):
+    """Fetches a single DPR report with all labor entries and site data."""
+    stmt = (
+        select(DPRReport)
+        .options(
+            selectinload(DPRReport.project),
+            selectinload(DPRReport.tower),
+            selectinload(DPRReport.site_engineer),
+            selectinload(DPRReport.labor_entries).selectinload(LaborMuster.contractor)
+        )
+        .where(DPRReport.id == dpr_id)
+    )
+    res = await db.execute(stmt)
+    saved = res.scalars().first()
+    if not saved:
+        raise HTTPException(status_code=404, detail="DPR report not found")
+
+    resp = DPRReportResponse.model_validate(saved)
+    resp.project_name = saved.project.project_name if saved.project else None
+    resp.tower_name = saved.tower.tower_name if saved.tower else None
+    resp.site_engineer_name = saved.site_engineer.full_name_en if saved.site_engineer else None
+    labor_list = []
+    for lab in saved.labor_entries:
+        lr = LaborMusterResponse.model_validate(lab)
+        lr.contractor_name = lab.contractor.company_name if lab.contractor else None
+        labor_list.append(lr)
+    resp.labor_entries = labor_list
+    return resp
+
+
 @router.post("/dpr", response_model=DPRReportResponse, status_code=status.HTTP_201_CREATED)
 async def create_dpr_report(
     payload: DPRReportCreate,
@@ -134,7 +225,6 @@ async def create_dpr_report(
     """
     Logs a new Construction Site Diary Daily Progress Report (DPR) with nested labor muster.
     """
-    # Pick first engineer
     user_res = await db.execute(select(User).order_by(User.id.asc()))
     eng = user_res.scalars().first()
 
@@ -195,7 +285,222 @@ async def create_dpr_report(
     resp.project_name = saved.project.project_name if saved.project else None
     resp.tower_name = saved.tower.tower_name if saved.tower else None
     resp.site_engineer_name = saved.site_engineer.full_name_en if saved.site_engineer else None
+    labor_list = []
+    for lab in saved.labor_entries:
+        lr = LaborMusterResponse.model_validate(lab)
+        lr.contractor_name = lab.contractor.company_name if lab.contractor else None
+        labor_list.append(lr)
+    resp.labor_entries = labor_list
     return resp
+
+
+@router.put("/dpr/{dpr_id}", response_model=DPRReportResponse)
+async def update_dpr_report(
+    dpr_id: int,
+    payload: DPRReportCreate,
+    db: AsyncSession = Depends(get_db)
+):
+    """Updates an existing DPR report and replaces its labor muster roll."""
+    stmt = select(DPRReport).where(DPRReport.id == dpr_id)
+    res = await db.execute(stmt)
+    dpr = res.scalar_one_or_none()
+    if not dpr:
+        raise HTTPException(status_code=404, detail="DPR report not found")
+
+    dpr.project_id = payload.project_id
+    dpr.tower_id = payload.tower_id
+    dpr.wbs_node_id = payload.wbs_node_id
+    if payload.report_date:
+        dpr.report_date = payload.report_date
+    dpr.weather_condition_id = payload.weather_condition_id or "SUNNY"
+    dpr.structural_activity_summary = payload.structural_activity_summary
+    dpr.floor_unit_location = payload.floor_unit_location
+    dpr.machinery_deployed = payload.machinery_deployed
+    dpr.site_photos = payload.site_photos or []
+    dpr.safety_incident_logged = bool(payload.safety_incident_logged)
+    dpr.safety_incident_notes = payload.safety_incident_notes
+    dpr.concrete_casting_cft = payload.concrete_casting_cft or 0.0
+    dpr.steel_rod_consumed_mt = payload.steel_rod_consumed_mt or 0.0
+    dpr.cement_consumed_bags = payload.cement_consumed_bags or 0
+
+    # Delete existing labor entries and replace
+    await db.execute(delete(LaborMuster).where(LaborMuster.dpr_id == dpr.id))
+    total_headcount = 0
+    if payload.labor_entries:
+        for lab in payload.labor_entries:
+            rate = lab.daily_wage_rate or 800.00
+            tot_wage = lab.worker_count * rate
+            total_headcount += lab.worker_count
+            entry = LaborMuster(
+                dpr_id=dpr.id,
+                contractor_id=lab.contractor_id,
+                trade_category=lab.trade_category,
+                worker_count=lab.worker_count,
+                daily_wage_rate=rate,
+                total_wage=tot_wage
+            )
+            db.add(entry)
+    dpr.total_workers_onsite = total_headcount
+
+    await db.commit()
+
+    # Re-fetch eager loaded response
+    res = await db.execute(
+        select(DPRReport)
+        .options(
+            selectinload(DPRReport.project),
+            selectinload(DPRReport.tower),
+            selectinload(DPRReport.site_engineer),
+            selectinload(DPRReport.labor_entries).selectinload(LaborMuster.contractor)
+        )
+        .where(DPRReport.id == dpr.id)
+    )
+    saved = res.scalars().first()
+    resp = DPRReportResponse.model_validate(saved)
+    resp.project_name = saved.project.project_name if saved.project else None
+    resp.tower_name = saved.tower.tower_name if saved.tower else None
+    resp.site_engineer_name = saved.site_engineer.full_name_en if saved.site_engineer else None
+    labor_list = []
+    for lab in saved.labor_entries:
+        lr = LaborMusterResponse.model_validate(lab)
+        lr.contractor_name = lab.contractor.company_name if lab.contractor else None
+        labor_list.append(lr)
+    resp.labor_entries = labor_list
+    return resp
+
+
+@router.delete("/dpr/{dpr_id}")
+async def delete_dpr_report(dpr_id: int, db: AsyncSession = Depends(get_db)):
+    """Deletes a DPR report and cascading labor muster records."""
+    stmt = select(DPRReport).where(DPRReport.id == dpr_id)
+    res = await db.execute(stmt)
+    dpr = res.scalar_one_or_none()
+    if not dpr:
+        raise HTTPException(status_code=404, detail="DPR report not found")
+    await db.delete(dpr)
+    await db.commit()
+    return {"message": "DPR report deleted successfully"}
+
+
+# --------------------------------------------------------------------------
+# 2.1 Subcontractor Labor Muster Roll Standalone CRUD
+# --------------------------------------------------------------------------
+@router.get("/labor-muster", response_model=List[LaborMusterResponse])
+async def list_labor_muster(
+    dpr_id: Optional[int] = Query(None),
+    contractor_id: Optional[int] = Query(None),
+    search: Optional[str] = Query(None),
+    limit: int = Query(50, ge=1, le=500),
+    offset: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Lists Subcontractor Labor Muster Roll entries with pagination and contractor details.
+    """
+    stmt = (
+        select(LaborMuster)
+        .options(selectinload(LaborMuster.contractor))
+        .order_by(LaborMuster.id.desc())
+    )
+    if dpr_id:
+        stmt = stmt.where(LaborMuster.dpr_id == dpr_id)
+    if contractor_id:
+        stmt = stmt.where(LaborMuster.contractor_id == contractor_id)
+    if search:
+        s = f"%{search.strip()}%"
+        stmt = stmt.where(LaborMuster.trade_category.ilike(s))
+
+    stmt = stmt.limit(limit).offset(offset)
+    result = await db.execute(stmt)
+    entries = result.scalars().all()
+
+    responses = []
+    for e in entries:
+        resp = LaborMusterResponse.model_validate(e)
+        resp.contractor_name = e.contractor.company_name if e.contractor else None
+        responses.append(resp)
+    return responses
+
+
+@router.get("/labor-muster/{labor_id}", response_model=LaborMusterResponse)
+async def get_labor_muster(labor_id: int, db: AsyncSession = Depends(get_db)):
+    """Fetches a single labor muster roll record."""
+    stmt = select(LaborMuster).options(selectinload(LaborMuster.contractor)).where(LaborMuster.id == labor_id)
+    res = await db.execute(stmt)
+    entry = res.scalar_one_or_none()
+    if not entry:
+        raise HTTPException(status_code=404, detail="Labor muster record not found")
+    resp = LaborMusterResponse.model_validate(entry)
+    resp.contractor_name = entry.contractor.company_name if entry.contractor else None
+    return resp
+
+
+@router.post("/labor-muster", response_model=LaborMusterResponse, status_code=status.HTTP_201_CREATED)
+async def create_labor_muster(
+    payload: LaborMusterCreate,
+    db: AsyncSession = Depends(get_db)
+):
+    """Creates a new labor muster record."""
+    rate = payload.daily_wage_rate or 800.00
+    tot_wage = payload.worker_count * rate
+    entry = LaborMuster(
+        dpr_id=payload.dpr_id,
+        contractor_id=payload.contractor_id,
+        trade_category=payload.trade_category,
+        worker_count=payload.worker_count,
+        daily_wage_rate=rate,
+        total_wage=tot_wage
+    )
+    db.add(entry)
+    await db.commit()
+    await db.refresh(entry)
+
+    res = await db.execute(select(LaborMuster).options(selectinload(LaborMuster.contractor)).where(LaborMuster.id == entry.id))
+    saved = res.scalar_one()
+    resp = LaborMusterResponse.model_validate(saved)
+    resp.contractor_name = saved.contractor.company_name if saved.contractor else None
+    return resp
+
+
+@router.put("/labor-muster/{labor_id}", response_model=LaborMusterResponse)
+async def update_labor_muster(
+    labor_id: int,
+    payload: LaborMusterCreate,
+    db: AsyncSession = Depends(get_db)
+):
+    """Updates an existing labor muster record."""
+    res = await db.execute(select(LaborMuster).where(LaborMuster.id == labor_id))
+    entry = res.scalar_one_or_none()
+    if not entry:
+        raise HTTPException(status_code=404, detail="Labor muster record not found")
+
+    entry.dpr_id = payload.dpr_id
+    entry.contractor_id = payload.contractor_id
+    entry.trade_category = payload.trade_category
+    entry.worker_count = payload.worker_count
+    entry.daily_wage_rate = payload.daily_wage_rate or 800.00
+    entry.total_wage = entry.worker_count * entry.daily_wage_rate
+
+    await db.commit()
+    await db.refresh(entry)
+
+    res2 = await db.execute(select(LaborMuster).options(selectinload(LaborMuster.contractor)).where(LaborMuster.id == entry.id))
+    saved = res2.scalar_one()
+    resp = LaborMusterResponse.model_validate(saved)
+    resp.contractor_name = saved.contractor.company_name if saved.contractor else None
+    return resp
+
+
+@router.delete("/labor-muster/{labor_id}")
+async def delete_labor_muster(labor_id: int, db: AsyncSession = Depends(get_db)):
+    """Deletes a labor muster record."""
+    res = await db.execute(select(LaborMuster).where(LaborMuster.id == labor_id))
+    entry = res.scalar_one_or_none()
+    if not entry:
+        raise HTTPException(status_code=404, detail="Labor muster record not found")
+    await db.delete(entry)
+    await db.commit()
+    return {"message": "Labor muster record deleted successfully"}
 
 
 # --------------------------------------------------------------------------
@@ -276,10 +581,13 @@ async def create_work_order(
 @router.get("/ra-bills", response_model=List[RABillResponse])
 async def list_ra_bills(
     work_order_id: Optional[int] = None,
+    search: Optional[str] = Query(None),
+    limit: int = Query(50, ge=1, le=500),
+    offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Lists Running Account (RA) Bills with statutory deductions and approval statuses.
+    Lists Running Account (RA) Bills with statutory deductions and approval statuses, supports pagination and search.
     """
     stmt = (
         select(RABill)
@@ -291,7 +599,15 @@ async def list_ra_bills(
     )
     if work_order_id:
         stmt = stmt.where(RABill.work_order_id == work_order_id)
+    if search:
+        s = f"%{search.strip()}%"
+        stmt = stmt.where(or_(
+            RABill.ra_bill_number.ilike(s),
+            RABill.status.ilike(s),
+            RABill.remarks.ilike(s)
+        ))
 
+    stmt = stmt.limit(limit).offset(offset)
     result = await db.execute(stmt)
     bills = result.scalars().all()
 
@@ -306,6 +622,32 @@ async def list_ra_bills(
                 resp.contractor_name = b.work_order.contractor.company_name
         responses.append(resp)
     return responses
+
+
+@router.get("/ra-bills/{ra_bill_id}", response_model=RABillResponse)
+async def get_ra_bill(ra_bill_id: int, db: AsyncSession = Depends(get_db)):
+    """Fetches a single RA bill with work order and approval chain."""
+    stmt = (
+        select(RABill)
+        .options(
+            selectinload(RABill.work_order).selectinload(WorkOrder.project),
+            selectinload(RABill.work_order).selectinload(WorkOrder.contractor)
+        )
+        .where(RABill.id == ra_bill_id)
+    )
+    res = await db.execute(stmt)
+    bill = res.scalars().first()
+    if not bill:
+        raise HTTPException(status_code=404, detail="RA Bill not found")
+
+    resp = RABillResponse.model_validate(bill)
+    if bill.work_order:
+        resp.work_order_no = bill.work_order.work_order_no
+        if bill.work_order.project:
+            resp.project_name = bill.work_order.project.project_name
+        if bill.work_order.contractor:
+            resp.contractor_name = bill.work_order.contractor.company_name
+    return resp
 
 
 @router.post("/ra-bills", response_model=RABillResponse, status_code=status.HTTP_201_CREATED)
@@ -537,10 +879,13 @@ async def get_construction_metrics(db: AsyncSession = Depends(get_db)):
 async def list_concrete_cube_tests(
     project_id: Optional[int] = Query(None),
     verdict: Optional[str] = Query(None),
+    search: Optional[str] = Query(None),
+    limit: int = Query(50, ge=1, le=500),
+    offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db)
 ):
     """
-    List concrete cube crushing test records with dynamic verdict tracking.
+    List concrete cube crushing test records with dynamic verdict tracking, pagination and search.
     """
     stmt = (
         select(ConcreteCubeTest)
@@ -551,7 +896,15 @@ async def list_concrete_cube_tests(
         stmt = stmt.where(ConcreteCubeTest.project_id == project_id)
     if verdict:
         stmt = stmt.where(ConcreteCubeTest.test_verdict == verdict)
+    if search:
+        s = f"%{search.strip()}%"
+        stmt = stmt.where(or_(
+            ConcreteCubeTest.structural_element.ilike(s),
+            ConcreteCubeTest.batching_plant_name.ilike(s),
+            ConcreteCubeTest.concrete_grade.ilike(s)
+        ))
 
+    stmt = stmt.limit(limit).offset(offset)
     result = await db.execute(stmt)
     records = result.scalars().all()
 
@@ -589,6 +942,29 @@ async def list_concrete_cube_tests(
         response_list.append(resp)
 
     return response_list
+
+
+@router.get("/cube-tests/{test_id}", response_model=ConcreteCubeTestResponse)
+async def get_concrete_cube_test(test_id: int, db: AsyncSession = Depends(get_db)):
+    """Fetches a single concrete cube test record by ID."""
+    stmt = (
+        select(ConcreteCubeTest)
+        .options(selectinload(ConcreteCubeTest.project), selectinload(ConcreteCubeTest.tower))
+        .where(ConcreteCubeTest.id == test_id)
+    )
+    res = await db.execute(stmt)
+    test = res.scalar_one_or_none()
+    if not test:
+        raise HTTPException(status_code=404, detail="Cube test record not found")
+
+    today = date.today()
+    resp = ConcreteCubeTestResponse.model_validate(test)
+    resp.project_name = test.project.project_name if test.project else None
+    resp.tower_name = test.tower.tower_name if test.tower else "All Towers"
+    resp.day7_status = "COMPLETED" if test.day7_strength_psi is not None else ("DUE" if test.day7_testing_date and test.day7_testing_date <= today else "UPCOMING")
+    resp.day14_status = "COMPLETED" if test.day14_strength_psi is not None else ("DUE" if test.day14_testing_date and test.day14_testing_date <= today else "UPCOMING")
+    resp.day28_status = "COMPLETED" if test.day28_strength_psi is not None else ("DUE" if test.day28_testing_date and test.day28_testing_date <= today else "UPCOMING")
+    return resp
 
 
 @router.post("/cube-tests", response_model=ConcreteCubeTestResponse, status_code=status.HTTP_201_CREATED)
@@ -793,10 +1169,13 @@ async def list_safety_ncrs(
     project_id: Optional[int] = Query(None),
     status_filter: Optional[str] = Query(None),
     category_filter: Optional[str] = Query(None),
+    search: Optional[str] = Query(None),
+    limit: int = Query(50, ge=1, le=500),
+    offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db)
 ):
     """
-    List site safety Non-Conformance Reports with filter by project, category, or status.
+    List site safety Non-Conformance Reports with filter by project, category, or status, with pagination and search.
     """
     stmt = (
         select(SafetyNCR)
@@ -809,7 +1188,15 @@ async def list_safety_ncrs(
         stmt = stmt.where(SafetyNCR.status == status_filter)
     if category_filter:
         stmt = stmt.where(SafetyNCR.category == category_filter)
+    if search:
+        s = f"%{search.strip()}%"
+        stmt = stmt.where(or_(
+            SafetyNCR.ncr_number.ilike(s),
+            SafetyNCR.description.ilike(s),
+            SafetyNCR.location_details.ilike(s)
+        ))
 
+    stmt = stmt.limit(limit).offset(offset)
     result = await db.execute(stmt)
     records = result.scalars().all()
 
@@ -823,6 +1210,27 @@ async def list_safety_ncrs(
         response_list.append(resp)
 
     return response_list
+
+
+@router.get("/safety-ncrs/{ncr_id}", response_model=SafetyNCRResponse)
+async def get_safety_ncr(ncr_id: int, db: AsyncSession = Depends(get_db)):
+    """Fetches a single Safety NCR record by ID."""
+    stmt = (
+        select(SafetyNCR)
+        .options(selectinload(SafetyNCR.project), selectinload(SafetyNCR.contractor))
+        .where(SafetyNCR.id == ncr_id)
+    )
+    res = await db.execute(stmt)
+    ncr = res.scalar_one_or_none()
+    if not ncr:
+        raise HTTPException(status_code=404, detail="Safety NCR record not found")
+
+    today = date.today()
+    resp = SafetyNCRResponse.model_validate(ncr)
+    resp.project_name = ncr.project.project_name if ncr.project else None
+    resp.contractor_name = ncr.contractor.company_name if ncr.contractor else "Unassigned / General"
+    resp.is_overdue = (ncr.status == "Open" and ncr.rectification_deadline < today)
+    return resp
 
 
 @router.post("/safety-ncrs", response_model=SafetyNCRResponse, status_code=status.HTTP_201_CREATED)

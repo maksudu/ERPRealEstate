@@ -1,0 +1,338 @@
+<div class="flex flex-col gap-6 w-full max-w-5xl mx-auto pb-16">
+  <!-- Top Bar & Breadcrumb -->
+  <div class="flex items-center justify-between pb-4 border-b border-border">
+    <div>
+      <div class="flex items-center gap-2">
+        <button
+          (click)="cancel()"
+          class="text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1 transition-colors"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+          </svg>
+          Back to Transfers Registry
+        </button>
+        <span class="text-muted-foreground text-xs">/</span>
+        <span class="text-xs font-medium text-primary">New Transfer Request (Spec 5.10)</span>
+      </div>
+      <h1 class="text-2xl font-bold font-display text-foreground mt-1">
+        Initiate Property Transfer, Buyer Change & Co-Buyer Mutation
+      </h1>
+      <p class="text-xs text-muted-foreground mt-0.5">
+        Execute legal buyer substitution, joint-buyer adjustments, transfer fee calculation, and compliance dues verification.
+      </p>
+    </div>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="p-4 rounded-xl border border-destructive/20 bg-destructive/10 text-destructive text-sm flex items-center justify-between shadow-xs">
+      <div class="flex items-center gap-2">
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+        <span>{{ errorMessage() }}</span>
+      </div>
+      <button (click)="errorMessage.set('')" class="text-xs font-semibold hover:underline">Dismiss</button>
+    </div>
+  }
+
+  <!-- Single Container Card for All Form Sections -->
+  <div class="bg-card border border-border rounded-xl shadow-xs overflow-hidden divide-y divide-border">
+    <!-- Section 1: Target Booking & Outstanding Balance Verification -->
+    <div class="p-6">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="text-sm font-bold uppercase tracking-wider text-foreground">1. Target Property Allotment & Compliance Check</h2>
+          <p class="text-xs text-muted-foreground">Select source property booking to evaluate dues and transfer eligibility.</p>
+        </div>
+        <a
+          routerLink="/sales/bookings/create"
+          class="text-xs text-primary hover:underline font-semibold inline-flex items-center gap-1"
+        >
+          + Add New Booking
+        </a>
+      </div>
+
+      <div class="max-w-2xl">
+        <app-searchable-select
+          label="Target Property Booking"
+          [options]="bookingOptions()"
+          [ngModel]="selectedBookingId()"
+          (selectionChange)="onBookingSelect($event)"
+          placeholder="Search booking by reference, allottee, or unit number..."
+          [required]="true"
+        ></app-searchable-select>
+      </div>
+
+      <!-- Selected Booking Specs & Compliance Banner -->
+      @if (selectedBooking()) {
+        <div class="mt-4 p-4 rounded-xl bg-secondary/30 border border-border grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+          <div>
+            <span class="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block">Source Customer</span>
+            <div class="font-bold text-foreground text-sm mt-0.5">{{ selectedBooking()?.customer_name }}</div>
+            <div class="text-muted-foreground">{{ selectedBooking()?.customer_phone }}</div>
+          </div>
+          <div>
+            <span class="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block">Allotted Property</span>
+            <div class="font-bold text-foreground text-sm mt-0.5">Unit {{ selectedBooking()?.unit_number }}</div>
+            <div class="text-muted-foreground">{{ selectedBooking()?.project_name }}</div>
+          </div>
+          <div>
+            <span class="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block">Contract Value</span>
+            <div class="font-bold text-foreground text-sm mt-0.5">৳{{ contractValue() | number:'1.2-2' }}</div>
+            <div class="text-emerald-600 font-medium">Paid: ৳{{ totalPaid() | number:'1.2-2' }}</div>
+          </div>
+          <div class="border-l border-border pl-4">
+            <span class="text-[10px] font-bold uppercase tracking-wider block" [ngClass]="outstandingBalance() > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600'">
+              Outstanding Compliance Dues
+            </span>
+            <div class="font-bold text-lg mt-0.5" [ngClass]="outstandingBalance() > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600'">
+              ৳{{ outstandingBalance() | number:'1.2-2' }}
+            </div>
+            <div class="text-[10px] text-muted-foreground">
+              {{ outstandingBalance() > 0 ? 'Requires NOC clearance or waiver' : 'All dues fully settled ✓' }}
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Section 2: Transfer Type & Transferee Details -->
+    <div class="p-6">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="text-sm font-bold uppercase tracking-wider text-foreground">2. Transfer Category & Ownership Mutation</h2>
+          <p class="text-xs text-muted-foreground">Select mutation category and define transferee or co-buyer particulars.</p>
+        </div>
+        <a
+          routerLink="/settings/lookups"
+          class="text-xs text-primary hover:underline font-semibold inline-flex items-center gap-1"
+        >
+          Lookup Settings
+        </a>
+      </div>
+
+      <div class="max-w-xl mb-6">
+        <app-searchable-select
+          label="Transfer Type (Dynamic Lookups)"
+          categoryCode="UNIT_TRANSFER_TYPES"
+          [options]="transferTypeOptions"
+          [ngModel]="transferType()"
+          (selectionChange)="onTypeSelect($event)"
+          placeholder="Select transfer type..."
+          [allowCreateNew]="true"
+          [required]="true"
+        ></app-searchable-select>
+      </div>
+
+      <!-- Case A: Full Buyer Substitution -->
+      @if (transferType() === 'FULL_BUYER_SUBSTITUTION') {
+        <div class="p-5 rounded-xl border border-primary/20 bg-primary/5 space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-primary">Destination Transferee (New Buyer Profile)</h3>
+            <a
+              routerLink="/crm/customers/new"
+              target="_blank"
+              class="text-xs text-primary hover:underline font-semibold inline-flex items-center gap-1"
+            >
+              + Create New Customer Profile
+            </a>
+          </div>
+
+          <div class="max-w-2xl">
+            <app-searchable-select
+              label="Select Transferee Customer"
+              [options]="customerOptions()"
+              [ngModel]="toCustomerId()"
+              (selectionChange)="toCustomerId.set($event)"
+              placeholder="Search destination buyer by name or phone..."
+              [required]="true"
+            ></app-searchable-select>
+          </div>
+        </div>
+      }
+
+      <!-- Case B: Add or Remove Co-Buyer -->
+      @if (transferType() === 'ADD_CO_BUYER' || transferType() === 'REMOVE_CO_BUYER') {
+        <div class="p-5 rounded-xl border border-border bg-secondary/20 space-y-4">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-foreground">Joint / Co-Buyer Particulars</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+              <app-custom-input
+                label="Co-Buyer Full Name"
+                type="text"
+                [value]="coBuyerName()"
+                (valueChange)="coBuyerName.set($event)"
+                placeholder="Full legal name"
+                [required]="true"
+              ></app-custom-input>
+            </div>
+            <div>
+              <app-custom-input
+                label="National ID / Passport No"
+                type="text"
+                [value]="coBuyerNid()"
+                (valueChange)="coBuyerNid.set($event)"
+                placeholder="NID or Passport number"
+              ></app-custom-input>
+            </div>
+            <div>
+              <app-custom-input
+                label="Primary Phone"
+                type="text"
+                [value]="coBuyerPhone()"
+                (valueChange)="coBuyerPhone.set($event)"
+                placeholder="+8801XXXXXXXXX"
+              ></app-custom-input>
+            </div>
+            <div>
+              <app-searchable-select
+                label="Relation to Allottee"
+                categoryCode="CO_BUYER_RELATIONS"
+                [options]="coBuyerRelationOptions"
+                [ngModel]="coBuyerRelation()"
+                (selectionChange)="coBuyerRelation.set($event)"
+                placeholder="Select relation..."
+                [allowCreateNew]="true"
+              ></app-searchable-select>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Case C: Ownership Share Amendment -->
+      @if (transferType() === 'SHARE_AMENDMENT' || transferType() === 'ADD_CO_BUYER') {
+        <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <app-custom-input
+              label="Previous Primary Ownership Share (%)"
+              type="number"
+              [value]="previousSharePercent()"
+              (valueChange)="previousSharePercent.set($event)"
+              placeholder="100.0"
+            ></app-custom-input>
+          </div>
+          <div>
+            <app-custom-input
+              label="New Ownership Share (%)"
+              type="number"
+              [value]="newSharePercent()"
+              (valueChange)="newSharePercent.set($event)"
+              placeholder="50.0"
+              hint="Remaining share shall be allotted to co-buyer/joint applicant."
+            ></app-custom-input>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Section 3: Developer Transfer Fee Calculation -->
+    <div class="p-6">
+      <div class="mb-4">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-foreground">3. Developer Transfer Fee Calculation</h2>
+        <p class="text-xs text-muted-foreground">Standard developer NOC fee is 1.00% of final contractual selling price.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+        <div>
+          <app-custom-input
+            label="Transfer Fee Percentage (%)"
+            type="number"
+            [value]="transferFeePercentage()"
+            (valueChange)="transferFeePercentage.set($event)"
+            placeholder="1.0"
+            hint="Applicable developer NOC processing fee."
+          ></app-custom-input>
+        </div>
+
+        <div class="p-4 rounded-xl bg-secondary/30 border border-border flex items-center justify-between">
+          <div>
+            <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Computed Transfer Fee (BDT)</span>
+            <div class="text-2xl font-bold font-mono text-primary mt-0.5">
+              ৳{{ computedTransferFee() | number:'1.2-2' }}
+            </div>
+          </div>
+          <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
+            NOC Receipt Required
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 4: Supporting Documents & Legal Verification -->
+    <div class="p-6">
+      <div class="mb-4">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-foreground">4. Supporting Documents & Consents</h2>
+        <p class="text-xs text-muted-foreground">Attach signed consent affidavits, NOC certificate, and RAJUK/developer permission.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <app-custom-input
+            label="NOC Document URL"
+            type="text"
+            [value]="nocDocumentUrl()"
+            (valueChange)="nocDocumentUrl.set($event)"
+            placeholder="https://.../noc-doc.pdf"
+          ></app-custom-input>
+        </div>
+        <div>
+          <app-custom-input
+            label="Sale Permission URL"
+            type="text"
+            [value]="salePermissionUrl()"
+            (valueChange)="salePermissionUrl.set($event)"
+            placeholder="https://.../permission.pdf"
+          ></app-custom-input>
+        </div>
+        <div>
+          <app-custom-input
+            label="Joint Affidavit URL"
+            type="text"
+            [value]="affidavitDocumentUrl()"
+            (valueChange)="affidavitDocumentUrl.set($event)"
+            placeholder="https://.../affidavit.pdf"
+          ></app-custom-input>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 5: Remarks -->
+    <div class="p-6">
+      <div class="mb-3">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-foreground">5. Commercial Justification & Transfer Remarks</h2>
+        <p class="text-xs text-muted-foreground">Document commercial approval details or special arrangements.</p>
+      </div>
+
+      <app-custom-textarea
+        [ngModel]="remarks()"
+        (ngModelChange)="remarks.set($event)"
+        placeholder="Enter transfer notes..."
+        rows="2"
+      ></app-custom-textarea>
+    </div>
+
+    <!-- Actions Footer -->
+    <div class="p-6 bg-secondary/10 flex items-center justify-between gap-4">
+      <button
+        type="button"
+        (click)="cancel()"
+        class="px-4 py-2 rounded-xl border border-border bg-card hover:bg-secondary text-foreground text-xs font-semibold shadow-xs transition-colors"
+      >
+        Cancel & Return
+      </button>
+
+      <button
+        type="button"
+        (click)="submit()"
+        [disabled]="isSubmitting() || !selectedBookingId()"
+        class="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-semibold inline-flex items-center gap-2 shadow-xs transition-colors disabled:opacity-50"
+      >
+        <svg class="w-4 h-4" [ngClass]="{'animate-spin': isSubmitting()}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        {{ isSubmitting() ? 'Submitting Request...' : 'Submit Transfer Request' }}
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,31 +1,148 @@
 export interface CustomMilestoneItem {
   title: string;
   percentage: number;
+  installment_type?: string;
   milestone_trigger?: string;
+  due_date?: string;
 }
 
 export interface CustomerInstallment {
   id: number;
   booking_id: number;
+  schedule_id?: number | null;
   booking_reference_no?: string | null;
   customer_name?: string | null;
   customer_phone?: string | null;
   unit_number?: string | null;
   installment_no: number;
+  installment_type?: string;
   title: string;
+  percentage?: number | null;
+  fixed_amount?: number | null;
   due_date: string;
   grace_period_days: number;
   payable_amount: number;
   paid_amount: number;
   late_fee_accrued: number;
+  
+  invoice_date?: string | null;
+  invoice_number?: string | null;
+  amount_billed?: number;
+  balance_due?: number;
+  
+  schedule_version?: string;
+  amendment_reference?: string | null;
+  reminder_status?: string;
+  notes?: string | null;
+  
   surcharge_percentage: number;
   overdue_days: number;
   sms_alert_sent: boolean;
   whatsapp_alert_sent: boolean;
   last_alert_sent_at?: string | null;
-  status: 'UPCOMING' | 'DUE' | 'PAID' | 'OVERDUE';
+  status: 'UPCOMING' | 'DUE' | 'PAID' | 'OVERDUE' | 'SCHEDULED' | 'INVOICED' | 'PARTIALLY_PAID' | string;
   milestone_trigger?: string | null;
   created_at?: string;
+}
+
+export interface BookingInstallmentSchedule {
+  id: number;
+  schedule_code: string;
+  booking_id: number;
+  customer_id: number;
+  booking_reference_no?: string | null;
+  customer_name?: string | null;
+  customer_phone?: string | null;
+  project_name?: string | null;
+  unit_number?: string | null;
+  agreement_reference_no?: string | null;
+  version: string;
+  plan_type: string;
+  approved_contract_price: number;
+  contract_price?: number;
+  booking_money_amount: number;
+  earnest_money_credited?: number;
+  down_payment_percentage: number;
+  down_payment_amount: number;
+  net_down_payment_amount?: number;
+  installment_balance_amount: number;
+  installment_balance?: number;
+  total_installment_count: number;
+  total_installments?: number;
+  regular_installment_amount: number;
+  rounding_adjustment_amount: number;
+  rounding_adjusted_installment_no: number;
+  start_date: string;
+  grace_period_days: number;
+  late_surcharge_rate_monthly: number;
+  status: 'ACTIVE' | 'DRAFT' | 'SUPERSEDED_AMENDED' | 'COMPLETED' | 'TERMINATED' | string;
+  amendment_reason?: string | null;
+  notes?: string | null;
+  total_billed?: number;
+  total_paid?: number;
+  total_outstanding?: number;
+  total_paid_amount?: number;
+  total_balance_due?: number;
+  total_overdue_amount?: number;
+  installments?: CustomerInstallment[];
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface PaginatedInstallmentSchedules {
+  items: BookingInstallmentSchedule[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface InstallmentSchedulePreviewItem {
+  installment_no: number;
+  installment_type: string;
+  title: string;
+  percentage?: number | null;
+  due_date: string;
+  grace_period_days: number;
+  payable_amount: number;
+  is_rounding_adjusted: boolean;
+  rounding_adjustment: number;
+  milestone_trigger?: string | null;
+}
+
+export interface InstallmentSchedulePreviewResponse {
+  booking_id: number;
+  booking_reference_no: string;
+  customer_name: string;
+  project_name: string;
+  unit_number: string;
+  approved_contract_price: number;
+  booking_money_amount: number;
+  down_payment_percentage: number;
+  down_payment_amount: number;
+  net_down_payment_due: number;
+  installment_balance_amount: number;
+  total_installment_count: number;
+  regular_installment_amount: number;
+  rounding_adjustment_amount: number;
+  rounding_adjusted_installment_no: number;
+  calculated_total_sum: number;
+  discrepancy_amount: number;
+  is_validated: boolean;
+  exact_sum_matches?: boolean;
+  total_contract_price?: number;
+  installments: InstallmentSchedulePreviewItem[];
+}
+
+export interface InstallmentInvoiceResponse {
+  installment_id: number;
+  invoice_number: string;
+  invoice_date: string;
+  booking_reference_no: string;
+  customer_name: string;
+  amount_billed: number;
+  balance_due: number;
+  due_date: string;
+  status: string;
 }
 
 export interface InstallmentAlertLog {

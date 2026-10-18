@@ -1,389 +1,204 @@
-<div class="flex flex-col gap-6">
-  <!-- Unified Card Container -->
-  <app-card-container 
-    title="Customer KYC & Nominee Profiles Master" 
-    subtitle="Statutory Anti-Money Laundering (AML) Compliance, NID/Passport Verification & Inheritance Shares"
-  >
-    <!-- Action Bar & Filter Controls -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-      <div class="relative flex-1 max-w-md">
-        <input 
-          type="text" 
-          [ngModel]="searchQuery()" 
-          (ngModelChange)="searchQuery.set($event)"
-          placeholder="Search by customer name, code, NID, mobile..." 
-          class="w-full pl-10 pr-4 py-2 text-sm rounded-lg bg-secondary/50 border border-border focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-foreground placeholder-muted-foreground"
-        />
-        <svg class="w-4 h-4 text-muted-foreground absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-        </svg>
-      </div>
+<div class="space-y-4 lg:space-y-6">
+  <app-card-container
+    title="Customer KYC & Nominee Profiles"
+    subtitle="Unified customer directory with KYC, nominee shares, consent preferences & duplicate merge (Spec 4.5).">
+    <div card-actions class="flex items-center gap-2">
+      <app-custom-button variant="secondary" (click)="refresh()" type="button">
+        <lucide-icon [img]="RefreshCw" size="16"></lucide-icon>
+        Refresh
+      </app-custom-button>
+      <app-custom-button variant="primary" (click)="createCustomer()" type="button">
+        <lucide-icon [img]="Plus" size="16"></lucide-icon>
+        Register Customer
+      </app-custom-button></div>
 
-      <div class="flex items-center gap-3">
-        <app-custom-button 
-          variant="primary" 
-          (clicked)="openCreateModal()"
-        >
-          <span class="flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
-            </svg>
-            + Register Customer KYC
-          </span>
-        </app-custom-button>
-      </div>
+    <!-- Filters -->
+    <form [formGroup]="filterForm" class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4 pb-4 border-b border-slate-200">
+      <app-custom-input
+        formControlName="search"
+        label="Search"
+        placeholder="Name, code, NID, phone, email…">
+      </app-custom-input>
+      <app-searchable-select
+        formControlName="customer_type"
+        label="Customer Type"
+        [options]="typeOptions"
+        placeholder="All types">
+      </app-searchable-select>
+      <app-searchable-select
+        formControlName="is_nrb"
+        label="Residency"
+        [options]="nrbOptions"
+        placeholder="All">
+      </app-searchable-select>
+      <app-searchable-select
+        formControlName="sort_by"
+        label="Sort By"
+        [options]="sortOptions">
+      </app-searchable-select>
+    </form>
+
+    <!-- Table -->
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-slate-200">
+        <thead>
+          <tr class="bg-slate-50">
+            <th class="px-3 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Customer</th>
+            <th class="px-3 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Code</th>
+            <th class="px-3 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Phone</th>
+            <th class="px-3 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Type</th>
+            <th class="px-3 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">NID / Passport</th>
+            <th class="px-3 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Nominees</th>
+            <th class="px-3 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Flags</th>
+            <th class="px-3 py-3 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 bg-white">
+          @if (isLoading()) {
+            <tr><td colspan="8" class="px-4 py-10 text-center text-slate-400">Loading…</td></tr>
+          } @else if (customers().length === 0) {
+            <tr><td colspan="8" class="px-4 py-10 text-center text-slate-400">No customers match the current filters.</td></tr>
+          } @else {
+            @for (c of customers(); track c.id) {
+              <tr class="hover:bg-slate-50">
+                <td class="px-3 py-3">
+                  <div class="font-medium text-slate-900">{{ c.full_name_en }}</div>
+                  @if (c.full_name_bn) {
+                    <div class="text-xs text-slate-500">{{ c.full_name_bn }}</div>
+                  }
+                  <div class="text-xs text-slate-400">{{ c.email || '—' }}</div>
+                </td>
+                <td class="px-3 py-3 font-mono text-xs text-slate-600">{{ c.customer_code }}</td>
+                <td class="px-3 py-3 text-sm text-slate-600">{{ c.primary_phone }}</td>
+                <td class="px-3 py-3">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-md border text-xs font-semibold bg-slate-100 text-slate-700 border-slate-200">
+                    {{ c.customer_type || 'INDIVIDUAL' }}
+                  </span>
+                </td>
+                <td class="px-3 py-3 text-sm text-slate-600 font-mono text-xs">
+                  {{ c.nid_number || c.passport_number || '—' }}
+                </td>
+                <td class="px-3 py-3 text-sm text-slate-600">
+                  {{ c.nominees.length }} ·
+                  @if (c.nominees.length) {
+                    {{ nomineeShareTotal(c) }}%
+                  }
+                </td>
+                <td class="px-3 py-3">
+                  <div class="flex flex-wrap gap-1">
+                    @if (c.is_nrb) {
+                      <span class="text-[10px] font-medium text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">NRB</span>
+                    }
+                    @if (c.is_opted_out) {
+                      <span class="text-[10px] font-medium text-red-700 bg-red-50 px-1.5 py-0.5 rounded border border-red-200">Opted Out</span>
+                    }
+                    @if (c.is_consent_given) {
+                      <span class="text-[10px] font-medium text-green-700 bg-green-50 px-1.5 py-0.5 rounded border border-green-200">Consent</span>
+                    }
+                  </div>
+                </td>
+                <td class="px-3 py-3 text-right">
+                  <div class="flex items-center justify-end gap-1">
+                    <app-custom-button variant="ghost" size="sm" type="button" (click)="viewDossier(c)" title="Dossier">
+                      <lucide-icon [img]="Eye" size="14"></lucide-icon>
+                    </app-custom-button>
+                    <app-custom-button variant="ghost" size="sm" type="button" (click)="editCustomer(c)" title="Edit">
+                      <lucide-icon [img]="Edit3" size="14"></lucide-icon>
+                    </app-custom-button>
+                    <app-custom-button variant="ghost" size="sm" type="button" (click)="openMerge(c)" title="Merge Duplicate">
+                      <lucide-icon [img]="Merge" size="14"></lucide-icon>
+                    </app-custom-button>
+                    <app-custom-button variant="ghost" size="sm" type="button" (click)="openDelete(c)" title="Delete">
+                      <lucide-icon [img]="Trash2" size="14" class="text-red-500"></lucide-icon>
+                    </app-custom-button></div>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
     </div>
 
-    <!-- Customer KYC Cards Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      @for (cust of filteredCustomers(); track cust.id) {
-        <div class="bg-card border border-border rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
-          <div>
-            <!-- Header: Customer Code & NRB Badge -->
-            <div class="flex items-center justify-between mb-3">
-              <span class="font-mono text-xs font-semibold px-2.5 py-1 rounded bg-secondary text-primary border border-border">
-                {{ cust.customer_code }}
-              </span>
-              @if (cust.is_nrb) {
-                <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20">
-                  ✈️ NRB (Non-Resident)
-                </span>
-              } @else {
-                <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
-                  🏠 Resident Citizen
-                </span>
-              }
-            </div>
-
-            <!-- Customer Identity -->
-            <div class="flex items-start gap-3 mb-4">
-              <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-lg border border-primary/20 shrink-0">
-                {{ cust.full_name_en.charAt(0) }}
-              </div>
-              <div>
-                <h3 class="font-bold text-base text-foreground">{{ cust.full_name_en }}</h3>
-                @if (cust.full_name_bn) {
-                  <p class="text-xs text-muted-foreground font-bengali">{{ cust.full_name_bn }}</p>
-                }
-                <div class="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                  <span>📞 {{ cust.primary_phone }}</span>
-                  @if (cust.email) {
-                    <span>• ✉️ {{ cust.email }}</span>
-                  }
-                </div>
-              </div>
-            </div>
-
-            <!-- Statutory KYC Details Grid -->
-            <div class="grid grid-cols-2 gap-2 text-xs bg-secondary/30 p-3 rounded-lg border border-border mb-4">
-              <div>
-                <span class="text-muted-foreground block text-[11px]">NID Card No:</span>
-                <span class="font-mono font-medium text-foreground">{{ cust.nid_number || 'N/A' }}</span>
-              </div>
-              <div>
-                <span class="text-muted-foreground block text-[11px]">e-TIN Number:</span>
-                <span class="font-mono font-medium text-foreground">{{ cust.tin_number || 'N/A' }}</span>
-              </div>
-              <div class="col-span-2 pt-1 border-t border-border/40">
-                <span class="text-muted-foreground block text-[11px]">Father / Husband:</span>
-                <span class="text-foreground">{{ cust.father_husband_name || 'N/A' }}</span>
-              </div>
-              <div class="col-span-2">
-                <span class="text-muted-foreground block text-[11px]">Present Address:</span>
-                <span class="text-foreground text-[11px] line-clamp-1">{{ cust.present_address || 'N/A' }}</span>
-              </div>
-            </div>
-
-            <!-- Nominees Sub-Section -->
-            <div>
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Registered Nominees ({{ cust.nominees.length }})
-                </span>
-                <button 
-                  (click)="openNomineeModal(cust)"
-                  class="text-xs text-primary hover:underline font-medium"
-                >
-                  + Add Nominee
-                </button>
-              </div>
-
-              <div class="space-y-1.5">
-                @for (nom of cust.nominees; track nom.id) {
-                  <div class="flex items-center justify-between text-xs bg-secondary/60 px-3 py-1.5 rounded-lg border border-border">
-                    <div class="flex items-center gap-2">
-                      <span class="font-medium text-foreground">{{ nom.nominee_name }}</span>
-                      <span class="text-[10px] px-1.5 py-0.5 rounded bg-card text-muted-foreground border border-border">
-                        {{ nom.relationship }}
-                      </span>
-                    </div>
-                    <span class="font-mono font-bold text-primary">{{ nom.share_percentage }}%</span>
-                  </div>
-                } @empty {
-                  <p class="text-xs text-amber-500/80 italic">No nominees assigned yet. Statutory allotment deed requires at least 1 nominee.</p>
-                }
-              </div>
-            </div>
-          </div>
-        </div>
-      } @empty {
-        <div class="col-span-2 flex flex-col items-center justify-center p-12 border border-dashed border-border rounded-xl text-center">
-          <svg class="w-12 h-12 text-muted-foreground/40 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-          </svg>
-          <h4 class="font-semibold text-foreground">No Verified Customers Found</h4>
-          <p class="text-xs text-muted-foreground mt-1">Register a customer KYC profile to generate statutory deeds and allotments.</p>
-        </div>
-      }
+    <!-- Pagination -->
+    <div class="flex items-center justify-between pt-4 mt-4 border-t border-slate-200">
+      <p class="text-sm text-slate-500">Showing {{ fromRow() }}–{{ toRow() }} of {{ total() }}</p>
+      <div class="flex items-center gap-2">
+        <app-custom-button variant="secondary" size="sm" type="button" (click)="setPage(currentPage() - 1)" [disabled]="currentPage() <= 1">
+          Previous
+        </app-custom-button>
+        <span class="text-sm text-slate-600">Page {{ currentPage() }} of {{ totalPages() }}</span>
+        <app-custom-button variant="secondary" size="sm" type="button" (click)="setPage(currentPage() + 1)" [disabled]="currentPage() >= totalPages()">
+          Next
+        </app-custom-button></div>
     </div>
   </app-card-container>
-
-  <!-- Modal 1: Register Customer KYC Profile -->
-  @if (isCreateModalOpen()) {
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
-      <div class="bg-card border border-border rounded-2xl w-full max-w-2xl shadow-2xl p-6 flex flex-col gap-5 my-8 max-h-[90vh] overflow-y-auto">
-        <div class="flex items-center justify-between border-b border-border pb-3">
-          <div>
-            <h3 class="text-lg font-bold text-foreground">Customer Statutory KYC Profile</h3>
-            <p class="text-xs text-muted-foreground">National Identity, e-TIN, and Nominee Allotment under AML Act</p>
-          </div>
-          <button (click)="closeCreateModal()" class="text-muted-foreground hover:text-foreground">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-          </button>
-        </div>
-
-        <form [formGroup]="customerForm" (ngSubmit)="submitCustomer()" class="flex flex-col gap-4">
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <app-custom-input
-              label="Full Name (English) *"
-              placeholder="e.g. Mrs. Sultana Parveen"
-              [formGroup]="customerForm"
-              controlName="full_name_en"
-            />
-            <app-custom-input
-              label="পূর্ণ নাম (বাংলা)"
-              placeholder="মোসাঃ সুলতানা পারভীন"
-              [formGroup]="customerForm"
-              controlName="full_name_bn"
-            />
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <app-custom-input
-              label="Father / Husband Name"
-              placeholder="Father or Husband name"
-              [formGroup]="customerForm"
-              controlName="father_husband_name"
-            />
-            <app-custom-input
-              label="Mother Name"
-              placeholder="Mother full name"
-              [formGroup]="customerForm"
-              controlName="mother_name"
-            />
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <app-custom-input
-              label="National ID (NID) *"
-              placeholder="10 or 17 digit NID"
-              [formGroup]="customerForm"
-              controlName="nid_number"
-            />
-            <app-custom-input
-              label="e-TIN Number"
-              placeholder="12 digit TIN"
-              [formGroup]="customerForm"
-              controlName="tin_number"
-            />
-            <app-custom-input
-              label="Passport No (for NRB)"
-              placeholder="Passport number"
-              [formGroup]="customerForm"
-              controlName="passport_number"
-            />
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <app-custom-input
-              label="Primary Phone Number *"
-              placeholder="+88017XXXXXXXX"
-              [formGroup]="customerForm"
-              controlName="primary_phone"
-            />
-            <app-custom-input
-              label="Email Address"
-              placeholder="customer@email.com"
-              [formGroup]="customerForm"
-              controlName="email"
-            />
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <app-custom-textarea
-              label="Present / Communication Address *"
-              placeholder="Current residence address..."
-              [formGroup]="customerForm"
-              controlName="present_address"
-            />
-            <app-custom-textarea
-              label="Permanent Address *"
-              placeholder="Village, Post, Thana, District..."
-              [formGroup]="customerForm"
-              controlName="permanent_address"
-            />
-          </div>
-
-          <!-- NRB Checkbox -->
-          <div class="flex items-center gap-2 pt-1">
-            <input 
-              type="checkbox" 
-              id="is_nrb" 
-              formControlName="is_nrb" 
-              class="w-4 h-4 rounded border-border text-primary focus:ring-primary"
-            />
-            <label for="is_nrb" class="text-xs font-medium text-foreground cursor-pointer">
-              Applicant is a Non-Resident Bangladeshi (NRB) living abroad
-            </label>
-          </div>
-
-          <!-- Nominees Nested Form Array -->
-          <div class="border-t border-border pt-3 mt-2">
-            <div class="flex items-center justify-between mb-3">
-              <div>
-                <h4 class="text-sm font-bold text-foreground">Inheritance Nominees</h4>
-                <p class="text-[11px] text-muted-foreground">Total share must equal 100%</p>
-              </div>
-              <button 
-                type="button" 
-                (click)="addNomineeField()" 
-                class="text-xs text-primary font-medium hover:underline"
-              >
-                + Add Another Nominee
-              </button>
-            </div>
-
-            <div formArrayName="nominees" class="space-y-3">
-              @for (nom of nomineesArray.controls; track $index) {
-                <div [formGroupName]="$index" class="p-3 bg-secondary/40 border border-border rounded-xl grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
-                  <div class="sm:col-span-4">
-                    <label class="block text-[11px] text-muted-foreground mb-1">Nominee Name *</label>
-                    <input 
-                      type="text" 
-                      formControlName="nominee_name" 
-                      placeholder="Nominee full name"
-                      class="w-full px-2.5 py-1.5 text-xs rounded-lg bg-card border border-border text-foreground"
-                    />
-                  </div>
-
-                  <div class="sm:col-span-3">
-                    <label class="block text-[11px] text-muted-foreground mb-1">Relationship *</label>
-                    <select 
-                      formControlName="relationship"
-                      class="w-full px-2 py-1.5 text-xs rounded-lg bg-card border border-border text-foreground"
-                    >
-                      @for (rel of relationshipOptions; track rel.value) {
-                        <option [value]="rel.value">{{ rel.label }}</option>
-                      }
-                    </select>
-                  </div>
-
-                  <div class="sm:col-span-3">
-                    <label class="block text-[11px] text-muted-foreground mb-1">Share (%) *</label>
-                    <input 
-                      type="number" 
-                      formControlName="share_percentage" 
-                      placeholder="100"
-                      class="w-full px-2.5 py-1.5 text-xs rounded-lg bg-card border border-border text-foreground"
-                    />
-                  </div>
-
-                  <div class="sm:col-span-2 flex justify-end">
-                    <button 
-                      type="button" 
-                      (click)="removeNomineeField($index)" 
-                      class="text-red-500 hover:text-red-600 text-xs mt-4"
-                      [disabled]="nomineesArray.length === 1"
-                    >
-                      ✕ Remove
-                    </button>
-                  </div>
-                </div>
-              }
-            </div>
-          </div>
-
-          <div class="flex justify-end gap-3 pt-3 border-t border-border">
-            <app-custom-button variant="outline" type="button" (clicked)="closeCreateModal()">
-              Cancel
-            </app-custom-button>
-            <app-custom-button variant="primary" type="submit" [disabled]="customerForm.invalid || isSubmitting()">
-              {{ isSubmitting() ? 'Saving Profile...' : 'Save Customer KYC' }}
-            </app-custom-button>
-          </div>
-        </form>
-      </div>
-    </div>
-  }
-
-  <!-- Modal 2: Add Nominee to Existing Customer -->
-  @if (isNomineeModalOpen()) {
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div class="bg-card border border-border rounded-2xl w-full max-w-md shadow-2xl p-6 flex flex-col gap-5">
-        <div class="flex items-center justify-between border-b border-border pb-3">
-          <div>
-            <h3 class="text-base font-bold text-foreground">Add Nominee</h3>
-            <p class="text-xs text-muted-foreground">{{ selectedCustomerForNominee()?.full_name_en }} ({{ selectedCustomerForNominee()?.customer_code }})</p>
-          </div>
-          <button (click)="closeNomineeModal()" class="text-muted-foreground hover:text-foreground">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-          </button>
-        </div>
-
-        <form [formGroup]="nomineeForm" (ngSubmit)="submitNominee()" class="flex flex-col gap-4">
-          <app-custom-input
-            label="Nominee Full Name *"
-            placeholder="e.g. Tanvir Mostafa"
-            [formGroup]="nomineeForm"
-            controlName="nominee_name"
-          />
-
-          <app-searchable-select
-            label="Relationship *"
-            [options]="relationshipOptions"
-            [formGroup]="nomineeForm"
-            controlName="relationship"
-          />
-
-          <app-custom-input
-            label="Nominee National ID (NID)"
-            placeholder="NID card number"
-            [formGroup]="nomineeForm"
-            controlName="nid_number"
-          />
-
-          <app-custom-input
-            label="Inheritance Share (%) *"
-            type="number"
-            placeholder="50"
-            [formGroup]="nomineeForm"
-            controlName="share_percentage"
-          />
-
-          <div class="flex justify-end gap-3 pt-3 border-t border-border">
-            <app-custom-button variant="outline" type="button" (clicked)="closeNomineeModal()">
-              Cancel
-            </app-custom-button>
-            <app-custom-button variant="primary" type="submit" [disabled]="nomineeForm.invalid || isSubmitting()">
-              {{ isSubmitting() ? 'Adding...' : 'Assign Nominee' }}
-            </app-custom-button>
-          </div>
-        </form>
-      </div>
-    </div>
-  }
 </div>
+
+<!-- Delete confirmation -->
+@if (deleteModalOpen() && deleteTarget(); as c) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" (click)="deleteModalOpen.set(false)">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6 space-y-4" (click)="$event.stopPropagation()">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-lg bg-red-100 text-red-600 flex items-center justify-center">
+          <lucide-icon [img]="AlertTriangle" size="20"></lucide-icon>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold text-slate-900">Delete Customer</h3>
+          <p class="text-sm text-slate-500">{{ c.full_name_en }} ({{ c.customer_code }})</p>
+        </div>
+      </div>
+      <p class="text-sm text-slate-600">
+        This permanently removes the customer and linked nominees/service requests. Prefer Merge for duplicate records to preserve inquiry history.
+      </p>
+      <div class="flex justify-end gap-2">
+        <app-custom-button variant="secondary" type="button" (click)="deleteModalOpen.set(false)">Cancel</app-custom-button>
+        <app-custom-button variant="primary" type="button" (click)="confirmDelete()" [disabled]="isDeleting() === c.id"
+                class="!bg-red-600 hover:!bg-red-700">
+          @if (isDeleting() === c.id) { Deleting… } @else { Delete Forever }
+        </app-custom-button></div>
+    </div>
+  </div>
+}
+
+<!-- Merge modal -->
+@if (mergeModalOpen() && mergeSource(); as src) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" (click)="mergeModalOpen.set(false)">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-lg p-6 space-y-4" (click)="$event.stopPropagation()">
+      <h3 class="text-lg font-semibold text-slate-900">Merge Duplicate Customer</h3>
+      <p class="text-sm text-slate-500">
+        Source (duplicate, will be soft-merged): <strong>{{ src.full_name_en }}</strong> ({{ src.customer_code }})
+      </p>
+
+      @if (mergeError()) {
+        <div class="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">{{ mergeError() }}</div>
+      }
+
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">Survivor (Target) Customer</label>
+        <select [(ngModel)]="mergeTargetId" class="erp-input w-full">
+          <option [ngValue]="null">Select survivor…</option>
+          @for (c of mergeTargets(); track c.id) {
+            <option [ngValue]="c.id">{{ c.full_name_en }} — {{ c.customer_code }} ({{ c.primary_phone }})</option>
+          }
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">Merge Reason (optional)</label>
+        <textarea [(ngModel)]="mergeReason" rows="2" class="erp-input w-full"
+                  placeholder="Why these records are the same person…"></textarea>
+      </div>
+
+      <p class="text-xs text-slate-500">
+        Inquiry/lead history is preserved by redirecting referrals to the survivor. The source is flagged as merged (soft delete), never hard-deleted.
+      </p>
+
+      <div class="flex justify-end gap-2">
+        <app-custom-button variant="secondary" type="button" (click)="mergeModalOpen.set(false)">Cancel</app-custom-button>
+        <app-custom-button variant="primary" type="button" (click)="confirmMerge()"
+                [disabled]="isMerging() || !mergeTargetId()">
+          @if (isMerging()) { Merging… } @else { Merge into Survivor }
+        </app-custom-button></div>
+    </div>
+  </div>
+}

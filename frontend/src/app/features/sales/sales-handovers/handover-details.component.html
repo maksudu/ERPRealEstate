@@ -1,0 +1,1243 @@
+<div class="flex flex-col gap-6 w-full max-w-7xl mx-auto pb-16">
+  <!-- Top Navigation & Breadcrumb -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-border">
+    <div>
+      <div class="flex items-center gap-2">
+        <a
+          routerLink="/sales/handovers"
+          class="text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1 transition-colors"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+          </svg>
+          Back to Handover Registry
+        </a>
+        <span class="text-muted-foreground text-xs">/</span>
+        <span class="text-xs font-mono font-medium text-foreground">{{ handover()?.handover_tracking_no }}</span>
+      </div>
+      <div class="flex items-center gap-3 mt-1.5 flex-wrap">
+        <h1 class="text-2xl font-bold font-display text-foreground">
+          {{ handover()?.handover_tracking_no }}
+        </h1>
+        @if (handover()) {
+          <span class="px-2.5 py-1 text-xs font-semibold rounded-full border" [ngClass]="getStatusBadgeClass(handover()!.status)">
+            {{ handover()!.status.replace('_', ' ') }}
+          </span>
+          <span class="px-2.5 py-1 text-xs font-semibold rounded-full border" [ngClass]="getPossessionBadgeClass(handover()!.physical_possession_status)">
+            Possession: {{ handover()!.physical_possession_status.replace('_', ' ') }}
+          </span>
+          @if (handover()?.handover_certificate_no) {
+            <span class="px-2.5 py-1 text-xs font-mono font-bold rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+              Cert: {{ handover()?.handover_certificate_no }}
+            </span>
+          }
+        }
+      </div>
+    </div>
+
+    <!-- Quick Actions Bar -->
+    <div class="flex items-center gap-2 flex-wrap">
+      <button
+        (click)="isAppointmentModalOpen.set(true)"
+        class="px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-secondary/50 text-xs font-semibold text-foreground inline-flex items-center gap-1.5 shadow-xs transition-colors"
+      >
+        <svg class="w-3.5 h-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
+        <span>Schedule Walkthrough</span>
+      </button>
+
+      <button
+        (click)="openLogSnagModal()"
+        class="px-3 py-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-xs font-semibold text-amber-600 dark:text-amber-400 inline-flex items-center gap-1.5 shadow-xs transition-colors"
+      >
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+        <span>+ Log Snag / Defect</span>
+      </button>
+
+      <button
+        (click)="isUtilitiesModalOpen.set(true)"
+        class="px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-secondary/50 text-xs font-semibold text-foreground inline-flex items-center gap-1.5 shadow-xs transition-colors"
+      >
+        <svg class="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+        </svg>
+        <span>Meters & Utilities</span>
+      </button>
+
+      <button
+        (click)="isKeysModalOpen.set(true)"
+        class="px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-secondary/50 text-xs font-semibold text-foreground inline-flex items-center gap-1.5 shadow-xs transition-colors"
+      >
+        <svg class="w-3.5 h-3.5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+        </svg>
+        <span>Issue Keys & RFID</span>
+      </button>
+
+      <button
+        (click)="isPossessionModalOpen.set(true)"
+        class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-xs transition-colors"
+      >
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <span>Execute Physical Possession</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- User Feedback & Alerts -->
+  @if (feedbackMessage()) {
+    <div class="p-4 rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-sm flex items-center justify-between shadow-xs">
+      <div class="flex items-center gap-2">
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        <span>{{ feedbackMessage() }}</span>
+      </div>
+      <button (click)="feedbackMessage.set('')" class="text-xs font-semibold hover:underline">Dismiss</button>
+    </div>
+  }
+
+  @if (errorMessage()) {
+    <div class="p-4 rounded-xl border border-destructive/20 bg-destructive/10 text-destructive text-sm flex items-center justify-between shadow-xs">
+      <div class="flex items-center gap-2">
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+        <span>{{ errorMessage() }}</span>
+      </div>
+      <button (click)="errorMessage.set('')" class="text-xs font-semibold hover:underline">Dismiss</button>
+    </div>
+  }
+
+  <!-- Loading State -->
+  @if (isLoading()) {
+    <div class="p-12 text-center bg-card border border-border rounded-xl">
+      <div class="inline-block animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mb-3"></div>
+      <div class="text-sm font-semibold text-foreground">Loading property handover dossier...</div>
+    </div>
+  } @else if (handover()) {
+    <!-- Main Dossier Card Container -->
+    <div class="bg-card border border-border rounded-xl shadow-xs overflow-hidden divide-y divide-border">
+      <!-- Section A: Summary Metrics & Property Specs -->
+      <div class="p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div>
+            <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Purchaser / Buyer</span>
+            <div class="font-bold text-foreground text-sm mt-1">{{ handover()?.customer_name }}</div>
+            <div class="text-xs text-muted-foreground">{{ handover()?.customer_phone }}</div>
+            <div class="text-[11px] text-muted-foreground mt-0.5">Booking Ref: {{ handover()?.booking_reference_no }}</div>
+          </div>
+
+          <div>
+            <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Property Identification</span>
+            <div class="font-bold text-foreground text-sm mt-1">Unit {{ handover()?.unit_number }}</div>
+            <div class="text-xs text-muted-foreground">{{ handover()?.project_name }} ({{ handover()?.project_code }})</div>
+            <div class="text-[11px] text-muted-foreground mt-0.5">Contract Value: ৳{{ (handover()?.final_contract_value || 0) | number:'1.2-2' }}</div>
+          </div>
+
+          <div>
+            <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Responsible Staff & Engineer</span>
+            <div class="font-bold text-foreground text-sm mt-1">{{ handover()?.responsible_staff_name || 'Staff Unassigned' }}</div>
+            <div class="text-xs text-muted-foreground">QA/QC: {{ handover()?.responsible_engineer_name || 'Engineer Unassigned' }}</div>
+            @if (handover()?.appointment_date) {
+              <div class="text-[11px] text-primary font-semibold mt-0.5">
+                Walkthrough: {{ handover()?.appointment_date }} ({{ handover()?.appointment_time }})
+              </div>
+            }
+          </div>
+
+          <div class="border-l border-border pl-4">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-[10px] font-bold text-primary uppercase tracking-wider block">Prerequisites Progress</span>
+              <span class="text-xs font-bold text-foreground">{{ prerequisitesProgress().completed }} of {{ prerequisitesProgress().total }}</span>
+            </div>
+            <div class="w-full bg-secondary rounded-full h-2 overflow-hidden mb-2">
+              <div class="bg-primary h-2 rounded-full transition-all duration-300" [style.width.%]="prerequisitesProgress().percentage"></div>
+            </div>
+            <div class="flex items-center justify-between text-[11px]">
+              <span class="text-muted-foreground font-medium">{{ prerequisitesProgress().percentage }}% Cleared</span>
+              <span class="font-bold" [ngClass]="openSnags().length > 0 ? 'text-amber-600' : 'text-emerald-600 dark:text-emerald-400'">
+                {{ openSnags().length }} Open Snags
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section B: Tab Navigation Bar -->
+      <div class="px-6 bg-secondary/15 flex items-center gap-2 overflow-x-auto border-b border-border">
+        <button
+          (click)="activeTab.set('prerequisites')"
+          class="py-3 px-4 text-xs font-bold border-b-2 transition-colors whitespace-nowrap flex items-center gap-2"
+          [ngClass]="activeTab() === 'prerequisites' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+          </svg>
+          <span>Handover Prerequisites ({{ prerequisitesProgress().completed }}/{{ prerequisitesProgress().total }})</span>
+        </button>
+
+        <button
+          (click)="activeTab.set('inspection')"
+          class="py-3 px-4 text-xs font-bold border-b-2 transition-colors whitespace-nowrap flex items-center gap-2"
+          [ngClass]="activeTab() === 'inspection' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+          </svg>
+          <span>Room-Wise Unit Inspection ({{ inspectionProgress().passed }}/{{ inspectionProgress().total }})</span>
+        </button>
+
+        <button
+          (click)="activeTab.set('snags')"
+          class="py-3 px-4 text-xs font-bold border-b-2 transition-colors whitespace-nowrap flex items-center gap-2"
+          [ngClass]="activeTab() === 'snags' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+          <span>Defect & Snagging Tracker</span>
+          @if (openSnags().length > 0) {
+            <span class="px-1.5 py-0.5 rounded-full bg-amber-500 text-white text-[10px] font-bold">
+              {{ openSnags().length }}
+            </span>
+          }
+        </button>
+
+        <button
+          (click)="activeTab.set('utilities')"
+          class="py-3 px-4 text-xs font-bold border-b-2 transition-colors whitespace-nowrap flex items-center gap-2"
+          [ngClass]="activeTab() === 'utilities' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+          </svg>
+          <span>Utility Accounts & Meters</span>
+        </button>
+
+        <button
+          (click)="activeTab.set('keys_warranties')"
+          class="py-3 px-4 text-xs font-bold border-b-2 transition-colors whitespace-nowrap flex items-center gap-2"
+          [ngClass]="activeTab() === 'keys_warranties' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+          </svg>
+          <span>Keys, RFID & Warranties</span>
+        </button>
+
+        <button
+          (click)="activeTab.set('possession')"
+          class="py-3 px-4 text-xs font-bold border-b-2 transition-colors whitespace-nowrap flex items-center gap-2"
+          [ngClass]="activeTab() === 'possession' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+          </svg>
+          <span>Possession Certificate & Acknowledgment</span>
+        </button>
+      </div>
+
+      <!-- Tab 1: Handover Prerequisites (8 Compliance Steps) -->
+      @if (activeTab() === 'prerequisites') {
+        <div class="p-6">
+          <!-- Distinct Status Strip per specification -->
+          <div class="mb-6 p-4 rounded-xl bg-secondary/30 border border-border">
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <span class="text-xs font-bold text-foreground uppercase tracking-wider block">Distinct Handover Status Matrices</span>
+                <p class="text-[11px] text-muted-foreground">Contractual completion, financial clearance, deed registration, and physical possession are maintained as distinct status fields.</p>
+              </div>
+              <button
+                (click)="isPrereqModalOpen.set(true)"
+                class="px-2.5 py-1 text-xs font-semibold rounded-lg border border-border bg-card hover:bg-secondary text-foreground inline-flex items-center gap-1 shadow-xs"
+              >
+                <span>Edit Distinct Statuses</span>
+              </button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div class="p-3 rounded-lg bg-card border border-border">
+                <span class="text-[10px] font-bold text-muted-foreground uppercase block">1. Contractual Completion</span>
+                <span class="text-xs font-bold text-foreground mt-0.5 block">{{ handover()?.contractual_completion_status }}</span>
+              </div>
+              <div class="p-3 rounded-lg bg-card border border-border">
+                <span class="text-[10px] font-bold text-muted-foreground uppercase block">2. Financial Clearance</span>
+                <span class="text-xs font-bold text-foreground mt-0.5 block" [ngClass]="handover()?.financial_clearance_status === 'CLEARED' ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600'">
+                  {{ handover()?.financial_clearance_status }}
+                </span>
+              </div>
+              <div class="p-3 rounded-lg bg-card border border-border">
+                <span class="text-[10px] font-bold text-muted-foreground uppercase block">3. Deed Registration</span>
+                <span class="text-xs font-bold text-foreground mt-0.5 block">{{ handover()?.legal_registration_status }}</span>
+              </div>
+              <div class="p-3 rounded-lg bg-card border border-border">
+                <span class="text-[10px] font-bold text-muted-foreground uppercase block">4. Physical Possession</span>
+                <span class="text-xs font-bold text-foreground mt-0.5 block" [ngClass]="handover()?.physical_possession_status === 'FULL_PHYSICAL_POSSESSION' ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'">
+                  {{ handover()?.physical_possession_status?.replace('_', ' ') }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 8 Handover Prerequisites Checklist -->
+          <div class="space-y-3">
+            @for (step of prerequisitesList(); track step.step_number) {
+              <div
+                class="p-4 rounded-xl border transition-all"
+                [ngClass]="step.completed ? 'bg-card border-border/80' : 'bg-secondary/20 border-border'"
+              >
+                <div class="flex items-start justify-between gap-4">
+                  <div class="flex items-start gap-3">
+                    <button
+                      (click)="togglePrerequisite(step)"
+                      class="mt-0.5 w-6 h-6 rounded-lg border flex items-center justify-center transition-colors cursor-pointer"
+                      [ngClass]="step.completed ? 'bg-primary border-primary text-primary-foreground' : 'border-border bg-card hover:border-primary/50 text-transparent'"
+                      title="Click to toggle prerequisite status"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                      </svg>
+                    </button>
+
+                    <div>
+                      <div class="flex items-center gap-2 flex-wrap">
+                        <span class="text-xs font-bold text-foreground">
+                          {{ step.step_number }}. {{ step.title }}
+                        </span>
+                        @if (step.completed) {
+                          <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold inline-flex items-center gap-1">
+                            Verified on {{ step.completion_date || 'N/A' }} by {{ step.verified_by || 'Staff' }}
+                          </span>
+                        } @else {
+                          <span class="text-[10px] px-2 py-0.5 rounded-full bg-secondary text-muted-foreground font-medium">
+                            Pending Verification
+                          </span>
+                        }
+                      </div>
+
+                      <p class="text-xs text-muted-foreground mt-1">{{ step.description }}</p>
+                    </div>
+                  </div>
+
+                  <button
+                    (click)="togglePrerequisite(step)"
+                    class="px-2.5 py-1 text-xs font-semibold rounded-lg border border-border bg-card hover:bg-secondary text-foreground inline-flex items-center gap-1 shadow-xs"
+                  >
+                    <span>{{ step.completed ? 'Re-open' : 'Verify' }}</span>
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Tab 2: Room-Wise Unit Inspection (9 Zones) -->
+      @if (activeTab() === 'inspection') {
+        <div class="p-6">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="text-sm font-bold text-foreground">Room-Wise Architectural & Engineering Inspection Checklist</h3>
+              <p class="text-xs text-muted-foreground">Click any item's status pill to cycle between PENDING, PASSED, and DEFECT_NOTED.</p>
+            </div>
+            <div class="text-xs font-semibold text-muted-foreground">
+              {{ inspectionProgress().passed }} of {{ inspectionProgress().total }} Architectural Zones Passed
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            @for (item of inspectionList(); track item.item; let idx = $index) {
+              <div class="p-4 rounded-xl border border-border bg-card flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-secondary text-muted-foreground">
+                      {{ item.location }}
+                    </span>
+                    <button
+                      (click)="cycleInspectionStatus(idx)"
+                      class="px-2.5 py-0.5 text-[11px] font-bold rounded-full border transition-all cursor-pointer"
+                      [ngClass]="item.status === 'PASSED' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' : (item.status === 'DEFECT_NOTED' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20' : 'bg-secondary text-muted-foreground border-border')"
+                    >
+                      {{ item.status }}
+                    </button>
+                  </div>
+                  <div class="font-bold text-foreground text-xs">{{ item.item }}</div>
+                  <p class="text-[11px] text-muted-foreground mt-1">{{ item.remarks }}</p>
+                </div>
+
+                <div class="mt-4 pt-3 border-t border-border flex items-center justify-between text-[11px]">
+                  <span class="text-muted-foreground">Click to toggle inspection status</span>
+                  @if (item.status === 'DEFECT_NOTED') {
+                    <button
+                      (click)="openLogSnagModal()"
+                      class="text-xs font-bold text-amber-600 hover:underline"
+                    >
+                      + Log Snag
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Tab 3: Defects & Snagging Tracker -->
+      @if (activeTab() === 'snags') {
+        <div class="p-6">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="text-sm font-bold text-foreground">Defect & Snagging Rectification Tracker</h3>
+              <p class="text-xs text-muted-foreground">Record all pre-handover joint inspection snags, assign severity, and verify contractor rectifications.</p>
+            </div>
+            <button
+              (click)="openLogSnagModal()"
+              class="px-3 py-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-xs font-bold text-amber-600 dark:text-amber-400 inline-flex items-center gap-1.5 shadow-xs"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+              </svg>
+              <span>+ Log New Defect / Snag</span>
+            </button>
+          </div>
+
+          <!-- Open Snags -->
+          <div class="mb-6">
+            <h4 class="text-xs font-bold text-amber-600 uppercase tracking-wider mb-3">
+              Active Snagging Items ({{ openSnags().length }})
+            </h4>
+
+            @if (openSnags().length === 0) {
+              <div class="p-6 rounded-xl bg-secondary/20 border border-border text-center">
+                <svg class="w-8 h-8 text-emerald-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <div class="text-xs font-bold text-foreground">No Outstanding Defects or Snags</div>
+                <div class="text-[11px] text-muted-foreground mt-0.5">All reported snagging items have been rectified and approved.</div>
+              </div>
+            } @else {
+              <div class="space-y-3">
+                @for (snag of openSnags(); track snag.id) {
+                  <div class="p-4 rounded-xl border border-amber-500/30 bg-amber-500/5 flex items-start justify-between gap-4">
+                    <div>
+                      <div class="flex items-center gap-2 flex-wrap">
+                        <span class="text-xs font-bold text-foreground">{{ snag.item_name }}</span>
+                        <span class="text-[10px] px-2 py-0.5 rounded bg-secondary text-foreground font-semibold">
+                          {{ snag.room_location }}
+                        </span>
+                        <span class="text-[10px] px-2 py-0.5 rounded-full border" [ngClass]="getSeverityBadgeClass(snag.severity)">
+                          {{ snag.severity }}
+                        </span>
+                        <span class="text-[10px] text-muted-foreground">Logged: {{ snag.logged_at }}</span>
+                      </div>
+                      <p class="text-xs text-foreground/80 mt-1">{{ snag.defect_description }}</p>
+                      @if (snag.target_rectification_date) {
+                        <div class="text-[11px] text-muted-foreground mt-1">
+                          Target Rectification Date: <span class="font-semibold text-foreground">{{ snag.target_rectification_date }}</span>
+                        </div>
+                      }
+                    </div>
+
+                    <button
+                      (click)="openResolveSnagModal(snag.id)"
+                      class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white inline-flex items-center gap-1 shadow-xs whitespace-nowrap"
+                    >
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                      </svg>
+                      <span>Mark Rectified</span>
+                    </button>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- Resolved Snags History -->
+          @if (resolvedSnags().length > 0) {
+            <div>
+              <h4 class="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">
+                Rectified Snags History ({{ resolvedSnags().length }})
+              </h4>
+              <div class="space-y-2">
+                @for (snag of resolvedSnags(); track snag.id) {
+                  <div class="p-3 rounded-xl bg-card border border-border flex items-start justify-between gap-4 opacity-75">
+                    <div>
+                      <div class="flex items-center gap-2">
+                        <span class="text-xs font-bold text-foreground line-through">{{ snag.item_name }} ({{ snag.room_location }})</span>
+                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold">
+                          Rectified on {{ snag.rectified_at }}
+                        </span>
+                      </div>
+                      @if (snag.rectification_notes) {
+                        <div class="text-[11px] text-muted-foreground mt-1">Rectification: {{ snag.rectification_notes }}</div>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Tab 4: Utility Accounts & Meter Readings -->
+      @if (activeTab() === 'utilities') {
+        <div class="p-6">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="text-sm font-bold text-foreground">Utility Accounts & Initial Meter Readings</h3>
+              <p class="text-xs text-muted-foreground">Capture electricity, gas, and water meter numbers and initial consumption readings for handover clearance.</p>
+            </div>
+            <button
+              (click)="isUtilitiesModalOpen.set(true)"
+              class="px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-secondary text-xs font-semibold text-foreground inline-flex items-center gap-1 shadow-xs"
+            >
+              <span>Edit Meter Readings</span>
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Electricity Meter -->
+            <div class="p-4 rounded-xl bg-secondary/30 border border-border">
+              <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-bold uppercase tracking-wider text-primary">Electricity Meter</span>
+                <span class="text-[10px] px-2 py-0.5 rounded bg-card text-foreground font-mono font-bold">
+                  {{ handover()?.electricity_provider || 'DESCO' }}
+                </span>
+              </div>
+              <div class="space-y-2">
+                <div>
+                  <span class="text-[10px] text-muted-foreground block">Meter Number</span>
+                  <span class="text-sm font-mono font-bold text-foreground">{{ handover()?.electricity_meter_no || 'Not Configured' }}</span>
+                </div>
+                <div>
+                  <span class="text-[10px] text-muted-foreground block">Initial Reading (kWh)</span>
+                  <span class="text-base font-mono font-bold text-foreground">{{ handover()?.electricity_meter_reading || '0.00' }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Gas Meter / Supply -->
+            <div class="p-4 rounded-xl bg-secondary/30 border border-border">
+              <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-bold uppercase tracking-wider text-amber-600">Gas Connection</span>
+                <span class="text-[10px] px-2 py-0.5 rounded bg-card text-foreground font-mono font-bold">
+                  {{ handover()?.gas_provider || 'TITAS_GAS' }}
+                </span>
+              </div>
+              <div class="space-y-2">
+                <div>
+                  <span class="text-[10px] text-muted-foreground block">Meter / Account No</span>
+                  <span class="text-sm font-mono font-bold text-foreground">{{ handover()?.gas_meter_no || 'Not Configured' }}</span>
+                </div>
+                <div>
+                  <span class="text-[10px] text-muted-foreground block">Initial Reading (m³)</span>
+                  <span class="text-base font-mono font-bold text-foreground">{{ handover()?.gas_meter_reading || '0.00' }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Water Connection -->
+            <div class="p-4 rounded-xl bg-secondary/30 border border-border">
+              <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-bold uppercase tracking-wider text-blue-500">Water Supply (WASA)</span>
+                <span class="text-[10px] px-2 py-0.5 rounded bg-card text-foreground font-mono font-bold">
+                  {{ handover()?.water_consumer_id || 'DWASA' }}
+                </span>
+              </div>
+              <div class="space-y-2">
+                <div>
+                  <span class="text-[10px] text-muted-foreground block">Water Meter No</span>
+                  <span class="text-sm font-mono font-bold text-foreground">{{ handover()?.water_meter_no || 'Building Central' }}</span>
+                </div>
+                <div>
+                  <span class="text-[10px] text-muted-foreground block">Initial Reading (Gallons / kL)</span>
+                  <span class="text-base font-mono font-bold text-foreground">{{ handover()?.water_meter_reading || '0.00' }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Tab 5: Keys, RFID & Equipment Warranties -->
+      @if (activeTab() === 'keys_warranties') {
+        <div class="p-6">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Key & Access Card Issuance Card -->
+            <div class="p-4 rounded-xl bg-card border border-border">
+              <div class="flex items-center justify-between mb-4">
+                <h4 class="text-xs font-bold uppercase tracking-wider text-foreground">Keys & Smart Access Card Issuance</h4>
+                <button
+                  (click)="isKeysModalOpen.set(true)"
+                  class="px-2.5 py-1 text-xs font-semibold rounded-lg border border-border bg-card hover:bg-secondary text-foreground inline-flex items-center gap-1 shadow-xs"
+                >
+                  <span>Edit Key Package</span>
+                </button>
+              </div>
+
+              <div class="grid grid-cols-3 gap-3 mb-4">
+                <div class="p-2.5 rounded-lg bg-secondary/30 border border-border text-center">
+                  <span class="text-[10px] text-muted-foreground block">Main Door Keys</span>
+                  <span class="text-base font-bold text-foreground font-mono">{{ handover()?.keys_issued_json?.main_door_keys || 3 }}</span>
+                </div>
+                <div class="p-2.5 rounded-lg bg-secondary/30 border border-border text-center">
+                  <span class="text-[10px] text-muted-foreground block">Bedroom Keys</span>
+                  <span class="text-base font-bold text-foreground font-mono">{{ handover()?.keys_issued_json?.bedroom_keys || 6 }}</span>
+                </div>
+                <div class="p-2.5 rounded-lg bg-secondary/30 border border-border text-center">
+                  <span class="text-[10px] text-muted-foreground block">Bathroom Keys</span>
+                  <span class="text-base font-bold text-foreground font-mono">{{ handover()?.keys_issued_json?.bathroom_keys || 3 }}</span>
+                </div>
+                <div class="p-2.5 rounded-lg bg-secondary/30 border border-border text-center">
+                  <span class="text-[10px] text-muted-foreground block">Mailbox Keys</span>
+                  <span class="text-base font-bold text-foreground font-mono">{{ handover()?.keys_issued_json?.mailbox_key || 2 }}</span>
+                </div>
+                <div class="p-2.5 rounded-lg bg-secondary/30 border border-border text-center">
+                  <span class="text-[10px] text-muted-foreground block">RFID Access Cards</span>
+                  <span class="text-base font-bold text-primary font-mono">{{ handover()?.keys_issued_json?.rfid_access_cards || 2 }}</span>
+                </div>
+                <div class="p-2.5 rounded-lg bg-secondary/30 border border-border text-center">
+                  <span class="text-[10px] text-muted-foreground block">Parking RFID Tag</span>
+                  <span class="text-base font-bold text-primary font-mono">{{ handover()?.keys_issued_json?.parking_rfid_tags || 1 }}</span>
+                </div>
+              </div>
+
+              <div class="text-xs text-muted-foreground">
+                Receiver: <span class="font-bold text-foreground">{{ handover()?.keys_issued_json?.receiver_name || handover()?.customer_name }}</span>
+              </div>
+              @if (handover()?.keys_issued_json?.notes) {
+                <div class="text-[11px] text-muted-foreground mt-1 bg-secondary/20 p-2 rounded border border-border">
+                  {{ handover()?.keys_issued_json?.notes }}
+                </div>
+              }
+            </div>
+
+            <!-- Warranty & Maintenance Documents Card -->
+            <div class="p-4 rounded-xl bg-card border border-border">
+              <div class="flex items-center justify-between mb-4">
+                <h4 class="text-xs font-bold uppercase tracking-wider text-foreground">Equipment Warranties & Defect Liability (DLP)</h4>
+                <button
+                  (click)="isWarrantiesModalOpen.set(true)"
+                  class="px-2.5 py-1 text-xs font-semibold rounded-lg border border-border bg-card hover:bg-secondary text-foreground inline-flex items-center gap-1 shadow-xs"
+                >
+                  <span>Edit Warranties</span>
+                </button>
+              </div>
+
+              <div class="space-y-2 mb-4">
+                <div class="flex items-center justify-between text-xs p-2 rounded bg-secondary/20">
+                  <span class="text-foreground">Passenger Elevator & Lift Warranty</span>
+                  <span class="font-bold text-emerald-600 dark:text-emerald-400">✓ Included</span>
+                </div>
+                <div class="flex items-center justify-between text-xs p-2 rounded bg-secondary/20">
+                  <span class="text-foreground">Standby Generator Set Warranty</span>
+                  <span class="font-bold text-emerald-600 dark:text-emerald-400">✓ Included</span>
+                </div>
+                <div class="flex items-center justify-between text-xs p-2 rounded bg-secondary/20">
+                  <span class="text-foreground">CP Sanitary Wares & Fittings Warranty</span>
+                  <span class="font-bold text-emerald-600 dark:text-emerald-400">✓ Included</span>
+                </div>
+                <div class="flex items-center justify-between text-xs p-2 rounded bg-secondary/20">
+                  <span class="text-foreground">Electrical Substation & Switchgear Warranty</span>
+                  <span class="font-bold text-emerald-600 dark:text-emerald-400">✓ Included</span>
+                </div>
+                <div class="flex items-center justify-between text-xs p-2 rounded bg-secondary/20">
+                  <span class="text-foreground">RCC Structural Core Integrity Warranty</span>
+                  <span class="font-bold text-emerald-600 dark:text-emerald-400">✓ Included (10-Year)</span>
+                </div>
+              </div>
+
+              <div class="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs">
+                <span class="font-bold text-emerald-600 dark:text-emerald-400 block">Defect Liability Period (DLP): {{ handover()?.warranty_documents_json?.dlp_months || 12 }} Months Free Maintenance</span>
+                <span class="text-muted-foreground mt-0.5 block">
+                  @if (handover()?.dlp_end_date) {
+                    Active until: <span class="font-bold text-foreground">{{ handover()?.dlp_end_date }}</span>
+                  } @else {
+                    Will be activated automatically upon execution of physical possession.
+                  }
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Tab 6: Possession Certificate & Acknowledgment -->
+      @if (activeTab() === 'possession') {
+        <div class="p-6">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="text-sm font-bold text-foreground">Physical Possession Handover Certificate & Customer Declaration</h3>
+              <p class="text-xs text-muted-foreground">Formal possession execution, customer acceptance declaration, and possession certificate archiving.</p>
+            </div>
+            @if (handover()?.physical_possession_status !== 'FULL_PHYSICAL_POSSESSION') {
+              <button
+                (click)="isPossessionModalOpen.set(true)"
+                class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-xs"
+              >
+                <span>Execute Final Possession</span>
+              </button>
+            }
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div class="p-4 rounded-xl bg-secondary/30 border border-border">
+              <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Handover Certificate No</span>
+              <div class="text-base font-mono font-bold text-foreground mt-1">
+                {{ handover()?.handover_certificate_no || 'Pending Execution' }}
+              </div>
+              <span class="text-xs text-muted-foreground">Permanent certificate reference</span>
+            </div>
+
+            <div class="p-4 rounded-xl bg-secondary/30 border border-border">
+              <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Physical Possession Date</span>
+              <div class="text-base font-bold text-foreground mt-1">
+                {{ handover()?.handover_date || 'Possession Not Taken' }}
+              </div>
+              <span class="text-xs text-muted-foreground">Keys & unit handed over</span>
+            </div>
+
+            <div class="p-4 rounded-xl bg-secondary/30 border border-border">
+              <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Customer Acknowledgment</span>
+              <div class="text-base font-bold text-emerald-600 dark:text-emerald-400 mt-1">
+                {{ handover()?.customer_acknowledged ? 'Signed & Acknowledged' : 'Pending Signature' }}
+              </div>
+              <span class="text-xs text-muted-foreground">Accepted on {{ handover()?.customer_acknowledgment_date || 'N/A' }}</span>
+            </div>
+
+            <div class="p-4 rounded-xl bg-secondary/30 border border-border">
+              <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">DLP Warranty Expiry</span>
+              <div class="text-base font-bold text-primary mt-1">
+                {{ handover()?.dlp_end_date || '12-Month Standard' }}
+              </div>
+              <span class="text-xs text-muted-foreground">Quarterly servicing covered</span>
+            </div>
+          </div>
+
+          @if (handover()?.customer_declaration_notes) {
+            <div class="p-4 rounded-xl bg-card border border-border mb-4">
+              <h4 class="text-xs font-bold uppercase tracking-wider text-foreground mb-1">Customer Possession Declaration</h4>
+              <p class="text-xs text-muted-foreground italic">"{{ handover()?.customer_declaration_notes }}"</p>
+            </div>
+          }
+
+          <div class="p-4 rounded-xl bg-card border border-border flex items-center justify-between">
+            <div>
+              <h4 class="text-xs font-bold text-foreground uppercase tracking-wider">Booking Milestone Integration</h4>
+              <p class="text-xs text-muted-foreground mt-0.5">
+                Executing possession sets booking workflow stage to 10_HANDOVER_COMPLETE and status to HANDOVER_COMPLETE.
+              </p>
+            </div>
+            <span class="text-xs px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold">
+              Automatic Sync Active
+            </span>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<!-- ================= MODALS ================= -->
+
+<!-- 1. Distinct Statuses & Prerequisites Modal -->
+@if (isPrereqModalOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+    <div class="bg-card border border-border rounded-xl shadow-lg w-full max-w-lg overflow-hidden">
+      <div class="p-4 border-b border-border flex items-center justify-between">
+        <h3 class="text-sm font-bold text-foreground">Update Distinct Handover Statuses</h3>
+        <button (click)="isPrereqModalOpen.set(false)" class="text-muted-foreground hover:text-foreground text-sm font-bold">✕</button>
+      </div>
+
+      <div class="p-6 space-y-4">
+        <app-searchable-select
+          label="Contractual Completion Status"
+          [options]="contractualOptions"
+          [ngModel]="contractualStatus()"
+          (ngModelChange)="contractualStatus.set($event)"
+          [allowCreateNew]="false"
+        ></app-searchable-select>
+
+        <app-searchable-select
+          label="Financial Dues Clearance Status"
+          [options]="financialOptions"
+          [ngModel]="financialStatus()"
+          (ngModelChange)="financialStatus.set($event)"
+          [allowCreateNew]="false"
+        ></app-searchable-select>
+
+        <app-searchable-select
+          label="Deed Registration Status"
+          [options]="legalOptions"
+          [ngModel]="legalStatus()"
+          (ngModelChange)="legalStatus.set($event)"
+          [allowCreateNew]="false"
+        ></app-searchable-select>
+      </div>
+
+      <div class="p-4 bg-secondary/20 border-t border-border flex items-center justify-end gap-2">
+        <app-custom-button variant="outline" (click)="isPrereqModalOpen.set(false)" [disabled]="isActionLoading()">
+          Cancel
+        </app-custom-button>
+        <app-custom-button variant="primary" (click)="savePrerequisites(prerequisitesList())" [loading]="isActionLoading()">
+          Save Statuses
+        </app-custom-button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- 2. Log Snag / Defect Modal -->
+@if (isLogSnagModalOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+    <div class="bg-card border border-border rounded-xl shadow-lg w-full max-w-lg overflow-hidden">
+      <div class="p-4 border-b border-border flex items-center justify-between">
+        <h3 class="text-sm font-bold text-amber-600 dark:text-amber-400">Log Unit Defect / Snagging Item</h3>
+        <button (click)="isLogSnagModalOpen.set(false)" class="text-muted-foreground hover:text-foreground text-sm font-bold">✕</button>
+      </div>
+
+      <div class="p-6 space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <app-custom-input
+            label="Defect Headline / Item"
+            [ngModel]="snagItemName()"
+            (ngModelChange)="snagItemName.set($event)"
+            placeholder="e.g. Balcony tile grouting crack"
+            [required]="true"
+          ></app-custom-input>
+
+          <app-custom-input
+            label="Room / Architectural Location"
+            [ngModel]="snagRoomLocation()"
+            (ngModelChange)="snagRoomLocation.set($event)"
+            placeholder="e.g. Master Bedroom"
+            [required]="true"
+          ></app-custom-input>
+        </div>
+
+        <app-searchable-select
+          label="Defect Severity"
+          categoryCode="HANDOVER_DEFECT_SEVERITY"
+          [options]="severityOptions"
+          [ngModel]="snagSeverity()"
+          (ngModelChange)="snagSeverity.set($event)"
+          [allowCreateNew]="true"
+        ></app-searchable-select>
+
+        <app-custom-input
+          label="Target Rectification Date"
+          type="date"
+          [ngModel]="snagTargetDate()"
+          (ngModelChange)="snagTargetDate.set($event)"
+        ></app-custom-input>
+
+        <app-custom-textarea
+          label="Detailed Defect Description & Rectification Directive"
+          [ngModel]="snagDescription()"
+          (ngModelChange)="snagDescription.set($event)"
+          rows="3"
+          placeholder="Describe the exact location, dimension, or finish defect observed during walkthrough..."
+          [required]="true"
+        ></app-custom-textarea>
+      </div>
+
+      <div class="p-4 bg-secondary/20 border-t border-border flex items-center justify-end gap-2">
+        <app-custom-button variant="outline" (click)="isLogSnagModalOpen.set(false)" [disabled]="isActionLoading()">
+          Cancel
+        </app-custom-button>
+        <app-custom-button variant="primary" (click)="saveSnag()" [loading]="isActionLoading()">
+          Save Defect Item
+        </app-custom-button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- 3. Resolve Snag Modal -->
+@if (isResolveSnagModalOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+    <div class="bg-card border border-border rounded-xl shadow-lg w-full max-w-lg overflow-hidden">
+      <div class="p-4 border-b border-border flex items-center justify-between">
+        <h3 class="text-sm font-bold text-emerald-600 dark:text-emerald-400">Confirm Defect Rectification</h3>
+        <button (click)="isResolveSnagModalOpen.set(false)" class="text-muted-foreground hover:text-foreground text-sm font-bold">✕</button>
+      </div>
+
+      <div class="p-6 space-y-4">
+        <p class="text-xs text-muted-foreground">
+          Confirm that the contractor has completed rework, QA/QC engineer inspected, and the snag is cleared.
+        </p>
+
+        <app-custom-textarea
+          label="Rectification Notes & Engineering Approval"
+          [ngModel]="snagResolutionNotes()"
+          (ngModelChange)="snagResolutionNotes.set($event)"
+          rows="3"
+          placeholder="e.g. Tile regrouted, polish completed, and inspected by site QA engineer."
+          [required]="true"
+        ></app-custom-textarea>
+      </div>
+
+      <div class="p-4 bg-secondary/20 border-t border-border flex items-center justify-end gap-2">
+        <app-custom-button variant="outline" (click)="isResolveSnagModalOpen.set(false)" [disabled]="isActionLoading()">
+          Cancel
+        </app-custom-button>
+        <app-custom-button variant="primary" (click)="saveResolveSnag()" [loading]="isActionLoading()">
+          Verify Rectification
+        </app-custom-button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- 4. Utilities Modal -->
+@if (isUtilitiesModalOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+    <div class="bg-card border border-border rounded-xl shadow-lg w-full max-w-lg overflow-hidden">
+      <div class="p-4 border-b border-border flex items-center justify-between">
+        <h3 class="text-sm font-bold text-foreground">Configure Utility Meters & Readings</h3>
+        <button (click)="isUtilitiesModalOpen.set(false)" class="text-muted-foreground hover:text-foreground text-sm font-bold">✕</button>
+      </div>
+
+      <div class="p-6 space-y-4">
+        <!-- Electricity -->
+        <div class="p-3 rounded-lg bg-secondary/30 border border-border space-y-3">
+          <span class="text-xs font-bold text-primary block">Electricity (DESCO / DPDC)</span>
+          <div class="grid grid-cols-2 gap-3">
+            <app-custom-input
+              label="Meter Serial No"
+              [ngModel]="elecMeterNo()"
+              (ngModelChange)="elecMeterNo.set($event)"
+              placeholder="e.g. MTR-EL-88912"
+            ></app-custom-input>
+            <app-custom-input
+              label="Initial Reading (kWh)"
+              [ngModel]="elecReading()"
+              (ngModelChange)="elecReading.set($event)"
+              placeholder="0.00"
+            ></app-custom-input>
+          </div>
+          <app-searchable-select
+            label="Electricity Provider"
+            categoryCode="UTILITY_PROVIDERS"
+            [options]="utilityProviderOptions"
+            [ngModel]="elecProvider()"
+            (ngModelChange)="elecProvider.set($event)"
+            [allowCreateNew]="true"
+          ></app-searchable-select>
+        </div>
+
+        <!-- Gas -->
+        <div class="p-3 rounded-lg bg-secondary/30 border border-border space-y-3">
+          <span class="text-xs font-bold text-amber-600 block">Gas (Titas / LPG)</span>
+          <div class="grid grid-cols-2 gap-3">
+            <app-custom-input
+              label="Meter / Account No"
+              [ngModel]="gasMeterNo()"
+              (ngModelChange)="gasMeterNo.set($event)"
+              placeholder="e.g. TITAS-ACC-1102"
+            ></app-custom-input>
+            <app-custom-input
+              label="Initial Reading (m³)"
+              [ngModel]="gasReading()"
+              (ngModelChange)="gasReading.set($event)"
+              placeholder="0.00"
+            ></app-custom-input>
+          </div>
+        </div>
+
+        <!-- Water -->
+        <div class="p-3 rounded-lg bg-secondary/30 border border-border space-y-3">
+          <span class="text-xs font-bold text-blue-500 block">Water Supply (WASA)</span>
+          <div class="grid grid-cols-2 gap-3">
+            <app-custom-input
+              label="Consumer ID / Meter No"
+              [ngModel]="waterMeterNo()"
+              (ngModelChange)="waterMeterNo.set($event)"
+              placeholder="e.g. WASA-W-991"
+            ></app-custom-input>
+            <app-custom-input
+              label="Initial Reading"
+              [ngModel]="waterReading()"
+              (ngModelChange)="waterReading.set($event)"
+              placeholder="0.00"
+            ></app-custom-input>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-4 bg-secondary/20 border-t border-border flex items-center justify-end gap-2">
+        <app-custom-button variant="outline" (click)="isUtilitiesModalOpen.set(false)" [disabled]="isActionLoading()">
+          Cancel
+        </app-custom-button>
+        <app-custom-button variant="primary" (click)="saveUtilities()" [loading]="isActionLoading()">
+          Save Utility Meters
+        </app-custom-button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- 5. Keys Modal -->
+@if (isKeysModalOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+    <div class="bg-card border border-border rounded-xl shadow-lg w-full max-w-lg overflow-hidden">
+      <div class="p-4 border-b border-border flex items-center justify-between">
+        <h3 class="text-sm font-bold text-purple-600 dark:text-purple-400">Issue Keys & Smart Access Cards</h3>
+        <button (click)="isKeysModalOpen.set(false)" class="text-muted-foreground hover:text-foreground text-sm font-bold">✕</button>
+      </div>
+
+      <div class="p-6 space-y-4">
+        <div class="grid grid-cols-3 gap-3">
+          <app-custom-input
+            type="number"
+            label="Main Door Keys"
+            [ngModel]="mainKeys()"
+            (ngModelChange)="mainKeys.set($event)"
+          ></app-custom-input>
+
+          <app-custom-input
+            type="number"
+            label="Bedroom Keys"
+            [ngModel]="bedKeys()"
+            (ngModelChange)="bedKeys.set($event)"
+          ></app-custom-input>
+
+          <app-custom-input
+            type="number"
+            label="Bathroom Keys"
+            [ngModel]="bathKeys()"
+            (ngModelChange)="bathKeys.set($event)"
+          ></app-custom-input>
+
+          <app-custom-input
+            type="number"
+            label="Mailbox Keys"
+            [ngModel]="mailKeys()"
+            (ngModelChange)="mailKeys.set($event)"
+          ></app-custom-input>
+
+          <app-custom-input
+            type="number"
+            label="RFID Access Cards"
+            [ngModel]="rfidCards()"
+            (ngModelChange)="rfidCards.set($event)"
+          ></app-custom-input>
+
+          <app-custom-input
+            type="number"
+            label="Parking RFID Tag"
+            [ngModel]="parkingTags()"
+            (ngModelChange)="parkingTags.set($event)"
+          ></app-custom-input>
+        </div>
+
+        <app-custom-input
+          label="Authorized Receiver Name"
+          [ngModel]="keyReceiver()"
+          (ngModelChange)="keyReceiver.set($event)"
+          placeholder="e.g. Purchaser Name or Power of Attorney"
+        ></app-custom-input>
+
+        <app-custom-textarea
+          label="Key Handover Notes"
+          [ngModel]="keyNotes()"
+          (ngModelChange)="keyNotes.set($event)"
+          rows="2"
+          placeholder="Original brass keys handed over in security pouch..."
+        ></app-custom-textarea>
+      </div>
+
+      <div class="p-4 bg-secondary/20 border-t border-border flex items-center justify-end gap-2">
+        <app-custom-button variant="outline" (click)="isKeysModalOpen.set(false)" [disabled]="isActionLoading()">
+          Cancel
+        </app-custom-button>
+        <app-custom-button variant="primary" (click)="saveKeys()" [loading]="isActionLoading()">
+          Confirm Key Issuance
+        </app-custom-button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- 6. Warranties Modal -->
+@if (isWarrantiesModalOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+    <div class="bg-card border border-border rounded-xl shadow-lg w-full max-w-lg overflow-hidden">
+      <div class="p-4 border-b border-border flex items-center justify-between">
+        <h3 class="text-sm font-bold text-foreground">Equipment Warranties & Defect Liability (DLP)</h3>
+        <button (click)="isWarrantiesModalOpen.set(false)" class="text-muted-foreground hover:text-foreground text-sm font-bold">✕</button>
+      </div>
+
+      <div class="p-6 space-y-4">
+        <div class="space-y-2">
+          <label class="flex items-center gap-2 text-xs font-semibold text-foreground cursor-pointer">
+            <input type="checkbox" [checked]="liftWarranty()" (change)="liftWarranty.set(!liftWarranty())" class="rounded border-border text-primary" />
+            <span>Passenger Elevator / Lift Warranty</span>
+          </label>
+          <label class="flex items-center gap-2 text-xs font-semibold text-foreground cursor-pointer">
+            <input type="checkbox" [checked]="genWarranty()" (change)="genWarranty.set(!genWarranty())" class="rounded border-border text-primary" />
+            <span>Standby Generator Set Warranty</span>
+          </label>
+          <label class="flex items-center gap-2 text-xs font-semibold text-foreground cursor-pointer">
+            <input type="checkbox" [checked]="sanWarranty()" (change)="sanWarranty.set(!sanWarranty())" class="rounded border-border text-primary" />
+            <span>Sanitary Wares & CP Fittings Warranty</span>
+          </label>
+          <label class="flex items-center gap-2 text-xs font-semibold text-foreground cursor-pointer">
+            <input type="checkbox" [checked]="elecWarranty()" (change)="elecWarranty.set(!elecWarranty())" class="rounded border-border text-primary" />
+            <span>Electrical Fixtures & Substation Warranty</span>
+          </label>
+          <label class="flex items-center gap-2 text-xs font-semibold text-foreground cursor-pointer">
+            <input type="checkbox" [checked]="structWarranty()" (change)="structWarranty.set(!structWarranty())" class="rounded border-border text-primary" />
+            <span>RCC Structural Core Integrity Warranty</span>
+          </label>
+        </div>
+
+        <app-custom-input
+          type="number"
+          label="Defect Liability Period (DLP) in Months"
+          [ngModel]="dlpMonths()"
+          (ngModelChange)="dlpMonths.set($event)"
+        ></app-custom-input>
+
+        <app-custom-textarea
+          label="Warranty Notes & Service Provider Contacts"
+          [ngModel]="warrantyNotes()"
+          (ngModelChange)="warrantyNotes.set($event)"
+          rows="2"
+          placeholder="Service desk hotline: +880-9612-XXXXXX..."
+        ></app-custom-textarea>
+      </div>
+
+      <div class="p-4 bg-secondary/20 border-t border-border flex items-center justify-end gap-2">
+        <app-custom-button variant="outline" (click)="isWarrantiesModalOpen.set(false)" [disabled]="isActionLoading()">
+          Cancel
+        </app-custom-button>
+        <app-custom-button variant="primary" (click)="saveWarranties()" [loading]="isActionLoading()">
+          Save Warranties
+        </app-custom-button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- 7. Schedule Appointment Modal -->
+@if (isAppointmentModalOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+    <div class="bg-card border border-border rounded-xl shadow-lg w-full max-w-lg overflow-hidden">
+      <div class="p-4 border-b border-border flex items-center justify-between">
+        <h3 class="text-sm font-bold text-foreground">Schedule Pre-Handover Joint Walkthrough</h3>
+        <button (click)="isAppointmentModalOpen.set(false)" class="text-muted-foreground hover:text-foreground text-sm font-bold">✕</button>
+      </div>
+
+      <div class="p-6 space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <app-custom-input
+            type="date"
+            label="Appointment Date"
+            [ngModel]="appointmentDate()"
+            (ngModelChange)="appointmentDate.set($event)"
+            [required]="true"
+          ></app-custom-input>
+
+          <app-custom-input
+            label="Slot / Time"
+            [ngModel]="appointmentTime()"
+            (ngModelChange)="appointmentTime.set($event)"
+          ></app-custom-input>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <app-custom-input
+            label="Handover Staff / Manager"
+            [ngModel]="staffName()"
+            (ngModelChange)="staffName.set($event)"
+          ></app-custom-input>
+
+          <app-custom-input
+            label="QA/QC Site Engineer"
+            [ngModel]="engineerName()"
+            (ngModelChange)="engineerName.set($event)"
+          ></app-custom-input>
+        </div>
+
+        <app-custom-textarea
+          label="Walkthrough Logistics Notes"
+          [ngModel]="appointmentRemarks()"
+          (ngModelChange)="appointmentRemarks.set($event)"
+          rows="2"
+          placeholder="Notify purchaser to bring original allotment letter and NID card..."
+        ></app-custom-textarea>
+      </div>
+
+      <div class="p-4 bg-secondary/20 border-t border-border flex items-center justify-end gap-2">
+        <app-custom-button variant="outline" (click)="isAppointmentModalOpen.set(false)" [disabled]="isActionLoading()">
+          Cancel
+        </app-custom-button>
+        <app-custom-button variant="primary" (click)="saveAppointment()" [loading]="isActionLoading()">
+          Schedule Walkthrough
+        </app-custom-button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- 8. Execute Final Possession Modal -->
+@if (isPossessionModalOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+    <div class="bg-card border border-border rounded-xl shadow-lg w-full max-w-lg overflow-hidden">
+      <div class="p-4 border-b border-border flex items-center justify-between">
+        <h3 class="text-sm font-bold text-emerald-600 dark:text-emerald-400">Execute Physical Possession Handover</h3>
+        <button (click)="isPossessionModalOpen.set(false)" class="text-muted-foreground hover:text-foreground text-sm font-bold">✕</button>
+      </div>
+
+      <div class="p-6 space-y-4">
+        <div class="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs">
+          <span class="font-bold text-emerald-600 dark:text-emerald-400 block">Milestone Trigger</span>
+          <span class="text-muted-foreground mt-0.5 block">
+            This will generate the Handover Certificate reference (HC-2026-XXXX), activate the 12-Month Defect Liability Period (DLP), set Physical Possession to FULL_PHYSICAL_POSSESSION, and update the Booking Workflow Stage to 10_HANDOVER_COMPLETE.
+          </span>
+        </div>
+
+        <app-custom-input
+          type="date"
+          label="Physical Possession Handover Date"
+          [ngModel]="possessionDate()"
+          (ngModelChange)="possessionDate.set($event)"
+          [required]="true"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Signed Possession Certificate Document URL"
+          [ngModel]="possessionCertificateUrl()"
+          (ngModelChange)="possessionCertificateUrl.set($event)"
+          placeholder="e.g. https://vault/possession/HC-2026-0012.pdf"
+        ></app-custom-input>
+
+        <app-custom-textarea
+          label="Customer Declaration & Acknowledgment Notes"
+          [ngModel]="possessionDeclarationNotes()"
+          (ngModelChange)="possessionDeclarationNotes.set($event)"
+          rows="3"
+          [required]="true"
+        ></app-custom-textarea>
+      </div>
+
+      <div class="p-4 bg-secondary/20 border-t border-border flex items-center justify-end gap-2">
+        <app-custom-button variant="outline" (click)="isPossessionModalOpen.set(false)" [disabled]="isActionLoading()">
+          Cancel
+        </app-custom-button>
+        <app-custom-button variant="primary" (click)="savePossession()" [loading]="isActionLoading()">
+          Confirm Physical Possession
+        </app-custom-button>
+      </div>
+    </div>
+  </div>
+}

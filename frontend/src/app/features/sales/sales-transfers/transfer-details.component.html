@@ -1,0 +1,460 @@
+<div class="flex flex-col gap-6 w-full max-w-6xl mx-auto pb-16">
+  <!-- Top Bar -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
+    <div>
+      <div class="flex items-center gap-2">
+        <a
+          routerLink="/sales/transfers"
+          class="text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1 transition-colors"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+          </svg>
+          Back to Transfers Registry
+        </a>
+        <span class="text-muted-foreground text-xs">/</span>
+        <span class="text-xs font-mono text-primary font-semibold">
+          {{ transfer()?.transfer_number || ('TRF-2026-' + transferId()) }}
+        </span>
+      </div>
+      <h1 class="text-2xl font-bold font-display text-foreground mt-1">
+        Property Ownership Mutation Dossier
+      </h1>
+      <p class="text-xs text-muted-foreground mt-0.5">
+        Authorized buyer substitution, joint-buyer assignment, fee verification, and subledger continuity.
+      </p>
+    </div>
+
+    <div class="flex items-center gap-2 flex-wrap">
+      @if (!isExecuted()) {
+        <button
+          (click)="openExecuteModal()"
+          class="px-4 py-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-semibold inline-flex items-center gap-1.5 shadow-xs transition-colors"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          Execute Ownership Mutation
+        </button>
+      }
+
+      <span
+        class="px-3 py-1.5 rounded-xl text-xs font-bold border tracking-wide uppercase inline-flex items-center gap-1.5"
+        [ngClass]="{
+          'bg-emerald-500/10 text-emerald-600 border-emerald-500/20': transfer()?.approval_status === 'EXECUTED_COMPLETED',
+          'bg-sky-500/10 text-sky-600 border-sky-500/20': transfer()?.approval_status === 'MANAGEMENT_APPROVED' || transfer()?.approval_status === 'LEGAL_APPROVED',
+          'bg-amber-500/10 text-amber-600 border-amber-500/20': transfer()?.approval_status === 'PENDING_COMPLIANCE',
+          'bg-destructive/10 text-destructive border-destructive/20': transfer()?.approval_status === 'REJECTED'
+        }"
+      >
+        <span class="w-2 h-2 rounded-full" [ngClass]="{
+          'bg-emerald-500': transfer()?.approval_status === 'EXECUTED_COMPLETED',
+          'bg-sky-500': transfer()?.approval_status === 'MANAGEMENT_APPROVED' || transfer()?.approval_status === 'LEGAL_APPROVED',
+          'bg-amber-500': transfer()?.approval_status === 'PENDING_COMPLIANCE',
+          'bg-destructive': transfer()?.approval_status === 'REJECTED'
+        }"></span>
+        {{ transfer()?.approval_status?.replace('_', ' ') }}
+      </span>
+    </div>
+  </div>
+
+  <!-- Notification Banners -->
+  @if (feedbackMessage()) {
+    <div class="p-4 rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-sm flex items-center justify-between shadow-xs">
+      <div class="flex items-center gap-2">
+        <svg class="w-5 h-5 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        <span>{{ feedbackMessage() }}</span>
+      </div>
+      <button (click)="feedbackMessage.set('')" class="text-xs hover:underline font-semibold">Dismiss</button>
+    </div>
+  }
+
+  @if (errorMessage()) {
+    <div class="p-4 rounded-xl border border-destructive/20 bg-destructive/10 text-destructive text-sm flex items-center justify-between shadow-xs">
+      <div class="flex items-center gap-2">
+        <svg class="w-5 h-5 text-destructive flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+        <span>{{ errorMessage() }}</span>
+      </div>
+      <button (click)="errorMessage.set('')" class="text-xs hover:underline font-semibold">Dismiss</button>
+    </div>
+  }
+
+  <!-- 4 Spec-Defined KPI Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="bg-card border border-border rounded-xl p-4 shadow-xs">
+      <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">Contract Value</span>
+      <div class="text-2xl font-bold font-display text-foreground mt-1">
+        ৳{{ (transfer()?.final_contract_value || 0) | number:'1.2-2' }}
+      </div>
+      <p class="text-[11px] text-muted-foreground mt-1">Approved apartment selling price</p>
+    </div>
+
+    <div class="bg-card border border-border rounded-xl p-4 shadow-xs">
+      <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">Paid Receipts Preserved</span>
+      <div class="text-2xl font-bold font-display text-emerald-600 dark:text-emerald-400 mt-1">
+        ৳{{ (transfer()?.total_paid_preserved || 0) | number:'1.2-2' }}
+      </div>
+      <p class="text-[11px] text-muted-foreground mt-1">Source customer history preserved</p>
+    </div>
+
+    <div class="bg-card border border-border rounded-xl p-4 shadow-xs">
+      <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">Transfer NOC Fee</span>
+      <div class="text-2xl font-bold font-display text-primary mt-1">
+        ৳{{ (transfer()?.transfer_fee_bdt || 0) | number:'1.2-2' }}
+      </div>
+      <p class="text-[11px] text-muted-foreground mt-1">
+        {{ transfer()?.is_fee_paid ? 'Fee Cleared ✓ (Receipt: ' + transfer()?.transfer_fee_receipt_no + ')' : 'Pending Fee Settlement' }}
+      </p>
+    </div>
+
+    <div class="bg-card border border-border rounded-xl p-4 shadow-xs">
+      <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">Compliance Dues Check</span>
+      <div class="text-2xl font-bold font-display mt-1" [ngClass]="(transfer()?.outstanding_balance_at_transfer || 0) > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600'">
+        {{ (transfer()?.outstanding_balance_at_transfer || 0) > 0 ? '৳' + ((transfer()?.outstanding_balance_at_transfer || 0) | number:'1.0-0') + ' Due' : 'Cleared ✓' }}
+      </div>
+      <p class="text-[11px] text-muted-foreground mt-1">
+        {{ transfer()?.is_dues_cleared ? 'All dues verified' : 'NOC clearance required' }}
+      </p>
+    </div>
+  </div>
+
+  <!-- Single Container Card for All Dossier Sections -->
+  <div class="bg-card border border-border rounded-xl shadow-xs overflow-hidden divide-y divide-border">
+    <!-- Section 1: Side-by-Side Buyer Comparison -->
+    <div class="p-6">
+      <h2 class="text-sm font-bold uppercase tracking-wider text-foreground mb-4">1. Side-by-Side Ownership Comparison</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Source Customer (Assignor) -->
+        <div class="p-4 rounded-xl border border-border bg-secondary/20">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-muted-foreground">Original Allottee (Assignor)</span>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-secondary text-foreground">Customer #{{ transfer()?.from_customer_id }}</span>
+          </div>
+          <div class="text-base font-bold text-foreground">{{ transfer()?.from_customer_name || 'Primary Purchaser' }}</div>
+          <div class="text-xs text-muted-foreground mt-0.5">{{ transfer()?.from_customer_phone || 'Phone not available' }}</div>
+          <div class="mt-3 pt-3 border-t border-border text-xs flex justify-between">
+            <span class="text-muted-foreground">Original Shareholding:</span>
+            <span class="font-bold font-mono text-foreground">{{ transfer()?.previous_share_percent }}%</span>
+          </div>
+        </div>
+
+        <!-- Destination Transferee (Assignee / Co-Buyer) -->
+        <div class="p-4 rounded-xl border border-primary/30 bg-primary/5">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-primary">Transferee / Co-Buyer (Assignee)</span>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-primary/10 text-primary font-bold">
+              {{ transfer()?.transfer_type?.replace('_', ' ') }}
+            </span>
+          </div>
+          @if (transfer()?.transfer_type === 'FULL_BUYER_SUBSTITUTION') {
+            <div class="text-base font-bold text-foreground">{{ transfer()?.to_customer_name || 'New Transferee' }}</div>
+            <div class="text-xs text-muted-foreground mt-0.5">{{ transfer()?.to_customer_phone || 'Phone not available' }}</div>
+          } @else if (transfer()?.co_buyer_name) {
+            <div class="text-base font-bold text-foreground">{{ transfer()?.co_buyer_name }}</div>
+            <div class="text-xs text-muted-foreground mt-0.5">
+              Relation: <strong>{{ transfer()?.co_buyer_relation }}</strong> · NID: {{ transfer()?.co_buyer_nid || 'N/A' }}
+            </div>
+          } @else {
+            <div class="text-sm font-semibold text-foreground">Ownership Share Adjusted</div>
+          }
+          <div class="mt-3 pt-3 border-t border-primary/20 text-xs flex justify-between">
+            <span class="text-muted-foreground">Revised Assigned Share:</span>
+            <span class="font-bold font-mono text-primary">{{ transfer()?.new_share_percent }}%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2: Property Specs & Documents -->
+    <div class="p-6">
+      <h2 class="text-sm font-bold uppercase tracking-wider text-foreground mb-4">2. Property Specifications & Legal Attachments</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-xs mb-4">
+        <div>
+          <span class="text-muted-foreground block text-[11px]">Booking Reference</span>
+          <span class="font-bold text-primary font-mono text-sm block mt-0.5">{{ transfer()?.booking_reference_no }}</span>
+        </div>
+        <div>
+          <span class="text-muted-foreground block text-[11px]">Project & Unit</span>
+          <span class="font-bold text-foreground text-sm block mt-0.5">Unit {{ transfer()?.unit_number }}</span>
+          <span class="text-muted-foreground text-[11px]">{{ transfer()?.project_name }}</span>
+        </div>
+        <div>
+          <span class="text-muted-foreground block text-[11px]">Revised Agreement Ref</span>
+          <span class="font-bold text-foreground font-mono text-sm block mt-0.5">{{ transfer()?.revised_agreement_reference || 'To be generated on execution' }}</span>
+        </div>
+        <div>
+          <span class="text-muted-foreground block text-[11px]">Transfer Effective Date</span>
+          <span class="font-bold text-foreground text-sm block mt-0.5">{{ transfer()?.transfer_effective_date || 'Pending execution' }}</span>
+        </div>
+      </div>
+
+      <!-- Attached Documents -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs pt-4 border-t border-border">
+        <div class="p-3 rounded-lg border border-border bg-secondary/10 flex items-center justify-between">
+          <div>
+            <span class="text-[10px] uppercase font-bold text-muted-foreground block">Developer NOC Certificate</span>
+            <span class="font-medium text-foreground">{{ transfer()?.noc_document_url ? 'Attached ✓' : 'Pending upload' }}</span>
+          </div>
+          @if (transfer()?.noc_document_url) {
+            <a [href]="transfer()?.noc_document_url" target="_blank" class="text-xs text-primary hover:underline">View</a>
+          }
+        </div>
+
+        <div class="p-3 rounded-lg border border-border bg-secondary/10 flex items-center justify-between">
+          <div>
+            <span class="text-[10px] uppercase font-bold text-muted-foreground block">Sale Permission Deed</span>
+            <span class="font-medium text-foreground">{{ transfer()?.sale_permission_url ? 'Attached ✓' : 'Pending upload' }}</span>
+          </div>
+          @if (transfer()?.sale_permission_url) {
+            <a [href]="transfer()?.sale_permission_url" target="_blank" class="text-xs text-primary hover:underline">View</a>
+          }
+        </div>
+
+        <div class="p-3 rounded-lg border border-border bg-secondary/10 flex items-center justify-between">
+          <div>
+            <span class="text-[10px] uppercase font-bold text-muted-foreground block">Joint Consent Affidavit</span>
+            <span class="font-medium text-foreground">{{ transfer()?.affidavit_document_url ? 'Attached ✓' : 'Pending upload' }}</span>
+          </div>
+          @if (transfer()?.affidavit_document_url) {
+            <a [href]="transfer()?.affidavit_document_url" target="_blank" class="text-xs text-primary hover:underline">View</a>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 3: 2-Tier Approvals -->
+    <div class="p-6">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="text-sm font-bold uppercase tracking-wider text-foreground">3. Governance & Dual Authorizations</h2>
+          <p class="text-xs text-muted-foreground">Requires authorized management and legal counsel sign-off prior to mutation.</p>
+        </div>
+        <span class="text-xs font-semibold px-2 py-0.5 rounded-full" [ngClass]="isFullyApproved() ? 'bg-emerald-500/10 text-emerald-600' : 'bg-amber-500/10 text-amber-600'">
+          {{ isFullyApproved() ? 'Approved for Execution ✓' : 'Approvals Pending' }}
+        </span>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Tier 1: Legal Staff Review -->
+        <div class="p-4 rounded-xl border border-border bg-card flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold text-foreground">1. Legal Staff Review</span>
+              <span
+                class="px-2 py-0.5 rounded text-[10px] font-bold uppercase"
+                [ngClass]="{
+                  'bg-emerald-500/10 text-emerald-600': transfer()?.legal_approved_by,
+                  'bg-secondary text-muted-foreground': !transfer()?.legal_approved_by
+                }"
+              >
+                {{ transfer()?.legal_approved_by ? 'Approved ✓' : 'Pending' }}
+              </span>
+            </div>
+            <p class="text-[11px] text-muted-foreground">Confirms power of attorney, title integrity, and joint buyer affidavit validity.</p>
+            @if (transfer()?.legal_approved_by) {
+              <div class="mt-2 text-[10px] text-muted-foreground font-mono">
+                Approved By: {{ transfer()?.legal_approved_by }} · {{ transfer()?.approval_date | date:'short' }}
+              </div>
+            }
+          </div>
+
+          @if (!transfer()?.legal_approved_by && !isExecuted()) {
+            <div class="mt-4 pt-3 border-t border-border flex items-center gap-2">
+              <button
+                (click)="openApprovalModal('LEGAL_APPROVED')"
+                class="flex-1 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition-colors"
+              >
+                Approve Legal
+              </button>
+              <button
+                (click)="openApprovalModal('REJECTED')"
+                class="px-3 py-1.5 rounded-lg border border-destructive/30 text-destructive hover:bg-destructive/10 text-xs font-semibold transition-colors"
+              >
+                Reject
+              </button>
+            </div>
+          }
+        </div>
+
+        <!-- Tier 2: Management Approval -->
+        <div class="p-4 rounded-xl border border-border bg-card flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold text-foreground">2. Authorized Management Approval</span>
+              <span
+                class="px-2 py-0.5 rounded text-[10px] font-bold uppercase"
+                [ngClass]="{
+                  'bg-emerald-500/10 text-emerald-600': transfer()?.management_approved_by,
+                  'bg-secondary text-muted-foreground': !transfer()?.management_approved_by
+                }"
+              >
+                {{ transfer()?.management_approved_by ? 'Approved ✓' : 'Pending' }}
+              </span>
+            </div>
+            <p class="text-[11px] text-muted-foreground">Managing Director / Head of Sales commercial authorization and fee waiver review.</p>
+            @if (transfer()?.management_approved_by) {
+              <div class="mt-2 text-[10px] text-muted-foreground font-mono">
+                Approved By: {{ transfer()?.management_approved_by }} · {{ transfer()?.approval_date | date:'short' }}
+              </div>
+            }
+          </div>
+
+          @if (!transfer()?.management_approved_by && !isExecuted()) {
+            <div class="mt-4 pt-3 border-t border-border flex items-center gap-2">
+              <button
+                (click)="openApprovalModal('MANAGEMENT_APPROVED')"
+                class="flex-1 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition-colors"
+              >
+                Approve Management
+              </button>
+              <button
+                (click)="openApprovalModal('REJECTED')"
+                class="px-3 py-1.5 rounded-lg border border-destructive/30 text-destructive hover:bg-destructive/10 text-xs font-semibold transition-colors"
+              >
+                Reject
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 4: Payment History Preservation & Subledger Continuity -->
+    <div class="p-6 bg-secondary/10">
+      <h2 class="text-sm font-bold uppercase tracking-wider text-foreground mb-3">4. Subledger Continuity & Transaction Preservation Controls</h2>
+      <div class="p-4 rounded-xl bg-card border border-border space-y-2 text-xs">
+        <div class="flex items-center gap-2">
+          <svg class="w-5 h-5 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+          </svg>
+          <strong class="text-foreground text-sm">Spec 5.10 Compliance: Original Payments Are Never Erased</strong>
+        </div>
+        <p class="text-muted-foreground leading-relaxed">
+          In strict compliance with statutory real estate accounting conventions, executing this ownership mutation preserves all original payment receipts, money receipt references, and bank instruments under source customer account #{{ transfer()?.from_customer_id }}.
+          A formal zero-value memorandum entry is linked to customer sales ledger, transferring title to the new assignee without altering historic financial records.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal 1: Approval Action Modal -->
+@if (isApprovalModalOpen()) {
+  <div class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+    <div class="bg-card border border-border rounded-xl max-w-md w-full shadow-lg p-6">
+      <div class="flex items-center justify-between pb-3 border-b border-border mb-4">
+        <h3 class="text-sm font-bold text-foreground">
+          Confirm Transfer Authorization Decision
+        </h3>
+        <button (click)="isApprovalModalOpen.set(false)" class="text-muted-foreground hover:text-foreground text-sm font-bold">✕</button>
+      </div>
+
+      <div class="space-y-4 text-xs">
+        <div class="p-3 rounded-lg bg-secondary/30">
+          <span class="text-muted-foreground">Action:</span>
+          <strong class="ml-1 text-foreground uppercase">{{ approvalDecision().replace('_', ' ') }}</strong>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-foreground mb-1">Approval Notes / Legal Observations</label>
+          <app-custom-textarea
+            [ngModel]="approvalNotes()"
+            (ngModelChange)="approvalNotes.set($event)"
+            placeholder="Enter review notes..."
+            rows="3"
+          ></app-custom-textarea>
+        </div>
+      </div>
+
+      <div class="mt-6 pt-4 border-t border-border flex items-center justify-end gap-2">
+        <button
+          (click)="isApprovalModalOpen.set(false)"
+          class="px-3 py-1.5 rounded-lg border border-border text-foreground hover:bg-secondary text-xs font-semibold"
+        >
+          Cancel
+        </button>
+        <button
+          (click)="submitApproval()"
+          [disabled]="isActionLoading()"
+          class="px-4 py-1.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-semibold disabled:opacity-50"
+        >
+          {{ isActionLoading() ? 'Saving...' : 'Confirm Approval' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal 2: Execution & Mutation Modal -->
+@if (isExecuteModalOpen()) {
+  <div class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+    <div class="bg-card border border-border rounded-xl max-w-lg w-full shadow-lg p-6">
+      <div class="flex items-center justify-between pb-3 border-b border-border mb-4">
+        <h3 class="text-sm font-bold text-foreground">
+          Execute Ownership Mutation & Subledger Link (Spec 5.10)
+        </h3>
+        <button (click)="isExecuteModalOpen.set(false)" class="text-muted-foreground hover:text-foreground text-sm font-bold">✕</button>
+      </div>
+
+      <div class="space-y-4 text-xs">
+        <div class="p-3 rounded-lg bg-primary/10 border border-primary/20 text-primary">
+          <p class="font-bold">Irreversible Commercial Operation</p>
+          <p class="text-[11px] mt-0.5">This will update the property allotment to the new assignee, record transfer fee receipt, and bind revised agreement references.</p>
+        </div>
+
+        <div>
+          <app-custom-input
+            label="Transfer Fee Money Receipt Number (MR)"
+            type="text"
+            [value]="transferFeeReceiptNo()"
+            (valueChange)="transferFeeReceiptNo.set($event)"
+            placeholder="E.g., MR-TRF-0042"
+            [required]="true"
+            hint="Mandatory proof of developer transfer fee payment."
+          ></app-custom-input>
+        </div>
+
+        <div>
+          <app-custom-input
+            label="Revised Agreement Reference Number"
+            type="text"
+            [value]="revisedAgreementReference()"
+            (valueChange)="revisedAgreementReference.set($event)"
+            placeholder="E.g., AGR-REV-BKG-2026-008"
+            hint="Generated addendum reference number."
+          ></app-custom-input>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-foreground mb-1">Execution Covenants</label>
+          <app-custom-textarea
+            [ngModel]="executionNotes()"
+            (ngModelChange)="executionNotes.set($event)"
+            placeholder="Notes regarding execution date, stamp duties, or registry remarks..."
+            rows="2"
+          ></app-custom-textarea>
+        </div>
+      </div>
+
+      <div class="mt-6 pt-4 border-t border-border flex items-center justify-end gap-2">
+        <button
+          (click)="isExecuteModalOpen.set(false)"
+          class="px-3 py-1.5 rounded-lg border border-border text-foreground hover:bg-secondary text-xs font-semibold"
+        >
+          Cancel
+        </button>
+        <button
+          (click)="submitExecution()"
+          [disabled]="isActionLoading() || !transferFeeReceiptNo().trim()"
+          class="px-4 py-1.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-semibold disabled:opacity-50"
+        >
+          {{ isActionLoading() ? 'Executing...' : 'Confirm & Execute Mutation' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
