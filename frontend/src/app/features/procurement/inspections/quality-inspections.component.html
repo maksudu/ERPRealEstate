@@ -1,0 +1,710 @@
+<app-procurement-nav
+  title="9.8 Quality Inspection & Rejection"
+  subtitle="Engineering QC Protocols, Lab Slump & Tensile Yield Tests, Mill Test Reports (MTR) & Non-Conformance (NCR) Management"
+>
+  <div actions class="flex items-center gap-2">
+    <button
+      type="button"
+      (click)="openAddQCModal()"
+      class="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 shadow-xs transition-all hover:scale-[1.02]"
+    >
+      <span>🔬</span>
+      <span>Perform Quality Inspection</span>
+    </button>
+  </div>
+</app-procurement-nav>
+
+<!-- KPI Metrics Overview -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+  <div class="p-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xs">
+    <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Total Inspections</div>
+    <div class="text-xl font-bold font-mono text-slate-800 dark:text-slate-100 mt-1">{{ totalQCCount() }}</div>
+    <div class="text-[10px] text-slate-400 mt-0.5">Lab & site tests logged</div>
+  </div>
+
+  <div class="p-3.5 bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-800/40 rounded-xl shadow-xs">
+    <div class="text-[11px] font-medium text-emerald-700 dark:text-emerald-400">Certified & Accepted</div>
+    <div class="text-xl font-bold font-mono text-emerald-800 dark:text-emerald-300 mt-1">{{ passedCount() }}</div>
+    <div class="text-[10px] text-emerald-600/80 dark:text-emerald-400/80 mt-0.5">Stock updated in store ledger</div>
+  </div>
+
+  <div class="p-3.5 bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-800/40 rounded-xl shadow-xs">
+    <div class="text-[11px] font-medium text-amber-700 dark:text-amber-400">Conditional Releases</div>
+    <div class="text-xl font-bold font-mono text-amber-800 dark:text-amber-300 mt-1">{{ conditionalCount() }}</div>
+    <div class="text-[10px] text-amber-600/80 dark:text-amber-400/80 mt-0.5">Approved under exception</div>
+  </div>
+
+  <div class="p-3.5 bg-rose-50/60 dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-800/40 rounded-xl shadow-xs">
+    <div class="text-[11px] font-medium text-rose-700 dark:text-rose-400">Rejected / NCRs</div>
+    <div class="text-xl font-bold font-mono text-rose-800 dark:text-rose-300 mt-1">{{ failedCount() }}</div>
+    <div class="text-[10px] text-rose-600/80 dark:text-rose-400/80 mt-0.5">Quarantined / Return to supplier</div>
+  </div>
+</div>
+
+<!-- Main Card Container: QC Inspections List -->
+<app-card-container
+  title="Material Quality Inspections & Technical Acceptance Register"
+  subtitle="Engineering verification of laboratory test results, MTR mill certificates and BNBC code compliance before store ledger entry."
+>
+  <!-- Category & Status Tabs Navigation -->
+  <div class="mb-4">
+    <app-custom-tabs
+      [tabs]="tabs"
+      [activeTabId]="activeTab"
+      (tabChange)="onTabChange($event)"
+    ></app-custom-tabs>
+  </div>
+
+  <!-- Search & Filter Controls -->
+  <div class="flex flex-col sm:flex-row items-center justify-between gap-3 mb-4">
+    <div class="flex items-center gap-2 w-full sm:w-96">
+      <div class="relative w-full">
+        <input
+          type="text"
+          [(ngModel)]="searchQuery"
+          (ngModelChange)="onSearch()"
+          placeholder="Search inspection ID, GRN, MTR certificate, notes..."
+          class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-amber-500 transition-colors"
+        />
+        <svg class="absolute left-2.5 top-2 w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2 w-full sm:w-auto">
+      <select
+        [(ngModel)]="selectedResult"
+        (ngModelChange)="onSearch()"
+        class="px-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-1 focus:ring-amber-500"
+      >
+        <option value="">All Test Decisions</option>
+        <option value="PASSED">Passed (Authorized for Stock)</option>
+        <option value="FAILED">Failed / Rejected</option>
+        <option value="CONDITIONAL_PASS">Conditional Pass</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Paginated QC Table -->
+  <div class="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-xl">
+    <table class="w-full text-left text-xs border-collapse">
+      <thead>
+        <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-850 text-slate-500 dark:text-slate-400 font-semibold">
+          <th class="py-2.5 px-3">Inspection ID & Date</th>
+          <th class="py-2.5 px-3">GRN Reference & Item</th>
+          <th class="py-2.5 px-3 text-right">Slump Test (mm)</th>
+          <th class="py-2.5 px-3 text-right">Tensile (MPa)</th>
+          <th class="py-2.5 px-3">Mill Test Report (MTR)</th>
+          <th class="py-2.5 px-3 text-center">Quality Decision</th>
+          <th class="py-2.5 px-3">Observation & NCR</th>
+          <th class="py-2.5 px-3 text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+        @for (qc of qualityInspections(); track qc.id) {
+          <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-colors">
+            <!-- Inspection ID & Date -->
+            <td class="py-2.5 px-3 font-mono">
+              <span class="font-bold text-amber-600 dark:text-amber-400 hover:underline cursor-pointer" (click)="viewQCDetails(qc)">
+                {{ qc.inspection_number }}
+              </span>
+              <span class="block text-[10px] text-slate-400 font-sans">{{ qc.inspection_date }}</span>
+              <span class="text-[9px] text-slate-500 font-sans">
+                By: {{ qc.inspector_name || 'QA Engineer' }}
+              </span>
+            </td>
+
+            <!-- GRN Reference & Item -->
+            <td class="py-2.5 px-3">
+              <div class="font-mono text-xs font-semibold text-slate-900 dark:text-slate-100">
+                {{ qc.grn_number || 'GRN-Gate' }}
+              </div>
+              <div class="text-[11px] font-medium text-slate-800 dark:text-slate-200">
+                {{ qc.material_name || 'Construction Materials' }}
+              </div>
+              <div class="text-[10px] text-slate-400">
+                PO: {{ qc.po_number || 'Linked PO' }}
+              </div>
+            </td>
+
+            <!-- Slump Test (mm) -->
+            <td class="py-2.5 px-3 text-right font-mono">
+              @if (qc.slump_test_mm) {
+                <span class="font-bold text-slate-800 dark:text-slate-200">{{ qc.slump_test_mm }} mm</span>
+                <span class="block text-[9px] text-emerald-600">Standard: 80-120mm</span>
+              } @else {
+                <span class="text-slate-400 text-[11px]">N/A</span>
+              }
+            </td>
+
+            <!-- Tensile Yield (MPa) -->
+            <td class="py-2.5 px-3 text-right font-mono">
+              @if (qc.tensile_strength_mpa) {
+                <span class="font-bold text-slate-800 dark:text-slate-200">{{ qc.tensile_strength_mpa }} MPa</span>
+                <span class="block text-[9px] text-emerald-600">Grade 500W</span>
+              } @else {
+                <span class="text-slate-400 text-[11px]">N/A</span>
+              }
+            </td>
+
+            <!-- MTR Mill Certificate -->
+            <td class="py-2.5 px-3">
+              <div class="font-mono text-[11px] text-slate-700 dark:text-slate-300 font-semibold truncate max-w-xs">
+                {{ qc.mtr_mill_test_report_number || 'MTR-Verified' }}
+              </div>
+              <div class="flex items-center gap-1 mt-0.5">
+                <span [class]="qc.mtr_verified ? 'text-emerald-600 text-[10px] font-bold' : 'text-slate-400 text-[10px]'">
+                  {{ qc.mtr_verified ? '✓ Mill Test Verified' : 'Pending MTR' }}
+                </span>
+              </div>
+            </td>
+
+            <!-- Quality Decision Badge -->
+            <td class="py-2.5 px-3 text-center">
+              @if (qc.test_result === 'PASSED') {
+                <app-status-badge status="PASSED" labelEn="PASSED" variant="success"></app-status-badge>
+              } @else if (qc.test_result === 'FAILED') {
+                <app-status-badge status="FAILED" labelEn="REJECTED" variant="danger"></app-status-badge>
+              } @else {
+                <app-status-badge status="CONDITIONAL" labelEn="CONDITIONAL" variant="amber"></app-status-badge>
+              }
+            </td>
+
+            <!-- Observations / Remarks -->
+            <td class="py-2.5 px-3">
+              <div class="text-slate-700 dark:text-slate-300 text-[11px] max-w-xs truncate" [title]="qc.qc_remarks || ''">
+                {{ qc.qc_remarks || 'Material meets ASTM / BSTI specifications.' }}
+              </div>
+            </td>
+
+            <!-- Actions -->
+            <td class="py-2.5 px-3 text-right">
+              <div class="flex items-center justify-end gap-1.5">
+                <!-- View Certificate -->
+                <button
+                  type="button"
+                  (click)="viewQCDetails(qc)"
+                  title="View Inspection Certificate & NCR Audit"
+                  class="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 transition-colors"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                  </svg>
+                </button>
+
+                <!-- Edit QC -->
+                <button
+                  type="button"
+                  (click)="openEditQCModal(qc)"
+                  title="Edit Quality Observations"
+                  class="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-amber-600 transition-colors"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                  </svg>
+                </button>
+
+                <!-- Delete QC -->
+                <button
+                  type="button"
+                  (click)="confirmDeleteQC(qc)"
+                  title="Delete QC Inspection"
+                  class="p-1 rounded-lg hover:bg-rose-100 dark:hover:bg-rose-950/40 text-rose-500 hover:text-rose-700 transition-colors"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="8" class="py-12 text-center text-slate-400 text-xs">
+              <div class="text-3xl mb-2">🔬</div>
+              <div class="font-semibold text-slate-600 dark:text-slate-300">No Quality Inspections Logged</div>
+              <div class="text-[11px] text-slate-400 mt-1">Submit gate consignments for testing by clicking "+ Perform Quality Inspection" above.</div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination Footer -->
+  <div class="flex items-center justify-between pt-4 text-xs text-slate-500 dark:text-slate-400">
+    <div>
+      Showing <span class="font-bold text-slate-800 dark:text-slate-200">{{ qualityInspections().length }}</span> inspection records
+    </div>
+    <div class="flex items-center gap-2">
+      <button
+        type="button"
+        (click)="previousPage()"
+        [disabled]="offset === 0"
+        class="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-800 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+      >
+        Previous
+      </button>
+      <span class="font-mono text-xs">Page {{ (offset / limit) + 1 }}</span>
+      <button
+        type="button"
+        (click)="nextPage()"
+        [disabled]="qualityInspections().length < limit"
+        class="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-800 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+      >
+        Next
+      </button>
+    </div>
+  </div>
+</app-card-container>
+
+<!-- ========================================================================= -->
+<!-- Modal 1: Perform Quality Inspection (Dedicated Popup - NEVER under table) -->
+<!-- ========================================================================= -->
+<app-modal
+  [isOpen]="isModalOpen"
+  [title]="isEditMode ? 'Edit Quality Inspection' : 'Perform Material Quality Inspection'"
+  subtitle="Laboratory test verification, material category checklist & technical acceptance decision"
+  [maxWidth]="'max-w-3xl'"
+  (closeModal)="closeModal()"
+>
+  <form [formGroup]="qcForm" (ngSubmit)="saveQC()" class="space-y-4">
+    <!-- GRN Selection -->
+    <div class="p-3 bg-slate-50 dark:bg-slate-850/80 border border-slate-200 dark:border-slate-800 rounded-xl space-y-2">
+      <app-searchable-select
+        label="Select Consignment Gate Entry (GRN) to Inspect"
+        placeholder="Search pending GRNs by number or material..."
+        [options]="grnOptions()"
+        [allowCreateNew]="false"
+        [required]="true"
+        [disabled]="isEditMode"
+        (selectionChange)="onGRNSelected($event)"
+      ></app-searchable-select>
+    </div>
+
+    <!-- Material Category Selector -->
+    <div class="space-y-1.5">
+      <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+        Material Quality Category & Technical Checklist <span class="text-rose-500">*</span>
+      </label>
+      <div class="grid grid-cols-2 sm:grid-cols-5 gap-2">
+        <button
+          type="button"
+          (click)="onCategoryChange('STEEL_REBAR')"
+          [class]="selectedCategory() === 'STEEL_REBAR' ? 'bg-amber-500 text-slate-950 font-bold border-amber-600' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'"
+          class="p-2 rounded-xl text-xs border text-center transition-all"
+        >
+          <span class="block text-sm">🔩</span>
+          <span>Steel Rebar</span>
+        </button>
+
+        <button
+          type="button"
+          (click)="onCategoryChange('CEMENT')"
+          [class]="selectedCategory() === 'CEMENT' ? 'bg-amber-500 text-slate-950 font-bold border-amber-600' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'"
+          class="p-2 rounded-xl text-xs border text-center transition-all"
+        >
+          <span class="block text-sm">🧱</span>
+          <span>Cement</span>
+        </button>
+
+        <button
+          type="button"
+          (click)="onCategoryChange('BRICKS')"
+          [class]="selectedCategory() === 'BRICKS' ? 'bg-amber-500 text-slate-950 font-bold border-amber-600' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'"
+          class="p-2 rounded-xl text-xs border text-center transition-all"
+        >
+          <span class="block text-sm">🟥</span>
+          <span>Bricks & Blocks</span>
+        </button>
+
+        <button
+          type="button"
+          (click)="onCategoryChange('AGGREGATES_SAND')"
+          [class]="selectedCategory() === 'AGGREGATES_SAND' ? 'bg-amber-500 text-slate-950 font-bold border-amber-600' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'"
+          class="p-2 rounded-xl text-xs border text-center transition-all"
+        >
+          <span class="block text-sm">🏖️</span>
+          <span>Sand / Aggregate</span>
+        </button>
+
+        <button
+          type="button"
+          (click)="onCategoryChange('FINISHING_MEP')"
+          [class]="selectedCategory() === 'FINISHING_MEP' ? 'bg-amber-500 text-slate-950 font-bold border-amber-600' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'"
+          class="p-2 rounded-xl text-xs border text-center transition-all"
+        >
+          <span class="block text-sm">✨</span>
+          <span>Finishing & MEP</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Category Specific Engineering Checklist Container -->
+    <div class="p-3.5 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl space-y-3">
+      <!-- CEMENT Checklist -->
+      @if (selectedCategory() === 'CEMENT') {
+        <div class="space-y-3">
+          <div class="text-xs font-bold text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
+            <span>🧱</span>
+            <span>Cement Quality Control Checklist (BDS EN 197-1 / ASTM C150)</span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <app-custom-input
+                label="Slump Test Result (mm)"
+                type="number"
+                placeholder="e.g. 100 mm (Tolerance 80-120mm)"
+                formControlName="slump_test_mm"
+              ></app-custom-input>
+            </div>
+            <div>
+              <app-custom-input
+                label="Manufacturing Batch / Date"
+                placeholder="e.g. CEM-LOT-2026-98"
+                formControlName="cement_batch_number"
+              ></app-custom-input>
+            </div>
+            <div class="flex items-center pt-5">
+              <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700 dark:text-slate-300">
+                <input type="checkbox" formControlName="bag_condition_ok" class="rounded text-amber-500 focus:ring-amber-500" />
+                <span>Bag seals dry & free of moisture lumps</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- STEEL REBAR Checklist -->
+      @if (selectedCategory() === 'STEEL_REBAR') {
+        <div class="space-y-3">
+          <div class="text-xs font-bold text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
+            <span>🔩</span>
+            <span>Steel Rebar Structural Inspection (BDS ISO 6935-2 / ASTM A615)</span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <app-custom-input
+                label="Tensile Yield Strength (MPa)"
+                type="number"
+                placeholder="e.g. 520 MPa (Grade 500W >= 500)"
+                formControlName="tensile_strength_mpa"
+              ></app-custom-input>
+            </div>
+            <div>
+              <app-custom-input
+                label="Mill Test Report (MTR) Number"
+                placeholder="e.g. BSRM-MTR-2026-9012"
+                formControlName="mtr_mill_test_report_number"
+                [required]="true"
+              ></app-custom-input>
+            </div>
+            <div class="flex items-center pt-5">
+              <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700 dark:text-slate-300">
+                <input type="checkbox" formControlName="mtr_verified" class="rounded text-amber-500 focus:ring-amber-500" />
+                <span>MTR Certificate Authenticated & Verified</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- BRICKS Checklist -->
+      @if (selectedCategory() === 'BRICKS') {
+        <div class="space-y-3">
+          <div class="text-xs font-bold text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
+            <span>🟥</span>
+            <span>Bricks & Blocks Dimensional & Strength Checks (BDS 208)</span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <app-custom-input
+                label="Compressive Strength (PSI)"
+                type="number"
+                placeholder="e.g. 2800 PSI (Min 2500 PSI)"
+                formControlName="brick_strength_psi"
+              ></app-custom-input>
+            </div>
+            <div class="flex items-center pt-5">
+              <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700 dark:text-slate-300">
+                <input type="checkbox" formControlName="dimensions_checked" class="rounded text-amber-500 focus:ring-amber-500" />
+                <span>Standard size (9.5" x 4.5" x 2.75" ± 1/8") verified</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- AGGREGATES & SAND Checklist -->
+      @if (selectedCategory() === 'AGGREGATES_SAND') {
+        <div class="space-y-3">
+          <div class="text-xs font-bold text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
+            <span>🏖️</span>
+            <span>Sand & Aggregates Silt Content & Sieve Analysis (ASTM C33)</span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <app-custom-input
+                label="Silt / Clay Content (%)"
+                type="number"
+                placeholder="e.g. 2.1% (Must be < 5.0%)"
+                formControlName="silt_content_pct"
+              ></app-custom-input>
+            </div>
+            <div>
+              <app-custom-input
+                label="Fineness Modulus (FM)"
+                type="number"
+                placeholder="e.g. 2.5 FM for concrete sand"
+                formControlName="fm_fineness_modulus"
+              ></app-custom-input>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- FINISHING & MEP Checklist -->
+      @if (selectedCategory() === 'FINISHING_MEP') {
+        <div class="space-y-3">
+          <div class="text-xs font-bold text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
+            <span>✨</span>
+            <span>Finishing Materials & MEP Architectural Spec Approval</span>
+          </div>
+          <div class="flex items-center pt-2">
+            <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700 dark:text-slate-300">
+              <input type="checkbox" formControlName="sample_approved" class="rounded text-amber-500 focus:ring-amber-500" />
+              <span>Sample board matches approved architectural mock-up, shade & texture</span>
+            </label>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Final Quality Acceptance Decision -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+          Final Quality Acceptance Decision <span class="text-rose-500">*</span>
+        </label>
+        <select
+          formControlName="test_result"
+          class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-amber-500 font-bold"
+        >
+          <option value="PASSED">PASSED (Authorize Store Stock Ledger Entry)</option>
+          <option value="FAILED">FAILED (Quarantine & Return to Supplier)</option>
+          <option value="CONDITIONAL_PASS">CONDITIONAL PASS (Minor Deviation / Exception)</option>
+        </select>
+      </div>
+
+      <div>
+        <app-custom-input
+          label="Inspection Date"
+          type="date"
+          formControlName="inspection_date"
+          [required]="true"
+        ></app-custom-input>
+      </div>
+    </div>
+
+    <!-- Non-Conformance Report (NCR) & Debit-Note Tracking (If Rejected or Conditional) -->
+    @if (qcForm.get('test_result')?.value === 'FAILED' || qcForm.get('test_result')?.value === 'CONDITIONAL_PASS') {
+      <div class="p-3 bg-rose-50/50 dark:bg-rose-950/25 border border-rose-200/60 dark:border-rose-800/40 rounded-xl space-y-3">
+        <div class="text-xs font-bold text-rose-800 dark:text-rose-300 flex items-center justify-between">
+          <span>Non-Conformance Report (NCR) & Supplier Debit-Note Tracking</span>
+          <span class="text-[10px] px-2 py-0.5 rounded bg-rose-100 dark:bg-rose-900/40 font-mono">QUARANTINE ACTIVE</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <app-custom-input
+              label="NCR Report Number"
+              placeholder="e.g. NCR-2026-0042"
+              formControlName="ncr_number"
+            ></app-custom-input>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              Corrective Action
+            </label>
+            <select
+              formControlName="ncr_action"
+              class="w-full px-3 py-2 text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-amber-500 font-medium"
+            >
+              <option value="RETURN_TO_SUPPLIER">Return Consignment to Supplier</option>
+              <option value="REPLACEMENT_REQUIRED">Supplier Replacement Delivery Required</option>
+              <option value="SUPPLIER_DEBIT_NOTE">Issue Supplier Debit-Note</option>
+              <option value="EMERGENCY_RELEASE_EXCEPTION">Documented Emergency Release</option>
+            </select>
+          </div>
+
+          <div>
+            <app-custom-input
+              label="Supplier Debit-Note Reference"
+              placeholder="e.g. DN-SUPP-9812"
+              formControlName="debit_note_tracking"
+            ></app-custom-input>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- QA Engineer Remarks -->
+    <div>
+      <app-custom-textarea
+        label="Quality Assurance Observations & Code Compliance Statement"
+        placeholder="Record laboratory results, sample collection details, micrometer measurements, BNBC/ASTM compliance..."
+        formControlName="qc_remarks"
+        [rows]="3"
+      ></app-custom-textarea>
+    </div>
+
+    <!-- Modal Actions Footer -->
+    <div class="flex items-center justify-end gap-2 pt-4 border-t border-slate-200 dark:border-slate-800">
+      <button
+        type="button"
+        (click)="closeModal()"
+        class="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors"
+      >
+        Cancel
+      </button>
+      <app-custom-button
+        [label]="isSaving() ? 'Certifying Quality...' : (isEditMode ? 'Update QC Record' : 'Authorize & Post Quality Decision')"
+        type="submit"
+        variant="primary"
+        [disabled]="qcForm.invalid || isSaving()"
+      ></app-custom-button>
+    </div>
+  </form>
+</app-modal>
+
+<!-- ========================================================================= -->
+<!-- Modal 2: Quality Inspection Certificate & NCR Audit Report (Print View)   -->
+<!-- ========================================================================= -->
+<app-modal
+  [isOpen]="isViewModalOpen"
+  title="Material Quality Inspection Certificate"
+  subtitle="Official engineering quality assurance certification and non-conformance audit document"
+  [maxWidth]="'max-w-2xl'"
+  (closeModal)="closeViewModal()"
+>
+  @if (selectedQC()) {
+    <div class="space-y-4 text-xs">
+      <!-- Header Banner -->
+      <div class="p-4 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-between">
+        <div>
+          <span class="text-[10px] uppercase tracking-wider text-slate-400 font-bold block">Inspection Certificate</span>
+          <span class="text-lg font-mono font-bold text-amber-600 dark:text-amber-400">{{ selectedQC()!.inspection_number }}</span>
+          <span class="block text-[11px] text-slate-500 font-sans mt-0.5">Date Tested: {{ selectedQC()!.inspection_date }}</span>
+        </div>
+        <div class="text-right">
+          <span class="text-[10px] uppercase tracking-wider text-slate-400 font-bold block">Final Decision</span>
+          <div class="mt-1">
+            @if (selectedQC()!.test_result === 'PASSED') {
+              <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">
+                PASSED - ACCEPTED IN STOCK
+              </span>
+            } @else if (selectedQC()!.test_result === 'FAILED') {
+              <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/30">
+                FAILED - QUARANTINED
+              </span>
+            } @else {
+              <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30">
+                CONDITIONAL ACCEPTANCE
+              </span>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Test Parameters Breakdown -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
+        <div>
+          <span class="text-slate-400 text-[10px] block">GRN Reference:</span>
+          <span class="font-mono font-bold text-slate-900 dark:text-slate-100">{{ selectedQC()!.grn_number || 'N/A' }}</span>
+        </div>
+        <div>
+          <span class="text-slate-400 text-[10px] block">Purchase Order:</span>
+          <span class="font-mono font-bold text-slate-900 dark:text-slate-100">{{ selectedQC()!.po_number || 'N/A' }}</span>
+        </div>
+        <div>
+          <span class="text-slate-400 text-[10px] block">Inspected Material:</span>
+          <span class="font-medium text-slate-900 dark:text-slate-100">{{ selectedQC()!.material_name || 'Materials' }}</span>
+        </div>
+        <div>
+          <span class="text-slate-400 text-[10px] block">Slump Test Result:</span>
+          <span class="font-mono font-bold text-slate-900 dark:text-slate-100">
+            {{ selectedQC()!.slump_test_mm ? (selectedQC()!.slump_test_mm + ' mm') : 'N/A' }}
+          </span>
+        </div>
+        <div>
+          <span class="text-slate-400 text-[10px] block">Tensile Strength (MPa):</span>
+          <span class="font-mono font-bold text-slate-900 dark:text-slate-100">
+            {{ selectedQC()!.tensile_strength_mpa ? (selectedQC()!.tensile_strength_mpa + ' MPa') : 'N/A' }}
+          </span>
+        </div>
+        <div>
+          <span class="text-slate-400 text-[10px] block">Mill Certificate (MTR):</span>
+          <span class="font-mono font-bold text-slate-900 dark:text-slate-100 truncate block">
+            {{ selectedQC()!.mtr_mill_test_report_number || 'N/A' }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Remarks -->
+      <div class="p-3 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-700 dark:text-slate-300">
+        <span class="font-bold text-slate-800 dark:text-slate-200 block mb-1">Quality Assurance & BNBC Compliance Observations:</span>
+        {{ selectedQC()!.qc_remarks || 'Material meets standard ASTM / BDS code requirements.' }}
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+        <button
+          type="button"
+          (click)="closeViewModal()"
+          class="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  }
+</app-modal>
+
+<!-- ========================================================================= -->
+<!-- Modal 3: Delete Confirmation Modal                                        -->
+<!-- ========================================================================= -->
+<app-modal
+  [isOpen]="isDeleteModalOpen"
+  title="Delete Quality Inspection Record"
+  subtitle="Permanent removal of material inspection test report"
+  [maxWidth]="'max-w-md'"
+  (closeModal)="closeDeleteModal()"
+>
+  @if (selectedQC()) {
+    <div class="space-y-4 text-xs">
+      <div class="p-3 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/40 rounded-xl text-rose-800 dark:text-rose-300">
+        Are you sure you want to delete Inspection record <span class="font-bold font-mono">{{ selectedQC()!.inspection_number }}</span>?
+        This record will be permanently deleted from the quality register.
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+        <button
+          type="button"
+          (click)="closeDeleteModal()"
+          class="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          (click)="executeDelete()"
+          class="px-4 py-2 text-xs font-bold rounded-xl bg-rose-600 hover:bg-rose-700 text-white transition-colors"
+        >
+          Confirm Delete
+        </button>
+      </div>
+    </div>
+  }
+</app-modal>

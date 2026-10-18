@@ -1,0 +1,756 @@
+<app-procurement-nav
+  title="9.9 Warehouse & Project-Site Stock"
+  subtitle="Multi-Warehouse & Project Stores, Storage Hierarchy (Bin/Rack/Zone), Stock Reservation & Physical Cycle Counting"
+>
+  <div actions class="flex items-center gap-2">
+    <button
+      type="button"
+      (click)="openAddStoreModal()"
+      class="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 shadow-xs transition-all hover:scale-[1.02]"
+    >
+      <span>🏬</span>
+      <span>Add Store / Warehouse</span>
+    </button>
+  </div>
+</app-procurement-nav>
+
+<!-- KPI Metrics Overview -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+  <div class="p-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xs">
+    <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Total Store Locations</div>
+    <div class="text-xl font-bold font-mono text-slate-800 dark:text-slate-100 mt-1">{{ totalStoresCount() }}</div>
+    <div class="text-[10px] text-slate-400 mt-0.5">Central & project site stores</div>
+  </div>
+
+  <div class="p-3.5 bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-800/40 rounded-xl shadow-xs">
+    <div class="text-[11px] font-medium text-emerald-700 dark:text-emerald-400">Total Stock Valuation</div>
+    <div class="text-xl font-bold font-mono text-emerald-800 dark:text-emerald-300 mt-1">
+      ৳ {{ totalValuationBDT() | number:'1.2-2' }}
+    </div>
+    <div class="text-[10px] text-emerald-600/80 dark:text-emerald-400/80 mt-0.5">Weighted average value</div>
+  </div>
+
+  <div class="p-3.5 bg-purple-50/60 dark:bg-purple-950/20 border border-purple-200/60 dark:border-purple-800/40 rounded-xl shadow-xs">
+    <div class="text-[11px] font-medium text-purple-700 dark:text-purple-400">Reserved for Work Orders</div>
+    <div class="text-xl font-bold font-mono text-purple-800 dark:text-purple-300 mt-1">{{ totalReservedQty() | number:'1.0-2' }}</div>
+    <div class="text-[10px] text-purple-600/80 dark:text-purple-400/80 mt-0.5">Committed to active WBS</div>
+  </div>
+
+  <div class="p-3.5 bg-rose-50/60 dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-800/40 rounded-xl shadow-xs">
+    <div class="text-[11px] font-medium text-rose-700 dark:text-rose-400">Low-Stock Reorder Alerts</div>
+    <div class="text-xl font-bold font-mono text-rose-800 dark:text-rose-300 mt-1">{{ lowStockItemsCount() }}</div>
+    <div class="text-[10px] text-rose-600/80 dark:text-rose-400/80 mt-0.5">Below reorder threshold</div>
+  </div>
+</div>
+
+<!-- Stores & Storage Hierarchy Cards -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+  @for (store of stores(); track store.id) {
+    <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs flex flex-col justify-between hover:border-amber-500/50 transition-all">
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <span [class]="store.is_central_warehouse ? 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30' : 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700'">
+            {{ store.is_central_warehouse ? '🏢 Central Holding Warehouse' : '🏗️ Project Site Store' }}
+          </span>
+          <div class="flex items-center gap-1">
+            <button
+              type="button"
+              (click)="openEditStoreModal(store)"
+              title="Edit Store Location"
+              class="p-1 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+              </svg>
+            </button>
+            <button
+              type="button"
+              (click)="confirmDeleteStore(store)"
+              title="Delete Store"
+              class="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100">
+          {{ store.store_name }}
+        </h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          Project: <span class="font-semibold text-slate-800 dark:text-slate-200">{{ store.project_name || 'Central Head Office' }}</span>
+        </p>
+
+        <div class="mt-2.5 p-2 bg-slate-50 dark:bg-slate-850 rounded-lg text-[10px] space-y-1 text-slate-600 dark:text-slate-400 font-mono">
+          <div class="flex items-center justify-between">
+            <span>Storage Hierarchy:</span>
+            <span class="font-bold text-amber-600">{{ store.zone_code || 'Zone-A' }} &bull; {{ store.rack_code || 'Rack-01' }} &bull; {{ store.bin_code || 'Bin-101' }}</span>
+          </div>
+          <div class="flex items-center justify-between font-sans">
+            <span>Store In-Charge:</span>
+            <span class="font-medium text-slate-800 dark:text-slate-200">{{ store.store_in_charge_name || 'Store Officer' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
+        <span class="text-slate-500">Stocked Lines:</span>
+        <span class="font-mono font-bold text-slate-800 dark:text-slate-200">
+          {{ store.stocks ? store.stocks.length : 0 }} Items
+        </span>
+      </div>
+    </div>
+  }
+</div>
+
+<!-- Main Card Container: Stock Balances, Reservations & Cycle Counts -->
+<app-card-container
+  title="Real-Time Storage Balances, Reservations & Cycle Counting"
+  subtitle="Formula: Available Stock = Accepted On-hand Stock - Reserved Stock. Quarantined and inspection-pending materials excluded from usable stock."
+>
+  <!-- Tabs Navigation -->
+  <div class="mb-4">
+    <app-custom-tabs
+      [tabs]="tabs"
+      [activeTabId]="activeTab"
+      (tabChange)="onTabChange($event)"
+    ></app-custom-tabs>
+  </div>
+
+  <!-- Search & Store Filter Controls -->
+  <div class="flex flex-col sm:flex-row items-center justify-between gap-3 mb-4">
+    <div class="flex items-center gap-2 w-full sm:w-96">
+      <div class="relative w-full">
+        <input
+          type="text"
+          [(ngModel)]="searchQuery"
+          (ngModelChange)="onSearch()"
+          placeholder="Search material name, item code, store, bin..."
+          class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-amber-500 transition-colors"
+        />
+        <svg class="absolute left-2.5 top-2 w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2 w-full sm:w-auto">
+      <select
+        [(ngModel)]="selectedStoreId"
+        (ngModelChange)="onSearch()"
+        class="px-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-1 focus:ring-amber-500 font-medium"
+      >
+        <option value="">All Warehouses & Site Stores</option>
+        @for (s of stores(); track s.id) {
+          <option [value]="s.id">{{ s.store_name }} ({{ s.is_central_warehouse ? 'Central' : 'Site' }})</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <!-- Paginated Inventory Stock Table -->
+  <div class="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-xl">
+    <table class="w-full text-left text-xs border-collapse">
+      <thead>
+        <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-850 text-slate-500 dark:text-slate-400 font-semibold">
+          <th class="py-2.5 px-3">Warehouse & Storage Address</th>
+          <th class="py-2.5 px-3">Material Item Code</th>
+          <th class="py-2.5 px-3 text-right">Accepted On-Hand</th>
+          <th class="py-2.5 px-3 text-right">Reserved (WO)</th>
+          <th class="py-2.5 px-3 text-right">Available Stock</th>
+          <th class="py-2.5 px-3 text-right">Weighted Rate</th>
+          <th class="py-2.5 px-3 text-right">Total Valuation</th>
+          <th class="py-2.5 px-3 text-center">Stock Status</th>
+          <th class="py-2.5 px-3 text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+        @for (stk of allStocks().slice(offset, offset + limit); track stk.id) {
+          <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-colors">
+            <!-- Store Location & Bin Address -->
+            <td class="py-2.5 px-3">
+              <div class="font-semibold text-slate-900 dark:text-slate-100">{{ stk.store_name }}</div>
+              <div class="text-[10px] text-amber-600 dark:text-amber-400 font-mono mt-0.5 flex items-center gap-1">
+                <span>📍</span>
+                <span>{{ stk.zone }} &bull; {{ stk.rack_number }} &bull; {{ stk.bin_location }}</span>
+              </div>
+            </td>
+
+            <!-- Material Item -->
+            <td class="py-2.5 px-3">
+              <div class="font-mono text-xs font-bold text-amber-600 dark:text-amber-400">{{ stk.material_code }}</div>
+              <div class="font-medium text-slate-900 dark:text-slate-100">{{ stk.material_name }}</div>
+              <div class="text-[10px] text-slate-400">Batch: {{ stk.batch_number || 'LOT-VERIFIED' }}</div>
+            </td>
+
+            <!-- Accepted On-Hand Stock -->
+            <td class="py-2.5 px-3 text-right font-mono font-bold text-slate-900 dark:text-slate-100">
+              {{ stk.current_stock_quantity | number:'1.0-2' }}
+              <span class="text-[10px] text-slate-400 font-sans block">{{ stk.unit_of_measure }}</span>
+            </td>
+
+            <!-- Reserved Stock -->
+            <td class="py-2.5 px-3 text-right font-mono">
+              <div [class]="(stk.reserved_quantity || 0) > 0 ? 'font-bold text-purple-600 dark:text-purple-400' : 'text-slate-400'">
+                {{ (stk.reserved_quantity || 0) | number:'1.0-2' }}
+              </div>
+              <span class="text-[9px] text-purple-500 font-sans block">Committed</span>
+            </td>
+
+            <!-- Available Stock (On-Hand - Reserved) -->
+            <td class="py-2.5 px-3 text-right font-mono">
+              <div class="font-bold text-emerald-600 dark:text-emerald-400 text-sm">
+                {{ (stk.available_quantity !== undefined ? stk.available_quantity : (stk.current_stock_quantity - (stk.reserved_quantity || 0))) | number:'1.0-2' }}
+              </div>
+              <span class="text-[9px] text-emerald-600/80 font-sans block">Usable balance</span>
+            </td>
+
+            <!-- Weighted Avg Rate -->
+            <td class="py-2.5 px-3 text-right font-mono text-slate-700 dark:text-slate-300">
+              ৳ {{ stk.weighted_avg_rate | number:'1.2-2' }}
+            </td>
+
+            <!-- Total Valuation -->
+            <td class="py-2.5 px-3 text-right font-mono font-bold text-emerald-600">
+              ৳ {{ stk.total_stock_value | number:'1.2-2' }}
+            </td>
+
+            <!-- Stock Status Badge -->
+            <td class="py-2.5 px-3 text-center">
+              @if (stk.is_low_stock) {
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/30">
+                  Low Stock Alert
+                </span>
+              } @else if ((stk.reserved_quantity || 0) > 0) {
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/15 text-purple-700 dark:text-purple-400 border border-purple-500/30">
+                  Reserved Active
+                </span>
+              } @else {
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">
+                  Optimal
+                </span>
+              }
+            </td>
+
+            <!-- Actions -->
+            <td class="py-2.5 px-3 text-right">
+              <div class="flex items-center justify-end gap-1.5">
+                <!-- Barcode / QR Custody Card -->
+                <button
+                  type="button"
+                  (click)="openQRModal(stk)"
+                  title="View Barcode / QR Stock Card & Custody"
+                  class="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-900 transition-colors"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
+                  </svg>
+                </button>
+
+                <!-- Reserve for Work Order -->
+                <button
+                  type="button"
+                  (click)="openReserveModal(stk)"
+                  title="Reserve Stock for Approved Work Order"
+                  class="px-2 py-1 rounded-lg bg-purple-500/15 hover:bg-purple-500/25 text-purple-700 dark:text-purple-400 font-semibold text-[10px] border border-purple-500/30 transition-colors"
+                >
+                  Reserve WO
+                </button>
+
+                <!-- Cycle Count Audit -->
+                <button
+                  type="button"
+                  (click)="openCycleModal(stk)"
+                  title="Perform Physical Cycle Count Audit"
+                  class="p-1 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-950/40 text-amber-600 dark:text-amber-400 transition-colors"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="9" class="py-12 text-center text-slate-400 text-xs">
+              <div class="text-3xl mb-2">🏬</div>
+              <div class="font-semibold text-slate-600 dark:text-slate-300">No Inventory Stock Balances Found</div>
+              <div class="text-[11px] text-slate-400 mt-1">Register a warehouse store or verify goods receipts at site gate.</div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination Footer -->
+  <div class="flex items-center justify-between pt-4 text-xs text-slate-500 dark:text-slate-400">
+    <div>
+      Showing <span class="font-bold text-slate-800 dark:text-slate-200">{{ allStocks().slice(offset, offset + limit).length }}</span> of <span class="font-bold">{{ totalRecords() }}</span> inventory balances
+    </div>
+    <div class="flex items-center gap-2">
+      <button
+        type="button"
+        (click)="previousPage()"
+        [disabled]="offset === 0"
+        class="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-800 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+      >
+        Previous
+      </button>
+      <span class="font-mono text-xs">Page {{ (offset / limit) + 1 }}</span>
+      <button
+        type="button"
+        (click)="nextPage()"
+        [disabled]="offset + limit >= totalRecords()"
+        class="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-800 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+      >
+        Next
+      </button>
+    </div>
+  </div>
+</app-card-container>
+
+<!-- ========================================================================= -->
+<!-- Modal 1: Register / Edit Warehouse Store (Dedicated Popup - NEVER under)  -->
+<!-- ========================================================================= -->
+<app-modal
+  [isOpen]="isStoreModalOpen"
+  [title]="editingStoreId ? 'Edit Warehouse Location' : 'Register New Warehouse / Site Store'"
+  subtitle="Define central warehouse, project site store, temporary store or floor sub-store location"
+  [maxWidth]="'max-w-2xl'"
+  (closeModal)="closeStoreModal()"
+>
+  <form [formGroup]="storeForm" (ngSubmit)="saveStore()" class="space-y-4">
+    <!-- Project Selection -->
+    <div class="space-y-1">
+      <app-searchable-select
+        label="Project Site Assignment"
+        placeholder="Select Project Site..."
+        [options]="projectOptions()"
+        [allowCreateNew]="false"
+        [required]="true"
+        formControlName="project_id"
+      ></app-searchable-select>
+    </div>
+
+    <!-- Store Name & Store Type -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <app-custom-input
+          label="Store / Warehouse Name"
+          placeholder="e.g. Navana Tower Central Site Store"
+          formControlName="store_name"
+          [required]="true"
+        ></app-custom-input>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+          Store Hierarchy Type <span class="text-rose-500">*</span>
+        </label>
+        <select
+          formControlName="store_type"
+          class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-amber-500 font-medium"
+        >
+          <option value="CENTRAL_WAREHOUSE">Central Holding Warehouse</option>
+          <option value="PROJECT_WAREHOUSE">Project Main Site Warehouse</option>
+          <option value="TEMP_SITE_STORE">Temporary Site Material Store</option>
+          <option value="FLOOR_LOCATION">Floor-Level Material Location</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Storage Hierarchy: Zone, Rack, Bin -->
+    <div class="p-3 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl space-y-2">
+      <div class="text-xs font-bold text-slate-700 dark:text-slate-300">Storage Location Hierarchy (Zone / Rack / Bin)</div>
+      <div class="grid grid-cols-3 gap-3">
+        <div>
+          <app-custom-input
+            label="Storage Zone"
+            placeholder="e.g. Zone-A"
+            formControlName="zone_code"
+          ></app-custom-input>
+        </div>
+        <div>
+          <app-custom-input
+            label="Rack / Shelf Code"
+            placeholder="e.g. Rack-04"
+            formControlName="rack_code"
+          ></app-custom-input>
+        </div>
+        <div>
+          <app-custom-input
+            label="Bin / Location Code"
+            placeholder="e.g. Bin-102"
+            formControlName="bin_code"
+          ></app-custom-input>
+        </div>
+      </div>
+    </div>
+
+    <!-- Storekeeper Custody & Contact -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <app-custom-input
+          label="Storekeeper In-Charge Name"
+          placeholder="e.g. Md. Rafiqul Islam"
+          formControlName="store_in_charge_name"
+          [required]="true"
+        ></app-custom-input>
+      </div>
+
+      <div>
+        <app-custom-input
+          label="Storekeeper Mobile Phone"
+          placeholder="e.g. 01711-223344"
+          formControlName="contact_phone"
+        ></app-custom-input>
+      </div>
+    </div>
+
+    <!-- Physical Location -->
+    <div>
+      <app-custom-input
+        label="Physical Location / Landmark Details"
+        placeholder="e.g. Plot 42, Basement-1 North Yard, Gulshan-2, Dhaka"
+        formControlName="location_details"
+        [required]="true"
+      ></app-custom-input>
+    </div>
+
+    <!-- Central Warehouse Flag -->
+    <div class="p-3 bg-amber-50/40 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-800/40 rounded-xl flex items-center gap-2">
+      <input
+        type="checkbox"
+        id="isCentralStore"
+        formControlName="is_central_warehouse"
+        class="w-4 h-4 text-amber-600 rounded border-slate-300 focus:ring-amber-500"
+      />
+      <label for="isCentralStore" class="text-xs font-semibold text-slate-800 dark:text-slate-200 cursor-pointer">
+        Designate as Central Holding Warehouse (Distributes to multiple developer project sites)
+      </label>
+    </div>
+
+    <!-- Modal Actions Footer -->
+    <div class="flex items-center justify-end gap-2 pt-4 border-t border-slate-200 dark:border-slate-800">
+      <button
+        type="button"
+        (click)="closeStoreModal()"
+        class="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors"
+      >
+        Cancel
+      </button>
+      <app-custom-button
+        [label]="isSaving() ? 'Saving Store...' : (editingStoreId ? 'Update Store' : 'Create Store Location')"
+        type="submit"
+        variant="primary"
+        [disabled]="storeForm.invalid || isSaving()"
+      ></app-custom-button>
+    </div>
+  </form>
+</app-modal>
+
+<!-- ========================================================================= -->
+<!-- Modal 2: Stock Reservation for Approved Work Orders                       -->
+<!-- ========================================================================= -->
+<app-modal
+  [isOpen]="isReserveModalOpen"
+  title="Reserve Stock for Approved Work Order"
+  subtitle="Formula: Available Stock = Accepted On-hand Stock - Reserved Stock"
+  [maxWidth]="'max-w-xl'"
+  (closeModal)="closeReserveModal()"
+>
+  @if (selectedStock()) {
+    <form [formGroup]="reserveForm" (ngSubmit)="saveReservation()" class="space-y-4 text-xs">
+      <!-- Item & Store Summary -->
+      <div class="p-3.5 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl space-y-2">
+        <div class="flex items-center justify-between">
+          <div>
+            <span class="font-bold text-slate-900 dark:text-slate-100 text-sm block">{{ selectedStock()!.material_name }}</span>
+            <span class="font-mono text-[10px] text-amber-600 font-semibold">{{ selectedStock()!.material_code }} &bull; {{ selectedStock()!.store_name }}</span>
+          </div>
+          <div class="text-right">
+            <span class="text-[10px] text-slate-400 block">Accepted On-Hand:</span>
+            <span class="font-mono font-bold text-slate-800 dark:text-slate-200 text-sm">
+              {{ selectedStock()!.current_stock_quantity | number:'1.0-2' }} {{ selectedStock()!.unit_of_measure }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <app-custom-input
+          label="Approved Work Order / WBS Reference"
+          placeholder="e.g. WO-2026-TOWER-A-SLAB"
+          formControlName="work_order_reference"
+          [required]="true"
+        ></app-custom-input>
+      </div>
+
+      <div>
+        <app-custom-textarea
+          label="Reservation Purpose / Activity Allocation"
+          placeholder="e.g. Reserved for casting 5th floor structural slab on Tuesday."
+          formControlName="reservation_purpose"
+          [rows]="2"
+          [required]="true"
+        ></app-custom-textarea>
+      </div>
+
+      <div>
+        <app-custom-input
+          label="Quantity to Reserve"
+          type="number"
+          placeholder="e.g. 50"
+          formControlName="reserved_quantity"
+          [required]="true"
+        ></app-custom-input>
+      </div>
+
+      <!-- Real-time Balance Calculation Display -->
+      <div class="p-3 bg-purple-50/50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800/40 rounded-xl flex items-center justify-between">
+        <div>
+          <span class="text-[10px] text-purple-700 dark:text-purple-300 font-bold block">Remaining Usable Available Stock:</span>
+          <span class="text-[10px] text-slate-500">After this work order reservation is committed</span>
+        </div>
+        <span class="font-mono font-bold text-base text-purple-800 dark:text-purple-200">
+          {{ reservationRemainingAvailable() | number:'1.0-2' }} {{ selectedStock()!.unit_of_measure }}
+        </span>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
+        <button
+          type="button"
+          (click)="closeReserveModal()"
+          class="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors"
+        >
+          Cancel
+        </button>
+        <app-custom-button
+          [label]="isReserveSaving() ? 'Reserving...' : 'Commit Work Order Reservation'"
+          type="submit"
+          variant="primary"
+          [disabled]="reserveForm.invalid || isReserveSaving()"
+        ></app-custom-button>
+      </div>
+    </form>
+  }
+</app-modal>
+
+<!-- ========================================================================= -->
+<!-- Modal 3: Physical Stock Count & Cycle Counting Audit                      -->
+<!-- ========================================================================= -->
+<app-modal
+  [isOpen]="isCycleModalOpen"
+  title="Physical Stock Count & Cycle Counting Audit"
+  subtitle="Verify physical counted quantity against book balance and reconcile discrepancies"
+  [maxWidth]="'max-w-xl'"
+  (closeModal)="closeCycleModal()"
+>
+  @if (selectedStock()) {
+    <form [formGroup]="cycleForm" (ngSubmit)="saveCycleCount()" class="space-y-4 text-xs">
+      <div class="p-3.5 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl space-y-2">
+        <div class="flex items-center justify-between">
+          <div>
+            <span class="font-bold text-slate-900 dark:text-slate-100 text-sm block">{{ selectedStock()!.material_name }}</span>
+            <span class="font-mono text-[10px] text-amber-600 font-semibold">{{ selectedStock()!.material_code }} &bull; {{ selectedStock()!.store_name }}</span>
+          </div>
+          <div class="text-right">
+            <span class="text-[10px] text-slate-400 block">System Book Balance:</span>
+            <span class="font-mono font-bold text-slate-800 dark:text-slate-200 text-sm">
+              {{ selectedStock()!.current_stock_quantity | number:'1.0-2' }} {{ selectedStock()!.unit_of_measure }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <app-custom-input
+            label="Physical Counted Quantity"
+            type="number"
+            placeholder="e.g. 95"
+            formControlName="physical_counted_quantity"
+            [required]="true"
+          ></app-custom-input>
+        </div>
+
+        <div>
+          <app-custom-input
+            label="Audit Date"
+            type="date"
+            formControlName="cycle_count_date"
+            [required]="true"
+          ></app-custom-input>
+        </div>
+      </div>
+
+      <!-- Variance Display -->
+      <div [class]="cycleVariance() === 0 ? 'p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl flex items-center justify-between' : (cycleVariance() > 0 ? 'p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-xl flex items-center justify-between' : 'p-3 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 rounded-xl flex items-center justify-between')">
+        <div>
+          <span class="text-[10px] font-bold block">Audit Discrepancy Variance:</span>
+          <span class="text-[10px] text-slate-500">Physical count minus Book stock balance</span>
+        </div>
+        <span class="font-mono font-bold text-base">
+          {{ cycleVariance() > 0 ? ('+' + cycleVariance()) : cycleVariance() }} {{ selectedStock()!.unit_of_measure }}
+        </span>
+      </div>
+
+      <div>
+        <app-custom-textarea
+          label="Discrepancy Justification / Count Notes"
+          placeholder="Explain reason for variance, physical damaged bags removed, or normal handling shrinkage..."
+          formControlName="discrepancy_reason"
+          [rows]="2"
+        ></app-custom-textarea>
+      </div>
+
+      <div>
+        <app-custom-input
+          label="Auditing Officer / Counter Name"
+          placeholder="e.g. Engr. Kamal Hossain"
+          formControlName="counter_officer_name"
+          [required]="true"
+        ></app-custom-input>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
+        <button
+          type="button"
+          (click)="closeCycleModal()"
+          class="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors"
+        >
+          Cancel
+        </button>
+        <app-custom-button
+          [label]="isCycleSaving() ? 'Adjusting Balance...' : 'Confirm & Post Cycle Count Adjustment'"
+          type="submit"
+          variant="primary"
+          [disabled]="cycleForm.invalid || isCycleSaving()"
+        ></app-custom-button>
+      </div>
+    </form>
+  }
+</app-modal>
+
+<!-- ========================================================================= -->
+<!-- Modal 4: Barcode / QR Stock Card & Custody Pass                           -->
+<!-- ========================================================================= -->
+<app-modal
+  [isOpen]="isQRModalOpen"
+  title="Barcode / QR Stock Card & Storage Custody"
+  subtitle="Mobile scan pass for storekeeper physical inventory tracking and custody"
+  [maxWidth]="'max-w-md'"
+  (closeModal)="closeQRModal()"
+>
+  @if (selectedStock()) {
+    <div class="space-y-4 text-xs text-center">
+      <!-- Simulated Visual QR Code -->
+      <div class="p-6 bg-white dark:bg-slate-900 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl flex flex-col items-center justify-center">
+        <div class="w-36 h-36 bg-slate-950 p-2 rounded-xl flex items-center justify-center shadow-md">
+          <div class="w-full h-full bg-white rounded-lg flex items-center justify-center p-2">
+            <!-- Stylized QR Grid representation -->
+            <div class="grid grid-cols-4 gap-1 w-full h-full">
+              <div class="bg-slate-950 rounded-xs"></div>
+              <div class="bg-slate-950 rounded-xs"></div>
+              <div class="bg-white rounded-xs"></div>
+              <div class="bg-slate-950 rounded-xs"></div>
+              <div class="bg-slate-950 rounded-xs"></div>
+              <div class="bg-white rounded-xs"></div>
+              <div class="bg-slate-950 rounded-xs"></div>
+              <div class="bg-slate-950 rounded-xs"></div>
+              <div class="bg-white rounded-xs"></div>
+              <div class="bg-slate-950 rounded-xs"></div>
+              <div class="bg-white rounded-xs"></div>
+              <div class="bg-slate-950 rounded-xs"></div>
+              <div class="bg-slate-950 rounded-xs"></div>
+              <div class="bg-white rounded-xs"></div>
+              <div class="bg-slate-950 rounded-xs"></div>
+              <div class="bg-slate-950 rounded-xs"></div>
+            </div>
+          </div>
+        </div>
+        <span class="font-mono text-[11px] font-bold text-amber-600 dark:text-amber-400 mt-3">
+          {{ selectedStock()!.material_code }} &bull; {{ selectedStock()!.store_id }}
+        </span>
+        <span class="text-[10px] text-slate-400 font-mono">
+          BIN: {{ selectedStock()!.zone }}-{{ selectedStock()!.rack_number }}-{{ selectedStock()!.bin_location }}
+        </span>
+      </div>
+
+      <!-- Item Matrix -->
+      <div class="p-3 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl text-left space-y-1.5">
+        <div class="flex justify-between">
+          <span class="text-slate-400">Material Item:</span>
+          <span class="font-bold text-slate-900 dark:text-slate-100">{{ selectedStock()!.material_name }}</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-slate-400">Storekeeper In-Charge:</span>
+          <span class="font-medium text-slate-800 dark:text-slate-200">Md. Rafiqul Islam</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-slate-400">Accepted On-Hand:</span>
+          <span class="font-mono font-bold text-slate-900 dark:text-slate-100">{{ selectedStock()!.current_stock_quantity | number:'1.0-2' }} {{ selectedStock()!.unit_of_measure }}</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-slate-400">Reserved for Work Orders:</span>
+          <span class="font-mono font-bold text-purple-600">{{ (selectedStock()!.reserved_quantity || 0) | number:'1.0-2' }}</span>
+        </div>
+        <div class="flex justify-between border-t border-slate-200 dark:border-slate-800 pt-1">
+          <span class="font-bold text-emerald-700 dark:text-emerald-400">Usable Available Stock:</span>
+          <span class="font-mono font-bold text-emerald-600">{{ (selectedStock()!.available_quantity !== undefined ? selectedStock()!.available_quantity : selectedStock()!.current_stock_quantity) | number:'1.0-2' }}</span>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+        <button
+          type="button"
+          (click)="closeQRModal()"
+          class="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  }
+</app-modal>
+
+<!-- ========================================================================= -->
+<!-- Modal 5: Delete Store Confirmation Modal                                  -->
+<!-- ========================================================================= -->
+<app-modal
+  [isOpen]="isDeleteStoreModalOpen"
+  title="Delete Store Location"
+  subtitle="Removal of empty warehouse or site store record"
+  [maxWidth]="'max-w-md'"
+  (closeModal)="closeDeleteStoreModal()"
+>
+  @if (selectedStore()) {
+    <div class="space-y-4 text-xs">
+      <div class="p-3 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/40 rounded-xl text-rose-800 dark:text-rose-300">
+        Are you sure you want to delete store <span class="font-bold">{{ selectedStore()!.store_name }}</span>?
+        Only empty stores without material balances can be deleted.
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+        <button
+          type="button"
+          (click)="closeDeleteStoreModal()"
+          class="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          (click)="executeDeleteStore()"
+          class="px-4 py-2 text-xs font-bold rounded-xl bg-rose-600 hover:bg-rose-700 text-white transition-colors"
+        >
+          Confirm Delete
+        </button>
+      </div>
+    </div>
+  }
+</app-modal>

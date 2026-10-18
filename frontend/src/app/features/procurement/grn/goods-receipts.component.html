@@ -1,0 +1,795 @@
+<app-procurement-nav
+  title="9.7 Goods Receipt Note (GRN)"
+  subtitle="Site Gate In Register, Physical Consignment Verification, Accepted vs Rejected Stock Separation & PO Status Tracking"
+>
+  <div actions class="flex items-center gap-2">
+    <button
+      type="button"
+      (click)="openAddGRNModal()"
+      class="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 shadow-xs transition-all hover:scale-[1.02]"
+    >
+      <span>🚚</span>
+      <span>New Site Gate In (GRN)</span>
+    </button>
+  </div>
+</app-procurement-nav>
+
+<!-- KPI Metrics Overview -->
+<div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
+  <div class="p-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xs">
+    <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Total Consignments</div>
+    <div class="text-xl font-bold font-mono text-slate-800 dark:text-slate-100 mt-1">{{ totalReceiptsCount() }}</div>
+    <div class="text-[10px] text-slate-400 mt-0.5">Physical gate entries</div>
+  </div>
+
+  <div class="p-3.5 bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-800/40 rounded-xl shadow-xs">
+    <div class="text-[11px] font-medium text-amber-700 dark:text-amber-400">Pending QC Inspection</div>
+    <div class="text-xl font-bold font-mono text-amber-800 dark:text-amber-300 mt-1">{{ pendingQCCount() }}</div>
+    <div class="text-[10px] text-amber-600/80 dark:text-amber-400/80 mt-0.5">Quarantined at site</div>
+  </div>
+
+  <div class="p-3.5 bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-800/40 rounded-xl shadow-xs">
+    <div class="text-[11px] font-medium text-emerald-700 dark:text-emerald-400">QC Passed & In-Store</div>
+    <div class="text-xl font-bold font-mono text-emerald-800 dark:text-emerald-300 mt-1">{{ passedQCCount() }}</div>
+    <div class="text-[10px] text-emerald-600/80 dark:text-emerald-400/80 mt-0.5">Usable stock credited</div>
+  </div>
+
+  <div class="p-3.5 bg-rose-50/60 dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-800/40 rounded-xl shadow-xs">
+    <div class="text-[11px] font-medium text-rose-700 dark:text-rose-400">Rejected / Quarantine</div>
+    <div class="text-xl font-bold font-mono text-rose-800 dark:text-rose-300 mt-1">{{ rejectedCount() }}</div>
+    <div class="text-[10px] text-rose-600/80 dark:text-rose-400/80 mt-0.5">Excluded from stock</div>
+  </div>
+
+  <div class="p-3.5 bg-purple-50/60 dark:bg-purple-950/20 border border-purple-200/60 dark:border-purple-800/40 rounded-xl shadow-xs col-span-2 md:col-span-1">
+    <div class="text-[11px] font-medium text-purple-700 dark:text-purple-400">Commercial Variances</div>
+    <div class="text-xl font-bold font-mono text-purple-800 dark:text-purple-300 mt-1">{{ varianceCount() }}</div>
+    <div class="text-[10px] text-purple-600/80 dark:text-purple-400/80 mt-0.5">3-Way match audit</div>
+  </div>
+</div>
+
+<!-- Main Card Container: GRN Register -->
+<app-card-container
+  title="Goods Receipt Notes & Site Gate Register"
+  subtitle="Authoritative log of physical supplier receipts. Strict isolation of rejected materials from usable stock."
+>
+  <!-- Tabs Navigation -->
+  <div class="mb-4">
+    <app-custom-tabs
+      [tabs]="tabs"
+      [activeTabId]="activeTab"
+      (tabChange)="onTabChange($event)"
+    ></app-custom-tabs>
+  </div>
+
+  <!-- Search & Filter Controls -->
+  <div class="flex flex-col sm:flex-row items-center justify-between gap-3 mb-4">
+    <div class="flex items-center gap-2 w-full sm:w-96">
+      <div class="relative w-full">
+        <input
+          type="text"
+          [(ngModel)]="searchQuery"
+          (ngModelChange)="onSearch()"
+          placeholder="Search GRN, challan, truck number, PO, vendor..."
+          class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-amber-500 transition-colors"
+        />
+        <svg class="absolute left-2.5 top-2 w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2 w-full sm:w-auto">
+      <select
+        [(ngModel)]="selectedStatus"
+        (ngModelChange)="onSearch()"
+        class="px-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-1 focus:ring-amber-500"
+      >
+        <option value="">All QC Decisions</option>
+        <option value="PENDING">Pending Inspection</option>
+        <option value="PASSED">QC Passed (In Stock)</option>
+        <option value="FAILED">QC Rejected (Quarantined)</option>
+        <option value="CONDITIONAL">Conditional Acceptance</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Paginated GRN Table -->
+  <div class="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-xl">
+    <table class="w-full text-left text-xs border-collapse">
+      <thead>
+        <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-850 text-slate-500 dark:text-slate-400 font-semibold">
+          <th class="py-2.5 px-3">GRN & Date</th>
+          <th class="py-2.5 px-3">PO Reference & Item</th>
+          <th class="py-2.5 px-3">Challan & Carrier Vehicle</th>
+          <th class="py-2.5 px-3 text-right">Physical Delivered</th>
+          <th class="py-2.5 px-3 text-right">Accepted Stock</th>
+          <th class="py-2.5 px-3 text-right">Rejected</th>
+          <th class="py-2.5 px-3 text-center">QC Status</th>
+          <th class="py-2.5 px-3 text-center">3-Way Match</th>
+          <th class="py-2.5 px-3 text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+        @for (grn of goodsReceipts(); track grn.id) {
+          <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-colors">
+            <!-- GRN Number -->
+            <td class="py-2.5 px-3 font-mono">
+              <span class="font-bold text-amber-600 dark:text-amber-400 hover:underline cursor-pointer" (click)="viewGRNDetails(grn)">
+                {{ grn.grn_number }}
+              </span>
+              <span class="block text-[10px] text-slate-400 font-sans">{{ grn.receipt_date }}</span>
+              <span class="text-[9px] px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 font-sans">
+                {{ grn.gate_entry_number || 'GATE-PASS' }}
+              </span>
+            </td>
+
+            <!-- PO Reference & Item -->
+            <td class="py-2.5 px-3">
+              <div class="font-mono text-xs font-semibold text-slate-900 dark:text-slate-100">
+                {{ grn.po_number || 'Direct PO' }}
+              </div>
+              <div class="text-[11px] font-medium text-slate-800 dark:text-slate-200">
+                {{ grn.material_name || 'Materials Consignment' }}
+              </div>
+              <div class="text-[10px] text-slate-400 truncate max-w-xs">
+                {{ grn.vendor_name || 'Supplier' }} &bull; {{ grn.project_name || 'Site' }}
+              </div>
+            </td>
+
+            <!-- Challan & Vehicle -->
+            <td class="py-2.5 px-3">
+              <div class="font-medium text-slate-800 dark:text-slate-200">
+                Challan: <span class="font-mono font-semibold">{{ grn.delivery_challan_number }}</span>
+              </div>
+              <div class="text-[10px] text-slate-500 font-mono flex items-center gap-1 mt-0.5">
+                <span>🚛</span>
+                <span>{{ grn.vehicle_number || 'N/A' }}</span>
+              </div>
+              @if (grn.driver_name) {
+                <div class="text-[10px] text-slate-400">Driver: {{ grn.driver_name }} ({{ grn.driver_phone || 'No phone' }})</div>
+              }
+            </td>
+
+            <!-- Physical Delivered Qty -->
+            <td class="py-2.5 px-3 text-right font-mono">
+              <div class="font-bold text-slate-900 dark:text-slate-100">
+                {{ grn.received_quantity | number:'1.0-2' }}
+              </div>
+              <div class="text-[10px] text-slate-400 font-sans">
+                {{ grn.unit_of_measure || 'Units' }}
+              </div>
+            </td>
+
+            <!-- Accepted Stock Qty -->
+            <td class="py-2.5 px-3 text-right font-mono">
+              <div class="font-bold text-emerald-600 dark:text-emerald-400">
+                {{ grn.accepted_quantity | number:'1.0-2' }}
+              </div>
+              <div class="text-[9px] text-emerald-600/70 font-sans">
+                {{ grn.qc_status === 'PASSED' ? 'In usable stock' : 'Quarantine hold' }}
+              </div>
+            </td>
+
+            <!-- Rejected Qty -->
+            <td class="py-2.5 px-3 text-right font-mono">
+              <div [class]="grn.rejected_quantity > 0 ? 'font-bold text-rose-600 dark:text-rose-400' : 'text-slate-400'">
+                {{ grn.rejected_quantity | number:'1.0-2' }}
+              </div>
+              @if (grn.rejected_quantity > 0) {
+                <span class="inline-block text-[9px] px-1 py-0.2 bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 rounded">
+                  Non-usable
+                </span>
+              }
+            </td>
+
+            <!-- QC Status Badge -->
+            <td class="py-2.5 px-3 text-center">
+              @if (grn.qc_status === 'PASSED') {
+                <app-status-badge status="PASSED" labelEn="QC Passed" variant="success"></app-status-badge>
+              } @else if (grn.qc_status === 'FAILED') {
+                <app-status-badge status="FAILED" labelEn="QC Rejected" variant="danger"></app-status-badge>
+              } @else if (grn.qc_status === 'CONDITIONAL') {
+                <app-status-badge status="CONDITIONAL" labelEn="Conditional" variant="amber"></app-status-badge>
+              } @else {
+                <app-status-badge status="PENDING" labelEn="Pending QC" variant="warning" [pulse]="true"></app-status-badge>
+              }
+            </td>
+
+            <!-- 3-Way Match Badge -->
+            <td class="py-2.5 px-3 text-center">
+              @if (grn.three_way_match_status === 'MATCHED_OK') {
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                  <span>✓</span> Matched
+                </span>
+              } @else if (grn.three_way_match_status === 'VARIANCE_FLAGGED') {
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/10 text-purple-600 border border-purple-500/20">
+                  <span>⚠</span> Variance
+                </span>
+              } @else if (grn.three_way_match_status === 'ACCOUNTS_APPROVED') {
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-600 border border-blue-500/20">
+                  <span>★</span> Accounts Post
+                </span>
+              } @else {
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-500">
+                  Pending Match
+                </span>
+              }
+            </td>
+
+            <!-- Actions -->
+            <td class="py-2.5 px-3 text-right">
+              <div class="flex items-center justify-end gap-1.5">
+                <!-- View Pass -->
+                <button
+                  type="button"
+                  (click)="viewGRNDetails(grn)"
+                  title="View Delivery Gate Pass"
+                  class="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 transition-colors"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                  </svg>
+                </button>
+
+                <!-- Submit to QC -->
+                @if (grn.qc_status === 'PENDING') {
+                  <button
+                    type="button"
+                    (click)="navigateToQC(grn.id)"
+                    title="Submit to Engineering QC Inspection"
+                    class="px-2 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-700 dark:text-amber-400 font-semibold text-[10px] border border-amber-500/30 transition-colors"
+                  >
+                    Inspect QC
+                  </button>
+                }
+
+                <!-- 3-Way Match -->
+                <button
+                  type="button"
+                  (click)="open3WayMatchModal(grn)"
+                  title="Perform 3-Way Commercial Invoice Match"
+                  class="p-1 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-950/40 text-purple-600 dark:text-purple-400 transition-colors"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                  </svg>
+                </button>
+
+                <!-- Edit GRN -->
+                @if (grn.status !== 'POSTED_ACCOUNTS') {
+                  <button
+                    type="button"
+                    (click)="openEditGRNModal(grn)"
+                    title="Edit GRN Details"
+                    class="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-amber-600 transition-colors"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                  </button>
+                }
+
+                <!-- Delete GRN -->
+                @if (grn.qc_status !== 'PASSED' && grn.status !== 'POSTED_ACCOUNTS') {
+                  <button
+                    type="button"
+                    (click)="confirmDeleteGRN(grn)"
+                    title="Delete Draft GRN"
+                    class="p-1 rounded-lg hover:bg-rose-100 dark:hover:bg-rose-950/40 text-rose-500 hover:text-rose-700 transition-colors"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                  </button>
+                }
+              </div>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="9" class="py-12 text-center text-slate-400 text-xs">
+              <div class="text-3xl mb-2">🚚</div>
+              <div class="font-semibold text-slate-600 dark:text-slate-300">No Goods Receipt Notes Found</div>
+              <div class="text-[11px] text-slate-400 mt-1">Receive materials at site gate by clicking "+ New Site Gate In (GRN)" above.</div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination Footer -->
+  <div class="flex items-center justify-between pt-4 text-xs text-slate-500 dark:text-slate-400">
+    <div>
+      Showing <span class="font-bold text-slate-800 dark:text-slate-200">{{ goodsReceipts().length }}</span> goods receipts
+    </div>
+    <div class="flex items-center gap-2">
+      <button
+        type="button"
+        (click)="previousPage()"
+        [disabled]="offset === 0"
+        class="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-800 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+      >
+        Previous
+      </button>
+      <span class="font-mono text-xs">Page {{ (offset / limit) + 1 }}</span>
+      <button
+        type="button"
+        (click)="nextPage()"
+        [disabled]="goodsReceipts().length < limit"
+        class="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-800 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+      >
+        Next
+      </button>
+    </div>
+  </div>
+</app-card-container>
+
+<!-- ========================================================================= -->
+<!-- Modal 1: Site Gate Entry & GRN Form (Dedicated Popup - NEVER under table) -->
+<!-- ========================================================================= -->
+<app-modal
+  [isOpen]="isModalOpen"
+  [title]="isEditMode ? 'Edit Goods Receipt Note' : 'Site Gate Entry & Goods Receipt Note (GRN)'"
+  subtitle="Record physical consignment count, carrier vehicle, delivery challan & batch tracking"
+  [maxWidth]="'max-w-3xl'"
+  (closeModal)="closeModal()"
+>
+  <form [formGroup]="grnForm" (ngSubmit)="saveGRN()" class="space-y-4">
+    <!-- PO Selection -->
+    <div class="p-3 bg-slate-50 dark:bg-slate-850/80 border border-slate-200 dark:border-slate-800 rounded-xl space-y-2">
+      <app-searchable-select
+        label="Select Authorized Purchase Order (PO)"
+        placeholder="Search PO by number, vendor or item..."
+        [options]="poOptions()"
+        [allowCreateNew]="false"
+        [required]="true"
+        [disabled]="isEditMode"
+        (selectionChange)="onPOSelected($event)"
+      ></app-searchable-select>
+
+      @if (selectedPO()) {
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-slate-200 dark:border-slate-800 text-[11px]">
+          <div>
+            <span class="text-slate-400 block">Ordered Qty:</span>
+            <span class="font-bold font-mono text-slate-800 dark:text-slate-200">
+              {{ selectedPO()!.ordered_quantity | number:'1.0-2' }} {{ selectedPO()!.unit_of_measure }}
+            </span>
+          </div>
+          <div>
+            <span class="text-slate-400 block">Unit PO Rate:</span>
+            <span class="font-bold font-mono text-slate-800 dark:text-slate-200">
+              ৳ {{ selectedPO()!.unit_price | number:'1.2-2' }}
+            </span>
+          </div>
+          <div>
+            <span class="text-slate-400 block">Project Site:</span>
+            <span class="font-medium text-slate-800 dark:text-slate-200 truncate block">
+              {{ selectedPO()!.project_name || 'Assigned Project' }}
+            </span>
+          </div>
+          <div>
+            <span class="text-slate-400 block">Destination Store:</span>
+            <span class="font-medium text-slate-800 dark:text-slate-200 truncate block">
+              {{ selectedPO()!.store_name || 'Central Site Store' }}
+            </span>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Challan, Date & Location -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div>
+        <app-custom-input
+          label="Delivery Challan Number"
+          placeholder="e.g. CH-2026-9812"
+          formControlName="delivery_challan_number"
+          [required]="true"
+        ></app-custom-input>
+      </div>
+
+      <div>
+        <app-custom-input
+          label="Receipt Date"
+          type="date"
+          formControlName="receipt_date"
+          [required]="true"
+        ></app-custom-input>
+      </div>
+
+      <div>
+        <app-searchable-select
+          categoryCode="WAREHOUSE_LOCATIONS"
+          label="Receiving Store / Location"
+          placeholder="Select warehouse site..."
+          [allowCreateNew]="true"
+          formControlName="receiving_location"
+        ></app-searchable-select>
+      </div>
+    </div>
+
+    <!-- Carrier & Driver Info -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div>
+        <app-custom-input
+          label="Vehicle / Truck Registration"
+          placeholder="e.g. Dhaka Metro TA 11-2098"
+          formControlName="vehicle_number"
+          [required]="true"
+        ></app-custom-input>
+      </div>
+
+      <div>
+        <app-custom-input
+          label="Driver Full Name"
+          placeholder="e.g. Md. Mokbul Hossain"
+          formControlName="driver_name"
+        ></app-custom-input>
+      </div>
+
+      <div>
+        <app-custom-input
+          label="Driver Contact Mobile"
+          placeholder="e.g. 01712-345678"
+          formControlName="driver_phone"
+        ></app-custom-input>
+      </div>
+    </div>
+
+    <!-- Physical Count, Rejection & Batch -->
+    <div class="p-3 bg-amber-50/40 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-800/40 rounded-xl space-y-3">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <!-- Physical Delivered Qty -->
+        <div>
+          <app-custom-input
+            label="Physically Delivered Qty (Challan)"
+            type="number"
+            placeholder="e.g. 980"
+            formControlName="received_quantity"
+            (valueChange)="onDeliveredInput($event)"
+            [required]="true"
+          ></app-custom-input>
+        </div>
+
+        <!-- Rejected Qty -->
+        <div>
+          <app-custom-input
+            label="Rejected / Damaged Qty"
+            type="number"
+            placeholder="e.g. 10"
+            formControlName="rejected_quantity"
+            (valueChange)="onRejectedInput($event)"
+            [required]="true"
+          ></app-custom-input>
+        </div>
+
+        <!-- Batch / Lot Reference -->
+        <div>
+          <app-custom-input
+            label="Batch / Heat / Lot Number"
+            placeholder="e.g. LOT-CEM-2026-B1"
+            formControlName="batch_number"
+          ></app-custom-input>
+        </div>
+      </div>
+
+      <!-- Real-time Quantity Breakdown Matrix (Per ERP Prompt Specification) -->
+      <div class="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
+        <div class="text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-2 flex items-center justify-between">
+          <span>Consignment Reconciliation & Stock Isolation</span>
+          <span class="text-[10px] text-amber-600 font-normal">BNBC Standard Physical Gate Check</span>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
+          <div class="p-2 bg-slate-50 dark:bg-slate-850 rounded-lg">
+            <span class="text-[10px] text-slate-500 block">Delivered at Gate</span>
+            <span class="font-mono font-bold text-slate-800 dark:text-slate-200 text-sm">
+              {{ deliveredQty() | number:'1.0-2' }}
+            </span>
+          </div>
+
+          <div class="p-2 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/50 rounded-lg">
+            <span class="text-[10px] text-emerald-600 block">Accepted for Stock</span>
+            <span class="font-mono font-bold text-emerald-700 dark:text-emerald-300 text-sm">
+              {{ acceptedQty() | number:'1.0-2' }}
+            </span>
+          </div>
+
+          <div class="p-2 bg-rose-50 dark:bg-rose-950/40 border border-rose-200/50 rounded-lg">
+            <span class="text-[10px] text-rose-600 block">Rejected / Quarantined</span>
+            <span class="font-mono font-bold text-rose-700 dark:text-rose-300 text-sm">
+              {{ rejectedQty() | number:'1.0-2' }}
+            </span>
+          </div>
+
+          <div class="p-2 bg-amber-50 dark:bg-amber-950/40 border border-amber-200/50 rounded-lg">
+            <span class="text-[10px] text-amber-600 block">Outstanding on Order</span>
+            <span class="font-mono font-bold text-amber-700 dark:text-amber-300 text-sm">
+              {{ poOutstandingQty() | number:'1.0-2' }}
+            </span>
+          </div>
+        </div>
+
+        <div class="mt-2 text-[10px] text-slate-500 flex items-center gap-1.5">
+          <span class="text-rose-500">🔒</span>
+          <span><strong>Strict Stock Policy:</strong> Rejected goods ({{ rejectedQty() }}) will NOT be added to usable inventory. Accepted materials will remain quarantined until Quality Control (QC) authorizes acceptance.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Remarks / Condition Notes -->
+    <div>
+      <app-custom-textarea
+        label="Gate Count Remarks & Package Condition Notes"
+        placeholder="Confirm seal intact, packaging dry, test certificates verified on delivery vehicle..."
+        formControlName="inspection_remarks"
+        [rows]="2"
+      ></app-custom-textarea>
+    </div>
+
+    <!-- Modal Actions Footer -->
+    <div class="flex items-center justify-end gap-2 pt-4 border-t border-slate-200 dark:border-slate-800">
+      <button
+        type="button"
+        (click)="closeModal()"
+        class="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors"
+      >
+        Cancel
+      </button>
+      <app-custom-button
+        [label]="isSaving() ? 'Saving Gate Entry...' : (isEditMode ? 'Update Goods Receipt' : 'Authorize & Post Gate Entry (GRN)')"
+        type="submit"
+        variant="primary"
+        [disabled]="grnForm.invalid || isSaving()"
+      ></app-custom-button>
+    </div>
+  </form>
+</app-modal>
+
+<!-- ========================================================================= -->
+<!-- Modal 2: Delivery Gate Pass & Inspection Overview (Printable View)        -->
+<!-- ========================================================================= -->
+<app-modal
+  [isOpen]="isViewModalOpen"
+  title="Goods Receipt Note & Delivery Gate Pass"
+  subtitle="Official documentation of physical material delivery and store receipt"
+  [maxWidth]="'max-w-2xl'"
+  (closeModal)="closeViewModal()"
+>
+  @if (selectedGRN()) {
+    <div class="space-y-4 text-xs">
+      <!-- Header Banner -->
+      <div class="p-4 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-between">
+        <div>
+          <span class="text-[10px] uppercase tracking-wider text-slate-400 font-bold block">Document No</span>
+          <span class="text-lg font-mono font-bold text-amber-600 dark:text-amber-400">{{ selectedGRN()!.grn_number }}</span>
+          <span class="block text-[11px] text-slate-500 font-sans mt-0.5">Gate In: {{ selectedGRN()!.receipt_date }}</span>
+        </div>
+        <div class="text-right">
+          <span class="text-[10px] uppercase tracking-wider text-slate-400 font-bold block">QC Status</span>
+          <div class="mt-1">
+            @if (selectedGRN()!.qc_status === 'PASSED') {
+              <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">
+                QC PASSED & POSTED
+              </span>
+            } @else if (selectedGRN()!.qc_status === 'FAILED') {
+              <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/30">
+                QC REJECTED
+              </span>
+            } @else {
+              <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30">
+                PENDING QC INSPECTION
+              </span>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Details Matrix -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
+        <div>
+          <span class="text-slate-400 text-[10px] block">Purchase Order:</span>
+          <span class="font-mono font-bold text-slate-900 dark:text-slate-100">{{ selectedGRN()!.po_number || 'N/A' }}</span>
+        </div>
+        <div>
+          <span class="text-slate-400 text-[10px] block">Delivery Challan:</span>
+          <span class="font-mono font-bold text-slate-900 dark:text-slate-100">{{ selectedGRN()!.delivery_challan_number }}</span>
+        </div>
+        <div>
+          <span class="text-slate-400 text-[10px] block">Vehicle Registration:</span>
+          <span class="font-mono font-bold text-slate-900 dark:text-slate-100">{{ selectedGRN()!.vehicle_number || 'N/A' }}</span>
+        </div>
+        <div>
+          <span class="text-slate-400 text-[10px] block">Material Item:</span>
+          <span class="font-medium text-slate-900 dark:text-slate-100">{{ selectedGRN()!.material_name || 'Materials' }}</span>
+        </div>
+        <div>
+          <span class="text-slate-400 text-[10px] block">Supplier / Vendor:</span>
+          <span class="font-medium text-slate-900 dark:text-slate-100">{{ selectedGRN()!.vendor_name || 'Vendor' }}</span>
+        </div>
+        <div>
+          <span class="text-slate-400 text-[10px] block">Store Receiver:</span>
+          <span class="font-medium text-slate-900 dark:text-slate-100">{{ selectedGRN()!.received_by_name || 'Store Officer' }}</span>
+        </div>
+      </div>
+
+      <!-- Quantities Reconciliation Bar -->
+      <div class="p-3 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl space-y-2">
+        <div class="text-xs font-bold text-slate-800 dark:text-slate-200">Consignment Quantities Breakdown</div>
+        <div class="grid grid-cols-3 gap-2 text-center">
+          <div class="p-2 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">
+            <span class="text-[10px] text-slate-400 block">Delivered</span>
+            <span class="font-mono font-bold text-sm text-slate-800 dark:text-slate-200">
+              {{ selectedGRN()!.received_quantity | number:'1.0-2' }}
+            </span>
+          </div>
+          <div class="p-2 bg-emerald-50 dark:bg-emerald-950/40 rounded-lg border border-emerald-200/50">
+            <span class="text-[10px] text-emerald-600 block">Accepted</span>
+            <span class="font-mono font-bold text-sm text-emerald-700 dark:text-emerald-300">
+              {{ selectedGRN()!.accepted_quantity | number:'1.0-2' }}
+            </span>
+          </div>
+          <div class="p-2 bg-rose-50 dark:bg-rose-950/40 rounded-lg border border-rose-200/50">
+            <span class="text-[10px] text-rose-600 block">Rejected</span>
+            <span class="font-mono font-bold text-sm text-rose-700 dark:text-rose-300">
+              {{ selectedGRN()!.rejected_quantity | number:'1.0-2' }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Remarks -->
+      @if (selectedGRN()!.inspection_remarks) {
+        <div class="p-3 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-600 dark:text-slate-400">
+          <span class="font-bold text-slate-800 dark:text-slate-200 block mb-1">Store & Gate Inspection Remarks:</span>
+          {{ selectedGRN()!.inspection_remarks }}
+        </div>
+      }
+
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+        <button
+          type="button"
+          (click)="closeViewModal()"
+          class="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  }
+</app-modal>
+
+<!-- ========================================================================= -->
+<!-- Modal 3: Accounts 3-Way Commercial Match                                  -->
+<!-- ========================================================================= -->
+<app-modal
+  [isOpen]="is3WayModalOpen"
+  title="3-Way Commercial Invoice Match Verification"
+  subtitle="Audit Purchase Order Rate * Accepted Physical Quantity vs Supplier Invoice"
+  [maxWidth]="'max-w-xl'"
+  (closeModal)="close3WayModal()"
+>
+  @if (selectedGRN()) {
+    <form [formGroup]="matchForm" (ngSubmit)="save3WayMatch()" class="space-y-4 text-xs">
+      <div class="p-3 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl space-y-2">
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <div>
+            <span class="text-slate-400 block text-[10px]">PO Unit Price:</span>
+            <span class="font-mono font-bold text-slate-800 dark:text-slate-200">
+              ৳ {{ (selectedGRN()!.po_unit_price || 0) | number:'1.2-2' }}
+            </span>
+          </div>
+          <div>
+            <span class="text-slate-400 block text-[10px]">Certified Accepted Qty:</span>
+            <span class="font-mono font-bold text-emerald-600">
+              {{ selectedGRN()!.accepted_quantity | number:'1.0-2' }} {{ selectedGRN()!.unit_of_measure }}
+            </span>
+          </div>
+          <div class="col-span-2 pt-2 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
+            <span class="font-semibold text-slate-700 dark:text-slate-300">Expected Certified Amount:</span>
+            <span class="font-mono font-bold text-base text-slate-900 dark:text-slate-100">
+              ৳ {{ (selectedGRN()!.calculated_expected_amount || (selectedGRN()!.accepted_quantity * (selectedGRN()!.po_unit_price || 0))) | number:'1.2-2' }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <app-custom-input
+            label="Supplier Commercial Invoice No."
+            placeholder="e.g. INV-9872"
+            formControlName="supplier_invoice_number"
+            [required]="true"
+          ></app-custom-input>
+        </div>
+
+        <div>
+          <app-custom-input
+            label="Supplier Invoice Amount (BDT)"
+            type="number"
+            placeholder="e.g. 520000"
+            formControlName="supplier_invoice_amount"
+            [required]="true"
+          ></app-custom-input>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+          Accounts Decision Action <span class="text-rose-500">*</span>
+        </label>
+        <select
+          formControlName="approval_action"
+          class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-amber-500 font-bold"
+        >
+          <option value="APPROVE_MATCH">APPROVE MATCH (Post Accounts Voucher)</option>
+          <option value="REJECT_VARIANCE">FLAG VARIANCE (Hold for Vendor Reconciliation)</option>
+        </select>
+      </div>
+
+      <div>
+        <app-custom-textarea
+          label="Accounts Verification Notes"
+          placeholder="Commercial tolerance, withholding tax (AIT), VAT challan 6.3 remarks..."
+          formControlName="accounts_notes"
+          [rows]="2"
+        ></app-custom-textarea>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
+        <button
+          type="button"
+          (click)="close3WayModal()"
+          class="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors"
+        >
+          Cancel
+        </button>
+        <app-custom-button
+          [label]="is3WaySaving() ? 'Posting Match...' : 'Confirm 3-Way Match'"
+          type="submit"
+          variant="primary"
+          [disabled]="matchForm.invalid || is3WaySaving()"
+        ></app-custom-button>
+      </div>
+    </form>
+  }
+</app-modal>
+
+<!-- ========================================================================= -->
+<!-- Modal 4: Delete Confirmation Modal                                        -->
+<!-- ========================================================================= -->
+<app-modal
+  [isOpen]="isDeleteModalOpen"
+  title="Cancel / Delete Goods Receipt Note"
+  subtitle="Permanent removal of unposted gate receipt record"
+  [maxWidth]="'max-w-md'"
+  (closeModal)="closeDeleteModal()"
+>
+  @if (selectedGRN()) {
+    <div class="space-y-4 text-xs">
+      <div class="p-3 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/40 rounded-xl text-rose-800 dark:text-rose-300">
+        Are you sure you want to delete GRN <span class="font-bold font-mono">{{ selectedGRN()!.grn_number }}</span>?
+        This consignment gate entry will be permanently removed.
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+        <button
+          type="button"
+          (click)="closeDeleteModal()"
+          class="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          (click)="executeDelete()"
+          class="px-4 py-2 text-xs font-bold rounded-xl bg-rose-600 hover:bg-rose-700 text-white transition-colors"
+        >
+          Confirm Delete
+        </button>
+      </div>
+    </div>
+  }
+</app-modal>

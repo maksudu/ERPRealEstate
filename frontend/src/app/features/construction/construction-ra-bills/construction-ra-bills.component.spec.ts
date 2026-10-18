@@ -163,12 +163,12 @@ describe('ConstructionRaBillsComponent', () => {
     expect(component.raBills().length).toBe(2);
   });
 
-  it('should open approval modal and post balanced accounts voucher', () => {
+  it('should open sign modal and post balanced accounts voucher', () => {
     spyOn(window, 'alert');
     const bill = mockRABills[0];
-    component.openApprovalModal(bill);
+    component.openSignModal(bill);
 
-    expect(component.isApprovalModalOpen()).toBeTrue();
+    expect(component.isSignModalOpen()).toBeTrue();
     expect(component.selectedBill()).toEqual(bill);
 
     const approvedBill: RABill = {
@@ -177,15 +177,15 @@ describe('ConstructionRaBillsComponent', () => {
       accounts_journal_voucher_ref: 'JV-2026-RA-01'
     } as any;
 
-    mockConstructionService.approveRABill.and.returnValue(of(approvedBill));
+    mockConstructionService.signRABill.and.returnValue(of(approvedBill));
 
-    component.confirmApproval();
+    component.submitSignature();
 
-    expect(mockConstructionService.approveRABill).toHaveBeenCalledWith(
+    expect(mockConstructionService.signRABill).toHaveBeenCalledWith(
       bill.id,
       jasmine.objectContaining({ action: 'APPROVE' })
     );
-    expect(component.isApprovalModalOpen()).toBeFalse();
+    expect(component.isSignModalOpen()).toBeFalse();
     const updated = component.raBills().find(b => b.id === bill.id);
     expect(updated?.status).toBe('ACCOUNTS_VOUCHER_POSTED');
   });

@@ -470,13 +470,25 @@ export class SidebarComponent implements OnInit {
     },
     {
       id: 'procurement',
-      title: 'Procurement & Stores',
+      title: 'Procurement & Inventory',
       iconSvg: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4',
+      badge: '15 Modules',
       items: [
-        { id: 'cockpit', label: 'SCM & Procurement Cockpit', route: '/procurement/cockpit', badge: 'PR→MIN' },
-        { id: 'stores', label: 'Site Store Stock Inventory', route: '/procurement/stores' },
-        { id: 'cs', label: 'Comparative Statements (CS)', route: '/procurement/comparative-statements' },
-        { id: 'grn', label: 'GRN & 3-Way Match Audit', route: '/procurement/grn' }
+        { id: 'proc-dash', label: 'Procurement Dashboard', route: '/procurement/dashboard', badge: 'Live' },
+        { id: 'proc-vendor', label: 'Supplier & Vendor Master', route: '/procurement/vendors', badge: 'Enlisted' },
+        { id: 'proc-mat', label: 'Material & Item Master', route: '/procurement/materials', badge: 'SKU' },
+        { id: 'proc-pr', label: 'Purchase Requisitions (PR)', route: '/procurement/requisitions', badge: 'BOQ Lock' },
+        { id: 'proc-rfq', label: 'RFQ & Quotation Comparison', route: '/procurement/rfq-comparison', badge: 'CS' },
+        { id: 'proc-po', label: 'Purchase Order (PO)', route: '/procurement/purchase-orders', badge: 'PO' },
+        { id: 'proc-grn', label: 'Goods Receipt Note (GRN)', route: '/procurement/grn', badge: 'Gate' },
+        { id: 'proc-qc', label: 'Quality Inspection (QC)', route: '/procurement/inspections', badge: 'QC' },
+        { id: 'proc-stock', label: 'Warehouse & Site Stock', route: '/procurement/warehouse-stock', badge: 'Stock' },
+        { id: 'proc-min', label: 'Material Issue & Consumption', route: '/procurement/material-issues', badge: 'MIN' },
+        { id: 'proc-transfer', label: 'Stock Transfer & Adjust', route: '/procurement/stock-transfers', badge: 'Challan' },
+        { id: 'proc-planning', label: 'Reorder & Material Plan', route: '/procurement/material-planning', badge: 'Indent' },
+        { id: 'proc-ledger', label: 'Stock Valuation & Ledger', route: '/procurement/inventory-ledger', badge: 'Costing' },
+        { id: 'proc-bills', label: 'Supplier Bills & 3-Way Match', route: '/procurement/supplier-bills', badge: '3-Way' },
+        { id: 'proc-audit', label: 'Audit Trail & Reports', route: '/procurement/reports-audit', badge: 'Audit' }
       ]
     },
     {

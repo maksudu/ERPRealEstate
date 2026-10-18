@@ -163,24 +163,99 @@ export const routes: Routes = [
     title: 'Site Safety & Non-Conformance Reports (NCR) - Bangladesh Real Estate ERP'
   },
   {
-    path: 'procurement/cockpit',
-    loadComponent: () => import('./features/procurement/procurement-cockpit/procurement-cockpit.component').then(m => m.ProcurementCockpitComponent),
-    title: 'Supply Chain & Procurement Cockpit (PR → RFQ → CS → PO → GRN → QC → Store Issue) - Bangladesh Real Estate ERP'
+    path: 'procurement',
+    redirectTo: 'procurement/dashboard',
+    pathMatch: 'full'
   },
   {
-    path: 'procurement/stores',
-    loadComponent: () => import('./features/procurement/procurement-stores/procurement-stores.component').then(m => m.ProcurementStoresComponent),
-    title: 'Site Store Stock Inventory - Bangladesh Real Estate ERP'
+    path: 'procurement/dashboard',
+    loadComponent: () => import('./features/procurement/dashboard/procurement-dashboard.component').then(m => m.ProcurementDashboardComponent),
+    title: '9.1 Procurement & Inventory Dashboard - Bangladesh Real Estate ERP'
   },
   {
-    path: 'procurement/comparative-statements',
-    loadComponent: () => import('./features/procurement/procurement-cs/procurement-cs.component').then(m => m.ProcurementCsComponent),
-    title: 'Comparative Statements (CS) - Bangladesh Real Estate ERP'
+    path: 'procurement/vendors',
+    loadComponent: () => import('./features/procurement/vendors/vendor-management.component').then(m => m.VendorManagementComponent),
+    title: '9.2 Supplier & Vendor Management - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'procurement/materials',
+    loadComponent: () => import('./features/procurement/materials/material-master.component').then(m => m.MaterialMasterComponent),
+    title: '9.3 Material & Item Master - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'procurement/requisitions',
+    loadComponent: () => import('./features/procurement/requisitions/purchase-requisitions.component').then(m => m.PurchaseRequisitionsComponent),
+    title: '9.4 Purchase Requisition (PR) - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'procurement/rfq-comparison',
+    loadComponent: () => import('./features/procurement/rfq-comparison/rfq-comparison.component').then(m => m.RfqComparisonComponent),
+    title: '9.5 RFQ & Supplier Quotation Comparison - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'procurement/purchase-orders',
+    loadComponent: () => import('./features/procurement/purchase-orders/purchase-orders.component').then(m => m.PurchaseOrdersComponent),
+    title: '9.6 Purchase Order (PO) Management - Bangladesh Real Estate ERP'
   },
   {
     path: 'procurement/grn',
-    loadComponent: () => import('./features/procurement/procurement-grn/procurement-grn.component').then(m => m.ProcurementGrnComponent),
-    title: 'Goods Receipt Note (GRN) & 3-Way Match - Bangladesh Real Estate ERP'
+    loadComponent: () => import('./features/procurement/grn/goods-receipts.component').then(m => m.GoodsReceiptsComponent),
+    title: '9.7 Goods Receipt Note (GRN) - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'procurement/inspections',
+    loadComponent: () => import('./features/procurement/inspections/quality-inspections.component').then(m => m.QualityInspectionsComponent),
+    title: '9.8 Quality Inspection & Rejection - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'procurement/warehouse-stock',
+    loadComponent: () => import('./features/procurement/warehouse-stock/warehouse-stock.component').then(m => m.WarehouseStockComponent),
+    title: '9.9 Warehouse & Project-Site Stock - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'procurement/material-issues',
+    loadComponent: () => import('./features/procurement/material-issues/material-issues.component').then(m => m.MaterialIssuesComponent),
+    title: '9.10 Material Issue & Consumption - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'procurement/stock-transfers',
+    loadComponent: () => import('./features/procurement/stock-transfers/stock-transfers.component').then(m => m.StockTransfersComponent),
+    title: '9.11 Stock Transfer & Adjustment - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'procurement/material-planning',
+    loadComponent: () => import('./features/procurement/material-planning/material-planning.component').then(m => m.MaterialPlanningComponent),
+    title: '9.12 Reorder Levels & Material Planning - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'procurement/inventory-ledger',
+    loadComponent: () => import('./features/procurement/inventory-ledger/inventory-ledger.component').then(m => m.InventoryLedgerComponent),
+    title: '9.13 Stock Valuation & Inventory Ledger - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'procurement/supplier-bills',
+    loadComponent: () => import('./features/procurement/supplier-bills/supplier-bills.component').then(m => m.SupplierBillsComponent),
+    title: '9.14 Supplier Bills & Payment Reconciliation - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'procurement/reports-audit',
+    loadComponent: () => import('./features/procurement/reports-audit/reports-audit.component').then(m => m.ReportsAuditComponent),
+    title: '9.15 Procurement Reports & Audit Trail - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'procurement/cockpit',
+    redirectTo: 'procurement/dashboard',
+    pathMatch: 'full'
+  },
+  {
+    path: 'procurement/stores',
+    redirectTo: 'procurement/warehouse-stock',
+    pathMatch: 'full'
+  },
+  {
+    path: 'procurement/comparative-statements',
+    redirectTo: 'procurement/rfq-comparison',
+    pathMatch: 'full'
   },
   {
     path: 'accounts/coa',

@@ -15,9 +15,16 @@ import {
   QualityInspection,
   MaterialIssueNote,
   StockTransfer,
+  StockAdjustmentRecord,
   StockLedger,
   StoreValuationResponse,
-  ProcurementMetrics
+  ValuationMethodComparison,
+  StockAgingReportItem,
+  PeriodEndReconciliation,
+  ProcurementMetrics,
+  ReorderAlertItem,
+  SupplierBill,
+  AuditTrailItem
 } from '../models/procurement.model';
 
 @Injectable({
@@ -28,12 +35,23 @@ export class ProcurementService {
   private baseUrl = `${environment.apiUrl}/procurement`;
 
   // 1. Vendors Master
-  getVendors(): Observable<Vendor[]> {
-    return this.http.get<Vendor[]>(`${this.baseUrl}/vendors`);
+  getVendors(search?: string, tradeCategory?: string): Observable<Vendor[]> {
+    let params = new HttpParams();
+    if (search) params = params.set('search', search);
+    if (tradeCategory) params = params.set('trade_category', tradeCategory);
+    return this.http.get<Vendor[]>(`${this.baseUrl}/vendors`, { params });
   }
 
   createVendor(payload: any): Observable<Vendor> {
     return this.http.post<Vendor>(`${this.baseUrl}/vendors`, payload);
+  }
+
+  updateVendor(id: number, payload: any): Observable<Vendor> {
+    return this.http.put<Vendor>(`${this.baseUrl}/vendors/${id}`, payload);
+  }
+
+  deleteVendor(id: number): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/vendors/${id}`);
   }
 
   // 2. Materials Master
@@ -45,16 +63,52 @@ export class ProcurementService {
     return this.http.post<MaterialItem>(`${this.baseUrl}/materials`, payload);
   }
 
+  updateMaterial(id: number, payload: any): Observable<MaterialItem> {
+    return this.http.put<MaterialItem>(`${this.baseUrl}/materials/${id}`, payload);
+  }
+
+  deleteMaterial(id: number): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/materials/${id}`);
+  }
+
   // 3. Site Stores & Valuation
-  getSiteStores(projectId?: number, isCentral?: boolean): Observable<SiteStore[]> {
+  getSiteStores(filters?: { project_id?: number; is_central?: boolean; search?: string; limit?: number; offset?: number } | number, isCentral?: boolean): Observable<SiteStore[]> {
     let params = new HttpParams();
-    if (projectId) params = params.set('project_id', projectId);
-    if (isCentral !== undefined) params = params.set('is_central', isCentral);
+    if (typeof filters === 'number') {
+      params = params.set('project_id', filters);
+      if (isCentral !== undefined) params = params.set('is_central', isCentral);
+    } else if (filters) {
+      if (filters.project_id) params = params.set('project_id', filters.project_id);
+      if (filters.is_central !== undefined) params = params.set('is_central', filters.is_central);
+      if (filters.search) params = params.set('search', filters.search);
+      if (filters.limit) params = params.set('limit', filters.limit);
+      if (filters.offset) params = params.set('offset', filters.offset);
+    }
     return this.http.get<SiteStore[]>(`${this.baseUrl}/stores`, { params });
+  }
+
+  getSiteStore(id: number): Observable<SiteStore> {
+    return this.http.get<SiteStore>(`${this.baseUrl}/stores/${id}`);
   }
 
   createSiteStore(payload: any): Observable<SiteStore> {
     return this.http.post<SiteStore>(`${this.baseUrl}/stores`, payload);
+  }
+
+  updateSiteStore(id: number, payload: any): Observable<SiteStore> {
+    return this.http.put<SiteStore>(`${this.baseUrl}/stores/${id}`, payload);
+  }
+
+  deleteSiteStore(id: number): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/stores/${id}`);
+  }
+
+  reserveStoreStock(payload: any): Observable<StoreStock> {
+    return this.http.post<StoreStock>(`${this.baseUrl}/stores/stock-reservation`, payload);
+  }
+
+  recordCycleCount(payload: any): Observable<StoreStock> {
+    return this.http.post<StoreStock>(`${this.baseUrl}/stores/cycle-count`, payload);
   }
 
   adjustStoreStock(payload: any): Observable<StoreStock> {
@@ -72,15 +126,30 @@ export class ProcurementService {
   }
 
   // 4. Purchase Requisitions (with BOQ Headroom Check)
-  getRequisitions(filters?: { project_id?: number; status_filter?: string }): Observable<PurchaseRequisition[]> {
+  getRequisitions(filters?: { project_id?: number; status_filter?: string; search?: string; limit?: number; offset?: number }): Observable<PurchaseRequisition[]> {
     let params = new HttpParams();
     if (filters?.project_id) params = params.set('project_id', filters.project_id);
     if (filters?.status_filter) params = params.set('status_filter', filters.status_filter);
+    if (filters?.search) params = params.set('search', filters.search);
+    if (filters?.limit) params = params.set('limit', filters.limit);
+    if (filters?.offset) params = params.set('offset', filters.offset);
     return this.http.get<PurchaseRequisition[]>(`${this.baseUrl}/requisitions`, { params });
   }
 
   createRequisition(payload: any): Observable<PurchaseRequisition> {
     return this.http.post<PurchaseRequisition>(`${this.baseUrl}/requisitions`, payload);
+  }
+
+  updateRequisition(id: number, payload: any): Observable<PurchaseRequisition> {
+    return this.http.put<PurchaseRequisition>(`${this.baseUrl}/requisitions/${id}`, payload);
+  }
+
+  executePRWorkflow(id: number, payload: { action: string; notes?: string }): Observable<PurchaseRequisition> {
+    return this.http.post<PurchaseRequisition>(`${this.baseUrl}/requisitions/${id}/workflow`, payload);
+  }
+
+  deleteRequisition(id: number): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/requisitions/${id}`);
   }
 
   // 5. Request for Quotation (RFQ)
@@ -106,32 +175,63 @@ export class ProcurementService {
   }
 
   // 7. Purchase Orders (PO)
-  getPurchaseOrders(filters?: { project_id?: number; vendor_id?: number; status_filter?: string }): Observable<PurchaseOrder[]> {
+  getPurchaseOrders(filters?: { project_id?: number; vendor_id?: number; status_filter?: string; search?: string; limit?: number; offset?: number }): Observable<PurchaseOrder[]> {
     let params = new HttpParams();
     if (filters?.project_id) params = params.set('project_id', filters.project_id);
     if (filters?.vendor_id) params = params.set('vendor_id', filters.vendor_id);
     if (filters?.status_filter) params = params.set('status_filter', filters.status_filter);
+    if (filters?.search) params = params.set('search', filters.search);
+    if (filters?.limit) params = params.set('limit', filters.limit);
+    if (filters?.offset) params = params.set('offset', filters.offset);
     return this.http.get<PurchaseOrder[]>(`${this.baseUrl}/purchase-orders`, { params });
+  }
+
+  createDirectPurchaseOrder(payload: any): Observable<PurchaseOrder> {
+    return this.http.post<PurchaseOrder>(`${this.baseUrl}/purchase-orders/direct`, payload);
   }
 
   generatePOFromCS(payload: any): Observable<PurchaseOrder> {
     return this.http.post<PurchaseOrder>(`${this.baseUrl}/purchase-orders/generate-from-cs`, payload);
   }
 
+  updatePurchaseOrder(poId: number, payload: any): Observable<PurchaseOrder> {
+    return this.http.put<PurchaseOrder>(`${this.baseUrl}/purchase-orders/${poId}`, payload);
+  }
+
   approvePurchaseOrder(poId: number, payload: any): Observable<PurchaseOrder> {
     return this.http.put<PurchaseOrder>(`${this.baseUrl}/purchase-orders/${poId}/approve`, payload);
   }
 
+  deletePurchaseOrder(poId: number): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/purchase-orders/${poId}`);
+  }
+
   // 8. Goods Receipt Notes (GRN) & Gate Entry
-  getGoodsReceipts(filters?: { po_id?: number; match_status?: string }): Observable<GoodsReceipt[]> {
+  getGoodsReceipts(filters?: { po_id?: number; match_status?: string; qc_status?: string; search?: string; limit?: number; offset?: number }): Observable<GoodsReceipt[]> {
     let params = new HttpParams();
     if (filters?.po_id) params = params.set('po_id', filters.po_id);
     if (filters?.match_status) params = params.set('match_status', filters.match_status);
+    if (filters?.qc_status) params = params.set('qc_status', filters.qc_status);
+    if (filters?.search) params = params.set('search', filters.search);
+    if (filters?.limit) params = params.set('limit', filters.limit);
+    if (filters?.offset) params = params.set('offset', filters.offset);
     return this.http.get<GoodsReceipt[]>(`${this.baseUrl}/goods-receipts`, { params });
+  }
+
+  getGoodsReceipt(grnId: number): Observable<GoodsReceipt> {
+    return this.http.get<GoodsReceipt>(`${this.baseUrl}/goods-receipts/${grnId}`);
   }
 
   createGoodsReceipt(payload: any): Observable<GoodsReceipt> {
     return this.http.post<GoodsReceipt>(`${this.baseUrl}/goods-receipts`, payload);
+  }
+
+  updateGoodsReceipt(grnId: number, payload: any): Observable<GoodsReceipt> {
+    return this.http.put<GoodsReceipt>(`${this.baseUrl}/goods-receipts/${grnId}`, payload);
+  }
+
+  deleteGoodsReceipt(grnId: number): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/goods-receipts/${grnId}`);
   }
 
   executeThreeWayMatch(grnId: number, payload: any): Observable<GoodsReceipt> {
@@ -139,32 +239,78 @@ export class ProcurementService {
   }
 
   // 9. Quality Inspection (QC)
-  getQualityInspections(grnId?: number): Observable<QualityInspection[]> {
+  getQualityInspections(filters?: { grn_id?: number; test_result?: string; search?: string; limit?: number; offset?: number }): Observable<QualityInspection[]> {
     let params = new HttpParams();
-    if (grnId) params = params.set('grn_id', grnId);
+    if (filters?.grn_id) params = params.set('grn_id', filters.grn_id);
+    if (filters?.test_result) params = params.set('test_result', filters.test_result);
+    if (filters?.search) params = params.set('search', filters.search);
+    if (filters?.limit) params = params.set('limit', filters.limit);
+    if (filters?.offset) params = params.set('offset', filters.offset);
     return this.http.get<QualityInspection[]>(`${this.baseUrl}/quality-inspections`, { params });
+  }
+
+  getQualityInspection(qcId: number): Observable<QualityInspection> {
+    return this.http.get<QualityInspection>(`${this.baseUrl}/quality-inspections/${qcId}`);
   }
 
   createQualityInspection(payload: any): Observable<QualityInspection> {
     return this.http.post<QualityInspection>(`${this.baseUrl}/quality-inspections`, payload);
   }
 
+  updateQualityInspection(qcId: number, payload: any): Observable<QualityInspection> {
+    return this.http.put<QualityInspection>(`${this.baseUrl}/quality-inspections/${qcId}`, payload);
+  }
+
+  deleteQualityInspection(qcId: number): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/quality-inspections/${qcId}`);
+  }
+
   // 10. Material Issue Notes (MIN)
-  getMaterialIssues(filters?: { project_id?: number; store_id?: number }): Observable<MaterialIssueNote[]> {
+  getMaterialIssues(filters?: { project_id?: number; store_id?: number; search?: string; limit?: number; offset?: number }): Observable<MaterialIssueNote[]> {
     let params = new HttpParams();
     if (filters?.project_id) params = params.set('project_id', filters.project_id);
     if (filters?.store_id) params = params.set('store_id', filters.store_id);
+    if (filters?.search) params = params.set('search', filters.search);
+    if (filters?.limit) params = params.set('limit', filters.limit);
+    if (filters?.offset) params = params.set('offset', filters.offset);
     return this.http.get<MaterialIssueNote[]>(`${this.baseUrl}/material-issues`, { params });
+  }
+
+  getMaterialIssue(minId: number): Observable<MaterialIssueNote> {
+    return this.http.get<MaterialIssueNote>(`${this.baseUrl}/material-issues/${minId}`);
   }
 
   createMaterialIssue(payload: any): Observable<MaterialIssueNote> {
     return this.http.post<MaterialIssueNote>(`${this.baseUrl}/material-issues`, payload);
   }
 
-  // 11. Inter-Site Stock Transfers
-  getStockTransfers(statusFilter?: string): Observable<StockTransfer[]> {
+  updateMaterialIssue(minId: number, payload: any): Observable<MaterialIssueNote> {
+    return this.http.put<MaterialIssueNote>(`${this.baseUrl}/material-issues/${minId}`, payload);
+  }
+
+  deleteMaterialIssue(minId: number): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/material-issues/${minId}`);
+  }
+
+  createMaterialReturn(payload: any): Observable<MaterialIssueNote> {
+    return this.http.post<MaterialIssueNote>(`${this.baseUrl}/material-issues/returns`, payload);
+  }
+
+  getConsumptionReconciliationReport(projectId?: number): Observable<any[]> {
     let params = new HttpParams();
-    if (statusFilter) params = params.set('status_filter', statusFilter);
+    if (projectId) params = params.set('project_id', projectId);
+    return this.http.get<any[]>(`${this.baseUrl}/material-issues/reconciliation-report`, { params });
+  }
+
+  // 11. Inter-Site Stock Transfers
+  getStockTransfers(paramsObj?: { search?: string; status_filter?: string; from_store_id?: number; to_store_id?: number; limit?: number; offset?: number }): Observable<StockTransfer[]> {
+    let params = new HttpParams();
+    if (paramsObj?.status_filter) params = params.set('status_filter', paramsObj.status_filter);
+    if (paramsObj?.from_store_id) params = params.set('from_store_id', paramsObj.from_store_id);
+    if (paramsObj?.to_store_id) params = params.set('to_store_id', paramsObj.to_store_id);
+    if (paramsObj?.search) params = params.set('search', paramsObj.search);
+    if (paramsObj?.limit) params = params.set('limit', paramsObj.limit);
+    if (paramsObj?.offset !== undefined) params = params.set('offset', paramsObj.offset);
     return this.http.get<StockTransfer[]>(`${this.baseUrl}/stock-transfers`, { params });
   }
 
@@ -176,8 +322,90 @@ export class ProcurementService {
     return this.http.put<StockTransfer>(`${this.baseUrl}/stock-transfers/${transferId}/receive`, payload);
   }
 
+  cancelStockTransfer(transferId: number, reason?: string): Observable<StockTransfer> {
+    let params = new HttpParams();
+    if (reason) params = params.set('reason', reason);
+    return this.http.post<StockTransfer>(`${this.baseUrl}/stock-transfers/${transferId}/cancel`, {}, { params });
+  }
+
+  // Stock Adjustments
+  getStockAdjustments(paramsObj?: { store_id?: number; search?: string; limit?: number; offset?: number }): Observable<StockAdjustmentRecord[]> {
+    let params = new HttpParams();
+    if (paramsObj?.store_id) params = params.set('store_id', paramsObj.store_id);
+    if (paramsObj?.search) params = params.set('search', paramsObj.search);
+    if (paramsObj?.limit) params = params.set('limit', paramsObj.limit);
+    if (paramsObj?.offset !== undefined) params = params.set('offset', paramsObj.offset);
+    return this.http.get<StockAdjustmentRecord[]>(`${this.baseUrl}/stock-adjustments`, { params });
+  }
+
+  reverseStockAdjustment(ledgerId: number, payload: { reversal_reason: string }): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/stock-adjustments/${ledgerId}/reverse`, payload);
+  }
+
   // 12. Procurement KPI Metrics
   getMetrics(): Observable<ProcurementMetrics> {
     return this.http.get<ProcurementMetrics>(`${this.baseUrl}/metrics`);
+  }
+
+  // 13. Planning & Reorder Alerts
+  getReorderAlerts(paramsObj?: { store_id?: number; project_id?: number; category?: string }): Observable<ReorderAlertItem[]> {
+    let params = new HttpParams();
+    if (paramsObj?.store_id) params = params.set('store_id', paramsObj.store_id);
+    if (paramsObj?.project_id) params = params.set('project_id', paramsObj.project_id);
+    if (paramsObj?.category) params = params.set('category', paramsObj.category);
+    return this.http.get<ReorderAlertItem[]>(`${this.baseUrl}/planning/reorder-alerts`, { params });
+  }
+
+  // Inventory Movement Ledger & Valuation
+  getInventoryLedger(paramsObj?: { store_id?: number; material_id?: number; transaction_type?: string; search?: string; limit?: number; offset?: number }): Observable<StockLedger[]> {
+    let params = new HttpParams();
+    if (paramsObj?.store_id) params = params.set('store_id', paramsObj.store_id);
+    if (paramsObj?.material_id) params = params.set('material_id', paramsObj.material_id);
+    if (paramsObj?.transaction_type) params = params.set('transaction_type', paramsObj.transaction_type);
+    if (paramsObj?.search) params = params.set('search', paramsObj.search);
+    if (paramsObj?.limit) params = params.set('limit', paramsObj.limit);
+    if (paramsObj?.offset !== undefined) params = params.set('offset', paramsObj.offset);
+    return this.http.get<StockLedger[]>(`${this.baseUrl}/inventory-ledger`, { params });
+  }
+
+  getValuationMethodComparison(): Observable<ValuationMethodComparison[]> {
+    return this.http.get<ValuationMethodComparison[]>(`${this.baseUrl}/valuation-comparison`);
+  }
+
+  getStockAgingReport(): Observable<StockAgingReportItem[]> {
+    return this.http.get<StockAgingReportItem[]>(`${this.baseUrl}/stock-aging-report`);
+  }
+
+  getPeriodEndReconciliation(): Observable<PeriodEndReconciliation> {
+    return this.http.get<PeriodEndReconciliation>(`${this.baseUrl}/period-end-reconciliation`);
+  }
+
+  // 14. Supplier Bills & Payment Reconciliation
+  getSupplierBills(paramsObj?: { status_filter?: string; search?: string; vendor_id?: number; limit?: number; offset?: number }): Observable<SupplierBill[]> {
+    let params = new HttpParams();
+    if (paramsObj?.status_filter) params = params.set('status_filter', paramsObj.status_filter);
+    if (paramsObj?.search) params = params.set('search', paramsObj.search);
+    if (paramsObj?.vendor_id) params = params.set('vendor_id', paramsObj.vendor_id);
+    if (paramsObj?.limit) params = params.set('limit', paramsObj.limit);
+    if (paramsObj?.offset !== undefined) params = params.set('offset', paramsObj.offset);
+    return this.http.get<SupplierBill[]>(`${this.baseUrl}/supplier-bills`, { params });
+  }
+
+  reconcileSupplierBill(grnId: number, payload: any): Observable<SupplierBill> {
+    return this.http.post<SupplierBill>(`${this.baseUrl}/supplier-bills/${grnId}/reconcile`, payload);
+  }
+
+  recordSupplierBillPayment(grnId: number, payload: any): Observable<SupplierBill> {
+    return this.http.post<SupplierBill>(`${this.baseUrl}/supplier-bills/${grnId}/payment`, payload);
+  }
+
+  issueSupplierDebitNote(grnId: number, payload: any): Observable<SupplierBill> {
+    return this.http.post<SupplierBill>(`${this.baseUrl}/supplier-bills/${grnId}/debit-note`, payload);
+  }
+
+  // 15. Audit Trail & Ledger Reports
+  getAuditTrail(limit: number = 50): Observable<AuditTrailItem[]> {
+    const params = new HttpParams().set('limit', limit);
+    return this.http.get<AuditTrailItem[]>(`${this.baseUrl}/audit-trail`, { params });
   }
 }

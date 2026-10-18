@@ -29,6 +29,17 @@ class VendorCreate(BaseModel):
     bin_number: Optional[str] = None
     payment_terms_days: Optional[int] = 30
 
+class VendorUpdate(BaseModel):
+    vendor_name: Optional[str] = None
+    trade_category: Optional[str] = None
+    contact_person: Optional[str] = None
+    phone_number: Optional[str] = None
+    email: Optional[str] = None
+    tin_number: Optional[str] = None
+    bin_number: Optional[str] = None
+    payment_terms_days: Optional[int] = None
+    is_active: Optional[bool] = None
+
 class VendorResponse(VendorBase):
     id: int
     created_at: Optional[datetime] = None
@@ -50,6 +61,14 @@ class MaterialItemCreate(BaseModel):
     category: str
     unit_of_measure: Optional[str] = "BAG"
     standard_unit_cost: Optional[float] = 0.00
+
+class MaterialItemUpdate(BaseModel):
+    material_code: Optional[str] = None
+    material_name: Optional[str] = None
+    category: Optional[str] = None
+    unit_of_measure: Optional[str] = None
+    standard_unit_cost: Optional[float] = None
+    is_active: Optional[bool] = None
 
 class MaterialItemResponse(MaterialItemBase):
     id: int
@@ -73,6 +92,13 @@ class StoreStockResponse(StoreStockBase):
     material_name: Optional[str] = None
     material_code: Optional[str] = None
     unit_of_measure: Optional[str] = None
+    reserved_quantity: float = 0.00
+    available_quantity: Optional[float] = None
+    quarantined_quantity: float = 0.00
+    bin_location: Optional[str] = None
+    rack_number: Optional[str] = None
+    zone: Optional[str] = None
+    batch_number: Optional[str] = None
     is_low_stock: bool = False
     last_updated_at: Optional[datetime] = None
 
@@ -93,6 +119,13 @@ class SiteStoreCreate(BaseModel):
     store_in_charge_user_id: Optional[int] = None
     is_central_warehouse: Optional[bool] = False
 
+class SiteStoreUpdate(BaseModel):
+    store_name: Optional[str] = None
+    location_details: Optional[str] = None
+    store_in_charge_user_id: Optional[int] = None
+    is_central_warehouse: Optional[bool] = None
+    is_active: Optional[bool] = None
+
 class SiteStoreResponse(SiteStoreBase):
     id: int
     project_name: Optional[str] = None
@@ -104,7 +137,43 @@ class StockAdjustmentCreate(BaseModel):
     store_id: int
     material_id: int
     quantity_delta: float
-    adjustment_reason: str # 'INITIAL_STOCK', 'MANUAL_CORRECTION', 'DAMAGE_WRITEOFF'
+    adjustment_reason: str # 'CYCLE_COUNT_VARIANCE', 'DAMAGE_MOISTURE', 'HANDLING_LOSS', 'UOM_CORRECTION', 'OPENING_BALANCE', 'THEFT_OR_PILFERAGE', 'OBSOLETE_SCRAP'
+    evidence_notes: Optional[str] = None
+    voucher_reference: Optional[str] = None
+
+class StockAdjustmentRecord(BaseModel):
+    id: int
+    store_id: int
+    store_name: str
+    material_id: int
+    material_name: str
+    unit_of_measure: str
+    quantity_delta: float
+    unit_rate: float
+    total_adjustment_value: float
+    adjustment_reason: str
+    approval_status: str # 'APPROVED', 'PENDING_APPROVAL'
+    evidence_notes: Optional[str] = None
+    voucher_reference: Optional[str] = None
+    created_at: Optional[datetime] = None
+
+class StockAdjustmentReversalRequest(BaseModel):
+    reversal_reason: str
+
+class StoreStockReservationRequest(BaseModel):
+    store_id: int
+    material_id: int
+    reserved_quantity: float
+    work_order_reference: Optional[str] = None
+    reservation_purpose: Optional[str] = None
+
+class PhysicalCycleCountRequest(BaseModel):
+    store_id: int
+    material_id: int
+    physical_counted_quantity: float
+    cycle_count_date: Optional[date] = None
+    discrepancy_reason: Optional[str] = None
+    counter_officer_name: Optional[str] = None
 
 
 # --------------------------------------------------------------------------
@@ -137,6 +206,18 @@ class PurchaseRequisitionCreate(BaseModel):
     floor_number: Optional[str] = None
     required_by_date: Optional[date] = None
     purpose_notes: Optional[str] = None
+
+class PurchaseRequisitionUpdate(BaseModel):
+    requested_quantity: Optional[float] = None
+    required_by_date: Optional[date] = None
+    tower_name: Optional[str] = None
+    floor_number: Optional[str] = None
+    purpose_notes: Optional[str] = None
+    status: Optional[str] = None
+
+class PRWorkflowAction(BaseModel):
+    action: str # 'SUBMIT', 'SITE_APPROVE', 'VERIFY_BUDGET', 'PROCUREMENT_REVIEW', 'APPROVE_PURCHASE', 'REJECT'
+    notes: Optional[str] = None
 
 class PurchaseRequisitionResponse(PurchaseRequisitionBase):
     id: int
@@ -294,6 +375,16 @@ class PurchaseOrderDirectCreate(BaseModel):
     delivery_schedule_notes: Optional[str] = None
     terms_and_conditions: Optional[str] = None
 
+class PurchaseOrderUpdate(BaseModel):
+    ordered_quantity: Optional[float] = None
+    unit_price: Optional[float] = None
+    delivery_deadline: Optional[date] = None
+    destination_store_id: Optional[int] = None
+    delivery_schedule_notes: Optional[str] = None
+    terms_and_conditions: Optional[str] = None
+    status: Optional[str] = None
+    approval_status: Optional[str] = None
+
 class PurchaseOrderResponse(PurchaseOrderBase):
     id: int
     project_name: Optional[str] = None
@@ -360,6 +451,18 @@ class GoodsReceiptCreate(BaseModel):
     supplier_invoice_amount: Optional[float] = None
     inspection_remarks: Optional[str] = None
 
+class GoodsReceiptUpdate(BaseModel):
+    delivery_challan_number: Optional[str] = None
+    vehicle_number: Optional[str] = None
+    driver_name: Optional[str] = None
+    driver_phone: Optional[str] = None
+    received_quantity: Optional[float] = None
+    rejected_quantity: Optional[float] = None
+    physical_count_verified: Optional[bool] = None
+    supplier_invoice_number: Optional[str] = None
+    supplier_invoice_amount: Optional[float] = None
+    inspection_remarks: Optional[str] = None
+
 class GoodsReceipt3WayMatchRequest(BaseModel):
     supplier_invoice_number: str
     supplier_invoice_amount: float
@@ -374,6 +477,9 @@ class GoodsReceiptResponse(GoodsReceiptBase):
     material_name: Optional[str] = None
     unit_of_measure: Optional[str] = None
     po_unit_price: Optional[float] = None
+    po_ordered_quantity: Optional[float] = None
+    po_outstanding_quantity: Optional[float] = None
+    destination_store_name: Optional[str] = None
     received_by_name: Optional[str] = None
     created_at: Optional[datetime] = None
 
@@ -388,6 +494,14 @@ class QualityInspectionCreate(BaseModel):
     mtr_mill_test_report_number: Optional[str] = None
     mtr_verified: bool = True
     test_result: str = "PASSED" # PASSED, FAILED, CONDITIONAL_PASS
+    qc_remarks: Optional[str] = None
+
+class QualityInspectionUpdate(BaseModel):
+    slump_test_mm: Optional[float] = None
+    tensile_strength_mpa: Optional[float] = None
+    mtr_mill_test_report_number: Optional[str] = None
+    mtr_verified: Optional[bool] = None
+    test_result: Optional[str] = None
     qc_remarks: Optional[str] = None
 
 class QualityInspectionResponse(BaseModel):
@@ -423,7 +537,38 @@ class MaterialIssueCreate(BaseModel):
     wbs_node_id: Optional[int] = None
     issued_to_contractor_id: Optional[int] = None
     contractor_name: Optional[str] = None
+    receiving_person: Optional[str] = None
+    batch_number: Optional[str] = None
+    boq_item_id: Optional[int] = None
     purpose: Optional[str] = None
+
+class MaterialIssueUpdate(BaseModel):
+    tower_name: Optional[str] = None
+    floor_number: Optional[str] = None
+    contractor_name: Optional[str] = None
+    receiving_person: Optional[str] = None
+    purpose: Optional[str] = None
+
+class MaterialReturnCreate(BaseModel):
+    min_id: int
+    returned_quantity: float
+    return_reason: str = "UNUSED_RECOVERY" # UNUSED_RECOVERY, DAMAGED_EXCHANGE, ACTIVITY_COMPLETED
+    returning_person: Optional[str] = None
+    remarks: Optional[str] = None
+
+class ConsumptionReconciliationReport(BaseModel):
+    activity_name: str
+    material_name: str
+    unit_of_measure: str
+    boq_allowance: float
+    total_issued: float
+    total_returned: float
+    reported_consumed: float
+    net_consumed: float
+    variance_quantity: float
+    wastage_percentage: float
+    unexplained_variance: float
+    contractor_name: Optional[str] = None
 
 class MaterialIssueResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -443,7 +588,10 @@ class MaterialIssueResponse(BaseModel):
     material_name: Optional[str] = None
     unit_of_measure: str
     issued_quantity: float
+    returned_quantity: float = 0.00
+    net_consumed_quantity: Optional[float] = None
     contractor_name: Optional[str] = None
+    receiving_person: Optional[str] = None
     issued_by_name: Optional[str] = None
     purpose: Optional[str] = None
     unit_cost_at_issue: float = 0.00
@@ -464,6 +612,10 @@ class StockTransferCreate(BaseModel):
     remarks: Optional[str] = None
 
 class StockTransferReceive(BaseModel):
+    received_quantity: Optional[float] = None
+    damaged_quantity: Optional[float] = 0.0
+    short_delivered_quantity: Optional[float] = 0.0
+    discrepancy_reason: Optional[str] = None
     remarks: Optional[str] = None
 
 class StockTransferResponse(BaseModel):
@@ -479,6 +631,10 @@ class StockTransferResponse(BaseModel):
     material_name: Optional[str] = None
     unit_of_measure: Optional[str] = None
     transfer_quantity: float
+    received_quantity: Optional[float] = None
+    damaged_quantity: Optional[float] = 0.0
+    short_delivered_quantity: Optional[float] = 0.0
+    discrepancy_notes: Optional[str] = None
     dispatch_date: date
     dispatched_by_name: Optional[str] = None
     receipt_date: Optional[date] = None
@@ -529,6 +685,39 @@ class StoreValuationResponse(BaseModel):
     total_valuation: float
     items: List[StoreValuationItem] = []
 
+class ValuationMethodComparison(BaseModel):
+    material_id: int
+    material_name: str
+    category: str
+    unit_of_measure: str
+    current_quantity: float
+    weighted_avg_rate: float
+    weighted_avg_valuation: float
+    fifo_rate: float
+    fifo_valuation: float
+    standard_cost: float
+    standard_valuation: float
+    cost_variance: float
+
+class StockAgingReportItem(BaseModel):
+    material_id: int
+    material_name: str
+    store_name: str
+    current_stock_quantity: float
+    unit_of_measure: str
+    weighted_avg_rate: float
+    total_valuation: float
+    days_since_last_movement: int
+    aging_category: str # 'ACTIVE (<30d)', 'SLOW_MOVING (31-90d)', 'NON_MOVING (91-180d)', 'OBSOLETE (>180d)'
+    impairment_risk: str # 'LOW', 'MEDIUM', 'HIGH'
+
+class PeriodEndReconciliation(BaseModel):
+    period_name: str
+    total_inventory_asset_valuation: float
+    gl_inventory_account_balance: float
+    unreconciled_difference: float
+    reconciliation_status: str # 'BALANCED', 'VARIANCE_DETECTED'
+
 
 # --------------------------------------------------------------------------
 # Procurement Summary Metrics
@@ -543,3 +732,97 @@ class ProcurementMetrics(BaseModel):
     grn_variance_flags: int
     pending_qc_count: int = 0
     total_inventory_valuation: float = 0.00
+
+
+# --------------------------------------------------------------------------
+# Planning, Supplier Bills & Audit Trail Schemas
+# --------------------------------------------------------------------------
+class ReorderAlertItem(BaseModel):
+    store_id: int
+    store_name: str
+    material_id: int
+    material_name: str
+    category: str
+    unit_of_measure: str
+    current_stock_quantity: float
+    reorder_level: float
+    safety_stock: float = 0.0
+    lead_time_days: int = 7
+    avg_daily_consumption: float = 0.0
+    open_po_quantity: float = 0.0
+    reserved_quantity: float = 0.0
+    max_stock_level: float = 0.0
+    shortage_quantity: float
+    weighted_avg_rate: float
+    suggested_order_value: float
+    suggested_purchase_quantity: float = 0.0
+    is_emergency: bool = False
+    project_id: Optional[int] = None
+    project_name: Optional[str] = None
+
+class SupplierBillResponse(BaseModel):
+    id: int
+    po_id: int
+    po_number: str
+    grn_number: str
+    vendor_name: str
+    project_name: Optional[str] = None
+    material_name: Optional[str] = None
+    unit_of_measure: Optional[str] = None
+    po_unit_price: float = 0.0
+    ordered_quantity: float = 0.0
+    delivered_quantity: float = 0.0
+    accepted_quantity: float = 0.0
+    rejected_quantity: float = 0.0
+    receipt_date: date
+    supplier_invoice_number: Optional[str] = None
+    supplier_invoice_amount: Optional[float] = None
+    calculated_expected_amount: float
+    variance_amount: float
+    three_way_match_status: str
+    accounts_voucher_ref: Optional[str] = None
+    qc_status: str
+    status: str
+    vat_tax_amount: float = 0.0
+    freight_amount: float = 0.0
+    discount_amount: float = 0.0
+    debit_note_number: Optional[str] = None
+    debit_note_amount: float = 0.0
+    payment_status: str = "UNPAID" # UNPAID, PAID
+    payment_voucher_ref: Optional[str] = None
+    duplicate_warning: bool = False
+
+class SupplierBillReconcileRequest(BaseModel):
+    supplier_invoice_number: str
+    supplier_invoice_amount: float
+    vat_tax_amount: float = 0.0
+    freight_amount: float = 0.0
+    discount_amount: float = 0.0
+    approval_action: str = "APPROVE_MATCH" # APPROVE_MATCH, VARIANCE_FLAGGED, DISPUTED
+    accounts_voucher_ref: Optional[str] = None
+    accounts_notes: Optional[str] = None
+
+class SupplierBillPaymentRequest(BaseModel):
+    paid_amount: float
+    payment_method: str = "BANK_TRANSFER" # BANK_TRANSFER, CHEQUE, BEFTN, RTGS, CASH
+    bank_account_reference: Optional[str] = None
+    cheque_number: Optional[str] = None
+    payment_voucher_ref: str
+    payment_date: Optional[date] = None
+    remarks: Optional[str] = None
+
+class SupplierDebitNoteCreate(BaseModel):
+    debit_amount: float
+    debit_reason: str # REJECTED_GOODS_DEDUCTION, PRICE_OVERCHARGE, TRANSIT_DAMAGE_CLAIM
+    remarks: Optional[str] = None
+
+class AuditTrailItem(BaseModel):
+    id: int
+    timestamp: datetime
+    module: str
+    action: str
+    reference_number: str
+    user_name: str
+    details: str
+    status: str
+

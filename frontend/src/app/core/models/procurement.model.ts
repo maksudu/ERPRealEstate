@@ -26,11 +26,20 @@ export interface MaterialItem {
 export interface StoreStock {
   id: number;
   store_id: number;
+  store_name?: string | null;
   material_id: number;
   material_name?: string | null;
   material_code?: string | null;
   unit_of_measure?: string | null;
   current_stock_quantity: number;
+  reserved_quantity?: number;
+  available_quantity?: number;
+  quarantined_quantity?: number;
+  bin_location?: string | null;
+  rack_number?: string | null;
+  zone?: string | null;
+  batch_number?: string | null;
+  expiry_date?: string | null;
   weighted_avg_rate: number;
   total_stock_value: number;
   reorder_level: number;
@@ -43,9 +52,14 @@ export interface SiteStore {
   project_id: number;
   project_name?: string | null;
   store_name: string;
+  store_type?: string | null;
   location_details?: string | null;
   store_in_charge_user_id?: number | null;
   store_in_charge_name?: string | null;
+  zone_code?: string | null;
+  rack_code?: string | null;
+  bin_code?: string | null;
+  contact_phone?: string | null;
   is_central_warehouse: boolean;
   is_active: boolean;
   stocks: StoreStock[];
@@ -59,12 +73,21 @@ export interface PurchaseRequisition {
   pr_number: string;
   requested_by_user_id: number;
   requester_name?: string | null;
+  department_name?: string | null;
+  site_engineer_name?: string | null;
   requisition_date: string;
   required_by_date?: string | null;
   material_id: number;
   material_name?: string | null;
+  material_specification?: string | null;
   unit_of_measure?: string | null;
   requested_quantity: number;
+  current_stock_quantity?: number | null;
+  reserved_quantity?: number | null;
+  estimated_unit_rate?: number | null;
+  estimated_amount?: number | null;
+  suggested_vendor_name?: string | null;
+  priority?: 'NORMAL' | 'URGENT' | 'EMERGENCY' | string;
   boq_item_id?: number | null;
   boq_item_code?: string | null;
   boq_remaining_headroom?: number | null;
@@ -74,7 +97,7 @@ export interface PurchaseRequisition {
   tower_name?: string | null;
   floor_number?: string | null;
   purpose_notes?: string | null;
-  status: 'PENDING_CS' | 'RFQ_ISSUED' | 'CS_PREPARED' | 'PO_ISSUED' | 'REJECTED';
+  status: 'DRAFT' | 'SUBMITTED' | 'SITE_APPROVED' | 'BUDGET_VERIFIED' | 'PROCUREMENT_REVIEWED' | 'APPROVED_FOR_PURCHASE' | 'PENDING_CS' | 'RFQ_ISSUED' | 'CS_PREPARED' | 'PARTIALLY_ORDERED' | 'FULLY_ORDERED' | 'PO_ISSUED' | 'REJECTED' | 'CLOSED' | string;
   created_at?: string;
 }
 
@@ -112,11 +135,17 @@ export interface CSQuotation {
   brand_grade?: string | null;
   payment_terms?: string | null;
   technical_compliance?: string;
+  quality_compliance?: 'Pass' | 'Pending' | 'Failed' | string;
   quoted_unit_rate: number;
+  transport_cost?: number;
+  discount_amount?: number;
+  tax_amount?: number;
+  total_delivered_cost?: number;
   quoted_quantity: number;
   total_quoted_amount: number;
   credit_days_offered: number;
   lead_time_days: number;
+  warranty_terms?: string | null;
   is_recommended: boolean;
   remarks?: string | null;
 }
@@ -174,6 +203,9 @@ export interface GoodsReceipt {
   po_id: number;
   po_number?: string | null;
   po_unit_price?: number | null;
+  po_ordered_quantity?: number | null;
+  po_outstanding_quantity?: number | null;
+  destination_store_name?: string | null;
   project_name?: string | null;
   vendor_name?: string | null;
   material_name?: string | null;
@@ -242,6 +274,10 @@ export interface MaterialIssueNote {
   material_name?: string | null;
   unit_of_measure: string;
   issued_quantity: number;
+  returned_quantity?: number;
+  net_consumed_quantity?: number;
+  receiving_person?: string | null;
+  batch_number?: string | null;
   contractor_name?: string | null;
   issued_by_name?: string | null;
   purpose?: string | null;
@@ -262,6 +298,10 @@ export interface StockTransfer {
   material_name?: string | null;
   unit_of_measure?: string | null;
   transfer_quantity: number;
+  received_quantity?: number | null;
+  damaged_quantity?: number;
+  short_delivered_quantity?: number;
+  discrepancy_notes?: string | null;
   dispatch_date: string;
   dispatched_by_name?: string | null;
   receipt_date?: string | null;
@@ -274,19 +314,40 @@ export interface StockTransfer {
   created_at?: string;
 }
 
+export interface StockAdjustmentRecord {
+  id: number;
+  store_id: number;
+  store_name: string;
+  material_id: number;
+  material_name: string;
+  unit_of_measure: string;
+  quantity_delta: number;
+  unit_rate: number;
+  total_adjustment_value: number;
+  adjustment_reason: string;
+  approval_status: string;
+  evidence_notes?: string;
+  voucher_reference?: string;
+  created_at?: string;
+}
+
 export interface StockLedger {
   id: number;
   store_id: number;
+  store_name?: string | null;
   material_id: number;
   material_name?: string | null;
+  unit_of_measure?: string | null;
   transaction_type: string;
   reference_number: string;
   transaction_date: string;
+  posting_date?: string;
   quantity_in: number;
   quantity_out: number;
   unit_rate: number;
   total_value: number;
   running_balance_qty: number;
+  balance_quantity?: number;
   running_weighted_avg_rate: number;
   created_at?: string;
 }
@@ -307,7 +368,44 @@ export interface StoreValuationResponse {
   is_central_warehouse: boolean;
   project_name?: string | null;
   total_valuation: number;
+  total_stock_value?: number;
   items: StoreValuationItem[];
+}
+
+export interface ValuationMethodComparison {
+  material_id: number;
+  material_name: string;
+  category: string;
+  unit_of_measure: string;
+  current_quantity: number;
+  weighted_avg_rate: number;
+  weighted_avg_valuation: number;
+  fifo_rate: number;
+  fifo_valuation: number;
+  standard_cost: number;
+  standard_valuation: number;
+  cost_variance: number;
+}
+
+export interface StockAgingReportItem {
+  material_id: number;
+  material_name: string;
+  store_name: string;
+  current_stock_quantity: number;
+  unit_of_measure: string;
+  weighted_avg_rate: number;
+  total_valuation: number;
+  days_since_last_movement: number;
+  aging_category: string;
+  impairment_risk: string;
+}
+
+export interface PeriodEndReconciliation {
+  period_name: string;
+  total_inventory_asset_valuation: number;
+  gl_inventory_account_balance: number;
+  unreconciled_difference: number;
+  reconciliation_status: string;
 }
 
 export interface ProcurementMetrics {
@@ -320,4 +418,72 @@ export interface ProcurementMetrics {
   grn_variance_flags: number;
   pending_qc_count: number;
   total_inventory_valuation: number;
+}
+
+export interface ReorderAlertItem {
+  store_id: number;
+  store_name: string;
+  material_id: number;
+  material_name: string;
+  category: string;
+  unit_of_measure: string;
+  current_stock_quantity: number;
+  reorder_level: number;
+  safety_stock?: number;
+  lead_time_days?: number;
+  avg_daily_consumption?: number;
+  open_po_quantity?: number;
+  reserved_quantity?: number;
+  max_stock_level?: number;
+  shortage_quantity: number;
+  weighted_avg_rate: number;
+  suggested_order_value: number;
+  suggested_purchase_quantity?: number;
+  is_emergency?: boolean;
+  project_id?: number | null;
+  project_name?: string | null;
+}
+
+export interface SupplierBill {
+  id: number;
+  po_id: number;
+  po_number: string;
+  grn_number: string;
+  vendor_name: string;
+  project_name?: string | null;
+  material_name?: string | null;
+  unit_of_measure?: string | null;
+  po_unit_price?: number;
+  ordered_quantity?: number;
+  delivered_quantity?: number;
+  accepted_quantity?: number;
+  rejected_quantity?: number;
+  receipt_date: string;
+  supplier_invoice_number?: string | null;
+  supplier_invoice_amount?: number | null;
+  calculated_expected_amount: number;
+  variance_amount: number;
+  three_way_match_status: string;
+  accounts_voucher_ref?: string | null;
+  qc_status: string;
+  status: string;
+  vat_tax_amount?: number;
+  freight_amount?: number;
+  discount_amount?: number;
+  debit_note_number?: string | null;
+  debit_note_amount?: number;
+  payment_status?: string;
+  payment_voucher_ref?: string | null;
+  duplicate_warning?: boolean;
+}
+
+export interface AuditTrailItem {
+  id: number;
+  timestamp: string;
+  module: string;
+  action: string;
+  reference_number: string;
+  user_name: string;
+  details: string;
+  status: string;
 }

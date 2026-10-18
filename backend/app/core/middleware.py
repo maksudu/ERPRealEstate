@@ -65,8 +65,13 @@ class AuditLoggingMiddleware(BaseHTTPMiddleware):
 
         # 1. Read request body and preserve stream for downstream handlers
         body_bytes = await request.body()
+        has_sent = False
         async def receive():
-            return {"type": "http.request", "body": body_bytes}
+            nonlocal has_sent
+            if not has_sent:
+                has_sent = True
+                return {"type": "http.request", "body": body_bytes, "more_body": False}
+            return {"type": "http.disconnect"}
         request._receive = receive
 
         # 2. Extract User ID from JWT Token if available
