@@ -98,15 +98,6 @@
       </div>
     </div>
 
-    <!-- Navigation Tabs -->
-    <div class="px-6 bg-white dark:bg-slate-900">
-      <app-custom-tabs
-        [tabs]="tabs()"
-        [activeTabId]="activeTab()"
-        variant="emerald"
-        (tabChange)="onTabChange($event)"
-      ></app-custom-tabs>
-    </div>
 
     <!-- TAB 1: VISUAL HIERARCHY TREE -->
     @if (activeTab() === 'tree') {

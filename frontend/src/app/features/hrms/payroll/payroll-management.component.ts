@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import {
   CardContainerComponent,
   CustomTabsComponent,
@@ -45,7 +46,6 @@ import { LookupItem } from '../../../core/models/lookup.model';
     CommonModule,
     FormsModule,
     CardContainerComponent,
-    CustomTabsComponent,
     CustomInputComponent,
     CustomTextareaComponent,
     CustomButtonComponent,
@@ -56,6 +56,7 @@ import { LookupItem } from '../../../core/models/lookup.model';
   templateUrl: './payroll-management.component.html'
 })
 export class PayrollManagementComponent implements OnInit {
+  private route = inject(ActivatedRoute);
   payrollService = inject(HrmsPayrollService);
   employeeService = inject(HrmsEmployeeService);
   lookupService = inject(LookupService);
@@ -240,6 +241,21 @@ export class PayrollManagementComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.route.url.subscribe(segments => {
+      const last = segments[segments.length - 1]?.path;
+      if (last === 'structures' || last === 'components') {
+        this.activeTab.set('structures');
+      } else if (last === 'assignments' || last === 'increments' || last === 'arrears') {
+        this.activeTab.set('assignments');
+      } else if (last === 'allowances' || last === 'deductions') {
+        this.activeTab.set('loans_advances');
+      } else if (last === 'bonus') {
+        this.activeTab.set('bonuses_tax');
+      } else {
+        this.activeTab.set('register');
+      }
+      this.refreshCurrentTab();
+    });
     this.loadDropdownData();
     this.refreshCurrentTab();
   }

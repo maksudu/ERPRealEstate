@@ -80,15 +80,7 @@
       </app-custom-button>
     </div>
 
-    <!-- Navigation Tabs -->
-    <div class="px-6 pt-3 bg-slate-50/50 dark:bg-slate-850/50">
-      <app-custom-tabs
-        [tabs]="tabs"
-        [activeTabId]="activeTab()"
-        (tabChange)="onTabChange($event)"
-        variant="gold"
-      ></app-custom-tabs>
-    </div>
+
 
     <!-- TAB 1: LEAVE APPLICATIONS -->
     @if (activeTab() === 'applications') {

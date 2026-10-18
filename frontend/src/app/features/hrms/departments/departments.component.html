@@ -107,15 +107,6 @@
       </div>
     </div>
 
-    <!-- Custom Navigation Tabs (Section 2 Structure) -->
-    <div class="px-6 pt-2">
-      <app-custom-tabs
-        [tabs]="tabs()"
-        [activeTabId]="activeTab()"
-        variant="gold"
-        (tabChange)="selectTab($event)"
-      ></app-custom-tabs>
-    </div>
 
     <!-- TAB 1: Section 2.1 & 3.1 & 3.2 DEPARTMENT MASTER -->
     @if (activeTab() === 'master') {

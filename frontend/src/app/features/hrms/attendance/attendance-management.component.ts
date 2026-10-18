@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import {
   CardContainerComponent,
   CustomTabsComponent,
@@ -43,7 +44,6 @@ import { LookupItem } from '../../../core/models/lookup.model';
     CommonModule,
     FormsModule,
     CardContainerComponent,
-    CustomTabsComponent,
     CustomInputComponent,
     CustomTextareaComponent,
     CustomButtonComponent,
@@ -54,6 +54,7 @@ import { LookupItem } from '../../../core/models/lookup.model';
   templateUrl: './attendance-management.component.html'
 })
 export class AttendanceManagementComponent implements OnInit {
+  private route = inject(ActivatedRoute);
   attendanceService = inject(HrmsAttendanceService);
   employeeService = inject(HrmsEmployeeService);
   departmentService = inject(HrmsDepartmentService);
@@ -248,6 +249,23 @@ export class AttendanceManagementComponent implements OnInit {
   quickLookupBanglaName = signal<string>('');
 
   ngOnInit() {
+    this.route.url.subscribe(segments => {
+      const last = segments[segments.length - 1]?.path;
+      if (last === 'shifts' || last === 'rosters') {
+        this.activeTab.set('shifts');
+      } else if (last === 'biometric') {
+        this.activeTab.set('devices');
+      } else if (last === 'corrections' || last === 'missing-punches') {
+        this.activeTab.set('corrections');
+      } else if (last === 'holiday-calendar') {
+        this.activeTab.set('holidays');
+      } else if (last === 'mobile-checkin') {
+        this.activeTab.set('geofences');
+      } else if (last === 'logs' || last === 'site-attendance' || last === 'late-early') {
+        this.activeTab.set('punches');
+      }
+      this.refreshCurrentTab();
+    });
     this.loadAllDropdownOptions();
     this.refreshCurrentTab();
   }

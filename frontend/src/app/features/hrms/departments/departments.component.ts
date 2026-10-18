@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { HrmsDepartmentService } from '../../../core/services/hrms-department.service';
 import { HrmsOrgService } from '../../../core/services/hrms-org.service';
 import { HrmsService, Employee } from '../hrms.service';
@@ -41,7 +42,6 @@ import {
     CustomInputComponent,
     CustomTextareaComponent,
     CustomButtonComponent,
-    CustomTabsComponent,
     ModalComponent,
     SearchableSelectComponent,
     StatusBadgeComponent
@@ -49,6 +49,7 @@ import {
   templateUrl: './departments.component.html'
 })
 export class DepartmentsComponent implements OnInit {
+  private route = inject(ActivatedRoute);
   deptService = inject(HrmsDepartmentService);
   orgService = inject(HrmsOrgService);
   hrmsService = inject(HrmsService);
@@ -220,6 +221,18 @@ export class DepartmentsComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.route.url.subscribe(segments => {
+      const last = segments[segments.length - 1]?.path;
+      if (last === 'hierarchy') {
+        this.activeTab.set('hierarchy');
+      } else if (last === 'heads') {
+        this.activeTab.set('head-assignment');
+      } else if (last === 'cost-centers') {
+        this.activeTab.set('cost-centers');
+      } else {
+        this.activeTab.set('master');
+      }
+    });
     this.refreshAllData();
   }
 

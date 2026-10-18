@@ -37,7 +37,6 @@ import {
     CustomInputComponent,
     CustomTextareaComponent,
     CustomButtonComponent,
-    CustomTabsComponent,
     ModalComponent,
     SearchableSelectComponent,
     StatusBadgeComponent
@@ -146,6 +145,14 @@ export class OrgStructureComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.route.url.subscribe(segments => {
+      const last = segments[segments.length - 1]?.path;
+      if (last === 'companies') this.activeTab.set('companies');
+      else if (last === 'legal-entities') this.activeTab.set('legal-entities');
+      else if (last === 'branches') this.activeTab.set('branches');
+      else if (last === 'project-offices') this.activeTab.set('project-offices');
+      else if (last === 'cost-centers') this.activeTab.set('tree');
+    });
     this.route.queryParamMap.subscribe(params => {
       const tab = params.get('tab');
       if (tab && ['tree', 'companies', 'legal-entities', 'branches', 'project-offices', 'settings'].includes(tab)) {

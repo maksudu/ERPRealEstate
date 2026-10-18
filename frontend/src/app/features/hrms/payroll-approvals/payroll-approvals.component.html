@@ -92,14 +92,7 @@
     </div>
   </div>
 
-  <!-- Unified Modular Navigation Tabs -->
-  <div class="mb-6">
-    <app-custom-tabs
-      [tabs]="tabs"
-      [activeTabId]="activeTab()"
-      (tabChange)="onTabChange($event)"
-    ></app-custom-tabs>
-  </div>
+
 
   <!-- TAB 1: MAKER-CHECKER APPROVALS & WORKFLOW (3.18, 3.19) -->
   @if (activeTab() === 'approvals') {

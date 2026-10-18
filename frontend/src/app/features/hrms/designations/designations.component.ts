@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { HrmsPositionService } from '../../../core/services/hrms-position.service';
 import { HrmsDepartmentService } from '../../../core/services/hrms-department.service';
 import { HrmsOrgService } from '../../../core/services/hrms-org.service';
@@ -38,7 +39,6 @@ import {
     CustomInputComponent,
     CustomTextareaComponent,
     CustomButtonComponent,
-    CustomTabsComponent,
     ModalComponent,
     SearchableSelectComponent,
     StatusBadgeComponent
@@ -46,6 +46,7 @@ import {
   templateUrl: './designations.component.html'
 })
 export class DesignationsComponent implements OnInit {
+  private route = inject(ActivatedRoute);
   posService = inject(HrmsPositionService);
   deptService = inject(HrmsDepartmentService);
   orgService = inject(HrmsOrgService);
@@ -277,6 +278,14 @@ export class DesignationsComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.route.url.subscribe(segments => {
+      const last = segments[segments.length - 1]?.path;
+      if (last === 'grades') {
+        this.activeTab.set('grades');
+      } else {
+        this.activeTab.set('designations');
+      }
+    });
     this.refreshAllData();
   }
 

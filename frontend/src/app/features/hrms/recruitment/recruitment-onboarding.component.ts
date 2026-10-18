@@ -30,7 +30,6 @@ export interface RecruitmentSubView {
     CustomTextareaComponent,
     CustomButtonComponent,
     ModalComponent,
-    SearchableSelectComponent,
     StatusBadgeComponent
   ],
   template: `

@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import {
   CardContainerComponent,
   CustomTabsComponent,
@@ -42,7 +43,6 @@ import { LookupItem } from '../../../core/models/lookup.model';
     CommonModule,
     FormsModule,
     CardContainerComponent,
-    CustomTabsComponent,
     CustomInputComponent,
     CustomTextareaComponent,
     CustomButtonComponent,
@@ -53,6 +53,7 @@ import { LookupItem } from '../../../core/models/lookup.model';
   templateUrl: './leave-overtime.component.html'
 })
 export class LeaveOvertimeComponent implements OnInit {
+  private route = inject(ActivatedRoute);
   leaveService = inject(HrmsLeaveService);
   employeeService = inject(HrmsEmployeeService);
   projectService = inject(ProjectService);
@@ -268,6 +269,19 @@ export class LeaveOvertimeComponent implements OnInit {
   );
 
   ngOnInit(): void {
+    this.route.url.subscribe(segments => {
+      const last = segments[segments.length - 1]?.path;
+      if (last === 'types' || last === 'policies' || last === 'entitlements' || last === 'holidays') {
+        this.activeTab.set('policies');
+      } else if (last === 'balances' || last === 'encashment' || last === 'calendar' || last === 'history') {
+        this.activeTab.set('balances');
+      } else if (last === 'overtime') {
+        this.activeTab.set('overtime');
+      } else if (last === 'applications' || last === 'approvals') {
+        this.activeTab.set('applications');
+      }
+      this.refreshCurrentTab();
+    });
     this.loadDropdownData();
     this.refreshCurrentTab();
   }

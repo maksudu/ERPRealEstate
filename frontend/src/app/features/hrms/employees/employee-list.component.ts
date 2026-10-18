@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { HrmsEmployeeService } from '../../../core/services/hrms-employee.service';
 import { HrmsDepartmentService } from '../../../core/services/hrms-department.service';
 import { HrmsPositionService } from '../../../core/services/hrms-position.service';
@@ -40,7 +41,6 @@ import {
     CustomInputComponent,
     CustomTextareaComponent,
     CustomButtonComponent,
-    CustomTabsComponent,
     ModalComponent,
     DrawerComponent,
     SearchableSelectComponent,
@@ -49,6 +49,7 @@ import {
   templateUrl: './employee-list.component.html'
 })
 export class EmployeeListComponent implements OnInit {
+  private route = inject(ActivatedRoute);
   employeeService = inject(HrmsEmployeeService);
   deptService = inject(HrmsDepartmentService);
   posService = inject(HrmsPositionService);
@@ -312,6 +313,22 @@ export class EmployeeListComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.route.url.subscribe(segments => {
+      const last = segments[segments.length - 1]?.path;
+      if (last === 'add') {
+        setTimeout(() => this.openCreateModal(), 200);
+      } else if (last === 'documents') {
+        this.activeMainTab.set('documents');
+      } else if (last === 'profile' || last === 'personal-info' || last === 'emergency-contacts') {
+        this.activeMainTab.set('directory');
+        setTimeout(() => {
+          const emps = this.employeeService.employees();
+          if (emps.length > 0) this.openDrawer(emps[0]);
+        }, 500);
+      } else {
+        this.activeMainTab.set('directory');
+      }
+    });
     this.loadEmployeesList();
     this.loadPrerequisites();
     this.loadSettingCategoryItems(this.activeSettingCategory());

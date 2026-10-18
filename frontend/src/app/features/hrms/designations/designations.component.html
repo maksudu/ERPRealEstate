@@ -73,14 +73,6 @@
       }
     </div>
 
-    <!-- Navigation Tabs -->
-    <div class="px-6 pt-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40">
-      <app-custom-tabs
-        [tabs]="tabs()"
-        [activeTabId]="activeTab()"
-        (tabChange)="activeTab.set($event)"
-      ></app-custom-tabs>
-    </div>
 
     <!-- Tab 1: Job Titles & Designations -->
     @if (activeTab() === 'designations') {
