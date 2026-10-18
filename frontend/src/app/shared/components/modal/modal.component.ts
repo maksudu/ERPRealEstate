@@ -8,18 +8,18 @@ import { CommonModule } from '@angular/common';
   template: `
     @if (isOpen) {
       <div 
-        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn"
+        class="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn"
         (click)="onBackdropClick()"
       >
         <div 
-          class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl w-full overflow-hidden animate-scaleUp flex flex-col max-h-[90vh]"
+          class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl w-full max-w-[96vw] overflow-hidden animate-scaleUp flex flex-col max-h-[92vh] sm:max-h-[90vh]"
           [ngClass]="modalClass"
           (click)="$event.stopPropagation()"
         >
           <!-- Header -->
-          <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-850/80 flex items-center justify-between shrink-0">
+          <div class="px-4 py-3 sm:px-6 sm:py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-850/80 flex items-center justify-between shrink-0">
             <div>
-              <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              <h3 class="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                 @if (badge) {
                   <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
                     {{ badge }}
@@ -28,7 +28,7 @@ import { CommonModule } from '@angular/common';
                 {{ title }}
               </h3>
               @if (subtitle) {
-                <p class="text-xs text-slate-600 dark:text-slate-300 mt-0.5">{{ subtitle }}</p>
+                <p class="text-[11px] sm:text-xs text-slate-600 dark:text-slate-300 mt-0.5">{{ subtitle }}</p>
               }
             </div>
             
@@ -45,13 +45,13 @@ import { CommonModule } from '@angular/common';
           </div>
 
           <!-- Body -->
-          <div class="p-6 overflow-y-auto flex-1">
+          <div class="p-3.5 sm:p-6 overflow-y-auto flex-1">
             <ng-content></ng-content>
           </div>
 
           <!-- Footer (Optional) -->
           @if (showFooter) {
-            <div class="px-6 py-3.5 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850 flex items-center justify-end gap-2 shrink-0">
+            <div class="px-4 py-3 sm:px-6 sm:py-3.5 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850 flex items-center justify-end gap-2 shrink-0">
               <ng-content select="[modal-footer]"></ng-content>
             </div>
           }

@@ -40,6 +40,32 @@ class Role(Base):
     created_at = Column(TIMESTAMP, server_default=func.now())
 
 
+class Permission(Base):
+    __tablename__ = "sys_permissions"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    module_code = Column(String(64), nullable=False, index=True)
+    permission_code = Column(String(100), unique=True, nullable=False, index=True)
+    permission_name = Column(String(150), nullable=False)
+    description = Column(String(255), nullable=True)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(TIMESTAMP, server_default=func.now())
+
+
+class RolePermission(Base):
+    __tablename__ = "sys_role_permissions"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    role_id = Column(BigInteger, ForeignKey("sys_roles.id", ondelete="CASCADE"), nullable=False, index=True)
+    permission_id = Column(BigInteger, ForeignKey("sys_permissions.id", ondelete="CASCADE"), nullable=False, index=True)
+    can_create = Column(Boolean, default=True)
+    can_read = Column(Boolean, default=True)
+    can_update = Column(Boolean, default=True)
+    can_delete = Column(Boolean, default=True)
+    can_approve = Column(Boolean, default=True)
+    created_at = Column(TIMESTAMP, server_default=func.now())
+
+
 class User(Base):
     __tablename__ = "sys_users"
 

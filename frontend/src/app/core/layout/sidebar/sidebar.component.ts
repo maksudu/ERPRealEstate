@@ -38,7 +38,7 @@ export class SidebarComponent implements OnInit {
   filterQuery = signal<string>('');
 
   // Expanded menu groups state (persisted as Set of IDs, auto-expands active route)
-  expandedGroupIds = signal<Set<string>>(new Set());
+  expandedGroupIds = signal<Set<string>>(new Set(['procurement']));
 
   // =========================================================================
   // 16 Full Enterprise HRMS Main Menus matching user specification exactly
@@ -379,6 +379,42 @@ export class SidebarComponent implements OnInit {
       ]
     },
     {
+      id: 'construction',
+      title: 'Construction Operations',
+      iconSvg: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4',
+      items: [
+        { id: 'wbs-boq', label: 'WBS & BOQ Hard Budget Locks', route: '/construction/wbs-boq' },
+        { id: 'dpr', label: 'Site Diary & Daily Progress (DPR)', route: '/construction/dpr' },
+        { id: 'labor-muster', label: 'Subcontractor Labor Muster Roll', route: '/construction/labor-muster' },
+        { id: 'ra-bills', label: 'Contractor RA Billing', route: '/construction/ra-bills' },
+        { id: 'cube-tests', label: 'Concrete Cube Crushing Tests', route: '/construction/cube-tests' },
+        { id: 'safety-ncr', label: 'Site Safety NCR Register', route: '/construction/safety-ncr' }
+      ]
+    },
+    {
+      id: 'procurement',
+      title: '9. Procurement & Inventory',
+      iconSvg: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4',
+      badge: '15 Modules',
+      items: [
+        { id: 'proc-dash', label: '9.1 Procurement Dashboard', route: '/procurement/dashboard', badge: 'Live' },
+        { id: 'proc-vendor', label: '9.2 Supplier & Vendor Management', route: '/procurement/vendors', badge: 'Enlist' },
+        { id: 'proc-mat', label: '9.3 Material & Item Master', route: '/procurement/materials', badge: 'SKU' },
+        { id: 'proc-pr', label: '9.4 Purchase Requisitions (PR)', route: '/procurement/requisitions', badge: 'BOQ Lock' },
+        { id: 'proc-rfq', label: '9.5 RFQ & Quotation Comparison', route: '/procurement/rfq-comparison', badge: 'CS' },
+        { id: 'proc-po', label: '9.6 Purchase Order (PO) Mgmt', route: '/procurement/purchase-orders', badge: 'PO' },
+        { id: 'proc-grn', label: '9.7 Goods Receipt Note (GRN)', route: '/procurement/grn', badge: 'Gate' },
+        { id: 'proc-qc', label: '9.8 Quality Inspection & Gate Entry', route: '/procurement/inspections', badge: 'QC' },
+        { id: 'proc-stock', label: '9.9 Warehouse & Project-Site Stock', route: '/procurement/warehouse-stock', badge: 'Stock' },
+        { id: 'proc-min', label: '9.10 Material Issue & Consumption', route: '/procurement/material-issues', badge: 'MIN' },
+        { id: 'proc-transfer', label: '9.11 Stock Transfers & Adjustments', route: '/procurement/stock-transfers', badge: 'Challan' },
+        { id: 'proc-planning', label: '9.12 Reorder & Material Planning', route: '/procurement/material-planning', badge: 'Indent' },
+        { id: 'proc-ledger', label: '9.13 Perpetual Valuation & Ledger', route: '/procurement/inventory-ledger', badge: 'Costing' },
+        { id: 'proc-bills', label: '9.14 Supplier Bills & 3-Way Match', route: '/procurement/supplier-bills', badge: '3-Way' },
+        { id: 'proc-audit', label: '9.15 Audit Trail & Reports', route: '/procurement/reports-audit', badge: 'Audit' }
+      ]
+    },
+    {
       id: 'units',
       title: 'Property Inventory',
       iconSvg: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10',
@@ -454,42 +490,6 @@ export class SidebarComponent implements OnInit {
       badge: '16 Modules',
       items: [],
       subGroups: []
-    },
-    {
-      id: 'construction',
-      title: 'Construction Operations',
-      iconSvg: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4',
-      items: [
-        { id: 'wbs-boq', label: 'WBS & BOQ Hard Budget Locks', route: '/construction/wbs-boq' },
-        { id: 'dpr', label: 'Site Diary & Daily Progress (DPR)', route: '/construction/dpr' },
-        { id: 'labor-muster', label: 'Subcontractor Labor Muster Roll', route: '/construction/labor-muster' },
-        { id: 'ra-bills', label: 'Contractor RA Billing', route: '/construction/ra-bills' },
-        { id: 'cube-tests', label: 'Concrete Cube Crushing Tests', route: '/construction/cube-tests' },
-        { id: 'safety-ncr', label: 'Site Safety NCR Register', route: '/construction/safety-ncr' }
-      ]
-    },
-    {
-      id: 'procurement',
-      title: 'Procurement & Inventory',
-      iconSvg: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4',
-      badge: '15 Modules',
-      items: [
-        { id: 'proc-dash', label: 'Procurement Dashboard', route: '/procurement/dashboard', badge: 'Live' },
-        { id: 'proc-vendor', label: 'Supplier & Vendor Master', route: '/procurement/vendors', badge: 'Enlisted' },
-        { id: 'proc-mat', label: 'Material & Item Master', route: '/procurement/materials', badge: 'SKU' },
-        { id: 'proc-pr', label: 'Purchase Requisitions (PR)', route: '/procurement/requisitions', badge: 'BOQ Lock' },
-        { id: 'proc-rfq', label: 'RFQ & Quotation Comparison', route: '/procurement/rfq-comparison', badge: 'CS' },
-        { id: 'proc-po', label: 'Purchase Order (PO)', route: '/procurement/purchase-orders', badge: 'PO' },
-        { id: 'proc-grn', label: 'Goods Receipt Note (GRN)', route: '/procurement/grn', badge: 'Gate' },
-        { id: 'proc-qc', label: 'Quality Inspection (QC)', route: '/procurement/inspections', badge: 'QC' },
-        { id: 'proc-stock', label: 'Warehouse & Site Stock', route: '/procurement/warehouse-stock', badge: 'Stock' },
-        { id: 'proc-min', label: 'Material Issue & Consumption', route: '/procurement/material-issues', badge: 'MIN' },
-        { id: 'proc-transfer', label: 'Stock Transfer & Adjust', route: '/procurement/stock-transfers', badge: 'Challan' },
-        { id: 'proc-planning', label: 'Reorder & Material Plan', route: '/procurement/material-planning', badge: 'Indent' },
-        { id: 'proc-ledger', label: 'Stock Valuation & Ledger', route: '/procurement/inventory-ledger', badge: 'Costing' },
-        { id: 'proc-bills', label: 'Supplier Bills & 3-Way Match', route: '/procurement/supplier-bills', badge: '3-Way' },
-        { id: 'proc-audit', label: 'Audit Trail & Reports', route: '/procurement/reports-audit', badge: 'Audit' }
-      ]
     },
     {
       id: 'handover',

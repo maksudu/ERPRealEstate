@@ -16,7 +16,8 @@ import { SidebarComponent } from './core/layout/sidebar/sidebar.component';
 export class AppComponent implements OnInit {
   authService = inject(AuthService);
   router = inject(Router);
-  isSidebarOpen = signal<boolean>(true);
+  
+  isSidebarOpen = signal<boolean>(typeof window !== 'undefined' ? window.innerWidth >= 1024 : true);
   isAuthPage = signal<boolean>(false);
 
   ngOnInit(): void {
@@ -26,7 +27,20 @@ export class AppComponent implements OnInit {
       filter(event => event instanceof NavigationEnd)
     ).subscribe((event: any) => {
       this.updateAuthPageState(event.urlAfterRedirects || event.url);
+      // Auto-collapse mobile drawer upon selecting any route
+      if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+        this.isSidebarOpen.set(false);
+      }
     });
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('resize', () => {
+        if (window.innerWidth < 1024 && this.isSidebarOpen()) {
+          // If viewport shrunk below desktop, close drawer to prevent blocking screen
+          this.isSidebarOpen.set(false);
+        }
+      });
+    }
   }
 
   private updateAuthPageState(url: string): void {

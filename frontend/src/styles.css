@@ -195,3 +195,33 @@
   max-width: 100%;
 }
 
+/* Responsive Card Actions & Mobile Form / Table Optimizations */
+@media (max-width: 640px) {
+  [card-actions] {
+    width: 100%;
+    justify-content: stretch;
+    gap: 0.5rem;
+  }
+  [card-actions] select,
+  [card-actions] .erp-input,
+  [card-actions] button,
+  [card-actions] app-custom-button {
+    min-width: 100%;
+    width: 100%;
+  }
+}
+
+/* Ensure smooth horizontal scrolling for data tables on mobile */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* HTML5 Fullscreen styling */
+:fullscreen, :-webkit-full-screen {
+  width: 100vw;
+  height: 100vh;
+  overflow-y: auto;
+}
+

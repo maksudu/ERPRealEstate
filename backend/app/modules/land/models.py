@@ -28,44 +28,153 @@ class LandBank(Base):
     
     # Deal Type: JOINT_VENTURE, OUTRIGHT_PURCHASE, REVENUE_SHARE
     deal_type = Column(String(64), nullable=False, default="JOINT_VENTURE", index=True)
+    opportunity_source = Column(String(64), nullable=False, default="BROKER") # BROKER, LANDOWNER, AGENT, INTERNAL_TEAM
+    source_contact_details = Column(String(255), nullable=True)
+    road_access_width_ft = Column(Numeric(6, 2), nullable=False, default=40.00)
+    surrounding_development = Column(Text, nullable=True)
+    proposed_development_type = Column(String(64), nullable=False, default="RESIDENTIAL")
+    far_potential = Column(Numeric(5, 2), nullable=False, default=4.50)
+    max_allowable_floors = Column(Integer, nullable=False, default=14)
+    ground_coverage_percent = Column(Numeric(5, 2), nullable=False, default=50.00)
+    estimated_builtup_sqft = Column(Numeric(16, 2), nullable=False, default=0.00)
+    indicative_cost_total = Column(Numeric(16, 2), nullable=False, default=0.00)
+    indicative_cost_per_katha = Column(Numeric(16, 2), nullable=False, default=0.00)
     
     # Status: DRAFT_PROPOSAL, LEGAL_VETTING, SURVEY_IN_PROGRESS, JV_SIGNED, ACQUIRED, REJECTED
     status = Column(String(64), nullable=False, default="DRAFT_PROPOSAL", index=True)
+    workflow_stage = Column(String(64), nullable=False, default="IDENTIFIED", index=True) # IDENTIFIED, SCREENING_INSPECTION, FEASIBILITY_VALUATION, MANAGEMENT_APPROVAL, DUE_DILIGENCE_NEGOTIATION, ACQUIRED, REJECTED
+    preliminary_valuation_notes = Column(Text, nullable=True)
+    feasibility_report_summary = Column(JSON, nullable=True)
     
     location_description = Column(Text, nullable=True)
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
 
     # Relationships
-    landowners = relationship("Landowner", back_populates="land_bank", cascade="all, delete-orphan")
+    landowners = relationship("Landowner", back_populates="land_bank")
     survey_records = relationship("SurveyRecord", back_populates="land_bank", cascade="all, delete-orphan")
     jv_agreements = relationship("JVAgreement", back_populates="land_bank", cascade="all, delete-orphan")
     khatians = relationship("LandKhatian", back_populates="land_bank", cascade="all, delete-orphan")
     dags = relationship("LandDag", back_populates="land_bank", cascade="all, delete-orphan")
     documents = relationship("LandDeedDocument", back_populates="land_bank", cascade="all, delete-orphan")
+    parcels = relationship("LandParcel", back_populates="land_bank")
 
 
 class Landowner(Base):
     """
-    Individual or institutional title holders with fractional or full ownership ratios.
+    Centralized register of landowners, sellers, co-owners, representatives, and authorized signatories.
+    Supports multi-parcel registration, duplicate detection, and PoA/banking compliance.
     """
     __tablename__ = "lnd_landowners"
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
-    land_bank_id = Column(BigInteger, ForeignKey("lnd_land_banks.id", ondelete="CASCADE"), nullable=False, index=True)
-    owner_type = Column(String(32), nullable=False, default="INDIVIDUAL") # INDIVIDUAL, COMPANY, HEIR_INHERITANCE
-    full_name_en = Column(String(191), nullable=False)
+    landowner_code = Column(String(64), unique=True, nullable=False, index=True) # e.g. LND-OWN-0001
+    land_bank_id = Column(BigInteger, ForeignKey("lnd_land_banks.id", ondelete="SET NULL"), nullable=True, index=True)
+    owner_type = Column(String(32), nullable=False, default="INDIVIDUAL") # INDIVIDUAL, JOINT_OWNER, COMPANY, POA_HOLDER
+    full_name_en = Column(String(191), nullable=False, index=True)
     full_name_bn = Column(String(191), nullable=True)
+    father_mother_spouse_name = Column(String(191), nullable=True)
+    present_address = Column(Text, nullable=True)
+    permanent_address = Column(Text, nullable=True)
+    
     nid_number = Column(String(64), nullable=True, index=True)
+    passport_number = Column(String(64), nullable=True)
+    company_reg_number = Column(String(64), nullable=True)
     tin_number = Column(String(64), nullable=True)
-    phone_number = Column(String(32), nullable=True)
+    phone_number = Column(String(32), nullable=True, index=True)
+    email = Column(String(128), nullable=True)
+    emergency_contact_name = Column(String(128), nullable=True)
+    emergency_contact_phone = Column(String(32), nullable=True)
+    
     ownership_share_ratio = Column(Numeric(6, 4), nullable=False, default=1.0000) # e.g. 0.5000 = 50%
-    bank_details = Column(JSON, nullable=True) # bank_name, branch, routing_number, account_no
+    ownership_nature = Column(String(32), nullable=False, default="INHERITED") # INHERITED, PURCHASED, GIFT_HEBA, COURT_DECREE
+    
+    # Restricted Banking Details
+    bank_name = Column(String(128), nullable=True)
+    bank_branch = Column(String(128), nullable=True)
+    bank_account_no = Column(String(64), nullable=True)
+    bank_routing_no = Column(String(32), nullable=True)
+    bank_account_holder = Column(String(128), nullable=True)
+    bank_details = Column(JSON, nullable=True)
+    
+    nominee_details = Column(JSON, nullable=True)
+    poa_details = Column(JSON, nullable=True)
+    supporting_documents = Column(JSON, nullable=True)
+    negotiation_notes = Column(JSON, nullable=True)
+    status = Column(String(32), nullable=False, default="ACTIVE", index=True) # PROSPECT, UNDER_VERIFICATION, ACTIVE, BLOCKED, ARCHIVED
     
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
 
     land_bank = relationship("LandBank", back_populates="landowners")
+    parcel_links = relationship("LandownerParcelLink", back_populates="landowner", cascade="all, delete-orphan")
+
+
+class LandParcel(Base):
+    """
+    Every land parcel must have a unique record, even when several parcels are acquired for the same project.
+    Supports multi-mouza, khatian, dag, and deeds with GPS coordinates and cardinal boundaries.
+    """
+    __tablename__ = "lnd_parcels"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    parcel_id = Column(String(64), unique=True, nullable=False, index=True) # e.g. LND-000125
+    land_bank_id = Column(BigInteger, ForeignKey("lnd_land_banks.id", ondelete="SET NULL"), nullable=True, index=True)
+    project_id = Column(BigInteger, nullable=True, index=True)
+    project_name = Column(String(191), nullable=False)
+    division = Column(String(64), nullable=False, default="Dhaka Division")
+    district = Column(String(64), nullable=False, default="Dhaka")
+    upazila_thana = Column(String(128), nullable=False, default="Gulshan")
+    mouza_name = Column(String(128), nullable=False, index=True)
+    jl_number = Column(String(64), nullable=False)
+    khatian_number = Column(String(64), nullable=False)
+    dag_number = Column(String(64), nullable=False)
+    land_classification = Column(String(64), nullable=False, default="RESIDENTIAL") # RESIDENTIAL, COMMERCIAL, AGRICULTURAL, OTHER
+    
+    total_area_decimal = Column(Numeric(14, 4), nullable=False, default=0.0)
+    total_area_katha = Column(Numeric(14, 4), nullable=False, default=0.0)
+    total_area_bigha = Column(Numeric(14, 4), nullable=False, default=0.0)
+    total_area_sqft = Column(Numeric(16, 2), nullable=False, default=0.0)
+    
+    acquisition_status = Column(String(64), nullable=False, default="PROPOSED", index=True) # PROPOSED, UNDER_REVIEW, APPROVED, ACQUIRED
+    gps_latitude = Column(Numeric(10, 7), nullable=True)
+    gps_longitude = Column(Numeric(10, 7), nullable=True)
+    boundary_north = Column(String(255), nullable=True)
+    boundary_south = Column(String(255), nullable=True)
+    boundary_east = Column(String(255), nullable=True)
+    boundary_west = Column(String(255), nullable=True)
+    road_access_width_ft = Column(Numeric(6, 2), nullable=False, default=40.0)
+    
+    deed_number = Column(String(128), nullable=True)
+    deed_date = Column(Date, nullable=True)
+    source_record_info = Column(JSON, nullable=True)
+    gis_polygon_data = Column(JSON, nullable=True)
+    remarks = Column(Text, nullable=True)
+    
+    created_at = Column(TIMESTAMP, server_default=func.now())
+    updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
+
+    land_bank = relationship("LandBank", back_populates="parcels")
+    owner_links = relationship("LandownerParcelLink", back_populates="parcel", cascade="all, delete-orphan")
+
+
+class LandownerParcelLink(Base):
+    """
+    Many-to-many relationship linking multiple landowners to single or multiple land parcels
+    with explicit ownership share percentages.
+    """
+    __tablename__ = "lnd_landowner_parcel_links"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    landowner_id = Column(BigInteger, ForeignKey("lnd_landowners.id", ondelete="CASCADE"), nullable=False, index=True)
+    parcel_id = Column(BigInteger, ForeignKey("lnd_parcels.id", ondelete="CASCADE"), nullable=False, index=True)
+    ownership_share_percent = Column(Numeric(6, 2), nullable=False, default=100.0)
+    title_deed_no = Column(String(128), nullable=True)
+    status = Column(String(32), nullable=False, default="ACTIVE")
+    created_at = Column(TIMESTAMP, server_default=func.now())
+
+    landowner = relationship("Landowner", back_populates="parcel_links")
+    parcel = relationship("LandParcel", back_populates="owner_links")
 
 
 class LandKhatian(Base):

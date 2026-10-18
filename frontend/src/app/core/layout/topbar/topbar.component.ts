@@ -1,4 +1,4 @@
-import { Component, Output, EventEmitter, inject, signal } from '@angular/core';
+import { Component, Output, EventEmitter, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
@@ -23,7 +23,7 @@ export interface NotificationItem {
     class: 'sticky top-0 z-40 block w-full backdrop-blur-md bg-white/85 dark:bg-slate-900/85 border-b border-slate-200/80 dark:border-slate-800/80 shadow-xs'
   }
 })
-export class TopbarComponent {
+export class TopbarComponent implements OnInit {
   authService = inject(AuthService);
   themeService = inject(ThemeService);
 
@@ -32,6 +32,34 @@ export class TopbarComponent {
   isDarkMode = () => this.themeService.isDark();
   isNotificationOpen = signal<boolean>(false);
   isProfileMenuOpen = signal<boolean>(false);
+  isFullscreen = signal<boolean>(false);
+
+  ngOnInit(): void {
+    if (typeof document !== 'undefined') {
+      document.addEventListener('fullscreenchange', () => {
+        this.isFullscreen.set(!!document.fullscreenElement);
+      });
+    }
+  }
+
+  toggleFullscreen(): void {
+    if (typeof document === 'undefined') return;
+    try {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {
+          console.warn('Error attempting to enable fullscreen:', err);
+        });
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen().catch(err => {
+            console.warn('Error attempting to exit fullscreen:', err);
+          });
+        }
+      }
+    } catch (err) {
+      console.warn('Fullscreen API error:', err);
+    }
+  }
 
   // Notifications
   notifications = signal<NotificationItem[]>([
