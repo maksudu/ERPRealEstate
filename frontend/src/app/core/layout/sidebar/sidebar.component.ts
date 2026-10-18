@@ -7,9 +7,10 @@ import { filter } from 'rxjs/operators';
 export interface SubMenuItem {
   id: string;
   label: string;
-  route: string;
+  route?: string;
   queryParams?: { [key: string]: any };
   badge?: string;
+  children?: SubMenuItem[];
 }
 
 export interface MenuGroup {
@@ -38,7 +39,8 @@ export class SidebarComponent implements OnInit {
   filterQuery = signal<string>('');
 
   // Expanded menu groups state (persisted as Set of IDs, auto-expands active route)
-  expandedGroupIds = signal<Set<string>>(new Set(['procurement']));
+  expandedGroupIds = signal<Set<string>>(new Set(['land', 'procurement']));
+  expandedSubItemIds = signal<Set<string>>(new Set(['land-reports-sub']));
 
   // =========================================================================
   // 16 Full Enterprise HRMS Main Menus matching user specification exactly
@@ -363,7 +365,39 @@ export class SidebarComponent implements OnInit {
       title: 'Land Bank & Acquisition',
       iconSvg: 'M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7',
       items: [
-        { id: 'landowners', label: 'Land Bank Proposals', route: '/land/proposals' },
+        { id: 'land-dashboard', label: 'Land Intelligence Cockpit', route: '/land/dashboard', badge: 'AI Live' },
+        { id: 'landowners-registry', label: 'Landowners & Sellers', route: '/land/landowners' },
+        { id: 'land-proposals', label: 'Land Search & Proposals', route: '/land/proposals' },
+        { id: 'land-parcels', label: 'Land Parcel Registry', route: '/land/parcels' },
+        { id: 'land-conversions', label: 'Area & Regional Conversions', route: '/land/conversions', badge: 'Live' },
+        { id: 'land-documents', label: 'Legal Documents Register', route: '/land/documents', badge: 'Vetting' },
+        { id: 'joint-ownership', label: 'Joint Ownership & Agreements', route: '/land/joint-ownership', badge: '100% Audit' },
+        { id: 'due-diligence', label: 'Legal Due Diligence & Encumbrance', route: '/land/due-diligence', badge: 'Compliance' },
+        { id: 'valuation-costing', label: 'Valuation & Acquisition Costing', route: '/land/valuation-costing', badge: 'Financial' },
+        { id: 'negotiation-agreements', label: 'Negotiation & Agreement Register', route: '/land/negotiation', badge: 'Commercial' },
+        { id: 'payment-schedules', label: 'Payment Schedules & Treasury', route: '/land/payment-schedules', badge: 'Treasury' },
+        {
+          id: 'land-reports-sub',
+          label: 'Land Reports (15)',
+          badge: '15 Reports',
+          children: [
+            { id: 'rep-1', label: 'Landowner Master', route: '/land/reports', queryParams: { type: 'landowner-master' } },
+            { id: 'rep-2', label: 'Parcel Register', route: '/land/reports', queryParams: { type: 'parcel-register' } },
+            { id: 'rep-3', label: 'Acquisition Pipeline', route: '/land/reports', queryParams: { type: 'opportunity-pipeline' } },
+            { id: 'rep-4', label: 'Area Summary', route: '/land/reports', queryParams: { type: 'area-summary' } },
+            { id: 'rep-5', label: 'Ownership Discrepancy', route: '/land/reports', queryParams: { type: 'ownership-discrepancy' } },
+            { id: 'rep-6', label: 'Unverified Documents', route: '/land/reports', queryParams: { type: 'unverified-documents' } },
+            { id: 'rep-7', label: 'Due Diligence & Encumbrance', route: '/land/reports', queryParams: { type: 'due-diligence-encumbrance' } },
+            { id: 'rep-8', label: 'Valuation & Cost-per-SqFt', route: '/land/reports', queryParams: { type: 'valuation-cost-sqft' } },
+            { id: 'rep-9', label: 'Approved vs Actual Spend', route: '/land/reports', queryParams: { type: 'expenditure-variance' } },
+            { id: 'rep-10', label: 'Agreement Milestones', route: '/land/reports', queryParams: { type: 'agreement-milestones' } },
+            { id: 'rep-11', label: 'Payment Schedule & Balance', route: '/land/reports', queryParams: { type: 'payment-schedule-balance' } },
+            { id: 'rep-12', label: 'Overdue Installments', route: '/land/reports', queryParams: { type: 'overdue-installments' }, badge: 'Alert' },
+            { id: 'rep-13', label: 'Project Acquired Land', route: '/land/reports', queryParams: { type: 'project-wise-summary' } },
+            { id: 'rep-14', label: 'Approval & Exceptions', route: '/land/reports', queryParams: { type: 'approval-exception-history' } },
+            { id: 'rep-15', label: 'Acquisition Audit Trail', route: '/land/reports', queryParams: { type: 'acquisition-audit-trail' }, badge: 'Audit' }
+          ]
+        },
         { id: 'khatian', label: 'Historic Surveys (CS/SA/RS/BS)', route: '/land/surveys' },
         { id: 'joint-venture', label: 'JV Agreements & Allocation', route: '/land/jv-agreements' }
       ]
@@ -556,7 +590,8 @@ export class SidebarComponent implements OnInit {
         // Standard single-level menu group
         const matchesGroup = group.title.toLowerCase().includes(q);
         const matchingItems = group.items.filter(item =>
-          item.label.toLowerCase().includes(q)
+          item.label.toLowerCase().includes(q) ||
+          (item.children && item.children.some(c => c.label.toLowerCase().includes(q)))
         );
 
         if (matchesGroup || matchingItems.length > 0) {
@@ -587,16 +622,20 @@ export class SidebarComponent implements OnInit {
   private autoExpandActiveRoute(): void {
     const currentUrl = this.router.url;
     for (const group of this.erpMenuGroups) {
-      if (group.items && group.items.some(item => currentUrl.startsWith(item.route))) {
-        this.expandedGroupIds.update(set => {
-          const newSet = new Set(set);
-          newSet.add(group.id);
-          return newSet;
-        });
+      if (group.items) {
+        for (const item of group.items) {
+          if (item.route && currentUrl.startsWith(item.route)) {
+            this.expandedGroupIds.update(set => new Set(set).add(group.id));
+          }
+          if (item.children && item.children.some(c => c.route && currentUrl.startsWith(c.route))) {
+            this.expandedGroupIds.update(set => new Set(set).add(group.id));
+            this.expandedSubItemIds.update(set => new Set(set).add(item.id));
+          }
+        }
       }
       if (group.subGroups) {
         for (const sub of group.subGroups) {
-          if (sub.items && sub.items.some(item => currentUrl.startsWith(item.route))) {
+          if (sub.items && sub.items.some(item => item.route && currentUrl.startsWith(item.route))) {
             this.expandedGroupIds.update(set => {
               const newSet = new Set(set);
               newSet.add(group.id);
@@ -625,4 +664,22 @@ export class SidebarComponent implements OnInit {
     }
     this.expandedGroupIds.set(current);
   }
+
+  isSubItemExpanded(itemId: string): boolean {
+    if (this.filterQuery().trim()) {
+      return true;
+    }
+    return this.expandedSubItemIds().has(itemId);
+  }
+
+  toggleSubItem(itemId: string): void {
+    const current = new Set(this.expandedSubItemIds());
+    if (current.has(itemId)) {
+      current.delete(itemId);
+    } else {
+      current.add(itemId);
+    }
+    this.expandedSubItemIds.set(current);
+  }
 }
+

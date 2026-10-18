@@ -1,0 +1,1249 @@
+<app-card-container [paddingClass]="'p-4 sm:p-6'">
+  <!-- Header & Title -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between pb-6 mb-6 border-b border-slate-200 dark:border-slate-800 gap-4">
+    <div>
+      <div class="flex items-center gap-2.5">
+        <div class="w-10 h-10 rounded-xl bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 border border-blue-500/20">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+            Landowner Negotiation & Agreement Management
+            <span class="text-xs px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 font-semibold border border-blue-200 dark:border-blue-800">
+              Module 2.9
+            </span>
+          </h1>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Full commercial acquisition register, offer/counteroffer audit versions, meeting minutes, and authorized terms approval.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Action -->
+    <div class="flex items-center gap-2.5 shrink-0">
+      <button
+        (click)="openCreateModal()"
+        class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs shadow-sm shadow-blue-500/20 transition-all duration-150 active:scale-95"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        New Commercial Negotiation
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI Metric Overview Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <!-- Total Active -->
+    <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 flex items-center justify-between">
+      <div>
+        <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Active Deals</p>
+        <h3 class="text-xl font-bold text-slate-900 dark:text-slate-100 mt-1">{{ getTotalActiveNegotiations() }}</h3>
+        <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">In active commercial dialogue</p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-500/20">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Final Terms Agreed -->
+    <div class="p-4 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-800/40 flex items-center justify-between">
+      <div>
+        <p class="text-[11px] font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Terms Agreed / Executed</p>
+        <h3 class="text-xl font-bold text-emerald-800 dark:text-emerald-300 mt-1">{{ getTotalAgreedDeals() }}</h3>
+        <p class="text-[11px] text-emerald-600 dark:text-emerald-500 mt-0.5">Approved commercial terms</p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/20">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Delayed Negotiations Alert -->
+    <div 
+      (click)="selectTab('alerts')"
+      class="p-4 rounded-xl bg-rose-50/60 dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-800/40 flex items-center justify-between cursor-pointer hover:border-rose-300 transition-colors"
+    >
+      <div>
+        <div class="flex items-center gap-1.5">
+          <p class="text-[11px] font-semibold uppercase tracking-wider text-rose-700 dark:text-rose-400">Delayed Negotiations</p>
+          <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
+        </div>
+        <h3 class="text-xl font-bold text-rose-800 dark:text-rose-300 mt-1">{{ getTotalDelayedDeals() }}</h3>
+        <p class="text-[11px] text-rose-600 dark:text-rose-500 mt-0.5">Past target closing deadline</p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center border border-rose-500/20">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Expiring Agreements Alert -->
+    <div 
+      (click)="selectTab('alerts')"
+      class="p-4 rounded-xl bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-800/40 flex items-center justify-between cursor-pointer hover:border-amber-300 transition-colors"
+    >
+      <div>
+        <div class="flex items-center gap-1.5">
+          <p class="text-[11px] font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-400">Expiring Agreements</p>
+          <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+        </div>
+        <h3 class="text-xl font-bold text-amber-800 dark:text-amber-300 mt-1">{{ getTotalExpiringAgreements() }}</h3>
+        <p class="text-[11px] text-amber-600 dark:text-amber-500 mt-0.5">Expiry within next 60 days</p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-500/20">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navigation Tabs -->
+  <div class="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 mb-6 overflow-x-auto">
+    <button
+      (click)="selectTab('deals')"
+      [ngClass]="activeTab === 'deals' ? 'border-blue-600 text-blue-600 dark:text-blue-400' : 'border-transparent text-slate-600 dark:text-slate-400'"
+      class="flex items-center gap-2 py-3 px-4 border-b-2 font-medium text-xs whitespace-nowrap transition-colors hover:text-slate-900 dark:hover:text-slate-200"
+    >
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+      </svg>
+      Negotiation Registers & Deals
+      <span class="px-2 py-0.5 rounded-full text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+        {{ negotiations.length }}
+      </span>
+    </button>
+
+    <button
+      (click)="selectTab('versions')"
+      [ngClass]="activeTab === 'versions' ? 'border-blue-600 text-blue-600 dark:text-blue-400' : 'border-transparent text-slate-600 dark:text-slate-400'"
+      class="flex items-center gap-2 py-3 px-4 border-b-2 font-medium text-xs whitespace-nowrap transition-colors hover:text-slate-900 dark:hover:text-slate-200"
+    >
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      Commercial Term Audit Trail (Versions)
+      @if (activeNegotiation?.term_versions?.length) {
+        <span class="px-2 py-0.5 rounded-full text-[10px] bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300">
+          v{{ activeNegotiation?.current_version }} ({{ activeNegotiation?.term_versions?.length }})
+        </span>
+      }
+    </button>
+
+    <button
+      (click)="selectTab('meetings')"
+      [ngClass]="activeTab === 'meetings' ? 'border-blue-600 text-blue-600 dark:text-blue-400' : 'border-transparent text-slate-600 dark:text-slate-400'"
+      class="flex items-center gap-2 py-3 px-4 border-b-2 font-medium text-xs whitespace-nowrap transition-colors hover:text-slate-900 dark:hover:text-slate-200"
+    >
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+      </svg>
+      Meeting Minutes & Follow-Up Tasks
+      @if (activeNegotiation?.meetings?.length) {
+        <span class="px-2 py-0.5 rounded-full text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+          {{ activeNegotiation?.meetings?.length }}
+        </span>
+      }
+    </button>
+
+    <button
+      (click)="selectTab('alerts')"
+      [ngClass]="activeTab === 'alerts' ? 'border-blue-600 text-blue-600 dark:text-blue-400' : 'border-transparent text-slate-600 dark:text-slate-400'"
+      class="flex items-center gap-2 py-3 px-4 border-b-2 font-medium text-xs whitespace-nowrap transition-colors hover:text-slate-900 dark:hover:text-slate-200"
+    >
+      <svg class="w-4 h-4 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+      </svg>
+      Delayed & Expiring Alerts
+      @if (getTotalDelayedDeals() + getTotalExpiringAgreements() > 0) {
+        <span class="px-2 py-0.5 rounded-full text-[10px] bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 font-bold">
+          {{ getTotalDelayedDeals() + getTotalExpiringAgreements() }}
+        </span>
+      }
+    </button>
+  </div>
+
+  <!-- TAB 1: NEGOTIATION REGISTERS & DEALS -->
+  @if (activeTab === 'deals') {
+    <!-- Filter Bar -->
+    <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 mb-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-3">
+        <!-- Search Input -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1.5">Search Deals</label>
+          <input
+            type="text"
+            [(ngModel)]="searchTerm"
+            (keyup.enter)="applyFilters()"
+            placeholder="Search code, title, terms..."
+            class="erp-input text-xs"
+          />
+        </div>
+
+        <!-- Parcel Filter -->
+        <div>
+          <app-searchable-select
+            label="Filter by Parcel"
+            [options]="parcelOptions"
+            [(ngModel)]="selectedParcelFilter"
+            (selectionChange)="applyFilters()"
+            placeholder="All Parcels"
+          ></app-searchable-select>
+        </div>
+
+        <!-- Stage Filter (Dynamic from Lookups) -->
+        <div>
+          <app-searchable-select
+            categoryCode="NEGOTIATION_STAGE"
+            label="Negotiation Stage"
+            [(ngModel)]="selectedStageFilter"
+            (selectionChange)="applyFilters()"
+            placeholder="All Stages"
+          ></app-searchable-select>
+        </div>
+
+        <!-- Agreement Status Filter (Dynamic from Lookups) -->
+        <div>
+          <app-searchable-select
+            categoryCode="AGREEMENT_WORKFLOW_STATUS"
+            label="Agreement Status"
+            [(ngModel)]="selectedStatusFilter"
+            (selectionChange)="applyFilters()"
+            placeholder="All Statuses"
+          ></app-searchable-select>
+        </div>
+
+        <!-- Delayed Only Toggle & Reset -->
+        <div class="flex items-end gap-2">
+          <label class="flex items-center gap-2 text-xs font-medium text-slate-700 dark:text-slate-300 cursor-pointer h-9 px-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 select-none">
+            <input
+              type="checkbox"
+              [(ngModel)]="onlyDelayedFilter"
+              (change)="applyFilters()"
+              class="rounded border-slate-300 text-rose-600 focus:ring-rose-500"
+            />
+            <span class="text-rose-600 dark:text-rose-400 font-semibold">Delayed Only</span>
+          </label>
+
+          <button
+            (click)="resetFilters()"
+            class="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-medium transition-colors h-9"
+            title="Reset Filters"
+          >
+            Reset
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Master Deals Table -->
+    <div class="rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900 shadow-xs mb-4">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-50 dark:bg-slate-850 border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+            <tr>
+              <th class="py-3 px-4">Deal Code & Title</th>
+              <th class="py-3 px-4">Parcel / Landowner</th>
+              <th class="py-3 px-4">Commercial Pricing</th>
+              <th class="py-3 px-4">Advance & Consideration</th>
+              <th class="py-3 px-4">Deadlines & Target</th>
+              <th class="py-3 px-4">Stage / Status</th>
+              <th class="py-3 px-4 text-center">Version</th>
+              <th class="py-3 px-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+            @if (isLoading) {
+              <tr>
+                <td colspan="8" class="text-center py-10 text-slate-500">
+                  <div class="inline-flex items-center gap-2">
+                    <svg class="animate-spin h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                    </svg>
+                    Loading negotiation registers...
+                  </div>
+                </td>
+              </tr>
+            } @else if (negotiations.length === 0) {
+              <tr>
+                <td colspan="8" class="text-center py-12 text-slate-500">
+                  <div class="max-w-xs mx-auto text-center">
+                    <svg class="w-10 h-10 mx-auto text-slate-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <p class="font-medium text-slate-700 dark:text-slate-300">No commercial negotiations found</p>
+                    <p class="text-[11px] text-slate-400 mt-1">Get started by creating a new deal register for a parcel.</p>
+                    <button
+                      (click)="openCreateModal()"
+                      class="mt-3 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-medium hover:bg-blue-700"
+                    >
+                      + Create Negotiation
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            } @else {
+              @for (neg of negotiations; track neg.id) {
+                <tr 
+                  (click)="selectNegotiation(neg)"
+                  [ngClass]="activeNegotiation?.id === neg.id ? 'bg-blue-50/40 dark:bg-blue-950/20' : ''"
+                  class="hover:bg-slate-50 dark:hover:bg-slate-850/60 transition-colors cursor-pointer"
+                >
+                  <!-- Code & Title -->
+                  <td class="py-3 px-4">
+                    <div class="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                      {{ neg.negotiation_code }}
+                      @if (neg.is_delayed) {
+                        <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 border border-rose-200 dark:border-rose-900">
+                          DELAYED
+                        </span>
+                      }
+                    </div>
+                    <div class="text-[11px] text-slate-600 dark:text-slate-400 font-medium truncate max-w-xs" [title]="neg.negotiation_title">
+                      {{ neg.negotiation_title }}
+                    </div>
+                  </td>
+
+                  <!-- Parcel / Landowner -->
+                  <td class="py-3 px-4">
+                    <div class="font-medium text-slate-800 dark:text-slate-200">
+                      {{ getParcelName(neg.parcel_id) }}
+                    </div>
+                    <div class="text-[11px] text-slate-500 dark:text-slate-400">
+                      {{ getLandownerName(neg.landowner_id) }}
+                    </div>
+                  </td>
+
+                  <!-- Commercial Pricing -->
+                  <td class="py-3 px-4">
+                    <div class="flex flex-col gap-0.5">
+                      <div class="text-[11px] text-slate-500">
+                        Asking: <span class="font-semibold text-slate-700 dark:text-slate-300">BDT {{ (neg.initial_asking_price_bdt || 0) | number:'1.2-2' }}</span>
+                      </div>
+                      <div class="text-[11px] text-blue-600 dark:text-blue-400 font-semibold">
+                        Offer: BDT {{ (neg.current_offer_amount_bdt || 0) | number:'1.2-2' }}
+                      </div>
+                      @if (neg.final_agreed_amount_bdt > 0) {
+                        <div class="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold">
+                          Agreed: BDT {{ neg.final_agreed_amount_bdt | number:'1.2-2' }}
+                        </div>
+                      }
+                    </div>
+                  </td>
+
+                  <!-- Advance & Consideration -->
+                  <td class="py-3 px-4">
+                    <div class="font-semibold text-slate-800 dark:text-slate-200">
+                      Adv: BDT {{ (neg.proposed_advance_bdt || 0) | number:'1.2-2' }}
+                    </div>
+                    <div class="text-[10px] font-medium text-slate-500">
+                      {{ neg.consideration_type }}
+                    </div>
+                  </td>
+
+                  <!-- Deadlines -->
+                  <td class="py-3 px-4">
+                    <div class="text-[11px] font-medium text-slate-700 dark:text-slate-300">
+                      Target: {{ neg.target_closing_deadline }}
+                    </div>
+                    @if (neg.agreement_expiry_date) {
+                      <div class="text-[10px] text-amber-600 dark:text-amber-400">
+                        Expiry: {{ neg.agreement_expiry_date }}
+                      </div>
+                    }
+                  </td>
+
+                  <!-- Stage / Status -->
+                  <td class="py-3 px-4">
+                    <div class="flex flex-col gap-1 items-start">
+                      <app-status-badge [status]="neg.negotiation_stage" [variant]="getStatusVariant(neg.negotiation_stage)"></app-status-badge>
+                      <app-status-badge [status]="neg.agreement_status" [variant]="getStatusVariant(neg.agreement_status)"></app-status-badge>
+                    </div>
+                  </td>
+
+                  <!-- Version -->
+                  <td class="py-3 px-4 text-center">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-700">
+                      v{{ neg.current_version }}
+                    </span>
+                  </td>
+
+                  <!-- Actions -->
+                  <td class="py-3 px-4 text-right" (click)="$event.stopPropagation()">
+                    <div class="flex items-center justify-end gap-1.5">
+                      <!-- Revise Terms (Offer/Counteroffer) -->
+                      <button
+                        (click)="openReviseTermsModal(neg)"
+                        class="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 transition-colors"
+                        title="Revise Terms / Counteroffer"
+                      >
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                      </button>
+
+                      <!-- Meeting Minutes -->
+                      <button
+                        (click)="openMeetingModal(neg)"
+                        class="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors"
+                        title="Log Meeting Minutes"
+                      >
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                      </button>
+
+                      <!-- Authorized Approval -->
+                      @if (neg.negotiation_stage !== 'FINAL_TERMS_AGREED') {
+                        <button
+                          (click)="openApproveModal(neg)"
+                          class="p-1.5 rounded-lg border border-emerald-200 dark:border-emerald-800/60 bg-emerald-50/50 dark:bg-emerald-950/30 hover:bg-emerald-100 text-emerald-700 dark:text-emerald-300 transition-colors"
+                          title="Authorize Final Commercial Terms"
+                        >
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                          </svg>
+                        </button>
+                      }
+
+                      <!-- Edit -->
+                      <button
+                        (click)="openEditModal(neg)"
+                        class="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors"
+                        title="Edit Details"
+                      >
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                        </svg>
+                      </button>
+
+                      <!-- Delete -->
+                      <button
+                        (click)="deleteNegotiation(neg.id)"
+                        class="p-1.5 rounded-lg border border-rose-200 dark:border-rose-800 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-rose-600 dark:text-rose-400 transition-colors"
+                        title="Delete Negotiation"
+                      >
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination Footer -->
+      <div class="px-4 py-3 bg-slate-50 dark:bg-slate-850 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500">
+        <div>
+          Showing Page {{ currentPage }} ({{ negotiations.length }} items loaded)
+        </div>
+        <div class="flex items-center gap-2">
+          <button
+            (click)="prevPage()"
+            [disabled]="currentPage === 1"
+            class="px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 disabled:opacity-50 text-slate-700 dark:text-slate-300"
+          >
+            Previous
+          </button>
+          <button
+            (click)="nextPage()"
+            [disabled]="negotiations.length < pageSize"
+            class="px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 disabled:opacity-50 text-slate-700 dark:text-slate-300"
+          >
+            Next
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- TAB 2: COMMERCIAL TERM AUDIT TRAIL (VERSIONS) -->
+  @if (activeTab === 'versions') {
+    <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800">
+      <div class="flex-1 max-w-md">
+        <label class="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1.5">Select Negotiation Deal</label>
+        <select
+          [(ngModel)]="selectedNegotiationIdForVersions"
+          (change)="onVersionNegotiationChange()"
+          class="erp-input text-xs"
+        >
+          @for (n of negotiations; track n.id) {
+            <option [value]="n.id">{{ n.negotiation_code }} - {{ n.negotiation_title }}</option>
+          }
+        </select>
+      </div>
+
+      @if (activeNegotiation) {
+        <div class="flex items-center gap-2">
+          <button
+            (click)="openReviseTermsModal(activeNegotiation)"
+            class="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs flex items-center gap-1.5 shadow-sm"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Submit New Offer / Counteroffer
+          </button>
+        </div>
+      }
+    </div>
+
+    @if (activeNegotiation) {
+      <!-- Summary Box of Selected Deal -->
+      <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 p-4 rounded-xl bg-blue-50/40 dark:bg-blue-950/20 border border-blue-200/50 dark:border-blue-900/40 mb-6">
+        <div>
+          <span class="text-[11px] text-slate-500 uppercase tracking-wider font-semibold">Initial Asking Price</span>
+          <p class="text-base font-bold text-slate-900 dark:text-slate-100 mt-0.5">BDT {{ activeNegotiation.initial_asking_price_bdt | number:'1.2-2' }}</p>
+        </div>
+        <div>
+          <span class="text-[11px] text-slate-500 uppercase tracking-wider font-semibold">Developer Target Price</span>
+          <p class="text-base font-bold text-blue-600 dark:text-blue-400 mt-0.5">BDT {{ activeNegotiation.developer_target_price_bdt | number:'1.2-2' }}</p>
+        </div>
+        <div>
+          <span class="text-[11px] text-slate-500 uppercase tracking-wider font-semibold">Latest Offer / Counteroffer</span>
+          <p class="text-base font-bold text-amber-600 dark:text-amber-400 mt-0.5">BDT {{ (activeNegotiation.current_counteroffer_amount_bdt || activeNegotiation.current_offer_amount_bdt) | number:'1.2-2' }}</p>
+        </div>
+        <div>
+          <span class="text-[11px] text-slate-500 uppercase tracking-wider font-semibold">Final Agreed Amount</span>
+          <p class="text-base font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
+            {{ activeNegotiation.final_agreed_amount_bdt > 0 ? ('BDT ' + (activeNegotiation.final_agreed_amount_bdt | number:'1.2-2')) : 'Pending Agreement' }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Version Audit Table -->
+      <div class="rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900 shadow-xs mb-6">
+        <div class="px-4 py-3 bg-slate-50 dark:bg-slate-850 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+          <h3 class="font-bold text-xs text-slate-900 dark:text-slate-100 flex items-center gap-2">
+            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Commercial Revision Audit Trail ({{ activeNegotiation.term_versions.length || 0 }} Revisions Recorded)
+          </h3>
+          <span class="text-[11px] text-slate-500">Immutable chronological record for audit compliance</span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50/50 dark:bg-slate-850/50 border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+              <tr>
+                <th class="py-3 px-4">Version</th>
+                <th class="py-3 px-4">Offered By Party</th>
+                <th class="py-3 px-4">Proposed Price (BDT)</th>
+                <th class="py-3 px-4">Advance Amount (BDT)</th>
+                <th class="py-3 px-4">Timeline (Days)</th>
+                <th class="py-3 px-4">Revision Rationale / Summary</th>
+                <th class="py-3 px-4">Logged By Officer</th>
+                <th class="py-3 px-4">Date Recorded</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+              @if (!activeNegotiation.term_versions || activeNegotiation.term_versions.length === 0) {
+                <tr>
+                  <td colspan="8" class="text-center py-8 text-slate-500">
+                    No term versions recorded for this deal.
+                  </td>
+                </tr>
+              } @else {
+                @for (v of activeNegotiation.term_versions; track v.id) {
+                  <tr class="hover:bg-slate-50 dark:hover:bg-slate-850/60 transition-colors">
+                    <td class="py-3 px-4 font-bold text-slate-900 dark:text-slate-100">
+                      <span class="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-[11px]">
+                        v{{ v.version_number }}
+                      </span>
+                    </td>
+                    <td class="py-3 px-4">
+                      <app-status-badge [status]="v.offered_by_party" [variant]="getOfferBadgeVariant(v.offered_by_party)"></app-status-badge>
+                    </td>
+                    <td class="py-3 px-4 font-semibold text-slate-900 dark:text-slate-100">
+                      BDT {{ v.proposed_price_bdt | number:'1.2-2' }}
+                    </td>
+                    <td class="py-3 px-4 text-slate-700 dark:text-slate-300">
+                      BDT {{ v.proposed_advance_bdt | number:'1.2-2' }}
+                    </td>
+                    <td class="py-3 px-4 text-slate-600 dark:text-slate-400">
+                      {{ v.proposed_timeline_days ? (v.proposed_timeline_days + ' days') : '-' }}
+                    </td>
+                    <td class="py-3 px-4 text-slate-700 dark:text-slate-300 max-w-xs">
+                      {{ v.revision_summary }}
+                    </td>
+                    <td class="py-3 px-4 text-slate-600 dark:text-slate-400">
+                      {{ v.created_by_officer }}
+                    </td>
+                    <td class="py-3 px-4 text-slate-500 text-[11px]">
+                      {{ v.created_at ? (v.created_at | date:'medium') : '-' }}
+                    </td>
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+  }
+
+  <!-- TAB 3: MEETING MINUTES & FOLLOW-UP TASKS -->
+  @if (activeTab === 'meetings') {
+    <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800">
+      <div class="flex-1 max-w-md">
+        <label class="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1.5">Select Negotiation Deal</label>
+        <select
+          [(ngModel)]="selectedNegotiationIdForMeetings"
+          (change)="onMeetingNegotiationChange()"
+          class="erp-input text-xs"
+        >
+          @for (n of negotiations; track n.id) {
+            <option [value]="n.id">{{ n.negotiation_code }} - {{ n.negotiation_title }}</option>
+          }
+        </select>
+      </div>
+
+      @if (activeNegotiation) {
+        <button
+          (click)="openMeetingModal(activeNegotiation)"
+          class="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs flex items-center gap-1.5 shadow-sm"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+          </svg>
+          Record Meeting Minutes
+        </button>
+      }
+    </div>
+
+    @if (activeNegotiation) {
+      @if (!activeNegotiation.meetings || activeNegotiation.meetings.length === 0) {
+        <div class="p-10 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 text-center text-slate-500">
+          <svg class="w-10 h-10 mx-auto text-slate-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          </svg>
+          <p class="font-medium text-slate-700 dark:text-slate-300">No meeting minutes logged yet</p>
+          <p class="text-[11px] text-slate-400 mt-1">Record the commercial meeting minutes, attendees, and agreed follow-up tasks.</p>
+          <button
+            (click)="openMeetingModal(activeNegotiation)"
+            class="mt-3 px-3.5 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-medium hover:bg-blue-700"
+          >
+            + Record First Meeting
+          </button>
+        </div>
+      } @else {
+        <div class="space-y-4">
+          @for (m of activeNegotiation.meetings; track m.id) {
+            <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 mb-3 border-b border-slate-100 dark:border-slate-800 gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xs">
+                    {{ m.meeting_date | date:'dd' }}
+                  </span>
+                  <div>
+                    <h4 class="font-bold text-xs text-slate-900 dark:text-slate-100">
+                      {{ m.meeting_date | date:'longDate' }} &bull; {{ m.meeting_venue }}
+                    </h4>
+                    <p class="text-[11px] text-slate-500">Meeting Record #{{ m.id }}</p>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  @if (m.next_meeting_date) {
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                      Next Meeting: {{ m.next_meeting_date }}
+                    </span>
+                  }
+                  @if (m.id) {
+                    <button
+                      (click)="deleteMeeting(m.id)"
+                      class="text-rose-500 hover:text-rose-700 p-1 rounded"
+                      title="Delete Meeting"
+                    >
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                      </svg>
+                    </button>
+                  }
+                </div>
+              </div>
+
+              <!-- Attendees Grid -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3 bg-slate-50 dark:bg-slate-850 p-3 rounded-lg text-xs">
+                <div>
+                  <span class="font-semibold text-slate-700 dark:text-slate-300">Developer Attendees:</span>
+                  <p class="text-slate-600 dark:text-slate-400 mt-0.5">{{ m.developer_attendees }}</p>
+                </div>
+                <div>
+                  <span class="font-semibold text-slate-700 dark:text-slate-300">Landowner Attendees:</span>
+                  <p class="text-slate-600 dark:text-slate-400 mt-0.5">{{ m.landowner_attendees }}</p>
+                </div>
+              </div>
+
+              <!-- Discussion Minutes -->
+              <div class="mb-3">
+                <span class="font-semibold text-xs text-slate-800 dark:text-slate-200">Discussion Minutes:</span>
+                <p class="text-xs text-slate-600 dark:text-slate-400 mt-1 whitespace-pre-line leading-relaxed">
+                  {{ m.discussion_minutes }}
+                </p>
+              </div>
+
+              <!-- Follow Up Tasks -->
+              @if (m.follow_up_tasks) {
+                <div class="p-2.5 rounded-lg bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/50 dark:border-amber-900/40 text-xs">
+                  <span class="font-semibold text-amber-800 dark:text-amber-400 flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                    </svg>
+                    Actionable Follow-up Tasks:
+                  </span>
+                  <p class="text-amber-900 dark:text-amber-200 mt-1 whitespace-pre-line">
+                    {{ m.follow_up_tasks }}
+                  </p>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+    }
+  }
+
+  <!-- TAB 4: DELAYED & EXPIRING ALERTS -->
+  @if (activeTab === 'alerts') {
+    <div class="space-y-6">
+      <!-- Delayed Negotiations Section -->
+      <div class="rounded-xl border border-rose-200 dark:border-rose-900 bg-white dark:bg-slate-900 overflow-hidden shadow-xs">
+        <div class="p-4 bg-rose-50/80 dark:bg-rose-950/40 border-b border-rose-200 dark:border-rose-900 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-lg bg-rose-500/20 text-rose-600 dark:text-rose-400 flex items-center justify-center">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="font-bold text-xs text-rose-950 dark:text-rose-200">
+                Delayed Negotiations ({{ alertsData?.total_delayed || 0 }})
+              </h3>
+              <p class="text-[11px] text-rose-700 dark:text-rose-400">Negotiations exceeding target closing deadline without executed agreement</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-4">
+          @if (!alertsData?.delayed_negotiations || alertsData?.delayed_negotiations?.length === 0) {
+            <p class="text-xs text-slate-500 text-center py-4">No delayed negotiations currently flagged. All deals are on track!</p>
+          } @else {
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              @for (del of alertsData?.delayed_negotiations; track del.id) {
+                <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850/50 flex flex-col justify-between">
+                  <div>
+                    <div class="flex items-center justify-between mb-2">
+                      <span class="font-bold text-xs text-slate-900 dark:text-slate-100">{{ del.negotiation_code }}</span>
+                      <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300">
+                        Deadline: {{ del.target_closing_deadline }}
+                      </span>
+                    </div>
+                    <h4 class="font-semibold text-xs text-slate-800 dark:text-slate-200 mb-1">{{ del.negotiation_title }}</h4>
+                    <p class="text-[11px] text-slate-500 mb-2">{{ getParcelName(del.parcel_id) }}</p>
+                    @if (del.delay_reason) {
+                      <div class="p-2 rounded bg-rose-50 dark:bg-rose-950/30 text-[11px] text-rose-700 dark:text-rose-300 mb-3">
+                        <span class="font-semibold">Reason:</span> {{ del.delay_reason }}
+                      </div>
+                    }
+                  </div>
+                  <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+                    <button
+                      (click)="openReviseTermsModal(del)"
+                      class="px-2.5 py-1.5 rounded-lg text-xs bg-blue-600 text-white font-medium hover:bg-blue-700"
+                    >
+                      Revise Terms
+                    </button>
+                    <button
+                      (click)="openEditModal(del)"
+                      class="px-2.5 py-1.5 rounded-lg text-xs border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium"
+                    >
+                      Extend Deadline
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Expiring Agreements Section -->
+      <div class="rounded-xl border border-amber-200 dark:border-amber-900 bg-white dark:bg-slate-900 overflow-hidden shadow-xs">
+        <div class="p-4 bg-amber-50/80 dark:bg-amber-950/40 border-b border-amber-200 dark:border-amber-900 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="font-bold text-xs text-amber-950 dark:text-amber-200">
+                Expiring Commercial Agreements ({{ alertsData?.total_expiring || 0 }})
+              </h3>
+              <p class="text-[11px] text-amber-700 dark:text-amber-400">Agreements expiring within the next 60 days requiring renewal or execution</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-4">
+          @if (!alertsData?.expiring_agreements || alertsData?.expiring_agreements?.length === 0) {
+            <p class="text-xs text-slate-500 text-center py-4">No commercial agreements expiring in the next 60 days.</p>
+          } @else {
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              @for (exp of alertsData?.expiring_agreements; track exp.id) {
+                <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850/50 flex flex-col justify-between">
+                  <div>
+                    <div class="flex items-center justify-between mb-2">
+                      <span class="font-bold text-xs text-slate-900 dark:text-slate-100">{{ exp.negotiation_code }}</span>
+                      <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                        Expires: {{ exp.agreement_expiry_date }}
+                      </span>
+                    </div>
+                    <h4 class="font-semibold text-xs text-slate-800 dark:text-slate-200 mb-1">{{ exp.negotiation_title }}</h4>
+                    <p class="text-[11px] text-slate-500 mb-2">{{ getParcelName(exp.parcel_id) }}</p>
+                    <div class="text-[11px] text-slate-600 dark:text-slate-400 mb-3">
+                      Status: <span class="font-semibold">{{ exp.agreement_status }}</span> &bull; Agreed Consideration: BDT {{ exp.final_agreed_amount_bdt | number:'1.2-2' }}
+                    </div>
+                  </div>
+                  <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+                    <button
+                      (click)="openEditModal(exp)"
+                      class="px-2.5 py-1.5 rounded-lg text-xs bg-amber-600 text-white font-medium hover:bg-amber-700"
+                    >
+                      Renew / Extend Agreement
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- MODAL 1: CREATE / EDIT MASTER NEGOTIATION -->
+  <app-modal
+    [isOpen]="isCreateEditModalOpen"
+    [title]="editingNegotiationId ? 'Edit Commercial Negotiation' : 'New Commercial Negotiation Deal'"
+    [subtitle]="'Record commercial terms, asking price, developer targets, and conditions precedent.'"
+    size="xl"
+    (closeModal)="isCreateEditModalOpen = false"
+  >
+    <div class="space-y-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- Parcel Selection -->
+        <app-searchable-select
+          label="Target Land Parcel"
+          [options]="parcelOptions"
+          [(ngModel)]="negotiationFormData.parcel_id"
+          [required]="true"
+          placeholder="Select Land Parcel..."
+        ></app-searchable-select>
+
+        <!-- Landowner Selection -->
+        <app-searchable-select
+          label="Primary Landowner / Representative"
+          [options]="landownerOptions"
+          [(ngModel)]="negotiationFormData.landowner_id"
+          placeholder="Select Landowner..."
+        ></app-searchable-select>
+      </div>
+
+      <!-- Negotiation Title -->
+      <app-custom-input
+        label="Negotiation Title / Acquisition Deal Reference"
+        [(ngModel)]="negotiationFormData.negotiation_title"
+        [required]="true"
+        placeholder="e.g. Uttara Sector 11 Commercial Plot Acquisition"
+      ></app-custom-input>
+
+      <!-- Stage & Consideration Type (Dynamic from Lookups) -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <app-searchable-select
+          categoryCode="NEGOTIATION_STAGE"
+          label="Negotiation Stage"
+          [(ngModel)]="negotiationFormData.negotiation_stage"
+          placeholder="Select Stage..."
+        ></app-searchable-select>
+
+        <app-searchable-select
+          categoryCode="CONSIDERATION_TYPE"
+          label="Commercial Consideration Type"
+          [(ngModel)]="negotiationFormData.consideration_type"
+          placeholder="Select Consideration..."
+        ></app-searchable-select>
+      </div>
+
+      <!-- Commercial Price Parameters -->
+      <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800">
+        <h4 class="text-xs font-bold text-slate-900 dark:text-slate-100 mb-3 flex items-center gap-1.5">
+          <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          Commercial Pricing & Advances (BDT)
+        </h4>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <app-custom-input
+            type="number"
+            label="Initial Asking Price (BDT)"
+            [(ngModel)]="negotiationFormData.initial_asking_price_bdt"
+            placeholder="0.00"
+          ></app-custom-input>
+
+          <app-custom-input
+            type="number"
+            label="Developer Target Price (BDT)"
+            [(ngModel)]="negotiationFormData.developer_target_price_bdt"
+            placeholder="0.00"
+          ></app-custom-input>
+
+          <app-custom-input
+            type="number"
+            label="Proposed Advance / Bayna (BDT)"
+            [(ngModel)]="negotiationFormData.proposed_advance_bdt"
+            placeholder="0.00"
+          ></app-custom-input>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+          <app-custom-input
+            type="number"
+            label="Current Offer Amount (BDT)"
+            [(ngModel)]="negotiationFormData.current_offer_amount_bdt"
+            placeholder="0.00"
+          ></app-custom-input>
+
+          <app-custom-input
+            type="number"
+            label="Current Counteroffer (BDT)"
+            [(ngModel)]="negotiationFormData.current_counteroffer_amount_bdt"
+            placeholder="0.00"
+          ></app-custom-input>
+        </div>
+      </div>
+
+      <!-- Payment Terms & Non-Cash Consideration -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <app-custom-textarea
+          label="Installment & Settlement Payment Terms"
+          [(ngModel)]="negotiationFormData.installment_terms_summary"
+          placeholder="e.g. 20% on Bayna, 40% on Mutation, 40% on Final Registry"
+          [rows]="3"
+        ></app-custom-textarea>
+
+        <app-custom-textarea
+          label="Non-Cash Consideration (Flats / Shops / Parking Allocation)"
+          [(ngModel)]="negotiationFormData.non_cash_consideration_details"
+          placeholder="e.g. 2 units of 1,800 sft on 4th floor + 2 car parking bays"
+          [rows]="3"
+        ></app-custom-textarea>
+      </div>
+
+      <!-- Conditions Precedent -->
+      <app-custom-textarea
+        label="Conditions Precedent & Legal Completion Prerequisites"
+        [(ngModel)]="negotiationFormData.conditions_precedent"
+        placeholder="e.g. CS-SA-RS mutation porcha delivery, clear dakhila, eviction of tenants, warishan certificate"
+        [rows]="2"
+      ></app-custom-textarea>
+
+      <!-- Deadlines & Agreement Status -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <app-custom-input
+          type="date"
+          label="Negotiation Start Date"
+          [(ngModel)]="negotiationFormData.negotiation_start_date"
+          [required]="true"
+        ></app-custom-input>
+
+        <app-custom-input
+          type="date"
+          label="Target Closing Deadline"
+          [(ngModel)]="negotiationFormData.target_closing_deadline"
+          [required]="true"
+        ></app-custom-input>
+
+        <app-searchable-select
+          categoryCode="AGREEMENT_WORKFLOW_STATUS"
+          label="Agreement Workflow Status"
+          [(ngModel)]="negotiationFormData.agreement_status"
+          placeholder="Select Status..."
+        ></app-searchable-select>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <app-custom-input
+          type="date"
+          label="Agreement Execution Date (If signed)"
+          [(ngModel)]="negotiationFormData.agreement_execution_date"
+        ></app-custom-input>
+
+        <app-custom-input
+          type="date"
+          label="Agreement Expiry Date (If term-bound)"
+          [(ngModel)]="negotiationFormData.agreement_expiry_date"
+        ></app-custom-input>
+      </div>
+    </div>
+
+    <div modal-footer class="flex items-center justify-end gap-2 w-full">
+      <button
+        type="button"
+        (click)="isCreateEditModalOpen = false"
+        class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-medium"
+      >
+        Cancel
+      </button>
+      <button
+        type="button"
+        (click)="saveNegotiation()"
+        [disabled]="isSubmitting"
+        class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium shadow-sm transition-all"
+      >
+        {{ isSubmitting ? 'Saving Deal...' : (editingNegotiationId ? 'Update Negotiation' : 'Create Negotiation') }}
+      </button>
+    </div>
+  </app-modal>
+
+  <!-- MODAL 2: REVISE COMMERCIAL TERMS (NEW VERSION) -->
+  <app-modal
+    [isOpen]="isReviseTermsModalOpen"
+    [title]="'Revise Commercial Terms & Submit Offer / Counteroffer'"
+    [subtitle]="'Creates an auditable revision entry and increments the negotiation version.'"
+    size="md"
+    (closeModal)="isReviseTermsModalOpen = false"
+  >
+    <div class="space-y-4">
+      <div class="p-3 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900 text-xs text-slate-700 dark:text-slate-300">
+        Deal: <span class="font-bold text-slate-900 dark:text-slate-100">{{ activeNegotiation?.negotiation_code }}</span> - {{ activeNegotiation?.negotiation_title }}
+        <br/>Current Version: <span class="font-bold">v{{ activeNegotiation?.current_version }}</span>
+      </div>
+
+      <!-- Party -->
+      <div>
+        <label class="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1.5">Offered By Party</label>
+        <select
+          [(ngModel)]="revisionFormData.offered_by_party"
+          class="erp-input text-xs"
+        >
+          <option value="DEVELOPER">Developer (Our Offer)</option>
+          <option value="LANDOWNER">Landowner (Counteroffer)</option>
+          <option value="MEDIATOR">Mediator / Broker Proposal</option>
+        </select>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <app-custom-input
+          type="number"
+          label="Proposed Price (BDT)"
+          [(ngModel)]="revisionFormData.proposed_price_bdt"
+          [required]="true"
+          placeholder="0.00"
+        ></app-custom-input>
+
+        <app-custom-input
+          type="number"
+          label="Proposed Advance (BDT)"
+          [(ngModel)]="revisionFormData.proposed_advance_bdt"
+          placeholder="0.00"
+        ></app-custom-input>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <app-custom-input
+          type="number"
+          label="Proposed Timeline (Days)"
+          [(ngModel)]="revisionFormData.proposed_timeline_days"
+          placeholder="30"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Created By Commercial Officer"
+          [(ngModel)]="revisionFormData.created_by_officer"
+          [required]="true"
+        ></app-custom-input>
+      </div>
+
+      <app-custom-textarea
+        label="Revision Rationale / Summary of Changes"
+        [(ngModel)]="revisionFormData.revision_summary"
+        [required]="true"
+        placeholder="State reason for adjusting price, payment milestone trade-offs, or concessions made..."
+        [rows]="3"
+      ></app-custom-textarea>
+    </div>
+
+    <div modal-footer class="flex items-center justify-end gap-2 w-full">
+      <button
+        type="button"
+        (click)="isReviseTermsModalOpen = false"
+        class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-medium"
+      >
+        Cancel
+      </button>
+      <button
+        type="button"
+        (click)="saveTermRevision()"
+        [disabled]="isSubmitting"
+        class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium shadow-sm transition-all"
+      >
+        {{ isSubmitting ? 'Submitting Version...' : 'Submit Version v' + ((activeNegotiation?.current_version || 1) + 1) }}
+      </button>
+    </div>
+  </app-modal>
+
+  <!-- MODAL 3: LOG MEETING MINUTES -->
+  <app-modal
+    [isOpen]="isMeetingModalOpen"
+    [title]="'Record Negotiation Meeting Minutes'"
+    [subtitle]="'Logs meeting discussion points, attendees, minutes, and follow-up tasks.'"
+    size="lg"
+    (closeModal)="isMeetingModalOpen = false"
+  >
+    <div class="space-y-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <app-custom-input
+          type="date"
+          label="Meeting Date"
+          [(ngModel)]="meetingFormData.meeting_date"
+          [required]="true"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Meeting Venue / Location"
+          [(ngModel)]="meetingFormData.meeting_venue"
+          [required]="true"
+          placeholder="e.g. Developer Boardroom, Site Office, Landowner Residence"
+        ></app-custom-input>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <app-custom-input
+          label="Developer Attendees"
+          [(ngModel)]="meetingFormData.developer_attendees"
+          placeholder="e.g. Acquisition Lead, Legal Counsel, Project Director"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Landowner Attendees"
+          [(ngModel)]="meetingFormData.landowner_attendees"
+          placeholder="e.g. Primary Owner, Siblings, Power of Attorney holder"
+        ></app-custom-input>
+      </div>
+
+      <app-custom-textarea
+        label="Discussion Minutes & Commercial Dialogue"
+        [(ngModel)]="meetingFormData.discussion_minutes"
+        [required]="true"
+        placeholder="Detailed minutes of what was discussed, counteroffers raised, and agreed positions..."
+        [rows]="4"
+      ></app-custom-textarea>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <app-custom-textarea
+          label="Follow-Up Action Items & Tasks"
+          [(ngModel)]="meetingFormData.follow_up_tasks"
+          placeholder="e.g. Prepare drafted deed, verify mutation porcha by Tuesday"
+          [rows]="2"
+        ></app-custom-textarea>
+
+        <app-custom-input
+          type="date"
+          label="Next Scheduled Meeting Date"
+          [(ngModel)]="meetingFormData.next_meeting_date"
+        ></app-custom-input>
+      </div>
+    </div>
+
+    <div modal-footer class="flex items-center justify-end gap-2 w-full">
+      <button
+        type="button"
+        (click)="isMeetingModalOpen = false"
+        class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-medium"
+      >
+        Cancel
+      </button>
+      <button
+        type="button"
+        (click)="saveMeeting()"
+        [disabled]="isSubmitting"
+        class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium shadow-sm transition-all"
+      >
+        {{ isSubmitting ? 'Saving Minutes...' : 'Save Meeting Minutes' }}
+      </button>
+    </div>
+  </app-modal>
+
+  <!-- MODAL 4: AUTHORIZED COMMERCIAL APPROVAL -->
+  <app-modal
+    [isOpen]="isApproveModalOpen"
+    [title]="'Authorized Approval of Final Commercial Terms'"
+    [subtitle]="'Only authorized executive personnel can lock agreed terms for execution.'"
+    size="md"
+    (closeModal)="isApproveModalOpen = false"
+  >
+    <div class="space-y-4">
+      <div class="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 text-xs text-slate-700 dark:text-slate-300">
+        Approving Deal: <span class="font-bold text-slate-900 dark:text-slate-100">{{ activeNegotiation?.negotiation_code }}</span>
+        <br/>Parcel: <span class="font-semibold">{{ getParcelName(activeNegotiation?.parcel_id || 0) }}</span>
+      </div>
+
+      <app-custom-input
+        label="Authorized Approver Name & Title"
+        [(ngModel)]="approvalFormData.approved_by"
+        [required]="true"
+        placeholder="e.g. Managing Director / Commercial Committee Chairman"
+      ></app-custom-input>
+
+      <app-custom-input
+        type="number"
+        label="Final Agreed Commercial Amount (BDT)"
+        [(ngModel)]="approvalFormData.final_agreed_amount_bdt"
+        [required]="true"
+        placeholder="0.00"
+      ></app-custom-input>
+
+      <app-custom-textarea
+        label="Commercial Approval Notes & Board Reference"
+        [(ngModel)]="approvalFormData.approval_notes"
+        placeholder="e.g. Approved per Board Resolution #BR-2026-10-88. Ready for agreement drafting & execution."
+        [rows]="3"
+      ></app-custom-textarea>
+    </div>
+
+    <div modal-footer class="flex items-center justify-end gap-2 w-full">
+      <button
+        type="button"
+        (click)="isApproveModalOpen = false"
+        class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-medium"
+      >
+        Cancel
+      </button>
+      <button
+        type="button"
+        (click)="saveApproval()"
+        [disabled]="isSubmitting"
+        class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium shadow-sm transition-all"
+      >
+        {{ isSubmitting ? 'Approving...' : 'Confirm & Authorize Terms' }}
+      </button>
+    </div>
+  </app-modal>
+</app-card-container>

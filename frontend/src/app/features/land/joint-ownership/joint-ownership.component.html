@@ -1,0 +1,1221 @@
+<div class="space-y-5">
+  <!-- Top KPI Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- Card 1: Total Co-Owners -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-2xs flex items-center justify-between">
+      <div>
+        <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Total Co-Owners Registered</p>
+        <h3 class="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">{{ totalSharesCount() }}</h3>
+        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-1 font-medium">
+          Inherited, Purchased & Partitioned
+        </p>
+      </div>
+      <div class="w-11 h-11 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+      </div>
+    </div>
+
+    <!-- Card 2: Verified Consents -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-2xs flex items-center justify-between">
+      <div>
+        <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Consents & Signatures Verified</p>
+        <h3 class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">{{ verifiedConsentsCount() }}</h3>
+        <p class="text-[11px] text-emerald-600 dark:text-emerald-400 mt-0.5 flex items-center gap-1 font-medium">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Authenticated PoA / Signatures
+        </p>
+      </div>
+      <div class="w-11 h-11 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+      </div>
+    </div>
+
+    <!-- Card 3: Disputed Shares / Missing Consents -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-2xs flex items-center justify-between">
+      <div>
+        <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Disputed / Missing Consents</p>
+        <h3 class="text-2xl font-bold text-amber-600 dark:text-amber-400 mt-1">{{ disputedSharesCount() }}</h3>
+        <p class="text-[11px] text-amber-600 dark:text-amber-400 mt-0.5 flex items-center gap-1 font-medium">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+          Requires Legal Resolution
+        </p>
+      </div>
+      <div class="w-11 h-11 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 flex items-center justify-center text-amber-600 dark:text-amber-400">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </div>
+    </div>
+
+    <!-- Card 4: Active Agreements -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-2xs flex items-center justify-between">
+      <div>
+        <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Developer-Landowner Deals</p>
+        <h3 class="text-2xl font-bold text-purple-600 dark:text-purple-400 mt-1">{{ totalAgreementsCount() }}</h3>
+        <p class="text-[11px] text-purple-600 dark:text-purple-400 mt-0.5 flex items-center gap-1 font-medium">
+          JV, Purchase & Registered PoA
+        </p>
+      </div>
+      <div class="w-11 h-11 rounded-xl bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800 flex items-center justify-center text-purple-600 dark:text-purple-400">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Live 100% Share Reconciliation Audit Bar (Bangladesh 20-Decimal Example) -->
+  @if (auditSummary()) {
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-2xs">
+      <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 flex items-center justify-center font-bold">
+            %
+          </div>
+          <div>
+            <h3 class="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              Joint Ownership 100% Share Validation Engine:
+              <span class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ auditSummary()?.project_name }}</span>
+            </h3>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400">
+              Total Parcel Area: <strong>{{ auditSummary()?.total_area_decimal }} Decimals</strong> ({{ auditSummary()?.total_area_katha }} Katha / {{ auditSummary()?.total_area_sqft }} sq ft) | {{ auditSummary()?.total_owners_count }} Registered Co-Owners
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <select
+            [value]="auditParcelId() || ''"
+            (change)="onAuditParcelChange($any($event.target).value)"
+            class="px-2.5 py-1 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-200 focus:outline-none"
+          >
+            @for (p of parcels(); track p.id) {
+              <option [value]="p.id">{{ p.project_name }} ({{ p.total_area_decimal }} Dec)</option>
+            }
+          </select>
+
+          <button
+            type="button"
+            (click)="openCreateShareModal(auditParcelId() || undefined)"
+            class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-colors"
+          >
+            + Add Co-Owner
+          </button>
+        </div>
+      </div>
+
+      <!-- Share Allocation Progress Bar -->
+      <div class="mt-3">
+        <div class="flex items-center justify-between text-xs mb-1.5 font-medium">
+          <span class="text-slate-700 dark:text-slate-300">
+            Recorded Ownership Share Total: 
+            <strong [ngClass]="auditSummary()?.is_fully_accounted_100 ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'">
+              {{ auditSummary()?.total_recorded_share_percent }}%
+            </strong>
+          </span>
+          @if (auditSummary()?.is_fully_accounted_100) {
+            <span class="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1 text-[11px]">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              100% Fully Accounted & Validated
+            </span>
+          } @else if ((auditSummary()?.unallocated_share_percent ?? 0) > 0) {
+            <span class="text-amber-600 dark:text-amber-400 font-bold text-[11px]">
+              ⚠️ {{ auditSummary()?.unallocated_share_percent }}% Unallocated / Missing Co-Sharer
+            </span>
+          } @else {
+            <span class="text-red-600 dark:text-red-400 font-bold text-[11px]">
+              ⛔ Over-allocated by {{ Math.abs(auditSummary()?.unallocated_share_percent ?? 0) }}%
+            </span>
+          }
+        </div>
+
+        <div class="w-full h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden flex">
+          @for (co of auditSummary()?.co_owners; track co.id) {
+            <div 
+              [style.width.%]="co.ownership_share_percent"
+              [title]="(co.landowner?.full_name_en || 'Owner') + ': ' + co.ownership_share_percent + '% (' + co.equivalent_area_decimal + ' Dec)'"
+              [ngClass]="{
+                'bg-emerald-500': co.consent_status === 'CONSENT_GRANTED',
+                'bg-amber-500': co.consent_status === 'CONSENT_PENDING',
+                'bg-red-500': co.consent_status === 'DISPUTED' || co.consent_status === 'REFUSED'
+              }"
+              class="h-full border-r border-white dark:border-slate-900 transition-all cursor-pointer"
+            ></div>
+          }
+        </div>
+      </div>
+
+      <!-- Co-Owners Distribution Chips -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 mt-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+        @for (co of auditSummary()?.co_owners; track co.id) {
+          <div class="p-2 rounded-lg bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs">
+            <div>
+              <div class="font-bold text-slate-800 dark:text-slate-100 truncate max-w-[130px]">
+                {{ co.landowner?.full_name_en }}
+              </div>
+              <div class="text-[10px] text-slate-400 mt-0.5">
+                {{ co.ownership_share_percent }}% = <strong>{{ co.equivalent_area_decimal }} Dec</strong> ({{ co.equivalent_area_katha }} katha)
+              </div>
+            </div>
+            <div class="text-right">
+              @if (co.consent_status === 'CONSENT_GRANTED') {
+                <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">Consent OK</span>
+              } @else if (co.consent_status === 'DISPUTED') {
+                <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300">Disputed</span>
+              } @else {
+                <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">Pending</span>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Main Standalone Card Container with Navigation Tabs -->
+  <app-card-container
+    [hasHeader]="true"
+    title="2.6 Joint Ownership & Landowner Developer Agreements"
+    subtitle="Register all co-owners, validate 100% share arithmetic, track title sources, and manage joint venture allocation terms."
+    badge="Module 2.6"
+  >
+    <!-- Header Actions & Tab Switching -->
+    <div card-actions class="flex items-center gap-2 flex-wrap">
+      <!-- Tab Toggle Buttons -->
+      <div class="inline-flex rounded-lg border border-slate-200 dark:border-slate-700 p-0.5 bg-slate-100 dark:bg-slate-800 text-xs font-semibold">
+        <button
+          type="button"
+          (click)="activeTab.set('SHARES')"
+          [ngClass]="activeTab() === 'SHARES' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-2xs' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'"
+          class="px-3 py-1.5 rounded-md transition-colors flex items-center gap-1.5"
+        >
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+          Co-Owners & Shares ({{ links().length }})
+        </button>
+
+        <button
+          type="button"
+          (click)="activeTab.set('AGREEMENTS')"
+          [ngClass]="activeTab() === 'AGREEMENTS' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-2xs' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'"
+          class="px-3 py-1.5 rounded-md transition-colors flex items-center gap-1.5"
+        >
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          Landowner Agreements ({{ agreements().length }})
+        </button>
+      </div>
+
+      <!-- Action Button Based on Active Tab -->
+      @if (activeTab() === 'SHARES') {
+        <button
+          type="button"
+          (click)="openAuditModal()"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 transition-colors shadow-2xs"
+        >
+          <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          100% Share Audit
+        </button>
+
+        <button
+          type="button"
+          (click)="openCreateShareModal()"
+          class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-colors shadow-2xs"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          Register Co-Owner Share
+        </button>
+      } @else {
+        <button
+          type="button"
+          (click)="openCreateAgreementModal()"
+          class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-colors shadow-2xs"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          New Landowner Agreement
+        </button>
+      }
+    </div>
+
+    <!-- Filters Bar -->
+    <div class="p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850/50 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+      <!-- Search -->
+      <div class="relative flex-1 max-w-md">
+        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        </span>
+        <input 
+          type="text" 
+          [value]="searchTerm()"
+          (input)="onSearch($event)"
+          placeholder="Search by owner name, code, deed number, or project..."
+          class="w-full pl-9 pr-3 py-1.5 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+        />
+      </div>
+
+      <!-- Filters -->
+      <div class="flex items-center gap-2 flex-wrap">
+        <!-- Parcel Filter -->
+        <select
+          [value]="selectedParcelId() || ''"
+          (change)="onParcelFilter($any($event.target).value)"
+          class="px-2.5 py-1.5 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-300 focus:outline-none"
+        >
+          <option value="">All Land Parcels</option>
+          @for (p of parcels(); track p.id) {
+            <option [value]="p.id">{{ p.project_name }} ({{ p.total_area_decimal }} Dec)</option>
+          }
+        </select>
+
+        @if (activeTab() === 'SHARES') {
+          <!-- Consent Status Filter -->
+          <select
+            [value]="selectedConsentStatus()"
+            (change)="onConsentFilter($any($event.target).value)"
+            class="px-2.5 py-1.5 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-300 focus:outline-none"
+          >
+            <option value="">All Consent Status</option>
+            <option value="CONSENT_GRANTED">Consent Granted & Verified</option>
+            <option value="CONSENT_PENDING">Pending Signatures / Absent</option>
+            <option value="DISPUTED">Ownership Disputed</option>
+            <option value="REFUSED">Consent Refused</option>
+          </select>
+
+          <!-- Source Filter -->
+          <select
+            [value]="selectedOwnershipSource()"
+            (change)="onSourceFilter($any($event.target).value)"
+            class="px-2.5 py-1.5 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-300 focus:outline-none"
+          >
+            <option value="">All Ownership Sources</option>
+            <option value="INHERITANCE">Inherited / Waris (ওয়ারিশসূত্রে)</option>
+            <option value="PURCHASE">Purchased (ক্রয়সূত্রে)</option>
+            <option value="PARTITION_DEED">Partition Deed (বণ্টননামা)</option>
+            <option value="GIFT_HEBA">Gift / Heba Deed (হেবানামা)</option>
+            <option value="COURT_DECREE">Court Decree (আদালতের ডিক্রি)</option>
+          </select>
+        }
+      </div>
+    </div>
+
+    <!-- TAB 1: CO-OWNERS & SHARES TABLE -->
+    @if (activeTab() === 'SHARES') {
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs text-slate-700 dark:text-slate-300">
+          <thead class="bg-slate-100/70 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-700 text-[11px] uppercase tracking-wider">
+            <tr>
+              <th class="py-3 px-4">Co-Owner Name & Code</th>
+              <th class="py-3 px-4">Connected Parcel</th>
+              <th class="py-3 px-4 text-right">Share %</th>
+              <th class="py-3 px-4 text-right">Equivalent Area</th>
+              <th class="py-3 px-4">Ownership Source</th>
+              <th class="py-3 px-4 text-right">Proposed Price / Deal</th>
+              <th class="py-3 px-4 text-center">Consent & PoA Status</th>
+              <th class="py-3 px-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+            @if (isLoading()) {
+              <tr>
+                <td colspan="8" class="py-10 text-center text-slate-400">
+                  <div class="inline-flex items-center gap-2">
+                    <svg class="w-5 h-5 animate-spin text-emerald-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+                    <span>Loading joint ownership shares...</span>
+                  </div>
+                </td>
+              </tr>
+            } @else if (paginatedLinks().length === 0) {
+              <tr>
+                <td colspan="8" class="py-10 text-center text-slate-400">
+                  No co-ownership shares found matching filter criteria.
+                </td>
+              </tr>
+            } @else {
+              @for (link of paginatedLinks(); track link.id) {
+                <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-850/50 transition-colors">
+                  <!-- Co-Owner Name & Code -->
+                  <td class="py-3 px-4">
+                    <div class="font-bold text-slate-900 dark:text-slate-100">
+                      {{ link.landowner?.full_name_en }}
+                    </div>
+                    <div class="font-mono text-[10px] text-slate-400 mt-0.5">
+                      {{ link.landowner?.landowner_code }} | NID: {{ link.landowner?.nid_number || 'N/A' }}
+                    </div>
+                  </td>
+
+                  <!-- Connected Parcel -->
+                  <td class="py-3 px-4">
+                    <div class="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                      <svg class="w-3.5 h-3.5 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>
+                      {{ link.parcel?.project_name }}
+                    </div>
+                    <div class="text-[10px] text-slate-400">
+                      Total: {{ link.parcel?.total_area_decimal }} Dec (Mouza: {{ link.parcel?.mouza_name }})
+                    </div>
+                  </td>
+
+                  <!-- Share % -->
+                  <td class="py-3 px-4 text-right">
+                    <span class="font-mono text-sm font-bold text-slate-900 dark:text-slate-100 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
+                      {{ link.ownership_share_percent }}%
+                    </span>
+                  </td>
+
+                  <!-- Equivalent Area -->
+                  <td class="py-3 px-4 text-right">
+                    <div class="font-mono font-bold text-emerald-700 dark:text-emerald-400">
+                      {{ link.equivalent_area_decimal }} Dec
+                    </div>
+                    <div class="font-mono text-[10px] text-slate-400 mt-0.5">
+                      {{ link.equivalent_area_katha }} katha ({{ link.equivalent_area_sqft | number:'1.0-0' }} sqft)
+                    </div>
+                  </td>
+
+                  <!-- Ownership Source -->
+                  <td class="py-3 px-4">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold"
+                      [ngClass]="{
+                        'bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300': link.ownership_source === 'PURCHASE',
+                        'bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300': link.ownership_source === 'INHERITANCE',
+                        'bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300': link.ownership_source === 'PARTITION_DEED',
+                        'bg-teal-50 text-teal-700 dark:bg-teal-950 dark:text-teal-300': link.ownership_source === 'GIFT_HEBA',
+                        'bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300': link.ownership_source === 'COURT_DECREE'
+                      }"
+                    >
+                      {{ link.ownership_source }}
+                    </span>
+                  </td>
+
+                  <!-- Proposed Price / Deal -->
+                  <td class="py-3 px-4 text-right">
+                    @if (link.proposed_sale_price_bdt) {
+                      <div class="font-mono font-bold text-slate-900 dark:text-slate-100">
+                        ৳{{ link.proposed_sale_price_bdt | number:'1.0-0' }}
+                      </div>
+                    } @else {
+                      <span class="text-slate-400 text-[11px]">—</span>
+                    }
+
+                    @if (link.development_share_percent) {
+                      <div class="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
+                        Dev Share: {{ link.development_share_percent }}%
+                      </div>
+                    }
+                  </td>
+
+                  <!-- Consent & PoA Status -->
+                  <td class="py-3 px-4 text-center">
+                    @if (link.consent_status === 'CONSENT_GRANTED') {
+                      <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+                        <svg class="w-3 h-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        Consent OK
+                      </span>
+                    } @else if (link.consent_status === 'DISPUTED') {
+                      <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300 border border-red-300 dark:border-red-800">
+                        Disputed
+                      </span>
+                    } @else {
+                      <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
+                        Pending
+                      </span>
+                    }
+
+                    @if (link.has_poa) {
+                      <div class="text-[9px] text-purple-600 dark:text-purple-400 mt-0.5 font-medium">
+                        PoA: {{ link.poa_holder_name || 'Authorized' }}
+                      </div>
+                    }
+                  </td>
+
+                  <!-- Actions -->
+                  <td class="py-3 px-4 text-right">
+                    <div class="inline-flex items-center gap-1">
+                      <button
+                        type="button"
+                        (click)="openEditShareModal(link)"
+                        title="Edit Co-Owner Share"
+                        class="p-1 rounded text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                      </button>
+
+                      <button
+                        type="button"
+                        (click)="deleteShare(link)"
+                        title="Delete Co-Owner Share"
+                        class="p-1 rounded text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/50 transition-colors"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination Footer -->
+      <div class="px-5 py-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850/50 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+          <span>Rows per page:</span>
+          <select 
+            [value]="pageSize()" 
+            (change)="onPageSizeChange($event)"
+            class="px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-xs text-slate-700 dark:text-slate-300 focus:outline-none"
+          >
+            @for (opt of pageSizeOptions; track opt) {
+              <option [value]="opt">{{ opt }}</option>
+            }
+          </select>
+          <span>
+            Showing {{ ((currentPage() - 1) * pageSize()) + 1 }} to {{ Math.min(currentPage() * pageSize(), filteredLinks().length) }} of {{ filteredLinks().length }}
+          </span>
+        </div>
+
+        <div class="flex items-center gap-1">
+          <button
+            type="button"
+            [disabled]="currentPage() === 1"
+            (click)="goToPage(currentPage() - 1)"
+            class="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 disabled:opacity-40 transition-colors"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+          </button>
+
+          <span class="px-2.5 py-1 text-xs font-semibold text-slate-700 dark:text-slate-300">
+            Page {{ currentPage() }} of {{ totalPages() }}
+          </span>
+
+          <button
+            type="button"
+            [disabled]="currentPage() === totalPages()"
+            (click)="goToPage(currentPage() + 1)"
+            class="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 disabled:opacity-40 transition-colors"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- TAB 2: LANDOWNER AGREEMENTS TABLE -->
+    @if (activeTab() === 'AGREEMENTS') {
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs text-slate-700 dark:text-slate-300">
+          <thead class="bg-slate-100/70 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-700 text-[11px] uppercase tracking-wider">
+            <tr>
+              <th class="py-3 px-4">Agreement Deed # & Type</th>
+              <th class="py-3 px-4">Target Parcel</th>
+              <th class="py-3 px-4 text-center">Sharing Ratio (LO : DEV)</th>
+              <th class="py-3 px-4 text-right">Signing Money</th>
+              <th class="py-3 px-4 text-center">Allocations (Flats / Shops / Parking)</th>
+              <th class="py-3 px-4">Registration Details</th>
+              <th class="py-3 px-4 text-center">Consent Flag</th>
+              <th class="py-3 px-4 text-center">Status</th>
+              <th class="py-3 px-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+            @if (isLoading()) {
+              <tr>
+                <td colspan="9" class="py-10 text-center text-slate-400">
+                  <div class="inline-flex items-center gap-2">
+                    <svg class="w-5 h-5 animate-spin text-emerald-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+                    <span>Loading agreements...</span>
+                  </div>
+                </td>
+              </tr>
+            } @else if (paginatedAgreements().length === 0) {
+              <tr>
+                <td colspan="9" class="py-10 text-center text-slate-400">
+                  No landowner agreements recorded. Click "New Landowner Agreement" to register one.
+                </td>
+              </tr>
+            } @else {
+              @for (agr of paginatedAgreements(); track agr.id) {
+                <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-850/50 transition-colors">
+                  <!-- Deed # & Type -->
+                  <td class="py-3 px-4">
+                    <div class="font-bold text-slate-900 dark:text-slate-100">
+                      {{ agr.agreement_deed_no }}
+                    </div>
+                    <div class="text-[10px] text-purple-700 dark:text-purple-400 font-semibold mt-0.5">
+                      {{ agr.agreement_type || 'JOINT_VENTURE_DEVELOPMENT' }}
+                    </div>
+                  </td>
+
+                  <!-- Parcel -->
+                  <td class="py-3 px-4">
+                    @if (agr.parcel) {
+                      <div class="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-1">
+                        <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>
+                        {{ agr.parcel.project_name }}
+                      </div>
+                      <div class="text-[10px] text-slate-400">
+                        {{ agr.parcel.mouza_name }} ({{ agr.parcel.total_area_decimal }} Dec)
+                      </div>
+                    } @else {
+                      <span class="text-slate-400 italic text-[11px]">Unlinked Parcel</span>
+                    }
+                  </td>
+
+                  <!-- Ratio -->
+                  <td class="py-3 px-4 text-center">
+                    <div class="font-mono font-bold text-slate-900 dark:text-slate-100 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded inline-block">
+                      {{ agr.landowner_share_percent }}% : {{ agr.developer_share_percent }}%
+                    </div>
+                    <div class="text-[10px] text-slate-400 mt-0.5">Tenure: {{ agr.tenure_months }} Mos</div>
+                  </td>
+
+                  <!-- Signing Money -->
+                  <td class="py-3 px-4 text-right">
+                    <div class="font-mono font-bold text-slate-900 dark:text-slate-100">
+                      ৳{{ agr.signing_money_total | number:'1.0-0' }}
+                    </div>
+                    <div class="font-mono text-[10px] text-emerald-600 dark:text-emerald-400">
+                      Paid: ৳{{ agr.signing_money_paid || 0 | number:'1.0-0' }}
+                    </div>
+                  </td>
+
+                  <!-- Allocations -->
+                  <td class="py-3 px-4 text-center">
+                    <div class="inline-flex items-center gap-1.5 text-xs font-semibold">
+                      <span class="px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300" title="Landowner Flats">
+                        {{ agr.allocated_flats_count || 0 }} Flats
+                      </span>
+                      <span class="px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300" title="Shops">
+                        {{ agr.allocated_shops_count || 0 }} Shops
+                      </span>
+                      <span class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300" title="Parking Bays">
+                        {{ agr.allocated_car_parks_count || 0 }} Parks
+                      </span>
+                    </div>
+                  </td>
+
+                  <!-- Registration -->
+                  <td class="py-3 px-4">
+                    <div class="text-[11px] text-slate-800 dark:text-slate-200">
+                      {{ agr.registration_office || 'Sub-Registry Office' }}
+                    </div>
+                    @if (agr.registration_deed_no) {
+                      <div class="font-mono text-[10px] text-slate-400">
+                        Reg Deed: {{ agr.registration_deed_no }} ({{ agr.registration_date }})
+                      </div>
+                    }
+                  </td>
+
+                  <!-- Consent Flag -->
+                  <td class="py-3 px-4 text-center">
+                    @if (agr.missing_consents_flag) {
+                      <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300 border border-red-300">
+                        Missing Consents
+                      </span>
+                    } @else {
+                      <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300">
+                        All Consented
+                      </span>
+                    }
+                  </td>
+
+                  <!-- Status -->
+                  <td class="py-3 px-4 text-center">
+                    <span class="px-2 py-0.5 rounded text-[10px] font-semibold uppercase"
+                      [ngClass]="{
+                        'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300': agr.status === 'ACTIVE',
+                        'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300': agr.status === 'DRAFT',
+                        'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300': agr.status === 'COMPLETED',
+                        'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300': agr.status === 'TERMINATED'
+                      }"
+                    >
+                      {{ agr.status }}
+                    </span>
+                  </td>
+
+                  <!-- Actions -->
+                  <td class="py-3 px-4 text-right">
+                    <div class="inline-flex items-center gap-1">
+                      <button
+                        type="button"
+                        (click)="openEditAgreementModal(agr)"
+                        title="Edit Agreement"
+                        class="p-1 rounded text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                      </button>
+
+                      <button
+                        type="button"
+                        (click)="deleteAgreement(agr)"
+                        title="Delete Agreement"
+                        class="p-1 rounded text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/50 transition-colors"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination Footer -->
+      <div class="px-5 py-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850/50 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+          <span>Rows per page:</span>
+          <select 
+            [value]="agreementsPageSize()" 
+            (change)="onAgreementsPageSizeChange($event)"
+            class="px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-xs text-slate-700 dark:text-slate-300 focus:outline-none"
+          >
+            <option [value]="10">10</option>
+            <option [value]="25">25</option>
+            <option [value]="50">50</option>
+          </select>
+          <span>
+            Showing {{ ((agreementsPage() - 1) * agreementsPageSize()) + 1 }} to {{ Math.min(agreementsPage() * agreementsPageSize(), filteredAgreements().length) }} of {{ filteredAgreements().length }}
+          </span>
+        </div>
+
+        <div class="flex items-center gap-1">
+          <button
+            type="button"
+            [disabled]="agreementsPage() === 1"
+            (click)="goToAgreementsPage(agreementsPage() - 1)"
+            class="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 disabled:opacity-40 transition-colors"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+          </button>
+
+          <span class="px-2.5 py-1 text-xs font-semibold text-slate-700 dark:text-slate-300">
+            Page {{ agreementsPage() }} of {{ totalAgreementsPages() }}
+          </span>
+
+          <button
+            type="button"
+            [disabled]="agreementsPage() === totalAgreementsPages()"
+            (click)="goToAgreementsPage(agreementsPage() + 1)"
+            class="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 disabled:opacity-40 transition-colors"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+    }
+  </app-card-container>
+
+  <!-- Modal 1: Register / Edit Co-Owner Share -->
+  <app-modal
+    [isOpen]="isShareModalOpen()"
+    [title]="isEditShareMode() ? 'Edit Co-Owner Share & Terms' : 'Register Co-Owner & Ownership Share'"
+    [subtitle]="'Record fractional ownership share percentage, source of title, and legal consent status.'"
+    [badge]="isEditShareMode() ? 'Edit Share' : 'New Co-Owner'"
+    size="xl"
+    (closed)="closeShareModal()"
+  >
+    <form [formGroup]="shareForm" (ngSubmit)="saveShare()" class="space-y-4">
+      <!-- Row 1: Parcel & Landowner -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+            Target Land Parcel *
+          </label>
+          <select
+            formControlName="parcel_id"
+            class="w-full px-3 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500 font-medium"
+          >
+            <option [ngValue]="null">-- Select Land Parcel --</option>
+            @for (p of parcels(); track p.id) {
+              <option [value]="p.id">
+                {{ p.project_name }} ({{ p.total_area_decimal }} Dec - Mouza: {{ p.mouza_name }})
+              </option>
+            }
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+            Co-Owner / Seller *
+          </label>
+          <select
+            formControlName="landowner_id"
+            class="w-full px-3 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500 font-medium"
+          >
+            <option [ngValue]="null">-- Select Co-Owner --</option>
+            @for (o of landowners(); track o.id) {
+              <option [value]="o.id">
+                {{ o.full_name_en }} ({{ o.landowner_code }} - NID: {{ o.nid_number || 'N/A' }})
+              </option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <!-- Row 2: Share %, Source, Title Deed -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div>
+          <app-custom-input
+            label="Ownership Share Percentage (%) *"
+            formControlName="ownership_share_percent"
+            type="number"
+            step="0.01"
+            placeholder="e.g. 50.00"
+            [required]="true"
+          ></app-custom-input>
+          <span class="text-[10px] text-slate-400 mt-0.5 block">
+            Fractional share (e.g. 50% = 10 decimals on 20 dec plot).
+          </span>
+        </div>
+
+        <div>
+          <app-searchable-select
+            categoryCode="OWNERSHIP_SOURCE"
+            label="Source of Ownership *"
+            formControlName="ownership_source"
+            [allowCreateNew]="true"
+            placeholder="Select source..."
+          ></app-searchable-select>
+        </div>
+
+        <div>
+          <app-custom-input
+            label="Registered Title Deed / Parcha Number"
+            formControlName="title_deed_no"
+            placeholder="e.g. Saf-Kabala Deed #4102/2018"
+          ></app-custom-input>
+        </div>
+      </div>
+
+      <!-- Row 3: Financial & Development Terms -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div>
+          <app-custom-input
+            label="Proposed Sale Consideration (BDT)"
+            formControlName="proposed_sale_price_bdt"
+            type="number"
+            placeholder="e.g. 35000000"
+          ></app-custom-input>
+        </div>
+
+        <div>
+          <app-custom-input
+            label="Development Share Ratio (%)"
+            formControlName="development_share_percent"
+            type="number"
+            step="0.01"
+            placeholder="e.g. 25.00"
+          ></app-custom-input>
+        </div>
+
+        <div>
+          <app-searchable-select
+            categoryCode="CONSENT_STATUS"
+            label="Consent & Signature Status *"
+            formControlName="consent_status"
+            [allowCreateNew]="true"
+            placeholder="Select consent status..."
+          ></app-searchable-select>
+        </div>
+      </div>
+
+      <!-- PoA & Dispute Notes -->
+      <div class="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850/50 space-y-3">
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            formControlName="has_poa"
+            class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 dark:border-slate-700"
+          />
+          <span class="text-xs font-semibold text-slate-800 dark:text-slate-200">
+            Represented via Registered Power of Attorney (PoA)
+          </span>
+        </label>
+
+        @if (shareForm.get('has_poa')?.value) {
+          <div>
+            <app-custom-input
+              label="Attorney / Representative Name"
+              formControlName="poa_holder_name"
+              placeholder="e.g. Md. Tariqul Islam (Son & PoA Holder)"
+            ></app-custom-input>
+          </div>
+        }
+
+        <div>
+          <app-custom-textarea
+            label="Dispute Flags, Injunction Risk or Settlement Remarks"
+            formControlName="dispute_remarks"
+            placeholder="Mention any competing sibling claims, pending partition decree, or waris consensus status..."
+            [rows]="2"
+          ></app-custom-textarea>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex items-center justify-end gap-2 pt-4 border-t border-slate-200 dark:border-slate-800">
+        <button
+          type="button"
+          (click)="closeShareModal()"
+          class="px-4 py-2 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 transition-colors"
+        >
+          Cancel
+        </button>
+
+        <button
+          type="submit"
+          [disabled]="isSaving()"
+          class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-colors shadow-2xs disabled:opacity-50"
+        >
+          @if (isSaving()) {
+            <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+            Saving...
+          } @else {
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            {{ isEditShareMode() ? 'Update Share Record' : 'Save Co-Owner Share' }}
+          }
+        </button>
+      </div>
+    </form>
+  </app-modal>
+
+  <!-- Modal 2: 100% Parcel Ownership Reconciliation Audit Modal -->
+  <app-modal
+    [isOpen]="isAuditModalOpen()"
+    title="100% Joint Ownership Arithmetic Audit"
+    subtitle="Mathematical reconciliation confirming whether all fractional shares equal 100% with no unallocated gap."
+    badge="100% Validation"
+    size="lg"
+    (closed)="closeAuditModal()"
+  >
+    @if (auditSummary()) {
+      <div class="space-y-4">
+        <!-- Status Banner -->
+        @if (auditSummary()?.is_fully_accounted_100) {
+          <div class="p-3.5 rounded-xl border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <div class="w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-xs">
+                ✓
+              </div>
+              <div>
+                <h4 class="text-xs font-bold text-emerald-900 dark:text-emerald-200">
+                  Full 100.00% Ownership Represented
+                </h4>
+                <p class="text-[11px] text-emerald-700 dark:text-emerald-300">
+                  Total parcel area of {{ auditSummary()?.total_area_decimal }} Decimals is completely accounted across {{ auditSummary()?.total_owners_count }} owners.
+                </p>
+              </div>
+            </div>
+            <span class="font-mono text-sm font-bold text-emerald-700 dark:text-emerald-400 bg-white dark:bg-slate-900 px-3 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800">
+              100% Verified
+            </span>
+          </div>
+        } @else {
+          <div class="p-3.5 rounded-xl border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <div class="w-7 h-7 rounded-full bg-amber-500 text-white flex items-center justify-center font-bold text-xs">
+                ⚠️
+              </div>
+              <div>
+                <h4 class="text-xs font-bold text-amber-900 dark:text-amber-200">
+                  Share Discrepancy Detected
+                </h4>
+                <p class="text-[11px] text-amber-700 dark:text-amber-300">
+                  Recorded shares total {{ auditSummary()?.total_recorded_share_percent }}%. Unallocated share: {{ auditSummary()?.unallocated_share_percent }}%.
+                </p>
+              </div>
+            </div>
+            <span class="font-mono text-sm font-bold text-amber-700 dark:text-amber-400 bg-white dark:bg-slate-900 px-3 py-1 rounded-lg border border-amber-200 dark:border-amber-800">
+              {{ auditSummary()?.unallocated_share_percent }}% Gap
+            </span>
+          </div>
+        }
+
+        <!-- Breakdown Table -->
+        <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+          <table class="w-full text-left text-xs text-slate-700 dark:text-slate-300">
+            <thead class="bg-slate-100/70 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 font-semibold text-[11px] uppercase tracking-wider">
+              <tr>
+                <th class="py-2.5 px-3">Owner Name</th>
+                <th class="py-2.5 px-3 text-right">Ownership Share</th>
+                <th class="py-2.5 px-3 text-right">Equivalent Area</th>
+                <th class="py-2.5 px-3 text-center">Consent Status</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+              @for (co of auditSummary()?.co_owners; track co.id) {
+                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-850/30">
+                  <td class="py-2.5 px-3 font-semibold text-slate-900 dark:text-slate-100">
+                    {{ co.landowner?.full_name_en }}
+                    <span class="text-[10px] text-slate-400 block font-normal">({{ co.ownership_source }})</span>
+                  </td>
+                  <td class="py-2.5 px-3 text-right font-mono font-bold text-slate-900 dark:text-slate-100">
+                    {{ co.ownership_share_percent }}%
+                  </td>
+                  <td class="py-2.5 px-3 text-right font-mono text-emerald-600 dark:text-emerald-400">
+                    {{ co.equivalent_area_decimal }} Decimals
+                    <span class="text-[10px] text-slate-400 block">({{ co.equivalent_area_sqft }} sq ft)</span>
+                  </td>
+                  <td class="py-2.5 px-3 text-center">
+                    @if (co.consent_status === 'CONSENT_GRANTED') {
+                      <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">Granted</span>
+                    } @else {
+                      <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">{{ co.consent_status }}</span>
+                    }
+                  </td>
+                </tr>
+              }
+              <tr class="bg-slate-50 dark:bg-slate-850 font-bold border-t-2 border-slate-300 dark:border-slate-700">
+                <td class="py-2.5 px-3">Total Reconciled</td>
+                <td class="py-2.5 px-3 text-right font-mono">{{ auditSummary()?.total_recorded_share_percent }}%</td>
+                <td class="py-2.5 px-3 text-right font-mono text-emerald-600 dark:text-emerald-400">{{ auditSummary()?.total_area_decimal }} Decimals</td>
+                <td class="py-2.5 px-3 text-center">
+                  {{ auditSummary()?.is_fully_accounted_100 ? 'VALIDATED' : 'DISCREPANCY' }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
+          <button
+            type="button"
+            (click)="closeAuditModal()"
+            class="px-4 py-2 text-xs font-semibold rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 transition-colors"
+          >
+            Close Audit
+          </button>
+        </div>
+      </div>
+    }
+  </app-modal>
+
+  <!-- Modal 3: Register / Edit Landowner Agreement -->
+  <app-modal
+    [isOpen]="isAgreementModalOpen()"
+    [title]="isEditAgreementMode() ? 'Edit Landowner Agreement' : 'Register Developer-Landowner Agreement'"
+    [subtitle]="'Contractual terms: Joint Venture (JV), Outright Purchase, General Power of Attorney, or Allocation Matrix.'"
+    [badge]="isEditAgreementMode() ? 'Edit Deal' : 'New Deal'"
+    size="xl"
+    (closed)="closeAgreementModal()"
+  >
+    <form [formGroup]="agreementForm" (ngSubmit)="saveAgreement()" class="space-y-4">
+      <!-- Row 1: Target Parcel, Agreement Type & Deed # -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+            Target Land Parcel *
+          </label>
+          <select
+            formControlName="parcel_id"
+            class="w-full px-3 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500 font-medium"
+          >
+            <option [ngValue]="null">-- Select Parcel --</option>
+            @for (p of parcels(); track p.id) {
+              <option [value]="p.id">{{ p.project_name }} ({{ p.total_area_decimal }} Dec)</option>
+            }
+          </select>
+        </div>
+
+        <div>
+          <app-searchable-select
+            categoryCode="AGREEMENT_TYPE"
+            label="Agreement Category / Type *"
+            formControlName="agreement_type"
+            [allowCreateNew]="true"
+            placeholder="Select agreement type..."
+          ></app-searchable-select>
+        </div>
+
+        <div>
+          <app-custom-input
+            label="Agreement Deed / Reference # *"
+            formControlName="agreement_deed_no"
+            placeholder="e.g. JV-AGR-2026-089"
+            [required]="true"
+          ></app-custom-input>
+        </div>
+      </div>
+
+      <!-- Row 2: Sharing Ratios & Signing Money -->
+      <div class="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850/50 space-y-3">
+        <h4 class="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+          <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+          Sharing Ratios & Financial Consideration (Must sum to 100%)
+        </h4>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <div>
+            <app-custom-input
+              label="Landowner Share (%) *"
+              formControlName="landowner_share_percent"
+              type="number"
+              step="0.01"
+              placeholder="50.00"
+              [required]="true"
+            ></app-custom-input>
+          </div>
+
+          <div>
+            <app-custom-input
+              label="Developer Share (%) *"
+              formControlName="developer_share_percent"
+              type="number"
+              step="0.01"
+              placeholder="50.00"
+              [required]="true"
+            ></app-custom-input>
+          </div>
+
+          <div>
+            <app-custom-input
+              label="Signing Money Total (BDT)"
+              formControlName="signing_money_total"
+              type="number"
+              placeholder="5000000"
+            ></app-custom-input>
+          </div>
+
+          <div>
+            <app-custom-input
+              label="Signing Money Paid (BDT)"
+              formControlName="signing_money_paid"
+              type="number"
+              placeholder="1000000"
+            ></app-custom-input>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 3: Landowner Physical Allocations (Flats, Shops, Parking) -->
+      <div class="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850/50 space-y-3">
+        <h4 class="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+          <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+          Landowner In-Kind Unit Allocations
+        </h4>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <div>
+            <app-custom-input
+              label="Allocated Flats Count"
+              formControlName="allocated_flats_count"
+              type="number"
+              placeholder="14"
+            ></app-custom-input>
+          </div>
+
+          <div>
+            <app-custom-input
+              label="Allocated Commercial Shops"
+              formControlName="allocated_shops_count"
+              type="number"
+              placeholder="2"
+            ></app-custom-input>
+          </div>
+
+          <div>
+            <app-custom-input
+              label="Allocated Car Parking Bays"
+              formControlName="allocated_car_parks_count"
+              type="number"
+              placeholder="14"
+            ></app-custom-input>
+          </div>
+
+          <div>
+            <app-custom-input
+              label="Project Tenure (Months) *"
+              formControlName="tenure_months"
+              type="number"
+              placeholder="36"
+              [required]="true"
+            ></app-custom-input>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 4: Registration & PoA -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div>
+          <app-custom-input
+            label="Registration Sub-Registry Office"
+            formControlName="registration_office"
+            placeholder="Sub-Registry Office, Gulshan"
+          ></app-custom-input>
+        </div>
+
+        <div>
+          <app-custom-input
+            label="Registration Deed Number"
+            formControlName="registration_deed_no"
+            placeholder="Volume Deed #1402"
+          ></app-custom-input>
+        </div>
+
+        <div>
+          <app-custom-input
+            label="Registration Date"
+            formControlName="registration_date"
+            type="date"
+          ></app-custom-input>
+        </div>
+      </div>
+
+      <!-- Obligations & Special Conditions -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <app-custom-textarea
+            label="Developer Obligations & Milestone Timeline"
+            formControlName="obligations_developer"
+            placeholder="Architecture, sanction, foundation, superstructure, finishing..."
+            [rows]="2"
+          ></app-custom-textarea>
+        </div>
+
+        <div>
+          <app-custom-textarea
+            label="Landowner Obligations & Vacant Handover"
+            formControlName="obligations_landowner"
+            placeholder="Vacant possession, utility clearance, mutation consent..."
+            [rows]="2"
+          ></app-custom-textarea>
+        </div>
+      </div>
+
+      <!-- Consent Discrepancy Flag Checkbox -->
+      <div class="p-3 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/40 dark:bg-amber-950/20">
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            formControlName="missing_consents_flag"
+            class="w-4 h-4 rounded text-amber-600 focus:ring-amber-500 border-slate-300 dark:border-slate-700"
+          />
+          <span class="text-xs font-semibold text-amber-900 dark:text-amber-200">
+            Flag Missing Consents / Outstanding Discrepancies for Legal Review
+          </span>
+        </label>
+      </div>
+
+      <!-- Modal Actions -->
+      <div class="flex items-center justify-end gap-2 pt-4 border-t border-slate-200 dark:border-slate-800">
+        <button
+          type="button"
+          (click)="closeAgreementModal()"
+          class="px-4 py-2 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 transition-colors"
+        >
+          Cancel
+        </button>
+
+        <button
+          type="submit"
+          [disabled]="isSaving()"
+          class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-colors shadow-2xs disabled:opacity-50"
+        >
+          @if (isSaving()) {
+            <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+            Saving Deal...
+          } @else {
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            {{ isEditAgreementMode() ? 'Update Agreement' : 'Save Agreement' }}
+          }
+        </button>
+      </div>
+    </form>
+  </app-modal>
+</div>

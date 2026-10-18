@@ -1,0 +1,935 @@
+<div class="space-y-6">
+  <!-- Top Stat KPI Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- Total Landowners -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xs flex items-center justify-between">
+      <div>
+        <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Total Registered Owners</p>
+        <h3 class="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">{{ totalOwnersCount() }}</h3>
+        <p class="text-[11px] text-emerald-600 dark:text-emerald-400 mt-0.5 flex items-center gap-1 font-medium">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+          Centralized Land Registry
+        </p>
+      </div>
+      <div class="w-11 h-11 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+      </div>
+    </div>
+
+    <!-- Active Landowners -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xs flex items-center justify-between">
+      <div>
+        <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Active & Title-Clear</p>
+        <h3 class="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">{{ activeOwnersCount() }}</h3>
+        <p class="text-[11px] text-blue-600 dark:text-blue-400 mt-0.5 flex items-center gap-1 font-medium">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          Verified Title Holders
+        </p>
+      </div>
+      <div class="w-11 h-11 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 flex items-center justify-center text-blue-600 dark:text-blue-400">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </div>
+    </div>
+
+    <!-- Prospects & Under Verification -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xs flex items-center justify-between">
+      <div>
+        <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Under Verification / Prospects</p>
+        <h3 class="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">{{ prospectsCount() }}</h3>
+        <p class="text-[11px] text-amber-600 dark:text-amber-400 mt-0.5 flex items-center gap-1 font-medium">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          AC Land & Sub-Registry Search
+        </p>
+      </div>
+      <div class="w-11 h-11 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 flex items-center justify-center text-amber-600 dark:text-amber-400">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+      </div>
+    </div>
+
+    <!-- Linked Parcels -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xs flex items-center justify-between">
+      <div>
+        <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Linked Parcel Associations</p>
+        <h3 class="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">{{ totalParcelsCount() }}</h3>
+        <p class="text-[11px] text-purple-600 dark:text-purple-400 mt-0.5 flex items-center gap-1 font-medium">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+          Multi-Owner Dag Shares
+        </p>
+      </div>
+      <div class="w-11 h-11 rounded-xl bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800 flex items-center justify-center text-purple-600 dark:text-purple-400">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Card Container -->
+  <app-card-container 
+    [hasHeader]="true"
+    title="2.1 Landowner and Seller Registry"
+    subtitle="Maintain centralized register of landowners, co-owners, power-of-attorney holders, legal representatives, and banking credentials."
+    badge="Module 2.1"
+  >
+    <!-- Card Actions in Header -->
+    <div card-actions class="flex items-center gap-2">
+      <button 
+        type="button"
+        (click)="openDuplicateModal()"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 hover:bg-amber-100 transition-colors shadow-2xs"
+      >
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        Detect Duplicate Owner
+      </button>
+
+      <button 
+        type="button"
+        (click)="openCreateModal()"
+        class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-colors shadow-2xs"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        Register Landowner
+      </button>
+    </div>
+
+    <!-- Filters Bar -->
+    <div class="p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850/50 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+      <!-- Search Input -->
+      <div class="relative flex-1 max-w-md">
+        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        </span>
+        <input 
+          type="text" 
+          [value]="searchTerm()"
+          (input)="onSearch($event)"
+          placeholder="Search by ID, name, NID, phone, TIN, or email..."
+          class="w-full pl-9 pr-3 py-1.5 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+        />
+      </div>
+
+      <!-- Dynamic Filter Dropdowns -->
+      <div class="flex items-center gap-3 flex-wrap">
+        <div class="w-48">
+          <app-searchable-select
+            categoryCode="LANDOWNER_TYPE"
+            placeholder="Filter Owner Type..."
+            [allowCreateNew]="true"
+            (selectionChange)="onOwnerTypeFilter($event)"
+          ></app-searchable-select>
+        </div>
+
+        <div class="w-48">
+          <app-searchable-select
+            categoryCode="LANDOWNER_STATUS"
+            placeholder="Filter Status..."
+            [allowCreateNew]="true"
+            (selectionChange)="onStatusFilter($event)"
+          ></app-searchable-select>
+        </div>
+
+        <!-- Page Size -->
+        <div class="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 shrink-0">
+          <span>Show:</span>
+          <select 
+            [value]="pageSize()"
+            (change)="onPageSizeChange($any($event.target).value)"
+            class="px-2 py-1 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+          >
+            @for (size of pageSizeOptions; track size) {
+              <option [value]="size">{{ size }} / page</option>
+            }
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table Container -->
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/75 dark:bg-slate-850/80 text-[11px] font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
+            <th class="px-4 py-3">Landowner ID</th>
+            <th class="px-4 py-3">Owner Profile</th>
+            <th class="px-4 py-3">Type & Status</th>
+            <th class="px-4 py-3">Identification</th>
+            <th class="px-4 py-3">Contact</th>
+            <th class="px-4 py-3">Ownership Nature</th>
+            <th class="px-4 py-3">Bank Details</th>
+            <th class="px-4 py-3 text-center">Linked Parcels</th>
+            <th class="px-4 py-3 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-xs text-slate-700 dark:text-slate-300">
+          @if (isLoading()) {
+            <tr>
+              <td colspan="9" class="px-4 py-12 text-center text-slate-400">
+                <div class="inline-flex items-center gap-2">
+                  <svg class="animate-spin w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>
+                  <span>Loading registered landowners...</span>
+                </div>
+              </td>
+            </tr>
+          } @else if (paginatedLandowners().length === 0) {
+            <tr>
+              <td colspan="9" class="px-4 py-12 text-center text-slate-400">
+                <div class="flex flex-col items-center justify-center">
+                  <svg class="w-10 h-10 text-slate-300 dark:text-slate-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                  <p class="font-medium text-slate-600 dark:text-slate-400">No landowners found</p>
+                  <p class="text-[11px] text-slate-400 mt-1">Adjust search parameters or click "Register Landowner" to create one.</p>
+                </div>
+              </td>
+            </tr>
+          } @else {
+            @for (owner of paginatedLandowners(); track owner.id) {
+              <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-colors">
+                <!-- Landowner ID -->
+                <td class="px-4 py-3 font-mono font-bold text-emerald-700 dark:text-emerald-400 whitespace-nowrap">
+                  {{ owner.landowner_code }}
+                </td>
+
+                <!-- Owner Profile -->
+                <td class="px-4 py-3">
+                  <div class="font-bold text-slate-900 dark:text-slate-100">{{ owner.full_name_en }}</div>
+                  @if (owner.full_name_bn) {
+                    <div class="text-[11px] text-slate-500 font-bengali">{{ owner.full_name_bn }}</div>
+                  }
+                  @if (owner.father_mother_spouse_name) {
+                    <div class="text-[10px] text-slate-400 mt-0.5">S/O, D/O, W/O: {{ owner.father_mother_spouse_name }}</div>
+                  }
+                </td>
+
+                <!-- Type & Status -->
+                <td class="px-4 py-3 whitespace-nowrap">
+                  <div class="flex flex-col gap-1">
+                    <span [ngClass]="getOwnerTypeBadgeColor(owner.owner_type)" class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold border">
+                      {{ owner.owner_type }}
+                    </span>
+                    <span [ngClass]="getStatusBadgeColor(owner.status)" class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold border">
+                      {{ owner.status }}
+                    </span>
+                  </div>
+                </td>
+
+                <!-- Identification -->
+                <td class="px-4 py-3 whitespace-nowrap text-[11px]">
+                  @if (owner.nid_number) {
+                    <div class="text-slate-800 dark:text-slate-200">
+                      <span class="text-slate-400 font-medium">NID:</span> {{ owner.nid_number }}
+                    </div>
+                  }
+                  @if (owner.tin_number) {
+                    <div class="text-slate-600 dark:text-slate-400 text-[10px]">
+                      <span class="text-slate-400">TIN:</span> {{ owner.tin_number }}
+                    </div>
+                  }
+                  @if (owner.company_reg_number) {
+                    <div class="text-purple-600 dark:text-purple-400 text-[10px]">
+                      <span class="text-slate-400">Reg:</span> {{ owner.company_reg_number }}
+                    </div>
+                  }
+                </td>
+
+                <!-- Contact -->
+                <td class="px-4 py-3 whitespace-nowrap text-[11px]">
+                  <div class="text-slate-800 dark:text-slate-200 font-medium">{{ owner.phone_number || 'N/A' }}</div>
+                  @if (owner.email) {
+                    <div class="text-[10px] text-slate-400">{{ owner.email }}</div>
+                  }
+                  @if (owner.emergency_contact_phone) {
+                    <div class="text-[9px] text-amber-600 dark:text-amber-400 mt-0.5">
+                      Emerg: {{ owner.emergency_contact_name }} ({{ owner.emergency_contact_phone }})
+                    </div>
+                  }
+                </td>
+
+                <!-- Ownership Nature -->
+                <td class="px-4 py-3 whitespace-nowrap text-[11px]">
+                  <div class="font-medium text-slate-800 dark:text-slate-200">{{ owner.ownership_nature }}</div>
+                  <div class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">
+                    Ratio: {{ (owner.ownership_share_ratio * 100).toFixed(1) }}%
+                  </div>
+                </td>
+
+                <!-- Bank Details -->
+                <td class="px-4 py-3 whitespace-nowrap text-[11px]">
+                  @if (owner.bank_name && owner.bank_account_no) {
+                    <div class="text-slate-800 dark:text-slate-200 font-medium">{{ owner.bank_name }}</div>
+                    <div class="text-[10px] font-mono text-slate-500">A/C: ••••{{ owner.bank_account_no.slice(-4) }}</div>
+                    <div class="text-[9px] text-slate-400">Holder: {{ owner.bank_account_holder || owner.full_name_en }}</div>
+                  } @else {
+                    <span class="text-slate-400 italic text-[10px]">Pending setup</span>
+                  }
+                </td>
+
+                <!-- Linked Parcels Count -->
+                <td class="px-4 py-3 text-center whitespace-nowrap">
+                  <span class="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                    {{ owner.linked_parcels_count || 0 }} Parcels
+                  </span>
+                </td>
+
+                <!-- Actions -->
+                <td class="px-4 py-3 text-right whitespace-nowrap">
+                  <div class="flex items-center justify-end gap-1.5">
+                    <!-- Communication & Negotiation History -->
+                    <button 
+                      type="button"
+                      (click)="openNegotiationModal(owner)"
+                      class="p-1.5 rounded-lg text-slate-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors"
+                      title="Negotiation & Communication History"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+                    </button>
+
+                    <!-- Edit Profile -->
+                    <button 
+                      type="button"
+                      (click)="openEditModal(owner)"
+                      class="p-1.5 rounded-lg text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors"
+                      title="Edit Landowner Profile"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                    </button>
+
+                    <!-- Archive -->
+                    @if (owner.status !== 'ARCHIVED') {
+                      <button 
+                        type="button"
+                        (click)="archiveOwner(owner)"
+                        class="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                        title="Archive Landowner"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Footer -->
+    <div class="px-4 py-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850/50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
+      <div>
+        Showing {{ ((currentPage() - 1) * pageSize()) + 1 }} to {{ Math.min(currentPage() * pageSize(), filteredLandowners().length) }} of {{ filteredLandowners().length }} landowners
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button 
+          type="button"
+          (click)="prevPage()"
+          [disabled]="currentPage() === 1"
+          class="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"
+        >
+          Previous
+        </button>
+
+        <span class="px-2 font-medium text-slate-800 dark:text-slate-200">
+          Page {{ currentPage() }} of {{ totalPages() }}
+        </span>
+
+        <button 
+          type="button"
+          (click)="nextPage()"
+          [disabled]="currentPage() >= totalPages()"
+          class="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  </app-card-container>
+
+  <!-- MODAL 1: REGISTER / EDIT LANDOWNER MODAL -->
+  <app-modal
+    [isOpen]="isCreateModalOpen()"
+    [title]="isEditMode() ? 'Edit Landowner Profile' : 'Register New Landowner & Seller'"
+    [subtitle]="isEditMode() ? 'Update identification, ownership ratio, and banking details' : 'Auto-generates unique Landowner ID and performs identity check'"
+    [modalClass]="'max-w-4xl'"
+    [showFooter]="true"
+    (closeModal)="isCreateModalOpen.set(false)"
+  >
+    <!-- Modal Tabs -->
+    <div class="flex items-center border-b border-slate-200 dark:border-slate-800 mb-4 overflow-x-auto">
+      <button 
+        type="button"
+        (click)="activeTab.set('personal')"
+        [ngClass]="activeTab() === 'personal' ? 'border-emerald-600 text-emerald-600 dark:text-emerald-400 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'"
+        class="px-4 py-2 text-xs border-b-2 whitespace-nowrap transition-colors"
+      >
+        1. Personal & Identification
+      </button>
+      <button 
+        type="button"
+        (click)="activeTab.set('contact')"
+        [ngClass]="activeTab() === 'contact' ? 'border-emerald-600 text-emerald-600 dark:text-emerald-400 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'"
+        class="px-4 py-2 text-xs border-b-2 whitespace-nowrap transition-colors"
+      >
+        2. Contact & Addresses
+      </button>
+      <button 
+        type="button"
+        (click)="activeTab.set('ownership')"
+        [ngClass]="activeTab() === 'ownership' ? 'border-emerald-600 text-emerald-600 dark:text-emerald-400 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'"
+        class="px-4 py-2 text-xs border-b-2 whitespace-nowrap transition-colors"
+      >
+        3. Ownership & Banking Details
+      </button>
+      <button 
+        type="button"
+        (click)="activeTab.set('nominee')"
+        [ngClass]="activeTab() === 'nominee' ? 'border-emerald-600 text-emerald-600 dark:text-emerald-400 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'"
+        class="px-4 py-2 text-xs border-b-2 whitespace-nowrap transition-colors"
+      >
+        4. Nominee & Power-of-Attorney (PoA)
+      </button>
+    </div>
+
+    <form [formGroup]="ownerForm" class="space-y-4">
+      <!-- TAB 1: PERSONAL & IDENTIFICATION -->
+      @if (activeTab() === 'personal') {
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Owner Type (Dynamic Searchable Select) -->
+          <div>
+            <app-searchable-select
+              categoryCode="LANDOWNER_TYPE"
+              label="Owner Type *"
+              formControlName="owner_type"
+              [allowCreateNew]="true"
+              placeholder="Select Owner Classification..."
+            ></app-searchable-select>
+          </div>
+
+          <!-- Status (Dynamic Searchable Select) -->
+          <div>
+            <app-searchable-select
+              categoryCode="LANDOWNER_STATUS"
+              label="Verification Status *"
+              formControlName="status"
+              [allowCreateNew]="true"
+              placeholder="Select Status..."
+            ></app-searchable-select>
+          </div>
+
+          <!-- English Full Name -->
+          <div>
+            <app-custom-input
+              label="Full Name (English) *"
+              formControlName="full_name_en"
+              placeholder="e.g. Alhaj Nurul Islam Chowdhury"
+              [required]="true"
+            ></app-custom-input>
+          </div>
+
+          <!-- Bangla Full Name -->
+          <div>
+            <app-custom-input
+              label="Full Name (বাংলা - Bengali)"
+              formControlName="full_name_bn"
+              placeholder="e.g. আলহাজ্ব নুরুল ইসলাম চৌধুরী"
+            ></app-custom-input>
+          </div>
+
+          <!-- Father/Mother/Spouse -->
+          <div class="md:col-span-2">
+            <app-custom-input
+              label="Father / Mother / Spouse Name"
+              formControlName="father_mother_spouse_name"
+              placeholder="e.g. Late Abdul Karim Chowdhury"
+            ></app-custom-input>
+          </div>
+
+          <!-- NID -->
+          <div>
+            <app-custom-input
+              label="National ID (NID Number)"
+              formControlName="nid_number"
+              placeholder="10, 13, or 17 digit NID"
+            ></app-custom-input>
+          </div>
+
+          <!-- Passport -->
+          <div>
+            <app-custom-input
+              label="Passport Number"
+              formControlName="passport_number"
+              placeholder="e.g. EG1029384"
+            ></app-custom-input>
+          </div>
+
+          <!-- TIN Number -->
+          <div>
+            <app-custom-input
+              label="e-TIN Number"
+              formControlName="tin_number"
+              placeholder="12 digit Tax ID"
+            ></app-custom-input>
+          </div>
+
+          <!-- Company Reg -->
+          <div>
+            <app-custom-input
+              label="Company Registration (RJSC / Trade License)"
+              formControlName="company_reg_number"
+              placeholder="If corporate landowner"
+            ></app-custom-input>
+          </div>
+        </div>
+      }
+
+      <!-- TAB 2: CONTACT & ADDRESSES -->
+      @if (activeTab() === 'contact') {
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Mobile -->
+          <div>
+            <app-custom-input
+              label="Primary Mobile Number"
+              formControlName="phone_number"
+              placeholder="+880 1712 345678"
+            ></app-custom-input>
+          </div>
+
+          <!-- Email -->
+          <div>
+            <app-custom-input
+              label="Email Address"
+              formControlName="email"
+              type="email"
+              placeholder="owner@domain.com"
+            ></app-custom-input>
+          </div>
+
+          <!-- Emergency Contact Name -->
+          <div>
+            <app-custom-input
+              label="Emergency Contact Name"
+              formControlName="emergency_contact_name"
+              placeholder="Family member / Attorney name"
+            ></app-custom-input>
+          </div>
+
+          <!-- Emergency Contact Phone -->
+          <div>
+            <app-custom-input
+              label="Emergency Contact Mobile"
+              formControlName="emergency_contact_phone"
+              placeholder="+880 1..."
+            ></app-custom-input>
+          </div>
+
+          <!-- Present Address -->
+          <div class="md:col-span-2">
+            <app-custom-textarea
+              label="Present / Residential Address"
+              formControlName="present_address"
+              placeholder="House #, Road #, Area, Thana, District"
+              [rows]="2"
+            ></app-custom-textarea>
+          </div>
+
+          <!-- Permanent Address -->
+          <div class="md:col-span-2">
+            <app-custom-textarea
+              label="Permanent Address (As per NID / Khatian)"
+              formControlName="permanent_address"
+              placeholder="Village, Post Office, Upazila, District"
+              [rows]="2"
+            ></app-custom-textarea>
+          </div>
+        </div>
+      }
+
+      <!-- TAB 3: OWNERSHIP & BANKING DETAILS -->
+      @if (activeTab() === 'ownership') {
+        <div class="space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Ownership Nature (Dynamic Select) -->
+            <div>
+              <app-searchable-select
+                categoryCode="OWNERSHIP_NATURE"
+                label="Ownership Nature *"
+                formControlName="ownership_nature"
+                [allowCreateNew]="true"
+                placeholder="Select Inheritance/Purchase..."
+              ></app-searchable-select>
+            </div>
+
+            <!-- Ownership Share Ratio -->
+            <div>
+              <app-custom-input
+                label="Ownership Share Ratio (0.01 to 1.0) *"
+                formControlName="ownership_share_ratio"
+                type="number"
+                step="0.0001"
+                placeholder="1.0000 = 100% share"
+                [required]="true"
+              ></app-custom-input>
+              <p class="text-[10px] text-slate-400 mt-1">E.g., 0.5000 represents 50% joint co-ownership.</p>
+            </div>
+          </div>
+
+          <!-- Banking Information Section -->
+          <div class="p-3 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl space-y-3">
+            <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+              <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              Restricted Banking Credentials (Signing Money / Land Cost Disbursement)
+            </h4>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div>
+                <app-custom-input
+                  label="Bank Name"
+                  formControlName="bank_name"
+                  placeholder="e.g. Dutch-Bangla Bank PLC"
+                ></app-custom-input>
+              </div>
+
+              <div>
+                <app-custom-input
+                  label="Branch Name"
+                  formControlName="bank_branch"
+                  placeholder="e.g. Gulshan Branch"
+                ></app-custom-input>
+              </div>
+
+              <div>
+                <app-custom-input
+                  label="Account Holder Name"
+                  formControlName="bank_account_holder"
+                  placeholder="Name on bank passbook"
+                ></app-custom-input>
+              </div>
+
+              <div>
+                <app-custom-input
+                  label="Account Number"
+                  formControlName="bank_account_no"
+                  placeholder="e.g. 115.120.987654"
+                ></app-custom-input>
+              </div>
+
+              <div>
+                <app-custom-input
+                  label="Routing Number"
+                  formControlName="bank_routing_no"
+                  placeholder="9-digit routing number"
+                ></app-custom-input>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- TAB 4: NOMINEE & POA -->
+      @if (activeTab() === 'nominee') {
+        <div class="space-y-4">
+          <!-- Nominee Block -->
+          <div class="p-3 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl space-y-3">
+            <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200">Legal Nominee Details</h4>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div>
+                <app-custom-input
+                  label="Nominee Name"
+                  formControlName="nominee_name"
+                  placeholder="Nominee full name"
+                ></app-custom-input>
+              </div>
+              <div>
+                <app-custom-input
+                  label="Relation with Landowner"
+                  formControlName="nominee_relation"
+                  placeholder="Son / Daughter / Spouse"
+                ></app-custom-input>
+              </div>
+              <div>
+                <app-custom-input
+                  label="Nominee NID Number"
+                  formControlName="nominee_nid"
+                  placeholder="NID number"
+                ></app-custom-input>
+              </div>
+            </div>
+          </div>
+
+          <!-- Power of Attorney Block -->
+          <div class="p-3 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl space-y-3">
+            <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200">Registered Power-of-Attorney (PoA) Information</h4>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div>
+                <app-custom-input
+                  label="Authorized PoA Holder Name"
+                  formControlName="poa_holder_name"
+                  placeholder="Signatory attorney name"
+                ></app-custom-input>
+              </div>
+              <div>
+                <app-custom-input
+                  label="PoA Deed Number"
+                  formControlName="poa_deed_no"
+                  placeholder="Sub-Registry Deed No"
+                ></app-custom-input>
+              </div>
+              <div>
+                <app-custom-input
+                  label="Execution Date"
+                  formControlName="poa_date"
+                  type="date"
+                ></app-custom-input>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+    </form>
+
+    <!-- Modal Footer Actions -->
+    <div modal-footer class="flex items-center justify-end gap-2">
+      <button 
+        type="button"
+        (click)="isCreateModalOpen.set(false)"
+        class="px-3.5 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 transition-colors"
+      >
+        Cancel
+      </button>
+
+      <button 
+        type="button"
+        (click)="saveLandowner()"
+        [disabled]="isSaving()"
+        class="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-50 transition-colors shadow-2xs"
+      >
+        @if (isSaving()) {
+          <svg class="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>
+        }
+        {{ isEditMode() ? 'Save Profile Changes' : 'Confirm Registration' }}
+      </button>
+    </div>
+  </app-modal>
+
+  <!-- MODAL 2: DUPLICATE DETECTION MODAL -->
+  <app-modal
+    [isOpen]="isDuplicateModalOpen()"
+    title="Configurable Duplicate Landowner Detection"
+    subtitle="Detect duplicate owner entries across NID, Phone, TIN, and RJSC registration before onboarding"
+    modalClass="max-w-2xl"
+    [showFooter]="true"
+    (closeModal)="isDuplicateModalOpen.set(false)"
+  >
+    <div class="space-y-4">
+      <p class="text-xs text-slate-600 dark:text-slate-300">
+        Enter National ID, Mobile Number, or TIN to run real-time deduplication check across the centralized database:
+      </p>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div>
+          <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Check NID</label>
+          <input 
+            type="text" 
+            [value]="duplicateCheckNid()"
+            (input)="duplicateCheckNid.set($any($event.target).value)"
+            placeholder="NID Number..."
+            class="w-full px-3 py-1.5 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-1 focus:ring-amber-500"
+          />
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Check Phone</label>
+          <input 
+            type="text" 
+            [value]="duplicateCheckPhone()"
+            (input)="duplicateCheckPhone.set($any($event.target).value)"
+            placeholder="Mobile Number..."
+            class="w-full px-3 py-1.5 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-1 focus:ring-amber-500"
+          />
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Check TIN</label>
+          <input 
+            type="text" 
+            [value]="duplicateCheckTin()"
+            (input)="duplicateCheckTin.set($any($event.target).value)"
+            placeholder="e-TIN..."
+            class="w-full px-3 py-1.5 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-1 focus:ring-amber-500"
+          />
+        </div>
+      </div>
+
+      <div class="flex justify-end">
+        <button 
+          type="button"
+          (click)="runDuplicateCheck()"
+          [disabled]="isCheckingDuplicate()"
+          class="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold rounded-lg bg-amber-600 hover:bg-amber-700 text-white disabled:opacity-50 transition-colors shadow-2xs"
+        >
+          @if (isCheckingDuplicate()) {
+            <svg class="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>
+          }
+          Scan Centralized Register
+        </button>
+      </div>
+
+      <!-- Result Display -->
+      @if (duplicateResult()) {
+        @if (duplicateResult()!.has_duplicate) {
+          <div class="p-3.5 rounded-xl border border-rose-200 dark:border-rose-900 bg-rose-50/70 dark:bg-rose-950/40 space-y-2">
+            <div class="flex items-center gap-2 text-rose-800 dark:text-rose-300 font-bold text-xs">
+              <svg class="w-4 h-4 text-rose-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+              <span>Potential Duplicate Match Found! (Matched By: {{ duplicateResult()!.matched_by }})</span>
+            </div>
+            
+            <div class="divide-y divide-rose-200 dark:divide-rose-900">
+              @for (match of duplicateResult()!.matches; track match.id) {
+                <div class="py-2 text-xs flex items-center justify-between">
+                  <div>
+                    <span class="font-bold text-slate-800 dark:text-slate-100">{{ match.full_name_en }}</span>
+                    <span class="text-slate-500 font-mono ml-2">({{ match.landowner_code }})</span>
+                    <div class="text-[11px] text-slate-500">
+                      NID: {{ match.nid_number || 'N/A' }} | Phone: {{ match.phone_number || 'N/A' }} | Status: {{ match.status }}
+                    </div>
+                  </div>
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-300">
+                    Existing Record
+                  </span>
+                </div>
+              }
+            </div>
+          </div>
+        } @else {
+          <div class="p-3.5 rounded-xl border border-emerald-200 dark:border-emerald-900 bg-emerald-50/70 dark:bg-emerald-950/40 flex items-center gap-2 text-emerald-800 dark:text-emerald-300 font-medium text-xs">
+            <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span>No duplicate record detected! Identity is clear for new landowner registration.</span>
+          </div>
+        }
+      }
+    </div>
+
+    <div modal-footer>
+      <button 
+        type="button"
+        (click)="isDuplicateModalOpen.set(false)"
+        class="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 transition-colors"
+      >
+        Close
+      </button>
+    </div>
+  </app-modal>
+
+  <!-- MODAL 3: NEGOTIATION & COMMUNICATION HISTORY MODAL -->
+  <app-modal
+    [isOpen]="isNegotiationModalOpen()"
+    [title]="'Negotiation & Communication Log: ' + (selectedOwnerForNotes()?.full_name_en || '')"
+    [subtitle]="'Track communication, meeting minutes, price offers, and legal objections for ' + (selectedOwnerForNotes()?.landowner_code || '')"
+    modalClass="max-w-2xl"
+    [showFooter]="true"
+    (closeModal)="isNegotiationModalOpen.set(false)"
+  >
+    <div class="space-y-4">
+      <!-- Add Note Form -->
+      <div class="p-3 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl space-y-3">
+        <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200">Log New Interaction / Meeting Note</h4>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+          <div>
+            <label class="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">Interaction Type</label>
+            <select 
+              [value]="newNoteType()"
+              (change)="newNoteType.set($any($event.target).value)"
+              class="w-full px-2.5 py-1 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            >
+              <option value="MEETING">In-Person Meeting</option>
+              <option value="PHONE_CALL">Telephone Discussion</option>
+              <option value="SITE_VISIT">Plot Inspection & Site Visit</option>
+              <option value="LEGAL_DISCUSSION">Legal Vetting Consultation</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">Date</label>
+            <input 
+              type="date" 
+              [value]="newNoteDate()"
+              (input)="newNoteDate.set($any($event.target).value)"
+              class="w-full px-2.5 py-1 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            />
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">Conducted By</label>
+            <input 
+              type="text" 
+              [value]="newNoteConductedBy()"
+              (input)="newNoteConductedBy.set($any($event.target).value)"
+              class="w-full px-2.5 py-1 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            />
+          </div>
+        </div>
+
+        <div>
+          <textarea 
+            [value]="newNoteText()"
+            (input)="newNoteText.set($any($event.target).value)"
+            rows="2"
+            placeholder="Record discussion details, landowner ratio demands, signing money requests..."
+            class="w-full p-2.5 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+          ></textarea>
+        </div>
+
+        <div class="flex justify-end">
+          <button 
+            type="button"
+            (click)="saveNegotiationNote()"
+            [disabled]="isSavingNote() || !newNoteText().trim()"
+            class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-50 transition-colors shadow-2xs"
+          >
+            @if (isSavingNote()) {
+              <svg class="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>
+            }
+            Save Interaction Note
+          </button>
+        </div>
+      </div>
+
+      <!-- Timeline List -->
+      <div class="space-y-3">
+        <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200">Chronological Negotiation History</h4>
+        
+        @if (!selectedOwnerForNotes()?.negotiation_notes || selectedOwnerForNotes()!.negotiation_notes!.length === 0) {
+          <p class="text-xs text-slate-400 italic">No communication history logged yet.</p>
+        } @else {
+          <div class="relative pl-6 space-y-4 before:content-[''] before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200 dark:before:bg-slate-800">
+            @for (note of selectedOwnerForNotes()!.negotiation_notes!; track $index) {
+              <div class="relative">
+                <span class="absolute -left-6 top-1.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-4 ring-white dark:ring-slate-900"></span>
+                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-3 text-xs shadow-2xs space-y-1">
+                  <div class="flex items-center justify-between text-[11px]">
+                    <span class="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                      <span class="px-1.5 py-0.5 rounded text-[10px] bg-slate-100 dark:bg-slate-800 font-medium">
+                        {{ note.interaction_type }}
+                      </span>
+                      {{ note.date }}
+                    </span>
+                    <span class="text-slate-400">{{ note.conducted_by || 'Officer' }}</span>
+                  </div>
+                  <p class="text-slate-700 dark:text-slate-300 leading-relaxed">{{ note.note }}</p>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+    <div modal-footer>
+      <button 
+        type="button"
+        (click)="isNegotiationModalOpen.set(false)"
+        class="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 transition-colors"
+      >
+        Close
+      </button>
+    </div>
+  </app-modal>
+</div>

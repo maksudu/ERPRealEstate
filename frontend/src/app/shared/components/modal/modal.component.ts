@@ -13,7 +13,7 @@ import { CommonModule } from '@angular/common';
       >
         <div 
           class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl w-full max-w-[96vw] overflow-hidden animate-scaleUp flex flex-col max-h-[92vh] sm:max-h-[90vh]"
-          [ngClass]="modalClass"
+          [ngClass]="computedModalClass"
           (click)="$event.stopPropagation()"
         >
           <!-- Header -->
@@ -80,12 +80,17 @@ export class ModalComponent {
   @Input() size: 'sm' | 'md' | 'lg' | 'xl' | '2xl' = 'md';
   @Input() maxWidth: string = '';
   @Input() maxWidthClass: string = '';
+  @Input() modalClass: string = '';
   @Input() closeOnBackdrop: boolean = true;
   @Input() showFooter: boolean = true;
 
   @Output() closed = new EventEmitter<void>();
+  @Output() closeModal = new EventEmitter<void>();
 
-  get modalClass(): string {
+  get computedModalClass(): string {
+    if (this.modalClass) {
+      return this.modalClass;
+    }
     if (this.maxWidth) {
       return this.maxWidth;
     }
@@ -105,6 +110,7 @@ export class ModalComponent {
   close(): void {
     this.isOpen = false;
     this.closed.emit();
+    this.closeModal.emit();
   }
 
   onBackdropClick(): void {

@@ -1,0 +1,727 @@
+<div class="space-y-6">
+  <!-- Page Header -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+        2.7 Legal Due Diligence & Encumbrance Tracking
+      </h1>
+      <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+        Statutory title verification, 30-year ownership chain audit, non-encumbrance search (NEC), and exception risk controls.
+      </p>
+    </div>
+    <div class="flex items-center gap-3">
+      <button
+        (click)="openCreateAuditModal()"
+        class="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-lg shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+      >
+        <i class="fas fa-balance-scale"></i>
+        <span>Initiate Legal Audit</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs flex items-center gap-4">
+      <div class="w-12 h-12 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xl shrink-0">
+        <i class="fas fa-clipboard-check"></i>
+      </div>
+      <div>
+        <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Audited Parcels</p>
+        <h3 class="text-xl font-bold text-slate-900 dark:text-white mt-0.5">{{ totalItems }}</h3>
+      </div>
+    </div>
+
+    <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs flex items-center gap-4">
+      <div class="w-12 h-12 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xl shrink-0">
+        <i class="fas fa-shield-alt"></i>
+      </div>
+      <div>
+        <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Cleared for Acquisition</p>
+        <h3 class="text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
+          {{ getClearanceCount('CLEARED') }}
+        </h3>
+      </div>
+    </div>
+
+    <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs flex items-center gap-4">
+      <div class="w-12 h-12 rounded-lg bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 flex items-center justify-center text-xl shrink-0">
+        <i class="fas fa-ban"></i>
+      </div>
+      <div>
+        <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Acquisition Blocked</p>
+        <h3 class="text-xl font-bold text-rose-600 dark:text-rose-400 mt-0.5">
+          {{ getClearanceCount('BLOCKED') }}
+        </h3>
+      </div>
+    </div>
+
+    <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs flex items-center gap-4">
+      <div class="w-12 h-12 rounded-lg bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xl shrink-0">
+        <i class="fas fa-spinner fa-spin"></i>
+      </div>
+      <div>
+        <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Under Due Diligence</p>
+        <h3 class="text-xl font-bold text-amber-600 dark:text-amber-400 mt-0.5">
+          {{ getClearanceCount('UNDER_REVIEW') }}
+        </h3>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statutory Disclaimer Notice -->
+  <div class="p-4 rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-50/70 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300 text-sm flex items-start gap-3">
+    <i class="fas fa-exclamation-triangle text-lg mt-0.5 shrink-0 text-amber-600 dark:text-amber-400"></i>
+    <div class="leading-relaxed">
+      <span class="font-semibold">Bangladesh Land Law Compliance Requirement:</span>
+      High-risk or critical findings (e.g., pending injunction, Artha Rin mortgage, or defective chain of title) strictly block final parcel acquisition approval.
+      Software validations assist documentation and do not replace legal vetting by enrolled Bangladesh Bar Council advocates. An authorized exception override requires documented board resolution.
+    </div>
+  </div>
+
+  <!-- Master Due Diligence Card Container -->
+  <app-card-container [hasHeader]="false" paddingClass="p-0">
+    <!-- Filter and Search Header -->
+    <div class="p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex flex-wrap items-center gap-3 flex-1">
+        <!-- Search -->
+        <div class="relative w-full sm:w-64">
+          <input
+            type="text"
+            [(ngModel)]="searchTerm"
+            (keyup.enter)="onSearch()"
+            placeholder="Search audit, counsel, firm..."
+            class="w-full pl-9 pr-3 py-1.5 text-xs bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-primary-500"
+          />
+          <i class="fas fa-search absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+        </div>
+
+        <!-- Parcel Filter -->
+        <div class="w-full sm:w-60">
+          <app-searchable-select
+            [options]="parcelOptions"
+            placeholder="Filter by Parcel..."
+            [(ngModel)]="selectedParcelFilter"
+            (ngModelChange)="onSearch()"
+          ></app-searchable-select>
+        </div>
+
+        <!-- Risk Filter -->
+        <div class="w-full sm:w-44">
+          <app-searchable-select
+            categoryCode="DUE_DILIGENCE_RISK_LEVEL"
+            placeholder="Risk Level..."
+            [(ngModel)]="selectedRiskFilter"
+            (ngModelChange)="onSearch()"
+            [allowCreateNew]="true"
+          ></app-searchable-select>
+        </div>
+
+        <!-- Clearance Status Filter -->
+        <div class="w-full sm:w-48">
+          <app-searchable-select
+            categoryCode="CLEARANCE_DECISION"
+            placeholder="Clearance Status..."
+            [(ngModel)]="selectedClearanceFilter"
+            (ngModelChange)="onSearch()"
+            [allowCreateNew]="true"
+          ></app-searchable-select>
+        </div>
+
+        <button
+          (click)="resetFilters()"
+          class="px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg shadow-2xs"
+          title="Reset Filters"
+        >
+          <i class="fas fa-undo mr-1"></i> Reset
+        </button>
+      </div>
+
+      <div class="text-xs text-slate-500 dark:text-slate-400">
+        Showing {{ audits.length }} of {{ totalItems }} legal audits
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse text-xs">
+        <thead class="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">
+          <tr>
+            <th class="py-3 px-4">Audit Code & Parcel</th>
+            <th class="py-3 px-4">Legal Counsel / Law Firm</th>
+            <th class="py-3 px-4">Search Period & Registry</th>
+            <th class="py-3 px-4">Checklist Progress</th>
+            <th class="py-3 px-4">Risk Level</th>
+            <th class="py-3 px-4">Clearance Status</th>
+            <th class="py-3 px-4 text-center">Acquisition Block</th>
+            <th class="py-3 px-4 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+          <tr *ngIf="isLoading">
+            <td colspan="8" class="text-center py-12 text-slate-400">
+              <i class="fas fa-circle-notch fa-spin text-2xl mb-2 text-primary-500"></i>
+              <p>Loading legal due diligence audits...</p>
+            </td>
+          </tr>
+          <tr *ngIf="!isLoading && audits.length === 0">
+            <td colspan="8" class="text-center py-12 text-slate-400">
+              <i class="fas fa-folder-open text-3xl mb-2 text-slate-300 dark:text-slate-600"></i>
+              <p>No legal due diligence audits found.</p>
+              <button
+                (click)="openCreateAuditModal()"
+                class="mt-3 px-3 py-1.5 text-xs bg-primary-50 text-primary-600 dark:bg-primary-950/40 dark:text-primary-400 rounded-lg hover:underline inline-flex items-center gap-1.5"
+              >
+                <i class="fas fa-plus"></i> Initiate your first audit
+              </button>
+            </td>
+          </tr>
+          <tr *ngFor="let audit of audits" class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
+            <!-- Audit Code & Parcel -->
+            <td class="py-3 px-4">
+              <div class="font-semibold text-slate-900 dark:text-white">
+                {{ audit.diligence_code || 'AUDIT-' + audit.id }}
+              </div>
+              <div class="text-slate-500 dark:text-slate-400 flex items-center gap-1 mt-0.5">
+                <i class="fas fa-map-marker-alt text-[10px] text-primary-500"></i>
+                <span>{{ getParcelName(audit.parcel_id) }}</span>
+              </div>
+            </td>
+
+            <!-- Legal Counsel / Firm -->
+            <td class="py-3 px-4">
+              <div class="font-medium text-slate-800 dark:text-slate-200">
+                {{ audit.lead_legal_counsel || 'In-House Counsel' }}
+              </div>
+              <div class="text-[11px] text-slate-500 dark:text-slate-400">
+                {{ audit.law_firm_name || 'Legal Affairs Dept' }}
+              </div>
+            </td>
+
+            <!-- Search Period & Registry -->
+            <td class="py-3 px-4">
+              <div class="font-medium text-slate-800 dark:text-slate-200">
+                {{ audit.title_search_period_years || 30 }} Years Chain
+              </div>
+              <div class="text-[11px] text-slate-500 dark:text-slate-400">
+                {{ audit.sub_registry_office_searched || 'Sub-Registry' }} • NEC: {{ audit.encumbrance_certificate_no || 'Pending' }}
+              </div>
+            </td>
+
+            <!-- Checklist Progress -->
+            <td class="py-3 px-4">
+              <div class="flex items-center gap-2">
+                <div class="w-20 bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+                  <div
+                    class="h-full bg-emerald-500"
+                    [style.width.%]="(audit.passed_items_count !== undefined ? audit.passed_items_count : getCompletedChecksCount(audit)) * 10"
+                  ></div>
+                </div>
+                <span class="font-medium text-[11px] text-slate-600 dark:text-slate-400">
+                  {{ audit.passed_items_count !== undefined ? audit.passed_items_count : getCompletedChecksCount(audit) }}/10
+                </span>
+              </div>
+              <div class="text-[10px] text-slate-400 mt-0.5">
+                {{ (audit.items?.length || 10) }} statutory points
+              </div>
+            </td>
+
+            <!-- Risk Level -->
+            <td class="py-3 px-4">
+              <app-status-badge
+                [status]="audit.overall_risk_level"
+                [variant]="getRiskBadgeVariant(audit.overall_risk_level)"
+              ></app-status-badge>
+            </td>
+
+            <!-- Clearance Status -->
+            <td class="py-3 px-4">
+              <div class="flex flex-col gap-1 items-start">
+                <app-status-badge
+                  [status]="audit.clearance_status"
+                  [variant]="getClearanceBadgeVariant(audit.clearance_status)"
+                ></app-status-badge>
+                <span
+                  *ngIf="audit.exception_approved_by"
+                  class="inline-flex items-center gap-1 text-[10px] text-purple-600 dark:text-purple-400 font-semibold bg-purple-50 dark:bg-purple-950/40 px-1.5 py-0.5 rounded"
+                  title="Override recorded by {{ audit.exception_approved_by }}"
+                >
+                  <i class="fas fa-certificate"></i> Exception Overridden
+                </span>
+              </div>
+            </td>
+
+            <!-- Acquisition Block -->
+            <td class="py-3 px-4 text-center">
+              <span
+                *ngIf="audit.acquisition_blocked"
+                class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-semibold text-rose-700 bg-rose-100 dark:bg-rose-950/50 dark:text-rose-400 rounded-md"
+              >
+                <i class="fas fa-lock"></i> BLOCKED
+              </span>
+              <span
+                *ngIf="!audit.acquisition_blocked"
+                class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 bg-emerald-100 dark:bg-emerald-950/50 dark:text-emerald-400 rounded-md"
+              >
+                <i class="fas fa-unlock"></i> CLEAR
+              </span>
+            </td>
+
+            <!-- Actions -->
+            <td class="py-3 px-4 text-right">
+              <div class="inline-flex items-center gap-1">
+                <!-- Open Checklist Review -->
+                <button
+                  (click)="openChecklistModal(audit)"
+                  class="p-1.5 text-primary-600 hover:text-primary-700 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/40 rounded transition-colors"
+                  title="Review 10-Point Checklist"
+                >
+                  <i class="fas fa-tasks"></i>
+                </button>
+
+                <!-- Exception Override Button (if blocked) -->
+                <button
+                  *ngIf="audit.acquisition_blocked"
+                  (click)="openExceptionModal(audit)"
+                  class="p-1.5 text-purple-600 hover:text-purple-700 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/40 rounded transition-colors"
+                  title="Documented Exception Override"
+                >
+                  <i class="fas fa-key"></i>
+                </button>
+
+                <!-- Edit Audit Details -->
+                <button
+                  (click)="openEditAuditModal(audit)"
+                  class="p-1.5 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-colors"
+                  title="Edit Audit Details"
+                >
+                  <i class="fas fa-pen"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Footer -->
+    <div class="p-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex items-center justify-between">
+      <div class="text-xs text-slate-500 dark:text-slate-400">
+        Page {{ currentPage }} of {{ totalPages }}
+      </div>
+      <div class="flex items-center gap-1">
+        <button
+          [disabled]="currentPage === 1"
+          (click)="goToPage(currentPage - 1)"
+          class="px-2.5 py-1 text-xs border border-slate-300 dark:border-slate-700 rounded bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          Previous
+        </button>
+        <button
+          *ngFor="let p of [].constructor(totalPages); let i = index"
+          (click)="goToPage(i + 1)"
+          [class.bg-primary-600]="currentPage === (i + 1)"
+          [class.text-white]="currentPage === (i + 1)"
+          [class.border-primary-600]="currentPage === (i + 1)"
+          class="w-7 h-7 text-xs border border-slate-300 dark:border-slate-700 rounded bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium"
+        >
+          {{ i + 1 }}
+        </button>
+        <button
+          [disabled]="currentPage === totalPages"
+          (click)="goToPage(currentPage + 1)"
+          class="px-2.5 py-1 text-xs border border-slate-300 dark:border-slate-700 rounded bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  </app-card-container>
+
+  <!-- ========================================== -->
+  <!-- MODAL 1: Create / Edit Legal Audit Record  -->
+  <!-- ========================================== -->
+  <app-modal
+    [isOpen]="isAuditModalOpen"
+    [title]="editingAuditId ? 'Edit Legal Due Diligence Audit' : 'Initiate Legal Due Diligence Audit'"
+    size="xl"
+    (close)="closeAuditModal()"
+  >
+    <div class="space-y-4 text-xs">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Parcel Selection -->
+        <div class="space-y-1">
+          <label class="font-semibold text-slate-700 dark:text-slate-300">
+            Target Land Parcel <span class="text-rose-500">*</span>
+          </label>
+          <app-searchable-select
+            [options]="parcelOptions"
+            placeholder="Select target parcel..."
+            [(ngModel)]="auditFormData.parcel_id"
+          ></app-searchable-select>
+        </div>
+
+        <!-- Search Period in Years -->
+        <app-custom-input
+          label="Search Period (Years)"
+          type="number"
+          [(ngModel)]="auditFormData.title_search_period_years"
+          placeholder="e.g. 30"
+          helperText="Standard Bangladesh chain search: 25-30 years"
+        ></app-custom-input>
+
+        <!-- Legal Counsel -->
+        <app-custom-input
+          label="Lead Legal Counsel / Advocate"
+          [(ngModel)]="auditFormData.lead_legal_counsel"
+          placeholder="e.g. Barrister / Adv. Rafiqul Islam"
+        ></app-custom-input>
+
+        <!-- Law Firm -->
+        <app-custom-input
+          label="Law Firm / Retained Chambers"
+          [(ngModel)]="auditFormData.law_firm_name"
+          placeholder="e.g. Islam & Associates Legal Chambers"
+        ></app-custom-input>
+
+        <!-- Sub Registry Office -->
+        <app-custom-input
+          label="Jurisdiction Sub-Registry Office"
+          [(ngModel)]="auditFormData.sub_registry_office_searched"
+          placeholder="e.g. Tejgaon / Savar Sub-Registry"
+        ></app-custom-input>
+
+        <!-- NEC Certificate -->
+        <app-custom-input
+          label="Non-Encumbrance Certificate (NEC) Ref"
+          [(ngModel)]="auditFormData.encumbrance_certificate_no"
+          placeholder="e.g. NEC-SR-2026/8941"
+        ></app-custom-input>
+
+        <!-- Overall Risk Level -->
+        <div class="space-y-1">
+          <label class="font-semibold text-slate-700 dark:text-slate-300">Overall Risk Level</label>
+          <app-searchable-select
+            categoryCode="DUE_DILIGENCE_RISK_LEVEL"
+            placeholder="Select risk level..."
+            [(ngModel)]="auditFormData.overall_risk_level"
+            [allowCreateNew]="true"
+          ></app-searchable-select>
+        </div>
+
+        <!-- Clearance Status -->
+        <div class="space-y-1">
+          <label class="font-semibold text-slate-700 dark:text-slate-300">Clearance Status</label>
+          <app-searchable-select
+            categoryCode="CLEARANCE_DECISION"
+            placeholder="Select clearance status..."
+            [(ngModel)]="auditFormData.clearance_status"
+            [allowCreateNew]="true"
+          ></app-searchable-select>
+        </div>
+      </div>
+
+      <!-- Legal Opinion -->
+      <app-custom-textarea
+        label="Legal Opinion & Executive Summary"
+        [(ngModel)]="auditFormData.summary_legal_opinion"
+        [rows]="3"
+        placeholder="Enter comprehensive legal counsel opinion on title, chain continuity, and court record checks..."
+      ></app-custom-textarea>
+
+      <!-- Footer Buttons -->
+      <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+        <button
+          type="button"
+          (click)="closeAuditModal()"
+          class="px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          (click)="saveAudit()"
+          [disabled]="isSubmitting"
+          class="px-4 py-2 text-xs font-semibold text-white bg-primary-600 hover:bg-primary-700 rounded-lg shadow-sm disabled:opacity-50 inline-flex items-center gap-1.5"
+        >
+          <i class="fas fa-save"></i>
+          <span>{{ editingAuditId ? 'Update Audit' : 'Initialize 10-Point Audit' }}</span>
+        </button>
+      </div>
+    </div>
+  </app-modal>
+
+  <!-- ============================================================== -->
+  <!-- MODAL 2: 10 Statutory Checklist Items Review & Evaluation      -->
+  <!-- ============================================================== -->
+  <app-modal
+    [isOpen]="isChecklistModalOpen"
+    [title]="'Legal Due Diligence Checklist: ' + (activeAudit?.diligence_code || 'Audit #' + activeAudit?.id)"
+    size="2xl"
+    (close)="closeChecklistModal()"
+  >
+    <div class="space-y-4 text-xs" *ngIf="activeAudit">
+      <!-- Summary Bar -->
+      <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <span class="font-semibold text-slate-900 dark:text-white">{{ getParcelName(activeAudit.parcel_id) }}</span>
+          <span class="text-slate-400 mx-1.5">•</span>
+          <span class="text-slate-600 dark:text-slate-300">{{ activeAudit.lead_legal_counsel || 'Legal Counsel' }} ({{ activeAudit.law_firm_name }})</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <app-status-badge
+            [status]="activeAudit.overall_risk_level"
+            [variant]="getRiskBadgeVariant(activeAudit.overall_risk_level)"
+          ></app-status-badge>
+          <app-status-badge
+            [status]="activeAudit.clearance_status"
+            [variant]="getClearanceBadgeVariant(activeAudit.clearance_status)"
+          ></app-status-badge>
+        </div>
+      </div>
+
+      <!-- Checklist Items Table -->
+      <div class="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-lg">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold uppercase text-[11px]">
+            <tr>
+              <th class="py-2.5 px-3">#</th>
+              <th class="py-2.5 px-3">Statutory Verification Check</th>
+              <th class="py-2.5 px-3">Risk Level</th>
+              <th class="py-2.5 px-3">Decision</th>
+              <th class="py-2.5 px-3">Officer / Evidence Ref</th>
+              <th class="py-2.5 px-3 text-center">Blocks Acquisition?</th>
+              <th class="py-2.5 px-3 text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+            <tr *ngIf="isLoadingItems">
+              <td colspan="7" class="text-center py-8 text-slate-400">
+                <i class="fas fa-circle-notch fa-spin text-xl mb-1 text-primary-500"></i>
+                <p>Loading checklist items...</p>
+              </td>
+            </tr>
+            <tr *ngFor="let item of auditItems; let idx = index" class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+              <td class="py-2.5 px-3 font-mono font-medium text-slate-500">{{ idx + 1 }}</td>
+              <td class="py-2.5 px-3">
+                <div class="font-semibold text-slate-800 dark:text-slate-200">{{ item.check_title }}</div>
+                <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">
+                  {{ item.remarks || 'Pending verification findings...' }}
+                </div>
+              </td>
+              <td class="py-2.5 px-3">
+                <app-status-badge
+                  [status]="item.risk_level"
+                  [variant]="getRiskBadgeVariant(item.risk_level)"
+                ></app-status-badge>
+              </td>
+              <td class="py-2.5 px-3">
+                <app-status-badge
+                  [status]="item.decision"
+                  [variant]="getDecisionBadgeVariant(item.decision)"
+                ></app-status-badge>
+              </td>
+              <td class="py-2.5 px-3">
+                <div class="font-medium text-slate-700 dark:text-slate-300">{{ item.responsible_officer || 'Unassigned' }}</div>
+                <div class="text-[10px] text-slate-400 font-mono">{{ item.evidence_documents || '-' }}</div>
+              </td>
+              <td class="py-2.5 px-3 text-center">
+                <span
+                  *ngIf="item.is_blocking"
+                  class="inline-flex items-center gap-1 text-[10px] font-bold text-rose-600 bg-rose-50 dark:bg-rose-950/40 px-2 py-0.5 rounded"
+                >
+                  <i class="fas fa-lock"></i> YES
+                </span>
+                <span
+                  *ngIf="!item.is_blocking"
+                  class="inline-flex items-center gap-1 text-[10px] font-bold text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded"
+                >
+                  NO
+                </span>
+              </td>
+              <td class="py-2.5 px-3 text-right">
+                <button
+                  (click)="openEditItemModal(item)"
+                  class="px-2.5 py-1 text-xs font-semibold text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-950/40 hover:bg-primary-100 rounded transition-all"
+                >
+                  <i class="fas fa-edit mr-1"></i> Assess
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Footer Buttons -->
+      <div class="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-slate-800">
+        <div class="text-xs text-slate-500">
+          Tip: High or Critical risk items with conditional or failed decision automatically block final acquisition.
+        </div>
+        <button
+          type="button"
+          (click)="closeChecklistModal()"
+          class="px-4 py-2 text-xs font-semibold text-white bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 rounded-lg"
+        >
+          Close Checklist
+        </button>
+      </div>
+    </div>
+  </app-modal>
+
+  <!-- ============================================================== -->
+  <!-- MODAL 3: Assess & Update Single Checklist Item                 -->
+  <!-- ============================================================== -->
+  <app-modal
+    [isOpen]="isItemEditModalOpen"
+    [title]="'Assess Check: ' + (editingItem?.check_title || '')"
+    size="lg"
+    (close)="closeItemEditModal()"
+  >
+    <div class="space-y-4 text-xs" *ngIf="editingItem">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Risk Level -->
+        <div class="space-y-1">
+          <label class="font-semibold text-slate-700 dark:text-slate-300">Evaluated Risk Level</label>
+          <app-searchable-select
+            categoryCode="DUE_DILIGENCE_RISK_LEVEL"
+            placeholder="Select risk level..."
+            [(ngModel)]="itemFormData.risk_level"
+            [allowCreateNew]="true"
+          ></app-searchable-select>
+        </div>
+
+        <!-- Decision -->
+        <div class="space-y-1">
+          <label class="font-semibold text-slate-700 dark:text-slate-300">Legal Decision</label>
+          <app-searchable-select
+            categoryCode="CLEARANCE_DECISION"
+            placeholder="Select decision..."
+            [(ngModel)]="itemFormData.decision"
+            [allowCreateNew]="true"
+          ></app-searchable-select>
+        </div>
+
+        <!-- Responsible Officer -->
+        <app-custom-input
+          label="Responsible Legal Officer"
+          [(ngModel)]="itemFormData.responsible_officer"
+          placeholder="e.g. Adv. Nazmul Huda"
+        ></app-custom-input>
+
+        <!-- Evidence Ref -->
+        <app-custom-input
+          label="Supporting Evidence / Deed / Khatian Ref"
+          [(ngModel)]="itemFormData.evidence_documents"
+          placeholder="e.g. CS Khatian 142, Search Receipt SR-2026-90"
+        ></app-custom-input>
+      </div>
+
+      <!-- Remarks -->
+      <app-custom-textarea
+        label="Factual Findings & Legal Remarks"
+        [(ngModel)]="itemFormData.remarks"
+        [rows]="4"
+        placeholder="Detail all observations regarding ownership chain, boundaries, mutation records, or court cases..."
+      ></app-custom-textarea>
+
+      <!-- Blocks Acquisition Toggle -->
+      <div class="p-3 rounded-lg border border-rose-200 dark:border-rose-900/50 bg-rose-50/50 dark:bg-rose-950/20 flex items-center justify-between">
+        <div>
+          <div class="font-semibold text-rose-800 dark:text-rose-300">Blocks Acquisition Approval</div>
+          <div class="text-[11px] text-rose-600 dark:text-rose-400 mt-0.5">
+            If enabled, purchase workflow will remain strictly locked until resolved or approved by exception.
+          </div>
+        </div>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" [(ngModel)]="itemFormData.is_blocking" class="sr-only peer">
+          <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-rose-600"></div>
+        </label>
+      </div>
+
+      <!-- Footer Buttons -->
+      <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-200 dark:border-slate-800">
+        <button
+          type="button"
+          (click)="closeItemEditModal()"
+          class="px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          (click)="saveItem()"
+          [disabled]="isSubmitting"
+          class="px-4 py-2 text-xs font-semibold text-white bg-primary-600 hover:bg-primary-700 rounded-lg shadow-sm disabled:opacity-50 inline-flex items-center gap-1.5"
+        >
+          <i class="fas fa-check"></i>
+          <span>Save Assessment</span>
+        </button>
+      </div>
+    </div>
+  </app-modal>
+
+  <!-- ============================================================== -->
+  <!-- MODAL 4: Documented Exception Process Override                -->
+  <!-- ============================================================== -->
+  <app-modal
+    [isOpen]="isExceptionModalOpen"
+    title="Documented Exception Approval Process"
+    size="md"
+    (close)="closeExceptionModal()"
+  >
+    <div class="space-y-4 text-xs" *ngIf="exceptionAudit">
+      <div class="p-3 rounded-lg border border-purple-200 dark:border-purple-900/50 bg-purple-50/60 dark:bg-purple-950/20 text-purple-800 dark:text-purple-300">
+        <div class="font-semibold flex items-center gap-1.5">
+          <i class="fas fa-shield-alt text-purple-600"></i>
+          Managing Director / Legal Committee Exception Waiver
+        </div>
+        <p class="text-[11px] mt-1 leading-relaxed">
+          High-risk and critical title defects block acquisition by policy. Proceeding requires documented commercial justification, indemnity bonds, and formal corporate approval.
+        </p>
+      </div>
+
+      <!-- Approver Officer Name -->
+      <app-custom-input
+        label="Authorizing Officer / Designation"
+        [(ngModel)]="exceptionFormData.approved_by_officer"
+        placeholder="e.g. Managing Director / Head of Legal Committee"
+        helperText="Must be an authorized C-level or board signatory"
+      ></app-custom-input>
+
+      <!-- Board Resolution Ref -->
+      <app-custom-input
+        label="Board Resolution / Approval Minute Ref"
+        [(ngModel)]="exceptionFormData.board_resolution_ref"
+        placeholder="e.g. BR-2026/ACQ-098 dated 15-Oct-2026"
+      ></app-custom-input>
+
+      <!-- Justification -->
+      <app-custom-textarea
+        label="Documented Exception Justification"
+        [(ngModel)]="exceptionFormData.exception_justification"
+        [rows]="4"
+        placeholder="Specify commercial grounds, indemnification agreements, seller guarantee deposits, or other legal risk mitigations..."
+      ></app-custom-textarea>
+
+      <!-- Footer Buttons -->
+      <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-200 dark:border-slate-800">
+        <button
+          type="button"
+          (click)="closeExceptionModal()"
+          class="px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          (click)="submitExceptionApproval()"
+          [disabled]="isSubmitting"
+          class="px-4 py-2 text-xs font-semibold text-white bg-purple-600 hover:bg-purple-700 rounded-lg shadow-sm disabled:opacity-50 inline-flex items-center gap-1.5"
+        >
+          <i class="fas fa-stamp"></i>
+          <span>Authorize Exception</span>
+        </button>
+      </div>
+    </div>
+  </app-modal>
+</div>

@@ -1,0 +1,1134 @@
+<div class="space-y-6">
+  <!-- Page Header -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+        2.8 Land Valuation & Acquisition Costing
+      </h1>
+      <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+        Agreed consideration budgeting, statutory registration expenses, unit costing (sqft, katha, decimal), and valuation variance comparison.
+      </p>
+    </div>
+    <div class="flex items-center gap-2">
+      <button
+        *ngIf="activeTab === 'costings'"
+        (click)="openCreateCostingModal()"
+        class="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold rounded-lg shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+      >
+        <i class="fas fa-plus"></i>
+        <span>Create Acquisition Costing</span>
+      </button>
+      <button
+        *ngIf="activeTab === 'valuations'"
+        (click)="openCreateValuationModal()"
+        class="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold rounded-lg shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+      >
+        <i class="fas fa-calculator"></i>
+        <span>Add Land Valuation</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs flex items-center gap-4">
+      <div class="w-12 h-12 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xl shrink-0">
+        <i class="fas fa-coins"></i>
+      </div>
+      <div>
+        <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Acquisition Cost</p>
+        <h3 class="text-lg font-bold text-slate-900 dark:text-white mt-0.5">
+          ৳ {{ getTotalSpent() | number:'1.0-0' }}
+        </h3>
+      </div>
+    </div>
+
+    <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs flex items-center gap-4">
+      <div class="w-12 h-12 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xl shrink-0">
+        <i class="fas fa-chart-line"></i>
+      </div>
+      <div>
+        <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Avg Cost per Sq Ft</p>
+        <h3 class="text-lg font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
+          ৳ {{ getAverageCostPerSqft() | number:'1.2-2' }} / sft
+        </h3>
+      </div>
+    </div>
+
+    <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs flex items-center gap-4">
+      <div class="w-12 h-12 rounded-lg bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 flex items-center justify-center text-xl shrink-0">
+        <i class="fas fa-landmark"></i>
+      </div>
+      <div>
+        <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Capitalized Land Asset</p>
+        <h3 class="text-lg font-bold text-purple-600 dark:text-purple-400 mt-0.5">
+          ৳ {{ getTotalCapitalizedLand() | number:'1.0-0' }}
+        </h3>
+      </div>
+    </div>
+
+    <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs flex items-center gap-4">
+      <div class="w-12 h-12 rounded-lg bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xl shrink-0">
+        <i class="fas fa-balance-scale-right"></i>
+      </div>
+      <div>
+        <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Budget Variance</p>
+        <h3 class="text-lg font-bold mt-0.5" [ngClass]="getTotalBudgetVariance() <= 0 ? 'text-emerald-600' : 'text-rose-600'">
+          ৳ {{ getTotalBudgetVariance() | number:'1.0-0' }}
+        </h3>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Card Container -->
+  <app-card-container [hasHeader]="false" paddingClass="p-0">
+    <!-- Tabs Header -->
+    <div class="flex items-center gap-6 px-6 pt-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+      <button
+        (click)="activeTab = 'costings'"
+        [class.border-primary-600]="activeTab === 'costings'"
+        [class.text-primary-600]="activeTab === 'costings'"
+        [class.dark:text-primary-400]="activeTab === 'costings'"
+        [class.border-transparent]="activeTab !== 'costings'"
+        [class.text-slate-500]="activeTab !== 'costings'"
+        class="pb-3 text-xs font-bold border-b-2 flex items-center gap-2 transition-colors cursor-pointer"
+      >
+        <i class="fas fa-file-invoice-dollar"></i>
+        <span>Acquisition Costing & Expenses</span>
+        <span class="px-2 py-0.5 text-[10px] rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
+          {{ costings.length }}
+        </span>
+      </button>
+
+      <button
+        (click)="activeTab = 'valuations'"
+        [class.border-primary-600]="activeTab === 'valuations'"
+        [class.text-primary-600]="activeTab === 'valuations'"
+        [class.dark:text-primary-400]="activeTab === 'valuations'"
+        [class.border-transparent]="activeTab !== 'valuations'"
+        [class.text-slate-500]="activeTab !== 'valuations'"
+        class="pb-3 text-xs font-bold border-b-2 flex items-center gap-2 transition-colors cursor-pointer"
+      >
+        <i class="fas fa-chart-pie"></i>
+        <span>Land Valuations & Benchmarks</span>
+        <span class="px-2 py-0.5 text-[10px] rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
+          {{ valuations.length }}
+        </span>
+      </button>
+
+      <button
+        (click)="activeTab = 'comparison'"
+        [class.border-primary-600]="activeTab === 'comparison'"
+        [class.text-primary-600]="activeTab === 'comparison'"
+        [class.dark:text-primary-400]="activeTab === 'comparison'"
+        [class.border-transparent]="activeTab !== 'comparison'"
+        [class.text-slate-500]="activeTab !== 'comparison'"
+        class="pb-3 text-xs font-bold border-b-2 flex items-center gap-2 transition-colors cursor-pointer"
+      >
+        <i class="fas fa-balance-scale"></i>
+        <span>Valuation Comparison Analysis</span>
+      </button>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- TAB 1: ACQUISITION COSTING & EXPENSE LEDGER                    -->
+    <!-- ============================================================== -->
+    <div *ngIf="activeTab === 'costings'" class="space-y-0">
+      <!-- Filter Bar -->
+      <div class="p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-900/30 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex flex-wrap items-center gap-3 flex-1">
+          <!-- Search -->
+          <div class="relative w-full sm:w-60">
+            <input
+              type="text"
+              [(ngModel)]="costingSearch"
+              (keyup.enter)="loadCostings()"
+              placeholder="Search code, remarks..."
+              class="w-full pl-9 pr-3 py-1.5 text-xs bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-primary-500"
+            />
+            <i class="fas fa-search absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+          </div>
+
+          <!-- Parcel Filter -->
+          <div class="w-full sm:w-56">
+            <app-searchable-select
+              [options]="parcelOptions"
+              placeholder="Filter by Parcel..."
+              [(ngModel)]="selectedParcelFilter"
+              (ngModelChange)="loadCostings()"
+            ></app-searchable-select>
+          </div>
+
+          <!-- Costing Status Filter -->
+          <div class="w-full sm:w-48">
+            <app-searchable-select
+              categoryCode="COSTING_STATUS"
+              placeholder="Costing Status..."
+              [(ngModel)]="selectedCostingStatusFilter"
+              (ngModelChange)="loadCostings()"
+              [allowCreateNew]="true"
+            ></app-searchable-select>
+          </div>
+
+          <button
+            (click)="selectedParcelFilter = ''; selectedCostingStatusFilter = ''; costingSearch = ''; loadCostings()"
+            class="px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg shadow-2xs"
+          >
+            <i class="fas fa-undo mr-1"></i> Reset
+          </button>
+        </div>
+
+        <div class="text-xs text-slate-500 dark:text-slate-400">
+          Total {{ costings.length }} costings recorded
+        </div>
+      </div>
+
+      <!-- Costings Table -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead class="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">
+            <tr>
+              <th class="py-3 px-4">Costing Code & Parcel</th>
+              <th class="py-3 px-4 text-right">Agreed Purchase Price</th>
+              <th class="py-3 px-4 text-right">Itemized Expenses (Act / Est)</th>
+              <th class="py-3 px-4 text-right">Total Acquisition Cost</th>
+              <th class="py-3 px-4 text-right">Cost per Sq Ft</th>
+              <th class="py-3 px-4 text-center">Costing Status</th>
+              <th class="py-3 px-4 text-center">Approval Stage</th>
+              <th class="py-3 px-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+            <tr *ngIf="isLoadingCostings">
+              <td colspan="8" class="text-center py-12 text-slate-400">
+                <i class="fas fa-circle-notch fa-spin text-2xl mb-2 text-primary-500"></i>
+                <p>Loading acquisition costings...</p>
+              </td>
+            </tr>
+            <tr *ngIf="!isLoadingCostings && costings.length === 0">
+              <td colspan="8" class="text-center py-12 text-slate-400">
+                <i class="fas fa-folder-open text-3xl mb-2 text-slate-300 dark:text-slate-600"></i>
+                <p>No acquisition costings found.</p>
+                <button
+                  (click)="openCreateCostingModal()"
+                  class="mt-3 px-3 py-1.5 text-xs bg-primary-50 text-primary-600 dark:bg-primary-950/40 dark:text-primary-400 rounded-lg hover:underline inline-flex items-center gap-1.5"
+                >
+                  <i class="fas fa-plus"></i> Create first costing
+                </button>
+              </td>
+            </tr>
+            <tr *ngFor="let c of costings" class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
+              <td class="py-3 px-4">
+                <div class="font-semibold text-slate-900 dark:text-white">{{ c.costing_code }}</div>
+                <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  {{ getParcelName(c.parcel_id) }}
+                </div>
+              </td>
+              <td class="py-3 px-4 text-right font-medium text-slate-900 dark:text-white">
+                ৳ {{ c.agreed_purchase_price_bdt | number:'1.0-0' }}
+              </td>
+              <td class="py-3 px-4 text-right">
+                <div class="font-semibold text-slate-800 dark:text-slate-200">
+                  ৳ {{ c.total_actual_expenses_bdt | number:'1.0-0' }}
+                </div>
+                <div class="text-[10px] text-slate-400">
+                  Est: ৳ {{ c.total_estimated_expenses_bdt | number:'1.0-0' }} ({{ c.expense_items.length || 0 }} items)
+                </div>
+              </td>
+              <td class="py-3 px-4 text-right">
+                <div class="font-bold text-primary-600 dark:text-primary-400">
+                  ৳ {{ c.total_actual_cost_bdt | number:'1.0-0' }}
+                </div>
+                <div class="text-[10px] text-slate-400">
+                  Budget: ৳ {{ c.budget_allocated_bdt | number:'1.0-0' }}
+                </div>
+              </td>
+              <td class="py-3 px-4 text-right font-semibold text-emerald-600 dark:text-emerald-400">
+                ৳ {{ c.cost_per_sqft_bdt | number:'1.2-2' }}
+                <div class="text-[10px] font-normal text-slate-400">
+                  ৳ {{ c.cost_per_decimal_bdt | number:'1.0-0' }} / Dec
+                </div>
+              </td>
+              <td class="py-3 px-4 text-center">
+                <app-status-badge
+                  [status]="c.costing_status"
+                  [variant]="getStatusVariant(c.costing_status)"
+                ></app-status-badge>
+              </td>
+              <td class="py-3 px-4 text-center">
+                <app-status-badge
+                  [status]="c.approval_stage"
+                  [variant]="getStatusVariant(c.approval_stage)"
+                ></app-status-badge>
+              </td>
+              <td class="py-3 px-4 text-right">
+                <div class="inline-flex items-center gap-1">
+                  <!-- Manage Expense Ledger -->
+                  <button
+                    (click)="openExpenseLedger(c)"
+                    class="p-1.5 text-primary-600 hover:text-primary-700 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/40 rounded transition-colors"
+                    title="Manage 8-Category Expense Ledger"
+                  >
+                    <i class="fas fa-list-ol"></i>
+                  </button>
+
+                  <!-- Approve Costing -->
+                  <button
+                    (click)="openCostingApproveModal(c)"
+                    class="p-1.5 text-purple-600 hover:text-purple-700 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/40 rounded transition-colors"
+                    title="Management / Board Approval"
+                  >
+                    <i class="fas fa-stamp"></i>
+                  </button>
+
+                  <!-- Edit -->
+                  <button
+                    (click)="openEditCostingModal(c)"
+                    class="p-1.5 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-colors"
+                    title="Edit Costing"
+                  >
+                    <i class="fas fa-pen"></i>
+                  </button>
+
+                  <!-- Delete -->
+                  <button
+                    (click)="deleteCosting(c.id)"
+                    class="p-1.5 text-rose-500 hover:text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded transition-colors"
+                    title="Delete Costing"
+                  >
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- TAB 2: LAND VALUATIONS & BENCHMARK MATRIX                      -->
+    <!-- ============================================================== -->
+    <div *ngIf="activeTab === 'valuations'" class="space-y-0">
+      <!-- Filter Bar -->
+      <div class="p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-900/30 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex flex-wrap items-center gap-3 flex-1">
+          <!-- Search -->
+          <div class="relative w-full sm:w-60">
+            <input
+              type="text"
+              [(ngModel)]="valSearch"
+              (keyup.enter)="loadValuations()"
+              placeholder="Search assessor, valuer, code..."
+              class="w-full pl-9 pr-3 py-1.5 text-xs bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-primary-500"
+            />
+            <i class="fas fa-search absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+          </div>
+
+          <!-- Parcel Filter -->
+          <div class="w-full sm:w-56">
+            <app-searchable-select
+              [options]="parcelOptions"
+              placeholder="Filter by Parcel..."
+              [(ngModel)]="selectedValParcelFilter"
+              (ngModelChange)="loadValuations()"
+            ></app-searchable-select>
+          </div>
+
+          <!-- Valuation Source Filter -->
+          <div class="w-full sm:w-52">
+            <app-searchable-select
+              categoryCode="VALUATION_SOURCE"
+              placeholder="Valuation Source..."
+              [(ngModel)]="selectedValSourceFilter"
+              (ngModelChange)="loadValuations()"
+              [allowCreateNew]="true"
+            ></app-searchable-select>
+          </div>
+
+          <button
+            (click)="selectedValParcelFilter = ''; selectedValSourceFilter = ''; valSearch = ''; loadValuations()"
+            class="px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg shadow-2xs"
+          >
+            <i class="fas fa-undo mr-1"></i> Reset
+          </button>
+        </div>
+
+        <div class="text-xs text-slate-500 dark:text-slate-400">
+          Total {{ valuations.length }} benchmark valuations
+        </div>
+      </div>
+
+      <!-- Valuations Table -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead class="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">
+            <tr>
+              <th class="py-3 px-4">Valuation Code & Parcel</th>
+              <th class="py-3 px-4">Date & Source</th>
+              <th class="py-3 px-4">Assessor / Valuer</th>
+              <th class="py-3 px-4 text-right">Asking Price</th>
+              <th class="py-3 px-4 text-right">Market Valuation</th>
+              <th class="py-3 px-4 text-right">Govt Mouza Total</th>
+              <th class="py-3 px-4 text-right">Recommended Offer</th>
+              <th class="py-3 px-4 text-center">Status</th>
+              <th class="py-3 px-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+            <tr *ngIf="isLoadingValuations">
+              <td colspan="9" class="text-center py-12 text-slate-400">
+                <i class="fas fa-circle-notch fa-spin text-2xl mb-2 text-primary-500"></i>
+                <p>Loading land valuations...</p>
+              </td>
+            </tr>
+            <tr *ngIf="!isLoadingValuations && valuations.length === 0">
+              <td colspan="9" class="text-center py-12 text-slate-400">
+                <i class="fas fa-calculator text-3xl mb-2 text-slate-300 dark:text-slate-600"></i>
+                <p>No valuation reports registered yet.</p>
+                <button
+                  (click)="openCreateValuationModal()"
+                  class="mt-3 px-3 py-1.5 text-xs bg-primary-50 text-primary-600 dark:bg-primary-950/40 dark:text-primary-400 rounded-lg hover:underline inline-flex items-center gap-1.5"
+                >
+                  <i class="fas fa-plus"></i> Add first valuation
+                </button>
+              </td>
+            </tr>
+            <tr *ngFor="let val of valuations" class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
+              <td class="py-3 px-4">
+                <div class="font-semibold text-slate-900 dark:text-white">{{ val.valuation_code }}</div>
+                <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  {{ getParcelName(val.parcel_id) }}
+                </div>
+              </td>
+              <td class="py-3 px-4">
+                <div class="font-medium text-slate-800 dark:text-slate-200">{{ val.valuation_date }}</div>
+                <div class="text-[11px] text-primary-600 dark:text-primary-400 font-semibold">
+                  {{ val.valuation_source.replace('_', ' ') }}
+                </div>
+              </td>
+              <td class="py-3 px-4">
+                <div class="font-medium text-slate-900 dark:text-white">{{ val.assessor_name }}</div>
+                <div class="text-[11px] text-slate-500 dark:text-slate-400">
+                  {{ val.assessor_company || 'Independent' }}
+                </div>
+              </td>
+              <td class="py-3 px-4 text-right font-medium text-rose-600 dark:text-rose-400">
+                ৳ {{ val.asking_price_total_bdt | number:'1.0-0' }}
+              </td>
+              <td class="py-3 px-4 text-right font-bold text-slate-900 dark:text-white">
+                ৳ {{ val.market_valuation_total_bdt | number:'1.0-0' }}
+              </td>
+              <td class="py-3 px-4 text-right">
+                <div class="font-semibold text-blue-600 dark:text-blue-400">
+                  ৳ {{ val.govt_mouza_valuation_total_bdt | number:'1.0-0' }}
+                </div>
+                <div class="text-[10px] text-slate-400">
+                  Rate: ৳ {{ val.govt_mouza_rate_per_decimal_bdt | number:'1.0-0' }} / Dec
+                </div>
+              </td>
+              <td class="py-3 px-4 text-right font-bold text-emerald-600 dark:text-emerald-400">
+                ৳ {{ val.recommended_offer_price_bdt | number:'1.0-0' }}
+              </td>
+              <td class="py-3 px-4 text-center">
+                <app-status-badge
+                  [status]="val.approval_status"
+                  [variant]="getStatusVariant(val.approval_status)"
+                ></app-status-badge>
+              </td>
+              <td class="py-3 px-4 text-right">
+                <div class="inline-flex items-center gap-1">
+                  <!-- Approve Valuation -->
+                  <button
+                    (click)="openValuationApproveModal(val)"
+                    class="p-1.5 text-purple-600 hover:text-purple-700 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/40 rounded transition-colors"
+                    title="Approve Valuation Report"
+                  >
+                    <i class="fas fa-check-circle"></i>
+                  </button>
+
+                  <!-- Edit -->
+                  <button
+                    (click)="openEditValuationModal(val)"
+                    class="p-1.5 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-colors"
+                    title="Edit Valuation"
+                  >
+                    <i class="fas fa-pen"></i>
+                  </button>
+
+                  <!-- Delete -->
+                  <button
+                    (click)="deleteValuation(val.id)"
+                    class="p-1.5 text-rose-500 hover:text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded transition-colors"
+                    title="Delete Valuation"
+                  >
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- TAB 3: COMPARATIVE ANALYSIS & VALUATION VARIANCE               -->
+    <!-- ============================================================== -->
+    <div *ngIf="activeTab === 'comparison'" class="p-6 space-y-6">
+      <!-- Parcel Selector for Comparison -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+        <div class="w-full sm:w-80">
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            Select Land Parcel to Compare
+          </label>
+          <app-searchable-select
+            [options]="parcelOptions"
+            placeholder="Select Parcel..."
+            [(ngModel)]="comparisonParcelId"
+            (ngModelChange)="onComparisonParcelChange()"
+          ></app-searchable-select>
+        </div>
+        <div class="text-xs text-slate-500 dark:text-slate-400">
+          Compares Landowner Asking vs Market Valuation vs Govt Sub-Registry Mouza Rate vs Agreed Price.
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div *ngIf="isLoadingComparison" class="py-12 text-center text-slate-400">
+        <i class="fas fa-circle-notch fa-spin text-2xl mb-2 text-primary-500"></i>
+        <p class="text-xs">Generating valuation comparative audit...</p>
+      </div>
+
+      <!-- Comparison Metrics Grid -->
+      <div *ngIf="!isLoadingComparison && comparisonData" class="space-y-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- Asking Price -->
+          <div class="p-4 rounded-xl border border-rose-200 dark:border-rose-900/50 bg-rose-50/40 dark:bg-rose-950/20">
+            <div class="text-[11px] font-bold text-rose-600 uppercase tracking-wider">Landowner Asking Price</div>
+            <div class="text-xl font-bold text-slate-900 dark:text-white mt-1">
+              ৳ {{ comparisonData.asking_price | number:'1.0-0' }}
+            </div>
+            <div class="text-[11px] text-slate-500 mt-1">
+              Initial seller expectation
+            </div>
+          </div>
+
+          <!-- Market Valuation -->
+          <div class="p-4 rounded-xl border border-blue-200 dark:border-blue-900/50 bg-blue-50/40 dark:bg-blue-950/20">
+            <div class="text-[11px] font-bold text-blue-600 uppercase tracking-wider">Surveyor Market Valuation</div>
+            <div class="text-xl font-bold text-slate-900 dark:text-white mt-1">
+              ৳ {{ comparisonData.market_valuation | number:'1.0-0' }}
+            </div>
+            <div class="text-[11px] text-slate-500 mt-1">
+              Chartered valuer report
+            </div>
+          </div>
+
+          <!-- Govt Mouza Rate -->
+          <div class="p-4 rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-50/40 dark:bg-amber-950/20">
+            <div class="text-[11px] font-bold text-amber-600 uppercase tracking-wider">Govt Sub-Registry Mouza Total</div>
+            <div class="text-xl font-bold text-slate-900 dark:text-white mt-1">
+              ৳ {{ comparisonData.govt_mouza_valuation | number:'1.0-0' }}
+            </div>
+            <div class="text-[11px] text-slate-500 mt-1">
+              Statutory minimum circle rate
+            </div>
+          </div>
+
+          <!-- Negotiated Agreed Price -->
+          <div class="p-4 rounded-xl border border-emerald-200 dark:border-emerald-900/50 bg-emerald-50/40 dark:bg-emerald-950/20">
+            <div class="text-[11px] font-bold text-emerald-600 uppercase tracking-wider">Negotiated Agreed Price</div>
+            <div class="text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">
+              ৳ {{ comparisonData.negotiated_agreed_price | number:'1.0-0' }}
+            </div>
+            <div class="text-[11px] text-slate-500 mt-1">
+              Actual consideration agreed
+            </div>
+          </div>
+        </div>
+
+        <!-- Comparative Variance Bar / Analytics -->
+        <div class="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-4">
+          <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <i class="fas fa-balance-scale text-primary-500"></i>
+            Commercial Variance Analysis for Investment Committee
+          </h3>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+            <div class="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+              <span class="text-slate-500">Negotiated Price vs Asking Price:</span>
+              <div class="text-base font-bold mt-1" [ngClass]="comparisonData.variance_asking_vs_negotiated <= 0 ? 'text-emerald-600' : 'text-rose-600'">
+                ৳ {{ comparisonData.variance_asking_vs_negotiated | number:'1.0-0' }}
+                <span class="text-xs font-normal text-slate-400">
+                  ({{ comparisonData.variance_asking_vs_negotiated <= 0 ? 'Saved Below Asking' : 'Premium' }})
+                </span>
+              </div>
+            </div>
+
+            <div class="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+              <span class="text-slate-500">Negotiated Price vs Market Valuation:</span>
+              <div class="text-base font-bold mt-1" [ngClass]="comparisonData.variance_market_vs_negotiated <= 0 ? 'text-emerald-600' : 'text-rose-600'">
+                ৳ {{ comparisonData.variance_market_vs_negotiated | number:'1.0-0' }}
+                <span class="text-xs font-normal text-slate-400">
+                  ({{ comparisonData.variance_market_vs_negotiated <= 0 ? 'Below Fair Market Value' : 'Above Market Value' }})
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </app-card-container>
+
+  <!-- ============================================================== -->
+  <!-- MODAL 1: CREATE / EDIT MASTER ACQUISITION COSTING              -->
+  <!-- ============================================================== -->
+  <app-modal
+    [isOpen]="isCostingModalOpen"
+    [title]="editingCostingId ? 'Edit Acquisition Costing Record' : 'Create Land Acquisition Costing'"
+    size="lg"
+    (close)="closeCostingModal()"
+  >
+    <div class="space-y-4 text-xs">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Target Parcel -->
+        <div class="space-y-1">
+          <label class="font-semibold text-slate-700 dark:text-slate-300">
+            Target Land Parcel <span class="text-rose-500">*</span>
+          </label>
+          <app-searchable-select
+            [options]="parcelOptions"
+            placeholder="Select target parcel..."
+            [(ngModel)]="costingFormData.parcel_id"
+          ></app-searchable-select>
+        </div>
+
+        <!-- Costing Date -->
+        <app-custom-input
+          label="Costing & Budget Date"
+          type="date"
+          [(ngModel)]="costingFormData.costing_date"
+        ></app-custom-input>
+
+        <!-- Agreed Purchase Price -->
+        <app-custom-input
+          label="Agreed Land Purchase Price (BDT)"
+          type="number"
+          [(ngModel)]="costingFormData.agreed_purchase_price_bdt"
+          placeholder="e.g. 32000000"
+          helperText="Core landowner consideration"
+        ></app-custom-input>
+
+        <!-- Budget Allocated -->
+        <app-custom-input
+          label="Total Budget Allocated (BDT)"
+          type="number"
+          [(ngModel)]="costingFormData.budget_allocated_bdt"
+          placeholder="e.g. 38000000"
+          helperText="Total approved fund cap for this acquisition"
+        ></app-custom-input>
+
+        <!-- Costing Status -->
+        <div class="space-y-1">
+          <label class="font-semibold text-slate-700 dark:text-slate-300">Costing Status</label>
+          <app-searchable-select
+            categoryCode="COSTING_STATUS"
+            placeholder="Select status..."
+            [(ngModel)]="costingFormData.costing_status"
+            [allowCreateNew]="true"
+          ></app-searchable-select>
+        </div>
+      </div>
+
+      <!-- Remarks -->
+      <app-custom-textarea
+        label="Acquisition Budget Remarks & Board Directives"
+        [(ngModel)]="costingFormData.remarks"
+        [rows]="3"
+        placeholder="Enter notes on payment milestones, escrow arrangements, or banking source..."
+      ></app-custom-textarea>
+
+      <!-- Footer Buttons -->
+      <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-200 dark:border-slate-800">
+        <button
+          type="button"
+          (click)="closeCostingModal()"
+          class="px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          (click)="saveCosting()"
+          [disabled]="isSubmitting"
+          class="px-4 py-2 text-xs font-semibold text-white bg-primary-600 hover:bg-primary-700 rounded-lg shadow-sm disabled:opacity-50 inline-flex items-center gap-1.5"
+        >
+          <i class="fas fa-save"></i>
+          <span>{{ editingCostingId ? 'Update Costing' : 'Save Costing & Budget' }}</span>
+        </button>
+      </div>
+    </div>
+  </app-modal>
+
+  <!-- ============================================================== -->
+  <!-- MODAL 2: 8-CATEGORY ITEMIZED EXPENSE LEDGER                    -->
+  <!-- ============================================================== -->
+  <app-modal
+    [isOpen]="isExpenseLedgerModalOpen"
+    [title]="'Acquisition Expense Ledger: ' + (activeCosting?.costing_code || '')"
+    size="2xl"
+    (close)="closeExpenseLedger()"
+  >
+    <div class="space-y-4 text-xs" *ngIf="activeCosting">
+      <!-- Costing Quick Summary -->
+      <div class="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <span class="text-slate-500">Agreed Consideration:</span>
+          <span class="font-bold text-slate-900 dark:text-white ml-1">৳ {{ activeCosting.agreed_purchase_price_bdt | number:'1.0-0' }}</span>
+          <span class="text-slate-400 mx-2">•</span>
+          <span class="text-slate-500">Total Actual Cost:</span>
+          <span class="font-bold text-primary-600 ml-1">৳ {{ activeCosting.total_actual_cost_bdt | number:'1.0-0' }}</span>
+        </div>
+        <button
+          (click)="openAddExpenseModal()"
+          class="px-3 py-1.5 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg shadow-2xs inline-flex items-center gap-1.5"
+        >
+          <i class="fas fa-plus"></i> Add Expense Item
+        </button>
+      </div>
+
+      <!-- Expense Items Table -->
+      <div class="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-lg">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold uppercase text-[11px]">
+            <tr>
+              <th class="py-2.5 px-3">Expense Category</th>
+              <th class="py-2.5 px-3">Item Description / Payee</th>
+              <th class="py-2.5 px-3 text-right">Estimated</th>
+              <th class="py-2.5 px-3 text-right">Actual Spent</th>
+              <th class="py-2.5 px-3 text-center">Accounting Policy</th>
+              <th class="py-2.5 px-3 text-center">Payment Status</th>
+              <th class="py-2.5 px-3 text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+            <tr *ngIf="!activeCosting.expense_items || activeCosting.expense_items.length === 0">
+              <td colspan="7" class="text-center py-8 text-slate-400">
+                No expense items recorded yet. Click "Add Expense Item" above.
+              </td>
+            </tr>
+            <tr *ngFor="let item of activeCosting.expense_items" class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+              <td class="py-2.5 px-3 font-semibold text-slate-800 dark:text-slate-200">
+                {{ item.expense_category.replace('_', ' ') }}
+              </td>
+              <td class="py-2.5 px-3">
+                <div class="font-medium text-slate-900 dark:text-white">{{ item.item_description }}</div>
+                <div class="text-[10px] text-slate-400">{{ item.payee_name || 'N/A' }}</div>
+              </td>
+              <td class="py-2.5 px-3 text-right text-slate-600 dark:text-slate-400">
+                ৳ {{ item.estimated_amount_bdt | number:'1.0-0' }}
+              </td>
+              <td class="py-2.5 px-3 text-right font-bold text-slate-900 dark:text-white">
+                ৳ {{ item.actual_amount_bdt | number:'1.0-0' }}
+              </td>
+              <td class="py-2.5 px-3 text-center font-mono text-[10px] text-purple-600 dark:text-purple-400">
+                {{ item.accounting_treatment }}
+              </td>
+              <td class="py-2.5 px-3 text-center">
+                <app-status-badge
+                  [status]="item.payment_status"
+                  [variant]="getStatusVariant(item.payment_status)"
+                ></app-status-badge>
+              </td>
+              <td class="py-2.5 px-3 text-right">
+                <div class="inline-flex items-center gap-1">
+                  <button
+                    (click)="openEditExpenseModal(item)"
+                    class="p-1 text-slate-500 hover:text-slate-800 dark:text-slate-400"
+                    title="Edit Item"
+                  >
+                    <i class="fas fa-pen"></i>
+                  </button>
+                  <button
+                    (click)="deleteExpenseItem(item.id)"
+                    class="p-1 text-rose-500 hover:text-rose-700 dark:text-rose-400"
+                    title="Delete Item"
+                  >
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Footer Buttons -->
+      <div class="flex items-center justify-end pt-3 border-t border-slate-200 dark:border-slate-800">
+        <button
+          type="button"
+          (click)="closeExpenseLedger()"
+          class="px-4 py-2 text-xs font-semibold text-white bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 rounded-lg"
+        >
+          Close Ledger
+        </button>
+      </div>
+    </div>
+  </app-modal>
+
+  <!-- ============================================================== -->
+  <!-- MODAL 3: ADD / EDIT INDIVIDUAL EXPENSE ITEM                    -->
+  <!-- ============================================================== -->
+  <app-modal
+    [isOpen]="isExpenseItemModalOpen"
+    [title]="editingExpenseItemId ? 'Edit Expense Item' : 'Add Acquisition Expense Item'"
+    size="md"
+    (close)="closeExpenseItemModal()"
+  >
+    <div class="space-y-4 text-xs">
+      <!-- Category Dynamic Select -->
+      <div class="space-y-1">
+        <label class="font-semibold text-slate-700 dark:text-slate-300">
+          Expense Category <span class="text-rose-500">*</span>
+        </label>
+        <app-searchable-select
+          categoryCode="ACQUISITION_EXPENSE_CATEGORY"
+          placeholder="Select expense category..."
+          [(ngModel)]="expenseItemFormData.expense_category"
+          [allowCreateNew]="true"
+        ></app-searchable-select>
+      </div>
+
+      <!-- Description -->
+      <app-custom-input
+        label="Item Description"
+        [(ngModel)]="expenseItemFormData.item_description"
+        placeholder="e.g. Sub-Registry 7.5% Duty & Local Tax"
+        [required]="true"
+      ></app-custom-input>
+
+      <!-- Payee Name -->
+      <app-custom-input
+        label="Payee / Recipient Authority"
+        [(ngModel)]="expenseItemFormData.payee_name"
+        placeholder="e.g. Sub-Registrar / Sonali Bank Treasury"
+      ></app-custom-input>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- Estimated Amount -->
+        <app-custom-input
+          label="Estimated Amount (BDT)"
+          type="number"
+          [(ngModel)]="expenseItemFormData.estimated_amount_bdt"
+          placeholder="0"
+        ></app-custom-input>
+
+        <!-- Actual Amount -->
+        <app-custom-input
+          label="Actual Amount Spent (BDT)"
+          type="number"
+          [(ngModel)]="expenseItemFormData.actual_amount_bdt"
+          placeholder="0"
+        ></app-custom-input>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- Accounting Treatment -->
+        <div class="space-y-1">
+          <label class="font-semibold text-slate-700 dark:text-slate-300">Accounting Policy</label>
+          <app-searchable-select
+            categoryCode="EXPENSE_ACCOUNTING_TREATMENT"
+            placeholder="Capitalization policy..."
+            [(ngModel)]="expenseItemFormData.accounting_treatment"
+            [allowCreateNew]="true"
+          ></app-searchable-select>
+        </div>
+
+        <!-- Payment Status -->
+        <app-custom-input
+          label="Payment Status"
+          [(ngModel)]="expenseItemFormData.payment_status"
+          placeholder="PLANNED / PAID"
+        ></app-custom-input>
+      </div>
+
+      <!-- Payment Date & Voucher -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <app-custom-input
+          label="Payment Date"
+          type="date"
+          [(ngModel)]="expenseItemFormData.payment_date"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Receipt Voucher Ref"
+          [(ngModel)]="expenseItemFormData.receipt_voucher_ref"
+          placeholder="e.g. CHQ-2026-90"
+        ></app-custom-input>
+      </div>
+
+      <!-- Footer Buttons -->
+      <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-200 dark:border-slate-800">
+        <button
+          type="button"
+          (click)="closeExpenseItemModal()"
+          class="px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          (click)="saveExpenseItem()"
+          [disabled]="isSubmitting"
+          class="px-4 py-2 text-xs font-semibold text-white bg-primary-600 hover:bg-primary-700 rounded-lg shadow-sm disabled:opacity-50 inline-flex items-center gap-1.5"
+        >
+          <i class="fas fa-check"></i>
+          <span>Save Expense Item</span>
+        </button>
+      </div>
+    </div>
+  </app-modal>
+
+  <!-- ============================================================== -->
+  <!-- MODAL 4: COSTING MANAGEMENT & BOARD APPROVAL PROCESS           -->
+  <!-- ============================================================== -->
+  <app-modal
+    [isOpen]="isCostingApproveModalOpen"
+    title="Acquisition Costing & Budget Approval"
+    size="md"
+    (close)="closeCostingApproveModal()"
+  >
+    <div class="space-y-4 text-xs">
+      <div class="p-3 rounded-lg border border-purple-200 dark:border-purple-900/50 bg-purple-50/60 dark:bg-purple-950/20 text-purple-800 dark:text-purple-300">
+        <div class="font-semibold flex items-center gap-1.5">
+          <i class="fas fa-stamp text-purple-600"></i>
+          Executive Committee / Board Budget Clearance
+        </div>
+        <p class="text-[11px] mt-1 leading-relaxed">
+          Authorizes purchase consideration and itemized expenditure cap for land acquisition closing and legal execution.
+        </p>
+      </div>
+
+      <app-custom-input
+        label="Approving Officer / Authority"
+        [(ngModel)]="costingApprovalFormData.approved_by"
+        placeholder="e.g. Managing Director / Executive Committee"
+        [required]="true"
+      ></app-custom-input>
+
+      <div class="space-y-1">
+        <label class="font-semibold text-slate-700 dark:text-slate-300">Approval Stage</label>
+        <select
+          [(ngModel)]="costingApprovalFormData.approval_stage"
+          class="w-full px-3 py-2 text-xs bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100"
+        >
+          <option value="BOARD_APPROVED">Board Approved</option>
+          <option value="PENDING_MANAGEMENT_APPROVAL">Pending Management Approval</option>
+          <option value="REJECTED">Rejected / Revise</option>
+        </select>
+      </div>
+
+      <app-custom-textarea
+        label="Approval Directives & Notes"
+        [(ngModel)]="costingApprovalFormData.approval_notes"
+        [rows]="3"
+        placeholder="Specify fund release tranche, escrow instructions, or special budget limits..."
+      ></app-custom-textarea>
+
+      <!-- Footer Buttons -->
+      <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-200 dark:border-slate-800">
+        <button
+          type="button"
+          (click)="closeCostingApproveModal()"
+          class="px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          (click)="submitCostingApproval()"
+          [disabled]="isSubmitting"
+          class="px-4 py-2 text-xs font-semibold text-white bg-purple-600 hover:bg-purple-700 rounded-lg shadow-sm disabled:opacity-50 inline-flex items-center gap-1.5"
+        >
+          <i class="fas fa-stamp"></i>
+          <span>Confirm Approval</span>
+        </button>
+      </div>
+    </div>
+  </app-modal>
+
+  <!-- ============================================================== -->
+  <!-- MODAL 5: CREATE / EDIT LAND VALUATION REPORT                   -->
+  <!-- ============================================================== -->
+  <app-modal
+    [isOpen]="isValuationModalOpen"
+    [title]="editingValuationId ? 'Edit Land Valuation Report' : 'Register Benchmark Land Valuation'"
+    size="xl"
+    (close)="closeValuationModal()"
+  >
+    <div class="space-y-4 text-xs">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Target Parcel -->
+        <div class="space-y-1">
+          <label class="font-semibold text-slate-700 dark:text-slate-300">
+            Target Land Parcel <span class="text-rose-500">*</span>
+          </label>
+          <app-searchable-select
+            [options]="parcelOptions"
+            placeholder="Select target parcel..."
+            [(ngModel)]="valuationFormData.parcel_id"
+            (ngModelChange)="onGovtMouzaRateChange()"
+          ></app-searchable-select>
+        </div>
+
+        <!-- Valuation Date -->
+        <app-custom-input
+          label="Valuation Date"
+          type="date"
+          [(ngModel)]="valuationFormData.valuation_date"
+        ></app-custom-input>
+
+        <!-- Valuation Source -->
+        <div class="space-y-1">
+          <label class="font-semibold text-slate-700 dark:text-slate-300">Valuation Source</label>
+          <app-searchable-select
+            categoryCode="VALUATION_SOURCE"
+            placeholder="Select valuation source..."
+            [(ngModel)]="valuationFormData.valuation_source"
+            [allowCreateNew]="true"
+          ></app-searchable-select>
+        </div>
+
+        <!-- Assessor Name -->
+        <app-custom-input
+          label="Assessor / Valuer Name"
+          [(ngModel)]="valuationFormData.assessor_name"
+          placeholder="e.g. Engr. Tanvir Ahmed, FIEB"
+          [required]="true"
+        ></app-custom-input>
+
+        <!-- Company -->
+        <app-custom-input
+          label="Survey / Valuation Company"
+          [(ngModel)]="valuationFormData.assessor_company"
+          placeholder="e.g. Pioneer Surveyors & Valuers Ltd"
+        ></app-custom-input>
+
+        <!-- License No -->
+        <app-custom-input
+          label="Valuer Professional License No"
+          [(ngModel)]="valuationFormData.assessor_license_no"
+          placeholder="e.g. VAL-DHK-4421"
+        ></app-custom-input>
+
+        <!-- Asking Price -->
+        <app-custom-input
+          label="Landowner Asking Price (BDT)"
+          type="number"
+          [(ngModel)]="valuationFormData.asking_price_total_bdt"
+          placeholder="0"
+        ></app-custom-input>
+
+        <!-- Market Valuation -->
+        <app-custom-input
+          label="Assessed Market Valuation (BDT)"
+          type="number"
+          [(ngModel)]="valuationFormData.market_valuation_total_bdt"
+          placeholder="0"
+        ></app-custom-input>
+
+        <!-- Govt Mouza Rate per Decimal -->
+        <app-custom-input
+          label="Govt Mouza Rate / Decimal (BDT)"
+          type="number"
+          [(ngModel)]="valuationFormData.govt_mouza_rate_per_decimal_bdt"
+          placeholder="0"
+          (ngModelChange)="onGovtMouzaRateChange()"
+        ></app-custom-input>
+
+        <!-- Recommended Offer Price -->
+        <app-custom-input
+          label="Recommended Offer Price (BDT)"
+          type="number"
+          [(ngModel)]="valuationFormData.recommended_offer_price_bdt"
+          placeholder="0"
+        ></app-custom-input>
+      </div>
+
+      <!-- Notes and Methodology -->
+      <app-custom-textarea
+        label="Valuation Methodology & Comparable Sales Evidence"
+        [(ngModel)]="valuationFormData.notes_and_methodology"
+        [rows]="3"
+        placeholder="Detail recent deed transactions in mouza, 60ft frontage adjustment, or sub-registry circle rates..."
+      ></app-custom-textarea>
+
+      <!-- Footer Buttons -->
+      <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-200 dark:border-slate-800">
+        <button
+          type="button"
+          (click)="closeValuationModal()"
+          class="px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          (click)="saveValuation()"
+          [disabled]="isSubmitting"
+          class="px-4 py-2 text-xs font-semibold text-white bg-primary-600 hover:bg-primary-700 rounded-lg shadow-sm disabled:opacity-50 inline-flex items-center gap-1.5"
+        >
+          <i class="fas fa-check"></i>
+          <span>Save Valuation</span>
+        </button>
+      </div>
+    </div>
+  </app-modal>
+
+  <!-- ============================================================== -->
+  <!-- MODAL 6: APPROVE VALUATION REPORT                              -->
+  <!-- ============================================================== -->
+  <app-modal
+    [isOpen]="isValuationApproveModalOpen"
+    title="Approve Land Valuation Report"
+    size="md"
+    (close)="closeValuationApproveModal()"
+  >
+    <div class="space-y-4 text-xs">
+      <app-custom-input
+        label="Authorizing Officer"
+        [(ngModel)]="valuationApprovalFormData.approved_by"
+        placeholder="e.g. Chief Legal Officer / Managing Director"
+        [required]="true"
+      ></app-custom-input>
+
+      <app-custom-textarea
+        label="Approval Remarks"
+        [(ngModel)]="valuationApprovalFormData.approval_remarks"
+        [rows]="3"
+        placeholder="e.g. Approved as maximum bidding price ceiling for acquisition team..."
+      ></app-custom-textarea>
+
+      <!-- Footer Buttons -->
+      <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-200 dark:border-slate-800">
+        <button
+          type="button"
+          (click)="closeValuationApproveModal()"
+          class="px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          (click)="submitValuationApproval()"
+          [disabled]="isSubmitting"
+          class="px-4 py-2 text-xs font-semibold text-white bg-purple-600 hover:bg-purple-700 rounded-lg shadow-sm disabled:opacity-50 inline-flex items-center gap-1.5"
+        >
+          <i class="fas fa-stamp"></i>
+          <span>Approve Report</span>
+        </button>
+      </div>
+    </div>
+  </app-modal>
+</div>

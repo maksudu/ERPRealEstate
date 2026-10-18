@@ -1,387 +1,840 @@
-<app-card-container 
-  title="Land Bank & Acquisition Proposals" 
-  subtitle="Raw land parcels, legal title verification, and area conversion matrix"
->
-  <!-- Card Header Actions -->
-  <div card-actions>
-    <app-custom-button variant="primary" (btnClick)="openCreateModal()">
-      <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-      </svg>
-      New Land Proposal
-    </app-custom-button>
+<div class="space-y-6">
+  <!-- Top KPI Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- Total Proposals -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xs flex items-center justify-between">
+      <div>
+        <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Total Land Opportunities</p>
+        <h3 class="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">{{ totalProposalsCount() }}</h3>
+        <p class="text-[11px] text-emerald-600 dark:text-emerald-400 mt-0.5 flex items-center gap-1 font-medium">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+          Active Acquisition Pipeline
+        </p>
+      </div>
+      <div class="w-11 h-11 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+      </div>
+    </div>
+
+    <!-- Due Diligence & Negotiation -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xs flex items-center justify-between">
+      <div>
+        <p class="text-xs font-medium text-slate-500 dark:text-slate-400">In Active Negotiation</p>
+        <h3 class="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">{{ inNegotiationCount() }}</h3>
+        <p class="text-[11px] text-indigo-600 dark:text-indigo-400 mt-0.5 flex items-center gap-1 font-medium">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+          Landowner Share Ratio Discussions
+        </p>
+      </div>
+      <div class="w-11 h-11 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+      </div>
+    </div>
+
+    <!-- Management Approval Stage -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xs flex items-center justify-between">
+      <div>
+        <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Management Approval Stage</p>
+        <h3 class="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">{{ managementApprovalCount() }}</h3>
+        <p class="text-[11px] text-amber-600 dark:text-amber-400 mt-0.5 flex items-center gap-1 font-medium">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Feasibility Vetted by Board
+        </p>
+      </div>
+      <div class="w-11 h-11 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 flex items-center justify-center text-amber-600 dark:text-amber-400">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      </div>
+    </div>
+
+    <!-- Potential Acquisition Area -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xs flex items-center justify-between">
+      <div>
+        <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Pipeline Land Area</p>
+        <h3 class="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">{{ totalPotentialKatha().toFixed(1) }} <span class="text-sm font-normal text-slate-400">Katha</span></h3>
+        <p class="text-[11px] text-purple-600 dark:text-purple-400 mt-0.5 font-medium">
+          ≈ {{ (totalPotentialKatha() * 720).toLocaleString() }} Sq Ft
+        </p>
+      </div>
+      <div class="w-11 h-11 rounded-xl bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800 flex items-center justify-center text-purple-600 dark:text-purple-400">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+      </div>
+    </div>
   </div>
 
-  <!-- Responsive Proposals Table -->
-  <div class="overflow-x-auto">
-    <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800 text-left text-xs">
-      <thead class="bg-slate-50 dark:bg-slate-850 text-slate-600 dark:text-slate-400 font-semibold uppercase tracking-wider">
-        <tr>
-          <th class="px-4 py-3">Project Code</th>
-          <th class="px-4 py-3">Proposal Title & Mouza</th>
-          <th class="px-4 py-3">Area (Katha / SqFt)</th>
-          <th class="px-4 py-3">Deal Type</th>
-          <th class="px-4 py-3">Status</th>
-          <th class="px-4 py-3 text-right">Actions</th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300">
-        @if (isLoading()) {
-          <tr>
-            <td colspan="6" class="px-4 py-8 text-center text-slate-400">
-              <div class="inline-flex items-center gap-2">
-                <svg class="animate-spin h-4 w-4 text-emerald-600" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-                </svg>
-                Loading land bank proposals...
-              </div>
-            </td>
+  <!-- Main Card Container -->
+  <app-card-container
+    [hasHeader]="true"
+    title="2.2 Land Search & Acquisition Proposals"
+    subtitle="Evaluate new land opportunities, preliminary surveys, construction FAR potentials, and track 5-stage acquisition approval decisions."
+    badge="Module 2.2"
+  >
+    <!-- Card Actions in Header -->
+    <div card-actions class="flex items-center gap-2">
+      <!-- Opportunity Comparison Modal Button -->
+      <button 
+        type="button"
+        (click)="openComparisonModal()"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-purple-300 dark:border-purple-700 bg-purple-50 dark:bg-purple-950/40 text-purple-800 dark:text-purple-300 hover:bg-purple-100 transition-colors shadow-2xs"
+      >
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        Compare Opportunities
+      </button>
+
+      <!-- Register New Opportunity -->
+      <button 
+        type="button"
+        (click)="openCreateModal()"
+        class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-colors shadow-2xs"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        Register New Opportunity
+      </button>
+    </div>
+
+    <!-- Filters Bar -->
+    <div class="p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850/50 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+      <!-- Search Input -->
+      <div class="relative flex-1 max-w-md">
+        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        </span>
+        <input 
+          type="text" 
+          [value]="searchTerm()"
+          (input)="onSearch($event)"
+          placeholder="Search by project code, proposal title, mouza, or thana..."
+          class="w-full pl-9 pr-3 py-1.5 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+        />
+      </div>
+
+      <!-- Dynamic Filter Dropdowns -->
+      <div class="flex items-center gap-3 flex-wrap">
+        <div class="w-56">
+          <app-searchable-select
+            categoryCode="PROPOSAL_WORKFLOW"
+            placeholder="Filter Workflow Stage..."
+            [allowCreateNew]="true"
+            (selectionChange)="onWorkflowFilter($event)"
+          ></app-searchable-select>
+        </div>
+
+        <!-- Page Size -->
+        <div class="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 shrink-0">
+          <span>Show:</span>
+          <select 
+            [value]="pageSize()"
+            (change)="onPageSizeChange($any($event.target).value)"
+            class="px-2 py-1 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+          >
+            @for (size of pageSizeOptions; track size) {
+              <option [value]="size">{{ size }} / page</option>
+            }
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table Container -->
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/75 dark:bg-slate-850/80 text-[11px] font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
+            <th class="px-4 py-3">Project Code</th>
+            <th class="px-4 py-3">Opportunity Title & Location</th>
+            <th class="px-4 py-3">Source & Deal Type</th>
+            <th class="px-4 py-3">Plot Size & Road</th>
+            <th class="px-4 py-3">Construction Potential (FAR)</th>
+            <th class="px-4 py-3">Workflow Stage</th>
+            <th class="px-4 py-3 text-center">Feasibility</th>
+            <th class="px-4 py-3 text-right">Actions</th>
           </tr>
-        } @else if (proposals().length === 0) {
-          <tr>
-            <td colspan="6" class="px-4 py-12 text-center text-slate-400">
-              No land proposals found. Click "+ New Land Proposal" to begin acquisition.
-            </td>
-          </tr>
-        } @else {
-          @for (item of proposals(); track item.id) {
-            <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
-              <td class="px-4 py-3.5 font-mono font-semibold text-emerald-600 dark:text-emerald-400">
-                {{ item.project_code }}
-              </td>
-              <td class="px-4 py-3.5">
-                <div class="font-medium text-slate-900 dark:text-slate-100">{{ item.proposal_title }}</div>
-                <div class="text-[11px] text-slate-400">Mouza: {{ item.mouza_name }} | JL No: {{ item.jl_number }}</div>
-              </td>
-              <td class="px-4 py-3.5">
-                <div class="font-semibold text-slate-900 dark:text-slate-100">{{ item.total_area_katha }} Katha</div>
-                <div class="text-[11px] text-slate-400">{{ item.total_area_sqft | number:'1.0-0' }} Sq Ft ({{ item.total_area_decimal }} Dec)</div>
-              </td>
-              <td class="px-4 py-3.5">
-                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300">
-                  {{ item.deal_type }}
-                </span>
-              </td>
-              <td class="px-4 py-3.5">
-                <span 
-                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium"
-                  [ngClass]="(item.status === 'JV_SIGNED' || item.status === 'ACQUIRED') ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'"
-                >
-                  {{ item.status }}
-                </span>
-              </td>
-              <td class="px-4 py-3.5 text-right">
-                <app-custom-button variant="secondary" size="sm" (btnClick)="viewDeedChain(item)">
-                  <svg class="w-3.5 h-3.5 mr-1 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-                  </svg>
-                  Deed Chain
-                </app-custom-button>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-xs text-slate-700 dark:text-slate-300">
+          @if (isLoading()) {
+            <tr>
+              <td colspan="8" class="px-4 py-12 text-center text-slate-400">
+                <div class="inline-flex items-center gap-2">
+                  <svg class="animate-spin w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>
+                  <span>Loading land opportunities...</span>
+                </div>
               </td>
             </tr>
-          }
-        }
-      </tbody>
-    </table>
-  </div>
-</app-card-container>
+          } @else if (paginatedProposals().length === 0) {
+            <tr>
+              <td colspan="8" class="px-4 py-12 text-center text-slate-400">
+                <div class="flex flex-col items-center justify-center">
+                  <svg class="w-10 h-10 text-slate-300 dark:text-slate-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                  <p class="font-medium text-slate-600 dark:text-slate-400">No land proposals match criteria</p>
+                  <p class="text-[11px] text-slate-400 mt-1">Click "Register New Opportunity" to onboard a prospective site.</p>
+                </div>
+              </td>
+            </tr>
+          } @else {
+            @for (proposal of paginatedProposals(); track proposal.id) {
+              <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-colors">
+                <!-- Project Code -->
+                <td class="px-4 py-3 font-mono font-bold text-emerald-700 dark:text-emerald-400 whitespace-nowrap">
+                  {{ proposal.project_code }}
+                </td>
 
-<!-- 1. CREATE LAND PROPOSAL MODAL -->
-@if (isCreateModalOpen()) {
-  <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="erp-card w-full max-w-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-      <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-850">
-        <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-          Create New Land Proposal (Bangladesh Acquisition)
-        </h3>
-        <button (click)="closeCreateModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-          </svg>
-        </button>
+                <!-- Opportunity Title & Location -->
+                <td class="px-4 py-3">
+                  <div class="font-bold text-slate-900 dark:text-slate-100">{{ proposal.proposal_title }}</div>
+                  <div class="text-[11px] text-slate-500">
+                    Mouza: {{ proposal.mouza_name }} (JL: {{ proposal.jl_number }}), {{ proposal.upazila_thana }}
+                  </div>
+                </td>
+
+                <!-- Source & Deal Type -->
+                <td class="px-4 py-3 whitespace-nowrap text-[11px]">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-800 dark:bg-blue-950 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                    Source: {{ proposal.opportunity_source || 'BROKER' }}
+                  </span>
+                  <div class="text-[10px] text-slate-500 mt-0.5">{{ proposal.deal_type }}</div>
+                </td>
+
+                <!-- Plot Size & Road -->
+                <td class="px-4 py-3 whitespace-nowrap text-[11px]">
+                  <div class="font-bold text-slate-900 dark:text-slate-100">
+                    {{ Number(proposal.total_area_katha).toFixed(1) }} Katha ({{ Number(proposal.total_area_decimal).toFixed(1) }} Dec)
+                  </div>
+                  <div class="text-[10px] text-slate-500 flex items-center gap-1">
+                    <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+                    Road: {{ proposal.road_access_width_ft || 40 }} ft Frontage
+                  </div>
+                </td>
+
+                <!-- Construction Potential (FAR) -->
+                <td class="px-4 py-3 whitespace-nowrap text-[11px]">
+                  <div class="font-semibold text-emerald-700 dark:text-emerald-400">
+                    FAR {{ proposal.far_potential || 4.5 }} ({{ proposal.max_allowable_floors || 14 }} Floors)
+                  </div>
+                  <div class="text-[10px] text-slate-500">
+                    Built-up: ≈ {{ Number(proposal.estimated_builtup_sqft || 0).toLocaleString() }} SFT
+                  </div>
+                </td>
+
+                <!-- Workflow Stage -->
+                <td class="px-4 py-3 whitespace-nowrap">
+                  <span [ngClass]="getWorkflowBadgeClass(proposal.workflow_stage || 'IDENTIFIED')" class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border">
+                    {{ proposal.workflow_stage || 'IDENTIFIED' }}
+                  </span>
+                </td>
+
+                <!-- Feasibility Report Trigger -->
+                <td class="px-4 py-3 text-center whitespace-nowrap">
+                  <button 
+                    type="button"
+                    (click)="openFeasibilityReport(proposal)"
+                    class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 hover:bg-emerald-100 transition-colors shadow-2xs"
+                  >
+                    <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    Feasibility Report
+                  </button>
+                </td>
+
+                <!-- Actions -->
+                <td class="px-4 py-3 text-right whitespace-nowrap">
+                  <div class="flex items-center justify-end gap-1.5">
+                    <!-- Deed Chain Verification -->
+                    <button 
+                      type="button"
+                      (click)="viewDeedChain(proposal)"
+                      class="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-colors"
+                      title="Deed Chain Verification (CS/SA/RS/BS)"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                    </button>
+
+                    <!-- Advance to Management Approval -->
+                    @if (proposal.workflow_stage === 'FEASIBILITY_VALUATION' || proposal.workflow_stage === 'SCREENING_INSPECTION') {
+                      <button 
+                        type="button"
+                        (click)="advanceWorkflow(proposal, 'MANAGEMENT_APPROVAL')"
+                        class="px-2 py-1 text-[10px] font-bold rounded bg-amber-500 hover:bg-amber-600 text-white transition-colors"
+                        title="Submit for Management Approval"
+                      >
+                        To Approval
+                      </button>
+                    }
+
+                    <!-- Advance to Negotiation -->
+                    @if (proposal.workflow_stage === 'MANAGEMENT_APPROVAL') {
+                      <button 
+                        type="button"
+                        (click)="advanceWorkflow(proposal, 'DUE_DILIGENCE_NEGOTIATION')"
+                        class="px-2 py-1 text-[10px] font-bold rounded bg-indigo-600 hover:bg-indigo-700 text-white transition-colors"
+                        title="Approve for Due Diligence & Negotiation"
+                      >
+                        To Negotiation
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Footer -->
+    <div class="px-4 py-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850/50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
+      <div>
+        Showing {{ ((currentPage() - 1) * pageSize()) + 1 }} to {{ Math.min(currentPage() * pageSize(), filteredProposals().length) }} of {{ filteredProposals().length }} proposals
       </div>
 
-      <form [formGroup]="proposalForm" (ngSubmit)="submitProposal()" class="p-6 space-y-4">
-        @if (createError()) {
-          <div class="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-lg text-xs text-rose-600 dark:text-rose-400">
-            {{ createError() }}
-          </div>
-        }
+      <div class="flex items-center gap-2">
+        <button 
+          type="button"
+          (click)="prevPage()"
+          [disabled]="currentPage() === 1"
+          class="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"
+        >
+          Previous
+        </button>
 
+        <span class="px-2 font-medium text-slate-800 dark:text-slate-200">
+          Page {{ currentPage() }} of {{ totalPages() }}
+        </span>
+
+        <button 
+          type="button"
+          (click)="nextPage()"
+          [disabled]="currentPage() >= totalPages()"
+          class="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  </app-card-container>
+
+  <!-- MODAL 1: REGISTER LAND OPPORTUNITY MODAL -->
+  <app-modal
+    [isOpen]="isCreateModalOpen()"
+    title="Register New Land Opportunity"
+    subtitle="Capture plot size, road access, FAR potential, surrounding development, and opportunity source"
+    [modalClass]="'max-w-4xl'"
+    [showFooter]="true"
+    (closeModal)="isCreateModalOpen.set(false)"
+  >
+    <!-- Modal Tabs -->
+    <div class="flex items-center border-b border-slate-200 dark:border-slate-800 mb-4">
+      <button 
+        type="button"
+        (click)="createActiveTab.set('basic')"
+        [ngClass]="createActiveTab() === 'basic' ? 'border-emerald-600 text-emerald-600 dark:text-emerald-400 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'"
+        class="px-4 py-2 text-xs border-b-2 whitespace-nowrap transition-colors"
+      >
+        1. Site Location & Opportunity Source
+      </button>
+      <button 
+        type="button"
+        (click)="createActiveTab.set('potential')"
+        [ngClass]="createActiveTab() === 'potential' ? 'border-emerald-600 text-emerald-600 dark:text-emerald-400 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'"
+        class="px-4 py-2 text-xs border-b-2 whitespace-nowrap transition-colors"
+      >
+        2. Plot Size, FAR & Indicative Cost
+      </button>
+      <button 
+        type="button"
+        (click)="createActiveTab.set('landowner')"
+        [ngClass]="createActiveTab() === 'landowner' ? 'border-emerald-600 text-emerald-600 dark:text-emerald-400 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'"
+        class="px-4 py-2 text-xs border-b-2 whitespace-nowrap transition-colors"
+      >
+        3. Primary Landowner & Contact
+      </button>
+    </div>
+
+    @if (createError()) {
+      <div class="p-3 mb-3 rounded-lg bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300 text-xs">
+        {{ createError() }}
+      </div>
+    }
+
+    <form [formGroup]="proposalForm" class="space-y-4">
+      <!-- TAB 1: BASIC & LOCATION -->
+      @if (createActiveTab() === 'basic') {
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <app-custom-input
-            formControlName="project_code"
-            label="Project Code"
-            placeholder="e.g. PRJ-DHAKA-GULSHAN"
-            [required]="true"
-            hint="Unique project alphanumeric identifier"
-          ></app-custom-input>
-
-          <app-custom-input
-            formControlName="proposal_title"
-            label="Proposal Title"
-            placeholder="e.g. North Avenue Waterfront Plot"
-            [required]="true"
-          ></app-custom-input>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <app-custom-input
-            formControlName="mouza_name"
-            label="Mouza Name"
-            placeholder="e.g. Gulshan Model Town / Tejgaon"
-            [required]="true"
-          ></app-custom-input>
-
-          <app-custom-input
-            formControlName="jl_number"
-            label="J.L. Number"
-            placeholder="e.g. JL-24 / JL-19"
-            [required]="true"
-          ></app-custom-input>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <app-searchable-select
-            label="Upazila / Thana *"
-            [options]="thanaOptions"
-            formControlName="upazila_thana"
-            placeholder="Select Upazila/Thana..."
-            [allowCreateNew]="true"
-            [required]="true"
-          />
-
-          <app-custom-input
-            formControlName="sub_registry_office"
-            label="Sub-Registry Office *"
-            placeholder="e.g. Gulshan Sub-Registry Office"
-            [required]="true"
-          ></app-custom-input>
-        </div>
-
-        <!-- Bangladesh Land Area Conversion Matrix -->
-        <div class="p-4 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl space-y-3">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-bold text-slate-800 dark:text-slate-200">Area Measurement & Converter</span>
-            <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">1 Katha = 720 SqFt | 1 Decimal = 435.60 SqFt | 1 Bigha = 20 Katha</span>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <app-searchable-select
-              label="Measurement Unit *"
-              [options]="unitOptions"
-              formControlName="input_unit"
-              (selectionChange)="onAreaInput()"
-              placeholder="Select unit..."
-              [allowCreateNew]="false"
+          <div>
+            <app-custom-input
+              label="Project Code *"
+              formControlName="project_code"
+              placeholder="e.g. PRJ-LND-2026-05"
               [required]="true"
-            />
-
-            <app-custom-input
-              formControlName="input_value"
-              type="number"
-              label="Area Quantity *"
-              placeholder="e.g. 18.5"
-              (input)="onAreaInput()"
             ></app-custom-input>
           </div>
 
-          <!-- Live Conversion Preview -->
-          @if (calculatedSqft() > 0) {
-            <div class="grid grid-cols-4 gap-2 pt-2 border-t border-slate-200 dark:border-slate-700 text-center">
-              <div class="p-2 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">
-                <div class="text-[10px] text-slate-400">Total Sq Ft</div>
-                <div class="text-xs font-bold text-emerald-600 dark:text-emerald-400">{{ calculatedSqft() | number:'1.0-0' }}</div>
+          <div>
+            <app-custom-input
+              label="Opportunity Title *"
+              formControlName="proposal_title"
+              placeholder="e.g. Prime Corner Plot at Gulshan-2 Lake Road"
+              [required]="true"
+            ></app-custom-input>
+          </div>
+
+          <!-- Opportunity Source (Dynamic Dropdown) -->
+          <div>
+            <app-searchable-select
+              categoryCode="OPPORTUNITY_SOURCE"
+              label="Opportunity Source *"
+              formControlName="opportunity_source"
+              [allowCreateNew]="true"
+              placeholder="Select Source (Broker / Agent)..."
+            ></app-searchable-select>
+          </div>
+
+          <!-- Proposed Development Type (Dynamic Dropdown) -->
+          <div>
+            <app-searchable-select
+              categoryCode="PROPOSED_DEVELOPMENT_TYPE"
+              label="Proposed Development *"
+              formControlName="proposed_development_type"
+              [allowCreateNew]="true"
+              placeholder="Select Residential / Commercial..."
+            ></app-searchable-select>
+          </div>
+
+          <div>
+            <app-custom-input
+              label="Mouza Name *"
+              formControlName="mouza_name"
+              placeholder="e.g. Gulshan Mouza"
+              [required]="true"
+            ></app-custom-input>
+          </div>
+
+          <div>
+            <app-custom-input
+              label="JL Number *"
+              formControlName="jl_number"
+              placeholder="e.g. 102"
+              [required]="true"
+            ></app-custom-input>
+          </div>
+
+          <div>
+            <app-custom-input
+              label="Upazila / Thana *"
+              formControlName="upazila_thana"
+              placeholder="e.g. Gulshan"
+              [required]="true"
+            ></app-custom-input>
+          </div>
+
+          <div>
+            <app-custom-input
+              label="Sub-Registry Office *"
+              formControlName="sub_registry_office"
+              placeholder="e.g. Gulshan Sub-Registry Office"
+              [required]="true"
+            ></app-custom-input>
+          </div>
+
+          <div class="md:col-span-2">
+            <app-custom-textarea
+              label="Surrounding Development & Road Frontage"
+              formControlName="surrounding_development"
+              placeholder="Nearby hospitals, metro station distance, commercial hub developments..."
+              [rows]="2"
+            ></app-custom-textarea>
+          </div>
+        </div>
+      }
+
+      <!-- TAB 2: PLOT SIZE, FAR & COST -->
+      @if (createActiveTab() === 'potential') {
+        <div class="space-y-4">
+          <!-- Area Engine Block -->
+          <div class="p-3 bg-emerald-50/40 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl space-y-3">
+            <h4 class="text-xs font-bold text-emerald-800 dark:text-emerald-300">Plot Size & Multi-Unit Area Calculation</h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Input Unit</label>
+                <select 
+                  formControlName="input_unit"
+                  (change)="onAreaInput()"
+                  class="w-full px-3 py-1.5 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                >
+                  <option value="KATHA">Katha (কাঠা - 720 Sq Ft)</option>
+                  <option value="DECIMAL">Decimal / Shotok (শতাংশ - 435.60 Sq Ft)</option>
+                  <option value="BIGHA">Bigha (বিঘা - 20 Katha)</option>
+                  <option value="SQFT">Square Feet (বর্গফুট)</option>
+                </select>
               </div>
-              <div class="p-2 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">
-                <div class="text-[10px] text-slate-400">Total Decimal</div>
-                <div class="text-xs font-bold text-indigo-600 dark:text-indigo-400">{{ calculatedDecimal() | number:'1.2-4' }} Dec</div>
-              </div>
-              <div class="p-2 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">
-                <div class="text-[10px] text-slate-400">Total Katha</div>
-                <div class="text-xs font-bold text-slate-700 dark:text-slate-300">{{ (calculatedSqft() / 720) | number:'1.2-4' }} Katha</div>
-              </div>
-              <div class="p-2 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">
-                <div class="text-[10px] text-slate-400">Total Bigha</div>
-                <div class="text-xs font-bold text-purple-600 dark:text-purple-400">{{ calculatedBigha() | number:'1.3-4' }} Bigha</div>
+
+              <div>
+                <app-custom-input
+                  label="Area Value *"
+                  formControlName="input_value"
+                  type="number"
+                  step="0.01"
+                  (input)="onAreaInput()"
+                  placeholder="e.g. 15.0"
+                  [required]="true"
+                ></app-custom-input>
               </div>
             </div>
-          }
-        </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <app-searchable-select
-            label="Deal Type *"
-            [options]="dealTypeOptions"
-            formControlName="deal_type"
-            placeholder="Select deal type..."
-            [allowCreateNew]="false"
-            [required]="true"
-          />
-
-          <app-searchable-select
-            label="Acquisition Status *"
-            [options]="statusOptions"
-            formControlName="status"
-            placeholder="Select status..."
-            [allowCreateNew]="false"
-            [required]="true"
-          />
-        </div>
-
-        <!-- Primary Landowner Summary -->
-        <div class="border-t border-slate-100 dark:border-slate-800 pt-3 space-y-3">
-          <span class="text-xs font-bold text-slate-800 dark:text-slate-200">Primary Title Holder / Landowner</span>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <app-custom-input
-              formControlName="owner_name_en"
-              label="Landowner Full Name *"
-              placeholder="e.g. Alhaj Rafiqul Islam"
-            ></app-custom-input>
-            <app-custom-input
-              formControlName="owner_nid"
-              label="NID Number"
-              placeholder="e.g. 19782690..."
-            ></app-custom-input>
-            <app-custom-input
-              formControlName="owner_phone"
-              label="Contact Phone"
-              placeholder="e.g. +88017..."
-            ></app-custom-input>
-          </div>
-        </div>
-
-        <app-custom-textarea
-          formControlName="location_description"
-          label="Physical Location & Boundaries"
-          placeholder="Detailed plot landmarks, road facing width, adjacent structures..."
-        ></app-custom-textarea>
-
-        <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
-          <app-custom-button type="button" variant="secondary" (btnClick)="closeCreateModal()">Cancel</app-custom-button>
-          <app-custom-button type="submit" variant="primary" [loading]="isSubmitting()">Create Proposal</app-custom-button>
-        </div>
-      </form>
-    </div>
-  </div>
-}
-
-<!-- 2. DEED CHAIN HISTORIC VERIFICATION MODAL -->
-@if (isChainModalOpen()) {
-  <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="erp-card w-full max-w-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-      <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-850">
-        <div>
-          <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-            <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-            </svg>
-            Bangladesh Deed Chain & Historical Survey Verification
-          </h3>
-          <p class="text-xs text-slate-400 mt-0.5">{{ selectedProposal()?.project_code }} - {{ selectedProposal()?.proposal_title }}</p>
-        </div>
-        <button (click)="closeChainModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-          </svg>
-        </button>
-      </div>
-
-      <div class="p-6 space-y-6">
-        @if (isLoadingChain()) {
-          <div class="py-12 text-center text-slate-400">
-            <svg class="animate-spin h-6 w-6 text-emerald-600 mx-auto mb-2" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-            </svg>
-            Auditing title deed sequence (CS -> SA -> RS -> BS)...
-          </div>
-        } @else if (chainVerification()) {
-          @let v = chainVerification()!;
-          <!-- Chain Health Banner -->
-          <div 
-            class="p-4 rounded-xl border flex items-start gap-3"
-            [ngClass]="{
-              'bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800': v.verification_status === 'VERIFIED',
-              'bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800': v.verification_status === 'PARTIAL',
-              'bg-rose-50 border-rose-200 dark:bg-rose-950/30 dark:border-rose-800': v.verification_status === 'MISSING_HISTORIC_LINK'
-            }"
-          >
-            <div class="mt-0.5">
-              @if (v.verification_status === 'VERIFIED') {
-                <span class="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs font-bold">✓</span>
-              } @else {
-                <span class="w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center text-xs font-bold">!</span>
-              }
+            <!-- Live Calculated Conversion -->
+            <div class="grid grid-cols-3 gap-2 text-center pt-1">
+              <div class="p-2 rounded-lg bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-800">
+                <div class="text-[10px] text-slate-500">Square Feet</div>
+                <div class="text-xs font-bold text-emerald-700 dark:text-emerald-400 font-mono">{{ calculatedSqft().toLocaleString() }}</div>
+              </div>
+              <div class="p-2 rounded-lg bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-800">
+                <div class="text-[10px] text-slate-500">Decimal</div>
+                <div class="text-xs font-bold text-emerald-700 dark:text-emerald-400 font-mono">{{ calculatedDecimal() }}</div>
+              </div>
+              <div class="p-2 rounded-lg bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-800">
+                <div class="text-[10px] text-slate-500">Est. Built-Up (FAR)</div>
+                <div class="text-xs font-bold text-purple-700 dark:text-purple-400 font-mono">{{ calculatedBuiltupSqft().toLocaleString() }} SFT</div>
+              </div>
             </div>
+          </div>
+
+          <!-- Construction Potential -->
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
             <div>
-              <div class="text-xs font-bold text-slate-900 dark:text-slate-100">Status: {{ v.verification_status }}</div>
-              <p class="text-xs text-slate-600 dark:text-slate-300 mt-0.5">{{ v.remarks }}</p>
-              <div class="text-[11px] text-slate-400 mt-2">
-                Survey Recorded Area: <span class="font-semibold text-slate-700 dark:text-slate-200">{{ v.total_survey_area_katha }} Katha</span> | Proposed Acquisition: <span class="font-semibold text-slate-700 dark:text-slate-200">{{ v.total_land_bank_area_katha }} Katha</span> (Variance: {{ v.area_variance_percentage }}%)
+              <app-custom-input
+                label="Road Width (ft) *"
+                formControlName="road_access_width_ft"
+                type="number"
+                placeholder="40"
+                [required]="true"
+              ></app-custom-input>
+            </div>
+
+            <div>
+              <app-custom-input
+                label="Allowable FAR *"
+                formControlName="far_potential"
+                type="number"
+                step="0.05"
+                (input)="onAreaInput()"
+                placeholder="4.50"
+                [required]="true"
+              ></app-custom-input>
+            </div>
+
+            <div>
+              <app-custom-input
+                label="Max Floors *"
+                formControlName="max_allowable_floors"
+                type="number"
+                placeholder="14"
+                [required]="true"
+              ></app-custom-input>
+            </div>
+
+            <div>
+              <app-custom-input
+                label="Indicative Cost (BDT)"
+                formControlName="indicative_cost_total"
+                type="number"
+                placeholder="e.g. 150000000"
+              ></app-custom-input>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- TAB 3: PRIMARY LANDOWNER & CONTACT -->
+      @if (createActiveTab() === 'landowner') {
+        <div class="space-y-4">
+          <div class="p-3 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl space-y-3">
+            <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200">Landowner / Primary Seller Details</h4>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div>
+                <app-custom-input
+                  label="Landowner Name *"
+                  formControlName="owner_name_en"
+                  placeholder="Primary seller full name"
+                  [required]="true"
+                ></app-custom-input>
+              </div>
+
+              <div>
+                <app-custom-input
+                  label="Contact Phone"
+                  formControlName="owner_phone"
+                  placeholder="+880 1..."
+                ></app-custom-input>
+              </div>
+
+              <div>
+                <app-custom-input
+                  label="National ID (NID)"
+                  formControlName="owner_nid"
+                  placeholder="NID number"
+                ></app-custom-input>
               </div>
             </div>
           </div>
 
-          <!-- Historic Survey Succession Timeline -->
-          <div class="space-y-3">
-            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Historic Title Survey Chain</h4>
-            <div class="grid grid-cols-4 gap-2">
-              <div class="p-3 rounded-lg border text-center" [ngClass]="v.has_cs ? 'border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/30' : 'border-slate-200 dark:border-slate-800'">
-                <div class="text-[11px] font-bold">CS (Cadastral)</div>
-                <div class="text-[10px] mt-1 font-semibold" [ngClass]="v.has_cs ? 'text-emerald-600' : 'text-slate-400'">{{ v.has_cs ? 'Recorded ✓' : 'Missing ✗' }}</div>
-              </div>
-              <div class="p-3 rounded-lg border text-center" [ngClass]="v.has_sa ? 'border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/30' : 'border-slate-200 dark:border-slate-800'">
-                <div class="text-[11px] font-bold">SA (State Acq)</div>
-                <div class="text-[10px] mt-1 font-semibold" [ngClass]="v.has_sa ? 'text-emerald-600' : 'text-slate-400'">{{ v.has_sa ? 'Recorded ✓' : 'Missing ✗' }}</div>
-              </div>
-              <div class="p-3 rounded-lg border text-center" [ngClass]="v.has_rs ? 'border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/30' : 'border-slate-200 dark:border-slate-800'">
-                <div class="text-[11px] font-bold">RS (Revisional)</div>
-                <div class="text-[10px] mt-1 font-semibold" [ngClass]="v.has_rs ? 'text-emerald-600' : 'text-slate-400'">{{ v.has_rs ? 'Recorded ✓' : 'Missing ✗' }}</div>
-              </div>
-              <div class="p-3 rounded-lg border text-center" [ngClass]="v.has_bs ? 'border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/30' : 'border-slate-200 dark:border-slate-800'">
-                <div class="text-[11px] font-bold">BS / City Survey</div>
-                <div class="text-[10px] mt-1 font-semibold" [ngClass]="v.has_bs ? 'text-emerald-600' : 'text-slate-400'">{{ v.has_bs ? 'Recorded ✓' : 'Optional' }}</div>
-              </div>
-            </div>
+          <div>
+            <app-custom-input
+              label="Source Contact Details (Broker / Agent)"
+              formControlName="source_contact_details"
+              placeholder="e.g. Modern Land Brokerage, Contact: Mr. Aminul +880 1812..."
+            ></app-custom-input>
           </div>
+        </div>
+      }
+    </form>
 
-          <!-- Logged Survey Records Table -->
-          <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
-            <div class="px-4 py-2.5 bg-slate-50 dark:bg-slate-850 text-xs font-bold text-slate-700 dark:text-slate-300">
-              Recorded Khatians & Dags
-            </div>
-            <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800 text-left text-xs">
-              <thead class="bg-slate-100/50 dark:bg-slate-800/50 text-slate-500">
-                <tr>
-                  <th class="px-3 py-2">Survey</th>
-                  <th class="px-3 py-2">Khatian #</th>
-                  <th class="px-3 py-2">Dag #</th>
-                  <th class="px-3 py-2">Recorded Tenant</th>
-                  <th class="px-3 py-2 text-right">Area (Katha)</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                @for (s of v.surveys; track s.id) {
-                  <tr>
-                    <td class="px-3 py-2 font-bold text-emerald-600">{{ s.survey_type_id }}</td>
-                    <td class="px-3 py-2 font-mono">{{ s.khatian_number }}</td>
-                    <td class="px-3 py-2 font-mono">{{ s.dag_number }}</td>
-                    <td class="px-3 py-2">{{ s.recorded_tenant_name }}</td>
-                    <td class="px-3 py-2 text-right font-semibold">{{ s.recorded_area_katha }}</td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
+    <!-- Modal Footer Actions -->
+    <div modal-footer class="flex items-center justify-end gap-2">
+      <button 
+        type="button"
+        (click)="isCreateModalOpen.set(false)"
+        class="px-3.5 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 transition-colors"
+      >
+        Cancel
+      </button>
+
+      <button 
+        type="button"
+        (click)="submitProposal()"
+        [disabled]="isSubmitting()"
+        class="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-50 transition-colors shadow-2xs"
+      >
+        @if (isSubmitting()) {
+          <svg class="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>
         }
-      </div>
-
-      <div class="px-6 py-3 border-t border-slate-200 dark:border-slate-800 flex justify-end bg-slate-50/50 dark:bg-slate-850">
-        <app-custom-button variant="secondary" (btnClick)="closeChainModal()">Close</app-custom-button>
-      </div>
+        Register Opportunity
+      </button>
     </div>
-  </div>
-}
+  </app-modal>
+
+  <!-- MODAL 2: ACQUISITION FEASIBILITY & PRELIMINARY VALUATION REPORT -->
+  <app-modal
+    [isOpen]="isFeasibilityModalOpen()"
+    [title]="'Acquisition Feasibility & Valuation: ' + (feasibilityReport()?.project_code || '')"
+    [subtitle]="feasibilityReport()?.proposal_title || ''"
+    modalClass="max-w-3xl"
+    [showFooter]="true"
+    (closeModal)="isFeasibilityModalOpen.set(false)"
+  >
+    @if (isLoadingFeasibility()) {
+      <div class="py-12 text-center text-xs text-slate-400">
+        <svg class="animate-spin w-6 h-6 text-emerald-600 mx-auto mb-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>
+        <span>Generating acquisition feasibility metrics...</span>
+      </div>
+    } @else if (feasibilityReport()) {
+      <div class="space-y-4">
+        <!-- Recommendation Highlight -->
+        <div class="p-3.5 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/70 dark:bg-emerald-950/40 flex items-start gap-3">
+          <svg class="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <div>
+            <h4 class="text-xs font-bold text-emerald-900 dark:text-emerald-200">Executive Feasibility Recommendation</h4>
+            <p class="text-xs text-emerald-800 dark:text-emerald-300 mt-0.5 leading-relaxed">
+              {{ feasibilityReport()!.recommendation }}
+            </p>
+          </div>
+        </div>
+
+        <!-- 4 Key Financial Metrics -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+          <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800">
+            <span class="text-[10px] text-slate-500 uppercase font-semibold">Total Built-Up Area</span>
+            <div class="text-sm font-bold font-mono text-slate-900 dark:text-slate-100 mt-1">
+              {{ feasibilityReport()!.total_builtup_sqft.toLocaleString() }} SFT
+            </div>
+            <div class="text-[10px] text-slate-400 mt-0.5">FAR: {{ feasibilityReport()!.far }} | {{ feasibilityReport()!.allowable_floors }} Flr</div>
+          </div>
+
+          <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800">
+            <span class="text-[10px] text-slate-500 uppercase font-semibold">Acquisition Cost</span>
+            <div class="text-sm font-bold font-mono text-slate-900 dark:text-slate-100 mt-1">
+              ৳{{ (feasibilityReport()!.indicative_acquisition_cost / 10000000).toFixed(2) }} Cr
+            </div>
+            <div class="text-[10px] text-slate-400 mt-0.5">৳{{ (feasibilityReport()!.cost_per_katha / 100000).toFixed(1) }}L / Katha</div>
+          </div>
+
+          <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800">
+            <span class="text-[10px] text-slate-500 uppercase font-semibold">Projected Revenue</span>
+            <div class="text-sm font-bold font-mono text-emerald-600 dark:text-emerald-400 mt-1">
+              ৳{{ (feasibilityReport()!.projected_revenue / 10000000).toFixed(2) }} Cr
+            </div>
+            <div class="text-[10px] text-slate-400 mt-0.5">&#64; 10,500 BDT / sqft</div>
+          </div>
+
+          <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800">
+            <span class="text-[10px] text-slate-500 uppercase font-semibold">Gross Margin %</span>
+            <div class="text-sm font-bold font-mono text-purple-600 dark:text-purple-400 mt-1">
+              {{ feasibilityReport()!.gross_margin_percent.toFixed(1) }}%
+            </div>
+            <div class="text-[10px] text-purple-500 mt-0.5">Profit: ৳{{ (feasibilityReport()!.estimated_gross_profit / 10000000).toFixed(2) }} Cr</div>
+          </div>
+        </div>
+
+        <!-- Risk & Opportunities Section -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+          <!-- Key Risks -->
+          <div class="p-3 rounded-xl bg-rose-50/50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900">
+            <h5 class="font-bold text-rose-800 dark:text-rose-300 flex items-center gap-1.5 mb-2">
+              <svg class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+              Key Acquisition Risks
+            </h5>
+            <ul class="space-y-1.5 text-slate-700 dark:text-slate-300">
+              @for (risk of feasibilityReport()!.key_risks; track risk) {
+                <li class="flex items-start gap-1.5">
+                  <span class="text-rose-500 font-bold">•</span>
+                  <span>{{ risk }}</span>
+                </li>
+              }
+            </ul>
+          </div>
+
+          <!-- Opportunities -->
+          <div class="p-3 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900">
+            <h5 class="font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5 mb-2">
+              <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              Development Opportunities
+            </h5>
+            <ul class="space-y-1.5 text-slate-700 dark:text-slate-300">
+              @for (opp of feasibilityReport()!.opportunities; track opp) {
+                <li class="flex items-start gap-1.5">
+                  <span class="text-emerald-500 font-bold">•</span>
+                  <span>{{ opp }}</span>
+                </li>
+              }
+            </ul>
+          </div>
+        </div>
+      </div>
+    }
+
+    <div modal-footer>
+      <button 
+        type="button"
+        (click)="isFeasibilityModalOpen.set(false)"
+        class="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 transition-colors"
+      >
+        Close
+      </button>
+    </div>
+  </app-modal>
+
+  <!-- MODAL 3: OPPORTUNITY COMPARISON MATRIX MODAL -->
+  <app-modal
+    [isOpen]="isCompareModalOpen()"
+    title="Compare Multiple Land Opportunities"
+    subtitle="Comparative evaluation matrix of location, plot size, road access, FAR potential, cost per katha, and workflow stages"
+    modalClass="max-w-4xl"
+    [showFooter]="true"
+    (closeModal)="isCompareModalOpen.set(false)"
+  >
+    @if (isLoadingCompare()) {
+      <div class="py-12 text-center text-xs text-slate-400">Loading comparison matrix...</div>
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-850 text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase">
+              <th class="p-2.5">Project</th>
+              <th class="p-2.5">Location</th>
+              <th class="p-2.5">Source</th>
+              <th class="p-2.5">Area (Katha)</th>
+              <th class="p-2.5">Road</th>
+              <th class="p-2.5">FAR</th>
+              <th class="p-2.5">Built-Up SFT</th>
+              <th class="p-2.5">Cost / Katha</th>
+              <th class="p-2.5">Stage</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+            @for (item of comparisonList(); track item.id) {
+              <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
+                <td class="p-2.5 font-bold font-mono text-emerald-700 dark:text-emerald-400 whitespace-nowrap">
+                  {{ item.project_code }}
+                </td>
+                <td class="p-2.5">{{ item.location }}</td>
+                <td class="p-2.5 whitespace-nowrap">{{ item.source }}</td>
+                <td class="p-2.5 font-bold font-mono">{{ item.area_katha }}</td>
+                <td class="p-2.5 whitespace-nowrap">{{ item.road_width_ft }} ft</td>
+                <td class="p-2.5 font-semibold text-purple-600 dark:text-purple-400">{{ item.far_potential }}</td>
+                <td class="p-2.5 font-mono">{{ item.builtup_sqft.toLocaleString() }}</td>
+                <td class="p-2.5 font-mono text-amber-600 dark:text-amber-400">
+                  {{ item.cost_per_katha > 0 ? '৳' + (item.cost_per_katha / 100000).toFixed(1) + 'L' : 'JV Share' }}
+                </td>
+                <td class="p-2.5 whitespace-nowrap">
+                  <span [ngClass]="getWorkflowBadgeClass(item.workflow_stage)" class="px-1.5 py-0.5 rounded text-[10px] font-bold border">
+                    {{ item.workflow_stage }}
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    <div modal-footer>
+      <button 
+        type="button"
+        (click)="isCompareModalOpen.set(false)"
+        class="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 transition-colors"
+      >
+        Close
+      </button>
+    </div>
+  </app-modal>
+
+  <!-- MODAL 4: HISTORICAL TITLE DEED CHAIN VERIFICATION -->
+  <app-modal
+    [isOpen]="isChainModalOpen()"
+    [title]="'Historical Survey Chain Continuity: ' + (chainVerification()?.project_code || '')"
+    [subtitle]="'Unbroken Chain: CS (1888) -> SA (1956) -> RS (1966) -> BS/City Survey for ' + (chainVerification()?.mouza_name || '')"
+    modalClass="max-w-2xl"
+    [showFooter]="true"
+    (closeModal)="isChainModalOpen.set(false)"
+  >
+    @if (isLoadingChain()) {
+      <div class="py-12 text-center text-xs text-slate-400">Verifying statutory records...</div>
+    } @else if (chainVerification()) {
+      <div class="space-y-4">
+        <!-- Status Box -->
+        <div 
+          [ngClass]="chainVerification()!.verification_status === 'VERIFIED' ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300' : 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300'"
+          class="p-3.5 rounded-xl border flex items-center justify-between text-xs"
+        >
+          <div class="font-bold">Title Continuity Status: {{ chainVerification()!.verification_status }}</div>
+          <span class="text-[11px] font-mono">Variance: {{ chainVerification()!.area_variance_percentage }}%</span>
+        </div>
+
+        <p class="text-xs text-slate-600 dark:text-slate-300">{{ chainVerification()!.remarks }}</p>
+
+        <!-- Chain Progress Steps -->
+        <div class="grid grid-cols-4 gap-2 text-center text-xs">
+          <div [ngClass]="chainVerification()!.has_cs ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300' : 'border-slate-200 bg-slate-50 text-slate-400'" class="p-2 rounded-lg border font-bold">
+            CS Survey
+          </div>
+          <div [ngClass]="chainVerification()!.has_sa ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300' : 'border-slate-200 bg-slate-50 text-slate-400'" class="p-2 rounded-lg border font-bold">
+            SA Survey
+          </div>
+          <div [ngClass]="chainVerification()!.has_rs ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300' : 'border-slate-200 bg-slate-50 text-slate-400'" class="p-2 rounded-lg border font-bold">
+            RS Survey
+          </div>
+          <div [ngClass]="chainVerification()!.has_bs ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300' : 'border-slate-200 bg-slate-50 text-slate-400'" class="p-2 rounded-lg border font-bold">
+            BS Survey
+          </div>
+        </div>
+      </div>
+    }
+
+    <div modal-footer>
+      <button 
+        type="button"
+        (click)="isChainModalOpen.set(false)"
+        class="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 transition-colors"
+      >
+        Close
+      </button>
+    </div>
+  </app-modal>
+</div>

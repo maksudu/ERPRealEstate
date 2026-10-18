@@ -374,26 +374,27 @@ export class JVAgreementsComponent implements OnInit {
     }
   }
 
-  getParcelTitle(landBankId: number): string {
+  getParcelTitle(landBankId?: number | null): string {
+    if (!landBankId) return 'N/A';
     const p = this.proposals().find(x => x.id === landBankId);
     return p ? `${p.project_code} - ${p.proposal_title}` : `Parcel #${landBankId}`;
   }
 
-  getLandownerCount(allocations: JVUnitAllocation[]): number {
+  getLandownerCount(allocations?: JVUnitAllocation[] | null): number {
     return (allocations || []).filter(u => u.allocation_type === 'LANDOWNER_UNIT').length;
   }
 
-  getDeveloperCount(allocations: JVUnitAllocation[]): number {
+  getDeveloperCount(allocations?: JVUnitAllocation[] | null): number {
     return (allocations || []).filter(u => u.allocation_type === 'DEVELOPER_UNIT').length;
   }
 
-  getLandownerSft(allocations: JVUnitAllocation[]): number {
+  getLandownerSft(allocations?: JVUnitAllocation[] | null): number {
     return (allocations || [])
       .filter(u => u.allocation_type === 'LANDOWNER_UNIT')
       .reduce((sum, u) => sum + (u.gross_sft || 0), 0);
   }
 
-  getDeveloperSft(allocations: JVUnitAllocation[]): number {
+  getDeveloperSft(allocations?: JVUnitAllocation[] | null): number {
     return (allocations || [])
       .filter(u => u.allocation_type === 'DEVELOPER_UNIT')
       .reduce((sum, u) => sum + (u.gross_sft || 0), 0);

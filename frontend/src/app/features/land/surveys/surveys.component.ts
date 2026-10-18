@@ -395,7 +395,8 @@ export class SurveysComponent implements OnInit {
     });
   }
 
-  getParcelTitle(landBankId: number): string {
+  getParcelTitle(landBankId?: number): string {
+    if (!landBankId) return 'General Survey';
     const p = this.proposals().find(x => x.id === landBankId);
     return p ? `${p.project_code} - ${p.proposal_title}` : `Parcel #${landBankId}`;
   }

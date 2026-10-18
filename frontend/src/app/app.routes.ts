@@ -33,9 +33,69 @@ export const routes: Routes = [
     pathMatch: 'full'
   },
   {
+    path: 'land',
+    redirectTo: 'land/dashboard',
+    pathMatch: 'full'
+  },
+  {
+    path: 'land/dashboard',
+    loadComponent: () => import('./features/land/dashboard/land-dashboard.component').then(m => m.LandDashboardComponent),
+    title: 'Oxland — Land Management & Intelligence Dashboard - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'land/landowners',
+    loadComponent: () => import('./features/land/landowners/landowners.component').then(m => m.LandownersComponent),
+    title: '2.1 Landowner and Seller Registry - Bangladesh Real Estate ERP'
+  },
+  {
     path: 'land/proposals',
     loadComponent: () => import('./features/land/proposals/proposals.component').then(m => m.ProposalsComponent),
-    title: 'Land Bank & Acquisition Proposals - Bangladesh Real Estate ERP'
+    title: '2.2 Land Search & Acquisition Proposals - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'land/parcels',
+    loadComponent: () => import('./features/land/parcels/parcels.component').then(m => m.ParcelsComponent),
+    title: '2.3 Land Parcel and Location Registry - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'land/conversions',
+    loadComponent: () => import('./features/land/conversions/conversions.component').then(m => m.ConversionsComponent),
+    title: '2.4 Land Area & Measurement Conversion - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'land/documents',
+    loadComponent: () => import('./features/land/documents/documents.component').then(m => m.DocumentsComponent),
+    title: '2.5 Deed, Mutation, Survey & Ownership Documents - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'land/joint-ownership',
+    loadComponent: () => import('./features/land/joint-ownership/joint-ownership.component').then(m => m.JointOwnershipComponent),
+    title: '2.6 Joint Ownership & Landowner Agreements - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'land/due-diligence',
+    loadComponent: () => import('./features/land/due-diligence/due-diligence.component').then(m => m.DueDiligenceComponent),
+    title: '2.7 Legal Due Diligence & Encumbrance Tracking - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'land/valuation-costing',
+    loadComponent: () => import('./features/land/valuation-costing/valuation-costing.component').then(m => m.ValuationCostingComponent),
+    title: '2.8 Land Valuation & Acquisition Costing - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'land/negotiation',
+    loadComponent: () => import('./features/land/negotiation/negotiation.component').then(m => m.NegotiationComponent),
+    title: '2.9 Landowner Negotiation & Agreement Management - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'land/payment-schedules',
+    loadComponent: () => import('./features/land/payment-schedules/payment-schedules.component').then(m => m.PaymentSchedulesComponent),
+    title: '2.10 Land Payment Schedules & Outstanding Balances - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'land/reports',
+    loadComponent: () => import('./features/land/reports/land-reports.component').then(m => m.LandReportsComponent),
+    title: 'Land Acquisition & Bank Intelligence Reports (15) - Bangladesh Real Estate ERP'
   },
   {
     path: 'land/surveys',

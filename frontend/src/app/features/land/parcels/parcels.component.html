@@ -1,0 +1,829 @@
+<div class="space-y-6">
+  <!-- Top Stat KPI Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- Total Registered Parcels -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xs flex items-center justify-between">
+      <div>
+        <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Total Land Parcels</p>
+        <h3 class="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">{{ totalParcelsCount() }}</h3>
+        <p class="text-[11px] text-emerald-600 dark:text-emerald-400 mt-0.5 flex items-center gap-1 font-medium">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+          Unique Parcel ID Registry
+        </p>
+      </div>
+      <div class="w-11 h-11 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+      </div>
+    </div>
+
+    <!-- Acquired Parcels -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xs flex items-center justify-between">
+      <div>
+        <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Acquired & Transferred</p>
+        <h3 class="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">{{ acquiredParcelsCount() }}</h3>
+        <p class="text-[11px] text-blue-600 dark:text-blue-400 mt-0.5 flex items-center gap-1 font-medium">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Full Title Possession
+        </p>
+      </div>
+      <div class="w-11 h-11 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 flex items-center justify-center text-blue-600 dark:text-blue-400">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+      </div>
+    </div>
+
+    <!-- Total Area in Decimal -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xs flex items-center justify-between">
+      <div>
+        <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Total Land Bank Area</p>
+        <h3 class="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">{{ totalAreaDecimal().toFixed(2) }} <span class="text-sm font-normal text-slate-400">Dec</span></h3>
+        <p class="text-[11px] text-purple-600 dark:text-purple-400 mt-0.5 font-medium">
+          ≈ {{ totalAreaKatha().toFixed(2) }} Katha
+        </p>
+      </div>
+      <div class="w-11 h-11 rounded-xl bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800 flex items-center justify-center text-purple-600 dark:text-purple-400">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+      </div>
+    </div>
+
+    <!-- Proposed / In Review -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xs flex items-center justify-between">
+      <div>
+        <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Under Review / Proposed</p>
+        <h3 class="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">{{ proposedParcelsCount() }}</h3>
+        <p class="text-[11px] text-amber-600 dark:text-amber-400 mt-0.5 flex items-center gap-1 font-medium">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Boundary & Legal Vetting
+        </p>
+      </div>
+      <div class="w-11 h-11 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 flex items-center justify-center text-amber-600 dark:text-amber-400">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Card Container -->
+  <app-card-container
+    [hasHeader]="true"
+    title="2.3 Land Parcel and Location Registry"
+    subtitle="Individual parcel master repository with multi-mouza, khatian, dag, cardinal boundaries, and GPS coordinates."
+    badge="Module 2.3"
+  >
+    <!-- Card Actions in Header -->
+    <div card-actions class="flex items-center gap-2">
+      <button 
+        type="button"
+        (click)="openCreateModal()"
+        class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-colors shadow-2xs"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        Register New Parcel
+      </button>
+    </div>
+
+    <!-- Filters Bar -->
+    <div class="p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850/50 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+      <!-- Search Input -->
+      <div class="relative flex-1 max-w-md">
+        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        </span>
+        <input 
+          type="text" 
+          [value]="searchTerm()"
+          (input)="onSearch($event)"
+          placeholder="Search by Parcel ID, project, mouza, khatian, or dag..."
+          class="w-full pl-9 pr-3 py-1.5 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+        />
+      </div>
+
+      <!-- Dynamic Filter Dropdowns -->
+      <div class="flex items-center gap-3 flex-wrap">
+        <div class="w-52">
+          <app-searchable-select
+            categoryCode="PARCEL_ACQUISITION_STATUS"
+            placeholder="Filter Acquisition Status..."
+            [allowCreateNew]="true"
+            (selectionChange)="onStatusFilter($event)"
+          ></app-searchable-select>
+        </div>
+
+        <!-- Page Size -->
+        <div class="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 shrink-0">
+          <span>Show:</span>
+          <select 
+            [value]="pageSize()"
+            (change)="onPageSizeChange($any($event.target).value)"
+            class="px-2 py-1 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+          >
+            @for (size of pageSizeOptions; track size) {
+              <option [value]="size">{{ size }} / page</option>
+            }
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table Container -->
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/75 dark:bg-slate-850/80 text-[11px] font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
+            <th class="px-4 py-3">Parcel ID</th>
+            <th class="px-4 py-3">Project & Location</th>
+            <th class="px-4 py-3">Land Records (Khatian / Dag)</th>
+            <th class="px-4 py-3">Area (Decimal / Katha)</th>
+            <th class="px-4 py-3">Status</th>
+            <th class="px-4 py-3 text-center">Boundaries & GPS</th>
+            <th class="px-4 py-3 text-center">Associated Owners</th>
+            <th class="px-4 py-3 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-xs text-slate-700 dark:text-slate-300">
+          @if (isLoading()) {
+            <tr>
+              <td colspan="8" class="px-4 py-12 text-center text-slate-400">
+                <div class="inline-flex items-center gap-2">
+                  <svg class="animate-spin w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>
+                  <span>Loading land parcels...</span>
+                </div>
+              </td>
+            </tr>
+          } @else if (paginatedParcels().length === 0) {
+            <tr>
+              <td colspan="8" class="px-4 py-12 text-center text-slate-400">
+                <div class="flex flex-col items-center justify-center">
+                  <svg class="w-10 h-10 text-slate-300 dark:text-slate-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+                  <p class="font-medium text-slate-600 dark:text-slate-400">No land parcels found</p>
+                  <p class="text-[11px] text-slate-400 mt-1">Click "Register New Parcel" to add an acquisition plot.</p>
+                </div>
+              </td>
+            </tr>
+          } @else {
+            @for (parcel of paginatedParcels(); track parcel.id) {
+              <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-colors">
+                <!-- Parcel ID -->
+                <td class="px-4 py-3 font-mono font-bold text-emerald-700 dark:text-emerald-400 whitespace-nowrap">
+                  {{ parcel.parcel_id }}
+                </td>
+
+                <!-- Project & Location -->
+                <td class="px-4 py-3">
+                  <div class="font-bold text-slate-900 dark:text-slate-100">{{ parcel.project_name }}</div>
+                  <div class="text-[11px] text-slate-500">
+                    {{ parcel.mouza_name }} (JL: {{ parcel.jl_number }}), {{ parcel.upazila_thana }}
+                  </div>
+                  <div class="text-[10px] text-slate-400">{{ parcel.district }}, {{ parcel.division }}</div>
+                </td>
+
+                <!-- Survey Records -->
+                <td class="px-4 py-3 whitespace-nowrap text-[11px]">
+                  <div class="text-slate-800 dark:text-slate-200">
+                    <span class="text-slate-400">Khatian:</span> <span class="font-bold font-mono">{{ parcel.khatian_number }}</span>
+                  </div>
+                  <div class="text-slate-800 dark:text-slate-200">
+                    <span class="text-slate-400">Dag:</span> <span class="font-bold font-mono">{{ parcel.dag_number }}</span>
+                  </div>
+                  <span class="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                    {{ parcel.land_classification }}
+                  </span>
+                </td>
+
+                <!-- Area -->
+                <td class="px-4 py-3 whitespace-nowrap text-[11px]">
+                  <div class="font-bold text-slate-900 dark:text-slate-100">
+                    {{ Number(parcel.total_area_decimal).toFixed(2) }} Decimal
+                  </div>
+                  <div class="text-emerald-600 dark:text-emerald-400 font-semibold text-[10px]">
+                    {{ Number(parcel.total_area_katha).toFixed(2) }} Katha ({{ Number(parcel.total_area_sqft).toLocaleString() }} sqft)
+                  </div>
+                </td>
+
+                <!-- Acquisition Status -->
+                <td class="px-4 py-3 whitespace-nowrap">
+                  <span [ngClass]="getAcquisitionBadgeClass(parcel.acquisition_status)" class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border">
+                    {{ parcel.acquisition_status }}
+                  </span>
+                </td>
+
+                <!-- Boundaries & GPS Visual -->
+                <td class="px-4 py-3 text-center whitespace-nowrap">
+                  <button 
+                    type="button"
+                    (click)="openBoundaryModal(parcel)"
+                    class="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-medium rounded-lg bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 hover:bg-sky-100 transition-colors"
+                  >
+                    <svg class="w-3.5 h-3.5 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    Compass & GPS
+                  </button>
+                </td>
+
+                <!-- Associated Owners -->
+                <td class="px-4 py-3 text-center whitespace-nowrap">
+                  <button 
+                    type="button"
+                    (click)="openOwnersModal(parcel)"
+                    class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold rounded-full bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 border border-purple-200 dark:border-purple-800 hover:bg-purple-200 transition-colors"
+                  >
+                    <svg class="w-3.5 h-3.5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                    {{ parcel.linked_owners_count || 0 }} Owners
+                  </button>
+                </td>
+
+                <!-- Actions -->
+                <td class="px-4 py-3 text-right whitespace-nowrap">
+                  <div class="flex items-center justify-end gap-1.5">
+                    <!-- Edit -->
+                    <button 
+                      type="button"
+                      (click)="openEditModal(parcel)"
+                      class="p-1.5 rounded-lg text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors"
+                      title="Edit Parcel"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                    </button>
+
+                    <!-- Delete -->
+                    <button 
+                      type="button"
+                      (click)="deleteParcel(parcel)"
+                      class="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                      title="Delete Parcel"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Footer -->
+    <div class="px-4 py-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850/50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
+      <div>
+        Showing {{ ((currentPage() - 1) * pageSize()) + 1 }} to {{ Math.min(currentPage() * pageSize(), filteredParcels().length) }} of {{ filteredParcels().length }} parcels
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button 
+          type="button"
+          (click)="prevPage()"
+          [disabled]="currentPage() === 1"
+          class="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"
+        >
+          Previous
+        </button>
+
+        <span class="px-2 font-medium text-slate-800 dark:text-slate-200">
+          Page {{ currentPage() }} of {{ totalPages() }}
+        </span>
+
+        <button 
+          type="button"
+          (click)="nextPage()"
+          [disabled]="currentPage() >= totalPages()"
+          class="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  </app-card-container>
+
+  <!-- MODAL 1: REGISTER / EDIT PARCEL MODAL -->
+  <app-modal
+    [isOpen]="isCreateModalOpen()"
+    [title]="isEditMode() ? 'Edit Land Parcel Details' : 'Register New Land Parcel'"
+    [subtitle]="isEditMode() ? 'Update administrative boundaries, area calculations, and GPS coordinates' : 'Assign to project with automatic unit conversion and legal deed references'"
+    [modalClass]="'max-w-4xl'"
+    [showFooter]="true"
+    (closeModal)="isCreateModalOpen.set(false)"
+  >
+    <form [formGroup]="parcelForm" class="space-y-4">
+      <!-- Row 1: Project Name & Administrative Location -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div>
+          <app-custom-input
+            label="Project Link / Name *"
+            formControlName="project_name"
+            placeholder="e.g. Twin Tower Project A"
+            [required]="true"
+          ></app-custom-input>
+        </div>
+
+        <div>
+          <app-custom-input
+            label="Division *"
+            formControlName="division"
+            placeholder="e.g. Dhaka Division"
+            [required]="true"
+          ></app-custom-input>
+        </div>
+
+        <div>
+          <app-custom-input
+            label="District *"
+            formControlName="district"
+            placeholder="e.g. Dhaka"
+            [required]="true"
+          ></app-custom-input>
+        </div>
+      </div>
+
+      <!-- Row 2: Thana, Mouza, JL, Classification -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <div>
+          <app-custom-input
+            label="Upazila / Thana *"
+            formControlName="upazila_thana"
+            placeholder="e.g. Gulshan"
+            [required]="true"
+          ></app-custom-input>
+        </div>
+
+        <div>
+          <app-custom-input
+            label="Mouza Name *"
+            formControlName="mouza_name"
+            placeholder="e.g. Badda Mouza"
+            [required]="true"
+          ></app-custom-input>
+        </div>
+
+        <div>
+          <app-custom-input
+            label="JL Number *"
+            formControlName="jl_number"
+            placeholder="e.g. 215"
+            [required]="true"
+          ></app-custom-input>
+        </div>
+
+        <div>
+          <app-searchable-select
+            categoryCode="PARCEL_ACQUISITION_STATUS"
+            label="Acquisition Status *"
+            formControlName="acquisition_status"
+            [allowCreateNew]="true"
+            placeholder="Select Status..."
+          ></app-searchable-select>
+        </div>
+      </div>
+
+      <!-- Row 3: Survey Numbers & Classification -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div>
+          <app-custom-input
+            label="Khatian Number *"
+            formControlName="khatian_number"
+            placeholder="e.g. 1042 / BS-890"
+            [required]="true"
+          ></app-custom-input>
+        </div>
+
+        <div>
+          <app-custom-input
+            label="Dag / Plot Number *"
+            formControlName="dag_number"
+            placeholder="e.g. 5041 / CS-210"
+            [required]="true"
+          ></app-custom-input>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Land Classification *</label>
+          <select 
+            formControlName="land_classification"
+            class="w-full px-3 py-1.5 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+          >
+            <option value="RESIDENTIAL">Residential (আবাসিক)</option>
+            <option value="COMMERCIAL">Commercial (বাণিজ্যিক)</option>
+            <option value="AGRICULTURAL">Agricultural / Nal (কৃষি / নাল)</option>
+            <option value="OTHER">Other / Mixed (মিশ্র)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Area Conversion Engine Box -->
+      <div class="p-3 bg-emerald-50/50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl space-y-3">
+        <div class="flex items-center justify-between">
+          <h4 class="text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
+            <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+            Bangladesh Multi-Unit Land Area Calculation Engine
+          </h4>
+          <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono">1 Katha = 720 SFT | 1 Decimal = 435.6 SFT</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Input Unit</label>
+            <select 
+              formControlName="input_unit"
+              (change)="onAreaInputChange()"
+              class="w-full px-3 py-1.5 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            >
+              <option value="DECIMAL">Decimal / Shotok (শতাংশ)</option>
+              <option value="KATHA">Katha (কাঠা)</option>
+              <option value="BIGHA">Bigha (বিঘা)</option>
+              <option value="SQFT">Square Feet (বর্গফুট)</option>
+            </select>
+          </div>
+
+          <div>
+            <app-custom-input
+              label="Input Area Value *"
+              formControlName="input_value"
+              type="number"
+              step="0.01"
+              (input)="onAreaInputChange()"
+              placeholder="e.g. 20.00"
+              [required]="true"
+            ></app-custom-input>
+          </div>
+        </div>
+
+        <!-- Calculated Live Preview -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-center">
+          <div class="p-2 rounded-lg bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-800">
+            <div class="text-[10px] text-slate-500 uppercase">Decimal</div>
+            <div class="text-xs font-bold text-emerald-700 dark:text-emerald-400 font-mono">{{ convertedDecimal() }}</div>
+          </div>
+          <div class="p-2 rounded-lg bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-800">
+            <div class="text-[10px] text-slate-500 uppercase">Katha</div>
+            <div class="text-xs font-bold text-emerald-700 dark:text-emerald-400 font-mono">{{ convertedKatha() }}</div>
+          </div>
+          <div class="p-2 rounded-lg bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-800">
+            <div class="text-[10px] text-slate-500 uppercase">Square Feet</div>
+            <div class="text-xs font-bold text-emerald-700 dark:text-emerald-400 font-mono">{{ convertedSqft().toLocaleString() }}</div>
+          </div>
+          <div class="p-2 rounded-lg bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-800">
+            <div class="text-[10px] text-slate-500 uppercase">Bigha</div>
+            <div class="text-xs font-bold text-emerald-700 dark:text-emerald-400 font-mono">{{ convertedBigha() }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cardinal Boundaries: North, South, East, West -->
+      <div class="p-3 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl space-y-3">
+        <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+          <svg class="w-4 h-4 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          Cardinal Boundaries & Road Access (North, South, East, West)
+        </h4>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <app-custom-input
+              label="North Boundary (উত্তরে সীমানা)"
+              formControlName="boundary_north"
+              placeholder="e.g. Plot #12 or 40ft Main Road"
+            ></app-custom-input>
+          </div>
+
+          <div>
+            <app-custom-input
+              label="South Boundary (দক্ষিণে সীমানা)"
+              formControlName="boundary_south"
+              placeholder="e.g. Mr. Rafiqul's Land or 30ft Road"
+            ></app-custom-input>
+          </div>
+
+          <div>
+            <app-custom-input
+              label="East Boundary (পূর্বে সীমানা)"
+              formControlName="boundary_east"
+              placeholder="e.g. Existing Residential Apartment"
+            ></app-custom-input>
+          </div>
+
+          <div>
+            <app-custom-input
+              label="West Boundary (পশ্চিমে সীমানা)"
+              formControlName="boundary_west"
+              placeholder="e.g. 60ft Boulevard Road"
+            ></app-custom-input>
+          </div>
+
+          <div>
+            <app-custom-input
+              label="Road Access Width (Feet) *"
+              formControlName="road_access_width_ft"
+              type="number"
+              placeholder="e.g. 40"
+              [required]="true"
+            ></app-custom-input>
+          </div>
+        </div>
+      </div>
+
+      <!-- GPS Coordinates & Deed Info -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <div>
+          <app-custom-input
+            label="GPS Latitude"
+            formControlName="gps_latitude"
+            type="number"
+            step="0.0000001"
+            placeholder="e.g. 23.7925"
+          ></app-custom-input>
+        </div>
+
+        <div>
+          <app-custom-input
+            label="GPS Longitude"
+            formControlName="gps_longitude"
+            type="number"
+            step="0.0000001"
+            placeholder="e.g. 90.4078"
+          ></app-custom-input>
+        </div>
+
+        <div>
+          <app-custom-input
+            label="Deed Number"
+            formControlName="deed_number"
+            placeholder="Saf-Kabala Deed No"
+          ></app-custom-input>
+        </div>
+
+        <div>
+          <app-custom-input
+            label="Deed Date"
+            formControlName="deed_date"
+            type="date"
+          ></app-custom-input>
+        </div>
+      </div>
+
+      <!-- Remarks -->
+      <div>
+        <app-custom-textarea
+          label="Parcel Field Inspection Remarks"
+          formControlName="remarks"
+          placeholder="Topography notes, demarcation status, high-tension lines, soil condition..."
+          [rows]="2"
+        ></app-custom-textarea>
+      </div>
+    </form>
+
+    <!-- Modal Footer Actions -->
+    <div modal-footer class="flex items-center justify-end gap-2">
+      <button 
+        type="button"
+        (click)="isCreateModalOpen.set(false)"
+        class="px-3.5 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 transition-colors"
+      >
+        Cancel
+      </button>
+
+      <button 
+        type="button"
+        (click)="saveParcel()"
+        [disabled]="isSaving()"
+        class="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-50 transition-colors shadow-2xs"
+      >
+        @if (isSaving()) {
+          <svg class="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>
+        }
+        {{ isEditMode() ? 'Save Parcel Changes' : 'Confirm Registration' }}
+      </button>
+    </div>
+  </app-modal>
+
+  <!-- MODAL 2: CARDINAL BOUNDARY COMPASS & GPS VIEWER -->
+  <app-modal
+    [isOpen]="isBoundaryModalOpen()"
+    [title]="'Cardinal Boundaries & GPS: ' + (selectedParcelForBoundary()?.parcel_id || '')"
+    [subtitle]="(selectedParcelForBoundary()?.project_name || '') + ' | Mouza: ' + (selectedParcelForBoundary()?.mouza_name || '')"
+    modalClass="max-w-xl"
+    [showFooter]="true"
+    (closeModal)="isBoundaryModalOpen.set(false)"
+  >
+    @if (selectedParcelForBoundary()) {
+      <div class="space-y-4">
+        <!-- Visual Compass Grid -->
+        <div class="bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-col items-center justify-center space-y-3">
+          <!-- North -->
+          <div class="w-full max-w-sm text-center">
+            <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300 mb-1">
+              NORTH (উত্তর)
+            </span>
+            <div class="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-800 dark:text-slate-200">
+              {{ selectedParcelForBoundary()!.boundary_north || 'Open Road / Undefined' }}
+            </div>
+          </div>
+
+          <!-- Middle Row (West - Parcel Center - East) -->
+          <div class="w-full grid grid-cols-3 gap-2 items-center">
+            <!-- West -->
+            <div class="text-center">
+              <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 mb-1">
+                WEST (পশ্চিম)
+              </span>
+              <div class="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-800 dark:text-slate-200">
+                {{ selectedParcelForBoundary()!.boundary_west || 'Undefined' }}
+              </div>
+            </div>
+
+            <!-- Center Plot Box -->
+            <div class="p-3 rounded-xl bg-emerald-600 text-white text-center shadow-md">
+              <div class="text-[10px] font-mono tracking-wider opacity-80">PARCEL PLOT</div>
+              <div class="text-xs font-bold mt-0.5">{{ selectedParcelForBoundary()!.parcel_id }}</div>
+              <div class="text-[10px] font-semibold mt-1 bg-white/20 rounded py-0.5 px-1">
+                {{ selectedParcelForBoundary()!.total_area_decimal }} Dec
+              </div>
+              <div class="text-[9px] opacity-90 mt-1">
+                {{ selectedParcelForBoundary()!.road_access_width_ft }}ft Road Access
+              </div>
+            </div>
+
+            <!-- East -->
+            <div class="text-center">
+              <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 mb-1">
+                EAST (পূর্ব)
+              </span>
+              <div class="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-800 dark:text-slate-200">
+                {{ selectedParcelForBoundary()!.boundary_east || 'Undefined' }}
+              </div>
+            </div>
+          </div>
+
+          <!-- South -->
+          <div class="w-full max-w-sm text-center">
+            <div class="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-800 dark:text-slate-200">
+              {{ selectedParcelForBoundary()!.boundary_south || 'Undefined' }}
+            </div>
+            <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300 mt-1">
+              SOUTH (দক্ষিণ)
+            </span>
+          </div>
+        </div>
+
+        <!-- GPS Coordinates Card -->
+        <div class="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs">
+          <div>
+            <div class="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+              <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              <span>GPS Coordinates</span>
+            </div>
+            <div class="text-slate-500 font-mono mt-0.5">
+              Lat: {{ selectedParcelForBoundary()!.gps_latitude || '23.7925000' }} | Long: {{ selectedParcelForBoundary()!.gps_longitude || '90.4078000' }}
+            </div>
+          </div>
+
+          @if (selectedParcelForBoundary()!.gps_latitude && selectedParcelForBoundary()!.gps_longitude) {
+            <a 
+              [href]="'https://www.google.com/maps?q=' + selectedParcelForBoundary()!.gps_latitude + ',' + selectedParcelForBoundary()!.gps_longitude" 
+              target="_blank"
+              class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 hover:bg-emerald-100 transition-colors"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+              Open in Maps
+            </a>
+          }
+        </div>
+      </div>
+    }
+
+    <div modal-footer>
+      <button 
+        type="button"
+        (click)="isBoundaryModalOpen.set(false)"
+        class="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 transition-colors"
+      >
+        Close
+      </button>
+    </div>
+  </app-modal>
+
+  <!-- MODAL 3: ASSOCIATE LANDOWNERS & FRACTIONAL SHARE MODAL -->
+  <app-modal
+    [isOpen]="isOwnersModalOpen()"
+    [title]="'Parcel Ownership Allocation: ' + (selectedParcelForOwners()?.parcel_id || '')"
+    [subtitle]="'Associate multiple co-owners, power-of-attorneys, and record fractional share percentages for ' + (selectedParcelForOwners()?.project_name || '')"
+    modalClass="max-w-2xl"
+    [showFooter]="true"
+    (closeModal)="isOwnersModalOpen.set(false)"
+  >
+    <div class="space-y-4">
+      <!-- Add Owner Association Form -->
+      <div class="p-3 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl space-y-3">
+        <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200">Associate Landowner with Fractional Share</h4>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+          <!-- Landowner Select -->
+          <div class="md:col-span-1">
+            <label class="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">Landowner *</label>
+            <select 
+              [value]="newLinkOwnerId()"
+              (change)="newLinkOwnerId.set(Number($any($event.target).value))"
+              class="w-full px-2.5 py-1 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-purple-500"
+            >
+              <option [value]="null">Select Owner...</option>
+              @for (lo of landowners(); track lo.id) {
+                <option [value]="lo.id">{{ lo.full_name_en }} ({{ lo.landowner_code }})</option>
+              }
+            </select>
+          </div>
+
+          <!-- Share % -->
+          <div>
+            <label class="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">Ownership Share (%) *</label>
+            <input 
+              type="number"
+              step="0.01"
+              [value]="newLinkSharePercent()"
+              (input)="newLinkSharePercent.set(Number($any($event.target).value))"
+              placeholder="e.g. 50.00"
+              class="w-full px-2.5 py-1 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-purple-500"
+            />
+          </div>
+
+          <!-- Title Deed No -->
+          <div>
+            <label class="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">Title Deed Number</label>
+            <input 
+              type="text"
+              [value]="newLinkDeedNo()"
+              (input)="newLinkDeedNo.set($any($event.target).value)"
+              placeholder="Deed Ref..."
+              class="w-full px-2.5 py-1 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-purple-500"
+            />
+          </div>
+        </div>
+
+        <div class="flex justify-end">
+          <button 
+            type="button"
+            (click)="addOwnerLink()"
+            [disabled]="isLinkingOwner() || !newLinkOwnerId()"
+            class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-lg bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50 transition-colors shadow-2xs"
+          >
+            @if (isLinkingOwner()) {
+              <svg class="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>
+            }
+            Link Owner to Parcel
+          </button>
+        </div>
+      </div>
+
+      <!-- Current Owners List -->
+      <div class="space-y-2">
+        <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200">Registered Co-Owners for this Plot</h4>
+
+        @if (isLoadingOwnerLinks()) {
+          <div class="py-6 text-center text-xs text-slate-400">Loading linked owners...</div>
+        } @else if (parcelOwnerLinks().length === 0) {
+          <p class="text-xs text-slate-400 italic">No owners linked to this parcel yet.</p>
+        } @else {
+          <div class="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden bg-white dark:bg-slate-900">
+            @for (link of parcelOwnerLinks(); track link.id) {
+              <div class="p-3 flex items-center justify-between text-xs hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                <div>
+                  <div class="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                    <span>{{ link.landowner?.full_name_en || 'Landowner #' + link.landowner_id }}</span>
+                    <span class="px-1.5 py-0.2 rounded font-mono text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                      {{ link.landowner?.landowner_code }}
+                    </span>
+                  </div>
+                  <div class="text-[11px] text-slate-500 mt-0.5">
+                    Phone: {{ link.landowner?.phone_number || 'N/A' }} | Type: {{ link.landowner?.owner_type || 'INDIVIDUAL' }}
+                    @if (link.title_deed_no) {
+                      | Deed: {{ link.title_deed_no }}
+                    }
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                  <span class="font-mono font-bold text-purple-700 dark:text-purple-400 text-xs bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800 px-2 py-0.5 rounded">
+                    {{ link.ownership_share_percent }}% Share
+                  </span>
+
+                  <button 
+                    type="button"
+                    (click)="removeOwnerLink(link)"
+                    class="p-1 rounded text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                    title="Unlink Owner"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+    <div modal-footer>
+      <button 
+        type="button"
+        (click)="isOwnersModalOpen.set(false)"
+        class="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 transition-colors"
+      >
+        Close
+      </button>
+    </div>
+  </app-modal>
+</div>

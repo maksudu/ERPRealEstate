@@ -150,7 +150,7 @@
                   </span>
                 </div>
                 <div class="text-[10px] text-slate-400 mt-0.5">
-                  Total {{ ag.unit_allocations.length }} Units Assigned
+                  Total {{ ag.unit_allocations?.length || 0 }} Units Assigned
                 </div>
               </td>
               <td class="px-4 py-3.5">
@@ -251,7 +251,7 @@
 
       <!-- Unit Matrix Grid -->
       <div class="p-6 max-h-[60vh] overflow-y-auto">
-        @if (selectedAgreement()!.unit_allocations.length === 0) {
+        @if (!selectedAgreement()?.unit_allocations?.length) {
           <div class="py-12 text-center text-slate-400">
             <p>No unit allocations mapped yet.</p>
             <app-custom-button variant="primary" size="sm" class="mt-3 inline-block" (btnClick)="openAutoAllocateModal()">
