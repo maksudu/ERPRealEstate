@@ -1,0 +1,458 @@
+<div class="space-y-6 max-w-6xl mx-auto">
+  <!-- Single Card Container (Rule 6) -->
+  <app-card-container
+    [title]="'Lead-to-Booking Handover Dossier: ' + (handover()?.handover_code || 'Loading...')"
+    subtitle="10-step controlled verification process transferring CRM accepted proposals into Sales Operations (Spec 4.12)">
+
+    <!-- Top Action Bar -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
+      <div class="flex items-center gap-3">
+        <app-custom-button variant="outline" size="sm" (clicked)="backToList()">
+          <i class="ri-arrow-left-line mr-1"></i> Back to Handovers
+        </app-custom-button>
+        <app-status-badge [status]="handover()?.status || 'PENDING'" [variant]="getStatusVariant(handover()?.status)"></app-status-badge>
+        <span *ngIf="handover()?.reservation_code" class="text-xs font-mono font-bold text-amber-600 bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20">
+          <i class="ri-bookmark-3-line mr-1"></i> {{ handover()?.reservation_code }}
+        </span>
+      </div>
+
+      <!-- Quick Action: Generate Reservation -->
+      <div class="flex items-center gap-2">
+        <app-custom-button
+          *ngIf="!handover()?.reservation_code && handover()?.status !== 'REJECTED'"
+          variant="primary"
+          [disabled]="isSaving()"
+          (clicked)="generateReservation()">
+          <i class="ri-file-shield-line mr-1"></i> Issue Reservation Reference (Step 7)
+        </app-custom-button>
+      </div>
+    </div>
+
+    <!-- Alert / Messages -->
+    <div *ngIf="successMessage()" class="p-3 my-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 text-xs flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <i class="ri-checkbox-circle-line text-base"></i>
+        <span>{{ successMessage() }}</span>
+      </div>
+      <button type="button" (click)="successMessage.set(null)" class="text-emerald-600 hover:opacity-80">
+        <i class="ri-close-line"></i>
+      </button>
+    </div>
+
+    <div *ngIf="errorMessage()" class="p-3 my-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 text-xs flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <i class="ri-error-warning-line text-base"></i>
+        <span>{{ errorMessage() }}</span>
+      </div>
+      <button type="button" (click)="errorMessage.set(null)" class="text-rose-600 hover:opacity-80">
+        <i class="ri-close-line"></i>
+      </button>
+    </div>
+
+    <!-- 10-Step Navigation Stepper -->
+    <div class="grid grid-cols-2 sm:grid-cols-5 lg:grid-cols-10 gap-1.5 my-4 p-1.5 bg-secondary/30 rounded-xl border border-border">
+      <button
+        *ngFor="let s of steps"
+        type="button"
+        (click)="activeStep.set(s.num)"
+        [ngClass]="activeStep() === s.num ? 'bg-primary text-primary-foreground shadow-sm' : 'hover:bg-secondary text-muted-foreground'"
+        class="flex flex-col items-center justify-center p-2 rounded-lg text-center transition-all">
+        <i [class]="s.icon + ' text-base mb-1'"></i>
+        <span class="text-[10px] font-bold leading-tight truncate w-full">{{ s.num }}. {{ s.title }}</span>
+      </button>
+    </div>
+
+    <!-- Loading Placeholder -->
+    <div *ngIf="isLoading()" class="py-12 text-center text-muted-foreground animate-pulse">
+      <i class="ri-loader-4-line ri-spin text-3xl mb-2"></i>
+      <div>Loading 10-step handover dossier...</div>
+    </div>
+
+    <!-- STEP CONTENT PANELS -->
+    <div *ngIf="!isLoading() && handover()" class="mt-6">
+
+      <!-- STEP 1: VERIFY CUSTOMER CONTACT DETAILS -->
+      <div *ngIf="activeStep() === 1" class="space-y-4">
+        <div class="p-4 rounded-xl bg-secondary/20 border border-border space-y-3">
+          <div class="flex items-center justify-between">
+            <h4 class="font-bold text-foreground text-sm flex items-center gap-2">
+              <i class="ri-user-follow-line text-primary text-base"></i>
+              Step 1: Customer Contact Details Verification
+            </h4>
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold"
+                  [ngClass]="handover()?.customer_verified ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-600 border border-amber-500/20'">
+              {{ handover()?.customer_verified ? 'Verified' : 'Pending Verification' }}
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs pt-2">
+            <div>
+              <span class="text-muted-foreground block">Customer Full Name:</span>
+              <span class="font-bold text-foreground text-sm">{{ handover()?.customer_name || handover()?.lead_name }}</span>
+            </div>
+            <div>
+              <span class="text-muted-foreground block">Customer Code:</span>
+              <span class="font-mono font-semibold text-foreground">{{ handover()?.customer_code || 'PROSPECT' }}</span>
+            </div>
+            <div>
+              <span class="text-muted-foreground block">Primary Phone Number:</span>
+              <span class="font-bold text-foreground">{{ handover()?.verified_phone || 'Unverified' }}</span>
+            </div>
+          </div>
+
+          <form [formGroup]="verificationForm" (ngSubmit)="saveVerification()" class="pt-4 border-t border-border space-y-3">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <app-custom-input
+                formControlName="verified_phone"
+                label="Confirm Verified Contact Phone *"
+                placeholder="+8801700000000">
+              </app-custom-input>
+              <app-custom-input
+                formControlName="verified_email"
+                label="Confirm Verified Email Address"
+                placeholder="customer@example.com">
+              </app-custom-input>
+            </div>
+
+            <label class="flex items-center gap-2 text-xs text-foreground cursor-pointer pt-1">
+              <input type="checkbox" formControlName="customer_verified" class="rounded text-primary focus:ring-primary">
+              <span class="font-semibold">I have directly verified the customer contact details against phone call / KYC identity document.</span>
+            </label>
+
+            <div class="flex justify-end pt-2">
+              <app-custom-button variant="primary" size="sm" type="submit" [disabled]="isSaving()">
+                Save Step 1 Verification
+              </app-custom-button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- STEP 2: CONFIRM PROJECT & UNIT SELECTION -->
+      <div *ngIf="activeStep() === 2" class="space-y-4">
+        <div class="p-4 rounded-xl bg-secondary/20 border border-border space-y-3">
+          <h4 class="font-bold text-foreground text-sm flex items-center gap-2">
+            <i class="ri-building-line text-primary text-base"></i>
+            Step 2: Project & Unit Selection Confirmation
+          </h4>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs pt-2">
+            <div class="p-3 rounded-lg bg-card border border-border">
+              <span class="text-muted-foreground block">Project:</span>
+              <span class="font-bold text-foreground text-sm">{{ handover()?.project_name || 'Allotted Project' }}</span>
+            </div>
+            <div class="p-3 rounded-lg bg-card border border-border">
+              <span class="text-muted-foreground block">Target Unit / Apartment:</span>
+              <span class="font-bold text-foreground text-sm">{{ handover()?.unit_number || 'Unit Not Allocated' }}</span>
+            </div>
+            <div class="p-3 rounded-lg bg-card border border-border">
+              <span class="text-muted-foreground block">Car Parking Slot:</span>
+              <span class="font-bold text-foreground text-sm">{{ handover()?.parking_slot || '1 Slot Included' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 3: REVALIDATE UNIT AVAILABILITY & APPROVED PRICING -->
+      <div *ngIf="activeStep() === 3" class="space-y-4">
+        <div class="p-4 rounded-xl bg-secondary/20 border border-border space-y-3">
+          <div class="flex items-center justify-between">
+            <h4 class="font-bold text-foreground text-sm flex items-center gap-2">
+              <i class="ri-checkbox-multiple-line text-emerald-500 text-base"></i>
+              Step 3: Unit Availability & Approved Pricing Revalidation
+            </h4>
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold"
+                  [ngClass]="handover()?.unit_availability_verified ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-600 border border-amber-500/20'">
+              {{ handover()?.unit_availability_verified ? 'Validated Available' : 'Pending Inventory Check' }}
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs pt-2">
+            <div class="p-3 rounded-lg bg-card border border-border">
+              <span class="text-muted-foreground block">Apartment Floor Area:</span>
+              <span class="font-bold text-foreground font-mono">{{ handover()?.unit_size_sqft || 2150 }} sft</span>
+            </div>
+            <div class="p-3 rounded-lg bg-card border border-border">
+              <span class="text-muted-foreground block">Approved Base Rate / Sft:</span>
+              <span class="font-bold text-foreground font-mono">{{ formatBdt(handover()?.approved_base_rate || 9500) }}/sft</span>
+            </div>
+            <div class="p-3 rounded-lg bg-card border border-border">
+              <span class="text-muted-foreground block">Current Inventory Status:</span>
+              <span class="font-bold text-emerald-600">Reserved for Handover (Not Sold)</span>
+            </div>
+          </div>
+
+          <form [formGroup]="verificationForm" (ngSubmit)="saveVerification()" class="pt-4 border-t border-border space-y-3">
+            <label class="flex items-center gap-2 text-xs text-foreground cursor-pointer">
+              <input type="checkbox" formControlName="unit_availability_verified" class="rounded text-primary focus:ring-primary">
+              <span class="font-semibold">I certify that the unit inventory is unencumbered, free from prior allotments, and approved for sales reservation.</span>
+            </label>
+            <div class="flex justify-end">
+              <app-custom-button variant="primary" size="sm" type="submit" [disabled]="isSaving()">
+                Save Step 3 Validation
+              </app-custom-button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- STEP 4: RECORD PROPOSED PRICE, DISCOUNT REQUEST & PAYMENT TERMS -->
+      <div *ngIf="activeStep() === 4" class="space-y-4">
+        <div class="p-4 rounded-xl bg-secondary/20 border border-border space-y-3">
+          <h4 class="font-bold text-foreground text-sm flex items-center gap-2">
+            <i class="ri-price-tag-3-line text-primary text-base"></i>
+            Step 4: Commercial Pricing, Discount Request & Payment Plan
+          </h4>
+
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs pt-2">
+            <div class="p-3 rounded-lg bg-card border border-border">
+              <span class="text-muted-foreground block">Standard List Price:</span>
+              <span class="font-bold text-foreground font-mono">{{ formatBdt(handover()?.list_price || (handover()?.agreed_price || 0) * 1.05) }}</span>
+            </div>
+            <div class="p-3 rounded-lg bg-card border border-border">
+              <span class="text-muted-foreground block">Proposed Final Price:</span>
+              <span class="font-bold text-emerald-600 font-mono text-sm">{{ formatBdt(handover()?.agreed_price || 0) }}</span>
+            </div>
+            <div class="p-3 rounded-lg bg-card border border-border">
+              <span class="text-muted-foreground block">Discount Status:</span>
+              <span class="font-bold text-foreground">{{ handover()?.discount_status || 'APPROVED' }}</span>
+            </div>
+            <div class="p-3 rounded-lg bg-card border border-border">
+              <span class="text-muted-foreground block">Payment Plan Preference:</span>
+              <span class="font-bold text-foreground">{{ handover()?.payment_plan_preference }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 5: VERIFY CUSTOMER IDENTIFICATION REQUIREMENTS (KYC) -->
+      <div *ngIf="activeStep() === 5" class="space-y-4">
+        <div class="p-4 rounded-xl bg-secondary/20 border border-border space-y-3">
+          <h4 class="font-bold text-foreground text-sm flex items-center gap-2">
+            <i class="ri-shield-user-line text-emerald-500 text-base"></i>
+            Step 5: Customer Identification Requirements & KYC Checklist
+          </h4>
+
+          <form [formGroup]="verificationForm" (ngSubmit)="saveVerification()" class="space-y-4 pt-2">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              <label class="flex items-center gap-2 p-3 rounded-xl border border-border bg-card cursor-pointer">
+                <input type="checkbox" formControlName="nid_passport_verified" class="rounded text-primary">
+                <div>
+                  <div class="font-bold text-foreground">National ID / Passport Verified</div>
+                  <div class="text-[10px] text-muted-foreground">Original verified or notarized copy on file</div>
+                </div>
+              </label>
+
+              <label class="flex items-center gap-2 p-3 rounded-xl border border-border bg-card cursor-pointer">
+                <input type="checkbox" formControlName="tin_certificate_verified" class="rounded text-primary">
+                <div>
+                  <div class="font-bold text-foreground">TIN / Tax Return Acknowledgment</div>
+                  <div class="text-[10px] text-muted-foreground">NBR e-TIN 12-digit certificate checked</div>
+                </div>
+              </label>
+
+              <label class="flex items-center gap-2 p-3 rounded-xl border border-border bg-card cursor-pointer">
+                <input type="checkbox" formControlName="nominee_verified" class="rounded text-primary">
+                <div>
+                  <div class="font-bold text-foreground">Nominee Information & Photos</div>
+                  <div class="text-[10px] text-muted-foreground">Nominee declaration form & photograph attached</div>
+                </div>
+              </label>
+
+              <label class="flex items-center gap-2 p-3 rounded-xl border border-border bg-card cursor-pointer">
+                <input type="checkbox" formControlName="power_of_attorney_verified" class="rounded text-primary">
+                <div>
+                  <div class="font-bold text-foreground">NRB Power of Attorney (If Applicable)</div>
+                  <div class="text-[10px] text-muted-foreground">Embassy attested & MOFA Bangladesh endorsed</div>
+                </div>
+              </label>
+            </div>
+
+            <app-custom-textarea
+              formControlName="kyc_notes"
+              label="KYC Compliance & Verification Notes"
+              placeholder="e.g. Verified against NID database. Customer is senior corporate executive at foreign multinational."
+              [rows]="3">
+            </app-custom-textarea>
+
+            <div class="flex justify-end">
+              <app-custom-button variant="primary" size="sm" type="submit" [disabled]="isSaving()">
+                Save Step 5 KYC Checklist
+              </app-custom-button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- STEP 6: GENERATE BOOKING REQUEST FOR AUTHORIZED REVIEW -->
+      <div *ngIf="activeStep() === 6" class="space-y-4">
+        <div class="p-4 rounded-xl bg-secondary/20 border border-border space-y-3">
+          <h4 class="font-bold text-foreground text-sm flex items-center gap-2">
+            <i class="ri-file-text-line text-primary text-base"></i>
+            Step 6: Booking Request Transmission & Operations Review
+          </h4>
+
+          <div class="text-xs text-muted-foreground leading-relaxed">
+            The booking request bridges CRM negotiation to the Sales Contract Execution desk. Current status:
+            <span class="font-bold text-foreground">{{ handover()?.status }}</span>.
+          </div>
+
+          <div *ngIf="handover()?.special_conditions" class="p-3 rounded-lg bg-card border border-border text-xs">
+            <span class="font-bold text-foreground block mb-1">Special Contractual Conditions:</span>
+            <div class="text-muted-foreground">{{ handover()?.special_conditions }}</div>
+          </div>
+
+          <div *ngIf="handover()?.handover_notes" class="p-3 rounded-lg bg-card border border-border text-xs">
+            <span class="font-bold text-foreground block mb-1">Handover Notes for Sales Desk:</span>
+            <div class="text-muted-foreground">{{ handover()?.handover_notes }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 7: CREATE BOOKING & RESERVATION REFERENCES AFTER APPROVAL -->
+      <div *ngIf="activeStep() === 7" class="space-y-4">
+        <div class="p-4 rounded-xl bg-secondary/20 border border-border space-y-3">
+          <h4 class="font-bold text-foreground text-sm flex items-center gap-2">
+            <i class="ri-bookmark-line text-amber-500 text-base"></i>
+            Step 7: Booking & Reservation Reference Generation
+          </h4>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs pt-2">
+            <div class="p-4 rounded-xl bg-card border border-border">
+              <span class="text-muted-foreground block text-[10px] uppercase font-bold">Official Reservation Reference</span>
+              <div class="text-lg font-mono font-bold text-amber-600 mt-1">
+                {{ handover()?.reservation_code || 'Pending Generation' }}
+              </div>
+            </div>
+
+            <div class="p-4 rounded-xl bg-card border border-border">
+              <span class="text-muted-foreground block text-[10px] uppercase font-bold">Sales Booking Reference</span>
+              <div class="text-lg font-mono font-bold text-primary mt-1">
+                {{ handover()?.booking_reference_number || 'Awaiting Sales Ops Execution' }}
+              </div>
+            </div>
+          </div>
+
+          <div *ngIf="!handover()?.reservation_code" class="pt-3">
+            <app-custom-button variant="primary" (clicked)="generateReservation()">
+              <i class="ri-shield-check-line mr-1"></i> Generate & Transmit Reservation Reference
+            </app-custom-button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 8: TRANSFER CUSTOMER, BROKER ATTRIBUTION & SOURCE CAMPAIGN -->
+      <div *ngIf="activeStep() === 8" class="space-y-4">
+        <div class="p-4 rounded-xl bg-secondary/20 border border-border space-y-3">
+          <h4 class="font-bold text-foreground text-sm flex items-center gap-2">
+            <i class="ri-share-forward-line text-primary text-base"></i>
+            Step 8: Customer, Broker Attribution & Source Campaign Transfer
+          </h4>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs pt-2">
+            <div class="p-3 rounded-lg bg-card border border-border">
+              <span class="text-muted-foreground block">Attributed Broker / Partner:</span>
+              <span class="font-bold text-foreground">{{ handover()?.broker_name || 'Direct Company Lead' }}</span>
+              <div *ngIf="handover()?.broker_commission_rate" class="text-[10px] text-muted-foreground mt-0.5">
+                Commission: {{ handover()?.broker_commission_rate }}%
+              </div>
+            </div>
+
+            <div class="p-3 rounded-lg bg-card border border-border">
+              <span class="text-muted-foreground block">Source Campaign:</span>
+              <span class="font-bold text-foreground">{{ handover()?.campaign_name || handover()?.utm_campaign || 'Organic Website / Walk-in' }}</span>
+            </div>
+
+            <div class="p-3 rounded-lg bg-card border border-border">
+              <span class="text-muted-foreground block">Originating UTM Channel:</span>
+              <span class="font-mono text-foreground">{{ handover()?.utm_source || 'direct' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 9: TRIGGER PAYMENT SCHEDULE & ACCOUNTING WORKFLOW -->
+      <div *ngIf="activeStep() === 9" class="space-y-4">
+        <div class="p-4 rounded-xl bg-secondary/20 border border-border space-y-3">
+          <h4 class="font-bold text-foreground text-sm flex items-center gap-2">
+            <i class="ri-wallet-3-line text-emerald-500 text-base"></i>
+            Step 9: Payment Terms, Token Money & Accounting Trigger
+          </h4>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs pt-2">
+            <div class="p-3 rounded-lg bg-card border border-border">
+              <span class="text-muted-foreground block">Booking Money / Token:</span>
+              <span class="text-base font-bold text-emerald-600 font-mono">{{ formatBdt(handover()?.booking_money_amount) }}</span>
+            </div>
+            <div class="p-3 rounded-lg bg-card border border-border">
+              <span class="text-muted-foreground block">Accounting Trigger:</span>
+              <span class="font-bold text-foreground">{{ handover()?.payment_schedule_triggered ? 'Triggered (Module 5.7)' : 'Pending Handover Acceptance' }}</span>
+            </div>
+            <div class="p-3 rounded-lg bg-card border border-border">
+              <span class="text-muted-foreground block">Payment Mode:</span>
+              <span class="font-bold text-foreground">{{ handover()?.token_money_payment_mode || 'PAY_ORDER' }}</span>
+            </div>
+          </div>
+
+          <form [formGroup]="paymentForm" (ngSubmit)="savePaymentTerms()" class="pt-4 border-t border-border space-y-3">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <app-custom-input
+                formControlName="token_transaction_ref"
+                label="Bank Pay Order / Cheque Number"
+                placeholder="e.g. PO #84920194">
+              </app-custom-input>
+
+              <app-custom-input
+                formControlName="token_bank_name"
+                label="Issuing Bank Name"
+                placeholder="e.g. Standard Chartered Bank (Gulshan Branch)">
+              </app-custom-input>
+
+              <app-custom-input
+                formControlName="token_received_date"
+                label="Token Deposit Date"
+                type="date">
+              </app-custom-input>
+            </div>
+
+            <div class="flex justify-end">
+              <app-custom-button variant="primary" size="sm" type="submit" [disabled]="isSaving()">
+                Save Step 9 Accounting Details
+              </app-custom-button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- STEP 10: COMPLETE CRM HISTORY PRESERVATION -->
+      <div *ngIf="activeStep() === 10" class="space-y-4">
+        <div class="p-4 rounded-xl bg-secondary/20 border border-border space-y-3">
+          <h4 class="font-bold text-foreground text-sm flex items-center gap-2">
+            <i class="ri-history-line text-primary text-base"></i>
+            Step 10: CRM History & Sales Audit Preservation
+          </h4>
+
+          <div class="text-xs text-muted-foreground leading-relaxed">
+            The complete negotiation history, communication logs, site visits, and preference profile are permanently snapshotted and linked to the customer sales ledger for post-handover customer service.
+          </div>
+
+          <div class="p-3 rounded-lg bg-card border border-border text-xs space-y-2">
+            <div class="flex justify-between">
+              <span class="text-muted-foreground">Original Handover Dossier Created:</span>
+              <span class="font-bold text-foreground">{{ handover()?.created_at | date:'medium' }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-muted-foreground">Transferred to Sales Operations At:</span>
+              <span class="font-bold text-foreground">{{ handover()?.transferred_to_sales_at ? (handover()?.transferred_to_sales_at | date:'medium') : 'Pending Transmission' }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-muted-foreground">Managing Sales Representative:</span>
+              <span class="font-bold text-foreground">{{ handover()?.sales_rep_name || 'Assigned Representative' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </app-card-container>
+</div>

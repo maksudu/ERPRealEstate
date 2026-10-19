@@ -1,0 +1,170 @@
+<div class="space-y-6 max-w-4xl mx-auto">
+  <!-- Single Card Container (Rule 6) -->
+  <app-card-container
+    [title]="isEditMode() ? 'Edit Commercial Opportunity' : 'Create Sales Opportunity'"
+    [subtitle]="isEditMode() ? 'Update deal parameters, confidence probability, or linked unit' : 'Convert a qualified prospect into an active deal opportunity linked to project inventory'">
+
+    <!-- Error Banner -->
+    <div *ngIf="errorMessage()" class="p-3 mb-6 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 text-xs flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <i class="ri-error-warning-line text-base"></i>
+        <span>{{ errorMessage() }}</span>
+      </div>
+      <button type="button" (click)="errorMessage.set(null)" class="text-rose-600 hover:opacity-80">
+        <i class="ri-close-line"></i>
+      </button>
+    </div>
+
+    <form [formGroup]="oppForm" (ngSubmit)="onSubmit()" class="space-y-6">
+      <!-- SECTION 1: OPPORTUNITY TITLE & BUYER LINKAGE -->
+      <div class="space-y-4">
+        <div class="flex items-center gap-2 border-b border-border pb-2">
+          <i class="ri-shake-hands-line text-primary text-base"></i>
+          <h3 class="font-bold text-foreground text-sm">Opportunity Overview & Buyer Linkage</h3>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="md:col-span-2">
+            <app-custom-input
+              formControlName="title"
+              label="Deal Opportunity Title *"
+              placeholder="e.g. 3-Bed Apartment Purchase at Blue Ocean Pinnacle (Gulshan)"
+              prefixIcon="ri-edit-line"
+              [required]="true">
+            </app-custom-input>
+          </div>
+
+          <div>
+            <app-searchable-select
+              formControlName="customer_id"
+              label="Linked Customer (If customer profile exists)"
+              placeholder="Search by customer name or phone"
+              [options]="customerOptions()">
+            </app-searchable-select>
+          </div>
+
+          <div>
+            <app-searchable-select
+              formControlName="lead_id"
+              label="Linked Lead (From CRM Pipeline)"
+              placeholder="Search by lead name or phone"
+              [options]="leadOptions()">
+            </app-searchable-select>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 2: INVENTORY & PROPERTY SELECTION -->
+      <div class="space-y-4">
+        <div class="flex items-center gap-2 border-b border-border pb-2">
+          <i class="ri-building-line text-primary text-base"></i>
+          <h3 class="font-bold text-foreground text-sm">Project & Property Inventory Selection</h3>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <app-searchable-select
+              formControlName="project_id"
+              label="Selected Project"
+              placeholder="Select Project"
+              [options]="projectOptions()">
+            </app-searchable-select>
+          </div>
+
+          <div>
+            <app-custom-input
+              formControlName="unit_number"
+              label="Target Unit / Apartment Number"
+              placeholder="e.g. Flat #9A, South Facing, Tower-1"
+              prefixIcon="ri-home-line">
+            </app-custom-input>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 3: COMMERCIAL VALUATION & CONFIDENCE -->
+      <div class="space-y-4">
+        <div class="flex items-center gap-2 border-b border-border pb-2">
+          <i class="ri-money-dollar-circle-line text-emerald-500 text-base"></i>
+          <h3 class="font-bold text-foreground text-sm">Commercial Valuation & Forecast Parameters</h3>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <app-custom-input
+              formControlName="estimated_deal_value"
+              label="Estimated Deal Value (BDT) *"
+              type="number"
+              placeholder="e.g. 18500000"
+              prefixIcon="ri-wallet-3-line"
+              [required]="true">
+            </app-custom-input>
+          </div>
+
+          <div>
+            <app-custom-input
+              formControlName="confidence_probability_pct"
+              label="Confidence Probability (%) *"
+              type="number"
+              placeholder="e.g. 70"
+              prefixIcon="ri-percent-line"
+              [required]="true">
+            </app-custom-input>
+          </div>
+
+          <div>
+            <app-searchable-select
+              formControlName="stage"
+              label="Initial Deal Stage *"
+              placeholder="Select Stage"
+              [categoryCode]="LOOKUP.funnelStage"
+              [allowCreateNew]="true"
+              [required]="true">
+            </app-searchable-select>
+          </div>
+
+          <div class="md:col-span-3">
+            <app-custom-input
+              formControlName="expected_close_date"
+              label="Target Closing Date"
+              type="date">
+            </app-custom-input>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 4: NOTES & REMARKS -->
+      <div class="space-y-4">
+        <div class="flex items-center gap-2 border-b border-border pb-2">
+          <i class="ri-file-text-line text-primary text-base"></i>
+          <h3 class="font-bold text-foreground text-sm">Discussion Notes & Strategy</h3>
+        </div>
+
+        <app-custom-textarea
+          formControlName="notes"
+          label="Internal Negotiation Notes"
+          placeholder="e.g. Customer visited site on Sunday. Liked unit 9A. Offered 1.85 Cr with 30% down payment and 48-month installment schedule."
+          [rows]="3">
+        </app-custom-textarea>
+      </div>
+
+      <!-- Action Bar -->
+      <div class="flex items-center justify-end gap-3 pt-4 border-t border-border">
+        <app-custom-button
+          variant="outline"
+          type="button"
+          (clicked)="cancel()">
+          Cancel
+        </app-custom-button>
+
+        <app-custom-button
+          variant="primary"
+          type="submit"
+          [disabled]="isSubmitting()">
+          <i class="ri-check-line mr-1"></i>
+          {{ isEditMode() ? 'Save Opportunity' : 'Create Deal Opportunity' }}
+        </app-custom-button>
+      </div>
+    </form>
+  </app-card-container>
+</div>

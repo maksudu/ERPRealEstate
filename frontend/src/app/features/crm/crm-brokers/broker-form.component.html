@@ -1,0 +1,408 @@
+<div class="space-y-6 max-w-5xl mx-auto">
+  <!-- Single Card Container (Rule 6) -->
+  <app-card-container
+    [title]="isEditMode() ? 'Edit Partner Agreement' : 'Onboard Broker / Referral Partner'"
+    [subtitle]="isEditMode() ? 'Update agreement terms, commission milestones, or bank payout details' : 'Register a new external broker, property agent, or corporate referral partner'">
+
+    <!-- Error Banner -->
+    <div *ngIf="errorMessage()" class="p-3 mb-6 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 text-xs flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <i class="ri-error-warning-line text-base"></i>
+        <span>{{ errorMessage() }}</span>
+      </div>
+      <button type="button" (click)="errorMessage.set(null)" class="text-rose-600 hover:opacity-80">
+        <i class="ri-close-line"></i>
+      </button>
+    </div>
+
+    <form [formGroup]="brokerForm" (ngSubmit)="onSubmit()" class="space-y-8">
+      <!-- SECTION 1: IDENTITY & CONTACT DETAILS -->
+      <div class="space-y-4">
+        <div class="flex items-center gap-2 border-b border-border pb-2">
+          <i class="ri-user-shared-line text-primary text-base"></i>
+          <h3 class="font-bold text-foreground text-sm">Partner Identity & Primary Contacts</h3>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="md:col-span-2">
+            <app-custom-input
+              formControlName="broker_name"
+              label="Company Name or Broker Full Name *"
+              placeholder="e.g. Dhaka Property Mart Ltd. or Mr. Rafiqul Islam"
+              prefixIcon="ri-building-line"
+              [required]="true">
+            </app-custom-input>
+          </div>
+
+          <div>
+            <app-searchable-select
+              formControlName="broker_type"
+              label="Partner Classification *"
+              placeholder="Select Classification"
+              [categoryCode]="LOOKUP.brokerType"
+              [allowCreateNew]="true"
+              [required]="true">
+            </app-searchable-select>
+          </div>
+
+          <div>
+            <app-custom-input
+              formControlName="contact_person"
+              label="Contact Person / Representative"
+              placeholder="e.g. Mohammad Amin (Managing Director)"
+              prefixIcon="ri-user-line">
+            </app-custom-input>
+          </div>
+
+          <div>
+            <app-custom-input
+              formControlName="primary_phone"
+              label="Primary Phone Number *"
+              placeholder="+88017XXXXXXXX"
+              prefixIcon="ri-phone-line"
+              [required]="true">
+            </app-custom-input>
+          </div>
+
+          <div>
+            <app-custom-input
+              formControlName="secondary_phone"
+              label="Secondary Phone / WhatsApp"
+              placeholder="+88018XXXXXXXX"
+              prefixIcon="ri-whatsapp-line">
+            </app-custom-input>
+          </div>
+
+          <div class="md:col-span-2">
+            <app-custom-input
+              formControlName="email"
+              label="Official Email Address"
+              placeholder="partner@brokerage.com.bd"
+              prefixIcon="ri-mail-line">
+            </app-custom-input>
+          </div>
+
+          <div>
+            <app-searchable-select
+              formControlName="status"
+              label="Partner Status *"
+              placeholder="Select Status"
+              [categoryCode]="LOOKUP.brokerStatus"
+              [allowCreateNew]="true"
+              [required]="true">
+            </app-searchable-select>
+          </div>
+
+          <div class="md:col-span-3">
+            <app-custom-input
+              formControlName="office_address"
+              label="Registered Office Address"
+              placeholder="Suite 5B, Navana Tower, Gulshan-1, Dhaka-1212"
+              prefixIcon="ri-map-pin-line">
+            </app-custom-input>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 2: REFERRAL ATTRIBUTION & SERVICE TERRITORY -->
+      <div class="space-y-4">
+        <div class="flex items-center gap-2 border-b border-border pb-2">
+          <i class="ri-compass-3-line text-primary text-base"></i>
+          <h3 class="font-bold text-foreground text-sm">Service Area & Referral Attribution</h3>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <app-custom-input
+              formControlName="service_area"
+              label="Operating Territory / Service Area"
+              placeholder="e.g. Uttara, Bashundhara R/A, Purbachal, Mirpur DOHS"
+              prefixIcon="ri-map-2-line">
+            </app-custom-input>
+          </div>
+
+          <div>
+            <app-custom-input
+              formControlName="preferred_projects_json"
+              label="Preferred / Focused Projects"
+              placeholder="e.g. Green Valley Luxury, Ocean Heights"
+              prefixIcon="ri-community-line">
+            </app-custom-input>
+          </div>
+
+          <div class="p-4 rounded-xl border border-border bg-secondary/20 md:col-span-2 space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                <i class="ri-links-line text-primary"></i> Lead Attribution Unique Identifiers
+              </span>
+              <button
+                type="button"
+                (click)="generateReferralCode()"
+                class="text-xs text-primary hover:underline flex items-center gap-1">
+                <i class="ri-refresh-line"></i> Re-generate Code
+              </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <app-custom-input
+                formControlName="referral_code"
+                label="Unique Referral Code"
+                placeholder="REF-XXXXX"
+                prefixIcon="ri-qr-code-line">
+              </app-custom-input>
+
+              <app-custom-input
+                formControlName="referral_link"
+                label="Unique Attribution Web Link"
+                placeholder="https://company.com/leads/register?ref=REF-XXXXX"
+                prefixIcon="ri-global-line">
+              </app-custom-input>
+            </div>
+            <p class="text-[11px] text-muted-foreground">
+              Leads originating via this code or web URL are automatically attributed to this partner for commission tracking.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 3: AGREEMENT & LEGAL AUTHORIZATION -->
+      <div class="space-y-4">
+        <div class="flex items-center gap-2 border-b border-border pb-2">
+          <i class="ri-file-shield-line text-primary text-base"></i>
+          <h3 class="font-bold text-foreground text-sm">Agreement & Legal Authorization</h3>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <app-custom-input
+              formControlName="agreement_number"
+              label="Broker Agreement Contract Number"
+              placeholder="e.g. AGR-2026-BRK-042"
+              prefixIcon="ri-article-line">
+            </app-custom-input>
+          </div>
+
+          <div>
+            <app-custom-input
+              formControlName="agreement_signed_date"
+              label="Agreement Execution Date"
+              type="date">
+            </app-custom-input>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <app-custom-input
+              formControlName="agreement_valid_from"
+              label="Valid From"
+              type="date">
+            </app-custom-input>
+
+            <app-custom-input
+              formControlName="agreement_valid_to"
+              label="Valid To"
+              type="date">
+            </app-custom-input>
+          </div>
+
+          <div>
+            <app-custom-input
+              formControlName="license_number"
+              label="Real Estate Broker / Trade License #"
+              placeholder="TRAD/DNCC/029192/2025"
+              prefixIcon="ri-government-line">
+            </app-custom-input>
+          </div>
+
+          <div>
+            <app-custom-input
+              formControlName="tin_number"
+              label="Taxpayer Identification # (TIN)"
+              placeholder="12-digit e-TIN"
+              prefixIcon="ri-bank-card-2-line">
+            </app-custom-input>
+          </div>
+
+          <div>
+            <app-custom-input
+              formControlName="bin_vat_number"
+              label="Business Identification # (BIN/VAT)"
+              placeholder="9 or 13-digit BIN"
+              prefixIcon="ri-percent-line">
+            </app-custom-input>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 4: COMMISSION STRUCTURE & MILESTONE CONDITIONS -->
+      <div class="space-y-4">
+        <div class="flex items-center gap-2 border-b border-border pb-2">
+          <i class="ri-percent-line text-primary text-base"></i>
+          <h3 class="font-bold text-foreground text-sm">Commission Structure & Milestone Policy</h3>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <app-searchable-select
+              formControlName="commission_type"
+              label="Commission Structure *"
+              placeholder="Select Structure"
+              [categoryCode]="LOOKUP.commissionType"
+              [allowCreateNew]="true"
+              [required]="true">
+            </app-searchable-select>
+          </div>
+
+          <div>
+            <app-custom-input
+              formControlName="commission_rate"
+              label="Commission Rate (% or Fixed BDT) *"
+              type="number"
+              placeholder="e.g. 1.50"
+              prefixIcon="ri-money-dollar-circle-line"
+              [required]="true">
+            </app-custom-input>
+          </div>
+
+          <div>
+            <app-searchable-select
+              formControlName="required_milestone"
+              label="Prerequisite Milestone for Payout *"
+              placeholder="Select Required Milestone"
+              [categoryCode]="LOOKUP.commissionMilestone"
+              [allowCreateNew]="true"
+              [required]="true">
+            </app-searchable-select>
+          </div>
+
+          <div class="md:col-span-3">
+            <app-custom-textarea
+              formControlName="eligibility_conditions"
+              label="Eligibility Conditions & Special Covenants"
+              placeholder="e.g. Commission becomes payable solely after booking advance + minimum 20% down payment has cleared. In case of customer cancellation before agreement, commission is clawed back."
+              [rows]="2">
+            </app-custom-textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 5: BANK & PAYMENT DETAILS (RESTRICTED ACCESS) -->
+      <div class="space-y-4">
+        <div class="flex items-center gap-2 border-b border-border pb-2">
+          <i class="ri-bank-card-line text-emerald-500 text-base"></i>
+          <h3 class="font-bold text-foreground text-sm">Bank & Payout Details (Restricted Access)</h3>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <app-custom-input
+              formControlName="bank_name"
+              label="Bank Name"
+              placeholder="e.g. Eastern Bank PLC, Dhaka Bank"
+              prefixIcon="ri-bank-line">
+            </app-custom-input>
+          </div>
+
+          <div>
+            <app-custom-input
+              formControlName="bank_branch"
+              label="Branch Name"
+              placeholder="Gulshan Branch"
+              prefixIcon="ri-community-line">
+            </app-custom-input>
+          </div>
+
+          <div>
+            <app-custom-input
+              formControlName="routing_number"
+              label="9-Digit Routing Number"
+              placeholder="e.g. 090271384"
+              prefixIcon="ri-barcode-line">
+            </app-custom-input>
+          </div>
+
+          <div class="md:col-span-2">
+            <app-custom-input
+              formControlName="bank_account_name"
+              label="Beneficiary Account Name"
+              placeholder="Must match Trade License or Broker legal name"
+              prefixIcon="ri-user-star-line">
+            </app-custom-input>
+          </div>
+
+          <div>
+            <app-custom-input
+              formControlName="bank_account_number"
+              label="Bank Account Number"
+              placeholder="e.g. 1041010048192"
+              prefixIcon="ri-bank-card-line">
+            </app-custom-input>
+          </div>
+
+          <div class="md:col-span-3">
+            <app-custom-input
+              formControlName="mobile_wallet_number"
+              label="Mobile Financial Service (bKash / Nagad / Rocket Merchant or Personal)"
+              placeholder="+88017XXXXXXXX"
+              prefixIcon="ri-smartphone-line">
+            </app-custom-input>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 6: COMPLIANCE DOCUMENTS -->
+      <div class="space-y-4">
+        <div class="flex items-center gap-2 border-b border-border pb-2">
+          <i class="ri-folder-shield-2-line text-primary text-base"></i>
+          <h3 class="font-bold text-foreground text-sm">Compliance Documents & Files</h3>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <app-custom-input
+              formControlName="trade_license_url"
+              label="Trade License Scan URL"
+              placeholder="https://... or /static/uploads/brokers/..."
+              prefixIcon="ri-attachment-line">
+            </app-custom-input>
+          </div>
+
+          <div>
+            <app-custom-input
+              formControlName="tin_cert_url"
+              label="TIN Certificate URL"
+              placeholder="https://... or /static/uploads/brokers/..."
+              prefixIcon="ri-attachment-line">
+            </app-custom-input>
+          </div>
+
+          <div>
+            <app-custom-input
+              formControlName="agreement_doc_url"
+              label="Signed Contract PDF URL"
+              placeholder="https://... or /static/uploads/brokers/..."
+              prefixIcon="ri-file-pdf-line">
+            </app-custom-input>
+          </div>
+        </div>
+      </div>
+
+      <!-- Submit & Cancel Bar -->
+      <div class="flex items-center justify-end gap-3 pt-4 border-t border-border">
+        <app-custom-button
+          variant="outline"
+          type="button"
+          (clicked)="cancel()">
+          Cancel
+        </app-custom-button>
+
+        <app-custom-button
+          variant="primary"
+          type="submit"
+          [disabled]="isSubmitting()">
+          <i class="ri-check-line mr-1"></i>
+          {{ isEditMode() ? 'Save Agreement Changes' : 'Authorize & Onboard Partner' }}
+        </app-custom-button>
+      </div>
+    </form>
+  </app-card-container>
+</div>

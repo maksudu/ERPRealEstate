@@ -1,137 +1,319 @@
-<div class="space-y-4 lg:space-y-6">
-  <app-card-container
-    [title]="isEditMode() ? 'Edit Customer KYC' : 'Register New Customer'"
-    subtitle="Unified profile with consent preferences, nominee shares & AML/KYC fields (Spec 4.5).">
-    <div card-actions class="flex items-center gap-2">
-      <app-custom-button variant="secondary" type="button" (click)="cancel()">
-        <lucide-icon [img]="ArrowLeft" size="16"></lucide-icon>
-        Back
-      </app-custom-button>
-      <app-custom-button variant="primary" type="button" (click)="save()" [disabled]="isSubmitting() || isLoading()">
-        <lucide-icon [img]="Save" size="16"></lucide-icon>
-        @if (isSubmitting()) { Saving… } @else { Save Customer }
-      </app-custom-button></div>
+<!-- Customer KYC & Nominee Registration Form (Spec 4.5) Wrapped in Single Card Container -->
+<app-card-container
+  [title]="isEditMode() ? 'Edit Customer KYC & Profile' : 'Register New Customer'"
+  [subtitle]="'Unified profile with consent preferences, nominee shares & AML/KYC fields (Spec 4.5) — ' + (isEditMode() ? 'Editing customer record #' + customerId : 'New customer master intake')"
+>
+  <!-- Card Header Actions -->
+  <div card-actions class="flex items-center gap-2">
+    <app-custom-button variant="secondary" (clicked)="cancel()" size="sm">
+      <span class="flex items-center gap-1.5">
+        <i class="ri-arrow-left-line text-sm"></i>
+        <span>Back</span>
+      </span>
+    </app-custom-button>
+    <app-custom-button
+      variant="primary"
+      size="sm"
+      [disabled]="isSubmitting() || isLoading() || form.invalid"
+      [loading]="isSubmitting()"
+      (clicked)="save()"
+    >
+      <span class="flex items-center gap-1.5">
+        <i class="ri-save-line text-sm"></i>
+        <span>{{ isEditMode() ? 'Update Customer' : 'Save Customer' }}</span>
+      </span>
+    </app-custom-button>
+  </div>
 
+  <div class="flex flex-col gap-6">
+    <!-- Notifications -->
     @if (errorMessage()) {
-      <div class="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700 flex items-center gap-2">
-        <lucide-icon [img]="AlertTriangle" size="16"></lucide-icon>
-        {{ errorMessage() }}
+      <div class="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-600 flex items-center gap-2">
+        <i class="ri-error-warning-line text-base shrink-0"></i>
+        <span>{{ errorMessage() }}</span>
       </div>
     }
     @if (successMessage()) {
-      <div class="mb-4 p-3 rounded-lg bg-green-50 border border-green-200 text-sm text-green-700">{{ successMessage() }}</div>
+      <div class="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs text-emerald-600 flex items-center gap-2">
+        <i class="ri-checkbox-circle-line text-base shrink-0"></i>
+        <span>{{ successMessage() }}</span>
+      </div>
     }
 
+    <!-- Duplicate Detection Warning -->
     @if (dupCheckResult()?.is_duplicate) {
-      <div class="mb-4 p-3 rounded-lg bg-amber-50 border border-amber-200 text-sm text-amber-800">
-        <strong>Possible duplicate found.</strong>
-        <ul class="mt-1 list-disc list-inside">
+      <div class="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-800 dark:text-amber-300">
+        <div class="flex items-center gap-2 font-semibold">
+          <i class="ri-alert-line text-base text-amber-500"></i>
+          <span>Possible Duplicate Customer Detected</span>
+        </div>
+        <ul class="mt-2 space-y-1 pl-6 list-disc">
           @for (m of dupCheckResult()!.matching_customers; track m.id) {
-            <li>{{ m.full_name_en }} — {{ m.customer_code }} ({{ m.primary_phone }})</li>
+            <li>
+              <strong>{{ m.full_name_en }}</strong> — {{ m.customer_code }} (Phone: {{ m.primary_phone }}{{ m.nid_number ? ' · NID: ' + m.nid_number : '' }})
+            </li>
           }
         </ul>
+        <p class="mt-2 text-[11px] text-amber-700 dark:text-amber-400">
+          You may still proceed if this is an intentional new entity, or use the <strong>Merge Duplicate</strong> feature in the customer directory.
+        </p>
       </div>
     }
 
     @if (isLoading()) {
-      <div class="py-10 text-center text-slate-400">Loading customer…</div>
+      <div class="py-12 text-center text-slate-400">
+        <div class="inline-flex items-center gap-2">
+          <i class="ri-loader-4-line animate-spin text-xl text-primary"></i>
+          <span>Loading customer record…</span>
+        </div>
+      </div>
     } @else {
-      <form [formGroup]="form" class="space-y-6">
-        <!-- Personal -->
-        <fieldset class="space-y-4">
-          <legend class="text-sm font-semibold text-slate-800 uppercase tracking-wide">Personal Details</legend>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <app-custom-input formControlName="full_name_en" label="Full Name (English) *" [required]="true"></app-custom-input>
-            <app-custom-input formControlName="full_name_bn" label="Full Name (Bangla)"></app-custom-input>
-            <app-custom-input formControlName="father_husband_name" label="Father / Husband Name"></app-custom-input>
-            <app-custom-input formControlName="mother_name" label="Mother Name"></app-custom-input>
-            <app-custom-input formControlName="nid_number" label="NID Number" placeholder="10–17 digits"></app-custom-input>
-            <app-custom-input formControlName="tin_number" label="TIN Number"></app-custom-input>
-            <app-custom-input formControlName="primary_phone" label="Primary Phone *" [required]="true"></app-custom-input>
-            <app-custom-input formControlName="secondary_phone" label="Secondary Phone"></app-custom-input>
-            <app-custom-input formControlName="email" label="Email" type="email"></app-custom-input>
-            <app-custom-input formControlName="passport_number" label="Passport Number (NRB)"></app-custom-input>
+      <form [formGroup]="form" class="flex flex-col gap-8">
+        <!-- 1. Personal & Legal Identity Details -->
+        <section class="space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
+            <h3 class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-primary"></span>
+              1. Personal & Legal Identity
+            </h3>
+            <span class="text-[11px] text-slate-400">Primary Identification</span>
           </div>
-        </fieldset>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <app-custom-input
+              formControlName="full_name_en"
+              label="Full Name (English) *"
+              placeholder="e.g. Mohammad Rafiqul Islam"
+              [required]="true"
+            ></app-custom-input>
+            <app-custom-input
+              formControlName="full_name_bn"
+              label="Full Name (Bangla)"
+              placeholder="যেমন: মোঃ রফিকুল ইসলাম"
+            ></app-custom-input>
+            <app-custom-input
+              formControlName="father_husband_name"
+              label="Father / Husband Name"
+              placeholder="Father or spouse name"
+            ></app-custom-input>
+            <app-custom-input
+              formControlName="mother_name"
+              label="Mother Name"
+              placeholder="Mother's name"
+            ></app-custom-input>
+            <app-custom-input
+              formControlName="nid_number"
+              label="National ID (NID)"
+              placeholder="10, 13, or 17 digit NID"
+            ></app-custom-input>
+            <app-custom-input
+              formControlName="tin_number"
+              label="e-TIN Number"
+              placeholder="12 digit tax identification"
+            ></app-custom-input>
+            <app-custom-input
+              formControlName="primary_phone"
+              label="Primary Contact Mobile *"
+              placeholder="+8801XXXXXXXXX"
+              [required]="true"
+            ></app-custom-input>
+            <app-custom-input
+              formControlName="secondary_phone"
+              label="Secondary Phone"
+              placeholder="Alternative phone"
+            ></app-custom-input>
+            <app-custom-input
+              formControlName="email"
+              label="Email Address"
+              type="email"
+              placeholder="prospect@example.com"
+            ></app-custom-input>
+            <app-custom-input
+              formControlName="passport_number"
+              label="Passport Number (NRB / Foreign)"
+              placeholder="Passport number"
+            ></app-custom-input>
+          </div>
+        </section>
 
-        <!-- Address -->
-        <fieldset class="space-y-4 pt-4 border-t border-slate-200">
-          <legend class="text-sm font-semibold text-slate-800 uppercase tracking-wide">Address</legend>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <app-custom-textarea formControlName="present_address" label="Present Address" rows="2"></app-custom-textarea>
-            <app-custom-textarea formControlName="permanent_address" label="Permanent Address" rows="2"></app-custom-textarea>
+        <!-- 2. Present & Permanent Addresses -->
+        <section class="space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
+            <h3 class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+              2. Residential & Permanent Address
+            </h3>
+            <span class="text-[11px] text-slate-400">Postal & Deed Verification</span>
           </div>
-        </fieldset>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <app-custom-textarea
+              formControlName="present_address"
+              label="Present / Mailing Address"
+              [rows]="3"
+              placeholder="Flat/House, Road, Area, Thana, District"
+            ></app-custom-textarea>
+            <app-custom-textarea
+              formControlName="permanent_address"
+              label="Permanent / Village Address"
+              [rows]="3"
+              placeholder="Village, Post Office, Thana, District"
+            ></app-custom-textarea>
+          </div>
+        </section>
 
-        <!-- Profile / Preferences -->
-        <fieldset class="space-y-4 pt-4 border-t border-slate-200">
-          <legend class="text-sm font-semibold text-slate-800 uppercase tracking-wide">Profile & Preferences</legend>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <app-searchable-select formControlName="customer_type" label="Customer Type" [categoryCode]="LOOKUP.customerType"></app-searchable-select>
-            <app-searchable-select formControlName="preferred_language" label="Preferred Language" [categoryCode]="LOOKUP.language"></app-searchable-select>
-            <app-searchable-select formControlName="preferred_contact_method" label="Preferred Contact" [categoryCode]="LOOKUP.contactMethod"></app-searchable-select>
+        <!-- 3. Profile Type & Communication Consent -->
+        <section class="space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
+            <h3 class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+              3. Profile Classification & Communication Consent
+            </h3>
+            <span class="text-[11px] text-slate-400">Marketing & Legal Consent</span>
           </div>
-          <div class="flex flex-wrap gap-6 pt-1">
-            <label class="flex items-center gap-2 text-sm text-slate-700">
-              <input type="checkbox" formControlName="is_nrb" class="rounded border-slate-300" />
-              NRB (Non-Resident Bangladeshi)
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <app-searchable-select
+              formControlName="customer_type"
+              label="Customer Type"
+              [categoryCode]="LOOKUP.customerType"
+              [allowCreateNew]="true"
+            ></app-searchable-select>
+            <app-searchable-select
+              formControlName="preferred_language"
+              label="Preferred Language"
+              [categoryCode]="LOOKUP.language"
+              [allowCreateNew]="true"
+            ></app-searchable-select>
+            <app-searchable-select
+              formControlName="preferred_contact_method"
+              label="Preferred Contact Channel"
+              [categoryCode]="LOOKUP.contactMethod"
+              [allowCreateNew]="true"
+            ></app-searchable-select>
+          </div>
+          <div class="flex flex-wrap gap-6 pt-2">
+            <label class="flex items-center gap-2.5 text-xs text-slate-700 dark:text-slate-300 cursor-pointer select-none">
+              <input type="checkbox" formControlName="is_nrb" class="rounded border-slate-300 dark:border-slate-600 cursor-pointer" />
+              <span class="font-medium">NRB (Non-Resident Bangladeshi)</span>
             </label>
-            <label class="flex items-center gap-2 text-sm text-slate-700">
-              <input type="checkbox" formControlName="is_consent_given" class="rounded border-slate-300" />
-              Communication Consent Given
+            <label class="flex items-center gap-2.5 text-xs text-slate-700 dark:text-slate-300 cursor-pointer select-none">
+              <input type="checkbox" formControlName="is_consent_given" class="rounded border-slate-300 dark:border-slate-600 cursor-pointer" />
+              <span class="font-medium">Communication Consent Given (Phone / SMS / WhatsApp)</span>
             </label>
           </div>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <app-custom-input formControlName="profile_photo_url" label="Profile Photo URL"></app-custom-input>
-            <app-custom-input formControlName="nid_scan_front_url" label="NID Scan Front URL"></app-custom-input>
-            <app-custom-input formControlName="nid_scan_back_url" label="NID Scan Back URL"></app-custom-input>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+            <app-custom-input
+              formControlName="profile_photo_url"
+              label="Profile Photo URL"
+              placeholder="https://..."
+            ></app-custom-input>
+            <app-custom-input
+              formControlName="nid_scan_front_url"
+              label="NID Scan Front Document URL"
+              placeholder="https://..."
+            ></app-custom-input>
+            <app-custom-input
+              formControlName="nid_scan_back_url"
+              label="NID Scan Back Document URL"
+              placeholder="https://..."
+            ></app-custom-input>
           </div>
-        </fieldset>
+        </section>
 
-        <!-- Nominees -->
-        <fieldset class="space-y-4 pt-4 border-t border-slate-200">
-          <div class="flex items-center justify-between">
-            <legend class="text-sm font-semibold text-slate-800 uppercase tracking-wide">Nominees (Inheritance Shares)</legend>
-            <span class="text-xs" [class.text-red-600]="nomineeShareTotal() > 100" [class.text-slate-500]="nomineeShareTotal() <= 100">
-              Total share: {{ nomineeShareTotal() }}%
+        <!-- 4. Nominees Management (Inheritance Shares) -->
+        <section class="space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
+            <div>
+              <h3 class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-purple-500"></span>
+                4. Nominee Management & Entitlement Shares
+              </h3>
+              <p class="text-[11px] text-slate-400 mt-0.5">
+                Nominee records are collected for contractual purposes and are <strong>not proof of legal ownership</strong>.
+              </p>
+            </div>
+            <span class="text-xs font-bold px-2.5 py-1 rounded-full border"
+                  [ngClass]="nomineeShareTotal() > 100 ? 'bg-rose-500/10 text-rose-600 border-rose-500/30' : 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30'">
+              Total Share: {{ nomineeShareTotal() }}%
             </span>
           </div>
-          <p class="text-xs text-slate-500">
-            Nominee records are <strong>not proof of legal ownership</strong>. Legally required nomination documents are separate.
-          </p>
 
           @if (nomineeShareTotal() > 100) {
-            <div class="p-2 rounded bg-red-50 border border-red-200 text-xs text-red-700">Total share exceeds 100%. Adjust before saving.</div>
+            <div class="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-600 flex items-center gap-2">
+              <i class="ri-error-warning-line text-base"></i>
+              <span>Total nominee share exceeds 100%. Please adjust percentages to equal exactly 100% or less.</span>
+            </div>
           }
 
-          <div formArrayName="nominees" class="space-y-3">
+          <div formArrayName="nominees" class="space-y-4">
             @for (group of nomineesArray.controls; track $index; let i = $index) {
-              <div [formGroupName]="i" class="p-4 rounded-lg border border-slate-200 bg-slate-50/50 space-y-3">
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-                  <app-custom-input formControlName="nominee_name" label="Nominee Name *" [required]="true"></app-custom-input>
-                  <app-searchable-select formControlName="relationship" label="Relation" [categoryCode]="LOOKUP.nomineeRelation"></app-searchable-select>
-                  <app-custom-input formControlName="nid_number" label="NID"></app-custom-input>
-                  <app-custom-input formControlName="share_percentage" label="Share %" type="number"></app-custom-input>
-                  <app-custom-input formControlName="phone" label="Phone"></app-custom-input>
-                  <app-custom-input formControlName="email" label="Email"></app-custom-input>
-                  <app-custom-input formControlName="address" label="Address"></app-custom-input>
-                  <app-custom-input formControlName="notes" label="Notes"></app-custom-input>
+              <div [formGroupName]="i" class="p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 space-y-4 shadow-xs">
+                <div class="flex items-center justify-between">
+                  <h4 class="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    Nominee #{{ i + 1 }}
+                  </h4>
+                  <button
+                    type="button"
+                    (click)="removeNomineeRow(i)"
+                    class="p-1 rounded-lg text-rose-500 hover:bg-rose-500/10 transition-colors inline-flex items-center gap-1 text-xs font-medium"
+                  >
+                    <i class="ri-delete-bin-line text-sm"></i>
+                    <span>Remove</span>
+                  </button>
                 </div>
-                <div class="flex justify-end">
-                  <app-custom-button variant="ghost" size="sm" type="button" (click)="removeNomineeRow(i)">
-                    <lucide-icon [img]="Trash2" size="14"></lucide-icon>
-                    Remove
-                  </app-custom-button></div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  <app-custom-input
+                    formControlName="nominee_name"
+                    label="Nominee Full Name *"
+                    [required]="true"
+                  ></app-custom-input>
+                  <app-searchable-select
+                    formControlName="relationship"
+                    label="Relationship *"
+                    [categoryCode]="LOOKUP.nomineeRelation"
+                    [allowCreateNew]="true"
+                    [required]="true"
+                  ></app-searchable-select>
+                  <app-custom-input
+                    formControlName="share_percentage"
+                    label="Share Percentage (%) *"
+                    type="number"
+                    [required]="true"
+                  ></app-custom-input>
+                  <app-custom-input
+                    formControlName="nid_number"
+                    label="NID Number"
+                  ></app-custom-input>
+                  <app-custom-input
+                    formControlName="phone"
+                    label="Mobile Phone"
+                  ></app-custom-input>
+                  <app-custom-input
+                    formControlName="email"
+                    label="Email Address"
+                    type="email"
+                  ></app-custom-input>
+                  <app-custom-input
+                    formControlName="address"
+                    label="Residential Address"
+                  ></app-custom-input>
+                  <app-custom-input
+                    formControlName="notes"
+                    label="Audit Notes"
+                  ></app-custom-input>
+                </div>
               </div>
             }
           </div>
 
-          <app-custom-button variant="dashed" type="button" (click)="addNomineeRow()">
-            <lucide-icon [img]="Plus" size="14"></lucide-icon>
-            Add Nominee
-          </app-custom-button>
-        </fieldset>
+          <button
+            type="button"
+            (click)="addNomineeRow()"
+            class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl border border-dashed border-primary text-primary hover:bg-primary/5 transition-colors"
+          >
+            <i class="ri-user-add-line text-sm"></i>
+            <span>+ Add Another Nominee</span>
+          </button>
+        </section>
       </form>
     }
-  </app-card-container>
-</div>
+  </div>
+</app-card-container>

@@ -1,0 +1,1070 @@
+<div class="space-y-6">
+  <!-- Single Card Container Encompassing Sales Funnel & Lead Conversion (Rule 6) -->
+  <app-card-container
+    title="Sales Funnel & Lead Conversion Workbench"
+    subtitle="Track progression from initial inquiry through qualification, site visits, negotiation, and quotation to booking handover">
+
+    <!-- KPI Metric Cards Row (Featuring the 2 Recommended KPI Formulas) -->
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+      <div class="p-4 rounded-xl border border-border bg-card/60 flex flex-col justify-between">
+        <div class="flex items-center justify-between text-muted-foreground text-xs font-medium">
+          <span>Unique Leads Cohort</span>
+          <i class="ri-user-search-line text-primary text-base"></i>
+        </div>
+        <div class="mt-2">
+          <div class="text-2xl font-bold text-foreground">{{ analytics().total_unique_leads }}</div>
+          <span class="text-xs text-muted-foreground">Eligible: {{ analytics().eligible_unique_leads }}</span>
+        </div>
+      </div>
+
+      <div class="p-4 rounded-xl border border-border bg-card/60 flex flex-col justify-between">
+        <div class="flex items-center justify-between text-muted-foreground text-xs font-medium">
+          <span>Site Visits Done</span>
+          <i class="ri-walk-line text-pink-500 text-base"></i>
+        </div>
+        <div class="mt-2">
+          <div class="text-2xl font-bold text-pink-500">{{ analytics().site_visits_completed }}</div>
+          <span class="text-xs text-muted-foreground">Property tours</span>
+        </div>
+      </div>
+
+      <div class="p-4 rounded-xl border border-border bg-card/60 flex flex-col justify-between">
+        <div class="flex items-center justify-between text-muted-foreground text-xs font-medium">
+          <span>Confirmed Bookings</span>
+          <i class="ri-hotel-bed-line text-emerald-500 text-base"></i>
+        </div>
+        <div class="mt-2">
+          <div class="text-2xl font-bold text-emerald-500">{{ analytics().total_valid_bookings }}</div>
+          <span class="text-xs text-muted-foreground">Deposit cleared</span>
+        </div>
+      </div>
+
+      <!-- Recommended KPI Formula 1: Lead-to-Booking Rate -->
+      <div class="p-4 rounded-xl border border-primary/30 bg-primary/5 flex flex-col justify-between">
+        <div class="flex items-center justify-between text-primary text-xs font-semibold">
+          <span>Lead-to-Booking Rate</span>
+          <i class="ri-percent-line text-primary text-base"></i>
+        </div>
+        <div class="mt-2">
+          <div class="text-2xl font-bold text-primary">{{ analytics().lead_to_booking_rate }}%</div>
+          <span class="text-[10px] text-muted-foreground">Bookings ÷ Eligible Unique Leads</span>
+        </div>
+      </div>
+
+      <!-- Recommended KPI Formula 2: Site Visit Conversion -->
+      <div class="p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5 flex flex-col justify-between">
+        <div class="flex items-center justify-between text-emerald-600 dark:text-emerald-400 text-xs font-semibold">
+          <span>Site Visit Conversion</span>
+          <i class="ri-pie-chart-line text-emerald-500 text-base"></i>
+        </div>
+        <div class="mt-2">
+          <div class="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{{ analytics().site_visit_conversion_rate }}%</div>
+          <span class="text-[10px] text-muted-foreground">Bookings ÷ Completed Visits</span>
+        </div>
+      </div>
+
+      <div class="p-4 rounded-xl border border-border bg-card/60 flex flex-col justify-between">
+        <div class="flex items-center justify-between text-muted-foreground text-xs font-medium">
+          <span>Active Opportunities</span>
+          <i class="ri-shake-hands-line text-indigo-500 text-base"></i>
+        </div>
+        <div class="mt-2">
+          <div class="text-2xl font-bold text-indigo-500">{{ totalOpportunities() }}</div>
+          <span class="text-xs text-muted-foreground">In negotiation pipeline</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation Header & Action Buttons -->
+    <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 border-b border-border pb-4 mb-6">
+      <!-- Tabs Selector -->
+      <div class="flex items-center gap-1 p-1 bg-secondary/30 rounded-xl border border-border flex-wrap">
+        <button
+          type="button"
+          (click)="activeTab.set('funnel')"
+          class="px-4 py-2 text-xs font-semibold rounded-lg transition-all flex items-center gap-2"
+          [ngClass]="activeTab() === 'funnel' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'">
+          <i class="ri-filter-3-line"></i>
+          <span>7-Stage Funnel & Leads</span>
+          <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-background/20">{{ totalLeads() }}</span>
+        </button>
+
+        <button
+          type="button"
+          (click)="activeTab.set('opportunities')"
+          class="px-4 py-2 text-xs font-semibold rounded-lg transition-all flex items-center gap-2"
+          [ngClass]="activeTab() === 'opportunities' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'">
+          <i class="ri-money-dollar-box-line"></i>
+          <span>Opportunities & Deals</span>
+          <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-background/20">{{ totalOpportunities() }}</span>
+        </button>
+
+        <button
+          type="button"
+          (click)="activeTab.set('handovers')"
+          class="px-4 py-2 text-xs font-semibold rounded-lg transition-all flex items-center gap-2"
+          [ngClass]="activeTab() === 'handovers' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'">
+          <i class="ri-hand-coin-line"></i>
+          <span>Booking Handovers</span>
+          <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-background/20">{{ totalHandovers() }}</span>
+        </button>
+
+        <button
+          type="button"
+          (click)="activeTab.set('stages')"
+          class="px-4 py-2 text-xs font-semibold rounded-lg transition-all flex items-center gap-2"
+          [ngClass]="activeTab() === 'stages' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'">
+          <i class="ri-settings-3-line"></i>
+          <span>Stage SLAs & Criteria</span>
+        </button>
+
+        <button
+          type="button"
+          (click)="activeTab.set('cohorts')"
+          class="px-4 py-2 text-xs font-semibold rounded-lg transition-all flex items-center gap-2"
+          [ngClass]="activeTab() === 'cohorts' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'">
+          <i class="ri-bar-chart-2-line"></i>
+          <span>Cohort Analytics</span>
+        </button>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center gap-2">
+        <app-custom-button
+          variant="outline"
+          size="sm"
+          (clicked)="createNewHandover()">
+          <i class="ri-hand-coin-line mr-1"></i> New Handover
+        </app-custom-button>
+
+        <app-custom-button
+          variant="primary"
+          size="sm"
+          (clicked)="createNewOpportunity()">
+          <i class="ri-add-line mr-1"></i> Create Opportunity
+        </app-custom-button>
+      </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- TAB 1: 7-STAGE SALES FUNNEL & LEAD PROGRESSION WORKBENCH       -->
+    <!-- ============================================================== -->
+    <div *ngIf="activeTab() === 'funnel'" class="space-y-6">
+      <!-- Visual 7-Stage Funnel Strip -->
+      <div class="p-4 rounded-xl border border-border bg-card space-y-3">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="font-bold text-foreground text-sm flex items-center gap-2">
+              <i class="ri-filter-2-line text-primary"></i>
+              Visual Progression Pipeline (Inquiry to Booking)
+            </h3>
+            <p class="text-xs text-muted-foreground">Funnel drop-off, step conversion, and average stage dwell time</p>
+          </div>
+          <span class="text-xs text-muted-foreground font-mono">Cohort: Last 30 Days</span>
+        </div>
+
+        <!-- 7 Stages Visual Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-7 gap-2 pt-2">
+          <div *ngFor="let s of analytics().stages; let i = index"
+            class="p-3 rounded-xl border border-border bg-secondary/20 relative flex flex-col justify-between overflow-hidden">
+            <div class="h-1 w-full absolute top-0 left-0" [style.background-color]="s.color_code"></div>
+            <div>
+              <div class="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                0{{ s.stage_order }} {{ s.stage_name }}
+              </div>
+              <div class="text-xl font-bold text-foreground mt-1">{{ s.lead_count }}</div>
+              <div class="text-[10px] text-muted-foreground mt-0.5">
+                Conv: <span class="font-semibold text-primary">{{ s.conversion_rate_from_first }}%</span>
+              </div>
+            </div>
+            <div class="mt-3 pt-2 border-t border-border/60 text-[10px] text-muted-foreground flex items-center justify-between">
+              <span title="Stage to Stage step rate">Step: {{ s.stage_to_stage_rate }}%</span>
+              <span title="Average dwell time" class="font-mono">{{ (s.avg_dwell_hours / 24).toFixed(0) }}d dwell</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filters Form -->
+      <form [formGroup]="leadFilterForm" class="grid grid-cols-1 md:grid-cols-3 gap-3 bg-card p-4 rounded-xl border border-border">
+        <app-custom-input
+          formControlName="search"
+          placeholder="Search lead name, code, phone..."
+          prefixIcon="ri-search-line">
+        </app-custom-input>
+
+        <app-searchable-select
+          formControlName="stage"
+          placeholder="Filter by Funnel Stage"
+          [categoryCode]="LOOKUP.funnelStage"
+          [allowCreateNew]="true">
+        </app-searchable-select>
+
+        <div class="flex items-center gap-2">
+          <div class="flex-1">
+            <app-custom-input
+              formControlName="health_grade"
+              placeholder="Health Grade (HOT, WARM, COLD)"
+              prefixIcon="ri-fire-line">
+            </app-custom-input>
+          </div>
+          <app-custom-button
+            variant="ghost"
+            size="sm"
+            (clicked)="leadFilterForm.reset()"
+            title="Reset Filters">
+            <i class="ri-refresh-line"></i>
+          </app-custom-button>
+        </div>
+      </form>
+
+      <!-- Leads in Funnel Table -->
+      <div class="border border-border rounded-xl overflow-hidden bg-card">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="bg-secondary/40 border-b border-border text-muted-foreground uppercase tracking-wider font-semibold">
+                <th class="py-3 px-4">Lead & Contact</th>
+                <th class="py-3 px-4">Project & Budget</th>
+                <th class="py-3 px-4">Current Stage</th>
+                <th class="py-3 px-4">Score & Grade</th>
+                <th class="py-3 px-4 text-center">Status / Loss</th>
+                <th class="py-3 px-4 text-right">Progression Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border">
+              <tr *ngIf="isLoadingLeads">
+                <td colspan="6" class="py-8 text-center text-muted-foreground">
+                  <i class="ri-loader-4-line animate-spin text-lg inline-block mr-2"></i>
+                  Loading leads progression...
+                </td>
+              </tr>
+
+              <tr *ngIf="!isLoadingLeads && leads().length === 0">
+                <td colspan="6" class="py-12 text-center text-muted-foreground">
+                  <div class="max-w-sm mx-auto space-y-2">
+                    <i class="ri-user-search-line text-3xl text-muted-foreground/60"></i>
+                    <p class="font-medium text-foreground">No leads found in this funnel scope</p>
+                    <p class="text-xs">Adjust your search filters or capture new leads into the pipeline.</p>
+                  </div>
+                </td>
+              </tr>
+
+              <tr *ngFor="let l of leads()" class="hover:bg-secondary/20 transition-colors">
+                <!-- Lead & Contact -->
+                <td class="py-3 px-4">
+                  <div class="font-semibold text-foreground">{{ l.lead_name }}</div>
+                  <div class="text-[11px] text-muted-foreground flex items-center gap-1.5 mt-0.5">
+                    <span class="font-mono text-primary bg-primary/10 px-1 py-0.5 rounded">{{ l.lead_code }}</span>
+                    <span>• {{ l.primary_phone }}</span>
+                  </div>
+                  <div *ngIf="l.email" class="text-[10px] text-muted-foreground mt-0.5">
+                    {{ l.email }}
+                  </div>
+                </td>
+
+                <!-- Project & Budget -->
+                <td class="py-3 px-4">
+                  <div class="font-medium text-foreground">{{ l.interested_project_name || 'All Projects' }}</div>
+                  <div class="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">
+                    {{ formatBdt(l.budget_range_max || 0) }}
+                  </div>
+                  <div class="text-[10px] text-muted-foreground">
+                    Source: {{ l.lead_source_id }}
+                  </div>
+                </td>
+
+                <!-- Current Stage -->
+                <td class="py-3 px-4">
+                  <app-status-badge [status]="l.lead_stage" [variant]="getBadgeVariant(l.lead_stage)"></app-status-badge>
+                  <div *ngIf="l.first_contacted_at" class="text-[10px] text-muted-foreground mt-1">
+                    Contacted: {{ l.first_contacted_at | date:'shortDate' }}
+                  </div>
+                </td>
+
+                <!-- Score & Grade -->
+                <td class="py-3 px-4">
+                  <div class="flex items-center gap-2">
+                    <span class="font-bold text-foreground">{{ l.lead_score }}/100</span>
+                    <span *ngIf="l.health_grade"
+                      class="px-1.5 py-0.5 rounded text-[10px] font-bold"
+                      [ngClass]="l.health_grade === 'HOT' ? 'bg-rose-500/10 text-rose-600 border border-rose-500/20' : (l.health_grade === 'WARM' ? 'bg-amber-500/10 text-amber-600 border border-amber-500/20' : 'bg-secondary text-muted-foreground')">
+                      {{ l.health_grade }}
+                    </span>
+                  </div>
+                </td>
+
+                <!-- Status / Loss -->
+                <td class="py-3 px-4 text-center">
+                  <div *ngIf="l.lead_stage === 'LOST'" class="text-rose-600 font-semibold text-[11px]">
+                    <i class="ri-close-circle-line mr-0.5"></i> Lost
+                    <div *ngIf="l.lost_reason" class="text-[10px] text-muted-foreground italic truncate max-w-[120px]" [title]="l.lost_reason">
+                      {{ l.lost_reason }}
+                    </div>
+                  </div>
+                  <div *ngIf="l.lead_stage !== 'LOST'" class="text-emerald-600 font-medium text-[11px]">
+                    Active Pipeline
+                  </div>
+                </td>
+
+                <!-- Actions -->
+                <td class="py-3 px-4 text-right">
+                  <div class="flex items-center justify-end gap-1 flex-wrap">
+                    <!-- Advance Stage -->
+                    <button
+                      *ngIf="l.lead_stage !== 'LOST' && l.lead_stage !== '07_BOOKING'"
+                      type="button"
+                      (click)="openTransitionModal(l)"
+                      class="px-2 py-1 bg-primary/10 hover:bg-primary/20 text-primary rounded text-[11px] font-semibold flex items-center gap-1"
+                      title="Advance to next funnel stage">
+                      <i class="ri-arrow-right-line"></i> Advance
+                    </button>
+
+                    <!-- View Dwell History -->
+                    <button
+                      type="button"
+                      (click)="openHistoryModal(l)"
+                      class="p-1.5 hover:bg-secondary rounded-lg text-muted-foreground hover:text-foreground transition-colors"
+                      title="View Stage Dwell History">
+                      <i class="ri-history-line text-sm"></i>
+                    </button>
+
+                    <!-- Disqualify / Loss -->
+                    <button
+                      *ngIf="l.lead_stage !== 'LOST'"
+                      type="button"
+                      (click)="openDisqualifyModal(l)"
+                      class="p-1.5 hover:bg-rose-500/10 rounded-lg text-muted-foreground hover:text-rose-600 transition-colors"
+                      title="Mark Lost / Disqualify">
+                      <i class="ri-thumb-down-line text-sm"></i>
+                    </button>
+
+                    <!-- Reopen Lost Lead -->
+                    <button
+                      *ngIf="l.lead_stage === 'LOST'"
+                      type="button"
+                      (click)="openReopenModal(l)"
+                      class="px-2 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 rounded text-[11px] font-semibold flex items-center gap-1"
+                      title="Reopen Lost Lead">
+                      <i class="ri-restart-line"></i> Reopen
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination (Rule 9) -->
+        <div class="flex items-center justify-between px-4 py-3 border-t border-border bg-card/50 text-xs">
+          <div class="text-muted-foreground">
+            Showing {{ leads().length }} of {{ totalLeads() }} leads
+          </div>
+          <div class="flex items-center gap-2">
+            <app-custom-button
+              variant="outline"
+              size="sm"
+              [disabled]="leadPage() <= 1"
+              (clicked)="onLeadPageChange(leadPage() - 1)">
+              <i class="ri-arrow-left-s-line"></i> Prev
+            </app-custom-button>
+            <span class="px-2 py-1 font-medium text-foreground">
+              Page {{ leadPage() }} of {{ Math.ceil(totalLeads() / leadLimit()) || 1 }}
+            </span>
+            <app-custom-button
+              variant="outline"
+              size="sm"
+              [disabled]="leadPage() * leadLimit() >= totalLeads()"
+              (clicked)="onLeadPageChange(leadPage() + 1)">
+              Next <i class="ri-arrow-right-s-line"></i>
+            </app-custom-button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- TAB 2: OPPORTUNITIES & DEALS WORKBENCH                         -->
+    <!-- ============================================================== -->
+    <div *ngIf="activeTab() === 'opportunities'" class="space-y-4">
+      <!-- Search & Filters -->
+      <form [formGroup]="opportunityFilterForm" class="grid grid-cols-1 md:grid-cols-3 gap-3 bg-card p-4 rounded-xl border border-border">
+        <app-custom-input
+          formControlName="search"
+          placeholder="Search opportunity code, title..."
+          prefixIcon="ri-search-line">
+        </app-custom-input>
+
+        <app-searchable-select
+          formControlName="stage"
+          placeholder="Filter by Stage"
+          [categoryCode]="LOOKUP.funnelStage"
+          [allowCreateNew]="true">
+        </app-searchable-select>
+
+        <div class="flex items-center justify-end gap-2">
+          <app-custom-button variant="primary" size="sm" (clicked)="createNewOpportunity()">
+            <i class="ri-add-line mr-1"></i> New Opportunity
+          </app-custom-button>
+        </div>
+      </form>
+
+      <!-- Opportunities Table -->
+      <div class="border border-border rounded-xl overflow-hidden bg-card">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="bg-secondary/40 border-b border-border text-muted-foreground uppercase tracking-wider font-semibold">
+                <th class="py-3 px-4">Opportunity & Buyer</th>
+                <th class="py-3 px-4">Project & Unit</th>
+                <th class="py-3 px-4">Deal Value & Confidence</th>
+                <th class="py-3 px-4">Closing Timeline</th>
+                <th class="py-3 px-4 text-center">Stage</th>
+                <th class="py-3 px-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border">
+              <tr *ngIf="isLoadingOpportunities">
+                <td colspan="6" class="py-8 text-center text-muted-foreground">
+                  <i class="ri-loader-4-line animate-spin text-lg inline-block mr-2"></i>
+                  Loading opportunities...
+                </td>
+              </tr>
+
+              <tr *ngIf="!isLoadingOpportunities && opportunities().length === 0">
+                <td colspan="6" class="py-12 text-center text-muted-foreground">
+                  <div class="max-w-sm mx-auto space-y-2">
+                    <i class="ri-shake-hands-line text-3xl text-muted-foreground/60"></i>
+                    <p class="font-medium text-foreground">No active opportunities recorded</p>
+                    <p class="text-xs">Convert qualified prospects into commercial deals linked to inventory.</p>
+                    <app-custom-button size="sm" variant="primary" (clicked)="createNewOpportunity()">
+                      <i class="ri-add-line mr-1"></i> Create Opportunity
+                    </app-custom-button>
+                  </div>
+                </td>
+              </tr>
+
+              <tr *ngFor="let o of opportunities()" class="hover:bg-secondary/20 transition-colors">
+                <!-- Opportunity & Buyer -->
+                <td class="py-3 px-4">
+                  <div class="font-mono font-bold text-primary">{{ o.opportunity_code }}</div>
+                  <div class="font-semibold text-foreground mt-0.5">{{ o.title }}</div>
+                  <div class="text-[11px] text-muted-foreground mt-0.5">
+                    Buyer: {{ o.customer_name || o.lead_name || 'Prospect' }}
+                  </div>
+                </td>
+
+                <!-- Project & Unit -->
+                <td class="py-3 px-4">
+                  <div class="font-medium text-foreground">{{ o.project_name || 'Project Assigned' }}</div>
+                  <div *ngIf="o.unit_number" class="text-[11px] text-primary font-semibold mt-0.5">
+                    Unit: {{ o.unit_number }}
+                  </div>
+                </td>
+
+                <!-- Deal Value & Confidence -->
+                <td class="py-3 px-4">
+                  <div class="font-bold text-foreground text-sm">{{ formatBdt(o.estimated_deal_value) }}</div>
+                  <div class="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1">
+                    <span>Prob: {{ o.confidence_probability_pct }}%</span>
+                    <div class="w-12 bg-secondary rounded-full h-1.5 overflow-hidden">
+                      <div class="bg-primary h-full" [style.width.%]="o.confidence_probability_pct"></div>
+                    </div>
+                  </div>
+                </td>
+
+                <!-- Closing Timeline -->
+                <td class="py-3 px-4">
+                  <div *ngIf="o.expected_close_date" class="text-foreground">
+                    Target: {{ o.expected_close_date }}
+                  </div>
+                  <div *ngIf="o.sales_rep_name" class="text-[10px] text-muted-foreground mt-0.5">
+                    Rep: {{ o.sales_rep_name }}
+                  </div>
+                </td>
+
+                <!-- Stage -->
+                <td class="py-3 px-4 text-center">
+                  <app-status-badge [status]="o.stage" [variant]="getBadgeVariant(o.stage)"></app-status-badge>
+                </td>
+
+                <!-- Actions -->
+                <td class="py-3 px-4 text-right">
+                  <div class="flex items-center justify-end gap-1">
+                    <!-- Create Handover -->
+                    <button
+                      *ngIf="o.stage !== '07_BOOKING' && o.stage !== 'LOST'"
+                      type="button"
+                      (click)="createNewHandover(o)"
+                      class="px-2 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 rounded text-[11px] font-semibold flex items-center gap-1"
+                      title="Handover to Sales Operations for Booking">
+                      <i class="ri-hand-coin-line"></i> Handover
+                    </button>
+
+                    <button
+                      type="button"
+                      (click)="editOpportunity(o)"
+                      class="p-1.5 hover:bg-secondary rounded-lg text-muted-foreground hover:text-foreground transition-colors"
+                      title="Edit Deal">
+                      <i class="ri-edit-line text-sm"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination (Rule 9) -->
+        <div class="flex items-center justify-between px-4 py-3 border-t border-border bg-card/50 text-xs">
+          <div class="text-muted-foreground">
+            Showing {{ opportunities().length }} of {{ totalOpportunities() }} deals
+          </div>
+          <div class="flex items-center gap-2">
+            <app-custom-button
+              variant="outline"
+              size="sm"
+              [disabled]="opportunityPage() <= 1"
+              (clicked)="onOpportunityPageChange(opportunityPage() - 1)">
+              <i class="ri-arrow-left-s-line"></i> Prev
+            </app-custom-button>
+            <span class="px-2 py-1 font-medium text-foreground">
+              Page {{ opportunityPage() }} of {{ Math.ceil(totalOpportunities() / opportunityLimit()) || 1 }}
+            </span>
+            <app-custom-button
+              variant="outline"
+              size="sm"
+              [disabled]="opportunityPage() * opportunityLimit() >= totalOpportunities()"
+              (clicked)="onOpportunityPageChange(opportunityPage() + 1)">
+              Next <i class="ri-arrow-right-s-line"></i>
+            </app-custom-button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- TAB 3: BOOKING HANDOVER DOSSIER                                -->
+    <!-- ============================================================== -->
+    <div *ngIf="activeTab() === 'handovers'" class="space-y-4">
+      <!-- Search & Filters -->
+      <form [formGroup]="handoverFilterForm" class="grid grid-cols-1 md:grid-cols-3 gap-3 bg-card p-4 rounded-xl border border-border">
+        <app-custom-input
+          formControlName="search"
+          placeholder="Search handover code..."
+          prefixIcon="ri-search-line">
+        </app-custom-input>
+
+        <app-searchable-select
+          formControlName="status"
+          placeholder="Handover Status"
+          [categoryCode]="LOOKUP.handoverStatus"
+          [allowCreateNew]="true">
+        </app-searchable-select>
+
+        <div class="flex items-center justify-end gap-2">
+          <app-custom-button variant="primary" size="sm" (clicked)="createNewHandover()">
+            <i class="ri-add-line mr-1"></i> New Handover
+          </app-custom-button>
+        </div>
+      </form>
+
+      <!-- Handovers Table -->
+      <div class="border border-border rounded-xl overflow-hidden bg-card">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="bg-secondary/40 border-b border-border text-muted-foreground uppercase tracking-wider font-semibold">
+                <th class="py-3 px-4">Handover Dossier</th>
+                <th class="py-3 px-4">Buyer & Unit</th>
+                <th class="py-3 px-4">Agreed Commercials</th>
+                <th class="py-3 px-4">Payment Plan</th>
+                <th class="py-3 px-4 text-center">Ops Status</th>
+                <th class="py-3 px-4 text-right">Review Action</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border">
+              <tr *ngIf="isLoadingHandovers">
+                <td colspan="6" class="py-8 text-center text-muted-foreground">
+                  <i class="ri-loader-4-line animate-spin text-lg inline-block mr-2"></i>
+                  Loading booking handovers...
+                </td>
+              </tr>
+
+              <tr *ngIf="!isLoadingHandovers && handovers().length === 0">
+                <td colspan="6" class="py-12 text-center text-muted-foreground">
+                  <div class="max-w-sm mx-auto space-y-2">
+                    <i class="ri-folder-transfer-line text-3xl text-muted-foreground/60"></i>
+                    <p class="font-medium text-foreground">No booking handovers pending</p>
+                    <p class="text-xs">Submit a handover when a customer commits to booking an apartment.</p>
+                  </div>
+                </td>
+              </tr>
+
+              <tr *ngFor="let h of handovers()" class="hover:bg-secondary/20 transition-colors">
+                <!-- Handover Dossier -->
+                <td class="py-3 px-4">
+                  <div class="font-mono font-bold text-primary">{{ h.handover_code }}</div>
+                  <div *ngIf="h.opportunity_code" class="text-[11px] text-muted-foreground mt-0.5">
+                    Opp: {{ h.opportunity_code }}
+                  </div>
+                  <div class="text-[10px] text-muted-foreground mt-0.5">
+                    Submitted: {{ h.created_at | date:'shortDate' }}
+                  </div>
+                </td>
+
+                <!-- Buyer & Unit -->
+                <td class="py-3 px-4">
+                  <div class="font-semibold text-foreground">{{ h.customer_name || h.lead_name || 'Customer' }}</div>
+                  <div class="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1">
+                    <span>{{ h.project_name || 'Project' }}</span>
+                    <span *ngIf="h.unit_number" class="font-bold text-foreground">({{ h.unit_number }})</span>
+                  </div>
+                </td>
+
+                <!-- Agreed Commercials -->
+                <td class="py-3 px-4">
+                  <div class="font-bold text-foreground">{{ formatBdt(h.agreed_price) }}</div>
+                  <div class="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">
+                    Booking Money: {{ formatBdt(h.booking_money_amount) }}
+                  </div>
+                </td>
+
+                <!-- Payment Plan -->
+                <td class="py-3 px-4">
+                  <div class="font-medium text-foreground">{{ h.payment_plan_preference || 'Standard' }}</div>
+                  <div *ngIf="h.special_conditions" class="text-[10px] text-muted-foreground italic truncate max-w-xs mt-0.5" [title]="h.special_conditions">
+                    Covenants: {{ h.special_conditions }}
+                  </div>
+                </td>
+
+                <!-- Ops Status -->
+                <td class="py-3 px-4 text-center">
+                  <app-status-badge [status]="h.status" [variant]="getBadgeVariant(h.status)"></app-status-badge>
+                  <div *ngIf="h.rejection_reason" class="text-[10px] text-rose-500 mt-1 italic truncate max-w-[120px]" [title]="h.rejection_reason">
+                    Rej: {{ h.rejection_reason }}
+                  </div>
+                </td>
+
+                <!-- Review Action -->
+                <td class="py-3 px-4 text-right">
+                  <div class="flex items-center justify-end gap-1">
+                    <button
+                      *ngIf="h.status === 'PENDING_SALES_OPS'"
+                      type="button"
+                      (click)="openReviewModal(h)"
+                      class="px-2.5 py-1 bg-primary/10 hover:bg-primary/20 text-primary rounded text-[11px] font-semibold flex items-center gap-1"
+                      title="Review and Accept/Reject Handover">
+                      <i class="ri-checkbox-circle-line"></i> Review
+                    </button>
+                    <span *ngIf="h.status !== 'PENDING_SALES_OPS'" class="text-[10px] text-muted-foreground italic">
+                      Processed
+                    </span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination (Rule 9) -->
+        <div class="flex items-center justify-between px-4 py-3 border-t border-border bg-card/50 text-xs">
+          <div class="text-muted-foreground">
+            Showing {{ handovers().length }} of {{ totalHandovers() }} handovers
+          </div>
+          <div class="flex items-center gap-2">
+            <app-custom-button
+              variant="outline"
+              size="sm"
+              [disabled]="handoverPage() <= 1"
+              (clicked)="onHandoverPageChange(handoverPage() - 1)">
+              <i class="ri-arrow-left-s-line"></i> Prev
+            </app-custom-button>
+            <span class="px-2 py-1 font-medium text-foreground">
+              Page {{ handoverPage() }} of {{ Math.ceil(totalHandovers() / handoverLimit()) || 1 }}
+            </span>
+            <app-custom-button
+              variant="outline"
+              size="sm"
+              [disabled]="handoverPage() * handoverLimit() >= totalHandovers()"
+              (clicked)="onHandoverPageChange(handoverPage() + 1)">
+              Next <i class="ri-arrow-right-s-line"></i>
+            </app-custom-button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- TAB 4: FUNNEL STAGES CONFIGURATION & SLAS                      -->
+    <!-- ============================================================== -->
+    <div *ngIf="activeTab() === 'stages'" class="space-y-4">
+      <div class="border border-border rounded-xl bg-card p-4 flex items-center justify-between">
+        <div>
+          <h3 class="font-bold text-foreground text-sm">Configurable Funnel Stages & Entry/Exit Criteria</h3>
+          <p class="text-xs text-muted-foreground">Define SLA target dwell days and transition requirements across the 7 funnel steps</p>
+        </div>
+        <span class="px-2.5 py-1 rounded bg-secondary text-xs font-mono">Dynamic Settings Enforced</span>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div *ngFor="let s of stages()" class="p-4 rounded-xl border border-border bg-card flex flex-col justify-between space-y-3">
+          <div>
+            <div class="flex items-center justify-between">
+              <span class="font-mono text-xs font-bold px-2 py-0.5 rounded" [style.background-color]="s.color_code + '20'" [style.color]="s.color_code">
+                Stage 0{{ s.stage_order }}
+              </span>
+              <span class="text-xs font-semibold text-muted-foreground">
+                SLA: {{ s.target_dwell_days }} Days Dwell
+              </span>
+            </div>
+            <div class="font-bold text-foreground text-base mt-2">{{ s.stage_name }}</div>
+            <p class="text-xs text-muted-foreground mt-1">{{ s.description }}</p>
+
+            <div class="mt-3 space-y-2 text-xs">
+              <div class="p-2 rounded-lg bg-secondary/30 border border-border">
+                <span class="font-semibold text-foreground text-[11px] block">Entry Criteria:</span>
+                <span class="text-muted-foreground">{{ s.entry_criteria || 'None specified' }}</span>
+              </div>
+              <div class="p-2 rounded-lg bg-secondary/30 border border-border">
+                <span class="font-semibold text-foreground text-[11px] block">Exit Criteria:</span>
+                <span class="text-muted-foreground">{{ s.exit_criteria || 'None specified' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="pt-2 border-t border-border flex justify-end">
+            <app-custom-button variant="outline" size="sm" (clicked)="openStageConfig(s)">
+              <i class="ri-edit-line mr-1"></i> Edit SLA & Criteria
+            </app-custom-button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- TAB 5: COHORT ANALYTICS (BY SOURCE, REP, PROJECT)              -->
+    <!-- ============================================================== -->
+    <div *ngIf="activeTab() === 'cohorts'" class="space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- By Source -->
+        <div class="border border-border rounded-xl bg-card p-4 space-y-3">
+          <div class="flex items-center justify-between border-b border-border pb-2">
+            <h4 class="font-bold text-foreground text-xs flex items-center gap-1.5">
+              <i class="ri-global-line text-primary"></i> Conversion by Source
+            </h4>
+          </div>
+          <div class="space-y-2">
+            <div *ngFor="let s of analytics().by_source" class="p-2.5 rounded-lg bg-secondary/20 border border-border flex items-center justify-between text-xs">
+              <div>
+                <div class="font-semibold text-foreground">{{ s.dimension_label }}</div>
+                <div class="text-[10px] text-muted-foreground">{{ s.total_leads }} leads • {{ s.bookings_count }} bookings</div>
+              </div>
+              <div class="text-right">
+                <div class="font-bold text-primary">{{ s.lead_to_booking_rate }}%</div>
+                <div class="text-[10px] text-muted-foreground">Booking Rate</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- By Sales Rep -->
+        <div class="border border-border rounded-xl bg-card p-4 space-y-3">
+          <div class="flex items-center justify-between border-b border-border pb-2">
+            <h4 class="font-bold text-foreground text-xs flex items-center gap-1.5">
+              <i class="ri-user-star-line text-emerald-500"></i> Conversion by Sales Rep
+            </h4>
+          </div>
+          <div class="space-y-2">
+            <div *ngFor="let r of analytics().by_sales_rep" class="p-2.5 rounded-lg bg-secondary/20 border border-border flex items-center justify-between text-xs">
+              <div>
+                <div class="font-semibold text-foreground">{{ r.dimension_label }}</div>
+                <div class="text-[10px] text-muted-foreground">{{ r.total_leads }} leads • {{ r.site_visits_count }} visits</div>
+              </div>
+              <div class="text-right">
+                <div class="font-bold text-emerald-600 dark:text-emerald-400">{{ r.site_visit_conversion_rate }}%</div>
+                <div class="text-[10px] text-muted-foreground">Visit Conv.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- By Project -->
+        <div class="border border-border rounded-xl bg-card p-4 space-y-3">
+          <div class="flex items-center justify-between border-b border-border pb-2">
+            <h4 class="font-bold text-foreground text-xs flex items-center gap-1.5">
+              <i class="ri-building-line text-indigo-500"></i> Conversion by Project
+            </h4>
+          </div>
+          <div class="space-y-2">
+            <div *ngFor="let p of analytics().by_project" class="p-2.5 rounded-lg bg-secondary/20 border border-border flex items-center justify-between text-xs">
+              <div>
+                <div class="font-semibold text-foreground">{{ p.dimension_label }}</div>
+                <div class="text-[10px] text-muted-foreground">{{ p.total_leads }} leads • {{ p.bookings_count }} booked</div>
+              </div>
+              <div class="text-right">
+                <div class="font-bold text-indigo-600 dark:text-indigo-400">{{ p.lead_to_booking_rate }}%</div>
+                <div class="text-[10px] text-muted-foreground">Lead-to-Booking</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </app-card-container>
+
+  <!-- ============================================================== -->
+  <!-- MODAL 1: ADVANCE STAGE MODAL                                   -->
+  <!-- ============================================================== -->
+  <app-modal
+    [isOpen]="isTransitionModalOpen()"
+    [title]="'Advance Funnel Stage: ' + (selectedLead()?.lead_name || '')"
+    (closed)="closeTransitionModal()">
+
+    <form [formGroup]="transitionForm" (ngSubmit)="submitStageTransition()" class="space-y-4 text-xs">
+      <div class="p-3 rounded-xl bg-secondary/20 border border-border">
+        <span class="text-muted-foreground">Current Stage:</span>
+        <div class="font-bold text-foreground mt-0.5">{{ selectedLead()?.lead_stage }}</div>
+      </div>
+
+      <app-searchable-select
+        formControlName="to_stage"
+        label="Select Next Stage *"
+        placeholder="Select Stage"
+        [categoryCode]="LOOKUP.funnelStage"
+        [allowCreateNew]="true"
+        [required]="true">
+      </app-searchable-select>
+
+      <app-custom-textarea
+        formControlName="transition_notes"
+        label="Transition Notes & Verification of Exit Criteria"
+        placeholder="e.g. Completed initial phone discovery; customer budget verified at 1.5 Crore. Ready for site visit."
+        [rows]="3">
+      </app-custom-textarea>
+
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-border">
+        <app-custom-button variant="outline" size="sm" type="button" (clicked)="closeTransitionModal()">Cancel</app-custom-button>
+        <app-custom-button variant="primary" size="sm" type="submit" [disabled]="isActionLoading()">
+          <i class="ri-arrow-right-line mr-1"></i> Confirm Advance
+        </app-custom-button>
+      </div>
+    </form>
+  </app-modal>
+
+  <!-- ============================================================== -->
+  <!-- MODAL 2: DISQUALIFY / LOSS REASON MODAL                        -->
+  <!-- ============================================================== -->
+  <app-modal
+    [isOpen]="isDisqualifyModalOpen()"
+    [title]="'Mark Lead as Lost: ' + (selectedLead()?.lead_name || '')"
+    (closed)="closeDisqualifyModal()">
+
+    <form [formGroup]="disqualifyForm" (ngSubmit)="submitDisqualify()" class="space-y-4 text-xs">
+      <app-searchable-select
+        formControlName="lost_reason"
+        label="Root Loss / Disqualification Reason *"
+        placeholder="Select Reason"
+        [categoryCode]="LOOKUP.lostReason"
+        [allowCreateNew]="true"
+        [required]="true">
+      </app-searchable-select>
+
+      <app-custom-textarea
+        formControlName="notes"
+        label="Loss Notes & Circumstances"
+        placeholder="e.g. Customer decided to buy from ABC Developer due to location preference in Dhanmondi."
+        [rows]="3">
+      </app-custom-textarea>
+
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-border">
+        <app-custom-button variant="outline" size="sm" type="button" (clicked)="closeDisqualifyModal()">Cancel</app-custom-button>
+        <app-custom-button variant="primary" size="sm" type="submit" [disabled]="isActionLoading()">
+          <i class="ri-close-circle-line mr-1"></i> Confirm Loss
+        </app-custom-button>
+      </div>
+    </form>
+  </app-modal>
+
+  <!-- ============================================================== -->
+  <!-- MODAL 3: REOPEN LOST LEAD MODAL                                -->
+  <!-- ============================================================== -->
+  <app-modal
+    [isOpen]="isReopenModalOpen()"
+    [title]="'Reopen Lost Lead: ' + (selectedLead()?.lead_name || '')"
+    (closed)="closeReopenModal()">
+
+    <form [formGroup]="reopenForm" (ngSubmit)="submitReopen()" class="space-y-4 text-xs">
+      <div class="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-900 dark:text-amber-200">
+        <div class="font-bold">Authorized Reopening Workflow:</div>
+        <p class="text-[11px] mt-0.5">Please record the customer return trigger or renewed interest rationale.</p>
+      </div>
+
+      <app-searchable-select
+        formControlName="target_stage"
+        label="Reopen Into Stage *"
+        placeholder="Select Stage"
+        [categoryCode]="LOOKUP.funnelStage"
+        [allowCreateNew]="true"
+        [required]="true">
+      </app-searchable-select>
+
+      <app-custom-textarea
+        formControlName="reopen_notes"
+        label="Customer Return Justification *"
+        placeholder="e.g. Customer called back; previous financing issue resolved with Prime Bank. Re-engaging for site visit."
+        [rows]="3">
+      </app-custom-textarea>
+
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-border">
+        <app-custom-button variant="outline" size="sm" type="button" (clicked)="closeReopenModal()">Cancel</app-custom-button>
+        <app-custom-button variant="primary" size="sm" type="submit" [disabled]="isActionLoading()">
+          <i class="ri-restart-line mr-1"></i> Reopen Lead
+        </app-custom-button>
+      </div>
+    </form>
+  </app-modal>
+
+  <!-- ============================================================== -->
+  <!-- MODAL 4: STAGE DWELL TIME HISTORY MODAL                        -->
+  <!-- ============================================================== -->
+  <app-modal
+    [isOpen]="isHistoryModalOpen()"
+    [title]="'Stage Progression & Dwell History: ' + (selectedLead()?.lead_name || '')"
+    (closed)="closeHistoryModal()">
+
+    <div class="space-y-3 text-xs">
+      <div *ngIf="isLoadingHistory" class="py-6 text-center text-muted-foreground">
+        <i class="ri-loader-4-line animate-spin text-base inline-block mr-2"></i>
+        Loading audit history...
+      </div>
+
+      <div *ngIf="!isLoadingHistory && stageHistory().length === 0" class="py-6 text-center text-muted-foreground">
+        No recorded transitions yet. Lead was created at stage {{ selectedLead()?.lead_stage }}.
+      </div>
+
+      <div *ngFor="let h of stageHistory()" class="p-3 rounded-xl border border-border bg-card space-y-1">
+        <div class="flex items-center justify-between">
+          <span class="font-semibold text-foreground">
+            {{ h.from_stage || 'START' }} <i class="ri-arrow-right-line mx-1 text-primary"></i> {{ h.to_stage }}
+          </span>
+          <span class="font-mono text-primary font-bold">{{ h.dwell_time_hours }}h in stage</span>
+        </div>
+        <div class="text-[11px] text-muted-foreground flex items-center justify-between">
+          <span>Date: {{ h.transition_date | date:'medium' }}</span>
+          <span *ngIf="h.transitioned_by_name">By: {{ h.transitioned_by_name }}</span>
+        </div>
+        <div *ngIf="h.transition_notes" class="text-[11px] text-foreground italic pt-1 border-t border-border/60">
+          Notes: {{ h.transition_notes }}
+        </div>
+      </div>
+
+      <div class="flex justify-end pt-2">
+        <app-custom-button variant="outline" size="sm" (clicked)="closeHistoryModal()">Close</app-custom-button>
+      </div>
+    </div>
+  </app-modal>
+
+  <!-- ============================================================== -->
+  <!-- MODAL 5: REVIEW BOOKING HANDOVER MODAL                         -->
+  <!-- ============================================================== -->
+  <app-modal
+    [isOpen]="isReviewModalOpen()"
+    [title]="'Review Booking Handover: ' + (selectedHandover()?.handover_code || '')"
+    (closed)="closeReviewModal()">
+
+    <form [formGroup]="reviewForm" (ngSubmit)="submitHandoverReview()" class="space-y-4 text-xs">
+      <div class="p-3.5 rounded-xl bg-secondary/20 border border-border space-y-1">
+        <div class="flex items-center justify-between">
+          <span class="font-bold text-foreground">{{ selectedHandover()?.customer_name || selectedHandover()?.lead_name }}</span>
+          <span class="font-bold text-emerald-600 dark:text-emerald-400 font-mono">{{ formatBdt(selectedHandover()?.agreed_price || 0) }}</span>
+        </div>
+        <div class="text-muted-foreground">
+          Unit: <strong>{{ selectedHandover()?.unit_number || 'N/A' }}</strong> • Booking Deposit: {{ formatBdt(selectedHandover()?.booking_money_amount || 0) }}
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <label class="font-medium text-foreground block">Review Decision *</label>
+        <div class="grid grid-cols-2 gap-2">
+          <label class="p-3 rounded-xl border border-border cursor-pointer flex items-center gap-2 hover:bg-secondary/20">
+            <input type="radio" formControlName="decision" value="ACCEPT" class="text-primary">
+            <span>Accept for Booking Execution</span>
+          </label>
+          <label class="p-3 rounded-xl border border-border cursor-pointer flex items-center gap-2 hover:bg-secondary/20">
+            <input type="radio" formControlName="decision" value="REJECT" class="text-primary">
+            <span>Return / Reject Handover</span>
+          </label>
+        </div>
+      </div>
+
+      <app-custom-input
+        formControlName="rejection_reason"
+        label="Rejection / Return Reason (If returning)"
+        placeholder="e.g. Booking money cheque not yet realized in bank account.">
+      </app-custom-input>
+
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-border">
+        <app-custom-button variant="outline" size="sm" type="button" (clicked)="closeReviewModal()">Cancel</app-custom-button>
+        <app-custom-button variant="primary" size="sm" type="submit" [disabled]="isActionLoading()">
+          <i class="ri-check-line mr-1"></i> Submit Decision
+        </app-custom-button>
+      </div>
+    </form>
+  </app-modal>
+
+  <!-- ============================================================== -->
+  <!-- MODAL 6: EDIT STAGE CONFIGURATION MODAL                        -->
+  <!-- ============================================================== -->
+  <app-modal
+    [isOpen]="isStageModalOpen()"
+    [title]="'Configure Funnel Stage: ' + (selectedStage()?.stage_name || '')"
+    (closed)="closeStageModal()">
+
+    <form [formGroup]="stageConfigForm" (ngSubmit)="saveStageConfig()" class="space-y-4 text-xs">
+      <div class="grid grid-cols-2 gap-3">
+        <app-custom-input
+          formControlName="stage_name"
+          label="Stage Name *"
+          placeholder="e.g. Site Visit / Meeting"
+          [required]="true">
+        </app-custom-input>
+
+        <app-custom-input
+          formControlName="target_dwell_days"
+          label="SLA Target Dwell (Days) *"
+          type="number"
+          placeholder="3"
+          [required]="true">
+        </app-custom-input>
+      </div>
+
+      <app-custom-textarea
+        formControlName="entry_criteria"
+        label="Stage Entry Criteria"
+        placeholder="Requirements that must be satisfied before entering this stage"
+        [rows]="2">
+      </app-custom-textarea>
+
+      <app-custom-textarea
+        formControlName="exit_criteria"
+        label="Stage Exit Criteria"
+        placeholder="Requirements that must be completed to advance past this stage"
+        [rows]="2">
+      </app-custom-textarea>
+
+      <app-custom-input
+        formControlName="color_code"
+        label="Badge Color Hex Code"
+        placeholder="#3b82f6">
+      </app-custom-input>
+
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-border">
+        <app-custom-button variant="outline" size="sm" type="button" (clicked)="closeStageModal()">Cancel</app-custom-button>
+        <app-custom-button variant="primary" size="sm" type="submit" [disabled]="isActionLoading()">
+          <i class="ri-save-line mr-1"></i> Save Configuration
+        </app-custom-button>
+      </div>
+    </form>
+  </app-modal>
+</div>

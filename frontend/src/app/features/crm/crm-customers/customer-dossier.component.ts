@@ -2,13 +2,14 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { LucideAngularModule, ArrowLeft, Edit3, Plus, Trash2, AlertTriangle, CheckCircle, XCircle } from 'lucide-angular';
 import {
   CardContainerComponent,
   CustomInputComponent,
   CustomTextareaComponent,
   CustomButtonComponent,
-  SearchableSelectComponent
+  SearchableSelectComponent,
+  ModalComponent,
+  StatusBadgeComponent
 } from '../../../shared/components';
 import { CrmService } from '../../../core/services/crm.service';
 import { Customer, Nominee, CustomerServiceRequest } from '../../../core/models/crm.model';
@@ -19,12 +20,13 @@ import { Customer, Nominee, CustomerServiceRequest } from '../../../core/models/
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    LucideAngularModule,
     CardContainerComponent,
     CustomInputComponent,
     CustomTextareaComponent,
     CustomButtonComponent,
-    SearchableSelectComponent
+    SearchableSelectComponent,
+    ModalComponent,
+    StatusBadgeComponent
   ],
   templateUrl: './customer-dossier.component.html'
 })
@@ -33,14 +35,6 @@ export class CustomerDossierComponent implements OnInit {
   private crmService = inject(CrmService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
-
-  readonly ArrowLeft = ArrowLeft;
-  readonly Edit3 = Edit3;
-  readonly Plus = Plus;
-  readonly Trash2 = Trash2;
-  readonly AlertTriangle = AlertTriangle;
-  readonly CheckCircle = CheckCircle;
-  readonly XCircle = XCircle;
 
   customerId: number | null = null;
   customer = signal<Customer | null>(null);
@@ -101,8 +95,14 @@ export class CustomerDossierComponent implements OnInit {
     if (!this.customerId) return;
     this.isLoading.set(true);
     this.crmService.getCustomer(this.customerId).subscribe({
-      next: (c) => { this.customer.set(c); this.isLoading.set(false); },
-      error: () => { this.errorMessage.set('Failed to load customer.'); this.isLoading.set(false); }
+      next: (c) => {
+        this.customer.set(c);
+        this.isLoading.set(false);
+      },
+      error: () => {
+        this.errorMessage.set('Failed to load customer dossier.');
+        this.isLoading.set(false);
+      }
     });
     this.crmService.getServiceRequests(this.customerId!, { limit: 50 }).subscribe({
       next: (res) => this.serviceRequests.set(res.items || [])
@@ -111,6 +111,10 @@ export class CustomerDossierComponent implements OnInit {
 
   edit(): void {
     if (this.customerId) this.router.navigate(['/crm/customers', this.customerId, 'edit']);
+  }
+
+  goToRequirements(): void {
+    if (this.customerId) this.router.navigate(['/crm/requirements'], { queryParams: { customer_id: this.customerId } });
   }
 
   back(): void {
@@ -242,12 +246,12 @@ export class CustomerDossierComponent implements OnInit {
 
   statusClass(status: string): string {
     switch (status) {
-      case 'OPEN': return 'bg-blue-100 text-blue-700 border-blue-200';
-      case 'IN_PROGRESS': return 'bg-amber-100 text-amber-700 border-amber-200';
-      case 'WAITING_CUSTOMER': return 'bg-purple-100 text-purple-700 border-purple-200';
-      case 'RESOLVED': return 'bg-green-100 text-green-700 border-green-200';
-      case 'CLOSED': return 'bg-slate-100 text-slate-600 border-slate-200';
-      default: return 'bg-slate-100 text-slate-600 border-slate-200';
+      case 'OPEN': return 'bg-blue-500/10 text-blue-600 border border-blue-500/30';
+      case 'IN_PROGRESS': return 'bg-amber-500/10 text-amber-600 border border-amber-500/30';
+      case 'WAITING_CUSTOMER': return 'bg-purple-500/10 text-purple-600 border border-purple-500/30';
+      case 'RESOLVED': return 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/30';
+      case 'CLOSED': return 'bg-slate-500/10 text-slate-600 border border-slate-500/30';
+      default: return 'bg-slate-500/10 text-slate-600 border border-slate-500/30';
     }
   }
 }

@@ -1,0 +1,194 @@
+<div class="space-y-6 max-w-5xl mx-auto">
+  <!-- Single Card Container (Rule 6) -->
+  <app-card-container
+    title="Import Exhibition, Fair & Offline Campaign Leads"
+    subtitle="Directly ingest prospect inquiries from REHAB fairs, property expos, and roadshows with attribution tagging (Spec 4.13)">
+
+    <!-- Success / Error Banners -->
+    <div *ngIf="successMessage()" class="p-3 mb-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 text-xs flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <i class="ri-checkbox-circle-line text-base"></i>
+        <span>{{ successMessage() }}</span>
+      </div>
+      <button type="button" (click)="successMessage.set(null)" class="text-emerald-600 hover:opacity-80">
+        <i class="ri-close-line"></i>
+      </button>
+    </div>
+
+    <div *ngIf="errorMessage()" class="p-3 mb-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 text-xs flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <i class="ri-error-warning-line text-base"></i>
+        <span>{{ errorMessage() }}</span>
+      </div>
+      <button type="button" (click)="errorMessage.set(null)" class="text-rose-600 hover:opacity-80">
+        <i class="ri-close-line"></i>
+      </button>
+    </div>
+
+    <form [formGroup]="importForm" (ngSubmit)="onSubmit()" class="space-y-6">
+      <!-- SECTION 1: TARGET CAMPAIGN ATTRIBUTION -->
+      <div class="space-y-4">
+        <div class="flex items-center gap-2 border-b border-border pb-2">
+          <i class="ri-advertisement-line text-primary text-base"></i>
+          <h3 class="font-bold text-foreground text-sm">Target Campaign Attribution & Channel</h3>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <app-searchable-select
+              formControlName="campaign_id"
+              label="Destination Marketing Campaign *"
+              placeholder="Select Campaign"
+              [options]="campaignOptions()"
+              [required]="true">
+            </app-searchable-select>
+          </div>
+
+          <div>
+            <app-custom-input
+              formControlName="channel"
+              label="Source Channel Tag *"
+              placeholder="EXHIBITION"
+              prefixIcon="ri-price-tag-3-line"
+              [required]="true">
+            </app-custom-input>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 2: FAST EXCEL SPREADSHEET PASTE -->
+      <div class="space-y-4">
+        <div class="flex items-center justify-between border-b border-border pb-2">
+          <div class="flex items-center gap-2">
+            <i class="ri-file-excel-2-line text-emerald-500 text-base"></i>
+            <h3 class="font-bold text-foreground text-sm">Quick Paste from Excel / Google Sheets</h3>
+          </div>
+          <span class="text-[10px] text-muted-foreground font-mono">Format: Name [Tab/Comma] Phone [Tab/Comma] Email [Tab/Comma] Budget [Tab/Comma] Notes</span>
+        </div>
+
+        <app-custom-textarea
+          formControlName="pasted_csv"
+          label="Paste Spreadsheet Rows Here"
+          placeholder="e.g.&#10;Engr. Tanvir Ahmed	+8801711223344	tanvir@gmail.com	25000000	REHAB Fair Stall B14&#10;Dr. Nasreen Sultana	+8801819334455	nasreen@yahoo.com	18500000	Interested in 3-bed Dhanmondi"
+          [rows]="3">
+        </app-custom-textarea>
+
+        <div class="flex justify-end">
+          <app-custom-button
+            variant="outline"
+            size="sm"
+            type="button"
+            (clicked)="parsePastedCsv()">
+            <i class="ri-play-list-add-line mr-1"></i> Parse Pasted Rows into Table
+          </app-custom-button>
+        </div>
+      </div>
+
+      <!-- SECTION 3: INGESTION STAGING TABLE -->
+      <div class="space-y-4">
+        <div class="flex items-center justify-between border-b border-border pb-2">
+          <div class="flex items-center gap-2">
+            <i class="ri-table-line text-primary text-base"></i>
+            <h3 class="font-bold text-foreground text-sm">Prospect Staging & Verification List ({{ parsedLeads().length }} rows)</h3>
+          </div>
+
+          <app-custom-button
+            variant="outline"
+            size="sm"
+            type="button"
+            (clicked)="addRow()">
+            <i class="ri-add-line mr-1"></i> Add Manual Row
+          </app-custom-button>
+        </div>
+
+        <!-- Table -->
+        <div class="overflow-x-auto rounded-xl border border-border">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-secondary/40 text-muted-foreground uppercase text-[10px] tracking-wider border-b border-border">
+              <tr>
+                <th class="py-2.5 px-3">#</th>
+                <th class="py-2.5 px-3">Lead Full Name *</th>
+                <th class="py-2.5 px-3">Primary Phone *</th>
+                <th class="py-2.5 px-3">Email Address</th>
+                <th class="py-2.5 px-3">Target Budget (BDT)</th>
+                <th class="py-2.5 px-3">Inquiry Notes / Source Details</th>
+                <th class="py-2.5 px-3 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border">
+              <tr *ngFor="let l of parsedLeads(); let i = index" class="hover:bg-secondary/20 transition-colors">
+                <td class="py-2 px-3 text-muted-foreground font-mono">{{ i + 1 }}</td>
+                <td class="py-2 px-3">
+                  <input
+                    type="text"
+                    [value]="l.lead_name"
+                    (input)="updateLead(i, 'lead_name', $any($event.target).value)"
+                    placeholder="e.g. Asif Mahmud"
+                    class="w-full text-xs rounded-lg border border-border bg-background p-1.5 text-foreground focus:ring-1 focus:ring-primary focus:outline-none">
+                </td>
+                <td class="py-2 px-3">
+                  <input
+                    type="text"
+                    [value]="l.primary_phone"
+                    (input)="updateLead(i, 'primary_phone', $any($event.target).value)"
+                    placeholder="+8801700000000"
+                    class="w-full text-xs rounded-lg border border-border bg-background p-1.5 font-mono text-foreground focus:ring-1 focus:ring-primary focus:outline-none">
+                </td>
+                <td class="py-2 px-3">
+                  <input
+                    type="email"
+                    [value]="l.email || ''"
+                    (input)="updateLead(i, 'email', $any($event.target).value)"
+                    placeholder="email@example.com"
+                    class="w-full text-xs rounded-lg border border-border bg-background p-1.5 text-foreground focus:ring-1 focus:ring-primary focus:outline-none">
+                </td>
+                <td class="py-2 px-3">
+                  <input
+                    type="number"
+                    [value]="l.budget_range_max || 0"
+                    (input)="updateLead(i, 'budget_range_max', $any($event.target).value)"
+                    class="w-full text-xs rounded-lg border border-border bg-background p-1.5 font-mono text-foreground focus:ring-1 focus:ring-primary focus:outline-none">
+                </td>
+                <td class="py-2 px-3">
+                  <input
+                    type="text"
+                    [value]="l.notes || ''"
+                    (input)="updateLead(i, 'notes', $any($event.target).value)"
+                    placeholder="Fair notes..."
+                    class="w-full text-xs rounded-lg border border-border bg-background p-1.5 text-foreground focus:ring-1 focus:ring-primary focus:outline-none">
+                </td>
+                <td class="py-2 px-3 text-right">
+                  <button
+                    type="button"
+                    (click)="removeRow(i)"
+                    [disabled]="parsedLeads().length === 1"
+                    class="p-1 rounded text-rose-500 hover:bg-rose-500/10 disabled:opacity-30">
+                    <i class="ri-delete-bin-line"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Action Bar -->
+      <div class="flex items-center justify-end gap-3 pt-4 border-t border-border">
+        <app-custom-button
+          variant="outline"
+          type="button"
+          (clicked)="cancel()">
+          Cancel
+        </app-custom-button>
+
+        <app-custom-button
+          variant="primary"
+          type="submit"
+          [disabled]="isSubmitting()">
+          <i class="ri-upload-cloud-line mr-1"></i>
+          Ingest & Attribute {{ parsedLeads().length }} Leads
+        </app-custom-button>
+      </div>
+    </form>
+  </app-card-container>
+</div>

@@ -1,271 +1,471 @@
-<div class="space-y-4 lg:space-y-6">
-  @if (errorMessage()) {
-    <div class="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700 flex items-center gap-2">
-      <lucide-icon [img]="AlertTriangle" size="16"></lucide-icon>
-      {{ errorMessage() }}
-    </div>
-  }
-  @if (successMessage()) {
-    <div class="p-3 rounded-lg bg-green-50 border border-green-200 text-sm text-green-700">{{ successMessage() }}</div>
-  }
+<!-- Unified Customer KYC Dossier (Spec 4.5) Wrapped in Single Card Container -->
+<app-card-container
+  [title]="customer() ? customer()!.full_name_en : 'Customer Dossier'"
+  [subtitle]="customer() ? (customer()!.customer_code + ' · Unified Master Profile & KYC Dossier (Spec 4.5)') : 'Loading dossier…'"
+>
+  <!-- Card Header Actions -->
+  <div card-actions class="flex items-center gap-2">
+    <app-custom-button variant="secondary" size="sm" (clicked)="back()">
+      <span class="flex items-center gap-1.5">
+        <i class="ri-arrow-left-line text-sm"></i>
+        <span>Back to Directory</span>
+      </span>
+    </app-custom-button>
+    <app-custom-button variant="secondary" size="sm" (clicked)="goToRequirements()" [disabled]="!customer()">
+      <span class="flex items-center gap-1.5">
+        <i class="ri-home-gear-line text-sm"></i>
+        <span>Property Requirements</span>
+      </span>
+    </app-custom-button>
+    <app-custom-button variant="primary" size="sm" (clicked)="edit()" [disabled]="!customer()">
+      <span class="flex items-center gap-1.5">
+        <i class="ri-edit-line text-sm"></i>
+        <span>Edit Profile</span>
+      </span>
+    </app-custom-button>
+  </div>
 
-  @if (isLoading()) {
-    <div class="erp-card p-10 text-center text-slate-400">Loading customer dossier…</div>
-  } @else {
-    @if (customer(); as c) {
+  <div class="flex flex-col gap-6">
+    <!-- Notifications -->
+    @if (errorMessage()) {
+      <div class="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-600 flex items-center gap-2">
+        <i class="ri-error-warning-line text-base shrink-0"></i>
+        <span>{{ errorMessage() }}</span>
+      </div>
+    }
+    @if (successMessage()) {
+      <div class="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs text-emerald-600 flex items-center gap-2">
+        <i class="ri-checkbox-circle-line text-base shrink-0"></i>
+        <span>{{ successMessage() }}</span>
+      </div>
+    }
 
-    <!-- Header card -->
-    <app-card-container
-      [title]="c.full_name_en"
-      [subtitle]="c.customer_code + ' · KYC Dossier (Spec 4.5)'">
-      <div card-actions class="flex items-center gap-2">
-        <app-custom-button variant="secondary" type="button" (click)="back()">
-          <lucide-icon [img]="ArrowLeft" size="16"></lucide-icon>
-          Back to Directory
-        </app-custom-button>
-        <app-custom-button variant="primary" type="button" (click)="edit()">
-          <lucide-icon [img]="Edit3" size="16"></lucide-icon>
-          Edit Profile
-        </app-custom-button></div>
-
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    @if (isLoading()) {
+      <div class="py-16 text-center text-slate-400">
+        <div class="inline-flex items-center gap-2">
+          <i class="ri-loader-4-line animate-spin text-xl text-primary"></i>
+          <span>Loading customer dossier…</span>
+        </div>
+      </div>
+    } @else {
+      @if (customer(); as c) {
+      <!-- 1. Master Customer Profile Overview Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 p-5 rounded-2xl bg-slate-50/50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800">
         <!-- Identity -->
         <div class="space-y-3">
-          <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Identity</h4>
-          <dl class="space-y-2 text-sm">
-            <div class="flex justify-between"><dt class="text-slate-500">Code</dt><dd class="font-mono">{{ c.customer_code }}</dd></div>
-            <div class="flex justify-between"><dt class="text-slate-500">Type</dt><dd>{{ c.customer_type || 'INDIVIDUAL' }}</dd></div>
-            <div class="flex justify-between"><dt class="text-slate-500">NID</dt><dd class="font-mono">{{ c.nid_number || '—' }}</dd></div>
-            <div class="flex justify-between"><dt class="text-slate-500">TIN</dt><dd class="font-mono">{{ c.tin_number || '—' }}</dd></div>
-            <div class="flex justify-between"><dt class="text-slate-500">Passport</dt><dd class="font-mono">{{ c.passport_number || '—' }}</dd></div>
+          <h4 class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+            <i class="ri-shield-user-line text-primary text-sm"></i>
+            <span>Identity & Legal KYC</span>
+          </h4>
+          <dl class="space-y-2 text-xs">
+            <div class="flex justify-between py-1 border-b border-slate-200/60 dark:border-slate-800">
+              <dt class="text-slate-500">Customer Code</dt>
+              <dd class="font-mono font-bold text-slate-900 dark:text-slate-100">{{ c.customer_code }}</dd>
+            </div>
+            <div class="flex justify-between py-1 border-b border-slate-200/60 dark:border-slate-800">
+              <dt class="text-slate-500">Customer Type</dt>
+              <dd class="font-medium text-slate-800 dark:text-slate-200">{{ c.customer_type || 'INDIVIDUAL' }}</dd>
+            </div>
+            <div class="flex justify-between py-1 border-b border-slate-200/60 dark:border-slate-800">
+              <dt class="text-slate-500">National ID (NID)</dt>
+              <dd class="font-mono text-slate-800 dark:text-slate-200">{{ c.nid_number || '—' }}</dd>
+            </div>
+            <div class="flex justify-between py-1 border-b border-slate-200/60 dark:border-slate-800">
+              <dt class="text-slate-500">e-TIN</dt>
+              <dd class="font-mono text-slate-800 dark:text-slate-200">{{ c.tin_number || '—' }}</dd>
+            </div>
+            <div class="flex justify-between py-1 border-b border-slate-200/60 dark:border-slate-800">
+              <dt class="text-slate-500">Passport</dt>
+              <dd class="font-mono text-slate-800 dark:text-slate-200">{{ c.passport_number || '—' }}</dd>
+            </div>
             @if (c.full_name_bn) {
-              <div class="flex justify-between"><dt class="text-slate-500">Bangla Name</dt><dd>{{ c.full_name_bn }}</dd></div>
+              <div class="flex justify-between py-1 border-b border-slate-200/60 dark:border-slate-800">
+                <dt class="text-slate-500">Bangla Name</dt>
+                <dd class="text-slate-800 dark:text-slate-200">{{ c.full_name_bn }}</dd>
+              </div>
             }
           </dl>
         </div>
 
-        <!-- Contact -->
+        <!-- Contact & Consent -->
         <div class="space-y-3">
-          <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Contact & Consent</h4>
-          <dl class="space-y-2 text-sm">
-            <div class="flex justify-between"><dt class="text-slate-500">Primary Phone</dt><dd>{{ c.primary_phone }}</dd></div>
-            <div class="flex justify-between"><dt class="text-slate-500">Secondary</dt><dd>{{ c.secondary_phone || '—' }}</dd></div>
-            <div class="flex justify-between"><dt class="text-slate-500">Email</dt><dd>{{ c.email || '—' }}</dd></div>
-            <div class="flex justify-between"><dt class="text-slate-500">Language</dt><dd>{{ c.preferred_language || 'BANGLA' }}</dd></div>
-            <div class="flex justify-between"><dt class="text-slate-500">Preferred Contact</dt><dd>{{ c.preferred_contact_method || 'PHONE' }}</dd></div>
-            <div class="flex justify-between">
-              <dt class="text-slate-500">Consent</dt>
+          <h4 class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+            <i class="ri-phone-line text-blue-500 text-sm"></i>
+            <span>Contact & Consent</span>
+          </h4>
+          <dl class="space-y-2 text-xs">
+            <div class="flex justify-between py-1 border-b border-slate-200/60 dark:border-slate-800">
+              <dt class="text-slate-500">Primary Mobile</dt>
+              <dd class="font-semibold text-slate-900 dark:text-slate-100">{{ c.primary_phone }}</dd>
+            </div>
+            <div class="flex justify-between py-1 border-b border-slate-200/60 dark:border-slate-800">
+              <dt class="text-slate-500">Secondary Mobile</dt>
+              <dd class="text-slate-700 dark:text-slate-300">{{ c.secondary_phone || '—' }}</dd>
+            </div>
+            <div class="flex justify-between py-1 border-b border-slate-200/60 dark:border-slate-800">
+              <dt class="text-slate-500">Email Address</dt>
+              <dd class="text-slate-700 dark:text-slate-300 truncate max-w-[150px]">{{ c.email || '—' }}</dd>
+            </div>
+            <div class="flex justify-between py-1 border-b border-slate-200/60 dark:border-slate-800">
+              <dt class="text-slate-500">Language</dt>
+              <dd class="text-slate-800 dark:text-slate-200">{{ c.preferred_language || 'BANGLA' }}</dd>
+            </div>
+            <div class="flex justify-between py-1 border-b border-slate-200/60 dark:border-slate-800">
+              <dt class="text-slate-500">Preferred Channel</dt>
+              <dd class="text-slate-800 dark:text-slate-200">{{ c.preferred_contact_method || 'PHONE' }}</dd>
+            </div>
+            <div class="flex justify-between py-1 border-b border-slate-200/60 dark:border-slate-800">
+              <dt class="text-slate-500">Consent Given</dt>
               <dd>
                 @if (c.is_consent_given) {
-                  <span class="inline-flex items-center gap-1 text-green-700 text-xs font-medium"><lucide-icon [img]="CheckCircle" size="14"></lucide-icon> Given</span>
+                  <span class="inline-flex items-center gap-1 text-emerald-600 font-bold">
+                    <i class="ri-checkbox-circle-fill"></i> Given
+                  </span>
                 } @else {
-                  <span class="inline-flex items-center gap-1 text-red-700 text-xs font-medium"><lucide-icon [img]="XCircle" size="14"></lucide-icon> Not Given</span>
+                  <span class="inline-flex items-center gap-1 text-rose-600 font-bold">
+                    <i class="ri-close-circle-fill"></i> No Consent
+                  </span>
                 }
               </dd>
             </div>
-            <div class="flex justify-between">
-              <dt class="text-slate-500">Opted Out</dt>
+            <div class="flex justify-between py-1 border-b border-slate-200/60 dark:border-slate-800">
+              <dt class="text-slate-500">Opt-Out Status</dt>
               <dd>
                 @if (c.is_opted_out) {
-                  <span class="text-red-700 text-xs font-medium">Yes @if (c.opt_out_at) { · {{ c.opt_out_at | date:'mediumDate' }} }</span>
-                } @else { <span class="text-slate-600 text-xs">No</span> }
+                  <span class="text-rose-600 font-bold">Opted Out @if (c.opt_out_at) { · {{ c.opt_out_at | date:'dd MMM yyyy' }} }</span>
+                } @else {
+                  <span class="text-emerald-600 font-medium">Active Marketing</span>
+                }
               </dd>
             </div>
-            @if (c.is_nrb) {
-              <div class="flex justify-between"><dt class="text-slate-500">Residency</dt><dd class="text-amber-700 font-medium">NRB</dd></div>
-            }
           </dl>
         </div>
 
-        <!-- Address -->
+        <!-- Address & Relationship Manager -->
         <div class="space-y-3">
-          <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Address</h4>
-          <div>
-            <p class="text-xs text-slate-500 mb-1">Present</p>
-            <p class="text-sm text-slate-700">{{ c.present_address || '—' }}</p>
-          </div>
-          <div>
-            <p class="text-xs text-slate-500 mb-1">Permanent</p>
-            <p class="text-sm text-slate-700">{{ c.permanent_address || '—' }}</p>
-          </div>
-          @if (c.relationship_manager_name) {
+          <h4 class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+            <i class="ri-map-pin-line text-emerald-500 text-sm"></i>
+            <span>Postal Address & RM</span>
+          </h4>
+          <div class="space-y-2 text-xs">
             <div>
-              <p class="text-xs text-slate-500 mb-1">Relationship Manager</p>
-              <p class="text-sm text-slate-700">{{ c.relationship_manager_name }}</p>
+              <p class="text-slate-500 font-medium mb-0.5">Present Address</p>
+              <p class="text-slate-800 dark:text-slate-200 font-normal bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-200/60 dark:border-slate-800">
+                {{ c.present_address || 'Not specified' }}
+              </p>
             </div>
-          }
+            <div>
+              <p class="text-slate-500 font-medium mb-0.5">Permanent Address</p>
+              <p class="text-slate-800 dark:text-slate-200 font-normal bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-200/60 dark:border-slate-800">
+                {{ c.permanent_address || 'Not specified' }}
+              </p>
+            </div>
+            @if (c.relationship_manager_name) {
+              <div>
+                <p class="text-slate-500 font-medium mb-0.5">Customer Relationship Manager</p>
+                <p class="text-slate-800 dark:text-slate-200 font-semibold">{{ c.relationship_manager_name }}</p>
+              </div>
+            }
+          </div>
         </div>
       </div>
-    </app-card-container>
 
-    <!-- Nominees -->
-    <app-card-container
-      title="Nominees"
-      [subtitle]="'Inheritance shares — total ' + nomineeShareTotal() + '%. NOT proof of legal ownership.'">
-      <div card-actions>
-        <app-custom-button variant="primary" type="button" (click)="openNomineeModal()">
-          <lucide-icon [img]="Plus" size="16"></lucide-icon>
-          Add Nominee
-        </app-custom-button></div>
-
-      @if (c.nominees.length === 0) {
-        <p class="text-sm text-slate-400 py-6 text-center">No nominees recorded yet.</p>
-      } @else {
-        <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-slate-200">
-            <thead>
-              <tr class="bg-slate-50">
-                <th class="px-3 py-2.5 text-left text-xs font-semibold text-slate-600 uppercase">Name</th>
-                <th class="px-3 py-2.5 text-left text-xs font-semibold text-slate-600 uppercase">Relation</th>
-                <th class="px-3 py-2.5 text-left text-xs font-semibold text-slate-600 uppercase">NID</th>
-                <th class="px-3 py-2.5 text-left text-xs font-semibold text-slate-600 uppercase">Share</th>
-                <th class="px-3 py-2.5 text-left text-xs font-semibold text-slate-600 uppercase">Phone</th>
-                <th class="px-3 py-2.5 text-left text-xs font-semibold text-slate-600 uppercase">Verification</th>
-                <th class="px-3 py-2.5 text-right text-xs font-semibold text-slate-600 uppercase">Actions</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100">
-              @for (n of c.nominees; track n.id) {
-                <tr>
-                  <td class="px-3 py-2.5 text-sm font-medium text-slate-900">{{ n.nominee_name }}</td>
-                  <td class="px-3 py-2.5 text-sm text-slate-600">{{ n.relationship }}</td>
-                  <td class="px-3 py-2.5 text-sm font-mono text-xs text-slate-600">{{ n.nid_number || '—' }}</td>
-                  <td class="px-3 py-2.5 text-sm font-semibold text-slate-800">{{ n.share_percentage }}%</td>
-                  <td class="px-3 py-2.5 text-sm text-slate-600">{{ n.phone || '—' }}</td>
-                  <td class="px-3 py-2.5">
-                    <span class="inline-flex px-2 py-0.5 rounded-md border text-xs font-semibold"
-                          [ngClass]="n.verification_status === 'VERIFIED' ? 'bg-green-50 text-green-700 border-green-200' : n.verification_status === 'REJECTED' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-amber-50 text-amber-700 border-amber-200'">
-                      {{ n.verification_status || 'PENDING' }}
-                    </span>
-                  </td>
-                  <td class="px-3 py-2.5 text-right">
-                    <div class="flex justify-end gap-1">
-                      <app-custom-button variant="ghost" size="sm" type="button" (click)="openNomineeModal(n)">
-                        <lucide-icon [img]="Edit3" size="14"></lucide-icon>
-                      </app-custom-button>
-                      <app-custom-button variant="ghost" size="sm" type="button" (click)="deleteNominee(n)">
-                        <lucide-icon [img]="Trash2" size="14" class="text-red-500"></lucide-icon>
-                      </app-custom-button></div>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
+      <!-- 2. Nominees Subsection (Inheritance Entitlements) -->
+      <div class="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs">
+        <div class="px-5 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/40 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
+                Nominees & Entitlements
+              </h3>
+              <span class="text-xs font-bold px-2 py-0.5 rounded-full border"
+                    [ngClass]="nomineeShareTotal() > 100 ? 'bg-rose-500/10 text-rose-600 border-rose-500/30' : 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30'">
+                Total Share: {{ nomineeShareTotal() }}%
+              </span>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-0.5">
+              Collected for contractual nomination purposes. NOT legal ownership proof.
+            </p>
+          </div>
+          <app-custom-button variant="primary" size="sm" (clicked)="openNomineeModal()">
+            <span class="flex items-center gap-1.5">
+              <i class="ri-user-add-line text-sm"></i>
+              <span>Add Nominee</span>
+            </span>
+          </app-custom-button>
         </div>
-      }
-    </app-card-container>
 
-    <!-- Service Requests -->
-    <app-card-container
-      title="Service Requests & Complaints"
-      subtitle="Post-sale and pre-sale service issues linked to this unified profile (Spec 4.5).">
-      <div card-actions>
-        <app-custom-button variant="primary" type="button" (click)="openServiceModal()">
-          <lucide-icon [img]="Plus" size="16"></lucide-icon>
-          New Request
-        </app-custom-button></div>
-
-      @if (serviceRequests().length === 0) {
-        <p class="text-sm text-slate-400 py-6 text-center">No service requests.</p>
-      } @else {
-        <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-slate-200">
-            <thead>
-              <tr class="bg-slate-50">
-                <th class="px-3 py-2.5 text-left text-xs font-semibold text-slate-600 uppercase">Title</th>
-                <th class="px-3 py-2.5 text-left text-xs font-semibold text-slate-600 uppercase">Type</th>
-                <th class="px-3 py-2.5 text-left text-xs font-semibold text-slate-600 uppercase">Status</th>
-                <th class="px-3 py-2.5 text-left text-xs font-semibold text-slate-600 uppercase">Priority</th>
-                <th class="px-3 py-2.5 text-left text-xs font-semibold text-slate-600 uppercase">Created</th>
-                <th class="px-3 py-2.5 text-right text-xs font-semibold text-slate-600 uppercase">Actions</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100">
-              @for (sr of serviceRequests(); track sr.id) {
+        @if (c.nominees.length === 0) {
+          <div class="py-12 text-center text-slate-400">
+            <i class="ri-user-line text-3xl"></i>
+            <p class="text-xs mt-1">No nominees recorded for this customer profile yet.</p>
+          </div>
+        } @else {
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-100/80 dark:bg-slate-850 text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-200 dark:border-slate-800">
                 <tr>
-                  <td class="px-3 py-2.5">
-                    <div class="text-sm font-medium text-slate-900">{{ sr.title }}</div>
-                    @if (sr.description) {
-                      <div class="text-xs text-slate-500 truncate max-w-xs">{{ sr.description }}</div>
-                    }
-                  </td>
-                  <td class="px-3 py-2.5 text-sm text-slate-600">{{ sr.request_type }}</td>
-                  <td class="px-3 py-2.5">
-                    <span class="inline-flex px-2 py-0.5 rounded-md border text-xs font-semibold" [ngClass]="statusClass(sr.status)">
-                      {{ sr.status }}
-                    </span>
-                  </td>
-                  <td class="px-3 py-2.5 text-sm text-slate-600">{{ sr.priority || 'MEDIUM' }}</td>
-                  <td class="px-3 py-2.5 text-sm text-slate-500">{{ sr.created_at | date:'mediumDate' }}</td>
-                  <td class="px-3 py-2.5 text-right">
-                    <div class="flex justify-end gap-1">
-                      <app-custom-button variant="ghost" size="sm" type="button" (click)="openServiceModal(sr)">
-                        <lucide-icon [img]="Edit3" size="14"></lucide-icon>
-                      </app-custom-button>
-                      <app-custom-button variant="ghost" size="sm" type="button" (click)="deleteServiceRequest(sr)">
-                        <lucide-icon [img]="Trash2" size="14" class="text-red-500"></lucide-icon>
-                      </app-custom-button></div>
-                  </td>
+                  <th class="px-4 py-3">Nominee Name</th>
+                  <th class="px-4 py-3">Relationship</th>
+                  <th class="px-4 py-3">National ID (NID)</th>
+                  <th class="px-4 py-3 text-right">Share %</th>
+                  <th class="px-4 py-3">Contact Phone</th>
+                  <th class="px-4 py-3">Verification Status</th>
+                  <th class="px-4 py-3 text-right w-24">Actions</th>
                 </tr>
-              }
-            </tbody>
-          </table>
+              </thead>
+              <tbody class="divide-y divide-slate-200/70 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                @for (n of c.nominees; track n.id) {
+                  <tr class="hover:bg-slate-50 dark:hover:bg-slate-850/60 transition-colors">
+                    <td class="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">{{ n.nominee_name }}</td>
+                    <td class="px-4 py-3 text-slate-700 dark:text-slate-300">{{ n.relationship }}</td>
+                    <td class="px-4 py-3 font-mono text-slate-600 dark:text-slate-400">{{ n.nid_number || '—' }}</td>
+                    <td class="px-4 py-3 text-right font-bold text-slate-900 dark:text-slate-100">{{ n.share_percentage }}%</td>
+                    <td class="px-4 py-3 text-slate-600 dark:text-slate-300">{{ n.phone || '—' }}</td>
+                    <td class="px-4 py-3">
+                      <span class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold border"
+                            [ngClass]="n.verification_status === 'VERIFIED' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30' : n.verification_status === 'REJECTED' ? 'bg-rose-500/10 text-rose-600 border-rose-500/30' : 'bg-amber-500/10 text-amber-600 border-amber-500/30'">
+                        {{ n.verification_status || 'PENDING' }}
+                      </span>
+                    </td>
+                    <td class="px-4 py-3 text-right">
+                      <div class="flex items-center justify-end gap-1">
+                        <button
+                          type="button"
+                          (click)="openNomineeModal(n)"
+                          class="p-1.5 rounded-lg text-slate-500 hover:text-primary hover:bg-primary/10 transition-colors"
+                          title="Edit Nominee"
+                        >
+                          <i class="ri-edit-line text-sm"></i>
+                        </button>
+                        <button
+                          type="button"
+                          (click)="deleteNominee(n)"
+                          class="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-500/10 transition-colors"
+                          title="Delete Nominee"
+                        >
+                          <i class="ri-delete-bin-line text-sm"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+
+      <!-- 3. Service Requests & Complaints Subsection -->
+      <div class="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs">
+        <div class="px-5 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/40 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 class="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
+              Customer Service Requests & Complaints
+            </h3>
+            <p class="text-[11px] text-slate-400 mt-0.5">
+              Service tickets, feedback, and complaints linked to this customer profile (Spec 4.5).
+            </p>
+          </div>
+          <app-custom-button variant="primary" size="sm" (clicked)="openServiceModal()">
+            <span class="flex items-center gap-1.5">
+              <i class="ri-add-line text-sm"></i>
+              <span>New Ticket</span>
+            </span>
+          </app-custom-button>
         </div>
+
+        @if (serviceRequests().length === 0) {
+          <div class="py-12 text-center text-slate-400">
+            <i class="ri-customer-service-2-line text-3xl"></i>
+            <p class="text-xs mt-1">No service requests or complaints on record.</p>
+          </div>
+        } @else {
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-100/80 dark:bg-slate-850 text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-200 dark:border-slate-800">
+                <tr>
+                  <th class="px-4 py-3">Title & Summary</th>
+                  <th class="px-4 py-3">Type</th>
+                  <th class="px-4 py-3">Status</th>
+                  <th class="px-4 py-3">Priority</th>
+                  <th class="px-4 py-3">Created Date</th>
+                  <th class="px-4 py-3 text-right w-24">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200/70 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                @for (sr of serviceRequests(); track sr.id) {
+                  <tr class="hover:bg-slate-50 dark:hover:bg-slate-850/60 transition-colors">
+                    <td class="px-4 py-3">
+                      <div class="font-semibold text-slate-900 dark:text-slate-100">{{ sr.title }}</div>
+                      @if (sr.description) {
+                        <div class="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-sm">{{ sr.description }}</div>
+                      }
+                    </td>
+                    <td class="px-4 py-3 text-slate-700 dark:text-slate-300 font-medium">{{ sr.request_type }}</td>
+                    <td class="px-4 py-3">
+                      <span class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold border" [ngClass]="statusClass(sr.status)">
+                        {{ sr.status }}
+                      </span>
+                    </td>
+                    <td class="px-4 py-3 text-slate-700 dark:text-slate-300 font-semibold">{{ sr.priority || 'MEDIUM' }}</td>
+                    <td class="px-4 py-3 text-slate-500 dark:text-slate-400">{{ sr.created_at | date:'dd MMM yyyy, h:mm a' }}</td>
+                    <td class="px-4 py-3 text-right">
+                      <div class="flex items-center justify-end gap-1">
+                        <button
+                          type="button"
+                          (click)="openServiceModal(sr)"
+                          class="p-1.5 rounded-lg text-slate-500 hover:text-primary hover:bg-primary/10 transition-colors"
+                          title="Edit Ticket"
+                        >
+                          <i class="ri-edit-line text-sm"></i>
+                        </button>
+                        <button
+                          type="button"
+                          (click)="deleteServiceRequest(sr)"
+                          class="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-500/10 transition-colors"
+                          title="Delete Ticket"
+                        >
+                          <i class="ri-delete-bin-line text-sm"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
       }
-    </app-card-container>
     }
-  }
-</div>
-
-<!-- Nominee modal -->
-@if (nomineeModalOpen()) {
-  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" (click)="nomineeModalOpen.set(false)">
-    <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()">
-      <h3 class="text-lg font-semibold text-slate-900">{{ editingNominee() ? 'Edit Nominee' : 'Add Nominee' }}</h3>
-      <form [formGroup]="nomineeForm" class="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <app-custom-input formControlName="nominee_name" label="Nominee Name *" [required]="true"></app-custom-input>
-        <app-searchable-select formControlName="relationship" label="Relation" [categoryCode]="LOOKUP.nomineeRelation"></app-searchable-select>
-        <app-custom-input formControlName="nid_number" label="NID"></app-custom-input>
-        <app-custom-input formControlName="share_percentage" label="Share %" type="number"></app-custom-input>
-        <app-custom-input formControlName="phone" label="Phone"></app-custom-input>
-        <app-custom-input formControlName="email" label="Email"></app-custom-input>
-        <app-custom-input formControlName="address" label="Address"></app-custom-input>
-        <app-searchable-select formControlName="verification_status" label="Verification" [categoryCode]="LOOKUP.nomineeVerification" [allowCreateNew]="false"></app-searchable-select>
-        <div class="md:col-span-2">
-          <app-custom-textarea formControlName="notes" label="Notes" rows="2"></app-custom-textarea>
-        </div>
-      </form>
-      <div class="flex justify-end gap-2">
-        <app-custom-button variant="secondary" type="button" (click)="nomineeModalOpen.set(false)">Cancel</app-custom-button>
-        <app-custom-button variant="primary" type="button" (click)="saveNominee()" [disabled]="isSaving()">
-          @if (isSaving()) { Saving… } @else { Save Nominee }
-        </app-custom-button></div>
-    </div>
   </div>
-}
+</app-card-container>
 
-<!-- Service request modal -->
-@if (serviceModalOpen()) {
-  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" (click)="serviceModalOpen.set(false)">
-    <div class="bg-white rounded-xl shadow-xl w-full max-w-lg p-6 space-y-4" (click)="$event.stopPropagation()">
-      <h3 class="text-lg font-semibold text-slate-900">{{ editingService() ? 'Edit Service Request' : 'New Service Request' }}</h3>
-      <form [formGroup]="serviceForm" class="space-y-3">
-        <app-searchable-select formControlName="request_type" label="Type"
-          [options]="[{ value: 'SERVICE', label: 'Service' }, { value: 'COMPLAINT', label: 'Complaint' }]"
-          [allowCreateNew]="false"></app-searchable-select>
-        <app-custom-input formControlName="title" label="Title *" [required]="true"></app-custom-input>
-        <app-custom-textarea formControlName="description" label="Description" rows="3"></app-custom-textarea>
-        <div class="grid grid-cols-2 gap-3">
-          <app-searchable-select formControlName="status" label="Status" [categoryCode]="LOOKUP.serviceStatus" [allowCreateNew]="false"></app-searchable-select>
-          <app-searchable-select formControlName="priority" label="Priority" [categoryCode]="LOOKUP.servicePriority" [allowCreateNew]="false"></app-searchable-select>
-        </div>
-        <app-custom-textarea formControlName="resolution_notes" label="Resolution Notes" rows="2"></app-custom-textarea>
-      </form>
-      <div class="flex justify-end gap-2">
-        <app-custom-button variant="secondary" type="button" (click)="serviceModalOpen.set(false)">Cancel</app-custom-button>
-        <app-custom-button variant="primary" type="button" (click)="saveServiceRequest()" [disabled]="isSaving()">
-          @if (isSaving()) { Saving… } @else { Save Request }
-        </app-custom-button></div>
+<!-- Reusable Nominee Modal -->
+<app-modal
+  [isOpen]="nomineeModalOpen()"
+  [title]="editingNominee() ? 'Edit Nominee Entitlement' : 'Add Nominee Entitlement'"
+  subtitle="Nominee details are stored for contract execution and inheritance records"
+  size="md"
+  (closed)="nomineeModalOpen.set(false)"
+>
+  <form [formGroup]="nomineeForm" class="flex flex-col gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <app-custom-input
+        formControlName="nominee_name"
+        label="Nominee Name *"
+        [required]="true"
+      ></app-custom-input>
+      <app-searchable-select
+        formControlName="relationship"
+        label="Relationship *"
+        [categoryCode]="LOOKUP.nomineeRelation"
+        [allowCreateNew]="true"
+        [required]="true"
+      ></app-searchable-select>
+      <app-custom-input
+        formControlName="share_percentage"
+        label="Entitlement Share (%) *"
+        type="number"
+        [required]="true"
+      ></app-custom-input>
+      <app-custom-input
+        formControlName="nid_number"
+        label="NID Number"
+      ></app-custom-input>
+      <app-custom-input
+        formControlName="phone"
+        label="Phone Number"
+      ></app-custom-input>
+      <app-custom-input
+        formControlName="email"
+        label="Email Address"
+        type="email"
+      ></app-custom-input>
+      <app-custom-input
+        formControlName="address"
+        label="Address"
+      ></app-custom-input>
+      <app-searchable-select
+        formControlName="verification_status"
+        label="Verification Status"
+        [categoryCode]="LOOKUP.nomineeVerification"
+        [allowCreateNew]="false"
+      ></app-searchable-select>
     </div>
+    <app-custom-textarea
+      formControlName="notes"
+      label="Audit Notes"
+      [rows]="2"
+    ></app-custom-textarea>
+  </form>
+
+  <div modal-footer class="flex items-center justify-end gap-2 w-full">
+    <app-custom-button variant="secondary" (clicked)="nomineeModalOpen.set(false)">Cancel</app-custom-button>
+    <app-custom-button variant="primary" [loading]="isSaving()" (clicked)="saveNominee()">
+      Save Nominee
+    </app-custom-button>
   </div>
-}
+</app-modal>
+
+<!-- Reusable Service Request Ticket Modal -->
+<app-modal
+  [isOpen]="serviceModalOpen()"
+  [title]="editingService() ? 'Edit Service Request / Ticket' : 'Create Service Request / Complaint'"
+  subtitle="Track post-handover issues, customer queries, and complaints"
+  size="md"
+  (closed)="serviceModalOpen.set(false)"
+>
+  <form [formGroup]="serviceForm" class="flex flex-col gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <app-searchable-select
+        formControlName="request_type"
+        label="Ticket Type *"
+        [options]="[{ value: 'SERVICE', label: 'Service Inquiry' }, { value: 'COMPLAINT', label: 'Customer Complaint' }]"
+        [allowCreateNew]="false"
+        [required]="true"
+      ></app-searchable-select>
+      <app-searchable-select
+        formControlName="priority"
+        label="Priority"
+        [categoryCode]="LOOKUP.servicePriority"
+        [allowCreateNew]="false"
+      ></app-searchable-select>
+    </div>
+    <app-custom-input
+      formControlName="title"
+      label="Subject / Title *"
+      placeholder="e.g. Plumbing leakage reported in Master Bath"
+      [required]="true"
+    ></app-custom-input>
+    <app-custom-textarea
+      formControlName="description"
+      label="Issue Description"
+      [rows]="3"
+      placeholder="Detailed customer complaint notes..."
+    ></app-custom-textarea>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <app-searchable-select
+        formControlName="status"
+        label="Resolution Status *"
+        [categoryCode]="LOOKUP.serviceStatus"
+        [allowCreateNew]="false"
+        [required]="true"
+      ></app-searchable-select>
+      <app-custom-textarea
+        formControlName="resolution_notes"
+        label="Resolution Notes"
+        [rows]="2"
+        placeholder="Actions taken to resolve..."
+      ></app-custom-textarea>
+    </div>
+  </form>
+
+  <div modal-footer class="flex items-center justify-end gap-2 w-full">
+    <app-custom-button variant="secondary" (clicked)="serviceModalOpen.set(false)">Cancel</app-custom-button>
+    <app-custom-button variant="primary" [loading]="isSaving()" (clicked)="saveServiceRequest()">
+      Save Ticket
+    </app-custom-button>
+  </div>
+</app-modal>

@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { ConstructionService } from '../../../core/services/construction.service';
 import { ProjectService } from '../../../core/services/project.service';
+import { LookupService } from '../../../core/services/lookup.service';
 import {
   ConstructionReportMeta,
   ConstructionReportSummaryKPIs,
@@ -33,6 +34,7 @@ import {
 export class ConstructionReportsComponent implements OnInit {
   private constructionService = inject(ConstructionService);
   private projectService = inject(ProjectService);
+  private lookupService = inject(LookupService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
 
@@ -61,18 +63,9 @@ export class ConstructionReportsComponent implements OnInit {
   projectOptions: { value: any; label: string }[] = [];
   contractorOptions: { value: any; label: string }[] = [];
   reportDropdownOptions: { value: any; label: string }[] = [];
-
-  categoryList = [
-    { id: 'ALL', label: 'All 14 Reports' },
-    { id: 'Progress & Schedule', label: 'Progress & Schedule' },
-    { id: 'Cost & Budget Control', label: 'Cost & Budget Control' },
-    { id: 'Materials & Store', label: 'Materials & Store' },
-    { id: 'Contractor & Contracts', label: 'Contractors & Work Orders' },
-    { id: 'Billing & Payments', label: 'Billing & Ageing' },
-    { id: 'Workforce & Site Ops', label: 'Workforce & Productivity' },
-    { id: 'Quality & Safety', label: 'Quality & Safety' },
-    { id: 'Closeout & Handover', label: 'Closeout & Handover' }
-  ];
+  dynamicCategories = signal<{ id: string; label: string }[]>([
+    { id: 'ALL', label: 'All 14 Reports' }
+  ]);
 
   // Active report metadata
   activeReportMeta = computed(() => {
@@ -131,6 +124,21 @@ export class ConstructionReportsComponent implements OnInit {
   }
 
   loadMetaAndKPIs(): void {
+    // Load dynamic categories from LookupService (Spec requirement 1)
+    this.lookupService.getItems('CONSTRUCTION_REPORT_CATEGORY').subscribe({
+      next: (items) => {
+        if (items && items.length > 0) {
+          this.dynamicCategories.set(items.map(i => ({
+            id: i.item_code,
+            label: i.item_name_en
+          })));
+        } else {
+          this.fallbackCategoriesFromTypes();
+        }
+      },
+      error: () => this.fallbackCategoriesFromTypes()
+    });
+
     this.constructionService.getConstructionReportTypes().subscribe({
       next: (types) => {
         this.reportTypes.set(types);
@@ -138,12 +146,25 @@ export class ConstructionReportsComponent implements OnInit {
           value: t.code,
           label: t.name
         }));
+        if (this.dynamicCategories().length <= 1) {
+          this.fallbackCategoriesFromTypes();
+        }
       }
     });
 
     this.constructionService.getConstructionReportSummaryKPIs().subscribe({
       next: (k) => this.kpis.set(k)
     });
+  }
+
+  private fallbackCategoriesFromTypes(): void {
+    const cats = Array.from(new Set(this.reportTypes().map(r => r.category))).filter(Boolean);
+    if (cats.length > 0) {
+      this.dynamicCategories.set([
+        { id: 'ALL', label: 'All 14 Reports' },
+        ...cats.map(c => ({ id: c, label: c }))
+      ]);
+    }
   }
 
   selectReport(code: string): void {

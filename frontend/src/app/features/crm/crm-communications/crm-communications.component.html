@@ -1,0 +1,561 @@
+<!-- Spec 4.9: Customer Communication History & Omnichannel Timeline -->
+<app-card-container
+  title="Customer Communication History"
+  subtitle="Unified omnichannel timeline of customer interactions across calls, WhatsApp, SMS, emails, site visits, and quotations"
+>
+  <!-- Card Header Actions -->
+  <div card-actions class="flex items-center gap-2">
+    <!-- View Switcher -->
+    <div class="flex items-center p-0.5 rounded-xl bg-secondary/80 border border-border">
+      <button
+        type="button"
+        (click)="setView('timeline')"
+        class="px-2.5 py-1 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5"
+        [class]="activeView() === 'timeline' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
+      >
+        <i class="ri-git-commit-line text-sm"></i>
+        <span>Customer Timeline</span>
+      </button>
+      <button
+        type="button"
+        (click)="setView('table')"
+        class="px-2.5 py-1 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5"
+        [class]="activeView() === 'table' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
+      >
+        <i class="ri-table-line text-sm"></i>
+        <span>All Logs</span>
+      </button>
+    </div>
+
+    <!-- Refresh -->
+    <app-custom-button variant="secondary" size="sm" (clicked)="activeView() === 'timeline' ? loadTimeline() : loadCommunications()">
+      <i class="ri-refresh-line text-sm" [class.animate-spin]="isLoading() || isLoadingTimeline()"></i>
+    </app-custom-button>
+
+    <!-- Log Interaction -->
+    <app-custom-button variant="primary" size="sm" (clicked)="openLogModal()">
+      <i class="ri-chat-new-line text-sm mr-1"></i>
+      <span>Log Interaction</span>
+    </app-custom-button>
+  </div>
+
+  <div class="space-y-6">
+    <!-- Omnichannel Channel Bar -->
+    <div class="p-3.5 rounded-xl bg-secondary/20 border border-border flex flex-wrap items-center gap-3 text-xs">
+      <span class="font-bold text-foreground flex items-center gap-1">
+        <i class="ri-links-line text-primary"></i> Channels:
+      </span>
+      <span class="flex items-center gap-1 text-muted-foreground font-medium">
+        <i class="ri-phone-line text-blue-500"></i> Calls
+      </span>
+      <span class="flex items-center gap-1 text-muted-foreground font-medium">
+        <i class="ri-whatsapp-line text-emerald-500"></i> WhatsApp
+      </span>
+      <span class="flex items-center gap-1 text-muted-foreground font-medium">
+        <i class="ri-message-2-line text-amber-500"></i> SMS
+      </span>
+      <span class="flex items-center gap-1 text-muted-foreground font-medium">
+        <i class="ri-mail-line text-indigo-500"></i> Email
+      </span>
+      <span class="flex items-center gap-1 text-muted-foreground font-medium">
+        <i class="ri-building-line text-purple-500"></i> Site Visits
+      </span>
+      <span class="flex items-center gap-1 text-muted-foreground font-medium">
+        <i class="ri-facebook-box-line text-sky-500"></i> Facebook Leads
+      </span>
+      <span class="flex items-center gap-1 text-muted-foreground font-medium">
+        <i class="ri-file-text-line text-orange-500"></i> Quotations
+      </span>
+      <span class="flex items-center gap-1 text-muted-foreground font-medium">
+        <i class="ri-sticky-note-line text-yellow-500"></i> Internal Notes
+      </span>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TIMELINE VIEW -->
+    <!-- ========================================== -->
+    @if (activeView() === 'timeline') {
+      <div class="space-y-6">
+        <!-- Contact Selector Ribbon -->
+        <div class="p-4 rounded-2xl border border-border bg-card flex flex-col md:flex-row items-center justify-between gap-4">
+          <div class="flex items-center gap-3 w-full md:w-auto">
+            <div class="flex items-center p-0.5 rounded-lg bg-secondary/80 border border-border shrink-0">
+              <button
+                type="button"
+                (click)="switchContactType('lead')"
+                class="px-2.5 py-1 text-xs font-semibold rounded-md transition-all"
+                [class]="selectedContactType() === 'lead' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
+              >
+                Lead
+              </button>
+              <button
+                type="button"
+                (click)="switchContactType('customer')"
+                class="px-2.5 py-1 text-xs font-semibold rounded-md transition-all"
+                [class]="selectedContactType() === 'customer' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
+              >
+                Customer
+              </button>
+            </div>
+
+            <!-- Select Contact -->
+            <div class="w-full md:w-80">
+              @if (selectedContactType() === 'lead') {
+                <app-searchable-select
+                  [options]="leadOptions()"
+                  [value]="selectedContactId()"
+                  (valueChange)="onContactSelected($event)"
+                  placeholder="Select lead to view history..."
+                  [allowCreateNew]="false"
+                ></app-searchable-select>
+              } @else {
+                <app-searchable-select
+                  [options]="customerOptions()"
+                  [value]="selectedContactId()"
+                  (valueChange)="onContactSelected($event)"
+                  placeholder="Select customer to view history..."
+                  [allowCreateNew]="false"
+                ></app-searchable-select>
+              }
+            </div>
+          </div>
+
+          <div class="text-xs text-muted-foreground text-right w-full md:w-auto">
+            <span>Showing unified omnichannel timeline for selected prospect</span>
+          </div>
+        </div>
+
+        <!-- Vertical Timeline Feed -->
+        @if (isLoadingTimeline()) {
+          <div class="py-16 text-center text-muted-foreground">
+            <i class="ri-loader-4-line animate-spin text-3xl mb-2 inline-block"></i>
+            <div>Loading communication sequence...</div>
+          </div>
+        } @else if (timelineItems().length === 0) {
+          <div class="p-12 rounded-2xl border border-border bg-card text-center text-muted-foreground">
+            <i class="ri-chat-history-line text-3xl mb-2 inline-block"></i>
+            <div class="font-bold text-foreground">No interactions logged yet</div>
+            <div class="text-xs mt-1">Click "Log Interaction" above to record a phone call, WhatsApp, meeting or quotation.</div>
+          </div>
+        } @else {
+          <div class="relative pl-6 space-y-6 before:absolute before:left-3 before:top-2 before:bottom-2 before:w-0.5 before:bg-border">
+            @for (item of timelineItems(); track item.id) {
+              <div class="relative flex items-start gap-4">
+                <!-- Timeline Node Icon -->
+                <div class="absolute -left-6 mt-1 w-6 h-6 rounded-full bg-card border-2 border-border flex items-center justify-center text-xs shadow-sm z-10">
+                  <i [class]="getChannelIcon(item.channel)"></i>
+                </div>
+
+                <!-- Timeline Content Card -->
+                <div
+                  class="flex-1 p-4 rounded-2xl border transition-all"
+                  [class]="item.is_sensitive
+                    ? 'border-amber-500/30 bg-amber-500/5'
+                    : 'border-border bg-card hover:border-primary/30'"
+                >
+                  <!-- Card Header: Title + Direction + Delivery + Timestamp -->
+                  <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                    <div class="flex items-center gap-2">
+                      <span class="px-2 py-0.5 rounded text-[10px] font-bold" [class]="getChannelBadgeColor(item.channel)">
+                        {{ item.channel.replace('_', ' ') }}
+                      </span>
+                      <span class="text-xs font-semibold text-muted-foreground">
+                        {{ item.direction }}
+                      </span>
+                      @if (item.is_sensitive) {
+                        <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-600 border border-amber-500/30 flex items-center gap-1">
+                          <i class="ri-lock-line"></i> Sensitive / Internal
+                        </span>
+                      }
+                      @if (item.is_automated) {
+                        <span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-500/10 text-blue-600 flex items-center gap-1">
+                          <i class="ri-robot-line"></i> Automated
+                        </span>
+                      }
+                    </div>
+
+                    <div class="flex items-center gap-2 text-xs">
+                      <app-status-badge
+                        [status]="item.delivery_status || 'DELIVERED'"
+                        [variant]="getDeliveryBadgeVariant(item.delivery_status)"
+                      ></app-status-badge>
+                      <span class="text-muted-foreground font-mono text-[11px]">
+                        {{ item.timestamp | date:'dd MMM yyyy, HH:mm' }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Subject / Title -->
+                  <h4 class="font-bold text-sm text-foreground mb-1.5">{{ item.title }}</h4>
+
+                  <!-- Content / Message Body -->
+                  <p class="text-xs text-foreground/90 whitespace-pre-wrap leading-relaxed mb-3">
+                    {{ item.content }}
+                  </p>
+
+                  <!-- Card Footer: Author + Resulting Action -->
+                  <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-border/80 text-[11px] text-muted-foreground">
+                    <div class="flex items-center gap-1">
+                      <i class="ri-user-line"></i>
+                      <span>Logged by: <strong class="text-foreground">{{ item.author || 'System' }}</strong></span>
+                    </div>
+
+                    @if (item.resulting_action) {
+                      <div class="flex items-center gap-1 text-primary font-medium">
+                        <i class="ri-arrow-right-line"></i>
+                        <span>Resulting Action: {{ item.resulting_action }}</span>
+                      </div>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <!-- ========================================== -->
+    <!-- LOG TABLE VIEW -->
+    <!-- ========================================== -->
+    @if (activeView() === 'table') {
+      <div class="space-y-4">
+        <!-- Search & Filter Toolbar -->
+        <div class="p-4 rounded-xl bg-secondary/30 border border-border" [formGroup]="filterForm">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <!-- Search -->
+            <div>
+              <app-custom-input
+                formControlName="search"
+                placeholder="Search subject, body, code..."
+                icon="ri-search-line"
+              ></app-custom-input>
+            </div>
+
+            <!-- Channel (Dynamic Lookup CRM_COMMUNICATION_CHANNEL) -->
+            <div>
+              <app-searchable-select
+                formControlName="channel"
+                placeholder="All Channels"
+                [categoryCode]="LOOKUP.channel"
+                [allowCreateNew]="true"
+              ></app-searchable-select>
+            </div>
+
+            <!-- Direction -->
+            <div>
+              <select
+                formControlName="direction"
+                class="w-full px-3 py-2 rounded-xl bg-background border border-border text-xs focus:ring-2 focus:ring-primary focus:outline-none"
+              >
+                <option value="">All Directions</option>
+                <option value="OUTBOUND">Outbound</option>
+                <option value="INBOUND">Inbound</option>
+                <option value="INTERNAL">Internal Note</option>
+              </select>
+            </div>
+
+            <!-- Delivery Status (Dynamic Lookup CRM_DELIVERY_STATUS) -->
+            <div>
+              <app-searchable-select
+                formControlName="delivery_status"
+                placeholder="All Delivery Statuses"
+                [categoryCode]="LOOKUP.deliveryStatus"
+                [allowCreateNew]="true"
+              ></app-searchable-select>
+            </div>
+          </div>
+        </div>
+
+        <div class="rounded-2xl border border-border bg-card overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-secondary/40 border-b border-border text-muted-foreground font-semibold">
+                  <th class="py-3 px-4">Code & Channel</th>
+                  <th class="py-3 px-4">Subject & Message Summary</th>
+                  <th class="py-3 px-4">Contact / Recipient</th>
+                  <th class="py-3 px-4">Direction</th>
+                  <th class="py-3 px-4">Logged By</th>
+                  <th class="py-3 px-4">Sent At</th>
+                  <th class="py-3 px-4">Delivery</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-border">
+                @if (isLoading()) {
+                  <tr>
+                    <td colspan="7" class="text-center py-10 text-muted-foreground">
+                      <i class="ri-loader-4-line animate-spin text-2xl mb-2 inline-block"></i>
+                      <div>Loading communication records...</div>
+                    </td>
+                  </tr>
+                } @else if (communications().length === 0) {
+                  <tr>
+                    <td colspan="7" class="text-center py-12 text-muted-foreground">
+                      <i class="ri-mail-open-line text-3xl mb-2 inline-block"></i>
+                      <div class="font-medium">No communication history logged</div>
+                      <div class="text-[11px] mt-1">Use "Log Interaction" to record a new conversation.</div>
+                    </td>
+                  </tr>
+                } @else {
+                  @for (comm of communications(); track comm.id) {
+                    <tr class="hover:bg-secondary/20 transition-all">
+                      <!-- Code & Channel -->
+                      <td class="py-3 px-4">
+                        <div class="flex items-center gap-1.5">
+                          <i [class]="getChannelIcon(comm.channel)"></i>
+                          <span class="font-semibold text-foreground">{{ comm.channel.replace('_', ' ') }}</span>
+                        </div>
+                        <div class="text-[10px] text-muted-foreground font-mono mt-0.5">
+                          {{ comm.communication_code }}
+                        </div>
+                      </td>
+
+                      <!-- Subject & Message -->
+                      <td class="py-3 px-4 max-w-xs">
+                        <div class="font-semibold text-foreground flex items-center gap-1.5">
+                          <span>{{ comm.subject }}</span>
+                          @if (comm.is_sensitive) {
+                            <i class="ri-lock-line text-amber-500 text-xs" title="Sensitive note"></i>
+                          }
+                        </div>
+                        <div class="text-[11px] text-muted-foreground truncate mt-0.5">
+                          {{ comm.message_body }}
+                        </div>
+                        @if (comm.resulting_action) {
+                          <div class="text-[10px] text-primary mt-0.5">
+                            Action: {{ comm.resulting_action }}
+                          </div>
+                        }
+                      </td>
+
+                      <!-- Contact -->
+                      <td class="py-3 px-4">
+                        <div class="font-semibold text-foreground">
+                          {{ comm.customer_name || comm.lead_name || 'No Client' }}
+                        </div>
+                        @if (comm.contact_phone) {
+                          <div class="text-[11px] text-muted-foreground font-mono">{{ comm.contact_phone }}</div>
+                        }
+                      </td>
+
+                      <!-- Direction -->
+                      <td class="py-3 px-4">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-secondary text-secondary-foreground border border-border">
+                          {{ comm.direction }}
+                        </span>
+                      </td>
+
+                      <!-- Logged By -->
+                      <td class="py-3 px-4">
+                        <span class="font-medium text-foreground">{{ comm.user_name || 'System' }}</span>
+                      </td>
+
+                      <!-- Sent At -->
+                      <td class="py-3 px-4 font-mono text-muted-foreground">
+                        {{ comm.sent_at | date:'dd MMM yyyy, HH:mm' }}
+                      </td>
+
+                      <!-- Delivery -->
+                      <td class="py-3 px-4">
+                        <app-status-badge
+                          [status]="comm.delivery_status || 'DELIVERED'"
+                          [variant]="getDeliveryBadgeVariant(comm.delivery_status)"
+                        ></app-status-badge>
+                      </td>
+                    </tr>
+                  }
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination Controls -->
+          @if (totalPages() > 1) {
+            <div class="p-3 border-t border-border flex items-center justify-between text-xs bg-secondary/10">
+              <span class="text-muted-foreground">
+                Showing {{ (page() - 1) * limit() + 1 }} to {{ Math.min(page() * limit(), total()) }} of {{ total() }} records
+              </span>
+              <div class="flex items-center gap-1.5">
+                <app-custom-button
+                  variant="secondary"
+                  size="sm"
+                  [disabled]="page() === 1"
+                  (clicked)="onPageChange(page() - 1)"
+                >
+                  <i class="ri-arrow-left-s-line text-sm"></i>
+                </app-custom-button>
+                <span class="px-2 font-medium">Page {{ page() }} of {{ totalPages() }}</span>
+                <app-custom-button
+                  variant="secondary"
+                  size="sm"
+                  [disabled]="page() === totalPages()"
+                  (clicked)="onPageChange(page() + 1)"
+                >
+                  <i class="ri-arrow-right-s-line text-sm"></i>
+                </app-custom-button>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  </div>
+</app-card-container>
+
+<!-- ========================================== -->
+<!-- LOG INTERACTION MODAL -->
+<!-- ========================================== -->
+<app-modal
+  [isOpen]="isLogModalOpen()"
+  title="Log Omnichannel Communication"
+  (closed)="closeLogModal()"
+>
+  <form [formGroup]="logForm" (ngSubmit)="saveLog()" class="space-y-4 text-xs">
+    <div class="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400">
+      <div class="font-semibold flex items-center gap-1.5 mb-0.5">
+        <i class="ri-message-3-line text-sm"></i>
+        <span>Spec 4.9 Unified Communication Registry</span>
+      </div>
+      <div>Log incoming/outgoing interactions across calls, WhatsApp, SMS, email, and meetings.</div>
+    </div>
+
+    <!-- Target Type Selector -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-semibold text-foreground mb-1">Target Contact Type</label>
+        <select
+          formControlName="target_type"
+          class="w-full px-3 py-2 rounded-xl bg-background border border-border text-xs focus:ring-2 focus:ring-primary focus:outline-none"
+        >
+          <option value="lead">Prospective Lead</option>
+          <option value="customer">Enrolled Customer</option>
+        </select>
+      </div>
+
+      <div>
+        @if (logForm.get('target_type')?.value === 'lead') {
+          <app-searchable-select
+            formControlName="lead_id"
+            label="Select Lead *"
+            [options]="leadOptions()"
+            [allowCreateNew]="false"
+          ></app-searchable-select>
+        } @else {
+          <app-searchable-select
+            formControlName="customer_id"
+            label="Select Customer *"
+            [options]="customerOptions()"
+            [allowCreateNew]="false"
+          ></app-searchable-select>
+        }
+      </div>
+    </div>
+
+    <!-- Channel & Direction -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <app-searchable-select
+          formControlName="channel"
+          label="Communication Channel *"
+          [categoryCode]="LOOKUP.channel"
+          [allowCreateNew]="true"
+          [required]="true"
+        ></app-searchable-select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-foreground mb-1">Direction *</label>
+        <select
+          formControlName="direction"
+          class="w-full px-3 py-2 rounded-xl bg-background border border-border text-xs focus:ring-2 focus:ring-primary focus:outline-none"
+        >
+          <option value="OUTBOUND">Outbound (Sent by Sales Rep)</option>
+          <option value="INBOUND">Inbound (Received from Client)</option>
+          <option value="INTERNAL">Internal Note (Staff Only)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Subject -->
+    <div>
+      <app-custom-input
+        formControlName="subject"
+        label="Interaction Subject *"
+        placeholder="e.g. Sent price quote via WhatsApp / Incoming query about handover date"
+        [required]="true"
+      ></app-custom-input>
+    </div>
+
+    <!-- Message Body -->
+    <div>
+      <app-custom-textarea
+        formControlName="message_body"
+        label="Message Content / Discussion Summary *"
+        placeholder="Record the verbatim message or detailed summary of the phone conversation..."
+        [rows]="4"
+        [required]="true"
+      ></app-custom-textarea>
+    </div>
+
+    <!-- Delivery Status & Resulting Action -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <app-searchable-select
+          formControlName="delivery_status"
+          label="Delivery / Call Status"
+          [categoryCode]="LOOKUP.deliveryStatus"
+          [allowCreateNew]="true"
+        ></app-searchable-select>
+      </div>
+
+      <div>
+        <app-custom-input
+          formControlName="resulting_action"
+          label="Resulting Action"
+          placeholder="e.g. Site visit requested for Friday"
+        ></app-custom-input>
+      </div>
+    </div>
+
+    <!-- Flags: Sensitive & Automated -->
+    <div class="p-3.5 rounded-xl border border-border bg-secondary/30 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <input
+          type="checkbox"
+          id="is_sensitive"
+          formControlName="is_sensitive"
+          class="rounded text-primary focus:ring-primary"
+        />
+        <label for="is_sensitive" class="text-xs text-foreground select-none cursor-pointer">
+          <span class="font-bold">Confidential / Sensitive Note</span>
+          <div class="text-[10px] text-muted-foreground">Restricts visibility to authorized sales managers</div>
+        </label>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <input
+          type="checkbox"
+          id="is_automated"
+          formControlName="is_automated"
+          class="rounded text-primary focus:ring-primary"
+        />
+        <label for="is_automated" class="text-xs text-foreground select-none cursor-pointer">
+          <span class="font-bold">System Generated</span>
+          <div class="text-[10px] text-muted-foreground">Automated notification or bot dispatch</div>
+        </label>
+      </div>
+    </div>
+
+    <!-- Modal Actions -->
+    <div class="flex items-center justify-end gap-2 pt-2 border-t border-border">
+      <app-custom-button variant="secondary" size="sm" type="button" (clicked)="closeLogModal()">
+        Cancel
+      </app-custom-button>
+      <app-custom-button variant="primary" size="sm" type="submit" [disabled]="isLogging()">
+        <i class="ri-check-line text-xs mr-1" [class.animate-spin]="isLogging()"></i>
+        <span>Save Interaction Log</span>
+      </app-custom-button>
+    </div>
+  </form>
+</app-modal>

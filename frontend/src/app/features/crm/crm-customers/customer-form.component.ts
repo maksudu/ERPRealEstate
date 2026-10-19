@@ -2,7 +2,6 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormArray } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { LucideAngularModule, Save, ArrowLeft, Plus, Trash2, AlertTriangle } from 'lucide-angular';
 import {
   CardContainerComponent,
   CustomInputComponent,
@@ -19,7 +18,6 @@ import { Customer, Nominee } from '../../../core/models/crm.model';
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    LucideAngularModule,
     CardContainerComponent,
     CustomInputComponent,
     CustomTextareaComponent,
@@ -33,12 +31,6 @@ export class CustomerFormComponent implements OnInit {
   private crmService = inject(CrmService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
-
-  readonly Save = Save;
-  readonly ArrowLeft = ArrowLeft;
-  readonly Plus = Plus;
-  readonly Trash2 = Trash2;
-  readonly AlertTriangle = AlertTriangle;
 
   customerId: number | null = null;
   isEditMode = signal(false);
@@ -82,17 +74,6 @@ export class CustomerFormComponent implements OnInit {
     nominees: this.fb.array([])
   });
 
-  nomineeForm: FormGroup = this.fb.group({
-    nominee_name: ['', Validators.required],
-    relationship: ['SPOUSE', Validators.required],
-    nid_number: [''],
-    share_percentage: [100, [Validators.required, Validators.min(1), Validators.max(100)]],
-    phone: [''],
-    email: ['', [Validators.email]],
-    address: [''],
-    notes: ['']
-  });
-
   get nomineesArray(): FormArray {
     return this.form.get('nominees') as FormArray;
   }
@@ -104,11 +85,6 @@ export class CustomerFormComponent implements OnInit {
       this.isEditMode.set(true);
       this.loadCustomer();
     }
-
-    // Debounced duplicate check on phone/email/nid
-    this.form.valueChanges.subscribe(() => {
-      // lightweight — full debounce on blur handlers below
-    });
 
     this.form.get('primary_phone')!.valueChanges.subscribe(() => this.scheduleDupCheck());
     this.form.get('email')!.valueChanges.subscribe(() => this.scheduleDupCheck());
@@ -208,7 +184,7 @@ export class CustomerFormComponent implements OnInit {
   save(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
-      this.errorMessage.set('Please fix validation errors.');
+      this.errorMessage.set('Please fix validation errors in the customer form.');
       return;
     }
     const totalShare = this.nomineeShareTotal();
@@ -256,11 +232,11 @@ export class CustomerFormComponent implements OnInit {
     };
 
     if (this.isEditMode() && this.customerId) {
-      delete payload.nominees; // nominees managed via dossier / separate endpoints on edit
+      delete payload.nominees;
       this.crmService.updateCustomer(this.customerId, payload).subscribe({
         next: () => {
           this.isSubmitting.set(false);
-          this.successMessage.set('Customer updated.');
+          this.successMessage.set('Customer updated successfully.');
           this.router.navigate(['/crm/customers', this.customerId]);
         },
         error: (err) => {
@@ -276,7 +252,7 @@ export class CustomerFormComponent implements OnInit {
         },
         error: (err) => {
           this.isSubmitting.set(false);
-          this.errorMessage.set(err?.error?.detail || 'Create failed.');
+          this.errorMessage.set(err?.error?.detail || 'Customer registration failed.');
         }
       });
     }

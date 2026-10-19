@@ -1,116 +1,178 @@
-<div class="space-y-4 lg:space-y-6">
-  <app-card-container
-    title="Customer KYC & Nominee Profiles"
-    subtitle="Unified customer directory with KYC, nominee shares, consent preferences & duplicate merge (Spec 4.5).">
-    <div card-actions class="flex items-center gap-2">
-      <app-custom-button variant="secondary" (click)="refresh()" type="button">
-        <lucide-icon [img]="RefreshCw" size="16"></lucide-icon>
-        Refresh
-      </app-custom-button>
-      <app-custom-button variant="primary" (click)="createCustomer()" type="button">
-        <lucide-icon [img]="Plus" size="16"></lucide-icon>
-        Register Customer
-      </app-custom-button></div>
+<!-- Customer KYC & Nominee Profiles Directory (Spec 4.5) Wrapped in Single Card Container -->
+<app-card-container
+  title="Customer KYC & Nominee Directory"
+  subtitle="Unified customer directory with KYC profiles, nominee entitlements, communication consent records & duplicate merging (Spec 4.5)"
+  paddingClass="p-0"
+>
+  <!-- Card Header Actions -->
+  <div card-actions class="flex items-center gap-2">
+    <app-custom-button variant="ghost" size="sm" (clicked)="refresh()" title="Refresh Directory">
+      <span class="flex items-center gap-1.5">
+        <i class="ri-refresh-line text-sm"></i>
+        <span>Refresh</span>
+      </span>
+    </app-custom-button>
+    <app-custom-button variant="primary" size="sm" (clicked)="createCustomer()">
+      <span class="flex items-center gap-1.5">
+        <i class="ri-user-add-line text-sm"></i>
+        <span>Register Customer</span>
+      </span>
+    </app-custom-button>
+  </div>
 
-    <!-- Filters -->
-    <form [formGroup]="filterForm" class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4 pb-4 border-b border-slate-200">
-      <app-custom-input
-        formControlName="search"
-        label="Search"
-        placeholder="Name, code, NID, phone, email…">
-      </app-custom-input>
-      <app-searchable-select
-        formControlName="customer_type"
-        label="Customer Type"
-        [options]="typeOptions"
-        placeholder="All types">
-      </app-searchable-select>
-      <app-searchable-select
-        formControlName="is_nrb"
-        label="Residency"
-        [options]="nrbOptions"
-        placeholder="All">
-      </app-searchable-select>
-      <app-searchable-select
-        formControlName="sort_by"
-        label="Sort By"
-        [options]="sortOptions">
-      </app-searchable-select>
-    </form>
+  <div class="flex flex-col">
+    <!-- Filters Section -->
+    <div class="px-4 sm:px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40">
+      <form [formGroup]="filterForm">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1.5 tracking-wide">Search</label>
+            <app-custom-input
+              placeholder="Name, code, NID, phone, email…"
+              formControlName="search"
+            ></app-custom-input>
+          </div>
+          <app-searchable-select
+            label="Customer Type"
+            [options]="typeOptions"
+            formControlName="customer_type"
+            placeholder="All types"
+            [allowCreateNew]="false"
+          ></app-searchable-select>
+          <app-searchable-select
+            label="Residency"
+            [options]="nrbOptions"
+            formControlName="is_nrb"
+            placeholder="All"
+            [allowCreateNew]="false"
+          ></app-searchable-select>
+          <app-searchable-select
+            label="Sort By"
+            [options]="sortOptions"
+            formControlName="sort_by"
+            [allowCreateNew]="false"
+          ></app-searchable-select>
+        </div>
+      </form>
+      <div class="mt-3 flex items-center justify-between gap-3">
+        <p class="text-[11px] text-slate-500 dark:text-slate-400">
+          Showing {{ fromRow() }}–{{ toRow() }} of {{ total() | number }} customers
+        </p>
+      </div>
+    </div>
 
-    <!-- Table -->
+    <!-- Table Section -->
     <div class="overflow-x-auto">
-      <table class="min-w-full divide-y divide-slate-200">
-        <thead>
-          <tr class="bg-slate-50">
-            <th class="px-3 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Customer</th>
-            <th class="px-3 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Code</th>
-            <th class="px-3 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Phone</th>
-            <th class="px-3 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Type</th>
-            <th class="px-3 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">NID / Passport</th>
-            <th class="px-3 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Nominees</th>
-            <th class="px-3 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Flags</th>
-            <th class="px-3 py-3 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">Actions</th>
+      <table class="w-full text-left text-xs">
+        <thead class="bg-slate-100/80 dark:bg-slate-850 text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-200 dark:border-slate-800">
+          <tr>
+            <th class="px-4 py-3">Customer</th>
+            <th class="px-4 py-3">Code</th>
+            <th class="px-4 py-3">Phone</th>
+            <th class="px-4 py-3">Type</th>
+            <th class="px-4 py-3">NID / Passport</th>
+            <th class="px-4 py-3">Nominees & Share</th>
+            <th class="px-4 py-3">Status Flags</th>
+            <th class="px-4 py-3 text-right w-32">Actions</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-slate-100 bg-white">
+        <tbody class="divide-y divide-slate-200/70 dark:divide-slate-800 bg-white dark:bg-slate-900">
           @if (isLoading()) {
-            <tr><td colspan="8" class="px-4 py-10 text-center text-slate-400">Loading…</td></tr>
+            @for (i of [1, 2, 3, 4, 5]; track i) {
+              <tr>
+                <td colspan="8" class="px-4 py-4">
+                  <div class="h-4 bg-slate-200 dark:bg-slate-800 rounded animate-pulse w-full"></div>
+                </td>
+              </tr>
+            }
           } @else if (customers().length === 0) {
-            <tr><td colspan="8" class="px-4 py-10 text-center text-slate-400">No customers match the current filters.</td></tr>
+            <tr>
+              <td colspan="8" class="px-4 py-16 text-center text-slate-400 dark:text-slate-500">
+                <div class="flex flex-col items-center gap-2">
+                  <i class="ri-team-line text-4xl"></i>
+                  <p class="text-sm font-medium">No customers found</p>
+                  <p class="text-xs">Register a new customer or adjust filters.</p>
+                </div>
+              </td>
+            </tr>
           } @else {
             @for (c of customers(); track c.id) {
-              <tr class="hover:bg-slate-50">
-                <td class="px-3 py-3">
-                  <div class="font-medium text-slate-900">{{ c.full_name_en }}</div>
+              <tr class="hover:bg-slate-50 dark:hover:bg-slate-850/60 transition-colors">
+                <td class="px-4 py-3">
+                  <div class="font-semibold text-slate-900 dark:text-slate-100">{{ c.full_name_en }}</div>
                   @if (c.full_name_bn) {
-                    <div class="text-xs text-slate-500">{{ c.full_name_bn }}</div>
+                    <div class="text-[11px] text-slate-500 dark:text-slate-400">{{ c.full_name_bn }}</div>
                   }
-                  <div class="text-xs text-slate-400">{{ c.email || '—' }}</div>
+                  <div class="text-[11px] text-slate-400 truncate max-w-[180px]">{{ c.email || '—' }}</div>
                 </td>
-                <td class="px-3 py-3 font-mono text-xs text-slate-600">{{ c.customer_code }}</td>
-                <td class="px-3 py-3 text-sm text-slate-600">{{ c.primary_phone }}</td>
-                <td class="px-3 py-3">
-                  <span class="inline-flex items-center px-2 py-0.5 rounded-md border text-xs font-semibold bg-slate-100 text-slate-700 border-slate-200">
+                <td class="px-4 py-3 font-mono font-semibold text-slate-800 dark:text-slate-200 text-[11px]">
+                  {{ c.customer_code }}
+                </td>
+                <td class="px-4 py-3 text-slate-700 dark:text-slate-200 font-medium">
+                  {{ c.primary_phone }}
+                </td>
+                <td class="px-4 py-3">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
                     {{ c.customer_type || 'INDIVIDUAL' }}
                   </span>
                 </td>
-                <td class="px-3 py-3 text-sm text-slate-600 font-mono text-xs">
+                <td class="px-4 py-3 font-mono text-[11px] text-slate-600 dark:text-slate-400">
                   {{ c.nid_number || c.passport_number || '—' }}
                 </td>
-                <td class="px-3 py-3 text-sm text-slate-600">
-                  {{ c.nominees.length }} ·
-                  @if (c.nominees.length) {
-                    {{ nomineeShareTotal(c) }}%
+                <td class="px-4 py-3 text-slate-700 dark:text-slate-200">
+                  <span class="font-semibold">{{ c.nominees.length }}</span> nominees
+                  @if (c.nominees.length > 0) {
+                    <span class="text-[11px] text-slate-400"> ({{ nomineeShareTotal(c) }}%)</span>
                   }
                 </td>
-                <td class="px-3 py-3">
+                <td class="px-4 py-3">
                   <div class="flex flex-wrap gap-1">
                     @if (c.is_nrb) {
-                      <span class="text-[10px] font-medium text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">NRB</span>
+                      <span class="text-[9px] font-bold text-amber-700 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/30">NRB</span>
                     }
                     @if (c.is_opted_out) {
-                      <span class="text-[10px] font-medium text-red-700 bg-red-50 px-1.5 py-0.5 rounded border border-red-200">Opted Out</span>
+                      <span class="text-[9px] font-bold text-rose-600 bg-rose-500/10 px-1.5 py-0.5 rounded border border-rose-500/30">OPTED OUT</span>
                     }
                     @if (c.is_consent_given) {
-                      <span class="text-[10px] font-medium text-green-700 bg-green-50 px-1.5 py-0.5 rounded border border-green-200">Consent</span>
+                      <span class="text-[9px] font-bold text-emerald-600 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/30">CONSENT</span>
                     }
                   </div>
                 </td>
-                <td class="px-3 py-3 text-right">
+                <td class="px-4 py-3 text-right">
                   <div class="flex items-center justify-end gap-1">
-                    <app-custom-button variant="ghost" size="sm" type="button" (click)="viewDossier(c)" title="Dossier">
-                      <lucide-icon [img]="Eye" size="14"></lucide-icon>
-                    </app-custom-button>
-                    <app-custom-button variant="ghost" size="sm" type="button" (click)="editCustomer(c)" title="Edit">
-                      <lucide-icon [img]="Edit3" size="14"></lucide-icon>
-                    </app-custom-button>
-                    <app-custom-button variant="ghost" size="sm" type="button" (click)="openMerge(c)" title="Merge Duplicate">
-                      <lucide-icon [img]="Merge" size="14"></lucide-icon>
-                    </app-custom-button>
-                    <app-custom-button variant="ghost" size="sm" type="button" (click)="openDelete(c)" title="Delete">
-                      <lucide-icon [img]="Trash2" size="14" class="text-red-500"></lucide-icon>
-                    </app-custom-button></div>
+                    <button
+                      type="button"
+                      (click)="viewDossier(c)"
+                      class="p-1.5 rounded-lg text-slate-500 hover:text-primary hover:bg-primary/10 transition-colors"
+                      title="View Customer Dossier"
+                    >
+                      <i class="ri-eye-line text-sm"></i>
+                    </button>
+                    <button
+                      type="button"
+                      (click)="editCustomer(c)"
+                      class="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-500/10 transition-colors"
+                      title="Edit Customer Profile"
+                    >
+                      <i class="ri-edit-line text-sm"></i>
+                    </button>
+                    <button
+                      type="button"
+                      (click)="openMerge(c)"
+                      class="p-1.5 rounded-lg text-slate-500 hover:text-amber-600 hover:bg-amber-500/10 transition-colors"
+                      title="Merge Duplicate Customer"
+                    >
+                      <i class="ri-git-merge-line text-sm"></i>
+                    </button>
+                    <button
+                      type="button"
+                      (click)="openDelete(c)"
+                      class="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-500/10 transition-colors"
+                      title="Delete Customer"
+                    >
+                      <i class="ri-delete-bin-line text-sm"></i>
+                    </button>
+                  </div>
                 </td>
               </tr>
             }
@@ -119,86 +181,109 @@
       </table>
     </div>
 
-    <!-- Pagination -->
-    <div class="flex items-center justify-between pt-4 mt-4 border-t border-slate-200">
-      <p class="text-sm text-slate-500">Showing {{ fromRow() }}–{{ toRow() }} of {{ total() }}</p>
+    <!-- Pagination Footer -->
+    <div class="px-4 sm:px-6 py-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 flex items-center justify-between">
+      <span class="text-[11px] text-slate-500 dark:text-slate-400">
+        Showing {{ fromRow() }}–{{ toRow() }} of {{ total() | number }} customers · Page {{ currentPage() }} of {{ totalPages() }}
+      </span>
       <div class="flex items-center gap-2">
-        <app-custom-button variant="secondary" size="sm" type="button" (click)="setPage(currentPage() - 1)" [disabled]="currentPage() <= 1">
-          Previous
-        </app-custom-button>
-        <span class="text-sm text-slate-600">Page {{ currentPage() }} of {{ totalPages() }}</span>
-        <app-custom-button variant="secondary" size="sm" type="button" (click)="setPage(currentPage() + 1)" [disabled]="currentPage() >= totalPages()">
-          Next
-        </app-custom-button></div>
-    </div>
-  </app-card-container>
-</div>
-
-<!-- Delete confirmation -->
-@if (deleteModalOpen() && deleteTarget(); as c) {
-  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" (click)="deleteModalOpen.set(false)">
-    <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6 space-y-4" (click)="$event.stopPropagation()">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-lg bg-red-100 text-red-600 flex items-center justify-center">
-          <lucide-icon [img]="AlertTriangle" size="20"></lucide-icon>
-        </div>
-        <div>
-          <h3 class="text-lg font-semibold text-slate-900">Delete Customer</h3>
-          <p class="text-sm text-slate-500">{{ c.full_name_en }} ({{ c.customer_code }})</p>
-        </div>
+        <button
+          type="button"
+          (click)="setPage(currentPage() - 1)"
+          [disabled]="currentPage() <= 1"
+          class="erp-button-secondary text-xs h-8 px-3 rounded-xl disabled:opacity-40 inline-flex items-center gap-1"
+        >
+          <i class="ri-arrow-left-s-line text-sm"></i>
+          <span>Previous</span>
+        </button>
+        <button
+          type="button"
+          (click)="setPage(currentPage() + 1)"
+          [disabled]="currentPage() >= totalPages()"
+          class="erp-button-secondary text-xs h-8 px-3 rounded-xl disabled:opacity-40 inline-flex items-center gap-1"
+        >
+          <span>Next</span>
+          <i class="ri-arrow-right-s-line text-sm"></i>
+        </button>
       </div>
-      <p class="text-sm text-slate-600">
-        This permanently removes the customer and linked nominees/service requests. Prefer Merge for duplicate records to preserve inquiry history.
-      </p>
-      <div class="flex justify-end gap-2">
-        <app-custom-button variant="secondary" type="button" (click)="deleteModalOpen.set(false)">Cancel</app-custom-button>
-        <app-custom-button variant="primary" type="button" (click)="confirmDelete()" [disabled]="isDeleting() === c.id"
-                class="!bg-red-600 hover:!bg-red-700">
-          @if (isDeleting() === c.id) { Deleting… } @else { Delete Forever }
-        </app-custom-button></div>
     </div>
   </div>
-}
+</app-card-container>
 
-<!-- Merge modal -->
-@if (mergeModalOpen() && mergeSource(); as src) {
-  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" (click)="mergeModalOpen.set(false)">
-    <div class="bg-white rounded-xl shadow-xl w-full max-w-lg p-6 space-y-4" (click)="$event.stopPropagation()">
-      <h3 class="text-lg font-semibold text-slate-900">Merge Duplicate Customer</h3>
-      <p class="text-sm text-slate-500">
-        Source (duplicate, will be soft-merged): <strong>{{ src.full_name_en }}</strong> ({{ src.customer_code }})
-      </p>
-
-      @if (mergeError()) {
-        <div class="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">{{ mergeError() }}</div>
-      }
-
-      <div>
-        <label class="block text-sm font-medium text-slate-700 mb-1">Survivor (Target) Customer</label>
-        <select [(ngModel)]="mergeTargetId" class="erp-input w-full">
-          <option [ngValue]="null">Select survivor…</option>
-          @for (c of mergeTargets(); track c.id) {
-            <option [ngValue]="c.id">{{ c.full_name_en }} — {{ c.customer_code }} ({{ c.primary_phone }})</option>
-          }
-        </select>
-      </div>
-
-      <div>
-        <label class="block text-sm font-medium text-slate-700 mb-1">Merge Reason (optional)</label>
-        <textarea [(ngModel)]="mergeReason" rows="2" class="erp-input w-full"
-                  placeholder="Why these records are the same person…"></textarea>
-      </div>
-
-      <p class="text-xs text-slate-500">
-        Inquiry/lead history is preserved by redirecting referrals to the survivor. The source is flagged as merged (soft delete), never hard-deleted.
-      </p>
-
-      <div class="flex justify-end gap-2">
-        <app-custom-button variant="secondary" type="button" (click)="mergeModalOpen.set(false)">Cancel</app-custom-button>
-        <app-custom-button variant="primary" type="button" (click)="confirmMerge()"
-                [disabled]="isMerging() || !mergeTargetId()">
-          @if (isMerging()) { Merging… } @else { Merge into Survivor }
-        </app-custom-button></div>
+<!-- Reusable Delete Confirmation Modal -->
+<app-modal
+  [isOpen]="deleteModalOpen()"
+  title="Delete Customer Record"
+  [subtitle]="deleteTarget() ? (deleteTarget()!.full_name_en + ' (' + deleteTarget()!.customer_code + ')') : ''"
+  size="sm"
+  (closed)="deleteModalOpen.set(false)"
+>
+  <div class="space-y-3">
+    <p class="text-xs text-slate-600 dark:text-slate-300">
+      This permanently deletes the customer record along with linked nominees and service inquiries.
+    </p>
+    <div class="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-700 dark:text-amber-400 flex items-start gap-2">
+      <i class="ri-alert-line text-base shrink-0 mt-0.5"></i>
+      <span>For duplicate records, use the <strong>Merge Duplicate</strong> feature instead to preserve complete lead and inquiry history.</span>
     </div>
   </div>
-}
+  <div modal-footer class="flex items-center justify-end gap-2 w-full">
+    <app-custom-button variant="secondary" (clicked)="deleteModalOpen.set(false)">Cancel</app-custom-button>
+    <app-custom-button
+      variant="danger"
+      [loading]="isDeleting() === deleteTarget()?.id"
+      (clicked)="confirmDelete()"
+    >
+      Delete Permanently
+    </app-custom-button>
+  </div>
+</app-modal>
+
+<!-- Reusable Duplicate Merge Modal -->
+<app-modal
+  [isOpen]="mergeModalOpen()"
+  title="Merge Duplicate Customer Record"
+  [subtitle]="mergeSource() ? ('Source (will be merged): ' + mergeSource()!.full_name_en + ' · ' + mergeSource()!.customer_code) : ''"
+  size="md"
+  (closed)="mergeModalOpen.set(false)"
+>
+  @if (mergeError()) {
+    <div class="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-600 flex items-center gap-2">
+      <i class="ri-error-warning-line text-base shrink-0"></i>
+      <span>{{ mergeError() }}</span>
+    </div>
+  }
+
+  <div class="flex flex-col gap-4">
+    <app-searchable-select
+      label="Survivor (Target) Customer *"
+      [options]="mergeTargetOptions()"
+      [value]="mergeTargetValue()"
+      (valueChange)="mergeTargetId.set($event ? +$event : null)"
+      placeholder="Select master customer to absorb duplicate..."
+      [allowCreateNew]="false"
+      [required]="true"
+      hint="All inquiry history, referrals, and linked records will be redirected to this survivor."
+    ></app-searchable-select>
+
+    <app-custom-textarea
+      label="Merge Reason / Audit Note"
+      placeholder="e.g. Duplicate account identified from identical phone number and national ID scan"
+      [rows]="3"
+      [value]="mergeReason()"
+      (valueChange)="mergeReason.set($event)"
+    ></app-custom-textarea>
+  </div>
+
+  <div modal-footer class="flex items-center justify-end gap-2 w-full">
+    <app-custom-button variant="secondary" (clicked)="mergeModalOpen.set(false)">Cancel</app-custom-button>
+    <app-custom-button
+      variant="primary"
+      [loading]="isMerging()"
+      [disabled]="isMerging() || !mergeTargetId()"
+      (clicked)="confirmMerge()"
+    >
+      Confirm Merge into Survivor
+    </app-custom-button>
+  </div>
+</app-modal>

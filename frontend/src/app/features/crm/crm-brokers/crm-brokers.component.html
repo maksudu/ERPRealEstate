@@ -1,0 +1,929 @@
+<div class="space-y-6">
+  <!-- Single Card Container Encompassing Broker & Referral Management (Rule 6) -->
+  <app-card-container
+    title="Broker & Referral Partner Management"
+    subtitle="Manage external brokers, property agents, corporate referrers, tracking milestones and approved commission payout workflows">
+
+    <!-- KPI Metric Cards Row -->
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+      <div class="p-4 rounded-xl border border-border bg-card/60 flex flex-col justify-between">
+        <div class="flex items-center justify-between text-muted-foreground text-xs font-medium">
+          <span>Total Partners</span>
+          <i class="ri-user-shared-line text-primary text-base"></i>
+        </div>
+        <div class="mt-2">
+          <div class="text-2xl font-bold text-foreground">{{ stats().total_brokers }}</div>
+          <span class="text-xs text-muted-foreground">Brokers & Agents</span>
+        </div>
+      </div>
+
+      <div class="p-4 rounded-xl border border-border bg-card/60 flex flex-col justify-between">
+        <div class="flex items-center justify-between text-muted-foreground text-xs font-medium">
+          <span>Active Partners</span>
+          <i class="ri-checkbox-circle-line text-emerald-500 text-base"></i>
+        </div>
+        <div class="mt-2">
+          <div class="text-2xl font-bold text-emerald-500">{{ stats().active_brokers }}</div>
+          <span class="text-xs text-muted-foreground">Authorized agreements</span>
+        </div>
+      </div>
+
+      <div class="p-4 rounded-xl border border-border bg-card/60 flex flex-col justify-between">
+        <div class="flex items-center justify-between text-muted-foreground text-xs font-medium">
+          <span>Bookings Attributed</span>
+          <i class="ri-building-line text-blue-500 text-base"></i>
+        </div>
+        <div class="mt-2">
+          <div class="text-2xl font-bold text-blue-500">{{ stats().total_bookings_referred }}</div>
+          <span class="text-xs text-muted-foreground">From {{ stats().total_leads_referred }} leads</span>
+        </div>
+      </div>
+
+      <div class="p-4 rounded-xl border border-border bg-card/60 flex flex-col justify-between">
+        <div class="flex items-center justify-between text-muted-foreground text-xs font-medium">
+          <span>Referred Sales Value</span>
+          <i class="ri-funds-box-line text-indigo-500 text-base"></i>
+        </div>
+        <div class="mt-2">
+          <div class="text-xl font-bold text-foreground truncate" [title]="formatBdt(stats().total_sales_value)">
+            {{ formatBdt(stats().total_sales_value) }}
+          </div>
+          <span class="text-xs text-muted-foreground">Total unit revenue</span>
+        </div>
+      </div>
+
+      <div class="p-4 rounded-xl border border-border bg-card/60 flex flex-col justify-between">
+        <div class="flex items-center justify-between text-muted-foreground text-xs font-medium">
+          <span>Commissions Paid</span>
+          <i class="ri-hand-coin-line text-emerald-600 text-base"></i>
+        </div>
+        <div class="mt-2">
+          <div class="text-xl font-bold text-emerald-600 truncate" [title]="formatBdt(stats().total_commission_paid)">
+            {{ formatBdt(stats().total_commission_paid) }}
+          </div>
+          <span class="text-xs text-muted-foreground">Disbursed net TDS</span>
+        </div>
+      </div>
+
+      <div class="p-4 rounded-xl border border-border bg-card/60 flex flex-col justify-between">
+        <div class="flex items-center justify-between text-muted-foreground text-xs font-medium">
+          <span>Pending Payout</span>
+          <i class="ri-time-line text-amber-500 text-base"></i>
+        </div>
+        <div class="mt-2">
+          <div class="text-xl font-bold text-amber-500 truncate" [title]="formatBdt(stats().pending_commission_payout)">
+            {{ formatBdt(stats().pending_commission_payout) }}
+          </div>
+          <span class="text-xs text-muted-foreground">Awaiting milestone/finance</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation Header & Action Buttons -->
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-border pb-4 mb-6">
+      <!-- Tabs Selector -->
+      <div class="flex items-center gap-1 p-1 bg-secondary/30 rounded-xl border border-border">
+        <button
+          type="button"
+          (click)="activeTab.set('brokers')"
+          class="px-4 py-2 text-xs font-semibold rounded-lg transition-all flex items-center gap-2"
+          [ngClass]="activeTab() === 'brokers' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'">
+          <i class="ri-community-line"></i>
+          <span>Partner Directory</span>
+          <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-background/20">{{ totalBrokers() }}</span>
+        </button>
+
+        <button
+          type="button"
+          (click)="activeTab.set('claims')"
+          class="px-4 py-2 text-xs font-semibold rounded-lg transition-all flex items-center gap-2"
+          [ngClass]="activeTab() === 'claims' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'">
+          <i class="ri-file-shield-2-line"></i>
+          <span>Commission Claims Pipeline</span>
+          <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-background/20">{{ totalClaims() }}</span>
+        </button>
+
+        <button
+          type="button"
+          (click)="activeTab.set('analytics')"
+          class="px-4 py-2 text-xs font-semibold rounded-lg transition-all flex items-center gap-2"
+          [ngClass]="activeTab() === 'analytics' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'">
+          <i class="ri-bar-chart-grouped-line"></i>
+          <span>Attribution & Leaderboard</span>
+        </button>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center gap-2">
+        <app-custom-button
+          variant="outline"
+          size="sm"
+          (clicked)="createNewClaim()">
+          <i class="ri-file-add-line mr-1"></i> Submit Claim
+        </app-custom-button>
+
+        <app-custom-button
+          variant="primary"
+          size="sm"
+          (clicked)="createNewBroker()">
+          <i class="ri-user-add-line mr-1"></i> Onboard Partner
+        </app-custom-button>
+      </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- TAB 1: BROKER DIRECTORY                                        -->
+    <!-- ============================================================== -->
+    <div *ngIf="activeTab() === 'brokers'" class="space-y-4">
+      <!-- Search & Filters -->
+      <form [formGroup]="brokerFilterForm" class="grid grid-cols-1 md:grid-cols-4 gap-3 bg-card p-4 rounded-xl border border-border">
+        <app-custom-input
+          formControlName="search"
+          placeholder="Search partner name, code, contact..."
+          prefixIcon="ri-search-line">
+        </app-custom-input>
+
+        <app-searchable-select
+          formControlName="broker_type"
+          placeholder="Partner Type"
+          [categoryCode]="LOOKUP.brokerType"
+          [allowCreateNew]="true">
+        </app-searchable-select>
+
+        <app-searchable-select
+          formControlName="status"
+          placeholder="Partner Status"
+          [categoryCode]="LOOKUP.brokerStatus"
+          [allowCreateNew]="true">
+        </app-searchable-select>
+
+        <div class="flex items-center gap-2">
+          <div class="flex-1">
+            <app-custom-input
+              formControlName="service_area"
+              placeholder="Service area (e.g. Uttara)"
+              prefixIcon="ri-map-pin-line">
+            </app-custom-input>
+          </div>
+          <app-custom-button
+            variant="ghost"
+            size="sm"
+            (clicked)="resetBrokerFilters()"
+            title="Reset Filters">
+            <i class="ri-refresh-line"></i>
+          </app-custom-button>
+        </div>
+      </form>
+
+      <!-- Broker Table -->
+      <div class="border border-border rounded-xl overflow-hidden bg-card">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="bg-secondary/40 border-b border-border text-muted-foreground uppercase tracking-wider font-semibold">
+                <th class="py-3 px-4">Partner Details</th>
+                <th class="py-3 px-4">Type & Area</th>
+                <th class="py-3 px-4">Referral Code / Link</th>
+                <th class="py-3 px-4">Commission Terms</th>
+                <th class="py-3 px-4 text-center">Attributed Track</th>
+                <th class="py-3 px-4 text-center">Status</th>
+                <th class="py-3 px-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border">
+              <tr *ngIf="isLoadingBrokers">
+                <td colspan="7" class="py-8 text-center text-muted-foreground">
+                  <i class="ri-loader-4-line animate-spin text-lg inline-block mr-2"></i>
+                  Loading partner directory...
+                </td>
+              </tr>
+
+              <tr *ngIf="!isLoadingBrokers && brokers().length === 0">
+                <td colspan="7" class="py-12 text-center text-muted-foreground">
+                  <div class="max-w-sm mx-auto space-y-2">
+                    <i class="ri-user-search-line text-3xl text-muted-foreground/60"></i>
+                    <p class="font-medium text-foreground">No brokers or partners found</p>
+                    <p class="text-xs">Onboard your first external broker, real estate agent, or customer referral partner.</p>
+                    <app-custom-button size="sm" variant="primary" (clicked)="createNewBroker()">
+                      <i class="ri-user-add-line mr-1"></i> Register Partner
+                    </app-custom-button>
+                  </div>
+                </td>
+              </tr>
+
+              <tr *ngFor="let b of brokers()" class="hover:bg-secondary/20 transition-colors">
+                <!-- Partner Details -->
+                <td class="py-3 px-4">
+                  <div class="font-semibold text-foreground">{{ b.broker_name }}</div>
+                  <div class="text-[11px] text-muted-foreground flex items-center gap-1.5 mt-0.5">
+                    <span class="font-mono text-primary bg-primary/10 px-1 py-0.5 rounded">{{ b.broker_code }}</span>
+                    <span *ngIf="b.contact_person">• {{ b.contact_person }}</span>
+                  </div>
+                  <div class="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-2">
+                    <span><i class="ri-phone-line mr-1"></i>{{ b.primary_phone }}</span>
+                    <span *ngIf="b.email"><i class="ri-mail-line mr-1"></i>{{ b.email }}</span>
+                  </div>
+                </td>
+
+                <!-- Type & Area -->
+                <td class="py-3 px-4">
+                  <div class="font-medium text-foreground">{{ b.broker_type }}</div>
+                  <div class="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
+                    <i class="ri-map-pin-2-line text-muted-foreground"></i>
+                    <span>{{ b.service_area || 'National / All' }}</span>
+                  </div>
+                  <div *ngIf="b.agreement_number" class="text-[10px] text-emerald-600 dark:text-emerald-400 mt-0.5 font-mono">
+                    Agr: {{ b.agreement_number }}
+                  </div>
+                </td>
+
+                <!-- Referral Code / Link -->
+                <td class="py-3 px-4">
+                  <div *ngIf="b.referral_code" class="flex items-center gap-1.5">
+                    <span class="font-mono font-bold text-foreground bg-secondary px-2 py-0.5 rounded border border-border">
+                      {{ b.referral_code }}
+                    </span>
+                    <button
+                      type="button"
+                      (click)="copyToClipboard(b.referral_code, 'code')"
+                      class="p-1 hover:bg-secondary rounded text-muted-foreground hover:text-foreground"
+                      title="Copy Referral Code">
+                      <i class="ri-file-copy-line text-sm"></i>
+                    </button>
+                  </div>
+                  <div *ngIf="b.referral_link" class="mt-1">
+                    <button
+                      type="button"
+                      (click)="copyToClipboard(b.referral_link, 'link')"
+                      class="text-[11px] text-primary hover:underline flex items-center gap-1">
+                      <i class="ri-link"></i> Copy Referral Link
+                    </button>
+                  </div>
+                </td>
+
+                <!-- Commission Terms -->
+                <td class="py-3 px-4">
+                  <div class="font-semibold text-foreground">
+                    {{ b.commission_rate }}%
+                    <span class="text-[10px] text-muted-foreground font-normal">({{ b.commission_type }})</span>
+                  </div>
+                  <div class="text-[10px] text-muted-foreground mt-0.5">
+                    Milestone: <span class="font-medium text-foreground">{{ b.required_milestone }}</span>
+                  </div>
+                  <div *ngIf="b.bank_account_number" class="text-[10px] text-muted-foreground mt-0.5 flex items-center gap-1">
+                    <i class="ri-bank-card-line text-emerald-500"></i>
+                    <span>{{ b.bank_name || 'Bank' }} (••••{{ b.bank_account_number.slice(-4) }})</span>
+                  </div>
+                </td>
+
+                <!-- Attributed Track -->
+                <td class="py-3 px-4 text-center">
+                  <div class="flex items-center justify-center gap-3">
+                    <div title="Leads Referred">
+                      <div class="font-bold text-foreground">{{ b.total_leads_count }}</div>
+                      <div class="text-[9px] uppercase tracking-wider text-muted-foreground">Leads</div>
+                    </div>
+                    <div class="border-l border-border h-6"></div>
+                    <div title="Bookings Won">
+                      <div class="font-bold text-blue-600 dark:text-blue-400">{{ b.total_bookings_count }}</div>
+                      <div class="text-[9px] uppercase tracking-wider text-muted-foreground">Bookings</div>
+                    </div>
+                  </div>
+                  <div class="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 mt-1">
+                    {{ formatBdt(b.total_sales_value) }}
+                  </div>
+                </td>
+
+                <!-- Status -->
+                <td class="py-3 px-4 text-center">
+                  <app-status-badge [status]="b.status" [variant]="getBadgeVariant(b.status)"></app-status-badge>
+                </td>
+
+                <!-- Actions -->
+                <td class="py-3 px-4 text-right">
+                  <div class="flex items-center justify-end gap-1">
+                    <button
+                      type="button"
+                      (click)="openBrokerDetails(b)"
+                      class="p-1.5 hover:bg-secondary rounded-lg text-muted-foreground hover:text-foreground transition-colors"
+                      title="View Details & Bank Info">
+                      <i class="ri-eye-line text-sm"></i>
+                    </button>
+
+                    <button
+                      type="button"
+                      (click)="editBroker(b)"
+                      class="p-1.5 hover:bg-secondary rounded-lg text-muted-foreground hover:text-foreground transition-colors"
+                      title="Edit Agreement">
+                      <i class="ri-edit-line text-sm"></i>
+                    </button>
+
+                    <button
+                      type="button"
+                      (click)="deleteBroker(b)"
+                      class="p-1.5 hover:bg-rose-500/10 rounded-lg text-muted-foreground hover:text-rose-600 transition-colors"
+                      title="Remove Partner">
+                      <i class="ri-delete-bin-line text-sm"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Broker Pagination (Rule 9) -->
+        <div class="flex items-center justify-between px-4 py-3 border-t border-border bg-card/50 text-xs">
+          <div class="text-muted-foreground">
+            Showing {{ brokers().length }} of {{ totalBrokers() }} partners
+          </div>
+          <div class="flex items-center gap-2">
+            <app-custom-button
+              variant="outline"
+              size="sm"
+              [disabled]="brokerPage() <= 1"
+              (clicked)="onBrokerPageChange(brokerPage() - 1)">
+              <i class="ri-arrow-left-s-line"></i> Prev
+            </app-custom-button>
+            <span class="px-2 py-1 font-medium text-foreground">
+              Page {{ brokerPage() }} of {{ Math.ceil(totalBrokers() / brokerLimit()) || 1 }}
+            </span>
+            <app-custom-button
+              variant="outline"
+              size="sm"
+              [disabled]="brokerPage() * brokerLimit() >= totalBrokers()"
+              (clicked)="onBrokerPageChange(brokerPage() + 1)">
+              Next <i class="ri-arrow-right-s-line"></i>
+            </app-custom-button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- TAB 2: COMMISSION CLAIMS PIPELINE                             -->
+    <!-- ============================================================== -->
+    <div *ngIf="activeTab() === 'claims'" class="space-y-4">
+      <!-- Search & Filters -->
+      <form [formGroup]="claimFilterForm" class="grid grid-cols-1 md:grid-cols-4 gap-3 bg-card p-4 rounded-xl border border-border">
+        <app-custom-input
+          formControlName="search"
+          placeholder="Search claim code, broker, unit, lead..."
+          prefixIcon="ri-search-line">
+        </app-custom-input>
+
+        <app-searchable-select
+          formControlName="claim_status"
+          placeholder="Claim Status"
+          [categoryCode]="LOOKUP.claimStatus"
+          [allowCreateNew]="true">
+        </app-searchable-select>
+
+        <app-searchable-select
+          formControlName="milestone_achieved"
+          placeholder="Milestone"
+          [categoryCode]="LOOKUP.commissionMilestone"
+          [allowCreateNew]="true">
+        </app-searchable-select>
+
+        <div class="flex items-center gap-2">
+          <app-custom-button
+            variant="ghost"
+            size="sm"
+            (clicked)="resetClaimFilters()"
+            title="Reset Filters">
+            <i class="ri-refresh-line mr-1"></i> Reset
+          </app-custom-button>
+          <div class="flex-1 text-right">
+            <span class="text-xs text-muted-foreground">Tax TDS: <strong>10% AIT</strong> applied</span>
+          </div>
+        </div>
+      </form>
+
+      <!-- Commission Claims Table -->
+      <div class="border border-border rounded-xl overflow-hidden bg-card">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="bg-secondary/40 border-b border-border text-muted-foreground uppercase tracking-wider font-semibold">
+                <th class="py-3 px-4">Claim & Partner</th>
+                <th class="py-3 px-4">Deal Attribution</th>
+                <th class="py-3 px-4">Commission Breakdown</th>
+                <th class="py-3 px-4">Milestone Eligibility</th>
+                <th class="py-3 px-4 text-center">Pipeline Status</th>
+                <th class="py-3 px-4 text-right">Approval Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border">
+              <tr *ngIf="isLoadingClaims">
+                <td colspan="6" class="py-8 text-center text-muted-foreground">
+                  <i class="ri-loader-4-line animate-spin text-lg inline-block mr-2"></i>
+                  Loading commission claims...
+                </td>
+              </tr>
+
+              <tr *ngIf="!isLoadingClaims && claims().length === 0">
+                <td colspan="6" class="py-12 text-center text-muted-foreground">
+                  <div class="max-w-sm mx-auto space-y-2">
+                    <i class="ri-file-shield-line text-3xl text-muted-foreground/60"></i>
+                    <p class="font-medium text-foreground">No commission claims recorded</p>
+                    <p class="text-xs">Submit a commission claim for an attributed customer booking or payment milestone.</p>
+                    <app-custom-button size="sm" variant="primary" (clicked)="createNewClaim()">
+                      <i class="ri-file-add-line mr-1"></i> Submit Commission Claim
+                    </app-custom-button>
+                  </div>
+                </td>
+              </tr>
+
+              <tr *ngFor="let c of claims()" class="hover:bg-secondary/20 transition-colors">
+                <!-- Claim & Partner -->
+                <td class="py-3 px-4">
+                  <div class="font-mono font-bold text-primary">{{ c.claim_code }}</div>
+                  <div class="font-semibold text-foreground mt-0.5">{{ c.broker_name }}</div>
+                  <div class="text-[11px] text-muted-foreground flex items-center gap-1.5 mt-0.5">
+                    <span class="font-mono text-muted-foreground">{{ c.broker_code }}</span>
+                    <span>• Ref: {{ c.referral_date }}</span>
+                  </div>
+                  <div *ngIf="c.source_evidence" class="text-[10px] text-muted-foreground italic truncate max-w-xs mt-0.5" [title]="c.source_evidence">
+                    Evidence: {{ c.source_evidence }}
+                  </div>
+                </td>
+
+                <!-- Deal Attribution -->
+                <td class="py-3 px-4">
+                  <div *ngIf="c.customer_name" class="font-medium text-foreground flex items-center gap-1">
+                    <i class="ri-user-line text-muted-foreground"></i>
+                    <span>{{ c.customer_name }}</span>
+                  </div>
+                  <div *ngIf="!c.customer_name && c.lead_name" class="font-medium text-foreground flex items-center gap-1">
+                    <i class="ri-user-follow-line text-muted-foreground"></i>
+                    <span>Lead: {{ c.lead_name }}</span>
+                  </div>
+                  <div class="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1">
+                    <i class="ri-building-line text-muted-foreground"></i>
+                    <span>{{ c.project_name || 'Project' }}</span>
+                    <span *ngIf="c.unit_number" class="font-semibold text-foreground">(Unit: {{ c.unit_number }})</span>
+                  </div>
+                  <div class="text-[11px] font-semibold text-foreground mt-0.5">
+                    Sale Value: {{ formatBdt(c.unit_sale_value) }}
+                  </div>
+                </td>
+
+                <!-- Commission Breakdown -->
+                <td class="py-3 px-4">
+                  <div class="font-semibold text-foreground">
+                    Gross: {{ formatBdt(c.calculated_commission_amount) }}
+                    <span class="text-[10px] text-muted-foreground font-normal">({{ c.commission_rate_percentage }}%)</span>
+                  </div>
+                  <div class="text-[10px] text-rose-500 mt-0.5">
+                    Less 10% TDS: -{{ formatBdt(c.tds_tax_deduction_amount) }}
+                  </div>
+                  <div class="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
+                    Net: {{ formatBdt(c.net_payable_amount) }}
+                  </div>
+                </td>
+
+                <!-- Milestone Eligibility -->
+                <td class="py-3 px-4">
+                  <div class="font-medium text-foreground">{{ c.milestone_achieved }}</div>
+                  <div class="mt-1 flex items-center gap-1">
+                    <span
+                      class="px-2 py-0.5 rounded text-[10px] font-semibold flex items-center gap-1"
+                      [ngClass]="c.is_milestone_verified ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'">
+                      <i [ngClass]="c.is_milestone_verified ? 'ri-checkbox-circle-fill' : 'ri-time-line'"></i>
+                      {{ c.is_milestone_verified ? 'Milestone Verified' : 'Unverified Milestone' }}
+                    </span>
+                  </div>
+                  <div *ngIf="c.milestone_verified_at" class="text-[10px] text-muted-foreground mt-0.5">
+                    Verified: {{ c.milestone_verified_at | date:'shortDate' }}
+                  </div>
+                </td>
+
+                <!-- Pipeline Status -->
+                <td class="py-3 px-4 text-center">
+                  <app-status-badge [status]="c.claim_status" [variant]="getBadgeVariant(c.claim_status)"></app-status-badge>
+                  <div *ngIf="c.disbursement_reference" class="text-[10px] text-emerald-600 font-mono mt-1" [title]="c.disbursement_reference">
+                    Trx: {{ c.disbursement_reference }}
+                  </div>
+                  <div *ngIf="c.rejection_reason" class="text-[10px] text-rose-500 mt-1 truncate max-w-[140px]" [title]="c.rejection_reason">
+                    Rej: {{ c.rejection_reason }}
+                  </div>
+                </td>
+
+                <!-- Approval Actions -->
+                <td class="py-3 px-4 text-right">
+                  <div class="flex items-center justify-end gap-1 flex-wrap">
+                    <!-- Step 1: Verify Milestone (Required by Spec 4.10) -->
+                    <button
+                      *ngIf="!c.is_milestone_verified && c.claim_status !== 'REJECTED' && c.claim_status !== 'DISBURSED'"
+                      type="button"
+                      (click)="verifyMilestone(c)"
+                      class="px-2 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 rounded text-[11px] font-semibold flex items-center gap-1"
+                      title="Verify booking/collection milestone">
+                      <i class="ri-shield-check-line"></i> Verify
+                    </button>
+
+                    <!-- Step 2: Sales Approval -->
+                    <button
+                      *ngIf="c.is_milestone_verified && c.claim_status === 'PENDING_SALES_APPROVAL'"
+                      type="button"
+                      (click)="openApproveModal(c, 'APPROVE_SALES')"
+                      class="px-2 py-1 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 rounded text-[11px] font-semibold flex items-center gap-1"
+                      title="Sales Approval">
+                      <i class="ri-user-star-line"></i> Sales OK
+                    </button>
+
+                    <!-- Step 3: Finance Approval -->
+                    <button
+                      *ngIf="c.claim_status === 'PENDING_FINANCE_APPROVAL'"
+                      type="button"
+                      (click)="openApproveModal(c, 'APPROVE_FINANCE')"
+                      class="px-2 py-1 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 rounded text-[11px] font-semibold flex items-center gap-1"
+                      title="Finance Authorization">
+                      <i class="ri-bank-line"></i> Finance OK
+                    </button>
+
+                    <!-- Step 4: Disburse Payout -->
+                    <button
+                      *ngIf="c.claim_status === 'APPROVED_FOR_PAYOUT'"
+                      type="button"
+                      (click)="openDisburseModal(c)"
+                      class="px-2 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 rounded text-[11px] font-semibold flex items-center gap-1"
+                      title="Record Payment Disbursement">
+                      <i class="ri-money-dollar-circle-line"></i> Disburse
+                    </button>
+
+                    <!-- Delete Claim -->
+                    <button
+                      *ngIf="c.claim_status === 'DRAFT' || c.claim_status === 'REJECTED'"
+                      type="button"
+                      (click)="deleteClaim(c)"
+                      class="p-1 hover:bg-rose-500/10 rounded text-muted-foreground hover:text-rose-600"
+                      title="Delete Claim">
+                      <i class="ri-delete-bin-line text-sm"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Claims Pagination (Rule 9) -->
+        <div class="flex items-center justify-between px-4 py-3 border-t border-border bg-card/50 text-xs">
+          <div class="text-muted-foreground">
+            Showing {{ claims().length }} of {{ totalClaims() }} claims
+          </div>
+          <div class="flex items-center gap-2">
+            <app-custom-button
+              variant="outline"
+              size="sm"
+              [disabled]="claimPage() <= 1"
+              (clicked)="onClaimPageChange(claimPage() - 1)">
+              <i class="ri-arrow-left-s-line"></i> Prev
+            </app-custom-button>
+            <span class="px-2 py-1 font-medium text-foreground">
+              Page {{ claimPage() }} of {{ Math.ceil(totalClaims() / claimLimit()) || 1 }}
+            </span>
+            <app-custom-button
+              variant="outline"
+              size="sm"
+              [disabled]="claimPage() * claimLimit() >= totalClaims()"
+              (clicked)="onClaimPageChange(claimPage() + 1)">
+              Next <i class="ri-arrow-right-s-line"></i>
+            </app-custom-button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- TAB 3: ATTRIBUTION & REVENUE ANALYTICS                         -->
+    <!-- ============================================================== -->
+    <div *ngIf="activeTab() === 'analytics'" class="space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Partner Leaderboard -->
+        <div class="lg:col-span-2 border border-border rounded-xl bg-card p-5">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="font-bold text-foreground">Partner Revenue Leaderboard</h3>
+              <p class="text-xs text-muted-foreground">Top external brokers ranked by sales volume generated</p>
+            </div>
+            <span class="px-2.5 py-1 bg-primary/10 text-primary text-xs font-semibold rounded-lg">Real Estate Attribution</span>
+          </div>
+
+          <div class="space-y-4">
+            <div *ngFor="let b of brokers(); let i = index" class="p-3.5 rounded-xl border border-border bg-secondary/10 flex items-center justify-between gap-4">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs"
+                  [ngClass]="i === 0 ? 'bg-amber-500/20 text-amber-600' : (i === 1 ? 'bg-slate-500/20 text-slate-600' : 'bg-secondary text-muted-foreground')">
+                  #{{ i + 1 }}
+                </div>
+                <div>
+                  <div class="font-semibold text-foreground">{{ b.broker_name }}</div>
+                  <div class="text-[11px] text-muted-foreground flex items-center gap-2">
+                    <span class="font-mono">{{ b.broker_code }}</span>
+                    <span>• {{ b.service_area || 'National' }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-6 text-right">
+                <div>
+                  <div class="text-xs font-bold text-foreground">{{ b.total_bookings_count }} units</div>
+                  <div class="text-[10px] text-muted-foreground">{{ b.total_leads_count }} leads referred</div>
+                </div>
+                <div>
+                  <div class="text-xs font-bold text-emerald-600 dark:text-emerald-400">{{ formatBdt(b.total_sales_value) }}</div>
+                  <div class="text-[10px] text-muted-foreground">Sales Revenue</div>
+                </div>
+                <div>
+                  <div class="text-xs font-bold text-primary">{{ formatBdt(b.total_commission_earned) }}</div>
+                  <div class="text-[10px] text-muted-foreground">Earned Comm.</div>
+                </div>
+              </div>
+            </div>
+
+            <div *ngIf="brokers().length === 0" class="text-center py-8 text-muted-foreground text-xs">
+              No referral performance records to display.
+            </div>
+          </div>
+        </div>
+
+        <!-- Policy & Commission Rules Card -->
+        <div class="border border-border rounded-xl bg-card p-5 space-y-4">
+          <h3 class="font-bold text-foreground flex items-center gap-2">
+            <i class="ri-shield-check-line text-primary"></i>
+            ERP Commission Policy
+          </h3>
+
+          <div class="text-xs text-muted-foreground space-y-3">
+            <div class="p-3 rounded-xl bg-secondary/30 border border-border">
+              <div class="font-semibold text-foreground mb-1">1. Milestone Prerequisite</div>
+              <p>Commissions do NOT become payable solely on lead submission. Claims require verified booking or collection milestones.</p>
+            </div>
+
+            <div class="p-3 rounded-xl bg-secondary/30 border border-border">
+              <div class="font-semibold text-foreground mb-1">2. Anti-Duplicate Prevention</div>
+              <p>System automatically checks and prevents duplicate claims on the same unit/booking across all partners.</p>
+            </div>
+
+            <div class="p-3 rounded-xl bg-secondary/30 border border-border">
+              <div class="font-semibold text-foreground mb-1">3. Bangladesh Tax (TDS 10%)</div>
+              <p>Under Income Tax Act 2023, 10% TDS (Advance Income Tax) is deducted at source prior to net disbursement.</p>
+            </div>
+
+            <div class="p-3 rounded-xl bg-secondary/30 border border-border">
+              <div class="font-semibold text-foreground mb-1">4. Dual Approvals</div>
+              <p>All claims route sequentially through Sales Verification and Finance Department authorization before payout.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </app-card-container>
+
+  <!-- ============================================================== -->
+  <!-- MODAL 1: BROKER DETAILS & BANK REPOSITORY                      -->
+  <!-- ============================================================== -->
+  <app-modal
+    [isOpen]="isBrokerDetailsModalOpen()"
+    [title]="selectedBroker()?.broker_name || 'Partner Profile'"
+    (closed)="closeBrokerDetails()">
+
+    <div *ngIf="selectedBroker()" class="space-y-4 text-xs">
+      <!-- Header Summary -->
+      <div class="p-4 rounded-xl bg-secondary/20 border border-border flex items-center justify-between">
+        <div>
+          <div class="text-sm font-bold text-foreground">{{ selectedBroker()?.broker_name }}</div>
+          <div class="text-muted-foreground font-mono mt-0.5">{{ selectedBroker()?.broker_code }} • {{ selectedBroker()?.broker_type }}</div>
+        </div>
+        <app-status-badge [status]="selectedBroker()?.status || ''" [variant]="getBadgeVariant(selectedBroker()?.status || '')"></app-status-badge>
+      </div>
+
+      <!-- Referral Link & Code Box -->
+      <div class="p-4 rounded-xl bg-primary/5 border border-primary/20 space-y-2">
+        <div class="font-semibold text-foreground flex items-center gap-1.5">
+          <i class="ri-share-line text-primary"></i> Referral Attribution Credentials
+        </div>
+        <div class="flex items-center justify-between bg-card p-2 rounded-lg border border-border">
+          <div>
+            <div class="text-[10px] text-muted-foreground">Unique Referral Code</div>
+            <div class="font-mono font-bold text-foreground text-sm">{{ selectedBroker()?.referral_code || 'N/A' }}</div>
+          </div>
+          <button
+            type="button"
+            (click)="copyToClipboard(selectedBroker()?.referral_code, 'code')"
+            class="px-3 py-1 bg-secondary hover:bg-secondary/80 rounded font-semibold text-foreground">
+            {{ copiedCode() ? 'Copied!' : 'Copy Code' }}
+          </button>
+        </div>
+
+        <div *ngIf="selectedBroker()?.referral_link" class="flex items-center justify-between bg-card p-2 rounded-lg border border-border">
+          <div class="truncate mr-2">
+            <div class="text-[10px] text-muted-foreground">Direct Lead Attribution URL</div>
+            <div class="font-mono text-muted-foreground text-[11px] truncate">{{ selectedBroker()?.referral_link }}</div>
+          </div>
+          <button
+            type="button"
+            (click)="copyToClipboard(selectedBroker()?.referral_link, 'link')"
+            class="px-3 py-1 bg-primary text-primary-foreground rounded font-semibold shrink-0">
+            {{ copiedLink() ? 'Copied!' : 'Copy Link' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Contact & Office -->
+      <div class="grid grid-cols-2 gap-3 p-3 rounded-xl border border-border bg-card">
+        <div>
+          <span class="text-muted-foreground">Contact Person:</span>
+          <div class="font-medium text-foreground">{{ selectedBroker()?.contact_person || 'N/A' }}</div>
+        </div>
+        <div>
+          <span class="text-muted-foreground">Primary Phone:</span>
+          <div class="font-medium text-foreground">{{ selectedBroker()?.primary_phone }}</div>
+        </div>
+        <div>
+          <span class="text-muted-foreground">Email:</span>
+          <div class="font-medium text-foreground">{{ selectedBroker()?.email || 'N/A' }}</div>
+        </div>
+        <div>
+          <span class="text-muted-foreground">Service Territory:</span>
+          <div class="font-medium text-foreground">{{ selectedBroker()?.service_area || 'National' }}</div>
+        </div>
+        <div class="col-span-2">
+          <span class="text-muted-foreground">Office Address:</span>
+          <div class="font-medium text-foreground">{{ selectedBroker()?.office_address || 'N/A' }}</div>
+        </div>
+      </div>
+
+      <!-- Bank & Payment Details (Restricted Access - Spec 4.10) -->
+      <div class="p-3 rounded-xl border border-border bg-card space-y-2">
+        <div class="font-semibold text-foreground flex items-center gap-1.5">
+          <i class="ri-bank-card-line text-emerald-500"></i> Bank & Payout Information (Restricted Access)
+        </div>
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <div>
+            <span class="text-muted-foreground">Bank Name:</span>
+            <div class="font-medium text-foreground">{{ selectedBroker()?.bank_name || 'N/A' }}</div>
+          </div>
+          <div>
+            <span class="text-muted-foreground">Branch:</span>
+            <div class="font-medium text-foreground">{{ selectedBroker()?.bank_branch || 'N/A' }}</div>
+          </div>
+          <div>
+            <span class="text-muted-foreground">Account Name:</span>
+            <div class="font-medium text-foreground">{{ selectedBroker()?.bank_account_name || 'N/A' }}</div>
+          </div>
+          <div>
+            <span class="text-muted-foreground">Account Number:</span>
+            <div class="font-mono font-medium text-foreground">{{ selectedBroker()?.bank_account_number || 'N/A' }}</div>
+          </div>
+          <div>
+            <span class="text-muted-foreground">Routing Number:</span>
+            <div class="font-mono font-medium text-foreground">{{ selectedBroker()?.routing_number || 'N/A' }}</div>
+          </div>
+          <div>
+            <span class="text-muted-foreground">Mobile Wallet (bKash/Nagad):</span>
+            <div class="font-mono font-medium text-foreground">{{ selectedBroker()?.mobile_wallet_number || 'N/A' }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Legal & Compliance Documents -->
+      <div class="p-3 rounded-xl border border-border bg-card space-y-2">
+        <div class="font-semibold text-foreground flex items-center gap-1.5">
+          <i class="ri-file-text-line text-primary"></i> Agreement & Compliance Files
+        </div>
+        <div class="grid grid-cols-3 gap-2">
+          <div *ngIf="selectedBroker()?.trade_license_url; else noDoc1">
+            <a [href]="selectedBroker()?.trade_license_url" target="_blank" class="p-2 rounded border border-border bg-secondary/30 flex items-center gap-1 hover:bg-secondary">
+              <i class="ri-attachment-line text-primary"></i> Trade License
+            </a>
+          </div>
+          <ng-template #noDoc1><div class="p-2 rounded border border-border text-muted-foreground text-[11px]">No Trade License</div></ng-template>
+
+          <div *ngIf="selectedBroker()?.tin_cert_url; else noDoc2">
+            <a [href]="selectedBroker()?.tin_cert_url" target="_blank" class="p-2 rounded border border-border bg-secondary/30 flex items-center gap-1 hover:bg-secondary">
+              <i class="ri-attachment-line text-primary"></i> TIN Certificate
+            </a>
+          </div>
+          <ng-template #noDoc2><div class="p-2 rounded border border-border text-muted-foreground text-[11px]">No TIN File</div></ng-template>
+
+          <div *ngIf="selectedBroker()?.agreement_doc_url; else noDoc3">
+            <a [href]="selectedBroker()?.agreement_doc_url" target="_blank" class="p-2 rounded border border-border bg-secondary/30 flex items-center gap-1 hover:bg-secondary">
+              <i class="ri-attachment-line text-primary"></i> Signed Agreement
+            </a>
+          </div>
+          <ng-template #noDoc3><div class="p-2 rounded border border-border text-muted-foreground text-[11px]">No Signed Doc</div></ng-template>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2">
+        <app-custom-button variant="outline" size="sm" (clicked)="closeBrokerDetails()">Close</app-custom-button>
+        <app-custom-button variant="primary" size="sm" (clicked)="editBroker(selectedBroker()!); closeBrokerDetails()">Edit Agreement</app-custom-button>
+      </div>
+    </div>
+  </app-modal>
+
+  <!-- ============================================================== -->
+  <!-- MODAL 2: COMMISSION CLAIM APPROVAL MODAL                       -->
+  <!-- ============================================================== -->
+  <app-modal
+    [isOpen]="isApproveModalOpen()"
+    [title]="'Review Claim: ' + (selectedClaim()?.claim_code || '')"
+    (closed)="closeApproveModal()">
+
+    <form [formGroup]="approvalForm" (ngSubmit)="submitApproval()" class="space-y-4 text-xs">
+      <div class="p-3.5 rounded-xl bg-secondary/20 border border-border space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="font-bold text-foreground">{{ selectedClaim()?.broker_name }}</span>
+          <span class="font-mono text-primary font-bold">{{ formatBdt(selectedClaim()?.net_payable_amount || 0) }} Net</span>
+        </div>
+        <div class="text-muted-foreground">
+          Milestone: <strong>{{ selectedClaim()?.milestone_achieved }}</strong> • Gross: {{ formatBdt(selectedClaim()?.calculated_commission_amount || 0) }}
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <label class="font-medium text-foreground block">Approval Decision *</label>
+        <div class="grid grid-cols-2 gap-2">
+          <label class="p-3 rounded-xl border border-border cursor-pointer flex items-center gap-2 hover:bg-secondary/20">
+            <input type="radio" formControlName="decision" value="APPROVE_SALES" class="text-primary">
+            <span>Sales Head Approval</span>
+          </label>
+          <label class="p-3 rounded-xl border border-border cursor-pointer flex items-center gap-2 hover:bg-secondary/20">
+            <input type="radio" formControlName="decision" value="APPROVE_FINANCE" class="text-primary">
+            <span>Finance Payout Approval</span>
+          </label>
+        </div>
+      </div>
+
+      <app-custom-textarea
+        formControlName="notes"
+        label="Internal Approval Remarks"
+        placeholder="e.g. Booking confirmed and down payment 20% realized in bank account. Approved for disbursement."
+        [rows]="3">
+      </app-custom-textarea>
+
+      <app-custom-input
+        formControlName="rejection_reason"
+        label="Rejection Reason (If rejecting claim)"
+        placeholder="Leave blank if approving...">
+      </app-custom-input>
+
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-border">
+        <app-custom-button variant="outline" size="sm" type="button" (clicked)="closeApproveModal()">
+          Cancel
+        </app-custom-button>
+        <app-custom-button variant="primary" size="sm" type="submit" [disabled]="isActionLoading()">
+          <i class="ri-check-line mr-1"></i> Submit Decision
+        </app-custom-button>
+      </div>
+    </form>
+  </app-modal>
+
+  <!-- ============================================================== -->
+  <!-- MODAL 3: DISBURSEMENT RECORDING MODAL                          -->
+  <!-- ============================================================== -->
+  <app-modal
+    [isOpen]="isDisburseModalOpen()"
+    [title]="'Disburse Commission: ' + (selectedClaim()?.claim_code || '')"
+    (closed)="closeDisburseModal()">
+
+    <form [formGroup]="disburseForm" (ngSubmit)="submitDisbursement()" class="space-y-4 text-xs">
+      <div class="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-800 dark:text-emerald-300">
+        <div class="flex items-center justify-between">
+          <span class="font-bold">Net Payout Authorized</span>
+          <span class="text-lg font-bold font-mono">{{ formatBdt(selectedClaim()?.net_payable_amount || 0) }}</span>
+        </div>
+        <div class="text-[11px] mt-1 text-emerald-700 dark:text-emerald-400">
+          Payable to: <strong>{{ selectedClaim()?.broker_name }}</strong> (Bank / Wallet details on file)
+        </div>
+      </div>
+
+      <app-custom-input
+        formControlName="disbursement_reference"
+        label="Disbursement Reference (Required) *"
+        placeholder="e.g., Cheque #4928192, BEFTN Trx #8821903, bKash TrxID #BL99421"
+        prefixIcon="ri-receipt-line">
+      </app-custom-input>
+
+      <app-custom-textarea
+        formControlName="notes"
+        label="Payment Remarks"
+        placeholder="e.g., Account payee cheque issued and dispatched via courier."
+        [rows]="2">
+      </app-custom-textarea>
+
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-border">
+        <app-custom-button variant="outline" size="sm" type="button" (clicked)="closeDisburseModal()">
+          Cancel
+        </app-custom-button>
+        <app-custom-button variant="primary" size="sm" type="submit" [disabled]="isActionLoading()">
+          <i class="ri-money-dollar-circle-line mr-1"></i> Confirm Disbursement
+        </app-custom-button>
+      </div>
+    </form>
+  </app-modal>
+</div>

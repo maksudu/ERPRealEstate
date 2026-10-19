@@ -1,0 +1,242 @@
+<div class="space-y-6 max-w-4xl mx-auto">
+  <!-- Single Card Container (Rule 6) -->
+  <app-card-container
+    [title]="isEditMode() ? 'Edit Marketing Campaign' : 'Create Marketing Campaign'"
+    subtitle="Configure omnichannel marketing campaigns, UTM tracking links, budget spend, and lead routing (Spec 4.13)">
+
+    <!-- Error Banner -->
+    <div *ngIf="errorMessage()" class="p-3 mb-6 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 text-xs flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <i class="ri-error-warning-line text-base"></i>
+        <span>{{ errorMessage() }}</span>
+      </div>
+      <button type="button" (click)="errorMessage.set(null)" class="text-rose-600 hover:opacity-80">
+        <i class="ri-close-line"></i>
+      </button>
+    </div>
+
+    <form [formGroup]="campaignForm" (ngSubmit)="onSubmit()" class="space-y-6">
+      <!-- SECTION 1: CAMPAIGN OVERVIEW -->
+      <div class="space-y-4">
+        <div class="flex items-center gap-2 border-b border-border pb-2">
+          <i class="ri-advertisement-line text-primary text-base"></i>
+          <h3 class="font-bold text-foreground text-sm">Campaign Overview & Marketing Channel</h3>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="md:col-span-2">
+            <app-custom-input
+              formControlName="name"
+              label="Campaign Name *"
+              placeholder="e.g. Luxury Gulshan Duplex Launch 2026"
+              prefixIcon="ri-edit-line"
+              [required]="true">
+            </app-custom-input>
+          </div>
+
+          <div>
+            <app-searchable-select
+              formControlName="channel"
+              label="Marketing Channel *"
+              [categoryCode]="LOOKUP.campaignChannel"
+              [allowCreateNew]="true"
+              [required]="true">
+            </app-searchable-select>
+          </div>
+
+          <div>
+            <app-searchable-select
+              formControlName="project_id"
+              label="Target Real Estate Project"
+              placeholder="Select Project"
+              [options]="projectOptions()">
+            </app-searchable-select>
+          </div>
+
+          <div class="md:col-span-2">
+            <app-custom-input
+              formControlName="target_audience"
+              label="Target Audience Persona"
+              placeholder="e.g. Doctors, University Professors, NRB Investors (Dubai/UK), High Net Worth Executives"
+              prefixIcon="ri-group-line">
+            </app-custom-input>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 2: BUDGET & LEAD TARGETS -->
+      <div class="space-y-4">
+        <div class="flex items-center gap-2 border-b border-border pb-2">
+          <i class="ri-money-dollar-circle-line text-emerald-500 text-base"></i>
+          <h3 class="font-bold text-foreground text-sm">Budget Allocation & Lead Conversion Targets</h3>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <app-custom-input
+              formControlName="allocated_budget"
+              label="Allocated Budget (BDT) *"
+              type="number"
+              placeholder="e.g. 500000"
+              prefixIcon="ri-wallet-3-line"
+              [required]="true">
+            </app-custom-input>
+          </div>
+
+          <div>
+            <app-custom-input
+              formControlName="actual_spend"
+              label="Actual Spend to Date (BDT) *"
+              type="number"
+              placeholder="e.g. 210000"
+              prefixIcon="ri-funds-line"
+              [required]="true">
+            </app-custom-input>
+          </div>
+
+          <div>
+            <app-custom-input
+              formControlName="target_leads"
+              label="Target Leads (Volume) *"
+              type="number"
+              placeholder="e.g. 250"
+              prefixIcon="ri-user-star-line"
+              [required]="true">
+            </app-custom-input>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 3: UTM TRACKING & URL GENERATOR -->
+      <div class="space-y-4">
+        <div class="flex items-center gap-2 border-b border-border pb-2">
+          <i class="ri-links-line text-primary text-base"></i>
+          <h3 class="font-bold text-foreground text-sm">UTM Tracking Parameters & Digital Attribution Link</h3>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <app-custom-input
+              formControlName="utm_source"
+              label="UTM Source"
+              placeholder="e.g. facebook, google_ads, newsletter">
+            </app-custom-input>
+          </div>
+
+          <div>
+            <app-custom-input
+              formControlName="utm_medium"
+              label="UTM Medium"
+              placeholder="e.g. paid_social, cpc, email">
+            </app-custom-input>
+          </div>
+
+          <div>
+            <app-custom-input
+              formControlName="utm_campaign"
+              label="UTM Campaign Slug"
+              placeholder="e.g. gulshan_duplex_launch_q1">
+            </app-custom-input>
+          </div>
+
+          <div>
+            <app-custom-input
+              formControlName="utm_content"
+              label="UTM Content (Ad Variant)"
+              placeholder="e.g. video_ad_walkthrough">
+            </app-custom-input>
+          </div>
+
+          <div>
+            <app-custom-input
+              formControlName="utm_term"
+              label="UTM Term (Keywords)"
+              placeholder="e.g. luxury_flat_gulshan">
+            </app-custom-input>
+          </div>
+
+          <div>
+            <app-custom-input
+              formControlName="landing_page_slug"
+              label="Landing Page Slug"
+              placeholder="e.g. projects/gulshan-pinnacle">
+            </app-custom-input>
+          </div>
+        </div>
+
+        <!-- Generated Tracking URL Preview Box -->
+        <div class="p-3 rounded-xl bg-secondary/30 border border-border space-y-1">
+          <div class="text-[10px] uppercase font-bold text-muted-foreground flex items-center gap-1">
+            <i class="ri-link text-primary"></i> Generated Campaign Tracking Link (Preserves Original Attribution)
+          </div>
+          <div class="font-mono text-xs text-primary font-medium break-all select-all">
+            {{ generatedTrackingUrl() }}
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 4: TIMELINE, STATUS & NOTES -->
+      <div class="space-y-4">
+        <div class="flex items-center gap-2 border-b border-border pb-2">
+          <i class="ri-calendar-line text-primary text-base"></i>
+          <h3 class="font-bold text-foreground text-sm">Campaign Timeline, Lifecycle & Notes</h3>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <app-custom-input
+              formControlName="start_date"
+              label="Campaign Start Date"
+              type="date">
+            </app-custom-input>
+          </div>
+
+          <div>
+            <app-custom-input
+              formControlName="end_date"
+              label="Campaign End Date"
+              type="date">
+            </app-custom-input>
+          </div>
+
+          <div>
+            <app-searchable-select
+              formControlName="status"
+              label="Campaign Status *"
+              [categoryCode]="LOOKUP.campaignStatus"
+              [allowCreateNew]="true"
+              [required]="true">
+            </app-searchable-select>
+          </div>
+
+          <div class="md:col-span-3">
+            <app-custom-textarea
+              formControlName="notes"
+              label="Campaign Strategy & Creative Notes"
+              placeholder="e.g. Creative asset focus on 360-degree virtual tour and payment plan flexibility..."
+              [rows]="3">
+            </app-custom-textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Bar -->
+      <div class="flex items-center justify-end gap-3 pt-4 border-t border-border">
+        <app-custom-button
+          variant="outline"
+          type="button"
+          (clicked)="cancel()">
+          Cancel
+        </app-custom-button>
+
+        <app-custom-button
+          variant="primary"
+          type="submit"
+          [disabled]="isSubmitting()">
+          <i class="ri-check-line mr-1"></i>
+          {{ isEditMode() ? 'Save Campaign Changes' : 'Launch Campaign' }}
+        </app-custom-button>
+      </div>
+    </form>
+  </app-card-container>
+</div>

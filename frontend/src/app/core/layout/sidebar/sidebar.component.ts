@@ -488,6 +488,14 @@ export class SidebarComponent implements OnInit {
         { id: 'lead-qualification', label: 'Lead Qualification & Scoring', route: '/crm/lead-qualification', badge: '4.4' },
         { id: 'leads', label: 'Omnichannel Leads & Pipeline', route: '/crm/leads' },
         { id: 'customers', label: 'Buyer Profiles & KYC', route: '/crm/customers', badge: '4.5' },
+        { id: 'customer-requirements', label: 'Requirements & Budget Match', route: '/crm/requirements', badge: '4.6' },
+        { id: 'crm-activities', label: 'Activities & Site Visits', route: '/crm/activities', badge: '4.7' },
+        { id: 'crm-tasks', label: 'Follow-up Tasks & Reminders', route: '/crm/tasks', badge: '4.8' },
+        { id: 'crm-communications', label: 'Communication History & Timeline', route: '/crm/communications', badge: '4.9' },
+        { id: 'crm-brokers', label: 'Brokers & Referrals', route: '/crm/brokers', badge: '4.10' },
+        { id: 'crm-funnel', label: 'Sales Funnel & Conversion', route: '/crm/funnel', badge: '4.11' },
+        { id: 'crm-handovers', label: 'Lead-to-Booking Handover', route: '/crm/handovers', badge: '4.12' },
+        { id: 'crm-campaigns', label: 'Campaigns & Marketing', route: '/crm/campaigns', badge: '4.13' },
         { id: 'customer-portal', label: 'Flat Owner Self-Service Portal', route: '/portal/customer', badge: 'Portal' }
       ]
     },

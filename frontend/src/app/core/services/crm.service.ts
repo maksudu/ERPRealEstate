@@ -31,8 +31,172 @@ import {
   CustomerServiceRequest,
   ServiceRequestPaginatedResponse,
   CrmDashboardResponse,
-  CrmDrilldownResponse
+  CrmDrilldownResponse,
+  CustomerRequirement,
+  CustomerRequirementCreate,
+  CustomerRequirementUpdate,
+  CustomerRequirementPaginatedResponse,
+  RequirementAuditLog,
+  InventoryMatchUnit,
+  InventoryRecommendation,
+  InventoryAlert,
+  ActivityStatsSummary,
+  FollowUpTask,
+  DailyTodoSummary,
+  CommunicationHistory,
+  CustomerTimelineItem,
+  Broker,
+  BrokerCreate,
+  BrokerUpdate,
+  BrokerPaginatedResponse,
+  BrokerStatsSummary,
+  CommissionClaim,
+  CommissionClaimCreate,
+  CommissionClaimUpdate,
+  CommissionClaimApproval,
+  CommissionClaimDisburse,
+  CommissionClaimPaginatedResponse,
+  FunnelStage,
+  FunnelStageCreate,
+  FunnelStageUpdate,
+  LeadStageTransition,
+  LeadStageTransitionCreate,
+  LeadDisqualifyRequest,
+  LeadReopenRequest,
+  Opportunity,
+  OpportunityCreate,
+  OpportunityUpdate,
+  OpportunityPaginatedResponse,
+  BookingHandover,
+  BookingHandoverCreate,
+  BookingHandoverUpdate,
+  BookingHandoverVerificationUpdate,
+  BookingHandoverReview,
+  BookingHandoverPaginatedResponse,
+  ConversionKpiResponse,
+  Campaign,
+  CampaignCreate,
+  CampaignUpdate,
+  CampaignPaginatedResponse,
+  MarketingTouchpoint,
+  MarketingTouchpointCreate,
+  SuppressionEntry,
+  SuppressionEntryCreate,
+  SuppressionPaginatedResponse,
+  CampaignMarketingDashboardKpis,
+  OfflineExhibitionImportPayload
 } from '../models/crm.model';
+
+export interface OpportunityFilters {
+  stage?: string;
+  sales_rep_id?: number;
+  project_id?: number;
+  customer_id?: number;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface BookingHandoverFilters {
+  status?: string;
+  sales_rep_id?: number;
+  project_id?: number;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface BrokerFilters {
+  search?: string;
+  broker_type?: string;
+  status?: string;
+  service_area?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface CommissionClaimFilters {
+  search?: string;
+  broker_id?: number;
+  claim_status?: string;
+  milestone_achieved?: string;
+  is_milestone_verified?: boolean;
+  page?: number;
+  limit?: number;
+}
+
+export interface ActivityFilters {
+  search?: string;
+  activity_type?: string;
+  status?: string;
+  lead_id?: number;
+  customer_id?: number;
+  project_id?: number;
+  sales_rep_id?: number;
+  start_date?: string;
+  end_date?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface ActivityPaginatedResponse {
+  items: LeadActivity[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface TaskFilters {
+  search?: string;
+  task_category?: string;
+  priority?: string;
+  status?: string;
+  assigned_to_id?: number;
+  lead_id?: number;
+  customer_id?: number;
+  due_filter?: string; // 'overdue' | 'today' | 'upcoming'
+  page?: number;
+  limit?: number;
+}
+
+export interface TaskPaginatedResponse {
+  items: FollowUpTask[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface CommunicationFilters {
+  search?: string;
+  channel?: string;
+  direction?: string;
+  lead_id?: number;
+  customer_id?: number;
+  delivery_status?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface CommunicationPaginatedResponse {
+  items: CommunicationHistory[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface RequirementFilters {
+  search?: string;
+  customer_id?: number;
+  project_id?: number;
+  status?: string;
+  property_type?: string;
+  sales_rep_id?: number;
+  min_budget?: number;
+  max_budget?: number;
+  sort_by?: string;
+  limit?: number;
+  offset?: number;
+}
 
 export interface LeadTableFilters {
   search?: string;
@@ -112,6 +276,13 @@ export class CrmService {
   assignmentsLimit = signal<number>(20);
   assignmentsOffset = signal<number>(0);
   isLoadingAssignments = signal<boolean>(false);
+
+  // Reactive pagination state for customer requirements table (Spec 4.6)
+  requirementsTable = signal<CustomerRequirement[]>([]);
+  requirementsTotal = signal<number>(0);
+  requirementsLimit = signal<number>(20);
+  requirementsOffset = signal<number>(0);
+  isLoadingRequirements = signal<boolean>(false);
 
   // ============================================================
   // 4.2 Lead Capture & Source Management
@@ -464,4 +635,504 @@ export class CrmService {
     if (filters?.search) params = params.set('search', filters.search);
     return this.http.get<CrmDrilldownResponse>(`${this.baseUrl}/dashboard/drilldown`, { params });
   }
+
+  // ============================================================
+  // 4.6 Customer Requirements & Budget Tracking
+  // ============================================================
+
+  loadRequirements(filters: RequirementFilters = {}): Observable<CustomerRequirementPaginatedResponse> {
+    this.isLoadingRequirements.set(true);
+    let params = new HttpParams()
+      .set('limit', String(filters.limit ?? 20))
+      .set('offset', String(filters.offset ?? 0));
+
+    if (filters.search && filters.search.trim()) params = params.set('search', filters.search.trim());
+    if (filters.customer_id) params = params.set('customer_id', String(filters.customer_id));
+    if (filters.project_id) params = params.set('project_id', String(filters.project_id));
+    if (filters.status && filters.status !== 'ALL') params = params.set('status', filters.status);
+    if (filters.property_type && filters.property_type !== 'ALL') params = params.set('property_type', filters.property_type);
+    if (filters.sales_rep_id) params = params.set('sales_rep_id', String(filters.sales_rep_id));
+    if (filters.min_budget !== undefined && filters.min_budget !== null) params = params.set('min_budget', String(filters.min_budget));
+    if (filters.max_budget !== undefined && filters.max_budget !== null) params = params.set('max_budget', String(filters.max_budget));
+    if (filters.sort_by) params = params.set('sort_by', filters.sort_by);
+
+    return this.http.get<CustomerRequirementPaginatedResponse>(`${this.baseUrl}/requirements`, { params }).pipe(
+      tap({
+        next: (res) => {
+          this.requirementsTable.set(res.items || []);
+          this.requirementsTotal.set(res.total || 0);
+          this.requirementsLimit.set(res.limit || 20);
+          this.requirementsOffset.set(res.offset || 0);
+          this.isLoadingRequirements.set(false);
+        },
+        error: () => this.isLoadingRequirements.set(false)
+      })
+    );
+  }
+
+  getRequirement(id: number): Observable<CustomerRequirement> {
+    return this.http.get<CustomerRequirement>(`${this.baseUrl}/requirements/${id}`);
+  }
+
+  createRequirement(payload: CustomerRequirementCreate): Observable<CustomerRequirement> {
+    return this.http.post<CustomerRequirement>(`${this.baseUrl}/requirements`, payload);
+  }
+
+  updateRequirement(id: number, payload: CustomerRequirementUpdate): Observable<CustomerRequirement> {
+    return this.http.put<CustomerRequirement>(`${this.baseUrl}/requirements/${id}`, payload);
+  }
+
+  deleteRequirement(id: number): Observable<{ message: string; id: number }> {
+    return this.http.delete<{ message: string; id: number }>(`${this.baseUrl}/requirements/${id}`);
+  }
+
+  getInventoryMatches(reqId: number): Observable<InventoryMatchUnit[]> {
+    return this.http.get<InventoryMatchUnit[]>(`${this.baseUrl}/requirements/${reqId}/matches`);
+  }
+
+  recommendUnit(reqId: number, payload: { unit_id: number; match_score_percentage?: number; match_details_json?: string }): Observable<InventoryRecommendation> {
+    return this.http.post<InventoryRecommendation>(`${this.baseUrl}/requirements/${reqId}/recommendations`, payload);
+  }
+
+  updateRecommendationStatus(recId: number, payload: { status: string; rejection_reason?: string; rejection_notes?: string }): Observable<InventoryRecommendation> {
+    return this.http.put<InventoryRecommendation>(`${this.baseUrl}/recommendations/${recId}/status`, payload);
+  }
+
+  getRequirementRecommendations(reqId: number): Observable<InventoryRecommendation[]> {
+    return this.http.get<InventoryRecommendation[]>(`${this.baseUrl}/requirements/${reqId}/recommendations`);
+  }
+
+  getRequirementAuditLogs(reqId: number): Observable<RequirementAuditLog[]> {
+    return this.http.get<RequirementAuditLog[]>(`${this.baseUrl}/requirements/${reqId}/audit-logs`);
+  }
+
+  getInventoryAlerts(isRead?: boolean, limit = 20, offset = 0): Observable<InventoryAlert[]> {
+    let params = new HttpParams()
+      .set('limit', String(limit))
+      .set('offset', String(offset));
+    if (isRead !== undefined) params = params.set('is_read', String(isRead));
+    return this.http.get<InventoryAlert[]>(`${this.baseUrl}/inventory-alerts`, { params });
+  }
+
+  markAlertRead(alertId: number): Observable<{ message: string; id: number }> {
+    return this.http.put<{ message: string; id: number }>(`${this.baseUrl}/inventory-alerts/${alertId}/read`, {});
+  }
+
+  // =====================================================================
+  // Spec 4.7: Sales Interactions & Calendar Activities
+  // =====================================================================
+
+  getActivities(filters: ActivityFilters = {}): Observable<ActivityPaginatedResponse> {
+    let params = new HttpParams()
+      .set('page', String(filters.page || 1))
+      .set('limit', String(filters.limit || 20));
+
+    if (filters.search) params = params.set('search', filters.search);
+    if (filters.activity_type) params = params.set('activity_type', filters.activity_type);
+    if (filters.status) params = params.set('status', filters.status);
+    if (filters.lead_id) params = params.set('lead_id', String(filters.lead_id));
+    if (filters.customer_id) params = params.set('customer_id', String(filters.customer_id));
+    if (filters.project_id) params = params.set('project_id', String(filters.project_id));
+    if (filters.sales_rep_id) params = params.set('sales_rep_id', String(filters.sales_rep_id));
+    if (filters.start_date) params = params.set('start_date', filters.start_date);
+    if (filters.end_date) params = params.set('end_date', filters.end_date);
+
+    return this.http.get<ActivityPaginatedResponse>(`${this.baseUrl}/activities`, { params });
+  }
+
+  getActivity(id: number): Observable<LeadActivity> {
+    return this.http.get<LeadActivity>(`${this.baseUrl}/activities/${id}`);
+  }
+
+  createActivity(payload: Partial<LeadActivity>, checkConflict = true): Observable<LeadActivity> {
+    let params = new HttpParams().set('check_conflict', String(checkConflict));
+    return this.http.post<LeadActivity>(`${this.baseUrl}/activities`, payload, { params });
+  }
+
+  updateActivity(id: number, payload: Partial<LeadActivity>): Observable<LeadActivity> {
+    return this.http.put<LeadActivity>(`${this.baseUrl}/activities/${id}`, payload);
+  }
+
+  updateActivityStatus(
+    id: number,
+    payload: {
+      status: string;
+      attendance_status?: string;
+      outcome?: string;
+      shortlisted_units_json?: string;
+      next_action?: string;
+      next_follow_up_date?: string;
+    }
+  ): Observable<LeadActivity> {
+    return this.http.put<LeadActivity>(`${this.baseUrl}/activities/${id}/status`, payload);
+  }
+
+  deleteActivity(id: number): Observable<{ message: string; id: number }> {
+    return this.http.delete<{ message: string; id: number }>(`${this.baseUrl}/activities/${id}`);
+  }
+
+  getActivityStats(projectId?: number, salesRepId?: number): Observable<ActivityStatsSummary> {
+    let params = new HttpParams();
+    if (projectId) params = params.set('project_id', String(projectId));
+    if (salesRepId) params = params.set('sales_rep_id', String(salesRepId));
+    return this.http.get<ActivityStatsSummary>(`${this.baseUrl}/activities/stats/summary`, { params });
+  }
+
+  // =====================================================================
+  // Spec 4.8: Follow-up Tasks and Reminders
+  // =====================================================================
+
+  getTasks(filters: TaskFilters = {}): Observable<TaskPaginatedResponse> {
+    let params = new HttpParams()
+      .set('page', String(filters.page || 1))
+      .set('limit', String(filters.limit || 20));
+
+    if (filters.search) params = params.set('search', filters.search);
+    if (filters.task_category) params = params.set('task_category', filters.task_category);
+    if (filters.priority) params = params.set('priority', filters.priority);
+    if (filters.status) params = params.set('status', filters.status);
+    if (filters.assigned_to_id) params = params.set('assigned_to_id', String(filters.assigned_to_id));
+    if (filters.lead_id) params = params.set('lead_id', String(filters.lead_id));
+    if (filters.customer_id) params = params.set('customer_id', String(filters.customer_id));
+    if (filters.due_filter) params = params.set('due_filter', filters.due_filter);
+
+    return this.http.get<TaskPaginatedResponse>(`${this.baseUrl}/tasks`, { params });
+  }
+
+  getTask(id: number): Observable<FollowUpTask> {
+    return this.http.get<FollowUpTask>(`${this.baseUrl}/tasks/${id}`);
+  }
+
+  getDailyTodoSummary(userId?: number): Observable<DailyTodoSummary> {
+    let params = new HttpParams();
+    if (userId) params = params.set('user_id', String(userId));
+    return this.http.get<DailyTodoSummary>(`${this.baseUrl}/tasks/daily-todo`, { params });
+  }
+
+  createTask(payload: Partial<FollowUpTask>): Observable<FollowUpTask> {
+    return this.http.post<FollowUpTask>(`${this.baseUrl}/tasks`, payload);
+  }
+
+  updateTask(id: number, payload: Partial<FollowUpTask>): Observable<FollowUpTask> {
+    return this.http.put<FollowUpTask>(`${this.baseUrl}/tasks/${id}`, payload);
+  }
+
+  completeTask(
+    id: number,
+    payload: {
+      completion_outcome: string;
+      completion_notes?: string;
+      create_next_task?: boolean;
+      next_task_title?: string;
+      next_task_category?: string;
+      next_task_due_date?: string;
+    }
+  ): Observable<FollowUpTask> {
+    return this.http.put<FollowUpTask>(`${this.baseUrl}/tasks/${id}/complete`, payload);
+  }
+
+  escalateTask(id: number, managerId?: number): Observable<FollowUpTask> {
+    let params = new HttpParams();
+    if (managerId) params = params.set('manager_id', String(managerId));
+    return this.http.post<FollowUpTask>(`${this.baseUrl}/tasks/${id}/escalate`, {}, { params });
+  }
+
+  deleteTask(id: number): Observable<{ message: string; id: number }> {
+    return this.http.delete<{ message: string; id: number }>(`${this.baseUrl}/tasks/${id}`);
+  }
+
+  // =====================================================================
+  // Spec 4.9: Customer Communication History
+  // =====================================================================
+
+  getCommunications(filters: CommunicationFilters = {}): Observable<CommunicationPaginatedResponse> {
+    let params = new HttpParams()
+      .set('page', String(filters.page || 1))
+      .set('limit', String(filters.limit || 20));
+
+    if (filters.search) params = params.set('search', filters.search);
+    if (filters.channel) params = params.set('channel', filters.channel);
+    if (filters.direction) params = params.set('direction', filters.direction);
+    if (filters.lead_id) params = params.set('lead_id', String(filters.lead_id));
+    if (filters.customer_id) params = params.set('customer_id', String(filters.customer_id));
+    if (filters.delivery_status) params = params.set('delivery_status', filters.delivery_status);
+
+    return this.http.get<CommunicationPaginatedResponse>(`${this.baseUrl}/communications`, { params });
+  }
+
+  logCommunication(payload: Partial<CommunicationHistory>): Observable<CommunicationHistory> {
+    return this.http.post<CommunicationHistory>(`${this.baseUrl}/communications`, payload);
+  }
+
+  getCustomerTimeline(leadId?: number, customerId?: number): Observable<CustomerTimelineItem[]> {
+    let params = new HttpParams();
+    if (leadId) params = params.set('lead_id', String(leadId));
+    if (customerId) params = params.set('customer_id', String(customerId));
+    return this.http.get<CustomerTimelineItem[]>(`${this.baseUrl}/communications/timeline`, { params });
+  }
+
+  // =====================================================================
+  // Spec 4.10: Broker and Referral Management
+  // =====================================================================
+
+  getBrokers(filters: BrokerFilters = {}): Observable<BrokerPaginatedResponse> {
+    let params = new HttpParams()
+      .set('page', String(filters.page || 1))
+      .set('limit', String(filters.limit || 20));
+
+    if (filters.search) params = params.set('search', filters.search);
+    if (filters.broker_type) params = params.set('broker_type', filters.broker_type);
+    if (filters.status) params = params.set('status', filters.status);
+    if (filters.service_area) params = params.set('service_area', filters.service_area);
+
+    return this.http.get<BrokerPaginatedResponse>(`${this.baseUrl}/brokers`, { params });
+  }
+
+  getBroker(id: number): Observable<Broker> {
+    return this.http.get<Broker>(`${this.baseUrl}/brokers/${id}`);
+  }
+
+  createBroker(payload: BrokerCreate): Observable<Broker> {
+    return this.http.post<Broker>(`${this.baseUrl}/brokers`, payload);
+  }
+
+  updateBroker(id: number, payload: BrokerUpdate): Observable<Broker> {
+    return this.http.put<Broker>(`${this.baseUrl}/brokers/${id}`, payload);
+  }
+
+  deleteBroker(id: number): Observable<{ message: string; id: number }> {
+    return this.http.delete<{ message: string; id: number }>(`${this.baseUrl}/brokers/${id}`);
+  }
+
+  getBrokerStats(): Observable<BrokerStatsSummary> {
+    return this.http.get<BrokerStatsSummary>(`${this.baseUrl}/brokers/stats/summary`);
+  }
+
+  getBrokerPerformance(brokerId: number): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/brokers/${brokerId}/performance`);
+  }
+
+  getCommissionClaims(filters: CommissionClaimFilters = {}): Observable<CommissionClaimPaginatedResponse> {
+    let params = new HttpParams()
+      .set('page', String(filters.page || 1))
+      .set('limit', String(filters.limit || 20));
+
+    if (filters.search) params = params.set('search', filters.search);
+    if (filters.broker_id) params = params.set('broker_id', String(filters.broker_id));
+    if (filters.claim_status) params = params.set('claim_status', filters.claim_status);
+    if (filters.milestone_achieved) params = params.set('milestone_achieved', filters.milestone_achieved);
+    if (filters.is_milestone_verified !== undefined) {
+      params = params.set('is_milestone_verified', String(filters.is_milestone_verified));
+    }
+
+    return this.http.get<CommissionClaimPaginatedResponse>(`${this.baseUrl}/commission-claims`, { params });
+  }
+
+  getCommissionClaim(id: number): Observable<CommissionClaim> {
+    return this.http.get<CommissionClaim>(`${this.baseUrl}/commission-claims/${id}`);
+  }
+
+  createCommissionClaim(payload: CommissionClaimCreate): Observable<CommissionClaim> {
+    return this.http.post<CommissionClaim>(`${this.baseUrl}/commission-claims`, payload);
+  }
+
+  updateCommissionClaim(id: number, payload: CommissionClaimUpdate): Observable<CommissionClaim> {
+    return this.http.put<CommissionClaim>(`${this.baseUrl}/commission-claims/${id}`, payload);
+  }
+
+  verifyClaimMilestone(id: number): Observable<CommissionClaim> {
+    return this.http.post<CommissionClaim>(`${this.baseUrl}/commission-claims/${id}/verify-milestone`, {});
+  }
+
+  approveCommissionClaim(id: number, payload: CommissionClaimApproval): Observable<CommissionClaim> {
+    return this.http.post<CommissionClaim>(`${this.baseUrl}/commission-claims/${id}/approve`, payload);
+  }
+
+  disburseCommissionClaim(id: number, payload: CommissionClaimDisburse): Observable<CommissionClaim> {
+    return this.http.post<CommissionClaim>(`${this.baseUrl}/commission-claims/${id}/disburse`, payload);
+  }
+
+  deleteCommissionClaim(id: number): Observable<{ message: string; id: number }> {
+    return this.http.delete<{ message: string; id: number }>(`${this.baseUrl}/commission-claims/${id}`);
+  }
+
+  // =====================================================================
+  // Spec 4.11: Sales Funnel and Lead Conversion
+  // =====================================================================
+
+  getFunnelStages(): Observable<FunnelStage[]> {
+    return this.http.get<FunnelStage[]>(`${this.baseUrl}/funnel/stages`);
+  }
+
+  createFunnelStage(payload: FunnelStageCreate): Observable<FunnelStage> {
+    return this.http.post<FunnelStage>(`${this.baseUrl}/funnel/stages`, payload);
+  }
+
+  updateFunnelStage(id: number, payload: FunnelStageUpdate): Observable<FunnelStage> {
+    return this.http.put<FunnelStage>(`${this.baseUrl}/funnel/stages/${id}`, payload);
+  }
+
+  deleteFunnelStage(id: number): Observable<{ message: string; id: number }> {
+    return this.http.delete<{ message: string; id: number }>(`${this.baseUrl}/funnel/stages/${id}`);
+  }
+
+  transitionLeadStage(leadId: number, payload: LeadStageTransitionCreate): Observable<LeadStageTransition> {
+    return this.http.post<LeadStageTransition>(`${this.baseUrl}/leads/${leadId}/stage-transition`, payload);
+  }
+
+  disqualifyLead(leadId: number, payload: LeadDisqualifyRequest): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/leads/${leadId}/disqualify`, payload);
+  }
+
+  reopenLead(leadId: number, payload: LeadReopenRequest): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/leads/${leadId}/reopen`, payload);
+  }
+
+  getLeadStageHistory(leadId: number): Observable<LeadStageTransition[]> {
+    return this.http.get<LeadStageTransition[]>(`${this.baseUrl}/leads/${leadId}/stage-history`);
+  }
+
+  getOpportunities(filters: OpportunityFilters = {}): Observable<OpportunityPaginatedResponse> {
+    let params = new HttpParams()
+      .set('page', String(filters.page || 1))
+      .set('limit', String(filters.limit || 20));
+
+    if (filters.search) params = params.set('search', filters.search);
+    if (filters.stage) params = params.set('stage', filters.stage);
+    if (filters.sales_rep_id) params = params.set('sales_rep_id', String(filters.sales_rep_id));
+    if (filters.project_id) params = params.set('project_id', String(filters.project_id));
+    if (filters.customer_id) params = params.set('customer_id', String(filters.customer_id));
+
+    return this.http.get<OpportunityPaginatedResponse>(`${this.baseUrl}/opportunities`, { params });
+  }
+
+  getOpportunity(id: number): Observable<Opportunity> {
+    return this.http.get<Opportunity>(`${this.baseUrl}/opportunities/${id}`);
+  }
+
+  createOpportunity(payload: OpportunityCreate): Observable<Opportunity> {
+    return this.http.post<Opportunity>(`${this.baseUrl}/opportunities`, payload);
+  }
+
+  updateOpportunity(id: number, payload: OpportunityUpdate): Observable<Opportunity> {
+    return this.http.put<Opportunity>(`${this.baseUrl}/opportunities/${id}`, payload);
+  }
+
+  deleteOpportunity(id: number): Observable<{ message: string; id: number }> {
+    return this.http.delete<{ message: string; id: number }>(`${this.baseUrl}/opportunities/${id}`);
+  }
+
+  getBookingHandovers(filters: BookingHandoverFilters = {}): Observable<BookingHandoverPaginatedResponse> {
+    let params = new HttpParams()
+      .set('page', String(filters.page || 1))
+      .set('limit', String(filters.limit || 20));
+
+    if (filters.search) params = params.set('search', filters.search);
+    if (filters.status) params = params.set('status', filters.status);
+    if (filters.sales_rep_id) params = params.set('sales_rep_id', String(filters.sales_rep_id));
+    if (filters.project_id) params = params.set('project_id', String(filters.project_id));
+
+    return this.http.get<BookingHandoverPaginatedResponse>(`${this.baseUrl}/booking-handovers`, { params });
+  }
+
+  getBookingHandover(id: number): Observable<BookingHandover> {
+    return this.http.get<BookingHandover>(`${this.baseUrl}/booking-handovers/${id}`);
+  }
+
+  createBookingHandover(payload: BookingHandoverCreate): Observable<BookingHandover> {
+    return this.http.post<BookingHandover>(`${this.baseUrl}/booking-handovers`, payload);
+  }
+
+  reviewBookingHandover(id: number, payload: BookingHandoverReview): Observable<BookingHandover> {
+    return this.http.post<BookingHandover>(`${this.baseUrl}/booking-handovers/${id}/review`, payload);
+  }
+
+  updateBookingHandover(id: number, payload: BookingHandoverUpdate): Observable<BookingHandover> {
+    return this.http.put<BookingHandover>(`${this.baseUrl}/booking-handovers/${id}`, payload);
+  }
+
+  updateHandoverVerification(id: number, payload: BookingHandoverVerificationUpdate): Observable<BookingHandover> {
+    return this.http.put<BookingHandover>(`${this.baseUrl}/booking-handovers/${id}/verification`, payload);
+  }
+
+  generateHandoverReservation(id: number): Observable<BookingHandover> {
+    return this.http.post<BookingHandover>(`${this.baseUrl}/booking-handovers/${id}/generate-reservation`, {});
+  }
+
+  deleteBookingHandover(id: number): Observable<{ message: string; id: number }> {
+    return this.http.delete<{ message: string; id: number }>(`${this.baseUrl}/booking-handovers/${id}`);
+  }
+
+  // Spec 4.13 Campaign Management
+  getCampaigns(filters: { channel?: string; status?: string; project_id?: number; search?: string; page?: number; limit?: number } = {}): Observable<CampaignPaginatedResponse> {
+    let params = new HttpParams()
+      .set('page', String(filters.page || 1))
+      .set('limit', String(filters.limit || 20));
+    if (filters.channel && filters.channel !== 'ALL') params = params.set('channel', filters.channel);
+    if (filters.status && filters.status !== 'ALL') params = params.set('status', filters.status);
+    if (filters.project_id) params = params.set('project_id', String(filters.project_id));
+    if (filters.search) params = params.set('search', filters.search);
+    return this.http.get<CampaignPaginatedResponse>(`${this.baseUrl}/campaigns`, { params });
+  }
+
+  getCampaign(id: number): Observable<Campaign> {
+    return this.http.get<Campaign>(`${this.baseUrl}/campaigns/${id}`);
+  }
+
+  createCampaign(payload: CampaignCreate): Observable<Campaign> {
+    return this.http.post<Campaign>(`${this.baseUrl}/campaigns`, payload);
+  }
+
+  updateCampaign(id: number, payload: CampaignUpdate): Observable<Campaign> {
+    return this.http.put<Campaign>(`${this.baseUrl}/campaigns/${id}`, payload);
+  }
+
+  deleteCampaign(id: number): Observable<{ message: string; id: number }> {
+    return this.http.delete<{ message: string; id: number }>(`${this.baseUrl}/campaigns/${id}`);
+  }
+
+  getCampaignDashboardKpis(): Observable<CampaignMarketingDashboardKpis> {
+    return this.http.get<CampaignMarketingDashboardKpis>(`${this.baseUrl}/campaigns/dashboard/kpis`);
+  }
+
+  getMarketingTouchpoints(leadId?: number, campaignId?: number): Observable<MarketingTouchpoint[]> {
+    let params = new HttpParams();
+    if (leadId) params = params.set('lead_id', String(leadId));
+    if (campaignId) params = params.set('campaign_id', String(campaignId));
+    return this.http.get<MarketingTouchpoint[]>(`${this.baseUrl}/campaigns/touchpoints/list`, { params });
+  }
+
+  createMarketingTouchpoint(payload: MarketingTouchpointCreate): Observable<MarketingTouchpoint> {
+    return this.http.post<MarketingTouchpoint>(`${this.baseUrl}/campaigns/touchpoints`, payload);
+  }
+
+  getSuppressionList(filters: { search?: string; reason?: string; page?: number; limit?: number } = {}): Observable<SuppressionPaginatedResponse> {
+    let params = new HttpParams()
+      .set('page', String(filters.page || 1))
+      .set('limit', String(filters.limit || 20));
+    if (filters.search) params = params.set('search', filters.search);
+    if (filters.reason && filters.reason !== 'ALL') params = params.set('reason', filters.reason);
+    return this.http.get<SuppressionPaginatedResponse>(`${this.baseUrl}/suppression-list`, { params });
+  }
+
+  createSuppressionEntry(payload: SuppressionEntryCreate): Observable<SuppressionEntry> {
+    return this.http.post<SuppressionEntry>(`${this.baseUrl}/suppression-list`, payload);
+  }
+
+  deleteSuppressionEntry(id: number): Observable<{ message: string; id: number }> {
+    return this.http.delete<{ message: string; id: number }>(`${this.baseUrl}/suppression-list/${id}`);
+  }
+
+  importOfflineExhibitionLeads(payload: OfflineExhibitionImportPayload): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/campaigns/offline-leads/import`, payload);
+  }
+
+  getFunnelAnalytics(projectId?: number, salesRepId?: number, cohortPeriod: string = 'LAST_30_DAYS'): Observable<ConversionKpiResponse> {
+    let params = new HttpParams().set('cohort_period', cohortPeriod);
+    if (projectId) params = params.set('project_id', String(projectId));
+    if (salesRepId) params = params.set('sales_rep_id', String(salesRepId));
+    return this.http.get<ConversionKpiResponse>(`${this.baseUrl}/funnel/analytics`, { params });
+  }
 }
+
+

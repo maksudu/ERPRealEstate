@@ -1,13 +1,129 @@
 export interface LeadActivity {
   id: number;
-  lead_id: number;
+  activity_code?: string;
+  lead_id?: number | null;
+  customer_id?: number | null;
+  project_id?: number | null;
+  unit_id?: number | null;
   sales_rep_id?: number | null;
-  activity_type: string; // PHONE_CALL, SITE_VISIT, WHATSAPP, OFFICE_MEETING, STAGE_CHANGE, EMAIL
+  activity_type: string;
+  title?: string | null;
   activity_summary: string;
   scheduled_at?: string | null;
+  scheduled_start?: string | null;
+  scheduled_end?: string | null;
+  duration_minutes?: number;
+  meeting_location?: string | null;
+  agenda?: string | null;
+  status: string; // PLANNED, COMPLETED, RESCHEDULED, CANCELLED, NO_SHOW
+  attendance_status?: string | null; // PENDING, ATTENDED, NO_SHOW, CANCELLED
   completed_at?: string | null;
   outcome?: string | null;
+  shortlisted_units_json?: string | null;
+  next_action?: string | null;
+  next_follow_up_date?: string | null;
+  reminder_minutes_before?: number;
+  is_reminder_sent?: boolean;
+  escalation_level?: number;
   created_at?: string;
+  updated_at?: string;
+  lead_name?: string | null;
+  customer_name?: string | null;
+  project_name?: string | null;
+  unit_number?: string | null;
+  sales_rep_name?: string | null;
+}
+
+export interface ActivityStatsSummary {
+  total_activities: number;
+  planned_count: number;
+  completed_count: number;
+  rescheduled_count: number;
+  cancelled_count: number;
+  no_show_count: number;
+  no_show_rate_percentage: number;
+  total_site_visits: number;
+  completed_site_visits: number;
+  no_show_site_visits: number;
+  site_visit_completion_rate_percentage: number;
+}
+
+export interface FollowUpTask {
+  id: number;
+  task_code: string;
+  lead_id?: number | null;
+  customer_id?: number | null;
+  activity_id?: number | null;
+  title: string;
+  description?: string | null;
+  task_category: string; // CRM_TASK_CATEGORY
+  priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+  due_date: string;
+  assigned_to_id?: number | null;
+  status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'OVERDUE' | 'CANCELLED';
+  completion_outcome?: string | null;
+  completion_notes?: string | null;
+  completed_at?: string | null;
+  completed_by_id?: number | null;
+  escalated_to_manager_id?: number | null;
+  escalated_at?: string | null;
+  reminder_channel?: string | null;
+  is_automated: boolean;
+  consent_checked: boolean;
+  created_at?: string;
+  updated_at?: string;
+  lead_name?: string | null;
+  customer_name?: string | null;
+  contact_phone?: string | null;
+  assigned_to_name?: string | null;
+  is_overdue?: boolean;
+}
+
+export interface DailyTodoSummary {
+  total_due_today: number;
+  total_overdue: number;
+  total_completed_today: number;
+  high_priority_count: number;
+  tasks: FollowUpTask[];
+}
+
+export interface CommunicationHistory {
+  id: number;
+  communication_code: string;
+  channel: string; // PHONE_CALL, WHATSAPP, SMS, EMAIL, OFFICE_MEETING, SITE_VISIT, WEBSITE_INQUIRY, FACEBOOK_LEAD, QUOTATION_SENT, INTERNAL_NOTE, COMPLAINT_TICKET
+  direction: 'INBOUND' | 'OUTBOUND' | 'INTERNAL';
+  lead_id?: number | null;
+  customer_id?: number | null;
+  user_id?: number | null;
+  subject: string;
+  message_body: string;
+  delivery_status?: string | null;
+  is_sensitive: boolean;
+  is_automated: boolean;
+  resulting_action?: string | null;
+  metadata_json?: string | null;
+  sent_at?: string | null;
+  created_at?: string;
+  user_name?: string | null;
+  lead_name?: string | null;
+  customer_name?: string | null;
+  contact_phone?: string | null;
+}
+
+export interface CustomerTimelineItem {
+  id: string;
+  type: 'COMMUNICATION' | 'ACTIVITY' | 'TASK';
+  channel: string;
+  direction: string;
+  title: string;
+  content: string;
+  delivery_status?: string | null;
+  attendance_status?: string | null;
+  is_sensitive?: boolean;
+  is_automated?: boolean;
+  author?: string | null;
+  timestamp: string;
+  resulting_action?: string | null;
 }
 
 export type PipelineStage =
@@ -21,7 +137,8 @@ export type PipelineStage =
   | 'LOST'
   | 'VISITED'
   | 'BOOKED'
-  | 'DROPPED';
+  | 'DROPPED'
+  | string;
 
 export type LeadPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
 
@@ -561,4 +678,816 @@ export interface CrmDrilldownResponse {
   offset: number;
   items: CrmDrilldownLeadItem[];
 }
+
+// ============================================================
+// Spec 4.6: Customer Requirements & Budget Tracking
+// ============================================================
+
+export interface CustomerRequirement {
+  id: number;
+  requirement_code: string;
+  customer_id: number;
+  title: string;
+  preferred_project_id?: number | null;
+  preferred_location?: string | null;
+  property_type?: string | null;
+  budget_min_bdt?: number | null;
+  budget_max_bdt?: number | null;
+  area_min_sqft?: number | null;
+  area_max_sqft?: number | null;
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+  preferred_floor?: string | null;
+  preferred_facing?: string | null;
+  parking_required: boolean;
+  parking_count: number;
+  purchase_timeline?: string | null;
+  payment_preference?: string | null;
+  amenities_required?: string | null;
+  special_notes?: string | null;
+  assigned_sales_rep_id?: number | null;
+  status: string;
+  customer_name?: string | null;
+  customer_code?: string | null;
+  customer_phone?: string | null;
+  project_name?: string | null;
+  sales_rep_name?: string | null;
+  matched_units_count: number;
+  last_matched_at?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+export interface CustomerRequirementCreate {
+  customer_id: number;
+  title: string;
+  preferred_project_id?: number | null;
+  preferred_location?: string | null;
+  property_type?: string | null;
+  budget_min_bdt?: number | null;
+  budget_max_bdt?: number | null;
+  area_min_sqft?: number | null;
+  area_max_sqft?: number | null;
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+  preferred_floor?: string | null;
+  preferred_facing?: string | null;
+  parking_required?: boolean;
+  parking_count?: number;
+  purchase_timeline?: string | null;
+  payment_preference?: string | null;
+  amenities_required?: string | null;
+  special_notes?: string | null;
+  assigned_sales_rep_id?: number | null;
+  status?: string | null;
+}
+
+export interface CustomerRequirementUpdate extends Partial<CustomerRequirementCreate> {
+  change_reason?: string | null;
+}
+
+export interface CustomerRequirementPaginatedResponse {
+  items: CustomerRequirement[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface RequirementAuditLog {
+  id: number;
+  requirement_id: number;
+  change_summary: string;
+  changed_by_name?: string | null;
+  old_values_json?: string | null;
+  new_values_json?: string | null;
+  created_at?: string | null;
+}
+
+export interface InventoryMatchUnit {
+  unit_id: number;
+  unit_number: string;
+  project_id: number;
+  project_name: string;
+  location?: string | null;
+  tower_name?: string | null;
+  floor_number: number;
+  facing_id: string;
+  unit_type_id: string;
+  bed_count: number;
+  bath_count: number;
+  gross_saleable_area_sqft: number;
+  total_unit_price: number;
+  status_id: string;
+  match_score_percentage: number;
+  match_breakdown: {
+    budget_score: number;
+    area_score: number;
+    bedroom_score: number;
+    floor_facing_score: number;
+    project_location_score: number;
+  };
+  is_already_recommended: boolean;
+  recommendation_id?: number | null;
+  recommendation_status?: string | null;
+}
+
+export interface InventoryRecommendation {
+  id: number;
+  requirement_id: number;
+  unit_id: number;
+  unit_number: string;
+  project_name: string;
+  floor_number: number;
+  facing_id: string;
+  bed_count: number;
+  bath_count: number;
+  gross_saleable_area_sqft: number;
+  total_unit_price: number;
+  match_score_percentage: number;
+  status: string; // RECOMMENDED, SHORTLISTED, SITE_VISITED, ACCEPTED, REJECTED
+  rejection_reason?: string | null;
+  rejection_notes?: string | null;
+  recommended_by_name?: string | null;
+  recommended_at?: string | null;
+  feedback_at?: string | null;
+}
+
+export interface InventoryAlert {
+  id: number;
+  requirement_id: number;
+  requirement_code: string;
+  customer_name: string;
+  unit_id: number;
+  unit_number: string;
+  project_name: string;
+  alert_title: string;
+  alert_message: string;
+  is_read: boolean;
+  created_at?: string | null;
+}
+
+// ============================================================
+// Spec 4.10: Broker and Referral Management Models
+// ============================================================
+
+export interface Broker {
+  id: number;
+  broker_code: string;
+  broker_name: string;
+  broker_type: string;
+  contact_person?: string | null;
+  primary_phone: string;
+  secondary_phone?: string | null;
+  email?: string | null;
+  office_address?: string | null;
+  service_area?: string | null;
+  preferred_projects_json?: string | null;
+
+  referral_code?: string | null;
+  referral_link?: string | null;
+
+  license_number?: string | null;
+  tin_number?: string | null;
+  bin_vat_number?: string | null;
+  agreement_number?: string | null;
+  agreement_signed_date?: string | null;
+  agreement_valid_from?: string | null;
+  agreement_valid_to?: string | null;
+
+  commission_type: string;
+  commission_rate: number;
+  eligibility_conditions?: string | null;
+  required_milestone: string;
+
+  bank_name?: string | null;
+  bank_branch?: string | null;
+  bank_account_name?: string | null;
+  bank_account_number?: string | null;
+  routing_number?: string | null;
+  mobile_wallet_number?: string | null;
+
+  trade_license_url?: string | null;
+  tin_cert_url?: string | null;
+  agreement_doc_url?: string | null;
+  status: string;
+
+  total_leads_count: number;
+  total_bookings_count: number;
+  total_sales_value: number;
+  total_commission_earned: number;
+  total_commission_paid: number;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+export interface BrokerCreate {
+  broker_name: string;
+  broker_type: string;
+  contact_person?: string | null;
+  primary_phone: string;
+  secondary_phone?: string | null;
+  email?: string | null;
+  office_address?: string | null;
+  service_area?: string | null;
+  preferred_projects_json?: string | null;
+  referral_code?: string | null;
+  referral_link?: string | null;
+  license_number?: string | null;
+  tin_number?: string | null;
+  bin_vat_number?: string | null;
+  agreement_number?: string | null;
+  agreement_signed_date?: string | null;
+  agreement_valid_from?: string | null;
+  agreement_valid_to?: string | null;
+  commission_type: string;
+  commission_rate: number;
+  eligibility_conditions?: string | null;
+  required_milestone: string;
+  bank_name?: string | null;
+  bank_branch?: string | null;
+  bank_account_name?: string | null;
+  bank_account_number?: string | null;
+  routing_number?: string | null;
+  mobile_wallet_number?: string | null;
+  trade_license_url?: string | null;
+  tin_cert_url?: string | null;
+  agreement_doc_url?: string | null;
+  status: string;
+}
+
+export interface BrokerUpdate extends Partial<BrokerCreate> {}
+
+export interface BrokerPaginatedResponse {
+  items: Broker[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface BrokerStatsSummary {
+  total_brokers: number;
+  active_brokers: number;
+  total_leads_referred: int_number;
+  total_bookings_referred: number;
+  total_sales_value: number;
+  total_commission_earned: number;
+  total_commission_paid: number;
+  pending_commission_payout: number;
+}
+type int_number = number;
+
+export interface CommissionClaim {
+  id: number;
+  claim_code: string;
+  broker_id: number;
+  lead_id?: number | null;
+  customer_id?: number | null;
+  booking_id?: number | null;
+  project_id?: number | null;
+  unit_id?: number | null;
+
+  referral_date: string;
+  source_evidence?: string | null;
+  unit_sale_value: number;
+  commission_rate_percentage: number;
+  calculated_commission_amount: number;
+  tds_tax_deduction_amount: number;
+  net_payable_amount: number;
+
+  milestone_achieved: string;
+  claim_status: string;
+  notes?: string | null;
+
+  is_milestone_verified: boolean;
+  milestone_verified_at?: string | null;
+  milestone_verified_by_id?: number | null;
+
+  sales_approval_by_id?: number | null;
+  sales_approved_at?: string | null;
+  finance_approval_by_id?: number | null;
+  finance_approved_at?: string | null;
+  disbursement_reference?: string | null;
+  disbursed_at?: string | null;
+  rejection_reason?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+
+  broker_name?: string | null;
+  broker_code?: string | null;
+  lead_name?: string | null;
+  customer_name?: string | null;
+  project_name?: string | null;
+  unit_number?: string | null;
+}
+
+export interface CommissionClaimCreate {
+  broker_id: number;
+  lead_id?: number | null;
+  customer_id?: number | null;
+  booking_id?: number | null;
+  project_id?: number | null;
+  unit_id?: number | null;
+  referral_date: string;
+  source_evidence?: string | null;
+  unit_sale_value: number;
+  commission_rate_percentage: number;
+  calculated_commission_amount: number;
+  tds_tax_deduction_amount: number;
+  net_payable_amount: number;
+  milestone_achieved: string;
+  claim_status?: string;
+  notes?: string | null;
+}
+
+export interface CommissionClaimUpdate extends Partial<CommissionClaimCreate> {}
+
+export interface CommissionClaimApproval {
+  decision: 'APPROVE_SALES' | 'APPROVE_FINANCE' | 'REJECT';
+  rejection_reason?: string | null;
+  notes?: string | null;
+}
+
+export interface CommissionClaimDisburse {
+  disbursement_reference: string;
+  notes?: string | null;
+}
+
+export interface CommissionClaimPaginatedResponse {
+  items: CommissionClaim[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+// ============================================================
+// Spec 4.11: Sales Funnel and Lead Conversion Models
+// ============================================================
+
+export interface FunnelStage {
+  id: number;
+  stage_code: string;
+  stage_name: string;
+  stage_order: number;
+  description?: string | null;
+  entry_criteria?: string | null;
+  exit_criteria?: string | null;
+  target_dwell_days: number;
+  color_code: string;
+  is_system_stage: boolean;
+  is_active: boolean;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+export interface FunnelStageCreate {
+  stage_code: string;
+  stage_name: string;
+  stage_order: number;
+  description?: string | null;
+  entry_criteria?: string | null;
+  exit_criteria?: string | null;
+  target_dwell_days: number;
+  color_code: string;
+  is_active: boolean;
+}
+
+export interface FunnelStageUpdate extends Partial<FunnelStageCreate> {}
+
+export interface LeadStageTransition {
+  id: number;
+  lead_id: number;
+  from_stage?: string | null;
+  to_stage: string;
+  transition_date?: string | null;
+  dwell_time_hours: number;
+  transition_notes?: string | null;
+  transitioned_by_id?: number | null;
+  transitioned_by_name?: string | null;
+}
+
+export interface LeadStageTransitionCreate {
+  to_stage: string;
+  transition_notes?: string | null;
+}
+
+export interface LeadDisqualifyRequest {
+  lost_reason: string;
+  notes?: string | null;
+}
+
+export interface LeadReopenRequest {
+  reopen_notes: string;
+  target_stage?: string;
+}
+
+export interface Opportunity {
+  id: number;
+  opportunity_code: string;
+  title: string;
+  lead_id?: number | null;
+  customer_id?: number | null;
+  project_id?: number | null;
+  unit_id?: number | null;
+  stage: string;
+  estimated_deal_value: number;
+  confidence_probability_pct: number;
+  expected_close_date?: string | null;
+  actual_close_date?: string | null;
+  assigned_sales_rep_id?: number | null;
+  loss_reason?: string | null;
+  loss_notes?: string | null;
+  is_reopened: boolean;
+  reopened_at?: string | null;
+  reopened_by_id?: number | null;
+  reopen_notes?: string | null;
+  notes?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+
+  lead_name?: string | null;
+  lead_phone?: string | null;
+  customer_name?: string | null;
+  customer_code?: string | null;
+  project_name?: string | null;
+  unit_number?: string | null;
+  sales_rep_name?: string | null;
+}
+
+export interface OpportunityCreate {
+  title: string;
+  lead_id?: number | null;
+  customer_id?: number | null;
+  project_id?: number | null;
+  unit_id?: number | null;
+  stage?: string;
+  estimated_deal_value: number;
+  confidence_probability_pct: number;
+  expected_close_date?: string | null;
+  actual_close_date?: string | null;
+  assigned_sales_rep_id?: number | null;
+  notes?: string | null;
+}
+
+export interface OpportunityUpdate extends Partial<OpportunityCreate> {
+  loss_reason?: string | null;
+  loss_notes?: string | null;
+}
+
+export interface OpportunityPaginatedResponse {
+  items: Opportunity[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface BookingHandover {
+  id: number;
+  handover_code: string;
+  opportunity_id?: number | null;
+  lead_id?: number | null;
+  customer_id?: number | null;
+  project_id?: number | null;
+  unit_id?: number | null;
+
+  // Step 1: Customer Contact
+  customer_verified?: boolean;
+  verified_phone?: string | null;
+  verified_email?: string | null;
+
+  // Step 2 & 3: Unit Selection & Availability
+  unit_number?: string | null;
+  parking_slot?: string | null;
+  unit_size_sqft?: number | null;
+  unit_availability_verified?: boolean;
+  approved_base_rate?: number | null;
+
+  // Step 4: Pricing & Discount Request
+  list_price?: number;
+  proposed_price?: number;
+  agreed_price: number;
+  discount_amount_requested?: number;
+  discount_percentage?: number;
+  discount_approval_reference?: string | null;
+  discount_status?: string | null;
+
+  // Step 5: Identification & KYC
+  nid_passport_verified?: boolean;
+  tin_certificate_verified?: boolean;
+  nominee_verified?: boolean;
+  power_of_attorney_verified?: boolean;
+  kyc_notes?: string | null;
+
+  // Step 6 & 7: References & Status
+  reservation_code?: string | null;
+  booking_reference_number?: string | null;
+  status: string;
+
+  // Step 8: Attribution
+  broker_id?: number | null;
+  broker_code?: string | null;
+  broker_commission_rate?: number | null;
+  campaign_id?: number | null;
+  utm_source?: string | null;
+  utm_campaign?: string | null;
+
+  // Step 9: Payment Terms
+  booking_money_amount: number;
+  payment_plan_preference?: string | null;
+  token_money_payment_mode?: string | null;
+  token_transaction_ref?: string | null;
+  token_bank_name?: string | null;
+  token_received_date?: string | null;
+  payment_schedule_triggered?: boolean;
+
+  // Step 10: Special Conditions & Notes
+  special_conditions?: string | null;
+  handover_notes?: string | null;
+  crm_history_snapshot?: string | null;
+
+  sales_rep_id?: number | null;
+  accepted_by_ops_id?: number | null;
+  accepted_at?: string | null;
+  sales_booking_id?: number | null;
+  rejection_reason?: string | null;
+  transferred_to_sales_at?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+
+  opportunity_code?: string | null;
+  lead_name?: string | null;
+  customer_name?: string | null;
+  customer_code?: string | null;
+  project_name?: string | null;
+  sales_rep_name?: string | null;
+  accepted_by_ops_name?: string | null;
+  broker_name?: string | null;
+  campaign_name?: string | null;
+}
+
+export interface BookingHandoverCreate {
+  opportunity_id?: number | null;
+  lead_id?: number | null;
+  customer_id?: number | null;
+  project_id?: number | null;
+  unit_id?: number | null;
+  customer_verified?: boolean;
+  verified_phone?: string;
+  verified_email?: string;
+  unit_number?: string;
+  parking_slot?: string;
+  unit_size_sqft?: number;
+  unit_availability_verified?: boolean;
+  approved_base_rate?: number;
+  list_price?: number;
+  proposed_price?: number;
+  agreed_price: number;
+  discount_amount_requested?: number;
+  discount_percentage?: number;
+  discount_approval_reference?: string;
+  discount_status?: string;
+  nid_passport_verified?: boolean;
+  tin_certificate_verified?: boolean;
+  nominee_verified?: boolean;
+  power_of_attorney_verified?: boolean;
+  kyc_notes?: string;
+  broker_id?: number;
+  broker_code?: string;
+  broker_commission_rate?: number;
+  campaign_id?: number;
+  utm_source?: string;
+  utm_campaign?: string;
+  booking_money_amount: number;
+  payment_plan_preference?: string;
+  token_money_payment_mode?: string;
+  token_transaction_ref?: string;
+  token_bank_name?: string;
+  token_received_date?: string;
+  special_conditions?: string | null;
+  handover_notes?: string | null;
+}
+
+export interface BookingHandoverUpdate extends Partial<BookingHandoverCreate> {}
+
+export interface BookingHandoverVerificationUpdate {
+  customer_verified: boolean;
+  verified_phone?: string;
+  verified_email?: string;
+  unit_availability_verified: boolean;
+  nid_passport_verified: boolean;
+  tin_certificate_verified: boolean;
+  nominee_verified: boolean;
+  power_of_attorney_verified: boolean;
+  kyc_notes?: string;
+  discount_status?: string;
+}
+
+export interface BookingHandoverReview {
+  decision: 'ACCEPT' | 'REJECT';
+  rejection_reason?: string | null;
+  sales_booking_id?: number | null;
+  reservation_code?: string | null;
+  booking_reference_number?: string | null;
+}
+
+export interface BookingHandoverPaginatedResponse {
+  items: BookingHandover[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface FunnelStageMetric {
+  stage_code: string;
+  stage_name: string;
+  stage_order: number;
+  color_code: string;
+  lead_count: number;
+  conversion_rate_from_first: number;
+  stage_to_stage_rate: number;
+  avg_dwell_hours: number;
+  drop_off_count: number;
+}
+
+export interface FunnelCohortBreakdown {
+  dimension_key: string;
+  dimension_label: string;
+  total_leads: number;
+  qualified_leads: number;
+  site_visits_count: number;
+  bookings_count: number;
+  lead_to_booking_rate: number;
+  site_visit_conversion_rate: number;
+}
+
+export interface ConversionKpiResponse {
+  cohort_period: string;
+  total_unique_leads: number;
+  eligible_unique_leads: number;
+  total_valid_bookings: number;
+  lead_to_booking_rate: number;
+  site_visits_completed: number;
+  bookings_from_site_visits: number;
+  site_visit_conversion_rate: number;
+  stages: FunnelStageMetric[];
+  by_source: FunnelCohortBreakdown[];
+  by_sales_rep: FunnelCohortBreakdown[];
+  by_project: FunnelCohortBreakdown[];
+  generated_at: string;
+}
+
+// -------------------------------------------------------------
+// Spec 4.13: Campaign & Marketing Management Interfaces
+// -------------------------------------------------------------
+export interface Campaign {
+  id: number;
+  campaign_code: string;
+  name: string;
+  channel: string; // CRM_CAMPAIGN_CHANNEL
+  project_id?: number | null;
+  target_audience?: string | null;
+  allocated_budget: number;
+  actual_spend: number;
+  target_leads: number;
+  utm_source?: string | null;
+  utm_medium?: string | null;
+  utm_campaign?: string | null;
+  utm_content?: string | null;
+  utm_term?: string | null;
+  tracking_url?: string | null;
+  landing_page_slug?: string | null;
+  campaign_lead_route_rep_id?: number | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  status: string; // CRM_CAMPAIGN_STATUS
+  notes?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+
+  // Joined & Calculated Fields
+  project_name?: string | null;
+  lead_route_rep_name?: string | null;
+  leads_count: number;
+  qualified_count: number;
+  bookings_count: number;
+  cpl: number;
+  cpql: number;
+  conversion_rate: number;
+  attributed_revenue: number;
+}
+
+export interface CampaignCreate {
+  name: string;
+  channel: string;
+  project_id?: number | null;
+  target_audience?: string | null;
+  allocated_budget: number;
+  actual_spend?: number;
+  target_leads?: number;
+  utm_source?: string | null;
+  utm_medium?: string | null;
+  utm_campaign?: string | null;
+  utm_content?: string | null;
+  utm_term?: string | null;
+  tracking_url?: string | null;
+  landing_page_slug?: string | null;
+  campaign_lead_route_rep_id?: number | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  status?: string;
+  notes?: string | null;
+}
+
+export interface CampaignUpdate extends Partial<CampaignCreate> {}
+
+export interface CampaignPaginatedResponse {
+  items: Campaign[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface MarketingTouchpoint {
+  id: number;
+  lead_id: number;
+  campaign_id?: number | null;
+  touchpoint_type: string; // CRM_TOUCHPOINT_TYPE
+  channel: string;
+  interaction_summary?: string | null;
+  recorded_at?: string | null;
+  lead_name?: string | null;
+  campaign_name?: string | null;
+  campaign_code?: string | null;
+}
+
+export interface MarketingTouchpointCreate {
+  lead_id: number;
+  campaign_id?: number | null;
+  touchpoint_type: string;
+  channel: string;
+  interaction_summary?: string | null;
+}
+
+export interface SuppressionEntry {
+  id: number;
+  phone?: string | null;
+  email?: string | null;
+  customer_name?: string | null;
+  suppression_reason: string; // CRM_SUPPRESSION_REASON
+  source_note?: string | null;
+  is_active: boolean;
+  consent_given_at?: string | null;
+  consent_revoked_at?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+export interface SuppressionEntryCreate {
+  phone?: string | null;
+  email?: string | null;
+  customer_name?: string | null;
+  suppression_reason: string;
+  source_note?: string | null;
+}
+
+export interface SuppressionPaginatedResponse {
+  items: SuppressionEntry[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface CampaignMarketingDashboardKpis {
+  total_campaigns: number;
+  active_campaigns: number;
+  total_budget_allocated: number;
+  total_actual_spend: number;
+  total_leads_generated: number;
+  total_qualified_leads: number;
+  total_bookings_won: number;
+  overall_cpl: number;
+  overall_cpql: number;
+  overall_lead_to_booking_rate: number;
+  total_attributed_revenue: number;
+  top_channel_by_leads: string;
+  top_channel_by_revenue: string;
+}
+
+export interface OfflineExhibitionLeadItem {
+  lead_name: string;
+  primary_phone: string;
+  email?: string | null;
+  interested_project_id?: number | null;
+  budget_range_max?: number | null;
+  notes?: string | null;
+}
+
+export interface OfflineExhibitionImportPayload {
+  campaign_id: number;
+  channel?: string;
+  leads: OfflineExhibitionLeadItem[];
+}
+
+
+
+
 

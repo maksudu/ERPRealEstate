@@ -1,0 +1,328 @@
+<!-- Dedicated Full-Screen Standalone Customer Requirement Form (Spec 4.6 & Rule 10) -->
+<app-card-container
+  [title]="isEditMode() ? 'Edit Customer Requirement Profile' : 'Capture New Customer Requirement'"
+  [subtitle]="isEditMode()
+    ? 'Modify property preferences or budget parameters; changes will be automatically logged to the audit history'
+    : 'Define customer property requirements and budget limits to activate inventory matching'"
+>
+  <!-- Card Header Actions -->
+  <div card-actions class="flex items-center gap-2">
+    <app-custom-button variant="secondary" size="sm" (clicked)="cancel()">
+      <i class="ri-arrow-left-line text-sm mr-1"></i>
+      <span>Back to List</span>
+    </app-custom-button>
+  </div>
+
+  <div class="space-y-6">
+    <!-- Advisory Alert -->
+    <div class="p-3.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-xs text-blue-600 dark:text-blue-400 flex items-start gap-2.5">
+      <i class="ri-shield-check-line text-base shrink-0 mt-0.5"></i>
+      <div>
+        <span class="font-bold">Preferences Separation:</span> Customer requirements captured here are used exclusively for inventory recommendations, pipeline prioritization, and notifications. They do not constitute a contractual flat allotment.
+      </div>
+    </div>
+
+    <!-- Error message banner -->
+    @if (errorMessage()) {
+      <div class="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-600 flex items-center gap-2">
+        <i class="ri-error-warning-line text-base shrink-0"></i>
+        <span>{{ errorMessage() }}</span>
+      </div>
+    }
+
+    @if (isLoading()) {
+      <div class="py-16 text-center text-muted-foreground">
+        <i class="ri-loader-4-line animate-spin text-2xl text-primary mb-2 block"></i>
+        <p class="text-xs">Loading requirement profile...</p>
+      </div>
+    } @else {
+      <form [formGroup]="form" (ngSubmit)="save()" class="space-y-6">
+        <!-- 1. Customer & Requirement Overview -->
+        <div class="p-5 rounded-2xl bg-secondary/30 border border-border space-y-4">
+          <h4 class="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
+            <i class="ri-user-star-line text-primary text-sm"></i>
+            <span>1. Customer & Profile Title</span>
+          </h4>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Customer Selector -->
+            <div>
+              <app-searchable-select
+                formControlName="customer_id"
+                label="Target Customer *"
+                [options]="customerOptions()"
+                [allowCreateNew]="false"
+                [required]="true"
+                placeholder="Search customer by name, code or phone..."
+                hint="Select the buyer profile this requirement belongs to"
+              ></app-searchable-select>
+            </div>
+
+            <!-- Title -->
+            <div>
+              <app-custom-input
+                formControlName="title"
+                label="Requirement Title *"
+                placeholder="e.g. Primary Residence - 3BHK Uttara"
+                [required]="true"
+                hint="Short descriptive title for sales tracking"
+              ></app-custom-input>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Property Preferences & Architecture -->
+        <div class="p-5 rounded-2xl bg-secondary/30 border border-border space-y-4">
+          <h4 class="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
+            <i class="ri-home-4-line text-primary text-sm"></i>
+            <span>2. Property Preferences & Configuration</span>
+          </h4>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- Property Type (Dynamic Lookup CRM_PROPERTY_TYPE) -->
+            <div>
+              <app-searchable-select
+                formControlName="property_type"
+                label="Property Type *"
+                [categoryCode]="LOOKUP.propertyType"
+                [allowCreateNew]="true"
+                [required]="true"
+              ></app-searchable-select>
+            </div>
+
+            <!-- Preferred Project -->
+            <div>
+              <app-searchable-select
+                formControlName="preferred_project_id"
+                label="Preferred Project"
+                [options]="projectOptions()"
+                [allowCreateNew]="false"
+              ></app-searchable-select>
+            </div>
+
+            <!-- Preferred Location -->
+            <div class="sm:col-span-2">
+              <app-custom-input
+                formControlName="preferred_location"
+                label="Preferred Location / Area"
+                placeholder="e.g. Uttara Sector 3, Gulshan 2, Bashundhara R/A"
+              ></app-custom-input>
+            </div>
+
+            <!-- Bedrooms -->
+            <div>
+              <app-custom-input
+                formControlName="bedrooms"
+                label="Bedrooms (BHK) *"
+                type="number"
+                placeholder="3"
+                [required]="true"
+              ></app-custom-input>
+            </div>
+
+            <!-- Bathrooms -->
+            <div>
+              <app-custom-input
+                formControlName="bathrooms"
+                label="Bathrooms"
+                type="number"
+                placeholder="3"
+              ></app-custom-input>
+            </div>
+
+            <!-- Preferred Floor (Dynamic Lookup CRM_PREFERRED_FLOOR) -->
+            <div>
+              <app-searchable-select
+                formControlName="preferred_floor"
+                label="Preferred Floor Level *"
+                [categoryCode]="LOOKUP.preferredFloor"
+                [allowCreateNew]="true"
+                [required]="true"
+              ></app-searchable-select>
+            </div>
+
+            <!-- Preferred Facing (Dynamic Lookup CRM_FACING) -->
+            <div>
+              <app-searchable-select
+                formControlName="preferred_facing"
+                label="Preferred Facing / Sunlight *"
+                [categoryCode]="LOOKUP.facing"
+                [allowCreateNew]="true"
+                [required]="true"
+              ></app-searchable-select>
+            </div>
+
+            <!-- Parking Count -->
+            <div>
+              <app-custom-input
+                formControlName="parking_count"
+                label="Car Parking Bays"
+                type="number"
+                placeholder="1"
+              ></app-custom-input>
+            </div>
+
+            <!-- Parking Required Checkbox -->
+            <div class="flex items-center pt-6">
+              <label class="inline-flex items-center gap-2 cursor-pointer text-xs font-medium text-foreground">
+                <input
+                  type="checkbox"
+                  formControlName="parking_required"
+                  class="rounded border-border text-primary focus:ring-primary h-4 w-4"
+                />
+                <span>Dedicated Parking Bay Required</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Budget Boundaries & Payment Preference -->
+        <div class="p-5 rounded-2xl bg-secondary/30 border border-border space-y-4">
+          <h4 class="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
+            <i class="ri-money-dollar-circle-line text-primary text-sm"></i>
+            <span>3. Budget Boundaries & Payment Structure</span>
+          </h4>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- Min Budget -->
+            <div>
+              <app-custom-input
+                formControlName="budget_min_bdt"
+                label="Minimum Budget (BDT) *"
+                type="number"
+                placeholder="12000000 (৳1.20 Cr)"
+                [required]="true"
+                hint="Lower boundary in Bangladeshi Taka"
+              ></app-custom-input>
+            </div>
+
+            <!-- Max Budget -->
+            <div>
+              <app-custom-input
+                formControlName="budget_max_bdt"
+                label="Maximum Budget (BDT) *"
+                type="number"
+                placeholder="15000000 (৳1.50 Cr)"
+                [required]="true"
+                hint="Upper boundary in Bangladeshi Taka"
+              ></app-custom-input>
+            </div>
+
+            <!-- Min Area -->
+            <div>
+              <app-custom-input
+                formControlName="area_min_sqft"
+                label="Minimum Area (Sq Ft)"
+                type="number"
+                placeholder="1400"
+                hint="Lower boundary in sq ft"
+              ></app-custom-input>
+            </div>
+
+            <!-- Max Area -->
+            <div>
+              <app-custom-input
+                formControlName="area_max_sqft"
+                label="Maximum Area (Sq Ft)"
+                type="number"
+                placeholder="1700"
+                hint="Upper boundary in sq ft"
+              ></app-custom-input>
+            </div>
+
+            <!-- Purchase Timeline (Dynamic Lookup CRM_PURCHASE_TIMELINE) -->
+            <div>
+              <app-searchable-select
+                formControlName="purchase_timeline"
+                label="Purchase Timeline *"
+                [categoryCode]="LOOKUP.purchaseTimeline"
+                [allowCreateNew]="true"
+                [required]="true"
+              ></app-searchable-select>
+            </div>
+
+            <!-- Payment Preference (Dynamic Lookup CRM_PAYMENT_PREFERENCE) -->
+            <div>
+              <app-searchable-select
+                formControlName="payment_preference"
+                label="Payment Preference *"
+                [categoryCode]="LOOKUP.paymentPreference"
+                [allowCreateNew]="true"
+                [required]="true"
+              ></app-searchable-select>
+            </div>
+
+            <!-- Lifecycle Status (Dynamic Lookup CRM_REQUIREMENT_STATUS) -->
+            <div>
+              <app-searchable-select
+                formControlName="status"
+                label="Requirement Status"
+                [categoryCode]="LOOKUP.requirementStatus"
+                [allowCreateNew]="false"
+              ></app-searchable-select>
+            </div>
+
+            <!-- Assigned Sales Rep -->
+            <div>
+              <app-searchable-select
+                formControlName="assigned_sales_rep_id"
+                label="Assigned Sales Representative"
+                [options]="salesRepOptions()"
+                [allowCreateNew]="false"
+              ></app-searchable-select>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Amenities, Specifications & Special Notes -->
+        <div class="p-5 rounded-2xl bg-secondary/30 border border-border space-y-4">
+          <h4 class="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
+            <i class="ri-file-list-3-line text-primary text-sm"></i>
+            <span>4. Amenities & Client Notes</span>
+          </h4>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <app-custom-input
+                formControlName="amenities_required"
+                label="Required Amenities & Facilities"
+                placeholder="e.g. Lift, Standby Generator, 24/7 Security, Gymnasium, Swimming Pool"
+                hint="Comma-separated amenities customer insisted on"
+              ></app-custom-input>
+            </div>
+
+            <div>
+              <app-custom-textarea
+                formControlName="special_notes"
+                label="Special Requirements & Observations"
+                placeholder="Specific preferences, e.g. prefers higher floor for noise reduction, wants corner flat, or needs bank loan assistance..."
+                [rows]="3"
+              ></app-custom-textarea>
+            </div>
+          </div>
+
+          <!-- Edit Mode: Audit Change Note -->
+          @if (isEditMode()) {
+            <div class="pt-2 border-t border-border">
+              <app-custom-input
+                formControlName="change_reason"
+                label="Reason for Modification (Audit Trail Note)"
+                placeholder="e.g. Customer increased budget after financial pre-approval; updated floor preference"
+                hint="This note will be recorded into the requirement audit timeline"
+              ></app-custom-input>
+            </div>
+          }
+        </div>
+
+        <!-- Form Submission Footer -->
+        <div class="flex items-center justify-end gap-3 pt-4 border-t border-border">
+          <app-custom-button variant="secondary" (clicked)="cancel()">Cancel</app-custom-button>
+          <app-custom-button variant="primary" type="submit" [loading]="isSaving()">
+            <i class="ri-save-line text-sm mr-1"></i>
+            <span>{{ isEditMode() ? 'Save Changes' : 'Create Requirement Profile' }}</span>
+          </app-custom-button>
+        </div>
+      </form>
+    }
+  </div>
+</app-card-container>

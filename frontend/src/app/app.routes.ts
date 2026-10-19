@@ -352,6 +352,131 @@ export const routes: Routes = [
     title: 'Edit Customer KYC - Bangladesh Real Estate ERP'
   },
   {
+    path: 'crm/requirements',
+    loadComponent: () => import('./features/crm/crm-requirements/crm-requirements.component').then(m => m.CrmRequirementsComponent),
+    title: 'Customer Requirements & Budget Tracking - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'crm/requirements/new',
+    loadComponent: () => import('./features/crm/crm-requirements/requirement-form.component').then(m => m.RequirementFormComponent),
+    title: 'Capture Customer Requirement - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'crm/requirements/:id',
+    loadComponent: () => import('./features/crm/crm-requirements/requirement-detail.component').then(m => m.RequirementDetailComponent),
+    title: 'Requirement & Inventory Matching - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'crm/requirements/:id/edit',
+    loadComponent: () => import('./features/crm/crm-requirements/requirement-form.component').then(m => m.RequirementFormComponent),
+    title: 'Edit Requirement Profile - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'crm/activities',
+    loadComponent: () => import('./features/crm/crm-activities/crm-activities.component').then(m => m.CrmActivitiesComponent),
+    title: 'Sales Interactions & Activity Calendar - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'crm/activities/new',
+    loadComponent: () => import('./features/crm/crm-activities/activity-form.component').then(m => m.ActivityFormComponent),
+    title: 'Schedule Sales Interaction - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'crm/activities/:id/edit',
+    loadComponent: () => import('./features/crm/crm-activities/activity-form.component').then(m => m.ActivityFormComponent),
+    title: 'Edit Scheduled Interaction - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'crm/tasks',
+    loadComponent: () => import('./features/crm/crm-tasks/crm-tasks.component').then(m => m.CrmTasksComponent),
+    title: 'Follow-up Tasks & Reminders - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'crm/tasks/new',
+    loadComponent: () => import('./features/crm/crm-tasks/task-form.component').then(m => m.TaskFormComponent),
+    title: 'Create Follow-up Task - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'crm/tasks/:id/edit',
+    loadComponent: () => import('./features/crm/crm-tasks/task-form.component').then(m => m.TaskFormComponent),
+    title: 'Edit Follow-up Task - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'crm/communications',
+    loadComponent: () => import('./features/crm/crm-communications/crm-communications.component').then(m => m.CrmCommunicationsComponent),
+    title: 'Customer Communication History - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'crm/brokers',
+    loadComponent: () => import('./features/crm/crm-brokers/crm-brokers.component').then(m => m.CrmBrokersComponent),
+    title: '4.10 Broker & Referral Management - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'crm/brokers/new',
+    loadComponent: () => import('./features/crm/crm-brokers/broker-form.component').then(m => m.BrokerFormComponent),
+    title: 'Onboard Broker / Referral Partner - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'crm/brokers/:id/edit',
+    loadComponent: () => import('./features/crm/crm-brokers/broker-form.component').then(m => m.BrokerFormComponent),
+    title: 'Edit Partner Agreement - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'crm/brokers/claims/new',
+    loadComponent: () => import('./features/crm/crm-brokers/commission-claim-form.component').then(m => m.CommissionClaimFormComponent),
+    title: 'Submit Commission Claim - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'crm/funnel',
+    loadComponent: () => import('./features/crm/crm-funnel/crm-funnel.component').then(m => m.CrmFunnelComponent),
+    title: '4.11 Sales Funnel & Lead Conversion - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'crm/funnel/opportunities/new',
+    loadComponent: () => import('./features/crm/crm-funnel/opportunity-form.component').then(m => m.OpportunityFormComponent),
+    title: 'Create Sales Opportunity - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'crm/funnel/opportunities/:id/edit',
+    loadComponent: () => import('./features/crm/crm-funnel/opportunity-form.component').then(m => m.OpportunityFormComponent),
+    title: 'Edit Sales Opportunity - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'crm/funnel/handovers/new',
+    loadComponent: () => import('./features/crm/crm-funnel/booking-handover-form.component').then(m => m.BookingHandoverFormComponent),
+    title: 'Create Booking Handover Dossier - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'crm/handovers',
+    loadComponent: () => import('./features/crm/crm-handovers/crm-handovers.component').then(m => m.CrmHandoversComponent),
+    title: '4.12 Lead-to-Booking Handover - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'crm/handovers/:id',
+    loadComponent: () => import('./features/crm/crm-handovers/handover-dossier.component').then(m => m.HandoverDossierComponent),
+    title: '10-Step Handover Dossier - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'crm/campaigns',
+    loadComponent: () => import('./features/crm/crm-campaigns/crm-campaigns.component').then(m => m.CrmCampaignsComponent),
+    title: '4.13 Campaign & Marketing Management - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'crm/campaigns/new',
+    loadComponent: () => import('./features/crm/crm-campaigns/campaign-form.component').then(m => m.CampaignFormComponent),
+    title: 'Launch Marketing Campaign - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'crm/campaigns/:id/edit',
+    loadComponent: () => import('./features/crm/crm-campaigns/campaign-form.component').then(m => m.CampaignFormComponent),
+    title: 'Edit Marketing Campaign - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'crm/campaigns/import',
+    loadComponent: () => import('./features/crm/crm-campaigns/campaign-import.component').then(m => m.CampaignImportComponent),
+    title: 'Import Exhibition & Offline Leads - Bangladesh Real Estate ERP'
+  },
+  {
     path: 'sales/bookings',
     loadComponent: () => import('./features/sales/sales-bookings/sales-bookings.component').then(m => m.SalesBookingsComponent),
     title: 'Apartment Bookings & Sales Workflow - Bangladesh Real Estate ERP'

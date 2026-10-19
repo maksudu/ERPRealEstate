@@ -1,16 +1,17 @@
 import { Component, OnInit, inject, signal, computed, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { LucideAngularModule, Plus, RefreshCw, Eye, Edit3, Trash2, Merge, AlertTriangle } from 'lucide-angular';
 import {
   CardContainerComponent,
   CustomInputComponent,
+  CustomTextareaComponent,
   CustomButtonComponent,
-  SearchableSelectComponent
+  SearchableSelectComponent,
+  ModalComponent,
+  StatusBadgeComponent
 } from '../../../shared/components';
 import { CrmService, CustomerTableFilters } from '../../../core/services/crm.service';
 import { Customer } from '../../../core/models/crm.model';
@@ -22,11 +23,13 @@ import { Customer } from '../../../core/models/crm.model';
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
-    LucideAngularModule,
     CardContainerComponent,
     CustomInputComponent,
+    CustomTextareaComponent,
     CustomButtonComponent,
-    SearchableSelectComponent
+    SearchableSelectComponent,
+    ModalComponent,
+    StatusBadgeComponent
   ],
   templateUrl: './crm-customers.component.html'
 })
@@ -35,14 +38,6 @@ export class CrmCustomersComponent implements OnInit {
   private crmService = inject(CrmService);
   private router = inject(Router);
   private destroyRef = inject(DestroyRef);
-
-  readonly Plus = Plus;
-  readonly RefreshCw = RefreshCw;
-  readonly Eye = Eye;
-  readonly Edit3 = Edit3;
-  readonly Trash2 = Trash2;
-  readonly Merge = Merge;
-  readonly AlertTriangle = AlertTriangle;
 
   customers = signal<Customer[]>([]);
   total = signal(0);
@@ -69,7 +64,7 @@ export class CrmCustomersComponent implements OnInit {
   };
 
   readonly typeOptions = [
-    { value: 'ALL', label: 'All Types' },
+    { value: 'ALL', label: 'All Customer Types' },
     { value: 'INDIVIDUAL', label: 'Individual' },
     { value: 'COMPANY', label: 'Company' },
     { value: 'INVESTOR', label: 'Investor' },
@@ -78,16 +73,16 @@ export class CrmCustomersComponent implements OnInit {
   ];
 
   readonly nrbOptions = [
-    { value: 'ALL', label: 'All Customers' },
-    { value: 'true', label: 'NRB Only' },
-    { value: 'false', label: 'Residents Only' }
+    { value: 'ALL', label: 'All Residencies' },
+    { value: 'true', label: 'NRB (Non-Resident)' },
+    { value: 'false', label: 'Resident Bangladeshi' }
   ];
 
   readonly sortOptions = [
-    { value: 'created_at_desc', label: 'Newest First' },
-    { value: 'created_at_asc', label: 'Oldest First' },
-    { value: 'full_name_en_asc', label: 'Name (A-Z)' },
-    { value: 'customer_code_asc', label: 'Code (A-Z)' }
+    { value: 'created_at_desc', label: 'Newest Registered' },
+    { value: 'created_at_asc', label: 'Oldest Registered' },
+    { value: 'full_name_en_asc', label: 'Name (A to Z)' },
+    { value: 'customer_code_asc', label: 'Code (A to Z)' }
   ];
 
   filterForm: FormGroup = this.fb.group({
@@ -102,8 +97,14 @@ export class CrmCustomersComponent implements OnInit {
   fromRow = computed(() => (this.total() === 0 ? 0 : this.offset() + 1));
   toRow = computed(() => Math.min(this.offset() + this.limit(), this.total()));
 
-  // Candidate targets for merge (same phone/email/nid matches not used here — plain list)
   mergeTargets = computed(() => this.customers().filter(c => c.id !== this.mergeSource()?.id));
+  mergeTargetOptions = computed(() =>
+    this.mergeTargets().map(c => ({
+      value: String(c.id),
+      label: `${c.full_name_en} (${c.customer_code} · ${c.primary_phone})`
+    }))
+  );
+  mergeTargetValue = computed(() => (this.mergeTargetId() ? String(this.mergeTargetId()) : null));
 
   ngOnInit(): void {
     this.loadTable();

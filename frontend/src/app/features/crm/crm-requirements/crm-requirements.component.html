@@ -1,0 +1,487 @@
+<!-- Customer Requirements & Budget Tracking Workbench (Spec 4.6) -->
+<app-card-container
+  title="Customer Requirements & Budget Tracking"
+  subtitle="Capture customer property preferences, budget boundaries, track revision history, and match live inventory"
+>
+  <!-- Card Header Actions -->
+  <div card-actions class="flex items-center gap-2">
+    <!-- Inventory Alerts Trigger -->
+    <app-custom-button
+      variant="secondary"
+      size="sm"
+      (clicked)="openAlertsModal()"
+    >
+      <i class="ri-notification-3-line text-sm mr-1"></i>
+      <span>Inventory Alerts</span>
+      @if (unreadAlertsCount() > 0) {
+        <span class="ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500 text-white">
+          {{ unreadAlertsCount() }}
+        </span>
+      }
+    </app-custom-button>
+
+    <!-- Refresh -->
+    <app-custom-button
+      variant="secondary"
+      size="sm"
+      (clicked)="refresh()"
+    >
+      <i class="ri-refresh-line text-sm" [class.animate-spin]="isLoading()"></i>
+    </app-custom-button>
+
+    <!-- Add Requirement -->
+    <app-custom-button
+      variant="primary"
+      size="sm"
+      (clicked)="goToCreate()"
+    >
+      <i class="ri-add-line text-sm mr-1"></i>
+      <span>New Requirement</span>
+    </app-custom-button>
+  </div>
+
+  <div class="space-y-6">
+    <!-- Advisory Alert: Separation from Contractual Terms (Spec 4.6) -->
+    <div class="p-3.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-xs text-blue-600 dark:text-blue-400 flex items-start gap-2.5">
+      <i class="ri-information-line text-base shrink-0 mt-0.5"></i>
+      <div>
+        <span class="font-bold">Contractual Separation Principle:</span> Customer requirement profiles capture prospective preferences and budget parameters for inventory recommendation. They remain strictly separate from confirmed apartment allotment agreements and statutory contractual deeds.
+      </div>
+    </div>
+
+    <!-- Status Metric Ribbon Cards -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <!-- Active Searching -->
+      <button
+        type="button"
+        (click)="quickFilterStatus('ACTIVE')"
+        class="text-left p-3.5 rounded-xl border transition-all"
+        [class]="filterForm.get('status')?.value === 'ACTIVE'
+          ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-600'
+          : 'bg-card border-border hover:border-slate-300 dark:hover:border-slate-700'"
+      >
+        <div class="flex items-center justify-between text-xs text-muted-foreground mb-1">
+          <span class="font-medium">Active Searching</span>
+          <i class="ri-search-eye-line text-emerald-500 text-base"></i>
+        </div>
+        <div class="text-xl font-bold text-foreground">{{ activeCount() }}</div>
+        <span class="text-[10px] text-muted-foreground">Prospects hunting</span>
+      </button>
+
+      <!-- Inventory Matched -->
+      <button
+        type="button"
+        (click)="quickFilterStatus('MATCHED')"
+        class="text-left p-3.5 rounded-xl border transition-all"
+        [class]="filterForm.get('status')?.value === 'MATCHED'
+          ? 'bg-blue-500/10 border-blue-500/40 text-blue-600'
+          : 'bg-card border-border hover:border-slate-300 dark:hover:border-slate-700'"
+      >
+        <div class="flex items-center justify-between text-xs text-muted-foreground mb-1">
+          <span class="font-medium">Inventory Matched</span>
+          <i class="ri-home-smile-line text-blue-500 text-base"></i>
+        </div>
+        <div class="text-xl font-bold text-foreground">{{ matchedCount() }}</div>
+        <span class="text-[10px] text-muted-foreground">Units recommended</span>
+      </button>
+
+      <!-- Fulfilled / Booked -->
+      <button
+        type="button"
+        (click)="quickFilterStatus('FULFILLED')"
+        class="text-left p-3.5 rounded-xl border transition-all"
+        [class]="filterForm.get('status')?.value === 'FULFILLED'
+          ? 'bg-purple-500/10 border-purple-500/40 text-purple-600'
+          : 'bg-card border-border hover:border-slate-300 dark:hover:border-slate-700'"
+      >
+        <div class="flex items-center justify-between text-xs text-muted-foreground mb-1">
+          <span class="font-medium">Fulfilled / Booked</span>
+          <i class="ri-checkbox-circle-line text-purple-500 text-base"></i>
+        </div>
+        <div class="text-xl font-bold text-foreground">{{ fulfilledCount() }}</div>
+        <span class="text-[10px] text-muted-foreground">Successful conversion</span>
+      </button>
+
+      <!-- On-Hold -->
+      <button
+        type="button"
+        (click)="quickFilterStatus('ON_HOLD')"
+        class="text-left p-3.5 rounded-xl border transition-all"
+        [class]="filterForm.get('status')?.value === 'ON_HOLD'
+          ? 'bg-amber-500/10 border-amber-500/40 text-amber-600'
+          : 'bg-card border-border hover:border-slate-300 dark:hover:border-slate-700'"
+      >
+        <div class="flex items-center justify-between text-xs text-muted-foreground mb-1">
+          <span class="font-medium">Temporarily On-Hold</span>
+          <i class="ri-pause-circle-line text-amber-500 text-base"></i>
+        </div>
+        <div class="text-xl font-bold text-foreground">{{ onHoldCount() }}</div>
+        <span class="text-[10px] text-muted-foreground">Paused by customer</span>
+      </button>
+    </div>
+
+    <!-- Search & Filters Bar -->
+    <div class="p-4 rounded-xl bg-secondary/30 border border-border">
+      <form [formGroup]="filterForm" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 items-end">
+        <!-- Search query -->
+        <div class="lg:col-span-2">
+          <app-custom-input
+            formControlName="search"
+            label="Search Requirements / Customers"
+            placeholder="Search by code, customer, phone, location..."
+          ></app-custom-input>
+        </div>
+
+        <!-- Project dropdown -->
+        <div>
+          <app-searchable-select
+            formControlName="project_id"
+            label="Preferred Project"
+            [options]="projectOptions()"
+            [allowCreateNew]="false"
+          ></app-searchable-select>
+        </div>
+
+        <!-- Property Type (Dynamic Lookup CRM_PROPERTY_TYPE) -->
+        <div>
+          <app-searchable-select
+            formControlName="property_type"
+            label="Property Type"
+            [categoryCode]="LOOKUP.propertyType"
+            [allowCreateNew]="true"
+          ></app-searchable-select>
+        </div>
+
+        <!-- Status (Dynamic Lookup CRM_REQUIREMENT_STATUS) -->
+        <div>
+          <app-searchable-select
+            formControlName="status"
+            label="Lifecycle Status"
+            [categoryCode]="LOOKUP.requirementStatus"
+            [allowCreateNew]="false"
+          ></app-searchable-select>
+        </div>
+
+        <!-- Sort By -->
+        <div>
+          <app-searchable-select
+            formControlName="sort_by"
+            label="Sort Order"
+            [options]="sortOptions"
+            [allowCreateNew]="false"
+          ></app-searchable-select>
+        </div>
+      </form>
+    </div>
+
+    <!-- Requirements Data Table -->
+    <div class="overflow-x-auto rounded-xl border border-border bg-card">
+      <table class="w-full text-left border-collapse text-xs">
+        <thead class="bg-secondary/60 text-muted-foreground border-b border-border uppercase font-semibold tracking-wider text-[11px]">
+          <tr>
+            <th class="py-3 px-4">Code & Customer</th>
+            <th class="py-3 px-4">Preferred Project & Location</th>
+            <th class="py-3 px-4">Configuration</th>
+            <th class="py-3 px-4">Budget Range</th>
+            <th class="py-3 px-4">Required Area</th>
+            <th class="py-3 px-4">Timeline & Payment</th>
+            <th class="py-3 px-4 text-center">Live Matches</th>
+            <th class="py-3 px-4">Status</th>
+            <th class="py-3 px-4 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border">
+          @if (isLoading()) {
+            <tr>
+              <td colspan="9" class="py-12 text-center text-muted-foreground">
+                <div class="inline-flex items-center gap-2">
+                  <i class="ri-loader-4-line animate-spin text-lg text-primary"></i>
+                  <span>Loading customer requirements...</span>
+                </div>
+              </td>
+            </tr>
+          } @else if (requirements().length === 0) {
+            <tr>
+              <td colspan="9" class="py-12 text-center text-muted-foreground">
+                <i class="ri-file-search-line text-3xl mb-2 block opacity-40"></i>
+                <p class="font-medium text-sm">No customer requirements found</p>
+                <p class="text-[11px] mt-1">Try adjusting your filters or click "+ New Requirement" to create one.</p>
+              </td>
+            </tr>
+          } @else {
+            @for (req of requirements(); track req.id) {
+              <tr class="hover:bg-secondary/20 transition-colors">
+                <!-- Code & Customer -->
+                <td class="py-3 px-4">
+                  <div class="font-mono font-bold text-primary hover:underline cursor-pointer" (click)="goToDetail(req.id)">
+                    {{ req.requirement_code }}
+                  </div>
+                  <div class="font-semibold text-foreground text-xs mt-0.5">
+                    {{ req.customer_name || 'Prospect Client' }}
+                  </div>
+                  <div class="text-[10px] text-muted-foreground flex items-center gap-1.5 mt-0.5">
+                    <span>{{ req.customer_code }}</span>
+                    <span>·</span>
+                    <span>{{ req.customer_phone }}</span>
+                  </div>
+                </td>
+
+                <!-- Project & Location -->
+                <td class="py-3 px-4">
+                  <div class="font-medium text-foreground">
+                    {{ req.project_name || 'Any Project' }}
+                  </div>
+                  <div class="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
+                    <i class="ri-map-pin-line text-[11px] text-primary"></i>
+                    <span>{{ req.preferred_location || 'Dhaka Metro' }}</span>
+                  </div>
+                </td>
+
+                <!-- Configuration -->
+                <td class="py-3 px-4">
+                  <div class="font-medium text-foreground flex items-center gap-1.5">
+                    <span class="px-1.5 py-0.5 rounded bg-secondary font-mono text-[10px] font-bold">
+                      {{ req.property_type || 'APARTMENT' }}
+                    </span>
+                    <span>{{ req.bedrooms || 3 }} Bed · {{ req.bathrooms || 3 }} Bath</span>
+                  </div>
+                  <div class="text-[11px] text-muted-foreground flex items-center gap-2 mt-1">
+                    <span>Floor: {{ req.preferred_floor || 'Mid' }}</span>
+                    <span>·</span>
+                    <span>{{ req.preferred_facing || 'South' }}</span>
+                    @if (req.parking_required) {
+                      <span class="text-emerald-600 font-medium">· Pkg</span>
+                    }
+                  </div>
+                </td>
+
+                <!-- Budget Range -->
+                <td class="py-3 px-4">
+                  <div class="font-bold text-foreground">
+                    {{ formatBdt(req.budget_min_bdt) }} – {{ formatBdt(req.budget_max_bdt) }}
+                  </div>
+                  <div class="text-[10px] text-muted-foreground mt-0.5">
+                    BDT Boundaries
+                  </div>
+                </td>
+
+                <!-- Required Area -->
+                <td class="py-3 px-4">
+                  <div class="font-medium text-foreground">
+                    {{ req.area_min_sqft || '—' }} – {{ req.area_max_sqft || '—' }} sq ft
+                  </div>
+                  <div class="text-[10px] text-muted-foreground mt-0.5">
+                    Net carpet/saleable
+                  </div>
+                </td>
+
+                <!-- Timeline & Payment -->
+                <td class="py-3 px-4">
+                  <div class="font-medium text-foreground">
+                    {{ req.purchase_timeline || 'Within 6 months' }}
+                  </div>
+                  <div class="text-[10px] text-muted-foreground mt-0.5">
+                    {{ req.payment_preference || 'Installments' }}
+                  </div>
+                </td>
+
+                <!-- Matched Live Inventory -->
+                <td class="py-3 px-4 text-center">
+                  <button
+                    type="button"
+                    (click)="goToDetail(req.id)"
+                    class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold transition-all"
+                    [class]="req.matched_units_count > 0
+                      ? 'bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border border-emerald-500/30'
+                      : 'bg-slate-500/10 text-slate-500 hover:bg-slate-500/20 border border-slate-500/30'"
+                  >
+                    <i class="ri-home-gear-line text-sm"></i>
+                    <span>{{ req.matched_units_count }} Units</span>
+                  </button>
+                </td>
+
+                <!-- Status -->
+                <td class="py-3 px-4">
+                  <span
+                    class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider inline-block"
+                    [ngClass]="{
+                      'bg-emerald-500/10 text-emerald-600 border border-emerald-500/30': req.status === 'ACTIVE',
+                      'bg-blue-500/10 text-blue-600 border border-blue-500/30': req.status === 'MATCHED',
+                      'bg-purple-500/10 text-purple-600 border border-purple-500/30': req.status === 'FULFILLED',
+                      'bg-amber-500/10 text-amber-600 border border-amber-500/30': req.status === 'ON_HOLD',
+                      'bg-slate-500/10 text-slate-500 border border-slate-500/30': req.status === 'CLOSED'
+                    }"
+                  >
+                    {{ req.status }}
+                  </span>
+                </td>
+
+                <!-- Actions -->
+                <td class="py-3 px-4 text-right whitespace-nowrap">
+                  <div class="flex items-center justify-end gap-1.5">
+                    <!-- Match & Recommend button -->
+                    <button
+                      type="button"
+                      title="Match Inventory & Recommendations"
+                      (click)="goToDetail(req.id)"
+                      class="p-1.5 rounded-lg border border-border bg-card hover:bg-primary/10 hover:text-primary transition-colors text-muted-foreground"
+                    >
+                      <i class="ri-search-eye-line text-sm"></i>
+                    </button>
+
+                    <!-- Edit button -->
+                    <button
+                      type="button"
+                      title="Edit Requirement"
+                      (click)="goToEdit(req.id)"
+                      class="p-1.5 rounded-lg border border-border bg-card hover:bg-secondary transition-colors text-muted-foreground"
+                    >
+                      <i class="ri-edit-line text-sm"></i>
+                    </button>
+
+                    <!-- Delete button -->
+                    <button
+                      type="button"
+                      title="Delete Requirement"
+                      (click)="confirmDelete(req)"
+                      class="p-1.5 rounded-lg border border-border bg-card hover:bg-rose-500/10 hover:text-rose-600 hover:border-rose-500/30 transition-colors text-muted-foreground"
+                    >
+                      <i class="ri-delete-bin-line text-sm"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Server-Side Pagination Controls -->
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground pt-2">
+      <div>
+        Showing <span class="font-bold text-foreground">{{ fromRow() }}</span> to
+        <span class="font-bold text-foreground">{{ toRow() }}</span> of
+        <span class="font-bold text-foreground">{{ total() }}</span> requirement profiles
+      </div>
+
+      <div class="flex items-center gap-1.5">
+        <app-custom-button
+          variant="secondary"
+          size="sm"
+          [disabled]="currentPage() <= 1"
+          (clicked)="setPage(currentPage() - 1)"
+        >
+          <i class="ri-arrow-left-s-line text-sm mr-1"></i>
+          <span>Previous</span>
+        </app-custom-button>
+
+        <span class="px-3 py-1 font-mono font-medium text-foreground">
+          Page {{ currentPage() }} of {{ totalPages() }}
+        </span>
+
+        <app-custom-button
+          variant="secondary"
+          size="sm"
+          [disabled]="currentPage() >= totalPages()"
+          (clicked)="setPage(currentPage() + 1)"
+        >
+          <span>Next</span>
+          <i class="ri-arrow-right-s-line text-sm ml-1"></i>
+        </app-custom-button>
+      </div>
+    </div>
+  </div>
+</app-card-container>
+
+<!-- Reusable Delete Modal -->
+<app-modal
+  [isOpen]="deleteModalOpen()"
+  title="Delete Customer Requirement"
+  subtitle="This action will permanently delete this requirement profile and its recommendation history."
+  size="sm"
+  (closed)="deleteModalOpen.set(false)"
+>
+  <div class="space-y-3 text-xs">
+    <p class="text-foreground">
+      Are you sure you want to delete requirement
+      <span class="font-mono font-bold text-primary">{{ deleteTarget()?.requirement_code }}</span>
+      belonging to <span class="font-bold">{{ deleteTarget()?.customer_name }}</span>?
+    </p>
+    <div class="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600">
+      <i class="ri-alert-line mr-1"></i> All unit match scoring and feedback history for this requirement will be purged.
+    </div>
+  </div>
+
+  <div modal-footer class="flex items-center justify-end gap-2 w-full">
+    <app-custom-button variant="secondary" (clicked)="deleteModalOpen.set(false)">Cancel</app-custom-button>
+    <app-custom-button variant="danger" [loading]="isDeleting()" (clicked)="executeDelete()">
+      Confirm Delete
+    </app-custom-button>
+  </div>
+</app-modal>
+
+<!-- Reusable Inventory Alerts Modal (Spec 4.6) -->
+<app-modal
+  [isOpen]="alertsModalOpen()"
+  title="Inventory Match Alerts for Sales Reps"
+  subtitle="Automated alerts generated when matching units become available for customer requirements"
+  size="lg"
+  (closed)="alertsModalOpen.set(false)"
+>
+  <div class="space-y-3 max-h-[60vh] overflow-y-auto">
+    @if (isLoadingAlerts()) {
+      <div class="py-8 text-center text-muted-foreground">
+        <i class="ri-loader-4-line animate-spin text-xl text-primary"></i>
+        <p class="mt-2 text-xs">Loading alerts...</p>
+      </div>
+    } @else if (alerts().length === 0) {
+      <div class="py-8 text-center text-muted-foreground">
+        <i class="ri-notification-off-line text-3xl opacity-40 mb-1 block"></i>
+        <p class="text-xs">No inventory alerts found.</p>
+      </div>
+    } @else {
+      @for (alert of alerts(); track alert.id) {
+        <div
+          class="p-3.5 rounded-xl border transition-all flex items-start justify-between gap-3"
+          [class]="alert.is_read
+            ? 'bg-card border-border opacity-70'
+            : 'bg-primary/5 border-primary/20'"
+        >
+          <div class="space-y-1">
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-xs text-foreground">{{ alert.alert_title }}</span>
+              @if (!alert.is_read) {
+                <span class="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-primary text-white">NEW</span>
+              }
+            </div>
+            <p class="text-xs text-muted-foreground">{{ alert.alert_message }}</p>
+            <div class="text-[10px] text-muted-foreground flex items-center gap-2">
+              <span>Customer: <strong class="text-foreground">{{ alert.customer_name }}</strong></span>
+              <span>·</span>
+              <span>Ref: <strong class="text-foreground">{{ alert.requirement_code }}</strong></span>
+              <span>·</span>
+              <span>Unit: <strong class="text-foreground">{{ alert.unit_number }}</strong></span>
+            </div>
+          </div>
+
+          <div class="shrink-0 flex items-center gap-1.5">
+            @if (!alert.is_read) {
+              <button
+                type="button"
+                (click)="markAlertRead(alert)"
+                class="px-2 py-1 text-[11px] rounded bg-secondary hover:bg-secondary/80 text-foreground transition-colors"
+              >
+                Mark Read
+              </button>
+            }
+          </div>
+        </div>
+      }
+    }
+  </div>
+
+  <div modal-footer class="flex items-center justify-end gap-2 w-full">
+    <app-custom-button variant="secondary" (clicked)="alertsModalOpen.set(false)">Close</app-custom-button>
+  </div>
+</app-modal>

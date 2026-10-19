@@ -14,6 +14,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { Router } from '@angular/router';
 import { LookupService } from '../../../core/services/lookup.service';
 import { LookupItem, QuickCreateLookupPayload } from '../../../core/models/lookup.model';
 
@@ -40,12 +41,14 @@ export interface SelectOption {
 export class SearchableSelectComponent implements OnInit, ControlValueAccessor {
   private lookupService = inject(LookupService);
   private elementRef = inject(ElementRef);
+  private router = inject(Router, { optional: true });
 
   @Input() categoryCode: string = '';
   @Input() options: SelectOption[] = [];
   @Input() label: string = '';
   @Input() placeholder: string = 'Select an option...';
   @Input() allowCreateNew: boolean = true;
+  @Input() createRoute: string = '';
   @Input() searchable: boolean = true;
   @Input() required: boolean = false;
   @Input() disabled: boolean = false;
@@ -65,6 +68,7 @@ export class SearchableSelectComponent implements OnInit, ControlValueAccessor {
 
   @Output() selectionChange = new EventEmitter<any>();
   @Output() valueChange = new EventEmitter<any>();
+  @Output() createNew = new EventEmitter<void>();
 
   // State Signals
   items = signal<LookupItem[]>([]);
@@ -191,6 +195,24 @@ export class SearchableSelectComponent implements OnInit, ControlValueAccessor {
   openQuickCreateModal(event: MouseEvent): void {
     event.stopPropagation();
     this.isOpen.set(false);
+
+    if (this.createNew.observed) {
+      this.createNew.emit();
+      return;
+    }
+
+    if (this.createRoute && this.router) {
+      this.router.navigateByUrl(this.createRoute);
+      return;
+    }
+
+    if (!this.categoryCode) {
+      if (this.router) {
+        this.router.navigateByUrl('/settings/lookups');
+      }
+      return;
+    }
+
     this.newEnglishName.set(this.searchTerm());
     this.newBanglaName.set('');
     this.newColorBadge.set('#10B981');

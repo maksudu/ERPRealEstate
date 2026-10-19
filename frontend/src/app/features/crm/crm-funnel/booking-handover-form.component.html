@@ -1,0 +1,160 @@
+<div class="space-y-6 max-w-4xl mx-auto">
+  <!-- Single Card Container (Rule 6) -->
+  <app-card-container
+    title="Create Booking Handover Dossier"
+    subtitle="Transition an accepted quotation/proposal into an authorized Sales Operations booking record (Module 5.1)">
+
+    <!-- Error Banner -->
+    <div *ngIf="errorMessage()" class="p-3 mb-6 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 text-xs flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <i class="ri-error-warning-line text-base"></i>
+        <span>{{ errorMessage() }}</span>
+      </div>
+      <button type="button" (click)="errorMessage.set(null)" class="text-rose-600 hover:opacity-80">
+        <i class="ri-close-line"></i>
+      </button>
+    </div>
+
+    <form [formGroup]="handoverForm" (ngSubmit)="onSubmit()" class="space-y-6">
+      <!-- SECTION 1: OPPORTUNITY & BUYER ATTRIBUTION -->
+      <div class="space-y-4">
+        <div class="flex items-center gap-2 border-b border-border pb-2">
+          <i class="ri-bookmark-3-line text-primary text-base"></i>
+          <h3 class="font-bold text-foreground text-sm">Source Opportunity & Buyer Attribution</h3>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="md:col-span-2">
+            <app-searchable-select
+              formControlName="opportunity_id"
+              label="Select Source Opportunity"
+              placeholder="Search opportunity by code or title"
+              [options]="opportunityOptions()">
+            </app-searchable-select>
+          </div>
+
+          <div>
+            <app-searchable-select
+              formControlName="customer_id"
+              label="Assigned Customer"
+              placeholder="Select customer"
+              [options]="customerOptions()">
+            </app-searchable-select>
+          </div>
+
+          <div>
+            <app-searchable-select
+              formControlName="lead_id"
+              label="Assigned CRM Lead"
+              placeholder="Select lead"
+              [options]="leadOptions()">
+            </app-searchable-select>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 2: PROJECT & PROPERTY SELECTION -->
+      <div class="space-y-4">
+        <div class="flex items-center gap-2 border-b border-border pb-2">
+          <i class="ri-building-line text-primary text-base"></i>
+          <h3 class="font-bold text-foreground text-sm">Project & Unit Specification</h3>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="md:col-span-2">
+            <app-searchable-select
+              formControlName="project_id"
+              label="Selected Real Estate Project"
+              placeholder="Search by project name"
+              [options]="projectOptions()">
+            </app-searchable-select>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 3: COMMERCIAL & FINANCIAL TERMS -->
+      <div class="space-y-4">
+        <div class="flex items-center gap-2 border-b border-border pb-2">
+          <i class="ri-money-dollar-box-line text-emerald-500 text-base"></i>
+          <h3 class="font-bold text-foreground text-sm">Commercial Financial Terms & Token Booking Amount</h3>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <app-custom-input
+              formControlName="agreed_price"
+              label="Agreed Final Sale Price (BDT) *"
+              type="number"
+              placeholder="e.g. 19500000"
+              prefixIcon="ri-wallet-3-line"
+              [required]="true">
+            </app-custom-input>
+          </div>
+
+          <div>
+            <app-custom-input
+              formControlName="booking_money_amount"
+              label="Booking Money / Token Collected (BDT) *"
+              type="number"
+              placeholder="e.g. 500000"
+              prefixIcon="ri-money-dollar-circle-line"
+              [required]="true">
+            </app-custom-input>
+          </div>
+
+          <div>
+            <app-searchable-select
+              formControlName="payment_plan_preference"
+              label="Payment Plan Preference *"
+              placeholder="Select Plan"
+              [options]="paymentPlanOptions"
+              [required]="true">
+            </app-searchable-select>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 4: SPECIAL CONDITIONS & HANDOVER NOTES -->
+      <div class="space-y-4">
+        <div class="flex items-center gap-2 border-b border-border pb-2">
+          <i class="ri-file-list-3-line text-primary text-base"></i>
+          <h3 class="font-bold text-foreground text-sm">Special Conditions & Operations Handover Dossier</h3>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <app-custom-textarea
+            formControlName="special_conditions"
+            label="Special Contractual Covenants / Commitments"
+            placeholder="e.g. 1 Covered basement car parking included; Imported sanitary fittings upgrade promised; Target possession Dec 2027"
+            [rows]="3">
+          </app-custom-textarea>
+
+          <app-custom-textarea
+            formControlName="handover_notes"
+            label="Handover Instructions for Sales Desk & Accounts"
+            placeholder="e.g. Customer bank token pay order received. Verification of NID & TIN submitted. Ready for sales agreement generation."
+            [rows]="3">
+          </app-custom-textarea>
+        </div>
+      </div>
+
+      <!-- ACTION BUTTONS -->
+      <div class="flex items-center justify-end gap-3 pt-4 border-t border-border">
+        <app-custom-button
+          variant="outline"
+          type="button"
+          (clicked)="cancel()">
+          Cancel
+        </app-custom-button>
+
+        <app-custom-button
+          variant="primary"
+          type="submit"
+          [disabled]="isSubmitting()">
+          <i class="ri-send-plane-fill mr-1"></i>
+          Submit Handover to Sales Operations
+        </app-custom-button>
+      </div>
+    </form>
+  </app-card-container>
+</div>

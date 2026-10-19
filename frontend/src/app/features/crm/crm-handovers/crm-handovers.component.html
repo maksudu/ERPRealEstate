@@ -1,0 +1,266 @@
+<div class="space-y-6 max-w-7xl mx-auto">
+  <!-- Single Card Container (Rule 6) -->
+  <app-card-container
+    title="Spec 4.12: Lead-to-Booking Handover Workflow"
+    subtitle="Audit-compliant commercial transfer of accepted buyer opportunities into sales operations (Module 5.1)">
+
+    <!-- Action Bar / Header Buttons -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
+      <!-- Info notice regarding guardrail -->
+      <div class="flex items-center gap-2 text-xs text-muted-foreground bg-primary/5 px-3 py-2 rounded-xl border border-primary/10">
+        <i class="ri-shield-check-line text-primary text-base"></i>
+        <span>
+          <strong>Controlled Sales Workflow:</strong> A converted lead issues a reservation reference and transfers attribution, but does <em>not</em> mark a unit as sold until the sales contract is executed.
+        </span>
+      </div>
+
+      <app-custom-button
+        variant="primary"
+        (clicked)="createHandover()">
+        <i class="ri-add-line mr-1"></i> New Handover Dossier
+      </app-custom-button>
+    </div>
+
+    <!-- Filter Bar -->
+    <form [formGroup]="filterForm" class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+      <div>
+        <app-custom-input
+          formControlName="search"
+          placeholder="Search by handover code or customer..."
+          prefixIcon="ri-search-line">
+        </app-custom-input>
+      </div>
+
+      <div>
+        <app-searchable-select
+          formControlName="status"
+          placeholder="Filter by Status"
+          [options]="statusOptions">
+        </app-searchable-select>
+      </div>
+
+      <div>
+        <app-searchable-select
+          formControlName="project_id"
+          placeholder="Filter by Project"
+          [options]="projectOptions()">
+        </app-searchable-select>
+      </div>
+    </form>
+
+    <!-- Handovers Table -->
+    <div class="overflow-x-auto rounded-xl border border-border mt-4">
+      <table class="w-full text-left text-xs">
+        <thead class="bg-secondary/40 text-muted-foreground uppercase text-[10px] tracking-wider border-b border-border">
+          <tr>
+            <th class="py-3 px-4">Handover Dossier</th>
+            <th class="py-3 px-4">Customer & KYC</th>
+            <th class="py-3 px-4">Project & Unit</th>
+            <th class="py-3 px-4">Financial Terms</th>
+            <th class="py-3 px-4">KYC Checklist</th>
+            <th class="py-3 px-4">Status</th>
+            <th class="py-3 px-4 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border">
+          <tr *ngIf="isLoading()" class="animate-pulse">
+            <td colspan="7" class="py-8 text-center text-muted-foreground">
+              <i class="ri-loader-4-line ri-spin text-2xl mb-2"></i>
+              <div>Loading handover dossiers...</div>
+            </td>
+          </tr>
+
+          <tr *ngIf="!isLoading() && handovers().length === 0">
+            <td colspan="7" class="py-8 text-center text-muted-foreground">
+              <i class="ri-inbox-line text-3xl mb-2"></i>
+              <div>No handover records found. Click "+ New Handover Dossier" to initiate.</div>
+            </td>
+          </tr>
+
+          <tr *ngFor="let h of handovers()" class="hover:bg-secondary/20 transition-colors">
+            <!-- Handover Dossier Info -->
+            <td class="py-3 px-4 font-mono font-medium">
+              <div class="text-primary font-bold">{{ h.handover_code }}</div>
+              <div *ngIf="h.reservation_code" class="text-[10px] text-amber-600 dark:text-amber-400 font-semibold mt-0.5">
+                <i class="ri-bookmark-line mr-0.5"></i> {{ h.reservation_code }}
+              </div>
+              <div class="text-[10px] text-muted-foreground mt-0.5">
+                {{ h.created_at | date:'mediumDate' }}
+              </div>
+            </td>
+
+            <!-- Customer & Contact -->
+            <td class="py-3 px-4">
+              <div class="font-semibold text-foreground flex items-center gap-1">
+                <span>{{ h.customer_name || h.lead_name || 'Walk-in Prospect' }}</span>
+                <i *ngIf="h.customer_verified" class="ri-checkbox-circle-fill text-emerald-500" title="Contact Details Verified"></i>
+              </div>
+              <div *ngIf="h.verified_phone" class="text-[11px] text-muted-foreground mt-0.5">
+                {{ h.verified_phone }}
+              </div>
+              <div *ngIf="h.customer_code" class="text-[10px] text-primary/80 font-mono">
+                Code: {{ h.customer_code }}
+              </div>
+            </td>
+
+            <!-- Project & Unit -->
+            <td class="py-3 px-4">
+              <div class="font-medium text-foreground">{{ h.project_name || 'Allotted Project' }}</div>
+              <div class="text-[11px] text-muted-foreground mt-0.5">
+                Unit: <span class="font-semibold text-foreground">{{ h.unit_number || 'N/A' }}</span>
+                <span *ngIf="h.unit_size_sqft" class="ml-1 text-[10px]">({{ h.unit_size_sqft }} sft)</span>
+              </div>
+              <span *ngIf="h.unit_availability_verified" class="inline-flex items-center gap-0.5 text-[10px] text-emerald-600 dark:text-emerald-400">
+                <i class="ri-check-line"></i> Inventory Validated
+              </span>
+            </td>
+
+            <!-- Financial Terms -->
+            <td class="py-3 px-4 font-mono">
+              <div class="font-bold text-foreground">{{ formatBdt(h.agreed_price) }}</div>
+              <div class="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">
+                Token: {{ formatBdt(h.booking_money_amount) }}
+              </div>
+              <div class="text-[10px] text-muted-foreground mt-0.5">
+                Plan: {{ h.payment_plan_preference || 'Standard' }}
+              </div>
+            </td>
+
+            <!-- KYC Checklist Progress -->
+            <td class="py-3 px-4">
+              <div class="flex items-center gap-1.5">
+                <div class="w-16 bg-secondary h-2 rounded-full overflow-hidden">
+                  <div
+                    class="h-full bg-emerald-500 rounded-full"
+                    [style.width.%]="(calculateKycScore(h) / 5) * 100">
+                  </div>
+                </div>
+                <span class="text-[10px] font-bold text-foreground">{{ calculateKycScore(h) }}/5</span>
+              </div>
+              <div class="text-[10px] text-muted-foreground mt-1">
+                {{ calculateKycScore(h) === 5 ? 'KYC Complete' : 'Verification Incomplete' }}
+              </div>
+            </td>
+
+            <!-- Status -->
+            <td class="py-3 px-4">
+              <app-status-badge [status]="h.status" [variant]="getStatusVariant(h.status)"></app-status-badge>
+              <div *ngIf="h.rejection_reason" class="text-[10px] text-rose-500 truncate max-w-[130px] mt-0.5" [title]="h.rejection_reason">
+                {{ h.rejection_reason }}
+              </div>
+            </td>
+
+            <!-- Actions -->
+            <td class="py-3 px-4 text-right">
+              <div class="flex items-center justify-end gap-1">
+                <button
+                  type="button"
+                  (click)="viewDossier(h)"
+                  class="px-2.5 py-1 rounded bg-secondary hover:bg-secondary/80 text-foreground font-medium text-xs flex items-center gap-1 transition-colors"
+                  title="Open 10-Step Handover Dossier">
+                  <i class="ri-folder-open-line text-primary"></i> 10-Step Dossier
+                </button>
+
+                <button
+                  *ngIf="h.status === 'PENDING_SALES_OPS' || h.status === 'RESERVATION_ISSUED'"
+                  type="button"
+                  (click)="openReviewModal(h)"
+                  class="px-2 py-1 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 font-medium text-xs flex items-center gap-1"
+                  title="Review for Operations Acceptance">
+                  <i class="ri-shield-check-line"></i> Review
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Controls (Rule 9) -->
+    <div *ngIf="totalPages() > 1" class="flex items-center justify-between pt-4 border-t border-border mt-4 text-xs">
+      <div class="text-muted-foreground">
+        Showing {{ (page() - 1) * limit() + 1 }} to {{ page() * limit() > totalHandovers() ? totalHandovers() : page() * limit() }} of {{ totalHandovers() }} handover dossiers
+      </div>
+      <div class="flex items-center gap-2">
+        <app-custom-button
+          variant="outline"
+          size="sm"
+          [disabled]="page() === 1"
+          (clicked)="changePage(page() - 1)">
+          Previous
+        </app-custom-button>
+        <span class="px-2 py-1 bg-secondary rounded text-foreground font-semibold">
+          {{ page() }} / {{ totalPages() }}
+        </span>
+        <app-custom-button
+          variant="outline"
+          size="sm"
+          [disabled]="page() === totalPages()"
+          (clicked)="changePage(page() + 1)">
+          Next
+        </app-custom-button>
+      </div>
+    </div>
+  </app-card-container>
+
+  <!-- Operations Review Modal -->
+  <app-modal
+    [isOpen]="isReviewModalOpen()"
+    title="Sales Operations Review & Acceptance"
+    subtitle="Review customer KYC, unit availability, and authorize booking handover creation (Spec 4.12)"
+    (closed)="closeReviewModal()">
+
+    <form [formGroup]="reviewForm" (ngSubmit)="submitReview()" class="space-y-4">
+      <div *ngIf="selectedHandover()" class="p-3 rounded-xl bg-secondary/30 border border-border text-xs space-y-1">
+        <div class="flex justify-between">
+          <span class="text-muted-foreground">Handover Code:</span>
+          <span class="font-bold text-foreground font-mono">{{ selectedHandover()?.handover_code }}</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-muted-foreground">Customer:</span>
+          <span class="font-bold text-foreground">{{ selectedHandover()?.customer_name || selectedHandover()?.lead_name }}</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-muted-foreground">Agreed Price:</span>
+          <span class="font-bold text-emerald-600 font-mono">{{ formatBdt(selectedHandover()?.agreed_price || 0) }}</span>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-foreground mb-1">Decision *</label>
+        <div class="grid grid-cols-2 gap-3">
+          <label class="flex items-center gap-2 p-2.5 rounded-xl border border-border cursor-pointer hover:bg-secondary/30 transition-colors"
+                 [ngClass]="{'border-emerald-500 bg-emerald-500/10': reviewForm.get('decision')?.value === 'ACCEPT'}">
+            <input type="radio" formControlName="decision" value="ACCEPT" class="text-emerald-600">
+            <span class="text-xs font-bold text-emerald-600">Accept & Authorize Handover</span>
+          </label>
+
+          <label class="flex items-center gap-2 p-2.5 rounded-xl border border-border cursor-pointer hover:bg-secondary/30 transition-colors"
+                 [ngClass]="{'border-rose-500 bg-rose-500/10': reviewForm.get('decision')?.value === 'REJECT'}">
+            <input type="radio" formControlName="decision" value="REJECT" class="text-rose-600">
+            <span class="text-xs font-bold text-rose-600">Return / Reject Dossier</span>
+          </label>
+        </div>
+      </div>
+
+      <div *ngIf="reviewForm.get('decision')?.value === 'REJECT'">
+        <label class="block text-xs font-semibold text-foreground mb-1">Rejection Reason *</label>
+        <textarea
+          formControlName="rejection_reason"
+          rows="3"
+          placeholder="Specify why the dossier is returned (e.g. Incomplete NID/TIN, Unit pricing mismatch)..."
+          class="w-full text-xs rounded-xl border border-border bg-background p-2.5 text-foreground focus:ring-1 focus:ring-primary focus:outline-none">
+        </textarea>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-3 border-t border-border">
+        <app-custom-button variant="outline" type="button" (clicked)="closeReviewModal()">
+          Cancel
+        </app-custom-button>
+        <app-custom-button variant="primary" type="submit" [disabled]="isSubmittingReview()">
+          Confirm Review
+        </app-custom-button>
+      </div>
+    </form>
+  </app-modal>
+</div>

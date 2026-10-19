@@ -1,0 +1,556 @@
+<!-- Standalone Full-Screen Requirement Detail & Inventory Matching Engine (Spec 4.6 & Rule 10) -->
+<app-card-container
+  [title]="requirement()?.title || 'Customer Requirement Profile'"
+  [subtitle]="(requirement()?.requirement_code || 'REQ') + ' · ' + (requirement()?.customer_name || 'Prospect Customer')"
+>
+  <!-- Card Header Actions -->
+  <div card-actions class="flex items-center gap-2">
+    <app-custom-button variant="secondary" size="sm" (clicked)="goBack()">
+      <i class="ri-arrow-left-line text-sm mr-1"></i>
+      <span>Back</span>
+    </app-custom-button>
+
+    <app-custom-button variant="primary" size="sm" (clicked)="goToEdit()">
+      <i class="ri-edit-line text-sm mr-1"></i>
+      <span>Edit Preferences</span>
+    </app-custom-button>
+  </div>
+
+  <div class="space-y-6">
+    <!-- Feedback / Success Message -->
+    @if (successMessage()) {
+      <div class="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs text-emerald-600 flex items-center gap-2">
+        <i class="ri-checkbox-circle-line text-base shrink-0"></i>
+        <span>{{ successMessage() }}</span>
+      </div>
+    }
+
+    @if (errorMessage()) {
+      <div class="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-600 flex items-center gap-2">
+        <i class="ri-error-warning-line text-base shrink-0"></i>
+        <span>{{ errorMessage() }}</span>
+      </div>
+    }
+
+    <!-- Contractual Separation Advisory -->
+    <div class="p-3.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-xs text-blue-600 dark:text-blue-400 flex items-start gap-2.5">
+      <i class="ri-information-line text-base shrink-0 mt-0.5"></i>
+      <div>
+        <span class="font-bold">Contractual Separation:</span> This profile stores prospect preferences for unit recommendations and sales matching. It does not replace or modify statutory contractual allotment terms or down-payment agreements.
+      </div>
+    </div>
+
+    @if (isLoading()) {
+      <div class="py-16 text-center text-muted-foreground">
+        <i class="ri-loader-4-line animate-spin text-2xl text-primary mb-2 block"></i>
+        <p class="text-xs">Loading requirement details...</p>
+      </div>
+    } @else {
+      @if (requirement(); as r) {
+      <!-- Top 3 Profile Overview Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Card 1: Customer Profile -->
+        <div class="p-4 rounded-xl bg-secondary/30 border border-border space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+              <i class="ri-user-line text-primary"></i> Buyer Identity
+            </span>
+            <span class="font-mono text-[10px] px-1.5 py-0.5 rounded bg-card border border-border font-bold">
+              {{ r.requirement_code }}
+            </span>
+          </div>
+
+          <div>
+            <h3 class="font-bold text-sm text-foreground">{{ r.customer_name }}</h3>
+            <p class="text-xs text-muted-foreground mt-0.5 font-mono">{{ r.customer_code }} · {{ r.customer_phone }}</p>
+          </div>
+
+          <div class="pt-2 border-t border-border/60 text-xs space-y-1">
+            <div class="flex justify-between">
+              <span class="text-muted-foreground">Preferred Location:</span>
+              <span class="font-medium text-foreground">{{ r.preferred_location || 'Any Area' }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-muted-foreground">Preferred Project:</span>
+              <span class="font-medium text-foreground">{{ r.project_name || 'All Active Projects' }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-muted-foreground">Purchase Timeline:</span>
+              <span class="font-medium text-foreground">{{ r.purchase_timeline || 'Within 6 months' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2: Property Specifications -->
+        <div class="p-4 rounded-xl bg-secondary/30 border border-border space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+              <i class="ri-building-line text-primary"></i> Unit Specifications
+            </span>
+            <span class="font-mono text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-bold">
+              {{ r.property_type || 'APARTMENT' }}
+            </span>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <div>
+              <div class="text-xs text-muted-foreground">Bedrooms</div>
+              <div class="font-bold text-sm text-foreground">{{ r.bedrooms || 3 }} BHK</div>
+            </div>
+            <div class="h-6 w-px bg-border"></div>
+            <div>
+              <div class="text-xs text-muted-foreground">Bathrooms</div>
+              <div class="font-bold text-sm text-foreground">{{ r.bathrooms || 3 }} Baths</div>
+            </div>
+            <div class="h-6 w-px bg-border"></div>
+            <div>
+              <div class="text-xs text-muted-foreground">Required Area</div>
+              <div class="font-bold text-sm text-foreground">{{ r.area_min_sqft }}–{{ r.area_max_sqft }} sft</div>
+            </div>
+          </div>
+
+          <div class="pt-2 border-t border-border/60 text-xs space-y-1">
+            <div class="flex justify-between">
+              <span class="text-muted-foreground">Floor Level:</span>
+              <span class="font-medium text-foreground">{{ r.preferred_floor || 'Mid Floor' }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-muted-foreground">Facing / Sunlight:</span>
+              <span class="font-medium text-foreground">{{ r.preferred_facing || 'South Facing' }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-muted-foreground">Parking Bay:</span>
+              <span class="font-medium" [class.text-emerald-600]="r.parking_required">
+                {{ r.parking_required ? r.parking_count + ' Bay(s) Required' : 'Not Required' }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3: Financial & Assignment -->
+        <div class="p-4 rounded-xl bg-secondary/30 border border-border space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+              <i class="ri-money-dollar-circle-line text-primary"></i> Budget Boundaries
+            </span>
+            <span
+              class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase"
+              [ngClass]="{
+                'bg-emerald-500/10 text-emerald-600': r.status === 'ACTIVE',
+                'bg-blue-500/10 text-blue-600': r.status === 'MATCHED',
+                'bg-purple-500/10 text-purple-600': r.status === 'FULFILLED',
+                'bg-amber-500/10 text-amber-600': r.status === 'ON_HOLD'
+              }"
+            >
+              {{ r.status }}
+            </span>
+          </div>
+
+          <div>
+            <div class="text-base font-extrabold text-foreground">
+              {{ formatBdt(r.budget_min_bdt) }} – {{ formatBdt(r.budget_max_bdt) }}
+            </div>
+            <p class="text-xs text-muted-foreground mt-0.5">Payment: {{ r.payment_preference || 'Installments' }}</p>
+          </div>
+
+          <div class="pt-2 border-t border-border/60 text-xs space-y-1">
+            <div class="flex justify-between">
+              <span class="text-muted-foreground">Assigned Sales Rep:</span>
+              <span class="font-medium text-foreground">{{ r.sales_rep_name || 'Unassigned' }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-muted-foreground">Matched Inventory:</span>
+              <span class="font-bold text-primary">{{ r.matched_units_count }} Available Units</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-muted-foreground">Amenities Insisted:</span>
+              <span class="font-medium text-foreground truncate max-w-[150px]" [title]="r.amenities_required || 'None'">
+                {{ r.amenities_required || 'Standard' }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Navigation Buttons -->
+      <div class="flex items-center gap-2 border-b border-border pb-1">
+        <button
+          type="button"
+          (click)="activeTab.set('matching')"
+          class="px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5"
+          [class]="activeTab() === 'matching'
+            ? 'bg-primary text-white shadow-sm'
+            : 'text-muted-foreground hover:bg-secondary hover:text-foreground'"
+        >
+          <i class="ri-home-gear-line text-sm"></i>
+          <span>Live Inventory Matching Engine</span>
+          <span class="ml-1 px-1.5 py-0.2 rounded-full text-[10px]" [class]="activeTab() === 'matching' ? 'bg-white/20 text-white' : 'bg-secondary text-foreground'">
+            {{ matches().length }}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          (click)="activeTab.set('recommendations')"
+          class="px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5"
+          [class]="activeTab() === 'recommendations'
+            ? 'bg-primary text-white shadow-sm'
+            : 'text-muted-foreground hover:bg-secondary hover:text-foreground'"
+        >
+          <i class="ri-send-plane-line text-sm"></i>
+          <span>Recommended Units & Feedback</span>
+          <span class="ml-1 px-1.5 py-0.2 rounded-full text-[10px]" [class]="activeTab() === 'recommendations' ? 'bg-white/20 text-white' : 'bg-secondary text-foreground'">
+            {{ recommendations().length }}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          (click)="activeTab.set('audit')"
+          class="px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5"
+          [class]="activeTab() === 'audit'
+            ? 'bg-primary text-white shadow-sm'
+            : 'text-muted-foreground hover:bg-secondary hover:text-foreground'"
+        >
+          <i class="ri-history-line text-sm"></i>
+          <span>Budget & Preference Revision History</span>
+          <span class="ml-1 px-1.5 py-0.2 rounded-full text-[10px]" [class]="activeTab() === 'audit' ? 'bg-white/20 text-white' : 'bg-secondary text-foreground'">
+            {{ auditLogs().length }}
+          </span>
+        </button>
+      </div>
+
+      <!-- Tab 1: Live Inventory Matching Engine -->
+      @if (activeTab() === 'matching') {
+        <div class="space-y-4">
+          <div class="flex items-center justify-between text-xs text-muted-foreground">
+            <p>Units dynamically scored against customer budget, required area, bedrooms, floor, facing, and project location.</p>
+            <app-custom-button variant="secondary" size="sm" (clicked)="loadMatches()">
+              <i class="ri-refresh-line text-sm mr-1" [class.animate-spin]="isLoadingMatches()"></i>
+              <span>Re-run Engine</span>
+            </app-custom-button>
+          </div>
+
+          @if (isLoadingMatches()) {
+            <div class="py-12 text-center text-muted-foreground">
+              <i class="ri-loader-4-line animate-spin text-xl text-primary mb-2 block"></i>
+              <p class="text-xs">Evaluating available inventory against preferences...</p>
+            </div>
+          } @else if (matches().length === 0) {
+            <div class="py-12 text-center text-muted-foreground border border-dashed border-border rounded-xl">
+              <i class="ri-building-2-line text-3xl opacity-40 mb-2 block"></i>
+              <p class="font-medium text-xs">No available inventory currently matches this requirement</p>
+              <p class="text-[11px] mt-1">Try widening the budget range or area limits in preferences.</p>
+            </div>
+          } @else {
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              @for (unit of matches(); track unit.unit_id) {
+                <div class="p-4 rounded-xl border border-border bg-card hover:border-primary/40 transition-all space-y-3">
+                  <!-- Unit Header & Match Score -->
+                  <div class="flex items-start justify-between">
+                    <div>
+                      <div class="flex items-center gap-2">
+                        <span class="font-extrabold text-sm text-foreground">Unit {{ unit.unit_number }}</span>
+                        <span class="px-1.5 py-0.5 rounded bg-secondary text-[10px] font-mono font-bold">
+                          {{ unit.unit_type_id }}
+                        </span>
+                      </div>
+                      <p class="text-xs text-muted-foreground mt-0.5 font-medium">{{ unit.project_name }}</p>
+                    </div>
+
+                    <!-- Match Score Badge -->
+                    <div
+                      class="px-2.5 py-1 rounded-full text-xs font-black tracking-wide"
+                      [ngClass]="{
+                        'bg-emerald-500/10 text-emerald-600 border border-emerald-500/30': unit.match_score_percentage >= 85,
+                        'bg-blue-500/10 text-blue-600 border border-blue-500/30': unit.match_score_percentage >= 70 && unit.match_score_percentage < 85,
+                        'bg-amber-500/10 text-amber-600 border border-amber-500/30': unit.match_score_percentage < 70
+                      }"
+                    >
+                      {{ unit.match_score_percentage }}% Match
+                    </div>
+                  </div>
+
+                  <!-- Unit Specifications Grid -->
+                  <div class="grid grid-cols-3 gap-2 py-2 border-y border-border/60 text-center text-xs">
+                    <div>
+                      <span class="text-[10px] text-muted-foreground block">Floor</span>
+                      <strong class="text-foreground">{{ unit.floor_number }}th Floor</strong>
+                    </div>
+                    <div>
+                      <span class="text-[10px] text-muted-foreground block">Facing</span>
+                      <strong class="text-foreground">{{ unit.facing_id }}</strong>
+                    </div>
+                    <div>
+                      <span class="text-[10px] text-muted-foreground block">Area</span>
+                      <strong class="text-foreground">{{ unit.gross_saleable_area_sqft }} sft</strong>
+                    </div>
+                  </div>
+
+                  <!-- Pricing & Bed/Bath -->
+                  <div class="flex items-center justify-between text-xs">
+                    <div>
+                      <span class="text-[10px] text-muted-foreground block">Unit Price (BDT)</span>
+                      <span class="font-bold text-sm text-primary">{{ formatBdt(unit.total_unit_price) }}</span>
+                    </div>
+
+                    <div class="text-right text-[11px] text-muted-foreground">
+                      <span>{{ unit.bed_count }} Bed · {{ unit.bath_count }} Bath</span>
+                      <span class="block text-[10px] text-emerald-600 font-medium">Status: {{ unit.status_id }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Match Score Breakdown Tags -->
+                  <div class="flex flex-wrap gap-1 text-[10px]">
+                    <span class="px-1.5 py-0.5 rounded bg-secondary text-muted-foreground">
+                      Budget: {{ unit.match_breakdown.budget_score }}/30
+                    </span>
+                    <span class="px-1.5 py-0.5 rounded bg-secondary text-muted-foreground">
+                      Area: {{ unit.match_breakdown.area_score }}/25
+                    </span>
+                    <span class="px-1.5 py-0.5 rounded bg-secondary text-muted-foreground">
+                      Bed: {{ unit.match_breakdown.bedroom_score }}/20
+                    </span>
+                    <span class="px-1.5 py-0.5 rounded bg-secondary text-muted-foreground">
+                      Floor/Facing: {{ unit.match_breakdown.floor_facing_score }}/15
+                    </span>
+                  </div>
+
+                  <!-- Action: Recommend Button -->
+                  <div class="pt-2">
+                    @if (unit.is_already_recommended) {
+                      <div class="w-full py-1.5 text-center text-xs font-bold rounded-lg bg-secondary text-muted-foreground">
+                        <i class="ri-check-line mr-1 text-emerald-600"></i> Recommended ({{ unit.recommendation_status }})
+                      </div>
+                    } @else {
+                      <app-custom-button
+                        variant="primary"
+                        size="sm"
+                        [fullWidth]="true"
+                        [loading]="isRecommending() === unit.unit_id"
+                        (clicked)="recommendUnit(unit)"
+                      >
+                        <i class="ri-send-plane-line text-sm mr-1"></i>
+                        <span>Recommend Unit to Customer</span>
+                      </app-custom-button>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Tab 2: Recommended Units & Customer Feedback History -->
+      @if (activeTab() === 'recommendations') {
+        <div class="space-y-4">
+          <div class="overflow-x-auto rounded-xl border border-border bg-card">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead class="bg-secondary/60 text-muted-foreground border-b border-border uppercase font-semibold tracking-wider text-[11px]">
+                <tr>
+                  <th class="py-3 px-4">Unit #</th>
+                  <th class="py-3 px-4">Project</th>
+                  <th class="py-3 px-4">Floor & Facing</th>
+                  <th class="py-3 px-4">Area & Price</th>
+                  <th class="py-3 px-4 text-center">Match Score</th>
+                  <th class="py-3 px-4">Customer Status</th>
+                  <th class="py-3 px-4">Rejection Reason / Notes</th>
+                  <th class="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-border">
+                @if (isLoadingRecs()) {
+                  <tr>
+                    <td colspan="8" class="py-8 text-center text-muted-foreground">
+                      <i class="ri-loader-4-line animate-spin text-lg text-primary mr-1"></i>
+                      <span>Loading recommendations...</span>
+                    </td>
+                  </tr>
+                } @else if (recommendations().length === 0) {
+                  <tr>
+                    <td colspan="8" class="py-8 text-center text-muted-foreground">
+                      No units have been recommended to this customer yet. Switch to "Live Inventory Matching Engine" tab to suggest units.
+                    </td>
+                  </tr>
+                } @else {
+                  @for (rec of recommendations(); track rec.id) {
+                    <tr class="hover:bg-secondary/20 transition-colors">
+                      <td class="py-3 px-4 font-bold text-foreground">
+                        Unit {{ rec.unit_number }}
+                      </td>
+                      <td class="py-3 px-4 font-medium text-foreground">
+                        {{ rec.project_name }}
+                      </td>
+                      <td class="py-3 px-4 text-muted-foreground">
+                        {{ rec.floor_number }}th Floor · {{ rec.facing_id }}
+                      </td>
+                      <td class="py-3 px-4">
+                        <div class="font-bold text-foreground">{{ formatBdt(rec.total_unit_price) }}</div>
+                        <div class="text-[10px] text-muted-foreground">{{ rec.gross_saleable_area_sqft }} sq ft</div>
+                      </td>
+                      <td class="py-3 px-4 text-center">
+                        <span class="font-bold text-primary">{{ rec.match_score_percentage }}%</span>
+                      </td>
+                      <td class="py-3 px-4">
+                        <span
+                          class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase"
+                          [ngClass]="{
+                            'bg-blue-500/10 text-blue-600': rec.status === 'RECOMMENDED',
+                            'bg-purple-500/10 text-purple-600': rec.status === 'SHORTLISTED',
+                            'bg-amber-500/10 text-amber-600': rec.status === 'SITE_VISITED',
+                            'bg-emerald-500/10 text-emerald-600': rec.status === 'ACCEPTED',
+                            'bg-rose-500/10 text-rose-600': rec.status === 'REJECTED'
+                          }"
+                        >
+                          {{ rec.status }}
+                        </span>
+                      </td>
+                      <td class="py-3 px-4 text-xs">
+                        @if (rec.status === 'REJECTED') {
+                          <div class="font-bold text-rose-600 text-[11px]">{{ rec.rejection_reason }}</div>
+                          <p class="text-[10px] text-muted-foreground truncate max-w-[200px]" [title]="rec.rejection_notes || ''">
+                            {{ rec.rejection_notes || 'No feedback note provided' }}
+                          </p>
+                        } @else {
+                          <span class="text-muted-foreground text-[11px]">—</span>
+                        }
+                      </td>
+                      <td class="py-3 px-4 text-right">
+                        <app-custom-button
+                          variant="secondary"
+                          size="sm"
+                          (clicked)="openFeedbackModal(rec)"
+                        >
+                          <i class="ri-feedback-line text-sm mr-1"></i>
+                          <span>Feedback</span>
+                        </app-custom-button>
+                      </td>
+                    </tr>
+                  }
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+
+      <!-- Tab 3: Budget & Preference Revision History (Spec 4.6 Audit Trail) -->
+      @if (activeTab() === 'audit') {
+        <div class="space-y-4">
+          @if (isLoadingAudit()) {
+            <div class="py-8 text-center text-muted-foreground">
+              <i class="ri-loader-4-line animate-spin text-lg text-primary mr-1"></i>
+              <span>Loading audit trail...</span>
+            </div>
+          } @else if (auditLogs().length === 0) {
+            <div class="py-8 text-center text-muted-foreground border border-dashed border-border rounded-xl">
+              No change history recorded yet. Changes in budget or preferences will automatically log here.
+            </div>
+          } @else {
+            <div class="relative pl-6 space-y-4 border-l-2 border-border ml-2">
+              @for (log of auditLogs(); track log.id) {
+                <div class="relative group">
+                  <!-- Timeline indicator dot -->
+                  <div class="absolute -left-[31px] top-1.5 w-3 h-3 rounded-full bg-primary ring-4 ring-card"></div>
+
+                  <div class="p-3.5 rounded-xl bg-card border border-border space-y-1">
+                    <div class="flex items-center justify-between text-xs">
+                      <span class="font-bold text-foreground">{{ log.change_summary }}</span>
+                      <span class="text-[11px] text-muted-foreground font-mono">
+                        {{ log.created_at ? (log.created_at | date:'medium') : 'Just now' }}
+                      </span>
+                    </div>
+
+                    <div class="text-[11px] text-muted-foreground">
+                      Logged by: <strong class="text-foreground">{{ log.changed_by_name || 'System / Staff' }}</strong>
+                    </div>
+
+                    @if (log.old_values_json || log.new_values_json) {
+                      <div class="pt-2 text-[10px] font-mono text-muted-foreground overflow-x-auto bg-secondary/40 p-2 rounded-lg mt-1">
+                        @if (log.old_values_json) {
+                          <div><span class="text-rose-500 font-bold">- Previous:</span> {{ log.old_values_json }}</div>
+                        }
+                        @if (log.new_values_json) {
+                          <div><span class="text-emerald-500 font-bold">+ New:</span> {{ log.new_values_json }}</div>
+                        }
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+      }
+    }
+  </div>
+</app-card-container>
+
+<!-- Reusable Customer Feedback Modal (Spec 4.6 Rejection Tracking) -->
+<app-modal
+  [isOpen]="feedbackModalOpen()"
+  title="Record Customer Feedback on Unit"
+  subtitle="Update prospect feedback: Shortlist, Accepted for Booking, or Rejected with specific reasons"
+  size="md"
+  (closed)="feedbackModalOpen.set(false)"
+>
+  @if (feedbackError()) {
+    <div class="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-600 flex items-center gap-2">
+      <i class="ri-error-warning-line text-base shrink-0"></i>
+      <span>{{ feedbackError() }}</span>
+    </div>
+  }
+
+  <form [formGroup]="feedbackForm" class="space-y-4">
+    <!-- Feedback Status -->
+    <div>
+      <app-searchable-select
+        formControlName="status"
+        label="Customer Feedback Status *"
+        [options]="feedbackStatusOptions"
+        [allowCreateNew]="false"
+        [required]="true"
+      ></app-searchable-select>
+    </div>
+
+    <!-- Rejection Reason (Dynamic Lookup CRM_REJECTION_REASON) -->
+    @if (isRejectedStatus()) {
+      <div class="space-y-4 p-3.5 rounded-xl bg-rose-500/5 border border-rose-500/20">
+        <app-searchable-select
+          formControlName="rejection_reason"
+          label="Rejection Reason *"
+          [categoryCode]="LOOKUP.rejectionReason"
+          [allowCreateNew]="true"
+          [required]="true"
+          placeholder="Select reason why unit was rejected..."
+          hint="Required for sales conversion drop-off analysis"
+        ></app-searchable-select>
+
+        <app-custom-textarea
+          formControlName="rejection_notes"
+          label="Detailed Customer Feedback & Objections"
+          placeholder="e.g. Budget was exceeded due to floor escalation; client preferred 8th floor or higher..."
+          [rows]="3"
+        ></app-custom-textarea>
+      </div>
+    } @else {
+      <div>
+        <app-custom-textarea
+          formControlName="rejection_notes"
+          label="Meeting / Feedback Notes"
+          placeholder="Client comments, agreed site visit schedule, or next follow-up action..."
+          [rows]="3"
+        ></app-custom-textarea>
+      </div>
+    }
+  </form>
+
+  <div modal-footer class="flex items-center justify-end gap-2 w-full">
+    <app-custom-button variant="secondary" (clicked)="feedbackModalOpen.set(false)">Cancel</app-custom-button>
+    <app-custom-button variant="primary" [loading]="isSubmittingFeedback()" (clicked)="saveFeedback()">
+      Save Feedback
+    </app-custom-button>
+  </div>
+</app-modal>

@@ -1,0 +1,194 @@
+<app-card-container
+  [title]="isEditMode() ? 'Edit Follow-up Task' : 'Create Follow-up Task'"
+  [subtitle]="isEditMode() ? 'Update task priorities, schedule, or reassignment' : 'Configure a next-action task after a customer interaction or inquiry sequence'"
+>
+  <!-- Card Header Actions -->
+  <div card-actions class="flex items-center gap-2">
+    <app-custom-button variant="secondary" size="sm" (clicked)="goBack()">
+      <i class="ri-arrow-left-line text-sm mr-1"></i>
+      <span>Back to Tasks</span>
+    </app-custom-button>
+  </div>
+
+  <form [formGroup]="taskForm" (ngSubmit)="onSubmit()" class="space-y-6 max-w-4xl">
+    <!-- Error Alert Banner -->
+    @if (errorMessage()) {
+      <div class="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs flex items-start gap-2.5">
+        <i class="ri-error-warning-line text-base shrink-0 mt-0.5"></i>
+        <div class="flex-1">
+          <div class="font-bold">Task Error</div>
+          <div>{{ errorMessage() }}</div>
+        </div>
+      </div>
+    }
+
+    <!-- 1. Client / Prospect Selection -->
+    <div class="p-5 rounded-2xl border border-border bg-card space-y-4">
+      <div class="flex items-center justify-between border-b border-border pb-3">
+        <div class="flex items-center gap-2">
+          <i class="ri-user-search-line text-primary text-base"></i>
+          <h3 class="font-bold text-sm text-foreground">1. Target Contact</h3>
+        </div>
+
+        <!-- Target Type Switcher -->
+        <div class="flex items-center p-0.5 rounded-lg bg-secondary/80 border border-border">
+          <button
+            type="button"
+            (click)="setTargetType('lead')"
+            class="px-2.5 py-1 text-xs font-semibold rounded-md transition-all"
+            [class]="targetType() === 'lead' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
+          >
+            Prospective Lead
+          </button>
+          <button
+            type="button"
+            (click)="setTargetType('customer')"
+            class="px-2.5 py-1 text-xs font-semibold rounded-md transition-all"
+            [class]="targetType() === 'customer' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
+          >
+            Enrolled Customer
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 gap-4">
+        @if (targetType() === 'lead') {
+          <div>
+            <app-searchable-select
+              formControlName="lead_id"
+              label="Select Prospective Lead"
+              [options]="leadOptions()"
+              [allowCreateNew]="false"
+              placeholder="Search prospective lead by name or phone..."
+            ></app-searchable-select>
+          </div>
+        } @else {
+          <div>
+            <app-searchable-select
+              formControlName="customer_id"
+              label="Select Enrolled Customer"
+              [options]="customerOptions()"
+              [allowCreateNew]="false"
+              placeholder="Search customer by name, code or phone..."
+            ></app-searchable-select>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- 2. Task Details & Lifecycle Stage -->
+    <div class="p-5 rounded-2xl border border-border bg-card space-y-4">
+      <div class="flex items-center gap-2 border-b border-border pb-3">
+        <i class="ri-task-line text-primary text-base"></i>
+        <h3 class="font-bold text-sm text-foreground">2. Task Classification & Priority</h3>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- Task Category (Dynamic Lookup CRM_TASK_CATEGORY) -->
+        <div>
+          <app-searchable-select
+            formControlName="task_category"
+            label="Follow-up Stage / Category *"
+            [categoryCode]="LOOKUP.taskCategory"
+            [allowCreateNew]="true"
+            [required]="true"
+            placeholder="Select task category..."
+          ></app-searchable-select>
+        </div>
+
+        <!-- Priority (Dynamic Lookup CRM_TASK_PRIORITY) -->
+        <div>
+          <app-searchable-select
+            formControlName="priority"
+            label="Priority Level *"
+            [categoryCode]="LOOKUP.taskPriority"
+            [allowCreateNew]="true"
+            [required]="true"
+            placeholder="Select priority..."
+          ></app-searchable-select>
+        </div>
+
+        <!-- Title -->
+        <div class="sm:col-span-2">
+          <app-custom-input
+            formControlName="title"
+            label="Task Action Title *"
+            placeholder="e.g. Call to discuss payment breakdown and schedule site visit"
+            [required]="true"
+          ></app-custom-input>
+        </div>
+
+        <!-- Description -->
+        <div class="sm:col-span-2">
+          <app-custom-textarea
+            formControlName="description"
+            label="Detailed Follow-up Instructions"
+            placeholder="Key talking points, customer objections, specific brochures or documents required..."
+            [rows]="3"
+          ></app-custom-textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Due Date & Reminder Settings -->
+    <div class="p-5 rounded-2xl border border-border bg-card space-y-4">
+      <div class="flex items-center gap-2 border-b border-border pb-3">
+        <i class="ri-notification-3-line text-primary text-base"></i>
+        <h3 class="font-bold text-sm text-foreground">3. Deadline & Alert Channel</h3>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- Due Date -->
+        <div>
+          <app-custom-input
+            formControlName="due_date"
+            type="datetime-local"
+            label="Follow-up Deadline *"
+            [required]="true"
+          ></app-custom-input>
+        </div>
+
+        <!-- Reminder Channel -->
+        <div>
+          <label class="block text-xs font-semibold text-foreground mb-1">Reminder Channel</label>
+          <select
+            formControlName="reminder_channel"
+            class="w-full px-3 py-2 rounded-xl bg-background border border-border text-xs focus:ring-2 focus:ring-primary focus:outline-none"
+          >
+            <option value="IN_APP">In-App Dashboard Notification</option>
+            <option value="EMAIL">Email Alert</option>
+            <option value="WHATSAPP">WhatsApp Message</option>
+            <option value="SMS">SMS Text Alert</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Customer Opt-out & Messaging Consent Guard (Spec 4.8) -->
+      <div class="p-3.5 rounded-xl border border-border bg-secondary/30 flex items-start gap-3">
+        <input
+          type="checkbox"
+          id="consent_checked"
+          formControlName="consent_checked"
+          class="mt-0.5 rounded text-primary focus:ring-primary"
+        />
+        <label for="consent_checked" class="text-xs text-foreground select-none cursor-pointer">
+          <span class="font-bold">Respect Customer Messaging Consent</span>
+          <div class="text-muted-foreground text-[11px] mt-0.5">
+            Automated notifications and reminders will be immediately suspended if the customer withdraws consent or opts out.
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <!-- Form Footer Actions -->
+    <div class="flex items-center justify-end gap-3 pt-2">
+      <app-custom-button variant="secondary" size="md" type="button" (clicked)="goBack()">
+        Cancel
+      </app-custom-button>
+      <app-custom-button variant="primary" size="md" type="submit" [disabled]="isSubmitting()">
+        <i class="ri-check-line text-sm mr-1" [class.animate-spin]="isSubmitting()"></i>
+        <span>{{ isEditMode() ? 'Update Task' : 'Create Task' }}</span>
+      </app-custom-button>
+    </div>
+  </form>
+</app-card-container>

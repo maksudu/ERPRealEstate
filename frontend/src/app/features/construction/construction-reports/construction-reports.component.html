@@ -62,17 +62,29 @@
     </div>
   </div>
 
-  <!-- Functional Category Filter Pills -->
-  <div class="flex items-center gap-1.5 p-1 bg-secondary/50 rounded-2xl border border-border overflow-x-auto mb-4">
-    <button
-      *ngFor="let cat of categoryList"
-      type="button"
-      (click)="selectCategory(cat.id)"
-      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap"
-      [ngClass]="selectedCategory() === cat.id ? 'bg-card text-foreground shadow-xs border border-border' : 'text-muted-foreground hover:text-foreground'"
+  <!-- Functional Category Filter Pills & Dynamic Settings Link -->
+  <div class="flex items-center justify-between gap-3 p-1.5 bg-secondary/50 rounded-2xl border border-border mb-4">
+    <div class="flex items-center gap-1.5 overflow-x-auto">
+      <button
+        *ngFor="let cat of dynamicCategories()"
+        type="button"
+        (click)="selectCategory(cat.id)"
+        class="px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap"
+        [ngClass]="selectedCategory() === cat.id ? 'bg-card text-foreground shadow-xs border border-border' : 'text-muted-foreground hover:text-foreground'"
+      >
+        {{ cat.label }}
+      </button>
+    </div>
+
+    <!-- Direct Quick-Link to Master Settings Lookups (Requirement 1) -->
+    <a
+      routerLink="/settings/lookups"
+      class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold text-primary hover:text-primary/80 bg-card rounded-xl border border-border shrink-0 shadow-xs transition-colors"
+      title="Dynamic Dropdown Creation & Customization Settings"
     >
-      {{ cat.label }}
-    </button>
+      <i class="ri-settings-4-line"></i>
+      <span>Dropdown Settings</span>
+    </a>
   </div>
 
   <!-- 14 Standard Reports Selection Carousel / Grid -->
@@ -144,33 +156,54 @@
     </div>
   </div>
 
-  <!-- Dynamic Search & Filter Controls -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-4 rounded-2xl bg-secondary/20 border border-border mb-6">
-    <div class="relative">
-      <i class="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm"></i>
-      <input
-        type="text"
-        [(ngModel)]="searchQuery"
-        (ngModelChange)="onFilterChange()"
-        placeholder="Search code, item, contractor, description..."
-        class="w-full pl-9 pr-3 py-2 bg-card border border-border rounded-xl text-xs text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
-      />
+  <!-- Dynamic Search & Filter Controls (All Searchable Dropdowns with + Add New) -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-4 rounded-2xl bg-secondary/20 border border-border mb-6">
+    <div class="relative flex flex-col justify-end">
+      <label class="block text-xs font-semibold text-foreground mb-1.5 tracking-wide">
+        Search Report Records
+      </label>
+      <div class="relative">
+        <i class="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm"></i>
+        <input
+          type="text"
+          [(ngModel)]="searchQuery"
+          (ngModelChange)="onFilterChange()"
+          placeholder="Filter descriptions, codes..."
+          class="w-full pl-9 pr-3 py-2 bg-card border border-border rounded-xl text-xs text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:ring-1 focus:ring-primary shadow-xs"
+        />
+      </div>
     </div>
 
+    <!-- Project Filter (Searchable with + Add New Project navigation) -->
     <app-searchable-select
+      label="Project"
       [options]="projectOptions"
       [ngModel]="selectedProjectId()"
       (ngModelChange)="selectedProjectId.set($event); onFilterChange()"
-      [allowCreateNew]="false"
+      [allowCreateNew]="true"
+      createRoute="/projects/create"
       placeholder="All Construction Projects"
     ></app-searchable-select>
 
+    <!-- Contractor Filter (Searchable with + Add New Contractor navigation) -->
     <app-searchable-select
+      label="Trade Contractor"
       [options]="contractorOptions"
       [ngModel]="selectedContractorId()"
       (ngModelChange)="selectedContractorId.set($event); onFilterChange()"
-      [allowCreateNew]="false"
+      [allowCreateNew]="true"
+      createRoute="/construction/contractors/create"
       placeholder="All Trade Contractors"
+    ></app-searchable-select>
+
+    <!-- Operational Status Filter (Dynamic lookups from sys_lookup_items with inline Quick Create) -->
+    <app-searchable-select
+      label="Operations Status"
+      categoryCode="CONSTRUCTION_REPORT_STATUS"
+      [ngModel]="selectedStatus()"
+      (ngModelChange)="selectedStatus.set($event); onFilterChange()"
+      [allowCreateNew]="true"
+      placeholder="All Statuses"
     ></app-searchable-select>
   </div>
 
