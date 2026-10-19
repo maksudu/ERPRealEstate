@@ -1,7 +1,9 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
 import { AccountsService } from '../../../core/services/accounts.service';
+import { LookupService } from '../../../core/services/lookup.service';
 import { ChartOfAccount, ChartOfAccountTreeNode } from '../../../core/models/accounts.model';
 import {
   CardContainerComponent,
@@ -16,7 +18,7 @@ import {
   imports: [
     CommonModule,
     FormsModule,
-    ReactiveFormsModule,
+    RouterLink,
     CardContainerComponent,
     CustomInputComponent,
     CustomButtonComponent,
@@ -26,65 +28,94 @@ import {
 })
 export class AccountsCoaComponent implements OnInit {
   private accountsService = inject(AccountsService);
-  private fb = inject(FormBuilder);
+  private lookupService = inject(LookupService);
+  private router = inject(Router);
 
   coaTree = signal<ChartOfAccountTreeNode[]>([]);
   coaFlatList = signal<ChartOfAccount[]>([]);
   isLoading = signal<boolean>(false);
-  isSubmitting = signal<boolean>(false);
-  isCreateModalOpen = signal<boolean>(false);
 
   // View state
   viewMode = signal<'tree' | 'flat'>('tree');
   searchQuery = signal<string>('');
   filterType = signal<string>('');
 
-  createForm: FormGroup = this.fb.group({
-    account_code: ['', Validators.required],
-    account_name_en: ['', Validators.required],
-    account_name_bn: [''],
-    account_type: ['Asset', Validators.required],
-    parent_account_id: [null],
-    is_leaf_account: [true],
-    currency: ['BDT'],
-    is_reconciliation_account: [false]
+  // Pagination for flat table
+  page = signal<number>(1);
+  pageSize = signal<number>(20);
+
+  accountTypeOptions: { value: any; label: string }[] = [
+    { value: '', label: 'All Account Groups' }
+  ];
+
+  totalPages = computed(() => {
+    const count = this.filteredFlatList().length;
+    return Math.ceil(count / this.pageSize()) || 1;
   });
 
-  accountTypeOptions = [
-    { value: '', label: 'All Account Types' },
-    { value: 'Asset', label: '1000 - Assets' },
-    { value: 'Liability', label: '2000 - Liabilities' },
-    { value: 'Equity', label: '3000 - Equity' },
-    { value: 'Revenue', label: '4000 - Revenue' },
-    { value: 'Expense', label: '5000 - Expenses' }
-  ];
+  filteredFlatList = computed(() => {
+    let list = this.coaFlatList();
+    const q = this.searchQuery().trim().toLowerCase();
+    if (q) {
+      list = list.filter(a =>
+        a.account_code.toLowerCase().includes(q) ||
+        a.account_name_en.toLowerCase().includes(q) ||
+        (a.account_name_bn && a.account_name_bn.toLowerCase().includes(q))
+      );
+    }
+    if (this.filterType()) {
+      list = list.filter(a => a.account_type === this.filterType());
+    }
+    return list;
+  });
 
-  typeSelectOptions = [
-    { value: 'Asset', label: 'Asset (e.g. 1000)' },
-    { value: 'Liability', label: 'Liability (e.g. 2000)' },
-    { value: 'Equity', label: 'Equity (e.g. 3000)' },
-    { value: 'Revenue', label: 'Revenue (e.g. 4000)' },
-    { value: 'Expense', label: 'Expense (e.g. 5000)' }
-  ];
+  pagedFlatList = computed(() => {
+    const list = this.filteredFlatList();
+    const start = (this.page() - 1) * this.pageSize();
+    return list.slice(start, start + this.pageSize());
+  });
 
-  parentAccountOptions = computed(() => [
-    { value: null, label: 'None (Root Level 1 Account)' },
-    ...this.coaFlatList().map(a => ({
-      value: a.id,
-      label: `${a.account_code} - ${a.account_name_en} (${a.account_type})`
-    }))
-  ]);
+  // KPI summaries
+  totalAccountsCount = computed(() => this.coaFlatList().length);
+  postingAccountsCount = computed(() => this.coaFlatList().filter(a => a.is_leaf_account).length);
+  controlAccountsCount = computed(() => this.coaFlatList().filter(a => a.is_control_account).length);
 
   ngOnInit(): void {
+    this.loadLookups();
     this.loadHierarchy();
     this.loadFlatCOA();
+  }
+
+  loadLookups(): void {
+    this.lookupService.getItems('COA_ACCOUNT_GROUP').subscribe({
+      next: (items) => {
+        if (items && items.length > 0) {
+          this.accountTypeOptions = [
+            { value: '', label: 'All Account Groups' },
+            ...items.map(i => ({ value: i.item_code, label: `${i.item_code} - ${i.item_name_en}` }))
+          ];
+        } else {
+          this.accountTypeOptions = [
+            { value: '', label: 'All Account Groups' },
+            { value: 'Asset', label: '1000 - Assets' },
+            { value: 'Liability', label: '2000 - Liabilities' },
+            { value: 'Equity', label: '3000 - Equity' },
+            { value: 'Revenue', label: '4000 - Revenue' },
+            { value: 'Cost_of_Sales', label: '5000 - Cost of Sales' },
+            { value: 'Project_Expense', label: '6100 - Project Expenses' },
+            { value: 'Operating_Expense', label: '6200 - Operating Expenses' },
+            { value: 'Finance_Cost', label: '6400 - Finance Costs' },
+            { value: 'Other_Income_Expense', label: '6500 - Other Income/Expenses' }
+          ];
+        }
+      }
+    });
   }
 
   loadHierarchy(): void {
     this.isLoading.set(true);
     this.accountsService.getCOAHierarchy().subscribe({
       next: (tree) => {
-        // Expand root nodes by default
         this.expandNodes(tree, true);
         this.coaTree.set(tree);
         this.isLoading.set(false);
@@ -97,7 +128,10 @@ export class AccountsCoaComponent implements OnInit {
   }
 
   loadFlatCOA(): void {
-    this.accountsService.getCOA(this.filterType() || undefined).subscribe({
+    this.accountsService.getCOA({
+      account_type: this.filterType() || undefined,
+      limit: 1000
+    }).subscribe({
       next: (res) => this.coaFlatList.set(res),
       error: (err) => console.error('Failed to load flat COA', err)
     });
@@ -128,42 +162,32 @@ export class AccountsCoaComponent implements OnInit {
     this.coaTree.set(tree);
   }
 
-  openCreateModal(parent?: ChartOfAccountTreeNode): void {
-    this.createForm.reset({
-      account_code: '',
-      account_name_en: '',
-      account_name_bn: '',
-      account_type: parent ? parent.account_type : 'Asset',
-      parent_account_id: parent ? parent.id : null,
-      is_leaf_account: true,
-      currency: 'BDT',
-      is_reconciliation_account: false
-    });
-    this.isCreateModalOpen.set(true);
-  }
-
-  closeCreateModal(): void {
-    this.isCreateModalOpen.set(false);
-  }
-
-  submitCreate(): void {
-    if (this.createForm.invalid) {
-      this.createForm.markAllAsTouched();
-      return;
+  // Navigation to Dedicated Standalone Full-Screen Components (Rule 10)
+  navigateToCreate(parent?: ChartOfAccountTreeNode): void {
+    if (parent) {
+      this.router.navigate(['/accounts/coa/create'], {
+        queryParams: { parent_id: parent.id, type: parent.account_type }
+      });
+    } else {
+      this.router.navigate(['/accounts/coa/create']);
     }
-    this.isSubmitting.set(true);
-    this.accountsService.createAccount(this.createForm.value).subscribe({
-      next: () => {
-        this.isSubmitting.set(false);
-        this.closeCreateModal();
-        this.loadHierarchy();
-        this.loadFlatCOA();
-      },
-      error: (err) => {
-        alert(err.error?.detail || 'Failed to create account');
-        this.isSubmitting.set(false);
-      }
+  }
+
+  navigateToEdit(id: number): void {
+    this.router.navigate(['/accounts/coa/edit', id]);
+  }
+
+  navigateToLedger(accountId: number): void {
+    this.router.navigate(['/accounts/ledger'], {
+      queryParams: { account_id: accountId }
     });
+  }
+
+  changePage(delta: number): void {
+    const p = this.page() + delta;
+    if (p >= 1 && p <= this.totalPages()) {
+      this.page.set(p);
+    }
   }
 
   // Filtered Tree logic
@@ -175,8 +199,39 @@ export class AccountsCoaComponent implements OnInit {
                       (node.account_name_bn && node.account_name_bn.toLowerCase().includes(q));
     const matchChildren = node.children ? node.children.some(c => this.filterTreeNode(c, query)) : false;
     if (matchChildren) {
-      node.expanded = true; // Auto-expand path to matched child
+      node.expanded = true;
     }
     return matchSelf || matchChildren;
   }
+
+  exportCSV(): void {
+    const list = this.filteredFlatList();
+    if (!list || list.length === 0) return;
+
+    const headers = ['"Account Code"', '"Account Name (EN)"', '"Account Name (BN)"', '"Account Type"', '"Normal Balance"', '"Level"', '"Is Posting"', '"Current Balance (BDT)"'];
+    const rows = list.map(a => [
+      `"${a.account_code}"`,
+      `"${a.account_name_en.replace(/"/g, '""')}"`,
+      `"${(a.account_name_bn || '').replace(/"/g, '""')}"`,
+      `"${a.account_type}"`,
+      `"${a.normal_balance || 'Debit'}"`,
+      `"${a.level || 5}"`,
+      `"${a.is_leaf_account ? 'Yes' : 'No'}"`,
+      `"${a.current_balance || 0}"`
+    ].join(','));
+
+    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows].join('\r\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `chart_of_accounts_${new Date().toISOString().substring(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  printCOA(): void {
+    window.print();
+  }
 }
+

@@ -1,0 +1,217 @@
+<div class="space-y-6">
+  <!-- Top Navigation Submodule Header -->
+  <app-cwip-allocation-nav></app-cwip-allocation-nav>
+
+  <!-- Central Card Container -->
+  <app-card-container>
+    <!-- Header Block -->
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-6 border-b border-slate-200 dark:border-slate-800 gap-4">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300">
+            Section 12.1 Analytical Control
+          </span>
+          <span class="text-slate-300 dark:text-slate-700">•</span>
+          <span class="text-xs text-slate-500">WIP Aging & Completion Reporting</span>
+        </div>
+        <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mt-1">
+          Budget vs Actual Construction Cost & Forecasts
+        </h1>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          BOQ budget variance analysis, work-package breakdown, WIP aging cycle, and predictive cost-to-complete forecasts.
+        </p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <button
+          (click)="loadBudgetTracking()"
+          class="inline-flex items-center px-4 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 shadow-sm transition-colors">
+          <svg class="w-4 h-4 mr-1.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          Refresh Analytics
+        </button>
+      </div>
+    </div>
+
+    <!-- Portfolio Executive KPIs -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+      <div class="p-4 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800">
+        <span class="text-xs font-medium text-slate-500">Portfolio BOQ Budget</span>
+        <div class="text-xl font-bold text-slate-900 dark:text-slate-100 mt-1 font-mono">
+          ৳{{ (trackingData?.portfolio_budget || 0) | number:'1.0-0' }}
+        </div>
+        <div class="text-[11px] text-slate-400 mt-0.5">Approved across {{ trackingData?.total_projects || 0 }} projects</div>
+      </div>
+
+      <div class="p-4 bg-indigo-50/60 dark:bg-indigo-950/30 rounded-xl border border-indigo-100 dark:border-indigo-900/40">
+        <span class="text-xs font-medium text-indigo-800 dark:text-indigo-300">Accumulated CWIP (Actual)</span>
+        <div class="text-xl font-bold text-indigo-700 dark:text-indigo-300 mt-1 font-mono">
+          ৳{{ (trackingData?.portfolio_actual_cwip || 0) | number:'1.0-0' }}
+        </div>
+        <div class="text-[11px] text-indigo-600 dark:text-indigo-400 mt-0.5">Active capital WIP investment</div>
+      </div>
+
+      <div class="p-4 bg-amber-50/60 dark:bg-amber-950/30 rounded-xl border border-amber-100 dark:border-amber-900/40">
+        <span class="text-xs font-medium text-amber-800 dark:text-amber-300">Cost-to-Complete Forecast</span>
+        <div class="text-xl font-bold text-amber-700 dark:text-amber-300 mt-1 font-mono">
+          ৳{{ (trackingData?.portfolio_cost_to_complete || 0) | number:'1.0-0' }}
+        </div>
+        <div class="text-[11px] text-amber-600 dark:text-amber-400 mt-0.5">Remaining estimated capital outlay</div>
+      </div>
+
+      <div class="p-4 bg-emerald-50/60 dark:bg-emerald-950/30 rounded-xl border border-emerald-100 dark:border-emerald-900/40">
+        <span class="text-xs font-medium text-emerald-800 dark:text-emerald-300">Avg Completion Progress</span>
+        <div class="text-xl font-bold text-emerald-700 dark:text-emerald-300 mt-1">
+          {{ (trackingData?.portfolio_completion_avg_pct || 0) | number:'1.1-1' }}%
+        </div>
+        <div class="w-full bg-emerald-200 dark:bg-emerald-900 rounded-full h-1.5 mt-2">
+          <div
+            class="bg-emerald-600 h-1.5 rounded-full"
+            [style.width.%]="trackingData?.portfolio_completion_avg_pct || 0"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter & Search Bar -->
+    <div class="mt-6 flex flex-col md:flex-row items-center justify-between gap-4 p-3 bg-slate-50/80 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-800">
+      <div class="flex-1 w-full md:w-auto relative">
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="onSearch()"
+          placeholder="Filter by project name, code or district..."
+          class="w-full pl-9 pr-4 py-2 text-xs border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+        <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+      </div>
+
+      <div class="flex items-center gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
+        <span class="text-xs text-slate-500 whitespace-nowrap">WIP Aging:</span>
+        <button
+          (click)="onAgingFilterChange('ALL')"
+          [class.bg-indigo-600]="selectedAgingFilter === 'ALL'"
+          [class.text-white]="selectedAgingFilter === 'ALL'"
+          [class.bg-white]="selectedAgingFilter !== 'ALL'"
+          class="px-2.5 py-1 text-xs rounded-lg border border-slate-200 shadow-sm transition-colors whitespace-nowrap">
+          All
+        </button>
+        <button
+          (click)="onAgingFilterChange('Under 90 Days (Active Cycle)')"
+          [class.bg-indigo-600]="selectedAgingFilter === 'Under 90 Days (Active Cycle)'"
+          [class.text-white]="selectedAgingFilter === 'Under 90 Days (Active Cycle)'"
+          [class.bg-white]="selectedAgingFilter !== 'Under 90 Days (Active Cycle)'"
+          class="px-2.5 py-1 text-xs rounded-lg border border-slate-200 shadow-sm transition-colors whitespace-nowrap">
+          Under 90 Days
+        </button>
+        <button
+          (click)="onAgingFilterChange('90-180 Days (Mid-Phase)')"
+          [class.bg-indigo-600]="selectedAgingFilter === '90-180 Days (Mid-Phase)'"
+          [class.text-white]="selectedAgingFilter === '90-180 Days (Mid-Phase)'"
+          [class.bg-white]="selectedAgingFilter !== '90-180 Days (Mid-Phase)'"
+          class="px-2.5 py-1 text-xs rounded-lg border border-slate-200 shadow-sm transition-colors whitespace-nowrap">
+          90-180 Days
+        </button>
+        <button
+          (click)="onAgingFilterChange('180+ Days (Extended Cycle)')"
+          [class.bg-indigo-600]="selectedAgingFilter === '180+ Days (Extended Cycle)'"
+          [class.text-white]="selectedAgingFilter === '180+ Days (Extended Cycle)'"
+          [class.bg-white]="selectedAgingFilter !== '180+ Days (Extended Cycle)'"
+          class="px-2.5 py-1 text-xs rounded-lg border border-slate-200 shadow-sm transition-colors whitespace-nowrap">
+          180+ Days
+        </button>
+      </div>
+    </div>
+
+    <!-- Comparative Table -->
+    <div class="mt-4 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+      <table class="w-full text-xs text-left">
+        <thead class="bg-slate-50 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-800">
+          <tr>
+            <th class="p-3">Project & Location</th>
+            <th class="p-3 text-right">BOQ Budget (৳)</th>
+            <th class="p-3 text-right">Actual CWIP (৳)</th>
+            <th class="p-3 text-right">Variance (৳)</th>
+            <th class="p-3">Completion %</th>
+            <th class="p-3 text-right">Cost to Complete (৳)</th>
+            <th class="p-3 text-right">Est. at Completion (EAC ৳)</th>
+            <th class="p-3 text-center">WIP Aging Status</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
+          <tr *ngIf="loading">
+            <td colspan="8" class="p-8 text-center text-slate-500">
+              <div class="inline-flex items-center gap-2">
+                <svg class="animate-spin h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Loading budget vs actual tracking...</span>
+              </div>
+            </td>
+          </tr>
+
+          <tr *ngIf="!loading && filteredProjects.length === 0">
+            <td colspan="8" class="p-8 text-center text-slate-400">
+              No matching projects found for current criteria.
+            </td>
+          </tr>
+
+          <tr *ngFor="let item of filteredProjects" class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+            <td class="p-3">
+              <div class="font-bold text-slate-900 dark:text-slate-100">{{ item.project_name }}</div>
+              <div class="text-[11px] text-slate-400">{{ item.district }} • {{ item.work_packages_count }} Work Packages</div>
+            </td>
+
+            <td class="p-3 text-right font-mono text-slate-700 dark:text-slate-300 font-medium whitespace-nowrap">
+              ৳{{ item.boq_approved_budget | number:'1.0-0' }}
+            </td>
+
+            <td class="p-3 text-right font-mono font-bold text-indigo-600 dark:text-indigo-400 whitespace-nowrap">
+              ৳{{ item.actual_cwip_accumulated | number:'1.0-0' }}
+            </td>
+
+            <td class="p-3 text-right font-mono font-bold whitespace-nowrap"
+                [class.text-emerald-600]="item.variance_amount >= 0"
+                [class.text-rose-600]="item.variance_amount < 0">
+              {{ item.variance_amount >= 0 ? '+' : '' }}৳{{ item.variance_amount | number:'1.0-0' }}
+              <div class="text-[10px] font-sans font-normal"
+                   [class.text-emerald-500]="item.variance_amount >= 0"
+                   [class.text-rose-500]="item.variance_amount < 0">
+                ({{ item.variance_pct | number:'1.1-1' }}% of budget)
+              </div>
+            </td>
+
+            <td class="p-3 min-w-[130px]">
+              <div class="flex items-center justify-between text-[11px] mb-1">
+                <span class="font-medium text-slate-700 dark:text-slate-300">{{ item.completion_percentage | number:'1.0-0' }}%</span>
+                <span class="text-slate-400">Physical</span>
+              </div>
+              <div class="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-1.5">
+                <div
+                  class="bg-indigo-600 h-1.5 rounded-full"
+                  [style.width.%]="item.completion_percentage"></div>
+              </div>
+            </td>
+
+            <td class="p-3 text-right font-mono text-amber-700 dark:text-amber-400 font-semibold whitespace-nowrap">
+              ৳{{ item.cost_to_complete_forecast | number:'1.0-0' }}
+            </td>
+
+            <td class="p-3 text-right font-mono text-slate-900 dark:text-slate-100 font-bold whitespace-nowrap">
+              ৳{{ item.estimate_at_completion | number:'1.0-0' }}
+            </td>
+
+            <td class="p-3 text-center whitespace-nowrap">
+              <app-status-badge
+                [status]="item.wip_aging_status"
+                [variant]="getAgingVariant(item.wip_aging_status)">
+              </app-status-badge>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </app-card-container>
+</div>

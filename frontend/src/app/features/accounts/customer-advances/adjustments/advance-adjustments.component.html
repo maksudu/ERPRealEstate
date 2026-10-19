@@ -1,0 +1,147 @@
+<div class="space-y-6">
+  <!-- Navigation Header -->
+  <app-customer-advances-nav activeSection="adjustments"></app-customer-advances-nav>
+
+  <!-- Card Container -->
+  <app-card-container>
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-border">
+      <div>
+        <div class="flex items-center gap-2.5">
+          <div class="p-2 bg-primary/10 text-primary rounded-xl">
+            <i class="ri-percent-line text-2xl"></i>
+          </div>
+          <div>
+            <h1 class="text-xl font-bold text-foreground">13.1.6 Late Charges & Approved Adjustments</h1>
+            <p class="text-xs text-muted-foreground mt-0.5">
+              Late surcharge assessments, executive discount waivers, and contract dispute adjustments with audit authorization.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <button
+        (click)="loadData()"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-muted-foreground bg-secondary hover:bg-secondary/80 rounded-lg border border-border transition-colors">
+        <i class="ri-refresh-line text-sm"></i>
+        <span>Refresh</span>
+      </button>
+    </div>
+
+    <!-- Table -->
+    <div class="overflow-x-auto rounded-xl border border-border bg-card mt-5">
+      <table class="w-full text-left border-collapse text-xs">
+        <thead>
+          <tr class="bg-secondary/40 border-b border-border text-muted-foreground uppercase tracking-wider text-[11px]">
+            <th class="py-3 px-4 font-semibold">Advance # / Customer</th>
+            <th class="py-3 px-4 font-semibold">Agreement Linkage</th>
+            <th class="py-3 px-4 font-semibold">Project & Unit</th>
+            <th class="py-3 px-4 font-semibold text-right">Late Fees Assessed</th>
+            <th class="py-3 px-4 font-semibold text-right">Late Fees Waived</th>
+            <th class="py-3 px-4 font-semibold">Notes / Approval Audit</th>
+            <th class="py-3 px-4 font-semibold text-center">Action</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border/60">
+          <tr *ngIf="isLoading()" class="text-center">
+            <td colspan="7" class="py-10 text-muted-foreground">
+              <i class="ri-loader-4-line text-2xl animate-spin inline-block mb-2"></i>
+              <p>Loading Adjustments...</p>
+            </td>
+          </tr>
+
+          <tr *ngFor="let adv of advances()" class="hover:bg-secondary/20 transition-colors">
+            <td class="py-3 px-4 font-bold text-foreground">
+              {{ adv.advance_number }}
+              <div class="font-normal text-muted-foreground text-[11px]">{{ adv.customer_name }}</div>
+            </td>
+
+            <td class="py-3 px-4 font-mono text-[11px] text-foreground">
+              {{ adv.sale_agreement_no || adv.booking_reference_no || '—' }}
+            </td>
+
+            <td class="py-3 px-4">
+              <span class="font-medium text-foreground">{{ adv.project_name }}</span>
+              <div class="text-[10px] text-primary">Unit: {{ adv.unit_number || 'All Units' }}</div>
+            </td>
+
+            <td class="py-3 px-4 text-right font-medium text-amber-600">
+              ৳ {{ adv.late_charges_assessed | number:'1.2-2' }}
+            </td>
+
+            <td class="py-3 px-4 text-right font-bold text-emerald-600">
+              ৳ {{ adv.late_charges_waived | number:'1.2-2' }}
+            </td>
+
+            <td class="py-3 px-4 text-muted-foreground text-[11px] max-w-xs truncate">
+              {{ adv.notes || 'No remarks recorded' }}
+            </td>
+
+            <td class="py-3 px-4 text-center">
+              <button
+                (click)="openAdjustModal(adv)"
+                class="px-2.5 py-1 text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg transition-colors">
+                + Adjust / Waive
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </app-card-container>
+
+  <!-- Adjustment Modal -->
+  <div *ngIf="showModal()" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div class="bg-card border border-border rounded-xl shadow-xl w-full max-w-md p-5 space-y-4">
+      <div class="flex items-center justify-between border-b border-border pb-3">
+        <h3 class="text-sm font-bold text-foreground">Post Late Charge Assessment or Waiver</h3>
+        <button (click)="showModal.set(false)" class="text-muted-foreground hover:text-foreground">
+          <i class="ri-close-line text-lg"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <app-searchable-select
+          label="Adjustment Type"
+          [options]="adjTypeOptions()"
+          [(ngModel)]="adjForm.adjustment_type">
+        </app-searchable-select>
+
+        <app-custom-input
+          label="Amount (৳)"
+          type="number"
+          [(ngModel)]="adjForm.amount">
+        </app-custom-input>
+
+        <div class="grid grid-cols-2 gap-3">
+          <app-custom-input
+            label="Approved By"
+            [(ngModel)]="adjForm.approved_by">
+          </app-custom-input>
+
+          <app-custom-input
+            label="Approval Reference #"
+            [(ngModel)]="adjForm.approval_reference">
+          </app-custom-input>
+        </div>
+
+        <app-custom-textarea
+          label="Justification & Executive Notes"
+          [(ngModel)]="adjForm.reason">
+        </app-custom-textarea>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-3 border-t border-border">
+        <button
+          (click)="showModal.set(false)"
+          class="px-3 py-1.5 text-xs rounded-lg border border-border hover:bg-secondary">
+          Cancel
+        </button>
+        <button
+          (click)="submitAdjustment()"
+          class="px-4 py-1.5 text-xs font-semibold bg-primary text-primary-foreground rounded-lg hover:bg-primary/90">
+          Save Adjustment
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

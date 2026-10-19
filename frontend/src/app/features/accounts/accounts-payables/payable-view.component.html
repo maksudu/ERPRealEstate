@@ -1,0 +1,653 @@
+<app-card-container
+  title="Accounts Payable Bill Audit & Remittance Drilldown"
+  subtitle="Complete 3-way matching audit trail, statutory tax withholdings, and payment disbursement log"
+  badge="AP Audit Certified"
+>
+  <!-- Unified Module Sub-Navigation Bar -->
+  <div class="flex items-center gap-1.5 p-1.5 bg-secondary/40 rounded-2xl border border-border overflow-x-auto mb-6 print:hidden">
+    <a
+      routerLink="/accounts/coa"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-node-tree"></i>
+      <span>Chart of Accounts</span>
+    </a>
+
+    <a
+      routerLink="/accounts/vouchers"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-file-list-3-line"></i>
+      <span>General Ledger Vouchers</span>
+    </a>
+
+    <a
+      routerLink="/accounts/ledger"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-booklet-line"></i>
+      <span>Ledger Inquiry & Statements</span>
+    </a>
+
+    <a
+      routerLink="/accounts/payables"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-card text-foreground shadow-xs border border-border inline-flex items-center gap-1.5 whitespace-nowrap"
+    >
+      <i class="ri-money-dollar-circle-line text-primary"></i>
+      <span>Accounts Payable (AP)</span>
+    </a>
+
+    <a
+      routerLink="/accounts/payables/ledger"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-contacts-book-2-line"></i>
+      <span>Supplier Ledger & Aging</span>
+    </a>
+
+    <a
+      routerLink="/accounts/receivables"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-hand-coin-line"></i>
+      <span>Accounts Receivable (AR)</span>
+    </a>
+
+    <a
+      routerLink="/accounts/receivables/receipts"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-refund-2-line"></i>
+      <span>Receipts & Allocations</span>
+    </a>
+
+    <a
+      routerLink="/accounts/receivables/ledger"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-user-star-line"></i>
+      <span>Customer Ledger & Aging</span>
+    </a>
+
+    <a
+      routerLink="/accounts/financial-reports"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-pie-chart-2-line"></i>
+      <span>Financial Reports (P&L / BS)</span>
+    </a>
+
+    <div class="ml-auto pl-2 flex items-center gap-2">
+      <a
+        routerLink="/settings/lookups"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-primary hover:text-primary/80 bg-card rounded-xl border border-border shadow-xs transition-colors whitespace-nowrap"
+        title="Dynamic Dropdown Creation & Customization Settings"
+      >
+        <i class="ri-settings-4-line"></i>
+        <span>Dropdown Settings</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div *ngIf="errorMessage()" class="p-4 rounded-2xl bg-destructive/10 border border-destructive/20 text-destructive text-sm flex items-center justify-between mb-6">
+    <div class="flex items-center gap-2">
+      <i class="ri-error-warning-line text-lg"></i>
+      <span>{{ errorMessage() }}</span>
+    </div>
+    <button (click)="errorMessage.set(null)" class="text-destructive hover:opacity-75">
+      <i class="ri-close-line"></i>
+    </button>
+  </div>
+
+  <div *ngIf="successMessage()" class="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-sm flex items-center justify-between mb-6">
+    <div class="flex items-center gap-2">
+      <i class="ri-checkbox-circle-line text-lg"></i>
+      <span>{{ successMessage() }}</span>
+    </div>
+    <button (click)="successMessage.set(null)" class="hover:opacity-75">
+      <i class="ri-close-line"></i>
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading()" class="py-20 text-center text-muted-foreground">
+    <i class="ri-loader-4-line text-3xl animate-spin text-primary inline-block mb-3"></i>
+    <p class="text-sm">Loading invoice and payment audit history...</p>
+  </div>
+
+  <div *ngIf="!isLoading() && invoice()" class="space-y-6">
+
+    <!-- Top Action Toolbar (hidden on print) -->
+    <div class="flex flex-wrap items-center justify-between gap-3 p-4 rounded-2xl bg-secondary/30 border border-border print:hidden">
+      <button
+        (click)="backToList()"
+        class="px-4 py-2 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground bg-card hover:bg-secondary border border-border transition-all inline-flex items-center gap-1.5"
+      >
+        <i class="ri-arrow-left-line"></i>
+        <span>Back to Invoices List</span>
+      </button>
+
+      <div class="flex items-center gap-2">
+        <button
+          (click)="printRemittance()"
+          class="px-4 py-2 rounded-xl text-xs font-semibold text-foreground bg-card hover:bg-secondary border border-border transition-all inline-flex items-center gap-1.5"
+        >
+          <i class="ri-printer-line"></i>
+          <span>Print Remittance Slip</span>
+        </button>
+
+        <!-- Approve Button (if Draft or Pending) -->
+        <button
+          *ngIf="['Draft', 'Pending_Verification'].includes(invoice()!.status)"
+          (click)="approveInvoice()"
+          [disabled]="isApproving()"
+          class="px-4 py-2 rounded-xl text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition-all inline-flex items-center gap-1.5 shadow-xs disabled:opacity-50"
+        >
+          <i *ngIf="isApproving()" class="ri-loader-4-line animate-spin"></i>
+          <i *ngIf="!isApproving()" class="ri-checkbox-circle-line"></i>
+          <span>{{ isApproving() ? 'Approving...' : 'Approve & Post Accrual' }}</span>
+        </button>
+
+        <!-- Issue Materials to Construction (CWIP) Transfer -->
+        <button
+          *ngIf="!['Draft', 'Cancelled'].includes(invoice()!.status) && invoice()!.project_id"
+          (click)="openIssueModal()"
+          class="px-4 py-2 rounded-xl text-xs font-semibold bg-amber-600 text-white hover:bg-amber-700 transition-all inline-flex items-center gap-1.5 shadow-xs"
+          title="Transfer materials from Project Inventory (1400) to Project CWIP (1220)"
+        >
+          <i class="ri-hammer-line"></i>
+          <span>Issue to Construction (CWIP)</span>
+        </button>
+
+        <!-- Record Payment Disbursement Button -->
+        <button
+          *ngIf="invoice()!.balance_due > 0 && !['Draft', 'Cancelled'].includes(invoice()!.status)"
+          (click)="openPaymentModal()"
+          class="px-4 py-2 rounded-xl text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-all inline-flex items-center gap-1.5 shadow-xs"
+        >
+          <i class="ri-money-dollar-circle-line"></i>
+          <span>Disburse Payment (৳ {{ invoice()!.balance_due | number:'1.2-2' }})</span>
+        </button>
+
+        <a
+          routerLink="/accounts/payables/create"
+          class="px-4 py-2 rounded-xl text-xs font-semibold bg-secondary text-foreground hover:bg-secondary/80 border border-border transition-all inline-flex items-center gap-1.5 shadow-xs"
+        >
+          <i class="ri-add-line"></i>
+          <span>+ New Bill</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Printable Bill & Remittance Voucher Card -->
+    <div class="p-6 rounded-2xl bg-card border border-border shadow-xs space-y-6 print:border-none print:shadow-none print:p-0">
+
+      <!-- Header Section -->
+      <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-6 border-b border-border">
+        <div>
+          <div class="inline-flex items-center gap-2 mb-2">
+            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-primary/10 text-primary border border-primary/20">
+              {{ invoice()?.invoice_type?.replace('_', ' ') }}
+            </span>
+            <span
+              class="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider"
+              [ngClass]="{
+                'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20': invoice()?.status === 'Paid',
+                'bg-blue-500/10 text-blue-600 border border-blue-500/20': invoice()?.status === 'Partially_Paid',
+                'bg-purple-500/10 text-purple-600 border border-purple-500/20': invoice()?.status === 'Approved',
+                'bg-amber-500/10 text-amber-600 border border-amber-500/20': invoice()?.status === 'Pending_Verification',
+                'bg-secondary text-muted-foreground': invoice()?.status === 'Draft'
+              }"
+            >
+              {{ invoice()?.status?.replace('_', ' ') }}
+            </span>
+          </div>
+
+          <h2 class="text-2xl font-bold font-mono text-foreground tracking-tight">
+            {{ invoice()?.invoice_number }}
+          </h2>
+          <p class="text-sm font-semibold text-foreground mt-0.5">
+            Payee: <span class="text-primary">{{ invoice()?.payee_name }}</span>
+          </p>
+        </div>
+
+        <div class="text-left sm:text-right space-y-1 text-xs">
+          <div>
+            <span class="text-muted-foreground">Invoice Date: </span>
+            <span class="font-semibold font-mono text-foreground">{{ invoice()?.invoice_date | date:'dd MMM yyyy' }}</span>
+          </div>
+          <div>
+            <span class="text-muted-foreground">Payment Due Date: </span>
+            <span class="font-semibold font-mono text-foreground">{{ invoice()?.due_date | date:'dd MMM yyyy' }}</span>
+          </div>
+          <div>
+            <span class="text-muted-foreground">Project Dimension: </span>
+            <span class="font-semibold text-foreground">{{ invoice()?.project_name || 'Corporate / Head Office' }}</span>
+          </div>
+          <div *ngIf="invoice()?.voucher_number">
+            <span class="text-muted-foreground">GL Accrual Voucher: </span>
+            <a [routerLink]="['/accounts/vouchers/view', invoice()?.voucher_id]" class="font-mono font-bold text-primary hover:underline">
+              {{ invoice()?.voucher_number }}
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Description / Memo -->
+      <div *ngIf="invoice()?.description" class="p-4 rounded-xl bg-secondary/30 border border-border">
+        <span class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block mb-1">
+          Bill Memo & Particulars
+        </span>
+        <p class="text-xs text-foreground italic">
+          "{{ invoice()?.description }}"
+        </p>
+      </div>
+
+      <!-- 3-Way Matching Verification Status Card -->
+      <div class="p-4 rounded-xl bg-secondary/20 border border-border">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
+            <i class="ri-scales-3-line text-primary"></i>
+            <span>3-Way Procurement Matching & QC Verification</span>
+          </span>
+          <span
+            class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
+            [ngClass]="{
+              'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20': invoice()?.three_way_match_status === 'MATCHED_OK',
+              'bg-amber-500/10 text-amber-600 border border-amber-500/20': invoice()?.three_way_match_status === 'PENDING',
+              'bg-rose-500/10 text-rose-600 border border-rose-500/20': invoice()?.three_way_match_status === 'VARIANCE_FLAGGED',
+              'bg-secondary text-muted-foreground': invoice()?.three_way_match_status === 'NOT_APPLICABLE'
+            }"
+          >
+            {{ invoice()?.three_way_match_status === 'MATCHED_OK' ? '3-Way Match Verified' : invoice()?.three_way_match_status }}
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+          <div class="p-3 rounded-lg bg-card border border-border">
+            <span class="text-muted-foreground block text-[11px]">1. Purchase Order / Work Order</span>
+            <span class="font-semibold text-foreground font-mono mt-0.5 block">
+              PO #{{ invoice()?.po_id || 'PO-2026-001' }}
+            </span>
+            <span class="text-[10px] text-emerald-500">Approved by Procurement</span>
+          </div>
+
+          <div class="p-3 rounded-lg bg-card border border-border">
+            <span class="text-muted-foreground block text-[11px]">2. Goods Receipt / Measurement</span>
+            <span class="font-semibold text-foreground font-mono mt-0.5 block">
+              GRN #{{ invoice()?.grn_id || 'GRN-2026-001' }}
+            </span>
+            <span class="text-[10px] text-emerald-500">Physical count & QC verified</span>
+          </div>
+
+          <div class="p-3 rounded-lg bg-card border border-border">
+            <span class="text-muted-foreground block text-[11px]">3. Vendor Invoice Billed</span>
+            <span class="font-semibold text-foreground font-mono mt-0.5 block">
+              {{ invoice()?.invoice_number }}
+            </span>
+            <span class="text-[10px] text-emerald-500">Quantity & rate matched</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Financial Breakdown Table -->
+      <div class="overflow-x-auto rounded-xl border border-border">
+        <table class="w-full text-xs text-left border-collapse">
+          <thead>
+            <tr class="bg-secondary/60 border-b border-border text-muted-foreground font-semibold uppercase tracking-wider text-[11px]">
+              <th class="py-3 px-4">Financial Component</th>
+              <th class="py-3 px-4">Statutory / Contractual Basis</th>
+              <th class="py-3 px-4 text-right">Debit / Deduction (৳)</th>
+              <th class="py-3 px-4 text-right">Credit / Payable (৳)</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border">
+            <tr>
+              <td class="py-3 px-4 font-semibold text-foreground">Gross Billed Value</td>
+              <td class="py-3 px-4 text-muted-foreground">Certified goods or contractor works rendered</td>
+              <td class="py-3 px-4 text-right font-mono text-muted-foreground">-</td>
+              <td class="py-3 px-4 text-right font-mono font-bold text-foreground">
+                ৳ {{ invoice()?.gross_amount | number:'1.2-2' }}
+              </td>
+            </tr>
+
+            <tr *ngIf="(invoice()?.tax_withholding_tds || 0) > 0">
+              <td class="py-3 px-4 font-medium text-foreground">Income Tax Withholding (TDS)</td>
+              <td class="py-3 px-4 text-muted-foreground">Income Tax Act 2023 (Section 52)</td>
+              <td class="py-3 px-4 text-right font-mono text-rose-500">
+                (৳ {{ invoice()?.tax_withholding_tds | number:'1.2-2' }})
+              </td>
+              <td class="py-3 px-4 text-right font-mono text-muted-foreground">-</td>
+            </tr>
+
+            <tr *ngIf="(invoice()?.vat_withholding_vds || 0) > 0">
+              <td class="py-3 px-4 font-medium text-foreground">Value Added Tax Withholding (VDS)</td>
+              <td class="py-3 px-4 text-muted-foreground">Bangladesh VAT & SD Act 2012</td>
+              <td class="py-3 px-4 text-right font-mono text-rose-500">
+                (৳ {{ invoice()?.vat_withholding_vds | number:'1.2-2' }})
+              </td>
+              <td class="py-3 px-4 text-right font-mono text-muted-foreground">-</td>
+            </tr>
+
+            <tr *ngIf="(invoice()?.retention_amount || 0) > 0">
+              <td class="py-3 px-4 font-medium text-foreground">Contractor Retention Holdback</td>
+              <td class="py-3 px-4 text-muted-foreground">Contract Defect Liability Guarantee</td>
+              <td class="py-3 px-4 text-right font-mono text-rose-500">
+                (৳ {{ invoice()?.retention_amount | number:'1.2-2' }})
+              </td>
+              <td class="py-3 px-4 text-right font-mono text-muted-foreground">-</td>
+            </tr>
+
+            <tr *ngIf="(invoice()?.other_deductions || 0) > 0">
+              <td class="py-3 px-4 font-medium text-foreground">Other Approved Deductions</td>
+              <td class="py-3 px-4 text-muted-foreground">Store materials recovery / penalties</td>
+              <td class="py-3 px-4 text-right font-mono text-rose-500">
+                (৳ {{ invoice()?.other_deductions | number:'1.2-2' }})
+              </td>
+              <td class="py-3 px-4 text-right font-mono text-muted-foreground">-</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr class="bg-secondary/40 font-bold border-t-2 border-border text-foreground">
+              <td colspan="3" class="py-3 px-4 text-right uppercase tracking-wider text-xs">
+                Net Approved Payable:
+              </td>
+              <td class="py-3 px-4 text-right font-mono text-sm text-primary">
+                ৳ {{ invoice()?.net_payable_amount | number:'1.2-2' }}
+              </td>
+            </tr>
+            <tr class="bg-secondary/20 text-muted-foreground font-semibold">
+              <td colspan="3" class="py-2.5 px-4 text-right uppercase tracking-wider text-[11px]">
+                Total Disbursements Paid to Date:
+              </td>
+              <td class="py-2.5 px-4 text-right font-mono text-xs text-emerald-600 dark:text-emerald-400">
+                (৳ {{ invoice()?.paid_amount | number:'1.2-2' }})
+              </td>
+            </tr>
+            <tr class="bg-secondary/60 font-bold text-foreground">
+              <td colspan="3" class="py-3 px-4 text-right uppercase tracking-wider text-xs">
+                Remaining Outstanding Balance Due:
+              </td>
+              <td
+                class="py-3 px-4 text-right font-mono text-base"
+                [ngClass]="(invoice()?.balance_due || 0) > 0 ? 'text-rose-500' : 'text-emerald-500'"
+              >
+                ৳ {{ invoice()?.balance_due | number:'1.2-2' }}
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <!-- Payment Disbursements History -->
+      <div class="space-y-3">
+        <h4 class="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
+          <i class="ri-history-line text-primary"></i>
+          <span>Payment Disbursements & Remittance Audit</span>
+        </h4>
+
+        <div *ngIf="invoice()?.payments && invoice()!.payments!.length > 0" class="overflow-x-auto rounded-xl border border-border">
+          <table class="w-full text-xs text-left border-collapse">
+            <thead>
+              <tr class="bg-secondary/60 border-b border-border text-muted-foreground font-semibold uppercase tracking-wider text-[11px]">
+                <th class="py-2.5 px-3">Payment No</th>
+                <th class="py-2.5 px-3">Date</th>
+                <th class="py-2.5 px-3">Method</th>
+                <th class="py-2.5 px-4">Instrument / Cheque Ref</th>
+                <th class="py-2.5 px-4 text-right">Amount (৳)</th>
+                <th class="py-2.5 px-3 text-center">GL Voucher</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border">
+              <tr *ngFor="let p of invoice()?.payments">
+                <td class="py-2.5 px-3 font-mono font-semibold text-primary">{{ p.payment_number }}</td>
+                <td class="py-2.5 px-3 font-mono text-muted-foreground">{{ p.payment_date | date:'dd MMM yyyy' }}</td>
+                <td class="py-2.5 px-3">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-medium bg-secondary text-foreground">
+                    {{ p.payment_method.replace('_', ' ') }}
+                  </span>
+                </td>
+                <td class="py-2.5 px-4 text-foreground">
+                  <span *ngIf="p.cheque_number">CQ: {{ p.cheque_number }}</span>
+                  <span *ngIf="p.transaction_reference" class="ml-1 text-muted-foreground font-mono">({{ p.transaction_reference }})</span>
+                  <span *ngIf="!p.cheque_number && !p.transaction_reference" class="text-muted-foreground">---</span>
+                </td>
+                <td class="py-2.5 px-4 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                  ৳ {{ p.amount | number:'1.2-2' }}
+                </td>
+                <td class="py-2.5 px-3 text-center">
+                  <a
+                    *ngIf="p.voucher_id"
+                    [routerLink]="['/accounts/vouchers/view', p.voucher_id]"
+                    class="font-mono text-primary hover:underline text-[11px]"
+                  >
+                    VCH #{{ p.voucher_id }}
+                  </a>
+                  <span *ngIf="!p.voucher_id" class="text-muted-foreground">---</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div *ngIf="!invoice()?.payments || invoice()!.payments!.length === 0" class="p-4 rounded-xl bg-secondary/20 border border-border text-center text-xs text-muted-foreground">
+          No disbursements have been recorded yet for this invoice.
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Record Payment Disbursement Modal Dialog -->
+  <div *ngIf="showPaymentModal()" class="fixed inset-0 z-50 bg-background/80 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="w-full max-w-lg p-6 rounded-2xl bg-card border border-border shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150">
+      <div class="flex items-center justify-between pb-3 border-b border-border">
+        <div>
+          <h3 class="text-base font-bold text-foreground flex items-center gap-2">
+            <i class="ri-money-dollar-circle-line text-primary"></i>
+            <span>Disburse Payment to {{ invoice()?.payee_name }}</span>
+          </h3>
+          <p class="text-xs text-muted-foreground mt-0.5">
+            Inv #{{ invoice()?.invoice_number }} • Outstanding: ৳ {{ invoice()?.balance_due | number:'1.2-2' }}
+          </p>
+        </div>
+        <button (click)="closePaymentModal()" class="text-muted-foreground hover:text-foreground">
+          <i class="ri-close-line text-xl"></i>
+        </button>
+      </div>
+
+      <form [formGroup]="paymentForm" (ngSubmit)="submitDisbursement()" class="space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <app-custom-input
+              label="Disbursement Amount (৳) *"
+              type="number"
+              formControlName="amount"
+              [required]="true"
+            ></app-custom-input>
+          </div>
+
+          <div>
+            <app-custom-input
+              label="Disbursement Date *"
+              type="date"
+              formControlName="payment_date"
+              [required]="true"
+            ></app-custom-input>
+          </div>
+
+          <div>
+            <app-searchable-select
+              label="Payment Method *"
+              formControlName="payment_method"
+              [options]="paymentMethodOptions"
+              [required]="true"
+            ></app-searchable-select>
+          </div>
+
+          <div>
+            <app-searchable-select
+              label="Bank / Cash Account *"
+              formControlName="bank_account_id"
+              [options]="bankAccountOptions"
+              placeholder="Select bank account..."
+              [required]="true"
+            ></app-searchable-select>
+          </div>
+
+          <div>
+            <app-custom-input
+              label="Cheque / Instrument No."
+              formControlName="cheque_number"
+              placeholder="e.g. CQ-89421"
+            ></app-custom-input>
+          </div>
+
+          <div>
+            <app-custom-input
+              label="Bank Transaction Ref"
+              formControlName="transaction_reference"
+              placeholder="e.g. BEFTN-09823"
+            ></app-custom-input>
+          </div>
+
+          <div class="sm:col-span-2">
+            <app-custom-textarea
+              label="Disbursement Memo / Notes"
+              formControlName="notes"
+              placeholder="Notes on authorized disbursement..."
+              [rows]="2"
+            ></app-custom-textarea>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-border">
+          <button
+            type="button"
+            (click)="closePaymentModal()"
+            class="px-4 py-2 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground bg-secondary hover:bg-secondary/80 border border-border transition-colors"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="submit"
+            [disabled]="isSubmittingPayment()"
+            class="px-5 py-2 rounded-xl text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-all inline-flex items-center gap-1.5 shadow-xs disabled:opacity-50"
+          >
+            <i *ngIf="isSubmittingPayment()" class="ri-loader-4-line animate-spin"></i>
+            <i *ngIf="!isSubmittingPayment()" class="ri-check-line"></i>
+            <span>{{ isSubmittingPayment() ? 'Disbursing...' : 'Confirm & Commit Disbursement' }}</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Issue Materials to Construction (CWIP Transfer) -->
+  <div
+    *ngIf="showIssueModal()"
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-xs"
+  >
+    <div class="w-full max-w-xl rounded-2xl bg-card border border-border shadow-xl p-6 space-y-6 animate-in fade-in zoom-in-95 duration-150">
+      <div class="flex items-center justify-between border-b border-border pb-4">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-600">
+            <i class="ri-hammer-line text-lg"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-semibold text-foreground">Issue Materials to Construction</h3>
+            <p class="text-xs text-muted-foreground">Transfers cost from Project Inventory (1400) to CWIP (1220)</p>
+          </div>
+        </div>
+        <button (click)="closeIssueModal()" class="text-muted-foreground hover:text-foreground">
+          <i class="ri-close-line text-xl"></i>
+        </button>
+      </div>
+
+      <!-- Accounting Alert -->
+      <div class="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-800 dark:text-amber-300 space-y-1">
+        <div class="font-semibold flex items-center gap-1.5">
+          <i class="ri-information-line"></i>
+          <span>Double-Entry Inventory Transfer Rule</span>
+        </div>
+        <p>
+          Initial supplier invoice debited <strong>Project Material Inventory (1400)</strong> without premature operational expensing. 
+          This action will generate a GL Journal Voucher debiting <strong>CWIP Work-in-Progress (1220)</strong> and crediting <strong>Project Inventory (1400)</strong>.
+        </p>
+      </div>
+
+      <form [formGroup]="issueForm" (ngSubmit)="submitMaterialIssue()" class="space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <app-custom-input
+              label="Issue Amount (BDT ৳) *"
+              type="number"
+              formControlName="amount"
+              placeholder="e.g. 500000"
+              [required]="true"
+            ></app-custom-input>
+          </div>
+
+          <div>
+            <app-custom-input
+              label="Issue Date *"
+              type="date"
+              formControlName="issue_date"
+              [required]="true"
+            ></app-custom-input>
+          </div>
+
+          <div>
+            <app-custom-input
+              label="Material Issue Slip / Ref *"
+              formControlName="issue_ref"
+              placeholder="e.g. MIF-2026-001"
+              [required]="true"
+            ></app-custom-input>
+          </div>
+
+          <div>
+            <app-custom-input
+              label="Project Cost Center"
+              formControlName="cost_center"
+              placeholder="e.g. Tower A Structural Civil Work"
+            ></app-custom-input>
+          </div>
+
+          <div class="sm:col-span-2">
+            <app-custom-textarea
+              label="Material Description & Site Usage *"
+              formControlName="material_description"
+              placeholder="e.g. 500 bags Portland Cement issued for Tower A basement slab casting"
+              [rows]="2"
+              [required]="true"
+            ></app-custom-textarea>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-border">
+          <button
+            type="button"
+            (click)="closeIssueModal()"
+            class="px-4 py-2 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground bg-secondary hover:bg-secondary/80 border border-border transition-colors"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="submit"
+            [disabled]="isSubmittingIssue()"
+            class="px-5 py-2 rounded-xl text-xs font-semibold bg-amber-600 text-white hover:bg-amber-700 transition-all inline-flex items-center gap-1.5 shadow-xs disabled:opacity-50"
+          >
+            <i *ngIf="isSubmittingIssue()" class="ri-loader-4-line animate-spin"></i>
+            <i *ngIf="!isSubmittingIssue()" class="ri-check-line"></i>
+            <span>{{ isSubmittingIssue() ? 'Posting CWIP Transfer...' : 'Confirm Issue to CWIP' }}</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</app-card-container>

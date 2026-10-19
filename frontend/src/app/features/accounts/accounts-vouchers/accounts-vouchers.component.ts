@@ -1,15 +1,14 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { AccountsService } from '../../../core/services/accounts.service';
 import { ProjectService } from '../../../core/services/project.service';
-import { Voucher, ChartOfAccount, CostCenter } from '../../../core/models/accounts.model';
+import { Voucher } from '../../../core/models/accounts.model';
 import { Project } from '../../../core/models/project.model';
 import {
   CardContainerComponent,
   CustomInputComponent,
-  CustomTextareaComponent,
   CustomButtonComponent,
   SearchableSelectComponent
 } from '../../../shared/components';
@@ -20,10 +19,9 @@ import {
   imports: [
     CommonModule,
     FormsModule,
-    ReactiveFormsModule,
+    RouterLink,
     CardContainerComponent,
     CustomInputComponent,
-    CustomTextareaComponent,
     CustomButtonComponent,
     SearchableSelectComponent
   ],
@@ -32,46 +30,29 @@ import {
 export class AccountsVouchersComponent implements OnInit {
   private accountsService = inject(AccountsService);
   private projectService = inject(ProjectService);
+  private router = inject(Router);
   private route = inject(ActivatedRoute);
-  private fb = inject(FormBuilder);
 
   vouchers = signal<Voucher[]>([]);
-  coaList = signal<ChartOfAccount[]>([]);
   projects = signal<Project[]>([]);
-  costCenters = signal<CostCenter[]>([]);
-
   isLoading = signal<boolean>(false);
-  isSubmitting = signal<boolean>(false);
-  isCreateModalOpen = signal<boolean>(false);
 
   // Filters
   filterType = signal<string>('');
   filterStatus = signal<string>('');
+  filterProjectId = signal<number | null>(null);
+  dateFrom = signal<string>('');
+  dateTo = signal<string>('');
   searchQuery = signal<string>('');
 
-  createForm: FormGroup = this.fb.group({
-    voucher_type: ['Journal', Validators.required],
-    project_id: [null],
-    voucher_date: [new Date().toISOString().split('T')[0], Validators.required],
-    narration: ['', Validators.required],
-    entries: this.fb.array([])
-  });
+  // Pagination
+  currentPage = signal<number>(1);
+  pageSize = signal<number>(15);
+  hasMore = signal<boolean>(false);
 
-  get entriesArray(): FormArray {
-    return this.createForm.get('entries') as FormArray;
-  }
-
+  // Options
   voucherTypeOptions = [
     { value: '', label: 'All Voucher Types' },
-    { value: 'Journal', label: 'Journal Voucher (JV)' },
-    { value: 'Cash_Payment', label: 'Cash Payment (CP)' },
-    { value: 'Cash_Receipt', label: 'Cash Receipt (CR)' },
-    { value: 'Bank_Payment', label: 'Bank Payment (BP)' },
-    { value: 'Bank_Receipt', label: 'Bank Receipt (BR)' },
-    { value: 'Contra', label: 'Contra Voucher (CV)' }
-  ];
-
-  typeCreateOptions = [
     { value: 'Journal', label: 'Journal Voucher (JV)' },
     { value: 'Cash_Payment', label: 'Cash Payment (CP)' },
     { value: 'Cash_Receipt', label: 'Cash Receipt (CR)' },
@@ -86,86 +67,71 @@ export class AccountsVouchersComponent implements OnInit {
     { value: 'Reversed', label: 'Reversed' }
   ];
 
-  projectOptions = computed(() =>
-    this.projects().map(p => ({
+  projectOptions = computed(() => [
+    { value: null, label: 'All Projects & Corporate' },
+    ...this.projects().map(p => ({
       value: p.id,
       label: `${p.project_name} (${p.project_code || 'PRJ'})`
     }))
-  );
-
-  accountOptions = computed(() =>
-    this.coaList().map(a => ({
-      value: a.id,
-      label: `${a.account_code} - ${a.account_name_en} (${a.account_type})`
-    }))
-  );
-
-  costCenterOptions = computed(() => [
-    { value: null, label: 'None (General Project Overhead)' },
-    ...this.costCenters().map(c => ({
-      value: c.id,
-      label: `${c.cost_center_code} - ${c.name} (${c.wbs_stage})`
-    }))
   ]);
 
-  computedTotalDebit = computed(() => {
-    // dynamically compute from form array values
-    const entries = this.createForm.get('entries')?.value || [];
-    return entries.reduce((sum: number, e: any) => sum + (parseFloat(e.debit_amount) || 0), 0);
-  });
-
-  computedTotalCredit = computed(() => {
-    const entries = this.createForm.get('entries')?.value || [];
-    return entries.reduce((sum: number, e: any) => sum + (parseFloat(e.credit_amount) || 0), 0);
-  });
+  // Summary Metrics
+  totalCount = computed(() => this.vouchers().length);
+  totalDebitsVolume = computed(() =>
+    this.vouchers().reduce((sum, v) => sum + (v.total_debit_amount || 0), 0)
+  );
+  postedCount = computed(() =>
+    this.vouchers().filter(v => v.status === 'Posted').length
+  );
+  reversedCount = computed(() =>
+    this.vouchers().filter(v => v.status === 'Reversed').length
+  );
 
   ngOnInit(): void {
     this.loadProjects();
-    this.loadCOA();
+
     this.route.queryParams.subscribe(params => {
-      if (params['search']) {
-        this.searchQuery.set(params['search']);
-      }
+      if (params['search']) this.searchQuery.set(params['search']);
+      if (params['type']) this.filterType.set(params['type']);
+      if (params['status']) this.filterStatus.set(params['status']);
       this.loadVouchers();
     });
   }
 
   loadProjects(): void {
     this.projectService.getProjects().subscribe({
-      next: (res) => {
-        this.projects.set(res);
-        if (res.length > 0) {
-          this.loadCostCenters(res[0].id);
-        }
-      },
+      next: (projs) => this.projects.set(projs),
       error: (err) => console.error('Failed to load projects', err)
-    });
-  }
-
-  loadCostCenters(projectId: number): void {
-    this.accountsService.getCostCenters(projectId).subscribe({
-      next: (res) => this.costCenters.set(res),
-      error: (err) => console.error('Failed to load cost centers', err)
-    });
-  }
-
-  loadCOA(): void {
-    this.accountsService.getCOA().subscribe({
-      next: (res) => this.coaList.set(res),
-      error: (err) => console.error('Failed to load COA', err)
     });
   }
 
   loadVouchers(): void {
     this.isLoading.set(true);
-    const filter: any = {};
-    if (this.filterType()) filter.voucher_type = this.filterType();
-    if (this.filterStatus()) filter.status_filter = this.filterStatus();
-    if (this.searchQuery()) filter.search = this.searchQuery();
 
-    this.accountsService.getVouchers(filter).subscribe({
+    const offset = (this.currentPage() - 1) * this.pageSize();
+    const limit = this.pageSize() + 1; // fetch 1 extra to check if next page exists
+
+    const filters: any = {
+      offset,
+      limit
+    };
+
+    if (this.filterType()) filters.voucher_type = this.filterType();
+    if (this.filterStatus()) filters.status_filter = this.filterStatus();
+    if (this.filterProjectId()) filters.project_id = this.filterProjectId();
+    if (this.searchQuery()) filters.search = this.searchQuery().trim();
+    if (this.dateFrom()) filters.date_from = this.dateFrom();
+    if (this.dateTo()) filters.date_to = this.dateTo();
+
+    this.accountsService.getVouchers(filters).subscribe({
       next: (res) => {
-        this.vouchers.set(res);
+        if (res.length > this.pageSize()) {
+          this.hasMore.set(true);
+          this.vouchers.set(res.slice(0, this.pageSize()));
+        } else {
+          this.hasMore.set(false);
+          this.vouchers.set(res);
+        }
         this.isLoading.set(false);
       },
       error: (err) => {
@@ -176,99 +142,70 @@ export class AccountsVouchersComponent implements OnInit {
   }
 
   onFilterChange(): void {
+    this.currentPage.set(1);
     this.loadVouchers();
   }
 
-  openCreateModal(): void {
-    this.entriesArray.clear();
-    this.createForm.reset({
-      voucher_type: 'Journal',
-      project_id: this.projects().length ? this.projects()[0].id : null,
-      voucher_date: new Date().toISOString().split('T')[0],
-      narration: ''
-    });
-
-    // Seed 2 initial balanced lines
-    this.addEntryLine(0, 0);
-    this.addEntryLine(0, 0);
-    this.isCreateModalOpen.set(true);
+  resetFilters(): void {
+    this.filterType.set('');
+    this.filterStatus.set('');
+    this.filterProjectId.set(null);
+    this.dateFrom.set('');
+    this.dateTo.set('');
+    this.searchQuery.set('');
+    this.currentPage.set(1);
+    this.loadVouchers();
   }
 
-  closeCreateModal(): void {
-    this.isCreateModalOpen.set(false);
-  }
-
-  addEntryLine(defaultDebit: number = 0, defaultCredit: number = 0): void {
-    const defaultAccId = this.coaList().length > this.entriesArray.length ? this.coaList()[this.entriesArray.length].id : (this.coaList().length ? this.coaList()[0].id : null);
-    const group = this.fb.group({
-      account_id: [defaultAccId, Validators.required],
-      cost_center_id: [null],
-      debit_amount: [defaultDebit, [Validators.min(0)]],
-      credit_amount: [defaultCredit, [Validators.min(0)]],
-      cheque_no: [''],
-      bill_reference: [''],
-      narration: ['']
-    });
-    this.entriesArray.push(group);
-  }
-
-  removeEntryLine(index: number): void {
-    if (this.entriesArray.length > 2) {
-      this.entriesArray.removeAt(index);
+  goToNextPage(): void {
+    if (this.hasMore()) {
+      this.currentPage.update(p => p + 1);
+      this.loadVouchers();
     }
   }
 
-  submitCreate(): void {
-    if (this.createForm.invalid) {
-      this.createForm.markAllAsTouched();
+  goToPrevPage(): void {
+    if (this.currentPage() > 1) {
+      this.currentPage.update(p => p - 1);
+      this.loadVouchers();
+    }
+  }
+
+  navigateToCreate(): void {
+    this.router.navigate(['/accounts/vouchers/create']);
+  }
+
+  navigateToView(voucherId: number): void {
+    this.router.navigate(['/accounts/vouchers/view', voucherId]);
+  }
+
+  exportCSV(): void {
+    const list = this.vouchers();
+    if (list.length === 0) {
+      alert('No vouchers available to export.');
       return;
     }
 
-    const val = this.createForm.value;
-    const dr = val.entries.reduce((sum: number, e: any) => sum + (parseFloat(e.debit_amount) || 0), 0);
-    const cr = val.entries.reduce((sum: number, e: any) => sum + (parseFloat(e.credit_amount) || 0), 0);
+    const headers = ['Voucher No', 'Type', 'Date', 'Project', 'Narration', 'Total Debit (Tk)', 'Total Credit (Tk)', 'Status', 'Created By'];
+    const rows = list.map(v => [
+      `"${v.voucher_number}"`,
+      `"${v.voucher_type}"`,
+      `"${v.voucher_date}"`,
+      `"${(v.project_name || 'Corporate').replace(/"/g, '""')}"`,
+      `"${(v.narration || '').replace(/"/g, '""')}"`,
+      v.total_debit_amount || 0,
+      v.total_credit_amount || 0,
+      `"${v.status}"`,
+      `"${(v.created_by_name || 'System').replace(/"/g, '""')}"`
+    ]);
 
-    if (Math.abs(dr - cr) > 0.01) {
-      alert(`Double-entry balance violation! Total Debit (৳${dr.toFixed(2)}) must equal Total Credit (৳${cr.toFixed(2)}).`);
-      return;
-    }
-
-    this.isSubmitting.set(true);
-    this.accountsService.createVoucher(val).subscribe({
-      next: () => {
-        this.isSubmitting.set(false);
-        this.closeCreateModal();
-        this.loadVouchers();
-      },
-      error: (err) => {
-        alert(err.error?.detail || 'Failed to post voucher');
-        this.isSubmitting.set(false);
-      }
-    });
-  }
-
-  reverseVoucher(v: Voucher): void {
-    if (!confirm(`Are you sure you want to reverse voucher ${v.voucher_number}? This will post an exact offsetting reversal voucher.`)) {
-      return;
-    }
-    this.accountsService.reverseVoucher(v.id).subscribe({
-      next: () => {
-        this.loadVouchers();
-      },
-      error: (err) => {
-        alert(err.error?.detail || 'Failed to reverse voucher');
-      }
-    });
-  }
-
-  getStatusBadge(status: string): { bg: string; textCol: string; border: string } {
-    switch (status) {
-      case 'Posted':
-        return { bg: 'bg-emerald-50 dark:bg-emerald-950/40', textCol: 'text-emerald-700 dark:text-emerald-300', border: 'border-emerald-300' };
-      case 'Reversed':
-        return { bg: 'bg-rose-50 dark:bg-rose-950/40', textCol: 'text-rose-700 dark:text-rose-300 font-semibold', border: 'border-rose-300' };
-      default:
-        return { bg: 'bg-blue-50 dark:bg-blue-950/40', textCol: 'text-blue-700 dark:text-blue-300', border: 'border-blue-300' };
-    }
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `GL_Vouchers_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }
 }

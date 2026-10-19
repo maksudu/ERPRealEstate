@@ -1,0 +1,475 @@
+<div class="space-y-6">
+  <!-- Top Navigation Header -->
+  <app-bank-recon-nav></app-bank-recon-nav>
+
+  <!-- Central Card Container -->
+  <app-card-container *ngIf="session">
+    <!-- Session Summary Header -->
+    <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between pb-6 border-b border-slate-200 dark:border-slate-800 gap-4">
+      <div>
+        <div class="flex items-center gap-2">
+          <a routerLink="/accounts/bank-reconciliation" class="inline-flex items-center text-xs font-medium text-slate-500 hover:text-indigo-600 transition-colors">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Back to Sessions
+          </a>
+          <span class="text-slate-300 dark:text-slate-700">•</span>
+          <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300">
+            Section 15.2 Interactive Workbench
+          </span>
+          <span class="text-slate-300 dark:text-slate-700">•</span>
+          <span *ngIf="session.is_locked" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 flex items-center gap-1">
+            <span>🔒</span> Period Locked
+          </span>
+        </div>
+
+        <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mt-1 flex items-center gap-3">
+          <span>{{ session.recon_reference_no }}</span>
+          <app-status-badge [status]="session.status" [variant]="getStatusVariant(session.status)"></app-status-badge>
+        </h1>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          {{ session.bank_account_name }} ({{ session.bank_account_code }}) • Period: {{ session.period_start_date }} to {{ session.period_end_date }} • Format: {{ session.statement_format }}
+        </p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <a
+          [routerLink]="['/accounts/bank-reconciliation/brs-report', session.id]"
+          class="inline-flex items-center px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 shadow-sm transition-colors">
+          <svg class="w-4 h-4 mr-1.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          View Official BRS Statement
+        </a>
+
+        <button
+          *ngIf="!session.is_locked"
+          (click)="openLockModal()"
+          class="inline-flex items-center px-4 py-2 text-xs font-semibold text-white bg-amber-600 hover:bg-amber-700 rounded-lg shadow-sm transition-colors">
+          <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+          Approve & Lock Period
+        </button>
+      </div>
+    </div>
+
+    <!-- Live Balance Audit Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+      <div class="p-4 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800">
+        <span class="text-xs font-medium text-slate-500">Statement Closing Balance</span>
+        <div class="text-xl font-bold text-slate-900 dark:text-slate-100 mt-1 font-mono">
+          ৳{{ session.statement_balance | number:'1.2-2' }}
+        </div>
+        <div class="text-[11px] text-slate-400 mt-0.5">Reported by official bank</div>
+      </div>
+
+      <div class="p-4 bg-indigo-50/60 dark:bg-indigo-950/30 rounded-xl border border-indigo-100 dark:border-indigo-900/40">
+        <span class="text-xs font-medium text-indigo-800 dark:text-indigo-300">General Ledger Book Balance</span>
+        <div class="text-xl font-bold text-indigo-700 dark:text-indigo-300 mt-1 font-mono">
+          ৳{{ session.book_balance | number:'1.2-2' }}
+        </div>
+        <div class="text-[11px] text-indigo-600 dark:text-indigo-400 mt-0.5">ERP posting balance</div>
+      </div>
+
+      <div class="p-4 rounded-xl border"
+           [class.bg-emerald-50]="session.difference_amount === 0"
+           [class.border-emerald-200]="session.difference_amount === 0"
+           [class.bg-rose-50]="session.difference_amount !== 0"
+           [class.border-rose-200]="session.difference_amount !== 0">
+        <span class="text-xs font-medium" [class.text-emerald-800]="session.difference_amount === 0" [class.text-rose-800]="session.difference_amount !== 0">
+          Unreconciled Variance
+        </span>
+        <div class="text-xl font-bold mt-1 font-mono"
+             [class.text-emerald-700]="session.difference_amount === 0"
+             [class.text-rose-700]="session.difference_amount !== 0">
+          ৳{{ session.difference_amount | number:'1.2-2' }}
+        </div>
+        <div class="text-[11px] mt-0.5" [class.text-emerald-600]="session.difference_amount === 0" [class.text-rose-600]="session.difference_amount !== 0">
+          {{ session.difference_amount === 0 ? '100% Balanced & Reconciled' : 'Discrepancy pending resolution' }}
+        </div>
+      </div>
+
+      <div class="p-4 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800">
+        <span class="text-xs font-medium text-slate-500">Matching Statistics</span>
+        <div class="text-xl font-bold text-slate-900 dark:text-slate-100 mt-1">
+          {{ session.matched_count }} <span class="text-sm font-normal text-slate-500">Matched</span> / {{ session.unmatched_count }} <span class="text-sm font-normal text-slate-500">Open</span>
+        </div>
+        <div class="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-1.5 mt-2">
+          <div
+            class="bg-indigo-600 h-1.5 rounded-full"
+            [style.width.%]="session.matched_count + session.unmatched_count > 0 ? (session.matched_count / (session.matched_count + session.unmatched_count) * 100) : 0"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="mt-6 flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+      <div class="flex items-center gap-2">
+        <button
+          (click)="setFilter('ALL')"
+          [class.bg-indigo-600]="activeFilter === 'ALL'"
+          [class.text-white]="activeFilter === 'ALL'"
+          [class.bg-slate-100]="activeFilter !== 'ALL'"
+          class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors">
+          All Lines ({{ session.items.length }})
+        </button>
+        <button
+          (click)="setFilter('MATCHED')"
+          [class.bg-indigo-600]="activeFilter === 'MATCHED'"
+          [class.text-white]="activeFilter === 'MATCHED'"
+          [class.bg-slate-100]="activeFilter !== 'MATCHED'"
+          class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors">
+          Matched ({{ session.matched_count }})
+        </button>
+        <button
+          (click)="setFilter('UNMATCHED')"
+          [class.bg-indigo-600]="activeFilter === 'UNMATCHED'"
+          [class.text-white]="activeFilter === 'UNMATCHED'"
+          [class.bg-slate-100]="activeFilter !== 'UNMATCHED'"
+          class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors">
+          Unmatched ({{ session.unmatched_count }})
+        </button>
+        <button
+          (click)="setFilter('EXCEPTIONS')"
+          [class.bg-indigo-600]="activeFilter === 'EXCEPTIONS'"
+          [class.text-white]="activeFilter === 'EXCEPTIONS'"
+          [class.bg-slate-100]="activeFilter !== 'EXCEPTIONS'"
+          class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors">
+          Charges & Exceptions
+        </button>
+      </div>
+
+      <div class="text-xs text-slate-500 font-mono">
+        Showing {{ filteredItems.length }} of {{ session.items.length }} transactions
+      </div>
+    </div>
+
+    <!-- Statement Lines Table -->
+    <div class="mt-4 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+      <table class="w-full text-xs text-left">
+        <thead class="bg-slate-50 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-800">
+          <tr>
+            <th class="p-3">Txn Date</th>
+            <th class="p-3">Unique Line UID (Audit)</th>
+            <th class="p-3">Reference / Chq</th>
+            <th class="p-3">Statement Description</th>
+            <th class="p-3 text-right">Debit (Withdrawal ৳)</th>
+            <th class="p-3 text-right">Credit (Deposit ৳)</th>
+            <th class="p-3 text-center">Match Status</th>
+            <th class="p-3">Exception / Classification</th>
+            <th class="p-3 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
+          <tr *ngFor="let item of filteredItems" class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+            <td class="p-3 text-slate-700 dark:text-slate-300 whitespace-nowrap">
+              {{ item.transaction_date }}
+            </td>
+
+            <td class="p-3 font-mono text-[11px] text-slate-400 whitespace-nowrap" title="{{ item.item_uid }}">
+              {{ item.item_uid ? (item.item_uid.substring(0, 14) + '...') : '—' }}
+            </td>
+
+            <td class="p-3 font-mono font-medium text-slate-800 dark:text-slate-200 whitespace-nowrap">
+              {{ item.reference_no || '—' }}
+            </td>
+
+            <td class="p-3">
+              <div class="font-medium text-slate-900 dark:text-slate-100">{{ item.description }}</div>
+              <div *ngIf="item.split_match_notes" class="text-[11px] text-indigo-600 dark:text-indigo-400 mt-0.5">
+                {{ item.split_match_notes }}
+              </div>
+            </td>
+
+            <td class="p-3 text-right font-mono text-slate-900 dark:text-slate-100 whitespace-nowrap">
+              {{ item.debit_amount > 0 ? ('৳' + (item.debit_amount | number:'1.2-2')) : '—' }}
+            </td>
+
+            <td class="p-3 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+              {{ item.credit_amount > 0 ? ('৳' + (item.credit_amount | number:'1.2-2')) : '—' }}
+            </td>
+
+            <td class="p-3 text-center whitespace-nowrap">
+              <app-status-badge
+                [status]="item.match_status"
+                [variant]="getStatusVariant(item.match_status)">
+              </app-status-badge>
+              <div *ngIf="item.matched_voucher_number" class="text-[10px] font-mono text-slate-500 mt-0.5">
+                {{ item.matched_voucher_number }}
+              </div>
+            </td>
+
+            <td class="p-3 whitespace-nowrap">
+              <app-status-badge
+                [status]="item.exception_type"
+                [variant]="getExceptionVariant(item.exception_type)">
+              </app-status-badge>
+            </td>
+
+            <td class="p-3 text-right whitespace-nowrap space-x-1.5">
+              <ng-container *ngIf="item.match_status === 'UNMATCHED' && !session.is_locked">
+                <button
+                  (click)="openManualMatch(item)"
+                  class="px-2 py-1 text-[11px] font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded border border-indigo-200 transition-colors">
+                  Match 1:1
+                </button>
+                <button
+                  (click)="openSplitMatch(item)"
+                  class="px-2 py-1 text-[11px] font-medium text-purple-700 bg-purple-50 hover:bg-purple-100 rounded border border-purple-200 transition-colors">
+                  Split Match
+                </button>
+                <button
+                  (click)="openAdjustmentModal(item)"
+                  class="px-2 py-1 text-[11px] font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded border border-emerald-200 transition-colors">
+                  Post Adj.
+                </button>
+              </ng-container>
+
+              <span *ngIf="item.match_status !== 'UNMATCHED'" class="text-[11px] font-mono text-slate-400">
+                ✓ Reconciled
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </app-card-container>
+
+  <!-- 1. Manual Match Modal -->
+  <div *ngIf="showManualMatchModal && selectedItemForMatch" class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
+        <h3 class="text-sm font-bold text-slate-900 dark:text-white">Manual 1-to-1 Match</h3>
+        <button (click)="closeManualMatch()" class="text-slate-400 hover:text-slate-600 font-bold">✕</button>
+      </div>
+
+      <div *ngIf="matchError" class="mt-3 p-3 bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-lg">
+        {{ matchError }}
+      </div>
+
+      <div class="mt-4 space-y-3 text-xs">
+        <div class="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg space-y-1">
+          <div class="font-medium text-slate-900 dark:text-white">{{ selectedItemForMatch.description }}</div>
+          <div class="text-slate-500">Ref: {{ selectedItemForMatch.reference_no || 'N/A' }} • Date: {{ selectedItemForMatch.transaction_date }}</div>
+          <div class="font-mono font-bold text-indigo-600">Amount: ৳{{ (selectedItemForMatch.debit_amount || selectedItemForMatch.credit_amount) | number:'1.2-2' }}</div>
+        </div>
+
+        <div>
+          <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">General Ledger Voucher ID *</label>
+          <input
+            type="number"
+            [(ngModel)]="manualVoucherId"
+            placeholder="e.g. 101, 102"
+            class="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900" />
+        </div>
+
+        <div>
+          <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Reconciliation Audit Note</label>
+          <input
+            type="text"
+            [(ngModel)]="manualMatchNotes"
+            class="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900" />
+        </div>
+      </div>
+
+      <div class="mt-6 flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+        <button (click)="closeManualMatch()" class="px-4 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50">
+          Cancel
+        </button>
+        <button
+          (click)="submitManualMatch()"
+          [disabled]="submittingMatch || !manualVoucherId"
+          class="px-5 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm disabled:opacity-50">
+          {{ submittingMatch ? 'Linking...' : 'Confirm 1:1 Match' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Split Match Modal (Section 15.1: Match 1 bank line to multiple vouchers) -->
+  <div *ngIf="showSplitMatchModal && selectedItemForSplit" class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
+        <div>
+          <h3 class="text-sm font-bold text-slate-900 dark:text-white">Split Match (1 Bank Line : Multiple Vouchers)</h3>
+          <p class="text-[11px] text-slate-500">Section 15.1 requirement for batch disbursement / consolidated collections.</p>
+        </div>
+        <button (click)="closeSplitMatch()" class="text-slate-400 hover:text-slate-600 font-bold">✕</button>
+      </div>
+
+      <div *ngIf="splitError" class="mt-3 p-3 bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-lg">
+        {{ splitError }}
+      </div>
+
+      <div class="mt-4 space-y-3 text-xs">
+        <div class="p-3 bg-purple-50 dark:bg-purple-950/30 rounded-lg border border-purple-200 dark:border-purple-800">
+          <div class="font-medium text-purple-900 dark:text-purple-100">Consolidated Bank Transaction</div>
+          <div class="font-mono font-bold text-purple-700 text-sm mt-0.5">
+            Total Target: ৳{{ (selectedItemForSplit.debit_amount || selectedItemForSplit.credit_amount) | number:'1.2-2' }}
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Voucher 1 ID *</label>
+            <input
+              type="number"
+              [(ngModel)]="splitVoucherId1"
+              placeholder="e.g. 101"
+              class="w-full px-3 py-2 border border-slate-300 rounded-lg font-mono" />
+          </div>
+          <div>
+            <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Voucher 2 ID *</label>
+            <input
+              type="number"
+              [(ngModel)]="splitVoucherId2"
+              placeholder="e.g. 102"
+              class="w-full px-3 py-2 border border-slate-300 rounded-lg font-mono" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Split Justification & Notes</label>
+          <input
+            type="text"
+            [(ngModel)]="splitNotes"
+            class="w-full px-3 py-2 border border-slate-300 rounded-lg" />
+        </div>
+      </div>
+
+      <div class="mt-6 flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+        <button (click)="closeSplitMatch()" class="px-4 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50">
+          Cancel
+        </button>
+        <button
+          (click)="submitSplitMatch()"
+          [disabled]="submittingSplit || !splitVoucherId1 || !splitVoucherId2"
+          class="px-5 py-2 text-xs font-semibold text-white bg-purple-600 hover:bg-purple-700 rounded-lg shadow-sm disabled:opacity-50">
+          {{ submittingSplit ? 'Verifying Sum...' : 'Apply Split Match' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Adjustment Journal Modal (Section 15.1: Bank Charges, Interest, Direct Collections) -->
+  <div *ngIf="showAdjustmentModal && selectedItemForAdj" class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
+        <div>
+          <h3 class="text-sm font-bold text-slate-900 dark:text-white">Prepare Authorized Adjustment Journal</h3>
+          <p class="text-[11px] text-slate-500">Post balanced Double-Entry GL Voucher for bank charges, interest, or direct credit.</p>
+        </div>
+        <button (click)="closeAdjustmentModal()" class="text-slate-400 hover:text-slate-600 font-bold">✕</button>
+      </div>
+
+      <div *ngIf="adjError" class="mt-3 p-3 bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-lg">
+        {{ adjError }}
+      </div>
+
+      <div class="mt-4 space-y-3 text-xs">
+        <div class="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg flex justify-between items-center">
+          <div>
+            <div class="font-medium text-slate-900 dark:text-white">{{ selectedItemForAdj.description }}</div>
+            <div class="text-[11px] text-slate-500">Date: {{ selectedItemForAdj.transaction_date }}</div>
+          </div>
+          <div class="text-right">
+            <span class="text-xs text-slate-400">Adjustment Amount</span>
+            <div class="font-mono font-bold text-emerald-600 text-sm">
+              ৳{{ (selectedItemForAdj.debit_amount || selectedItemForAdj.credit_amount) | number:'1.2-2' }}
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Adjustment Type *</label>
+          <select
+            [(ngModel)]="adjType"
+            class="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900">
+            <option value="BANK_CHARGE">Bank Charge & VAT (Debit Expense / Credit Bank)</option>
+            <option value="INTEREST_EARNED">Bank Profit / Interest (Debit Bank / Credit Income)</option>
+            <option value="DIRECT_DEPOSIT">Direct Buyer Deposit (Debit Bank / Credit Customer Advances)</option>
+          </select>
+        </div>
+
+        <div>
+          <app-searchable-select
+            label="Contra General Ledger Account *"
+            [options]="expenseAccountOptions"
+            [value]="adjContraAccountId"
+            (valueChange)="adjContraAccountId = $event"
+            placeholder="Select Account..."
+            [allowCreateNew]="false">
+          </app-searchable-select>
+        </div>
+
+        <div>
+          <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Voucher Narration *</label>
+          <input
+            type="text"
+            [(ngModel)]="adjNarration"
+            required
+            class="w-full px-3 py-2 border border-slate-300 rounded-lg" />
+        </div>
+      </div>
+
+      <div class="mt-6 flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+        <button (click)="closeAdjustmentModal()" class="px-4 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50">
+          Cancel
+        </button>
+        <button
+          (click)="submitAdjustment()"
+          [disabled]="submittingAdj || !adjNarration"
+          class="px-5 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm disabled:opacity-50">
+          {{ submittingAdj ? 'Posting Voucher...' : 'Confirm & Post Adjustment Journal' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Lock Period Modal -->
+  <div *ngIf="showLockModal && session" class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
+        <div class="flex items-center gap-2">
+          <span class="text-lg">🔒</span>
+          <h3 class="text-sm font-bold text-slate-900 dark:text-white">Approve & Lock Reconciliation Period</h3>
+        </div>
+        <button (click)="closeLockModal()" class="text-slate-400 hover:text-slate-600 font-bold">✕</button>
+      </div>
+
+      <div *ngIf="lockError" class="mt-3 p-3 bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-lg">
+        {{ lockError }}
+      </div>
+
+      <div class="mt-4 space-y-3 text-xs">
+        <p class="text-slate-600">
+          Locking period <strong>{{ session.recon_reference_no }}</strong> ensures that no statement line can ever be reconciled twice.
+        </p>
+
+        <div>
+          <label class="block font-medium text-slate-700 mb-1">Approved By *</label>
+          <input type="text" [(ngModel)]="approvedBy" class="w-full px-3 py-2 border border-slate-300 rounded-lg font-medium" />
+        </div>
+
+        <div>
+          <label class="block font-medium text-slate-700 mb-1">Audit Notes</label>
+          <textarea [(ngModel)]="lockNotes" rows="2" class="w-full px-3 py-2 border border-slate-300 rounded-lg"></textarea>
+        </div>
+      </div>
+
+      <div class="mt-6 flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+        <button (click)="closeLockModal()" class="px-4 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50">
+          Cancel
+        </button>
+        <button
+          (click)="submitLockPeriod()"
+          [disabled]="locking || !approvedBy"
+          class="px-5 py-2 text-xs font-semibold text-white bg-amber-600 hover:bg-amber-700 rounded-lg shadow-sm disabled:opacity-50">
+          {{ locking ? 'Locking...' : 'Seal & Lock Period' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

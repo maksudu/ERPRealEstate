@@ -1,0 +1,462 @@
+<!-- Master Card Container for Customer Receipt Allocation -->
+<app-card-container
+  title="Customer Money Receipts & Multi-Invoice Allocation"
+  subtitle="Distinguish recorded receipts, funds clearance, installment allocations, unallocated advance cash, and reversals without double-counting"
+  badge="AR Cash Core"
+>
+  <!-- Unified Module Sub-Navigation Bar -->
+  <div class="flex items-center gap-1.5 p-1.5 bg-secondary/40 rounded-2xl border border-border overflow-x-auto mb-6">
+    <a
+      routerLink="/accounts/coa"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-node-tree"></i>
+      <span>Chart of Accounts</span>
+    </a>
+
+    <a
+      routerLink="/accounts/vouchers"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-file-list-3-line"></i>
+      <span>General Ledger Vouchers</span>
+    </a>
+
+    <a
+      routerLink="/accounts/ledger"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-booklet-line"></i>
+      <span>Ledger Inquiry & Statements</span>
+    </a>
+
+    <a
+      routerLink="/accounts/payables"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-money-dollar-circle-line"></i>
+      <span>Accounts Payable (AP)</span>
+    </a>
+
+    <a
+      routerLink="/accounts/receivables"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-hand-coin-line"></i>
+      <span>Accounts Receivable (AR)</span>
+    </a>
+
+    <a
+      routerLink="/accounts/receivables/receipts"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-card text-foreground shadow-xs border border-border inline-flex items-center gap-1.5 whitespace-nowrap"
+    >
+      <i class="ri-refund-2-line text-primary"></i>
+      <span>Receipts & Allocations</span>
+    </a>
+
+    <a
+      routerLink="/accounts/receivables/ledger"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-user-star-line"></i>
+      <span>Customer Ledger & Aging</span>
+    </a>
+
+    <a
+      routerLink="/accounts/financial-reports"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-pie-chart-2-line"></i>
+      <span>Financial Reports (P&L / BS)</span>
+    </a>
+
+    <div class="ml-auto pl-2 flex items-center gap-2">
+      <a
+        routerLink="/settings/lookups"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-primary hover:text-primary/80 bg-card rounded-xl border border-border shadow-xs transition-colors whitespace-nowrap"
+        title="Dynamic Dropdown Creation & Customization Settings"
+      >
+        <i class="ri-settings-4-line"></i>
+        <span>Dropdown Settings</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- 5-Stage Lifecycle KPI Ribbon -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+    <!-- 1. Total Collections -->
+    <div class="p-4 rounded-2xl bg-card border border-border shadow-xs">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-medium text-muted-foreground">Total Receipts</span>
+        <div class="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+          <i class="ri-wallet-3-line text-base"></i>
+        </div>
+      </div>
+      <div class="text-xl font-bold text-foreground">
+        ৳ {{ (kpis()?.total_receipts_amount || 0) | number:'1.2-2' }}
+      </div>
+      <div class="text-[11px] text-muted-foreground mt-1">
+        {{ kpis()?.total_receipts_count || 0 }} receipts recorded & cleared
+      </div>
+    </div>
+
+    <!-- 2. Funds Verified & Cleared -->
+    <div class="p-4 rounded-2xl bg-card border border-border shadow-xs">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-medium text-muted-foreground">Funds Cleared</span>
+        <div class="w-8 h-8 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600">
+          <i class="ri-checkbox-circle-line text-base"></i>
+        </div>
+      </div>
+      <div class="text-xl font-bold text-emerald-600 dark:text-emerald-400">
+        ৳ {{ (kpis()?.total_cleared_amount || 0) | number:'1.2-2' }}
+      </div>
+      <div class="text-[11px] text-muted-foreground mt-1">
+        Bank/cash confirmed & GL posted
+      </div>
+    </div>
+
+    <!-- 3. Allocated to Invoices/Installments -->
+    <div class="p-4 rounded-2xl bg-card border border-border shadow-xs">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-medium text-muted-foreground">Allocated to Invoices</span>
+        <div class="w-8 h-8 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600">
+          <i class="ri-split-cells-horizontal text-base"></i>
+        </div>
+      </div>
+      <div class="text-xl font-bold text-blue-600 dark:text-blue-400">
+        ৳ {{ (kpis()?.total_allocated_amount || 0) | number:'1.2-2' }}
+      </div>
+      <div class="text-[11px] text-muted-foreground mt-1">
+        Applied across buyer installments
+      </div>
+    </div>
+
+    <!-- 4. Unallocated Advance Cash -->
+    <div class="p-4 rounded-2xl bg-card border border-border shadow-xs">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-medium text-muted-foreground">Unallocated Advance</span>
+        <div class="w-8 h-8 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-600">
+          <i class="ri-coins-line text-base"></i>
+        </div>
+      </div>
+      <div class="text-xl font-bold text-purple-600 dark:text-purple-400">
+        ৳ {{ (kpis()?.total_unallocated_advance || 0) | number:'1.2-2' }}
+      </div>
+      <div class="text-[11px] text-muted-foreground mt-1">
+        Available customer cash buffer
+      </div>
+    </div>
+
+    <!-- 5. Reversed or Refunded -->
+    <div class="p-4 rounded-2xl bg-card border border-border shadow-xs">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-medium text-muted-foreground">Reversed / Bounced</span>
+        <div class="w-8 h-8 rounded-xl bg-destructive/10 flex items-center justify-center text-destructive">
+          <i class="ri-arrow-go-back-line text-base"></i>
+        </div>
+      </div>
+      <div class="text-xl font-bold text-destructive">
+        ৳ {{ (kpis()?.total_reversed_amount || 0) | number:'1.2-2' }}
+      </div>
+      <div class="text-[11px] text-muted-foreground mt-1">
+        Dishonored instruments & reversals
+      </div>
+    </div>
+  </div>
+
+  <!-- Action Toolbar & Searchable Filters -->
+  <div class="p-5 rounded-2xl bg-card border border-border shadow-xs space-y-4 mb-6">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div class="flex-1 min-w-[240px] max-w-md">
+        <app-custom-input
+          [(ngModel)]="searchQuery"
+          (keyup.enter)="applyFilters()"
+          placeholder="Search receipt #, cheque #, reference or notes..."
+          icon="ri-search-line"
+        ></app-custom-input>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button
+          (click)="exportCSV()"
+          class="px-4 py-2 rounded-xl text-xs font-semibold text-foreground bg-card hover:bg-secondary border border-border transition-all inline-flex items-center gap-1.5 shadow-xs"
+        >
+          <i class="ri-download-2-line"></i>
+          <span>Export CSV</span>
+        </button>
+
+        <a
+          routerLink="/accounts/receivables/receipts/create"
+          class="px-4 py-2 rounded-xl text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-all inline-flex items-center gap-1.5 shadow-xs"
+        >
+          <i class="ri-add-line"></i>
+          <span>+ New Money Receipt</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Filter Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 pt-2 border-t border-border/60">
+      <div>
+        <label class="block text-[11px] font-medium text-muted-foreground mb-1">Lifecycle Status</label>
+        <select
+          [(ngModel)]="selectedStatus"
+          (change)="applyFilters()"
+          class="w-full text-xs rounded-xl bg-background border border-border px-3 py-2 text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+        >
+          <option *ngFor="let opt of statusOptions" [value]="opt.value">{{ opt.label }}</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-[11px] font-medium text-muted-foreground mb-1">Customer</label>
+        <select
+          [(ngModel)]="selectedCustomerId"
+          (change)="applyFilters()"
+          class="w-full text-xs rounded-xl bg-background border border-border px-3 py-2 text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+        >
+          <option *ngFor="let opt of customerOptions" [ngValue]="opt.value">{{ opt.label }}</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-[11px] font-medium text-muted-foreground mb-1">Project</label>
+        <select
+          [(ngModel)]="selectedProjectId"
+          (change)="applyFilters()"
+          class="w-full text-xs rounded-xl bg-background border border-border px-3 py-2 text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+        >
+          <option *ngFor="let opt of projectOptions" [ngValue]="opt.value">{{ opt.label }}</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-[11px] font-medium text-muted-foreground mb-1">Collection Method</label>
+        <select
+          [(ngModel)]="selectedMethod"
+          (change)="applyFilters()"
+          class="w-full text-xs rounded-xl bg-background border border-border px-3 py-2 text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+        >
+          <option *ngFor="let opt of methodOptions" [value]="opt.value">{{ opt.label }}</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-[11px] font-medium text-muted-foreground mb-1">From Date</label>
+        <input
+          type="date"
+          [(ngModel)]="dateFrom"
+          (change)="applyFilters()"
+          class="w-full text-xs rounded-xl bg-background border border-border px-3 py-2 text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+        />
+      </div>
+
+      <div class="flex items-end gap-2">
+        <button
+          (click)="applyFilters()"
+          class="flex-1 py-2 rounded-xl text-xs font-semibold bg-secondary hover:bg-secondary/80 text-foreground border border-border transition-colors text-center"
+        >
+          Apply
+        </button>
+        <button
+          (click)="resetFilters()"
+          class="px-3 py-2 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground border border-border transition-colors"
+          title="Reset Filters"
+        >
+          <i class="ri-refresh-line"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Double Counting Protection Banner -->
+  <div class="p-3.5 rounded-xl bg-secondary/30 border border-border text-xs text-muted-foreground flex items-center justify-between mb-4">
+    <div class="flex items-center gap-2">
+      <i class="ri-shield-check-line text-base text-primary"></i>
+      <span>
+        <strong>Multi-Invoice Allocation Rule:</strong> 
+        A single Money Receipt can be allocated across multiple milestone installments. Master collection amounts are aggregated strictly from root receipts to ensure zero double-counting.
+      </span>
+    </div>
+    <span class="text-[11px] font-medium text-foreground">Showing {{ receipts().length }} receipts</span>
+  </div>
+
+  <!-- Receipts Table -->
+  <div class="rounded-2xl border border-border bg-card overflow-hidden shadow-xs">
+    <div class="overflow-x-auto">
+      <table class="w-full text-xs text-left">
+        <thead class="bg-secondary/40 text-muted-foreground font-semibold border-b border-border">
+          <tr>
+            <th class="px-4 py-3">Receipt # & Date</th>
+            <th class="px-4 py-3">Customer & Project</th>
+            <th class="px-4 py-3">Instrument / Channel</th>
+            <th class="px-4 py-3 text-right">Total Received</th>
+            <th class="px-4 py-3 text-right">Allocated</th>
+            <th class="px-4 py-3 text-right">Unallocated Advance</th>
+            <th class="px-4 py-3 text-center">Lifecycle Status</th>
+            <th class="px-4 py-3 text-center">Allocations</th>
+            <th class="px-4 py-3 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border/60">
+          <tr *ngIf="isLoading()" class="text-center">
+            <td colspan="9" class="py-12 text-muted-foreground">
+              <i class="ri-loader-4-line text-2xl animate-spin text-primary inline-block mb-2"></i>
+              <p>Loading customer money receipts...</p>
+            </td>
+          </tr>
+
+          <tr *ngIf="!isLoading() && receipts().length === 0" class="text-center">
+            <td colspan="9" class="py-12 text-muted-foreground">
+              <i class="ri-inbox-line text-3xl text-muted-foreground/60 inline-block mb-2"></i>
+              <p>No money receipts found matching your criteria.</p>
+            </td>
+          </tr>
+
+          <tr
+            *ngFor="let r of receipts()"
+            class="hover:bg-secondary/20 transition-colors"
+          >
+            <!-- Receipt # & Date -->
+            <td class="px-4 py-3 font-medium">
+              <div class="text-foreground font-semibold flex items-center gap-1.5">
+                <i class="ri-refund-2-line text-primary"></i>
+                <span>{{ r.receipt_number }}</span>
+              </div>
+              <div class="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
+                <i class="ri-calendar-line"></i>
+                <span>{{ r.receipt_date | date:'dd MMM yyyy' }}</span>
+              </div>
+            </td>
+
+            <!-- Customer & Project -->
+            <td class="px-4 py-3">
+              <div class="font-medium text-foreground">{{ r.customer_name || 'N/A' }}</div>
+              <div class="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
+                <i class="ri-building-line"></i>
+                <span>{{ r.project_name || 'Corporate Unassigned' }}</span>
+              </div>
+            </td>
+
+            <!-- Instrument / Channel -->
+            <td class="px-4 py-3">
+              <div class="text-foreground font-medium flex items-center gap-1">
+                <i class="ri-bank-card-line text-muted-foreground"></i>
+                <span>{{ r.collection_method }}</span>
+              </div>
+              <div *ngIf="r.cheque_number" class="text-[11px] text-muted-foreground font-mono mt-0.5">
+                CQ: {{ r.cheque_number }} ({{ r.cheque_date | date:'dd/MM' }})
+              </div>
+              <div *ngIf="r.transaction_reference" class="text-[11px] text-muted-foreground font-mono mt-0.5">
+                Ref: {{ r.transaction_reference }}
+              </div>
+            </td>
+
+            <!-- Total Received -->
+            <td class="px-4 py-3 text-right font-semibold text-foreground">
+              ৳ {{ r.amount | number:'1.2-2' }}
+            </td>
+
+            <!-- Allocated Amount -->
+            <td class="px-4 py-3 text-right font-medium text-blue-600 dark:text-blue-400">
+              ৳ {{ r.allocated_amount | number:'1.2-2' }}
+            </td>
+
+            <!-- Unallocated Advance -->
+            <td class="px-4 py-3 text-right font-medium">
+              <span [class.text-purple-600]="r.unallocated_amount > 0" [class.text-muted-foreground]="r.unallocated_amount === 0">
+                ৳ {{ r.unallocated_amount | number:'1.2-2' }}
+              </span>
+            </td>
+
+            <!-- Lifecycle Status Badge -->
+            <td class="px-4 py-3 text-center">
+              <span
+                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-semibold"
+                [ngClass]="getStatusBadgeClass(r.status)"
+              >
+                {{ r.status }}
+              </span>
+            </td>
+
+            <!-- Allocation Count / Invoice Split Badge -->
+            <td class="px-4 py-3 text-center">
+              <span
+                *ngIf="(r.allocations?.length || 0) > 0"
+                class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-secondary text-[11px] font-medium text-foreground"
+                title="Allocated across multiple installments"
+              >
+                <i class="ri-split-cells-horizontal text-primary"></i>
+                <span>{{ r.allocations?.length }} Inv</span>
+              </span>
+              <span *ngIf="!r.allocations || r.allocations.length === 0" class="text-muted-foreground text-[11px]">
+                Advance
+              </span>
+            </td>
+
+            <!-- Actions -->
+            <td class="px-4 py-3 text-right">
+              <div class="flex items-center justify-end gap-1.5">
+                <!-- Quick Verify Button (if Recorded) -->
+                <button
+                  *ngIf="r.status === 'Recorded'"
+                  (click)="quickVerify(r)"
+                  class="px-2 py-1 rounded-lg text-[11px] font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition-colors shadow-2xs"
+                  title="Verify funds & post GL Receipt Voucher"
+                >
+                  <i class="ri-check-line mr-0.5"></i>
+                  Verify
+                </button>
+
+                <!-- View & Allocate Hub Button -->
+                <button
+                  (click)="viewReceipt(r)"
+                  class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-secondary hover:bg-secondary/80 text-foreground border border-border transition-colors inline-flex items-center gap-1"
+                >
+                  <i class="ri-eye-line text-xs"></i>
+                  <span>Details</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Table Pagination Controls -->
+    <div class="p-4 border-t border-border flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
+      <div class="flex items-center gap-2">
+        <span>Rows per page:</span>
+        <select
+          [(ngModel)]="limit"
+          (change)="onLimitChange(limit)"
+          class="text-xs rounded-xl bg-background border border-border px-2 py-1 text-foreground"
+        >
+          <option *ngFor="let opt of limitOptions" [value]="opt.value">{{ opt.label }}</option>
+        </select>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <span>Page {{ currentPage }}</span>
+        <div class="flex items-center gap-1">
+          <button
+            (click)="previousPage()"
+            [disabled]="offset === 0"
+            class="px-3 py-1 rounded-xl border border-border bg-card hover:bg-secondary disabled:opacity-40 transition-colors"
+          >
+            <i class="ri-arrow-left-s-line"></i>
+          </button>
+          <button
+            (click)="nextPage()"
+            [disabled]="receipts().length < limit"
+            class="px-3 py-1 rounded-xl border border-border bg-card hover:bg-secondary disabled:opacity-40 transition-colors"
+          >
+            <i class="ri-arrow-right-s-line"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</app-card-container>

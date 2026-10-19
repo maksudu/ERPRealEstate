@@ -1,0 +1,471 @@
+<div class="space-y-6">
+  <!-- Navigation Tabs -->
+  <app-customer-advances-nav activeSection="advances"></app-customer-advances-nav>
+
+  <!-- Main Card Container -->
+  <app-card-container>
+    <!-- Header with Title & Action -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-border">
+      <div>
+        <div class="flex items-center gap-2.5">
+          <div class="p-2 bg-primary/10 text-primary rounded-xl">
+            <i class="ri-hand-coin-line text-2xl"></i>
+          </div>
+          <div>
+            <h1 class="text-xl font-bold text-foreground">13.1 Customer Advance & Installment Accounting</h1>
+            <p class="text-xs text-muted-foreground mt-0.5">
+              Multi-project customer advance receipts, installment demand allocations, liability ledgers & IFRS 15 revenue recognition.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button
+          (click)="loadAdvances()"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-muted-foreground bg-secondary/80 hover:bg-secondary rounded-lg border border-border/80 transition-colors">
+          <i class="ri-refresh-line text-sm"></i>
+          <span>Refresh</span>
+        </button>
+
+        <a
+          routerLink="/accounts/customer-advances/create"
+          class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg shadow-xs transition-colors">
+          <i class="ri-add-line text-sm"></i>
+          <span>Record Advance Receipt</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- KPI Summary Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 my-5">
+      <!-- Total Gross Advances -->
+      <div class="p-4 rounded-xl border border-border/70 bg-card/60 shadow-xs flex items-center justify-between">
+        <div>
+          <span class="text-xs font-medium text-muted-foreground">Total Advances Received</span>
+          <h3 class="text-xl font-bold text-foreground mt-1">৳ {{ totalGrossAdvances() | number:'1.2-2' }}</h3>
+          <span class="text-[11px] text-emerald-600 font-medium">All active bookings</span>
+        </div>
+        <div class="p-3 bg-emerald-500/10 text-emerald-600 rounded-xl">
+          <i class="ri-wallet-3-line text-xl"></i>
+        </div>
+      </div>
+
+      <!-- Unapplied Credit Balance -->
+      <div class="p-4 rounded-xl border border-border/70 bg-card/60 shadow-xs flex items-center justify-between">
+        <div>
+          <span class="text-xs font-medium text-muted-foreground">Unapplied Liability Balance</span>
+          <h3 class="text-xl font-bold text-amber-600 mt-1">৳ {{ totalUnappliedCredits() | number:'1.2-2' }}</h3>
+          <span class="text-[11px] text-muted-foreground">Held as customer liability</span>
+        </div>
+        <div class="p-3 bg-amber-500/10 text-amber-600 rounded-xl">
+          <i class="ri-safe-2-line text-xl"></i>
+        </div>
+      </div>
+
+      <!-- Allocated to Installments -->
+      <div class="p-4 rounded-xl border border-border/70 bg-card/60 shadow-xs flex items-center justify-between">
+        <div>
+          <span class="text-xs font-medium text-muted-foreground">Allocated to Demands</span>
+          <h3 class="text-xl font-bold text-blue-600 mt-1">৳ {{ totalAllocatedInstallments() | number:'1.2-2' }}</h3>
+          <span class="text-[11px] text-muted-foreground">Cleared against milestones</span>
+        </div>
+        <div class="p-3 bg-blue-500/10 text-blue-600 rounded-xl">
+          <i class="ri-check-double-line text-xl"></i>
+        </div>
+      </div>
+
+      <!-- Recognized Revenue -->
+      <div class="p-4 rounded-xl border border-border/70 bg-card/60 shadow-xs flex items-center justify-between">
+        <div>
+          <span class="text-xs font-medium text-muted-foreground">Recognized Revenue (IFRS 15)</span>
+          <h3 class="text-xl font-bold text-purple-600 mt-1">৳ {{ totalRecognizedRevenue() | number:'1.2-2' }}</h3>
+          <span class="text-[11px] text-muted-foreground">Transferred to Sales P&L</span>
+        </div>
+        <div class="p-3 bg-purple-500/10 text-purple-600 rounded-xl">
+          <i class="ri-exchange-dollar-line text-xl"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search & Filter Controls -->
+    <div class="p-3.5 bg-secondary/30 rounded-xl border border-border/70 mb-5 space-y-3">
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
+        <!-- Search Input -->
+        <div class="md:col-span-4">
+          <app-custom-input
+            label=""
+            [(ngModel)]="searchTerm"
+            (keyup.enter)="onSearch()"
+            placeholder="Search Advance #, Customer, Agreement, Unit...">
+          </app-custom-input>
+        </div>
+
+        <!-- Project Filter -->
+        <div class="md:col-span-3">
+          <app-searchable-select
+            label=""
+            [options]="projectOptions()"
+            [(ngModel)]="selectedProject"
+            (ngModelChange)="onFilterChange()">
+          </app-searchable-select>
+        </div>
+
+        <!-- Transaction Type -->
+        <div class="md:col-span-3">
+          <app-searchable-select
+            label=""
+            [options]="txTypeOptions()"
+            [(ngModel)]="selectedTxType"
+            (ngModelChange)="onFilterChange()">
+          </app-searchable-select>
+        </div>
+
+        <!-- Status Filter -->
+        <div class="md:col-span-2">
+          <app-searchable-select
+            label=""
+            [options]="statusOptions()"
+            [(ngModel)]="selectedStatus"
+            (ngModelChange)="onFilterChange()">
+          </app-searchable-select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="overflow-x-auto rounded-xl border border-border bg-card">
+      <table class="w-full text-left border-collapse text-xs">
+        <thead>
+          <tr class="bg-secondary/40 border-b border-border text-muted-foreground uppercase tracking-wider text-[11px]">
+            <th class="py-3 px-4 font-semibold">Advance # / Date</th>
+            <th class="py-3 px-4 font-semibold">Customer & Contract</th>
+            <th class="py-3 px-4 font-semibold">Project / Unit</th>
+            <th class="py-3 px-4 font-semibold">Type & Mode</th>
+            <th class="py-3 px-4 font-semibold text-right">Gross Amount</th>
+            <th class="py-3 px-4 font-semibold text-right">Unapplied Balance</th>
+            <th class="py-3 px-4 font-semibold text-center">Status</th>
+            <th class="py-3 px-4 font-semibold text-center">IFRS 15 Policy</th>
+            <th class="py-3 px-4 font-semibold text-center">GL Voucher</th>
+            <th class="py-3 px-4 font-semibold text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border/60">
+          <tr *ngIf="isLoading()" class="text-center">
+            <td colspan="10" class="py-10 text-muted-foreground">
+              <i class="ri-loader-4-line text-2xl animate-spin inline-block mb-2"></i>
+              <p>Loading Customer Advance records...</p>
+            </td>
+          </tr>
+
+          <tr *ngIf="!isLoading() && advances().length === 0" class="text-center">
+            <td colspan="10" class="py-12 text-muted-foreground">
+              <i class="ri-inbox-line text-3xl inline-block mb-2 text-muted-foreground/60"></i>
+              <p>No customer advance transactions found matching criteria.</p>
+            </td>
+          </tr>
+
+          <tr *ngFor="let adv of advances()" class="hover:bg-secondary/20 transition-colors">
+            <!-- Advance # & Date -->
+            <td class="py-3 px-4">
+              <div class="font-bold text-foreground">{{ adv.advance_number }}</div>
+              <div class="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1">
+                <span>{{ adv.receipt_date }}</span>
+                <span class="px-1.5 py-0.2 rounded text-[10px] bg-secondary text-muted-foreground">
+                  {{ adv.days_outstanding }}d ago
+                </span>
+              </div>
+            </td>
+
+            <!-- Customer & Agreement -->
+            <td class="py-3 px-4">
+              <div class="font-semibold text-foreground">{{ adv.customer_name }}</div>
+              <div class="text-[11px] text-muted-foreground font-mono mt-0.5">
+                {{ adv.sale_agreement_no || adv.booking_reference_no || 'Pending Contract' }}
+              </div>
+            </td>
+
+            <!-- Project & Unit -->
+            <td class="py-3 px-4">
+              <div class="font-medium text-foreground">{{ adv.project_name }}</div>
+              <div class="text-[11px] text-primary font-medium mt-0.5">
+                Unit: {{ adv.unit_number || 'Multiple Units' }}
+              </div>
+            </td>
+
+            <!-- Type & Mode -->
+            <td class="py-3 px-4">
+              <div class="font-medium text-foreground">{{ formatStatus(adv.transaction_type) }}</div>
+              <div class="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1">
+                <i class="ri-bank-card-line text-xs"></i>
+                <span>{{ formatStatus(adv.payment_mode) }}</span>
+              </div>
+            </td>
+
+            <!-- Gross Amount -->
+            <td class="py-3 px-4 text-right font-bold text-foreground">
+              ৳ {{ adv.gross_amount | number:'1.2-2' }}
+            </td>
+
+            <!-- Unapplied Balance -->
+            <td class="py-3 px-4 text-right">
+              <span
+                class="font-bold"
+                [ngClass]="adv.unapplied_credit_balance > 0 ? 'text-amber-600' : 'text-muted-foreground'">
+                ৳ {{ adv.unapplied_credit_balance | number:'1.2-2' }}
+              </span>
+            </td>
+
+            <!-- Status -->
+            <td class="py-3 px-4 text-center">
+              <app-status-badge
+                [status]="adv.accounting_status"
+                [variant]="getStatusVariant(adv.accounting_status)">
+              </app-status-badge>
+            </td>
+
+            <!-- Revenue Status -->
+            <td class="py-3 px-4 text-center">
+              <span
+                class="px-2 py-0.5 rounded-full text-[10px] font-medium"
+                [ngClass]="{
+                  'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300': adv.revenue_recognition_status === 'TRANSFERRED_TO_REVENUE',
+                  'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300': adv.revenue_recognition_status === 'POC_ELIGIBLE',
+                  'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300': adv.revenue_recognition_status === 'UNEARNED_LIABILITY'
+                }">
+                {{ formatStatus(adv.revenue_recognition_status) }}
+              </span>
+            </td>
+
+            <!-- GL Voucher -->
+            <td class="py-3 px-4 text-center font-mono text-[11px]">
+              <span *ngIf="adv.gl_voucher_id" class="text-primary font-semibold hover:underline cursor-pointer">
+                VR-{{ adv.gl_voucher_id }}
+              </span>
+              <span *ngIf="!adv.gl_voucher_id" class="text-muted-foreground/60">—</span>
+            </td>
+
+            <!-- Actions -->
+            <td class="py-3 px-4 text-center">
+              <div class="flex items-center justify-center gap-1.5">
+                <!-- Allocate Button -->
+                <button
+                  *ngIf="adv.unapplied_credit_balance > 0"
+                  (click)="openAllocateModal(adv)"
+                  title="Allocate to Installment Demand"
+                  class="p-1.5 text-blue-600 hover:bg-blue-500/10 rounded-lg transition-colors">
+                  <i class="ri-split-cells-vertical text-sm"></i>
+                </button>
+
+                <!-- IFRS 15 Revenue Recognition -->
+                <button
+                  *ngIf="adv.revenue_recognition_status !== 'TRANSFERRED_TO_REVENUE'"
+                  (click)="openRecognizeModal(adv)"
+                  title="Recognize Revenue (IFRS 15)"
+                  class="p-1.5 text-purple-600 hover:bg-purple-500/10 rounded-lg transition-colors">
+                  <i class="ri-exchange-dollar-line text-sm"></i>
+                </button>
+
+                <!-- Process Refund -->
+                <button
+                  *ngIf="adv.unapplied_credit_balance > 0"
+                  (click)="openRefundModal(adv)"
+                  title="Cancellation & Refund"
+                  class="p-1.5 text-amber-600 hover:bg-amber-500/10 rounded-lg transition-colors">
+                  <i class="ri-refund-2-line text-sm"></i>
+                </button>
+
+                <!-- Edit -->
+                <a
+                  [routerLink]="['/accounts/customer-advances/edit', adv.id]"
+                  title="Edit Transaction"
+                  class="p-1.5 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg transition-colors">
+                  <i class="ri-pencil-line text-sm"></i>
+                </a>
+
+                <!-- Delete -->
+                <button
+                  *ngIf="adv.revenue_recognized_amount === 0"
+                  (click)="deleteAdvance(adv.id)"
+                  title="Delete"
+                  class="p-1.5 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors">
+                  <i class="ri-delete-bin-line text-sm"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Controls -->
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-border mt-4 text-xs text-muted-foreground">
+      <div>
+        Showing page <span class="font-semibold text-foreground">{{ currentPage() }}</span> of
+        <span class="font-semibold text-foreground">{{ totalPages() }}</span> (Total {{ totalCount() }} advances)
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button
+          [disabled]="currentPage() <= 1"
+          (click)="onPageChange(currentPage() - 1)"
+          class="px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed">
+          Previous
+        </button>
+        <button
+          [disabled]="currentPage() >= totalPages()"
+          (click)="onPageChange(currentPage() + 1)"
+          class="px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed">
+          Next
+        </button>
+      </div>
+    </div>
+  </app-card-container>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL 1: ALLOCATE TO INSTALLMENT DEMAND                                   -->
+  <!-- ========================================================================= -->
+  <div *ngIf="showAllocateModal()" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div class="bg-card border border-border rounded-xl shadow-xl w-full max-w-md p-5 space-y-4">
+      <div class="flex items-center justify-between border-b border-border pb-3">
+        <h3 class="text-sm font-bold text-foreground">Allocate Advance to Installment</h3>
+        <button (click)="showAllocateModal.set(false)" class="text-muted-foreground hover:text-foreground">
+          <i class="ri-close-line text-lg"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <span class="text-muted-foreground">Advance #:</span>
+          <span class="font-bold text-foreground ml-1">{{ selectedAdvance()?.advance_number }}</span>
+        </div>
+        <div>
+          <span class="text-muted-foreground">Customer:</span>
+          <span class="font-semibold text-foreground ml-1">{{ selectedAdvance()?.customer_name }}</span>
+        </div>
+        <div class="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-300">
+          Available Unapplied Balance: <strong>৳ {{ selectedAdvance()?.unapplied_credit_balance | number:'1.2-2' }}</strong>
+        </div>
+
+        <app-custom-input
+          label="Amount to Allocate (৳)"
+          type="number"
+          [(ngModel)]="allocForm.allocated_amount"
+          placeholder="0.00">
+        </app-custom-input>
+
+        <app-custom-input
+          label="Notes / Allocation Remarks"
+          [(ngModel)]="allocForm.notes"
+          placeholder="e.g. Cleared 2nd Floor Roof Casting Installment">
+        </app-custom-input>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-3 border-t border-border">
+        <button
+          (click)="showAllocateModal.set(false)"
+          class="px-3 py-1.5 text-xs rounded-lg border border-border hover:bg-secondary">
+          Cancel
+        </button>
+        <button
+          (click)="submitAllocation()"
+          class="px-4 py-1.5 text-xs font-semibold bg-primary text-primary-foreground rounded-lg hover:bg-primary/90">
+          Post Allocation
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL 2: IFRS 15 REVENUE RECOGNITION                                      -->
+  <!-- ========================================================================= -->
+  <div *ngIf="showRecognizeModal()" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div class="bg-card border border-border rounded-xl shadow-xl w-full max-w-md p-5 space-y-4">
+      <div class="flex items-center justify-between border-b border-border pb-3">
+        <h3 class="text-sm font-bold text-foreground">IFRS 15 Revenue Recognition Transfer</h3>
+        <button (click)="showRecognizeModal.set(false)" class="text-muted-foreground hover:text-foreground">
+          <i class="ri-close-line text-lg"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div class="p-2.5 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-700 dark:text-purple-300">
+          Illustrative Entry: <strong>Debit Customer Advances (2120), Credit Sales Revenue (4010)</strong>
+        </div>
+
+        <app-custom-input
+          label="Revenue Amount to Recognize (৳)"
+          type="number"
+          [(ngModel)]="revForm.recognized_amount">
+        </app-custom-input>
+
+        <app-custom-input
+          label="Recognition Policy Notes"
+          [(ngModel)]="revForm.notes"
+          placeholder="Percentage of Completion (POC) / Sub-Registry deed transfer">
+        </app-custom-input>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-3 border-t border-border">
+        <button
+          (click)="showRecognizeModal.set(false)"
+          class="px-3 py-1.5 text-xs rounded-lg border border-border hover:bg-secondary">
+          Cancel
+        </button>
+        <button
+          (click)="submitRevenueRecognition()"
+          class="px-4 py-1.5 text-xs font-semibold bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+          Transfer to Revenue
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL 3: CANCELLATION & REFUND ACCOUNTING                                 -->
+  <!-- ========================================================================= -->
+  <div *ngIf="showRefundModal()" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div class="bg-card border border-border rounded-xl shadow-xl w-full max-w-md p-5 space-y-4">
+      <div class="flex items-center justify-between border-b border-border pb-3">
+        <h3 class="text-sm font-bold text-foreground">Cancellation & Refund Settlement</h3>
+        <button (click)="showRefundModal.set(false)" class="text-muted-foreground hover:text-foreground">
+          <i class="ri-close-line text-lg"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <app-custom-input
+          label="Net Refund to Buyer (৳)"
+          type="number"
+          [(ngModel)]="refundForm.refund_amount">
+        </app-custom-input>
+
+        <app-custom-input
+          label="Forfeiture Amount / Penalty (৳)"
+          type="number"
+          [(ngModel)]="refundForm.forfeiture_amount"
+          hint="Credited to Allotment Cancellation Forfeiture Income (4040)">
+        </app-custom-input>
+
+        <app-custom-input
+          label="Cancellation Reason"
+          [(ngModel)]="refundForm.reason"
+          placeholder="Client relocation / mutual release agreement">
+        </app-custom-input>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-3 border-t border-border">
+        <button
+          (click)="showRefundModal.set(false)"
+          class="px-3 py-1.5 text-xs rounded-lg border border-border hover:bg-secondary">
+          Cancel
+        </button>
+        <button
+          (click)="submitRefund()"
+          class="px-4 py-1.5 text-xs font-semibold bg-red-600 text-white rounded-lg hover:bg-red-700">
+          Disburse Refund
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

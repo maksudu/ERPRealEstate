@@ -1,0 +1,419 @@
+<!-- Master Card Container for Register Customer Money Receipt -->
+<app-card-container
+  title="Register Customer Money Receipt & Multi-Invoice Allocation"
+  subtitle="Record collection instruments, apply immediate installment allocations or hold unallocated advance cash"
+  badge="AR Cash Voucher"
+>
+  <!-- Unified Module Sub-Navigation Bar -->
+  <div class="flex items-center gap-1.5 p-1.5 bg-secondary/40 rounded-2xl border border-border overflow-x-auto mb-6">
+    <a
+      routerLink="/accounts/coa"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-node-tree"></i>
+      <span>Chart of Accounts</span>
+    </a>
+
+    <a
+      routerLink="/accounts/vouchers"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-file-list-3-line"></i>
+      <span>General Ledger Vouchers</span>
+    </a>
+
+    <a
+      routerLink="/accounts/ledger"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-booklet-line"></i>
+      <span>Ledger Inquiry & Statements</span>
+    </a>
+
+    <a
+      routerLink="/accounts/payables"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-money-dollar-circle-line"></i>
+      <span>Accounts Payable (AP)</span>
+    </a>
+
+    <a
+      routerLink="/accounts/receivables"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-hand-coin-line"></i>
+      <span>Accounts Receivable (AR)</span>
+    </a>
+
+    <a
+      routerLink="/accounts/receivables/receipts"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-card text-foreground shadow-xs border border-border inline-flex items-center gap-1.5 whitespace-nowrap"
+    >
+      <i class="ri-refund-2-line text-primary"></i>
+      <span>Receipts & Allocations</span>
+    </a>
+
+    <a
+      routerLink="/accounts/receivables/ledger"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-user-star-line"></i>
+      <span>Customer Ledger & Aging</span>
+    </a>
+
+    <a
+      routerLink="/accounts/financial-reports"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-pie-chart-2-line"></i>
+      <span>Financial Reports (P&L / BS)</span>
+    </a>
+
+    <div class="ml-auto pl-2 flex items-center gap-2">
+      <a
+        routerLink="/settings/lookups"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-primary hover:text-primary/80 bg-card rounded-xl border border-border shadow-xs transition-colors whitespace-nowrap"
+        title="Dynamic Dropdown Creation & Customization Settings"
+      >
+        <i class="ri-settings-4-line"></i>
+        <span>Dropdown Settings</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div *ngIf="errorMessage()" class="p-4 rounded-2xl bg-destructive/10 border border-destructive/20 text-destructive text-sm flex items-center justify-between mb-6">
+    <div class="flex items-center gap-2">
+      <i class="ri-error-warning-line text-lg"></i>
+      <span>{{ errorMessage() }}</span>
+    </div>
+    <button (click)="errorMessage.set(null)" class="text-destructive hover:opacity-75">
+      <i class="ri-close-line"></i>
+    </button>
+  </div>
+
+  <!-- Back Link -->
+  <div class="flex items-center justify-between mb-6">
+    <a
+      routerLink="/accounts/receivables/receipts"
+      class="px-4 py-2 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground bg-card hover:bg-secondary border border-border transition-all inline-flex items-center gap-1.5"
+    >
+      <i class="ri-arrow-left-line"></i>
+      <span>Back to Receipts Register</span>
+    </a>
+  </div>
+
+  <!-- Main Creation Form -->
+  <form [formGroup]="receiptForm" (ngSubmit)="onSubmit()" class="space-y-6">
+
+    <!-- Section 1: Customer & Instrument Header -->
+    <div class="p-6 rounded-2xl bg-card border border-border shadow-xs space-y-5">
+      <div class="flex items-center gap-2 pb-3 border-b border-border">
+        <div class="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+          <i class="ri-bank-card-line text-lg"></i>
+        </div>
+        <div>
+          <h3 class="text-sm font-semibold text-foreground">Money Receipt Details</h3>
+          <p class="text-xs text-muted-foreground">Specify customer, total collection deposit, and instrument channel</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        <!-- Customer Selector -->
+        <div>
+          <app-searchable-select
+            label="Customer / Apartment Buyer *"
+            formControlName="customer_id"
+            [options]="customerOptions"
+            placeholder="Select customer..."
+            [required]="true"
+            [allowCreateNew]="true"
+            createRoute="/crm/customers/create"
+          ></app-searchable-select>
+        </div>
+
+        <!-- Project Selector -->
+        <div>
+          <app-searchable-select
+            label="Project Name"
+            formControlName="project_id"
+            [options]="projectOptions"
+            placeholder="Corporate / Select project..."
+            [allowCreateNew]="true"
+            createRoute="/projects/master"
+          ></app-searchable-select>
+        </div>
+
+        <!-- Receipt Date -->
+        <div>
+          <app-custom-input
+            label="Collection Date *"
+            type="date"
+            formControlName="receipt_date"
+            [required]="true"
+          ></app-custom-input>
+        </div>
+
+        <!-- Total Receipt Amount -->
+        <div>
+          <app-custom-input
+            label="Total Receipt Amount (BDT ৳) *"
+            type="number"
+            formControlName="amount"
+            placeholder="e.g. 500000"
+            [required]="true"
+          ></app-custom-input>
+        </div>
+
+        <!-- Collection Method -->
+        <div>
+          <app-searchable-select
+            label="Collection Method *"
+            formControlName="collection_method"
+            [options]="methodOptions"
+            placeholder="Select payment channel..."
+            [required]="true"
+          ></app-searchable-select>
+        </div>
+
+        <!-- Status / Clearance Stage -->
+        <div>
+          <label class="block text-xs font-medium text-foreground mb-1.5">Lifecycle Clearance Status *</label>
+          <select
+            formControlName="status"
+            class="w-full text-xs rounded-xl bg-background border border-border px-3 py-2 text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+          >
+            <option value="Cleared">Cleared (Funds verified in Bank/Cash, Post GL Voucher)</option>
+            <option value="Recorded">Recorded (PDC Cheque / slip received, Awaiting Clearance)</option>
+          </select>
+        </div>
+
+        <!-- Bank Account Selector -->
+        <div>
+          <app-searchable-select
+            label="Deposit Bank / Cash Account *"
+            formControlName="bank_account_id"
+            [options]="bankAccountOptions"
+            placeholder="Select bank..."
+            [allowCreateNew]="true"
+            createRoute="/accounts/coa"
+          ></app-searchable-select>
+        </div>
+
+        <!-- Cheque / Instrument Number -->
+        <div>
+          <app-custom-input
+            label="Cheque / Instrument No."
+            formControlName="cheque_number"
+            placeholder="e.g. CQ-774912"
+          ></app-custom-input>
+        </div>
+
+        <!-- Cheque Date -->
+        <div>
+          <app-custom-input
+            label="Cheque Date (if applicable)"
+            type="date"
+            formControlName="cheque_date"
+          ></app-custom-input>
+        </div>
+
+        <!-- Bank Transaction Reference -->
+        <div>
+          <app-custom-input
+            label="Bank Transaction Ref / Slip #"
+            formControlName="transaction_reference"
+            placeholder="e.g. BEFTN-991204"
+          ></app-custom-input>
+        </div>
+
+        <!-- Bank Name -->
+        <div>
+          <app-custom-input
+            label="Drawee Bank Name"
+            formControlName="bank_name"
+            placeholder="e.g. Eastern Bank Ltd"
+          ></app-custom-input>
+        </div>
+
+        <!-- General Memo / Notes -->
+        <div class="sm:col-span-2 md:col-span-3">
+          <app-custom-textarea
+            label="Receipt Narration & Remarks"
+            formControlName="notes"
+            placeholder="Official money receipt notes..."
+            [rows]="2"
+          ></app-custom-textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2: Allocation Mode & Multi-Invoice Selection -->
+    <div class="p-6 rounded-2xl bg-card border border-border shadow-xs space-y-5">
+      <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-border">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600">
+            <i class="ri-split-cells-horizontal text-lg"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-semibold text-foreground">Multi-Invoice Allocation Matrix</h3>
+            <p class="text-xs text-muted-foreground">Distribute the money receipt across one or multiple milestone installments</p>
+          </div>
+        </div>
+
+        <!-- Allocation Mode Selector -->
+        <div class="flex items-center gap-1.5 p-1 bg-secondary rounded-xl text-xs font-semibold">
+          <button
+            type="button"
+            (click)="allocationMode = 'split_allocation'"
+            class="px-3 py-1.5 rounded-lg transition-colors"
+            [ngClass]="allocationMode === 'split_allocation' ? 'bg-card text-foreground shadow-2xs' : 'text-muted-foreground hover:text-foreground'"
+          >
+            Allocate to Invoices
+          </button>
+          <button
+            type="button"
+            (click)="allocationMode = 'advance_only'"
+            class="px-3 py-1.5 rounded-lg transition-colors"
+            [ngClass]="allocationMode === 'advance_only' ? 'bg-card text-foreground shadow-2xs' : 'text-muted-foreground hover:text-foreground'"
+          >
+            Hold as Pure Advance
+          </button>
+        </div>
+      </div>
+
+      <!-- If Pure Advance Mode -->
+      <div *ngIf="allocationMode === 'advance_only'" class="p-5 rounded-xl bg-purple-500/10 border border-purple-500/20 text-xs text-purple-800 dark:text-purple-300 space-y-1">
+        <div class="font-semibold flex items-center gap-1.5">
+          <i class="ri-information-line text-sm"></i>
+          <span>Unallocated Advance Mode Selected</span>
+        </div>
+        <p>
+          The entire amount of <strong>৳ {{ (receiptForm.get('amount')?.value || 0) | number:'1.2-2' }}</strong> will be held in the Customer Advances Liability Account (`2140`). 
+          It can be allocated to future milestone demand notices at any time via the Receipt Allocation Manager.
+        </p>
+      </div>
+
+      <!-- If Split Allocation Mode -->
+      <div *ngIf="allocationMode === 'split_allocation'" class="space-y-4">
+        <!-- Live Calculation Summary Ribbon -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="p-3.5 rounded-xl bg-secondary/50 border border-border">
+            <span class="text-[11px] font-medium text-muted-foreground">Receipt Amount</span>
+            <div class="text-base font-bold text-foreground">
+              ৳ {{ (receiptForm.get('amount')?.value || 0) | number:'1.2-2' }}
+            </div>
+          </div>
+          <div class="p-3.5 rounded-xl bg-blue-500/10 border border-blue-500/20">
+            <span class="text-[11px] font-medium text-blue-600 dark:text-blue-400">Total Allocated</span>
+            <div class="text-base font-bold text-blue-600 dark:text-blue-400">
+              ৳ {{ getTotalAllocated() | number:'1.2-2' }}
+            </div>
+          </div>
+          <div class="p-3.5 rounded-xl bg-purple-500/10 border border-purple-500/20">
+            <span class="text-[11px] font-medium text-purple-600 dark:text-purple-400">Remaining Advance</span>
+            <div class="text-base font-bold text-purple-600 dark:text-purple-400">
+              ৳ {{ getRemainingUnallocated() | number:'1.2-2' }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Open Invoices Table -->
+        <div class="rounded-xl border border-border overflow-hidden">
+          <table class="w-full text-xs text-left">
+            <thead class="bg-secondary/40 text-muted-foreground font-semibold border-b border-border">
+              <tr>
+                <th class="px-4 py-2.5 w-12 text-center">Select</th>
+                <th class="px-4 py-2.5">Invoice #</th>
+                <th class="px-4 py-2.5">Demand / Milestone</th>
+                <th class="px-4 py-2.5 text-right">Balance Due</th>
+                <th class="px-4 py-2.5 text-right w-48">Allocated Amount (৳)</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border/60">
+              <tr *ngIf="isLoadingInvoices()" class="text-center">
+                <td colspan="5" class="py-8 text-muted-foreground">
+                  <i class="ri-loader-4-line text-lg animate-spin text-primary inline-block mb-1"></i>
+                  <p>Loading customer outstanding invoices...</p>
+                </td>
+              </tr>
+
+              <tr *ngIf="!isLoadingInvoices() && allocationsArray.length === 0" class="text-center">
+                <td colspan="5" class="py-8 text-muted-foreground">
+                  <i class="ri-checkbox-circle-line text-2xl text-emerald-600 inline-block mb-1"></i>
+                  <p>Customer has no outstanding unpaid invoices. Receipt will be saved as unallocated advance.</p>
+                </td>
+              </tr>
+
+              <tr
+                *ngFor="let group of allocationsArray.controls; let i = index"
+                class="hover:bg-secondary/20 transition-colors"
+                [ngClass]="{ 'bg-primary/5': group.get('selected')?.value }"
+              >
+                <!-- Checkbox -->
+                <td class="px-4 py-3 text-center">
+                  <input
+                    type="checkbox"
+                    [checked]="group.get('selected')?.value"
+                    (change)="toggleInvoiceSelection(i)"
+                    class="rounded-sm border-border text-primary focus:ring-primary"
+                  />
+                </td>
+
+                <!-- Invoice # -->
+                <td class="px-4 py-3 font-semibold text-foreground">
+                  {{ group.get('invoice_number')?.value }}
+                </td>
+
+                <!-- Milestone / Title -->
+                <td class="px-4 py-3 text-muted-foreground">
+                  {{ group.get('milestone_title')?.value || 'Installment Demand' }}
+                </td>
+
+                <!-- Balance Due -->
+                <td class="px-4 py-3 text-right font-medium text-foreground">
+                  ৳ {{ group.get('balance_due')?.value | number:'1.2-2' }}
+                </td>
+
+                <!-- Allocated Amount Input -->
+                <td class="px-4 py-2 text-right">
+                  <input
+                    type="number"
+                    [value]="group.get('allocated_amount')?.value"
+                    (input)="group.patchValue({ allocated_amount: $any($event.target).value, selected: true })"
+                    [disabled]="!group.get('selected')?.value"
+                    class="w-full text-right text-xs rounded-lg bg-background border border-border px-2.5 py-1.5 text-foreground disabled:opacity-40 focus:outline-hidden focus:ring-1 focus:ring-primary"
+                    placeholder="0.00"
+                  />
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Submit Toolbar -->
+    <div class="flex items-center justify-end gap-3 pt-4 border-t border-border">
+      <a
+        routerLink="/accounts/receivables/receipts"
+        class="px-5 py-2.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground bg-secondary hover:bg-secondary/80 border border-border transition-colors"
+      >
+        Cancel
+      </a>
+
+      <button
+        type="submit"
+        [disabled]="isSubmitting()"
+        class="px-6 py-2.5 rounded-xl text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-all inline-flex items-center gap-1.5 shadow-xs disabled:opacity-50"
+      >
+        <i *ngIf="isSubmitting()" class="ri-loader-4-line animate-spin"></i>
+        <i *ngIf="!isSubmitting()" class="ri-check-line"></i>
+        <span>{{ isSubmitting() ? 'Recording Receipt...' : 'Confirm & Commit Money Receipt' }}</span>
+      </button>
+    </div>
+
+  </form>
+
+</app-card-container>

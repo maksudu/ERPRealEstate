@@ -1,0 +1,355 @@
+<app-card-container
+  title="Issue Accounts Receivable Demand Notice / Milestone Invoice"
+  subtitle="Register apartment installment demands, down-payments, utility charges, commercial rentals & auto-post GL billing vouchers"
+  badge="AR Billing Core"
+>
+  <!-- Unified Module Sub-Navigation Bar -->
+  <div class="flex items-center gap-1.5 p-1.5 bg-secondary/40 rounded-2xl border border-border overflow-x-auto mb-6">
+    <a
+      routerLink="/accounts/coa"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-node-tree"></i>
+      <span>Chart of Accounts</span>
+    </a>
+
+    <a
+      routerLink="/accounts/vouchers"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-file-list-3-line"></i>
+      <span>General Ledger Vouchers</span>
+    </a>
+
+    <a
+      routerLink="/accounts/ledger"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-booklet-line"></i>
+      <span>Ledger Inquiry & Statements</span>
+    </a>
+
+    <a
+      routerLink="/accounts/payables"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-money-dollar-circle-line"></i>
+      <span>Accounts Payable (AP)</span>
+    </a>
+
+    <a
+      routerLink="/accounts/receivables"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-card text-foreground shadow-xs border border-border inline-flex items-center gap-1.5 whitespace-nowrap"
+    >
+      <i class="ri-hand-coin-line text-primary"></i>
+      <span>Accounts Receivable (AR)</span>
+    </a>
+
+    <a
+      routerLink="/accounts/receivables/receipts"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-refund-2-line"></i>
+      <span>Receipts & Allocations</span>
+    </a>
+
+    <a
+      routerLink="/accounts/receivables/ledger"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-user-star-line"></i>
+      <span>Customer Ledger & Aging</span>
+    </a>
+
+    <a
+      routerLink="/accounts/financial-reports"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-pie-chart-2-line"></i>
+      <span>Financial Reports (P&L / BS)</span>
+    </a>
+
+    <div class="ml-auto pl-2 flex items-center gap-2">
+      <a
+        routerLink="/settings/lookups"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-primary hover:text-primary/80 bg-card rounded-xl border border-border shadow-xs transition-colors whitespace-nowrap"
+      >
+        <i class="ri-settings-4-line"></i>
+        <span>Dropdown Settings</span>
+      </a>
+    </div>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="bg-destructive/10 text-destructive border border-destructive/20 rounded-2xl p-4 mb-6 flex items-start gap-3">
+      <i class="ri-error-warning-line text-lg mt-0.5"></i>
+      <div class="text-xs">
+        <p class="font-bold">Validation Error</p>
+        <p class="mt-0.5">{{ errorMessage() }}</p>
+      </div>
+    </div>
+  }
+
+  <form [formGroup]="receivableForm" (ngSubmit)="onSubmit()" class="space-y-6">
+    <!-- SECTION 1: Notice Reference & Billing Classification -->
+    <div class="bg-card rounded-2xl border border-border p-6 shadow-xs">
+      <div class="flex items-center gap-2 mb-4 pb-3 border-b border-border">
+        <span class="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold">
+          <i class="ri-file-paper-2-line"></i>
+        </span>
+        <div>
+          <h3 class="text-sm font-bold text-foreground">1. Demand Notice Identification & Schedule</h3>
+          <p class="text-xs text-muted-foreground">Unique notice number, demand type and payment deadline</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Demand Notice # -->
+        <div>
+          <app-custom-input
+            label="Demand Notice # *"
+            placeholder="e.g. DN-2026-0001"
+            formControlName="invoice_number"
+            hint="Unique reference number for customer"
+          ></app-custom-input>
+        </div>
+
+        <!-- Demand Type Dynamic Lookup -->
+        <div>
+          <app-searchable-select
+            categoryCode="AR_INVOICE_TYPE"
+            label="Demand / Billing Type *"
+            placeholder="Select demand type..."
+            [value]="receivableForm.get('invoice_type')?.value"
+            (valueChange)="receivableForm.patchValue({ invoice_type: $event })"
+            [allowCreateNew]="true"
+            createRoute="/settings/lookups"
+            hint="Milestone installment, down-payment, utility, etc."
+          ></app-searchable-select>
+        </div>
+
+        <!-- Notice Date -->
+        <div>
+          <app-custom-input
+            label="Demand Notice Date *"
+            type="date"
+            formControlName="invoice_date"
+          ></app-custom-input>
+        </div>
+
+        <!-- Payment Due Date -->
+        <div>
+          <app-custom-input
+            label="Payment Due Date *"
+            type="date"
+            formControlName="due_date"
+            hint="Actual due date used for aging schedules"
+          ></app-custom-input>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2: Customer, Project & Property Allocation -->
+    <div class="bg-card rounded-2xl border border-border p-6 shadow-xs">
+      <div class="flex items-center gap-2 mb-4 pb-3 border-b border-border">
+        <span class="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold">
+          <i class="ri-user-star-line"></i>
+        </span>
+        <div>
+          <h3 class="text-sm font-bold text-foreground">2. Customer & Unit Allocation</h3>
+          <p class="text-xs text-muted-foreground">Link demand notice to customer buyer, real estate project and booked apartment</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Searchable Customer with Add New -->
+        <div>
+          <app-searchable-select
+            label="Customer / Buyer Payee *"
+            placeholder="Search by customer name, phone, code..."
+            [options]="customerOptions"
+            [value]="receivableForm.get('customer_id')?.value"
+            (valueChange)="onCustomerSelect($event)"
+            [allowCreateNew]="true"
+            createRoute="/crm/customers"
+            hint="Primary apartment buyer or commercial lessee"
+          ></app-searchable-select>
+        </div>
+
+        <!-- Searchable Project with Add New -->
+        <div>
+          <app-searchable-select
+            label="Real Estate Project"
+            placeholder="Select project..."
+            [options]="projectOptions"
+            [value]="receivableForm.get('project_id')?.value"
+            (valueChange)="onProjectSelect($event)"
+            [allowCreateNew]="true"
+            createRoute="/projects/master"
+            hint="Target development site"
+          ></app-searchable-select>
+        </div>
+
+        <!-- Property Unit -->
+        <div>
+          <app-searchable-select
+            label="Apartment / Commercial Unit"
+            placeholder="Select unit..."
+            [options]="unitOptions"
+            [value]="receivableForm.get('unit_id')?.value"
+            (valueChange)="receivableForm.patchValue({ unit_id: $event })"
+            [allowCreateNew]="true"
+            createRoute="/inventory/units"
+            hint="Specific flat/unit for this installment"
+          ></app-searchable-select>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 3: Financial Demand Breakdown & GL Account Dimensions -->
+    <div class="bg-card rounded-2xl border border-border p-6 shadow-xs">
+      <div class="flex items-center gap-2 mb-4 pb-3 border-b border-border">
+        <span class="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold">
+          <i class="ri-money-dollar-box-line"></i>
+        </span>
+        <div>
+          <h3 class="text-sm font-bold text-foreground">3. Financial Calculation & General Ledger Accounts</h3>
+          <p class="text-xs text-muted-foreground">Gross installment demand, contractual late fees, discounts, and GL double-entry mapping</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <!-- Gross Amount -->
+        <div>
+          <app-custom-input
+            label="Gross Installment / Demand Amount (৳) *"
+            type="number"
+            formControlName="gross_amount"
+            hint="Base contract milestone or billing charge"
+          ></app-custom-input>
+        </div>
+
+        <!-- Contractual Late Fee -->
+        <div>
+          <app-custom-input
+            label="Contractual Late Fee / Surcharge (৳)"
+            type="number"
+            formControlName="late_fee_amount"
+            hint="Late penalty where contractually permitted"
+          ></app-custom-input>
+          <!-- Quick Calculators -->
+          <div class="flex items-center gap-1.5 mt-2">
+            <span class="text-[10px] text-muted-foreground">Quick Late Fee:</span>
+            <button
+              type="button"
+              (click)="applyStandardLateFee(1.5)"
+              class="px-1.5 py-0.5 text-[10px] rounded bg-secondary hover:bg-secondary/80 text-foreground border border-border font-medium cursor-pointer"
+            >
+              1.5%
+            </button>
+            <button
+              type="button"
+              (click)="applyStandardLateFee(2.5)"
+              class="px-1.5 py-0.5 text-[10px] rounded bg-secondary hover:bg-secondary/80 text-foreground border border-border font-medium cursor-pointer"
+            >
+              2.5%
+            </button>
+            <button
+              type="button"
+              (click)="applyStandardLateFee(5.0)"
+              class="px-1.5 py-0.5 text-[10px] rounded bg-secondary hover:bg-secondary/80 text-foreground border border-border font-medium cursor-pointer"
+            >
+              5.0%
+            </button>
+          </div>
+        </div>
+
+        <!-- Approved Discount / Rebate -->
+        <div>
+          <app-custom-input
+            label="Approved Discount / Rebate (৳)"
+            type="number"
+            formControlName="discount_amount"
+            hint="Approved waiver or timely payment concession"
+          ></app-custom-input>
+        </div>
+      </div>
+
+      <!-- Net Payable Summary Ribbon -->
+      <div class="p-4 rounded-xl bg-secondary/50 border border-border flex flex-wrap items-center justify-between gap-3 mb-6">
+        <div>
+          <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Net Amount Receivable from Customer</span>
+          <p class="text-xs text-muted-foreground">Gross Amount + Contractual Late Fee - Concession Discount</p>
+        </div>
+        <div class="text-2xl font-bold font-mono text-primary">
+          ৳{{ computedNetReceivable() | number:'1.2-2' }}
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Debit: Accounts Receivable Account -->
+        <div>
+          <app-searchable-select
+            label="Debit: Accounts Receivable Ledger (COA) *"
+            placeholder="Select receivable asset account..."
+            [options]="receivableAccountOptions"
+            [value]="receivableForm.get('receivable_account_id')?.value"
+            (valueChange)="receivableForm.patchValue({ receivable_account_id: $event })"
+            [allowCreateNew]="true"
+            createRoute="/accounts/coa/create"
+            hint="Default: 1130 - Accounts Receivable - Flat Buyers"
+          ></app-searchable-select>
+        </div>
+
+        <!-- Credit: Revenue / Advances Account -->
+        <div>
+          <app-searchable-select
+            label="Credit: Revenue / Customer Advances (COA) *"
+            placeholder="Select revenue or unearned income account..."
+            [options]="revenueAccountOptions"
+            [value]="receivableForm.get('revenue_account_id')?.value"
+            (valueChange)="receivableForm.patchValue({ revenue_account_id: $event })"
+            [allowCreateNew]="true"
+            createRoute="/accounts/coa/create"
+            hint="Default: 4100 - Property Sales Revenue or 2140 - Customer Advances"
+          ></app-searchable-select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Description & Particulars -->
+    <div class="bg-card rounded-2xl border border-border p-6 shadow-xs">
+      <app-custom-textarea
+        label="Description / Milestone Particulars"
+        placeholder="e.g. 5th Floor Roof Slab Casting Installment as per contract schedule..."
+        formControlName="description"
+        [rows]="3"
+        hint="Details printed on customer demand letter and GL voucher"
+      ></app-custom-textarea>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex items-center justify-end gap-3 pt-2">
+      <a
+        routerLink="/accounts/receivables"
+        class="inline-flex items-center justify-center px-4 py-2.5 rounded-xl border border-border bg-card hover:bg-secondary text-foreground text-xs font-semibold transition-colors"
+      >
+        Cancel
+      </a>
+
+      <app-custom-button
+        type="submit"
+        variant="primary"
+        [disabled]="isSubmitting()"
+      >
+        @if (isSubmitting()) {
+          <span class="inline-block animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></span>
+          Posting Demand Notice & GL Voucher...
+        } @else {
+          <i class="ri-check-line mr-1.5"></i>
+          Register Demand Notice
+        }
+      </app-custom-button>
+    </div>
+  </form>
+</app-card-container>

@@ -1,0 +1,398 @@
+<div class="w-full max-w-7xl mx-auto space-y-6">
+  <!-- Section Navigation Header -->
+  <app-cwip-allocation-nav></app-cwip-allocation-nav>
+
+  <!-- Notification Banner -->
+  <div *ngIf="feedbackMessage" 
+       [ngClass]="feedbackType === 'success' ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-400' : 'bg-rose-500/10 border-rose-500/30 text-rose-700 dark:text-rose-400'"
+       class="p-4 rounded-xl border flex items-center justify-between shadow-xs transition-all">
+    <div class="flex items-center gap-2.5 text-sm font-medium">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <span>{{ feedbackMessage }}</span>
+    </div>
+    <button (click)="feedbackMessage = null" class="text-xs font-semibold">✕</button>
+  </div>
+
+  <!-- 12.1 Portfolio KPI Cards -->
+  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5">
+    <div class="bg-card border border-border rounded-xl p-3.5 shadow-xs">
+      <div class="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Total Allocated CWIP</div>
+      <div class="text-lg font-bold text-foreground mt-1">৳{{ (kpis?.total_allocated_cwip || 0) | number:'1.0-0' }}</div>
+      <div class="text-[10px] text-muted-foreground mt-0.5">
+        {{ kpis?.total_allocations_count || 0 }} traceable allocations
+      </div>
+    </div>
+
+    <div class="bg-card border border-border rounded-xl p-3.5 shadow-xs">
+      <div class="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Materials Issued to CWIP</div>
+      <div class="text-lg font-bold text-primary mt-1">৳{{ (kpis?.total_material_issues_cost || 0) | number:'1.0-0' }}</div>
+      <div class="text-[10px] text-muted-foreground mt-0.5">
+        {{ kpis?.total_material_issues_count || 0 }} store issues (12.3)
+      </div>
+    </div>
+
+    <div class="bg-card border border-border rounded-xl p-3.5 shadow-xs">
+      <div class="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Net Active CWIP</div>
+      <div class="text-lg font-bold text-amber-600 dark:text-amber-400 mt-1">৳{{ (kpis?.active_net_cwip_balance || 0) | number:'1.0-0' }}</div>
+      <div class="text-[10px] text-muted-foreground mt-0.5">
+        Under development (1220)
+      </div>
+    </div>
+
+    <div class="bg-card border border-border rounded-xl p-3.5 shadow-xs">
+      <div class="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Transferred to COGS</div>
+      <div class="text-lg font-bold text-emerald-600 dark:text-emerald-400 mt-1">৳{{ (kpis?.total_cogs_transferred || 0) | number:'1.0-0' }}</div>
+      <div class="text-[10px] text-muted-foreground mt-0.5">
+        Unit sales / handovers (5100)
+      </div>
+    </div>
+
+    <div class="bg-card border border-border rounded-xl p-3.5 shadow-xs">
+      <div class="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Budget Utilization</div>
+      <div class="text-lg font-bold text-indigo-600 dark:text-indigo-400 mt-1">{{ kpis?.budget_utilization_pct || 0 }}%</div>
+      <div class="text-[10px] text-muted-foreground mt-0.5">
+        vs Approved BOQ
+      </div>
+    </div>
+
+    <div class="bg-card border border-border rounded-xl p-3.5 shadow-xs">
+      <div class="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Accounting Framework</div>
+      <div class="text-xs font-bold text-foreground mt-1">Capitalized CWIP</div>
+      <div class="text-[10px] text-emerald-600 font-medium mt-0.5">
+        Policy verified audit
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Card Container -->
+  <app-card-container>
+    <!-- Header -->
+    <div class="p-5 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div>
+        <h2 class="text-base font-semibold text-foreground">Traceable Construction Cost Allocations</h2>
+        <p class="text-xs text-muted-foreground mt-0.5">
+          Spec 12.1 & 12.2 — Accumulate direct and common costs against projects and work packages without destructive overwrite.
+        </p>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <a routerLink="/accounts/construction-cwip/create"
+           class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg shadow-xs transition-colors">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          <span>Allocate Construction Cost</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="p-4 bg-muted/20 border-b border-border">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <!-- Search Input -->
+        <div class="relative">
+          <input
+            type="text"
+            [(ngModel)]="searchQuery"
+            (keyup.enter)="onSearch()"
+            placeholder="Search ref, package, basis..."
+            class="w-full pl-9 pr-3 py-2 text-xs rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground focus:ring-1 focus:ring-primary" />
+          <svg class="w-4 h-4 absolute left-2.5 top-2.5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+
+        <!-- Target Project Filter -->
+        <app-searchable-select
+          [options]="projectOptions"
+          label=""
+          placeholder="All Target Projects"
+          (valueChange)="onProjectChange($event)">
+        </app-searchable-select>
+
+        <!-- Allocation Method Filter (Dynamic Lookup) -->
+        <app-searchable-select
+          categoryCode="CWIP_ALLOCATION_METHOD"
+          label=""
+          placeholder="All Allocation Methods"
+          (valueChange)="onMethodChange($event)">
+        </app-searchable-select>
+
+        <!-- Cost Category Filter (Dynamic Lookup) -->
+        <app-searchable-select
+          categoryCode="CWIP_COST_CATEGORY"
+          label=""
+          placeholder="All Cost Categories"
+          (valueChange)="onCostCategoryChange($event)">
+        </app-searchable-select>
+      </div>
+    </div>
+
+    <!-- Table Container -->
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse text-xs">
+        <thead>
+          <tr class="border-b border-border bg-muted/40 text-muted-foreground font-semibold">
+            <th class="py-3 px-3.5">Allocation Ref & Date</th>
+            <th class="py-3 px-3.5">Target Project & Work Package</th>
+            <th class="py-3 px-3.5">Cost Category</th>
+            <th class="py-3 px-3.5">Allocation Method</th>
+            <th class="py-3 px-3.5 text-right">Allocated CWIP (৳)</th>
+            <th class="py-3 px-3.5">Allocation Basis & Traceability</th>
+            <th class="py-3 px-3.5 text-center">GL Voucher</th>
+            <th class="py-3 px-3.5 text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border">
+          <tr *ngIf="loading" class="text-center">
+            <td colspan="8" class="py-8 text-muted-foreground text-xs">
+              <div class="flex items-center justify-center gap-2">
+                <svg class="animate-spin w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Loading cost allocations...</span>
+              </div>
+            </td>
+          </tr>
+
+          <tr *ngIf="!loading && allocations.length === 0" class="text-center">
+            <td colspan="8" class="py-8 text-muted-foreground text-xs">
+              No cost allocations found matching your filters.
+            </td>
+          </tr>
+
+          <tr *ngFor="let a of allocations" class="hover:bg-muted/30 transition-colors">
+            <!-- Allocation Ref & Date -->
+            <td class="py-3 px-3.5">
+              <div class="font-mono font-semibold text-foreground">{{ a.allocation_ref }}</div>
+              <div class="text-[10px] text-muted-foreground">{{ a.allocation_date | date:'mediumDate' }}</div>
+            </td>
+
+            <!-- Target Project & Package -->
+            <td class="py-3 px-3.5">
+              <div class="font-medium text-foreground">{{ a.target_project_name || 'Project #' + a.target_project_id }}</div>
+              <div class="text-[11px] text-primary font-mono mt-0.5">{{ a.work_package_name }}</div>
+            </td>
+
+            <!-- Cost Category -->
+            <td class="py-3 px-3.5">
+              <div class="font-medium text-foreground">{{ formatCategory(a.cost_category) }}</div>
+              <div class="text-[10px] text-muted-foreground font-mono">Src: {{ a.source_module }}</div>
+            </td>
+
+            <!-- Allocation Method -->
+            <td class="py-3 px-3.5">
+              <app-status-badge [status]="formatMethod(a.allocation_method)" [variant]="getMethodBadgeVariant(a.allocation_method)"></app-status-badge>
+            </td>
+
+            <!-- Allocated Amount -->
+            <td class="py-3 px-3.5 text-right font-bold text-foreground">
+              ৳{{ a.allocated_amount | number:'1.2-2' }}
+            </td>
+
+            <!-- Basis & Origin -->
+            <td class="py-3 px-3.5 max-w-xs">
+              <div class="truncate text-[11px] text-foreground" [title]="a.allocation_basis_description">
+                {{ a.allocation_basis_description }}
+              </div>
+              <div class="text-[10px] text-muted-foreground mt-0.5">
+                Original Incurred: ৳{{ a.original_amount | number:'1.0-0' }} ({{ a.original_project_name || 'Pool' }})
+              </div>
+            </td>
+
+            <!-- GL Voucher -->
+            <td class="py-3 px-3.5 text-center">
+              <span class="px-2 py-0.5 rounded-md text-[10px] font-mono bg-primary/10 text-primary border border-primary/20">
+                #{{ a.gl_voucher_id || 'Posted' }}
+              </span>
+            </td>
+
+            <!-- Actions -->
+            <td class="py-3 px-3.5 text-center">
+              <div class="flex items-center justify-center gap-1">
+                <!-- Origin Audit -->
+                <button
+                  (click)="viewOriginAudit(a)"
+                  title="Inspect Original Cost Traceability (12.2)"
+                  class="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </button>
+
+                <!-- Transfer to COGS (12.3) -->
+                <button
+                  *ngIf="!a.is_transferred_to_cogs"
+                  (click)="openTransferCOGSModal(a)"
+                  title="Transfer to Cost of Sales (12.3 Unit Handover)"
+                  class="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-500/10 transition-colors">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                </button>
+
+                <span *ngIf="a.is_transferred_to_cogs" class="text-[10px] text-emerald-600 font-semibold" title="Transferred to COPS">
+                  ✓ Sold
+                </span>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Controls -->
+    <div class="p-4 border-t border-border flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
+      <div class="flex items-center gap-2">
+        <span>Show</span>
+        <select
+          [ngModel]="limit"
+          (ngModelChange)="onLimitChange($event)"
+          class="px-2 py-1 rounded-md border border-border bg-card text-foreground focus:ring-1 focus:ring-primary">
+          <option [value]="5">5</option>
+          <option [value]="10">10</option>
+          <option [value]="25">25</option>
+          <option [value]="50">50</option>
+        </select>
+        <span>records per page (Total: {{ total }})</span>
+      </div>
+
+      <div class="flex items-center gap-1.5">
+        <button
+          [disabled]="page <= 1"
+          (click)="goToPage(page - 1)"
+          class="px-2.5 py-1 rounded-md border border-border bg-card text-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed">
+          Previous
+        </button>
+
+        <span class="px-2 font-medium text-foreground">
+          Page {{ page }} of {{ totalPages }}
+        </span>
+
+        <button
+          [disabled]="page >= totalPages"
+          (click)="goToPage(page + 1)"
+          class="px-2.5 py-1 rounded-md border border-border bg-card text-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed">
+          Next
+        </button>
+      </div>
+    </div>
+  </app-card-container>
+
+  <!-- Origin Traceability Drawer / Modal -->
+  <app-modal
+    [isOpen]="showAuditModal"
+    [title]="'Cost Allocation Traceability Audit — ' + selectedAllocation?.allocation_ref"
+    (close)="showAuditModal = false">
+    <div *ngIf="selectedAllocation" class="space-y-4 text-xs">
+      <div class="p-3 bg-primary/5 border border-primary/20 rounded-xl space-y-1">
+        <div class="font-semibold text-primary">Spec 12.2 Traceability Rule</div>
+        <div class="text-muted-foreground">
+          "The system should preserve the original cost and record the allocation as a traceable accounting transaction. It should not simply overwrite the original project or cost centre."
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3 p-3 bg-muted/20 border border-border rounded-xl">
+        <div>
+          <span class="text-muted-foreground">Original Incurred Source:</span>
+          <div class="font-semibold text-foreground mt-0.5">{{ selectedAllocation.original_project_name || 'Shared Overhead Pool' }}</div>
+          <div class="text-[10px] text-muted-foreground">Source Module: {{ selectedAllocation.source_module }} ({{ selectedAllocation.source_transaction_ref || 'Central' }})</div>
+        </div>
+        <div>
+          <span class="text-muted-foreground">Original Gross Cost:</span>
+          <div class="font-semibold text-foreground mt-0.5">৳{{ selectedAllocation.original_amount | number:'1.2-2' }}</div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3 p-3 bg-muted/20 border border-border rounded-xl">
+        <div>
+          <span class="text-muted-foreground">Target Project & Package:</span>
+          <div class="font-semibold text-foreground mt-0.5">{{ selectedAllocation.target_project_name }}</div>
+          <div class="text-[10px] text-primary font-mono">{{ selectedAllocation.work_package_name }}</div>
+        </div>
+        <div>
+          <span class="text-muted-foreground">Allocated Amount:</span>
+          <div class="font-bold text-base text-primary mt-0.5">৳{{ selectedAllocation.allocated_amount | number:'1.2-2' }}</div>
+        </div>
+      </div>
+
+      <div class="p-3 bg-muted/20 border border-border rounded-xl">
+        <span class="text-muted-foreground">Documented Allocation Basis:</span>
+        <div class="font-medium text-foreground mt-1">{{ selectedAllocation.allocation_basis_description }}</div>
+        <div *ngIf="selectedAllocation.basis_metric_value" class="text-[11px] text-muted-foreground font-mono mt-1">
+          Metric: {{ selectedAllocation.basis_metric_value }} {{ selectedAllocation.basis_metric_unit }}
+        </div>
+      </div>
+
+      <div class="pt-3 border-t border-border flex justify-end">
+        <button (click)="showAuditModal = false" class="px-4 py-1.5 rounded-lg border border-border text-foreground hover:bg-muted">Close</button>
+      </div>
+    </div>
+  </app-modal>
+
+  <!-- 12.3 Transfer to COGS Modal -->
+  <app-modal
+    [isOpen]="showCOGSModal"
+    [title]="'Transfer CWIP to Cost of Sales (12.3 Unit Handover)'"
+    (close)="showCOGSModal = false">
+    <div class="space-y-4 text-xs">
+      <div class="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl space-y-1">
+        <div class="font-semibold text-emerald-800 dark:text-emerald-400">12.3 Matching Principle Transfer</div>
+        <div class="text-muted-foreground">
+          Debit: Cost of Property Sold (5100) | Credit: Construction Work in Progress (1220)
+          <div class="italic text-[10px] text-emerald-900/80 dark:text-emerald-300 mt-1">
+            "When a unit is sold, the appropriate portion of accumulated development cost may be transferred to cost of sales according to approved policy. Do not automatically expense all construction costs when incurred."
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block font-medium text-foreground mb-1">Transfer Date</label>
+          <input type="date" [(ngModel)]="cogsForm.transfer_date" class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground" />
+        </div>
+        <div>
+          <label class="block font-medium text-foreground mb-1">Unit Number / Code *</label>
+          <input type="text" [(ngModel)]="cogsForm.unit_number" class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground" placeholder="e.g. Apt 4B (Tower 1)" />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block font-medium text-foreground mb-1">Buyer / Customer Name</label>
+          <input type="text" [(ngModel)]="cogsForm.customer_name" class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground" />
+        </div>
+        <div>
+          <label class="block font-medium text-foreground mb-1">Sale Agreement Reference</label>
+          <input type="text" [(ngModel)]="cogsForm.sale_agreement_ref" class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground font-mono" />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block font-medium text-foreground mb-1">Unit Floor Area (SFT)</label>
+          <input type="number" [(ngModel)]="cogsForm.unit_floor_area_sft" class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground" />
+        </div>
+        <div>
+          <label class="block font-medium text-foreground mb-1">Transferred Cost to COGS (৳) *</label>
+          <input type="number" [(ngModel)]="cogsForm.transferred_cogs_amount" class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground font-bold" />
+        </div>
+      </div>
+
+      <div>
+        <label class="block font-medium text-foreground mb-1">Documented Accounting Policy Basis</label>
+        <textarea rows="2" [(ngModel)]="cogsForm.accounting_policy_basis" class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground"></textarea>
+      </div>
+
+      <div class="pt-3 border-t border-border flex justify-end gap-2">
+        <button (click)="showCOGSModal = false" class="px-3 py-1.5 rounded-lg border border-border text-foreground hover:bg-muted">Cancel</button>
+        <button [disabled]="submittingCOGS || cogsForm.transferred_cogs_amount <= 0" (click)="submitCOGSTransfer()" class="px-4 py-1.5 rounded-lg bg-emerald-600 text-white font-semibold hover:bg-emerald-700 disabled:opacity-50">
+          Post COGS Transfer Voucher
+        </button>
+      </div>
+    </div>
+  </app-modal>
+</div>

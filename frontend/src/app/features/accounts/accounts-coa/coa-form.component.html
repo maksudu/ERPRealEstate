@@ -1,0 +1,315 @@
+<!-- Standalone Full-Screen Component for Chart of Accounts Head Creation/Edit -->
+<app-card-container
+  [title]="isEditMode() ? 'Edit Head of Account: ' + (accountForm.get('account_code')?.value || '') : 'Create New Head of Account'"
+  subtitle="Hierarchical Chart of Accounts (COA) Definition & Financial Statement Mapping"
+  [badge]="isEditMode() ? 'Edit Mode' : 'New Account'"
+>
+  <!-- Card Header Quick Actions -->
+  <div card-actions class="flex items-center gap-2">
+    <a
+      routerLink="/settings/lookups"
+      class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-primary hover:text-primary/80 bg-secondary/50 rounded-xl border border-border transition-colors"
+      title="Configure Dynamic Dropdown Categories in Settings"
+    >
+      <i class="ri-settings-4-line"></i>
+      <span>Dropdown Settings</span>
+    </a>
+    <button
+      type="button"
+      (click)="cancel()"
+      class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-xl border border-border bg-card text-foreground hover:bg-secondary transition-colors"
+    >
+      <i class="ri-arrow-left-line"></i>
+      <span>Back to COA</span>
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading()" class="py-16 text-center text-muted-foreground flex flex-col items-center gap-2">
+    <i class="ri-loader-4-line text-3xl animate-spin text-primary"></i>
+    <span class="text-xs">Loading account head configuration...</span>
+  </div>
+
+  <!-- Main Reactive Form -->
+  <form *ngIf="!isLoading()" [formGroup]="accountForm" (ngSubmit)="onSubmit()" class="space-y-6">
+    <!-- Error Alert Banner -->
+    <div *ngIf="errorMessage()" class="p-3.5 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-xs flex items-center gap-2">
+      <i class="ri-error-warning-line text-base shrink-0"></i>
+      <span>{{ errorMessage() }}</span>
+    </div>
+
+    <!-- Section 1: Identification & Naming -->
+    <div class="p-5 rounded-2xl bg-secondary/10 border border-border space-y-4">
+      <div class="flex items-center gap-2 pb-2 border-b border-border">
+        <i class="ri-hashtag text-primary"></i>
+        <h3 class="text-xs font-bold uppercase tracking-wider text-foreground">
+          1. Identification & Hierarchy
+        </h3>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- Account Code -->
+        <div>
+          <label class="block text-xs font-semibold text-foreground mb-1.5">
+            Account Code <span class="text-destructive">*</span>
+          </label>
+          <input
+            type="text"
+            formControlName="account_code"
+            placeholder="e.g. 1110, 1220, 2110, 4100"
+            class="w-full px-3.5 py-2 bg-card border border-border rounded-xl text-xs text-foreground placeholder:text-muted-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-primary shadow-xs"
+            [readonly]="isEditMode()"
+          />
+          <p *ngIf="accountForm.get('account_code')?.touched && accountForm.get('account_code')?.invalid" class="text-[11px] text-destructive mt-1">
+            Valid alphanumeric account code is required.
+          </p>
+        </div>
+
+        <!-- Account Name (English) -->
+        <div>
+          <label class="block text-xs font-semibold text-foreground mb-1.5">
+            Account Name (English) <span class="text-destructive">*</span>
+          </label>
+          <input
+            type="text"
+            formControlName="account_name_en"
+            placeholder="e.g. Cash in Hand (Corporate Head Office)"
+            class="w-full px-3.5 py-2 bg-card border border-border rounded-xl text-xs text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:ring-1 focus:ring-primary shadow-xs"
+          />
+          <p *ngIf="accountForm.get('account_name_en')?.touched && accountForm.get('account_name_en')?.invalid" class="text-[11px] text-destructive mt-1">
+            English account name is required.
+          </p>
+        </div>
+
+        <!-- Account Name (Bengali) -->
+        <div>
+          <label class="block text-xs font-semibold text-foreground mb-1.5">
+            Account Name (Bengali / বাংলা)
+          </label>
+          <input
+            type="text"
+            formControlName="account_name_bn"
+            placeholder="e.g. হাতে নগদ (প্রধান কার্যালয়)"
+            class="w-full px-3.5 py-2 bg-card border border-border rounded-xl text-xs text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:ring-1 focus:ring-primary shadow-xs"
+          />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+        <!-- Account Group / Classification -->
+        <div>
+          <label class="block text-xs font-semibold text-foreground mb-1.5">
+            Account Group & Category <span class="text-destructive">*</span>
+          </label>
+          <select
+            formControlName="account_type"
+            (change)="onTypeChange(accountForm.get('account_type')?.value)"
+            class="w-full px-3.5 py-2 bg-card border border-border rounded-xl text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary shadow-xs"
+          >
+            <option *ngFor="let opt of accountGroupOptions" [value]="opt.value">{{ opt.label }}</option>
+          </select>
+        </div>
+
+        <!-- Parent Account Head -->
+        <div>
+          <label class="block text-xs font-semibold text-foreground mb-1.5">
+            Parent Account Group
+          </label>
+          <select
+            formControlName="parent_account_id"
+            class="w-full px-3.5 py-2 bg-card border border-border rounded-xl text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary shadow-xs"
+          >
+            <option *ngFor="let opt of parentAccountOptions" [value]="opt.value">{{ opt.label }}</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2: Financial Policy & Statement Mapping -->
+    <div class="p-5 rounded-2xl bg-secondary/10 border border-border space-y-4">
+      <div class="flex items-center gap-2 pb-2 border-b border-border">
+        <i class="ri-scales-3-line text-primary"></i>
+        <h3 class="text-xs font-bold uppercase tracking-wider text-foreground">
+          2. Financial Policy, Normal Balance & Statement Mapping
+        </h3>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Normal Balance -->
+        <div>
+          <label class="block text-xs font-semibold text-foreground mb-1.5">
+            Normal Balance Type <span class="text-destructive">*</span>
+          </label>
+          <select
+            formControlName="normal_balance"
+            class="w-full px-3.5 py-2 bg-card border border-border rounded-xl text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary shadow-xs"
+          >
+            <option *ngFor="let opt of normalBalanceOptions" [value]="opt.value">{{ opt.label }}</option>
+          </select>
+        </div>
+
+        <!-- Statement Mapping -->
+        <div>
+          <label class="block text-xs font-semibold text-foreground mb-1.5">
+            Financial Statement Mapping <span class="text-destructive">*</span>
+          </label>
+          <select
+            formControlName="statement_mapping"
+            class="w-full px-3.5 py-2 bg-card border border-border rounded-xl text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary shadow-xs"
+          >
+            <option *ngFor="let opt of statementMappingOptions" [value]="opt.value">{{ opt.label }}</option>
+          </select>
+        </div>
+
+        <!-- Currency -->
+        <div>
+          <label class="block text-xs font-semibold text-foreground mb-1.5">
+            Currency
+          </label>
+          <input
+            type="text"
+            formControlName="currency"
+            class="w-full px-3.5 py-2 bg-card border border-border rounded-xl text-xs text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-primary shadow-xs"
+            readonly
+          />
+        </div>
+
+        <!-- Opening Balance -->
+        <div>
+          <label class="block text-xs font-semibold text-foreground mb-1.5">
+            Opening Balance (৳ BDT)
+          </label>
+          <input
+            type="number"
+            step="0.01"
+            formControlName="opening_balance"
+            placeholder="0.00"
+            class="w-full px-3.5 py-2 bg-card border border-border rounded-xl text-xs text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-primary shadow-xs"
+          />
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-foreground mb-1.5">
+          Legacy System / Migration Reference Code
+        </label>
+        <input
+          type="text"
+          formControlName="migration_reference"
+          placeholder="e.g. Tally ACC-0412, Legacy Oracle Code, or Excel Ref"
+          class="w-full px-3.5 py-2 bg-card border border-border rounded-xl text-xs text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:ring-1 focus:ring-primary shadow-xs"
+        />
+      </div>
+    </div>
+
+    <!-- Section 3: Classification Flags & Controls -->
+    <div class="p-5 rounded-2xl bg-secondary/10 border border-border space-y-4">
+      <div class="flex items-center gap-2 pb-2 border-b border-border">
+        <i class="ri-shield-check-line text-primary"></i>
+        <h3 class="text-xs font-bold uppercase tracking-wider text-foreground">
+          3. Accounting Controls & Dimension Applicability
+        </h3>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <!-- Leaf Account Flag -->
+        <label class="flex items-start gap-3 p-3 rounded-xl border border-border bg-card cursor-pointer hover:bg-secondary/20 transition-colors">
+          <input
+            type="checkbox"
+            formControlName="is_leaf_account"
+            class="mt-0.5 rounded border-border text-primary focus:ring-primary"
+          />
+          <div>
+            <span class="text-xs font-semibold text-foreground block">Posting Ledger Account</span>
+            <span class="text-[11px] text-muted-foreground">Allows direct voucher line postings (uncheck for header group only)</span>
+          </div>
+        </label>
+
+        <!-- Control Account Flag -->
+        <label class="flex items-start gap-3 p-3 rounded-xl border border-border bg-card cursor-pointer hover:bg-secondary/20 transition-colors">
+          <input
+            type="checkbox"
+            formControlName="is_control_account"
+            class="mt-0.5 rounded border-border text-primary focus:ring-primary"
+          />
+          <div>
+            <span class="text-xs font-semibold text-foreground block">Control Account</span>
+            <span class="text-[11px] text-muted-foreground">Designates sub-ledger balance control (Debtors, Creditors)</span>
+          </div>
+        </label>
+
+        <!-- Reconciliation Account Flag -->
+        <label class="flex items-start gap-3 p-3 rounded-xl border border-border bg-card cursor-pointer hover:bg-secondary/20 transition-colors">
+          <input
+            type="checkbox"
+            formControlName="is_reconciliation_account"
+            class="mt-0.5 rounded border-border text-primary focus:ring-primary"
+          />
+          <div>
+            <span class="text-xs font-semibold text-foreground block">Bank / Escrow Reconciliation</span>
+            <span class="text-[11px] text-muted-foreground">Subject to bank statement auto-matching and reconciliation</span>
+          </div>
+        </label>
+
+        <!-- Requires Project Dimension -->
+        <label class="flex items-start gap-3 p-3 rounded-xl border border-border bg-card cursor-pointer hover:bg-secondary/20 transition-colors">
+          <input
+            type="checkbox"
+            formControlName="requires_project"
+            class="mt-0.5 rounded border-border text-primary focus:ring-primary"
+          />
+          <div>
+            <span class="text-xs font-semibold text-foreground block">Project Mandatory</span>
+            <span class="text-[11px] text-muted-foreground">Every journal posting must specify a valid project</span>
+          </div>
+        </label>
+
+        <!-- Requires Cost Center Dimension -->
+        <label class="flex items-start gap-3 p-3 rounded-xl border border-border bg-card cursor-pointer hover:bg-secondary/20 transition-colors">
+          <input
+            type="checkbox"
+            formControlName="requires_cost_center"
+            class="mt-0.5 rounded border-border text-primary focus:ring-primary"
+          />
+          <div>
+            <span class="text-xs font-semibold text-foreground block">Cost Center Mandatory</span>
+            <span class="text-[11px] text-muted-foreground">Requires WBS stage / cost center allocation on entry lines</span>
+          </div>
+        </label>
+
+        <!-- Active Status Flag -->
+        <label class="flex items-start gap-3 p-3 rounded-xl border border-border bg-card cursor-pointer hover:bg-secondary/20 transition-colors">
+          <input
+            type="checkbox"
+            formControlName="is_active"
+            class="mt-0.5 rounded border-border text-primary focus:ring-primary"
+          />
+          <div>
+            <span class="text-xs font-semibold text-foreground block">Active Account</span>
+            <span class="text-[11px] text-muted-foreground">Active in dropdowns and eligible for ongoing transactions</span>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <!-- Form Footer Actions -->
+    <div class="flex items-center justify-end gap-3 pt-4 border-t border-border">
+      <button
+        type="button"
+        (click)="cancel()"
+        class="px-5 py-2 text-xs font-semibold rounded-xl border border-border bg-card text-foreground hover:bg-secondary transition-colors"
+      >
+        Cancel
+      </button>
+
+      <button
+        type="submit"
+        [disabled]="isSubmitting() || accountForm.invalid"
+        class="px-6 py-2 text-xs font-semibold rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors inline-flex items-center gap-2 shadow-xs"
+      >
+        <i *ngIf="isSubmitting()" class="ri-loader-4-line animate-spin"></i>
+        <span>{{ isEditMode() ? 'Update Account Head' : 'Save Head of Account' }}</span>
+      </button>
+    </div>
+  </form>
+</app-card-container>

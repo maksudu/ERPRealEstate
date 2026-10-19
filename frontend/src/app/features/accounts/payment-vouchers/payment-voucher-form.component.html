@@ -1,0 +1,574 @@
+<div class="space-y-6">
+  <!-- Top Navigation & Module Switcher Ribbon -->
+  <div class="flex flex-wrap items-center justify-between gap-4 bg-card border border-border rounded-2xl p-4 shadow-sm">
+    <div class="flex items-center gap-3">
+      <div class="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center text-2xl font-bold shadow-inner">
+        <i class="ri-draft-line"></i>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="text-xl font-bold text-foreground tracking-tight">
+            {{ isEditMode() ? 'Edit Payment Voucher' : 'Create Payment Voucher' }}
+          </h1>
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+            <span class="w-1.5 h-1.5 rounded-full bg-primary mr-1.5 animate-pulse"></span>
+            Double-Entry Outflow
+          </span>
+        </div>
+        <p class="text-xs text-muted-foreground mt-0.5">
+          Standardized voucher creation with automatic debit/credit resolution, AP invoice linkage, and cheque tracking.
+        </p>
+      </div>
+    </div>
+
+    <!-- Quick Dynamic Dropdown & Lookups Setting Link -->
+    <div class="flex items-center gap-2">
+      <a
+        routerLink="/settings/lookups"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/80 border border-border transition-colors"
+      >
+        <i class="ri-settings-4-line text-sm"></i>
+        <span>Dynamic Lookups Config</span>
+      </a>
+
+      <a
+        routerLink="/accounts/payment-vouchers"
+        class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-medium bg-secondary text-foreground hover:bg-secondary/80 border border-border transition-colors"
+      >
+        <i class="ri-arrow-left-line text-sm"></i>
+        <span>Back to Register</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Unified Module Sub-Navigation Bar -->
+  <div class="flex items-center gap-1.5 p-1.5 bg-secondary/40 rounded-2xl border border-border overflow-x-auto">
+    <a
+      routerLink="/accounts/coa"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-node-tree"></i>
+      <span>Chart of Accounts</span>
+    </a>
+
+    <a
+      routerLink="/accounts/vouchers"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-file-list-3-line"></i>
+      <span>General Ledger Vouchers</span>
+    </a>
+
+    <a
+      routerLink="/accounts/payables"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-money-dollar-circle-line"></i>
+      <span>Accounts Payable (AP)</span>
+    </a>
+
+    <a
+      routerLink="/accounts/payment-vouchers"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-card text-foreground shadow-xs border border-border inline-flex items-center gap-1.5 whitespace-nowrap"
+    >
+      <i class="ri-secure-payment-line text-primary"></i>
+      <span>Payment Vouchers</span>
+    </a>
+
+    <a
+      routerLink="/accounts/receivables"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-hand-coin-line"></i>
+      <span>Accounts Receivable (AR)</span>
+    </a>
+
+    <a
+      routerLink="/accounts/cash-bank"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-bank-card-line"></i>
+      <span>Cash, Bank & MFS</span>
+    </a>
+  </div>
+
+  <!-- Notification Banner -->
+  @if (errorMessage()) {
+    <div class="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-700 dark:text-rose-300 flex items-center justify-between text-sm shadow-sm">
+      <div class="flex items-center gap-2">
+        <i class="ri-error-warning-fill text-lg text-rose-500"></i>
+        <span>{{ errorMessage() }}</span>
+      </div>
+      <button (click)="errorMessage.set(null)" class="text-rose-500 hover:text-rose-700">
+        <i class="ri-close-line text-lg"></i>
+      </button>
+    </div>
+  }
+
+  <!-- Quick Scenario Presets Ribbon -->
+  <div class="flex flex-wrap items-center justify-between gap-3 p-3.5 bg-secondary/30 rounded-2xl border border-border">
+    <div class="flex items-center gap-2 text-xs text-muted-foreground">
+      <i class="ri-lightbulb-line text-amber-500 text-base"></i>
+      <span class="font-medium">Quick Accounting Presets:</span>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2">
+      <!-- Preset 1: Direct Office Expense ৳25,000 (Section 8.3 example) -->
+      <button
+        type="button"
+        (click)="loadOfficeExpenseExample()"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-card text-foreground hover:bg-secondary border border-border shadow-2xs transition-colors"
+      >
+        <i class="ri-file-paper-2-line text-blue-500"></i>
+        <span>8.3 Example: Office Expense ৳25,000 via Bank</span>
+      </button>
+
+      <!-- Preset 2: Supplier Payable Settlement ৳150,000 (prevents duplicate expense) -->
+      <button
+        type="button"
+        (click)="loadSupplierPayableExample()"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-card text-foreground hover:bg-secondary border border-border shadow-2xs transition-colors"
+      >
+        <i class="ri-refund-2-line text-amber-500"></i>
+        <span>Payable Settlement ৳150,000 via Cheque</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Master Card Container: The Full Creation/Edit Form -->
+  <app-card-container
+    [hasHeader]="true"
+    [title]="isEditMode() ? 'Modify Payment Voucher Details' : 'New Outgoing Payment Voucher Form'"
+    subtitle="All dropdowns are searchable with direct creation shortcuts. Strict debit-credit parity enforced."
+  >
+    <div card-actions class="flex items-center gap-2">
+      <button
+        type="button"
+        (click)="saveVoucher()"
+        [disabled]="isSaving()"
+        class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm transition-colors"
+      >
+        <i class="ri-save-line text-sm" [class.animate-spin]="isSaving()"></i>
+        <span>{{ isEditMode() ? 'Save Changes' : 'Create Payment Voucher' }}</span>
+      </button>
+    </div>
+
+    <form (ngSubmit)="saveVoucher()" class="space-y-6">
+      <!-- Section 1: Voucher Header & Beneficiary -->
+      <div>
+        <h3 class="text-sm font-bold text-foreground flex items-center gap-2 mb-3 pb-2 border-b border-border">
+          <i class="ri-user-star-line text-primary"></i>
+          <span>1. Voucher Header & Payee Information</span>
+        </h3>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- Voucher Date -->
+          <div>
+            <app-custom-input
+              label="Voucher Date"
+              type="date"
+              [(ngModel)]="voucher_date"
+              name="voucher_date"
+              [required]="true"
+            ></app-custom-input>
+          </div>
+
+          <!-- Project / Cost Center -->
+          <div>
+            <app-searchable-select
+              label="Project / Cost Center"
+              [options]="projectOptions()"
+              [(value)]="project_id"
+              [searchable]="true"
+              [allowCreateNew]="true"
+              createRoute="/projects"
+              placeholder="Select project site..."
+              hint="Attaches payment to real-estate project"
+            ></app-searchable-select>
+          </div>
+
+          <!-- Payee Type -->
+          <div>
+            <app-searchable-select
+              label="Payee Beneficiary Type"
+              [options]="payeeTypeOptions()"
+              [(value)]="payee_type"
+              [searchable]="true"
+              [allowCreateNew]="true"
+              createRoute="/settings/lookups"
+              placeholder="Select payee category..."
+              [required]="true"
+            ></app-searchable-select>
+          </div>
+
+          <!-- Payee Vendor / Direct Name -->
+          <div>
+            @if (payee_type() === 'Vendor' || payee_type() === 'Subcontractor') {
+              <app-searchable-select
+                label="Registered Vendor / Supplier"
+                [options]="vendorOptions()"
+                [(value)]="payee_vendor_id"
+                (valueChange)="onPayeeVendorSelected($event)"
+                [searchable]="true"
+                [allowCreateNew]="true"
+                createRoute="/procurement/vendors"
+                placeholder="Select supplier..."
+                [required]="true"
+              ></app-searchable-select>
+            } @else {
+              <app-custom-input
+                label="Direct Payee Name"
+                [(ngModel)]="payee_name_direct"
+                name="payee_name_direct"
+                placeholder="e.g. Dhaka Electric Supply / Landlord"
+                [required]="true"
+              ></app-custom-input>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2: Outflow Method & Source Fund Account -->
+      <div>
+        <h3 class="text-sm font-bold text-foreground flex items-center gap-2 mb-3 pb-2 border-b border-border">
+          <i class="ri-bank-card-line text-primary"></i>
+          <span>2. Payment Outflow Method & Source Account</span>
+        </h3>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- Payment Method -->
+          <div>
+            <app-searchable-select
+              label="Payment Method"
+              [options]="methodOptions()"
+              [(value)]="payment_method"
+              [searchable]="true"
+              [allowCreateNew]="true"
+              createRoute="/settings/lookups"
+              placeholder="Select payment method..."
+              [required]="true"
+            ></app-searchable-select>
+          </div>
+
+          <!-- Dynamic Source Fund Selector based on Method -->
+          @if (payment_method() === 'Cash') {
+            <div>
+              <app-searchable-select
+                label="Source Cashbox (Petty Cash Fund)"
+                [options]="cashboxOptions()"
+                [(value)]="source_cashbox_id"
+                [searchable]="true"
+                [allowCreateNew]="true"
+                createRoute="/accounts/cash-bank"
+                placeholder="Select site cashbox..."
+                [required]="true"
+                hint="Credits Cash in Hand [1100]"
+              ></app-searchable-select>
+            </div>
+          } @else if (payment_method() === 'MFS') {
+            <div>
+              <app-searchable-select
+                label="MFS Wallet / Provider"
+                [options]="mfsOptions()"
+                [(value)]="source_mfs_provider_id"
+                [searchable]="true"
+                [allowCreateNew]="true"
+                createRoute="/accounts/cash-bank"
+                placeholder="Select bKash/Nagad..."
+                [required]="true"
+                hint="Credits MFS Wallet [1120]"
+              ></app-searchable-select>
+            </div>
+          } @else {
+            <div>
+              <app-searchable-select
+                label="Source Bank Account"
+                [options]="bankAccountOptions()"
+                [(value)]="source_bank_account_id"
+                [searchable]="true"
+                [allowCreateNew]="true"
+                createRoute="/accounts/cash-bank"
+                placeholder="Select corporate bank..."
+                [required]="true"
+                hint="Credits Bank Account [1110]"
+              ></app-searchable-select>
+            </div>
+          }
+
+          <!-- Cheque Number / Electronic Settlement Reference -->
+          @if (payment_method() === 'Cheque') {
+            <div>
+              <app-custom-input
+                label="Cheque Leaf Number"
+                [(ngModel)]="cheque_number"
+                name="cheque_number"
+                placeholder="e.g. CHQ-993810"
+                [required]="true"
+                hint="Tracks cheque clearing lifecycle"
+              ></app-custom-input>
+            </div>
+            <div>
+              <app-custom-input
+                label="Cheque Date"
+                type="date"
+                [(ngModel)]="cheque_date"
+                name="cheque_date"
+              ></app-custom-input>
+            </div>
+          } @else {
+            <div>
+              <app-custom-input
+                label="Electronic Settlement Ref / Txn ID"
+                [(ngModel)]="settlement_reference"
+                name="settlement_reference"
+                placeholder="e.g. BEFTN-773912 / MFS-TXN-99"
+                hint="Bank / Gateway reference"
+              ></app-custom-input>
+            </div>
+            <div>
+              <app-custom-input
+                label="Supporting Invoice / PO Ref"
+                [(ngModel)]="supporting_invoice_ref"
+                name="supporting_invoice_ref"
+                placeholder="e.g. BILL-2026-092"
+              ></app-custom-input>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Section 3: Debit Leg Classification & Amount -->
+      <div>
+        <h3 class="text-sm font-bold text-foreground flex items-center gap-2 mb-3 pb-2 border-b border-border">
+          <i class="ri-scales-line text-primary"></i>
+          <span>3. Debit Classification & Financial Amount</span>
+        </h3>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- Debit Category -->
+          <div>
+            <app-searchable-select
+              label="Debit Category"
+              [options]="categoryOptions()"
+              [(value)]="debit_category"
+              [searchable]="true"
+              [allowCreateNew]="true"
+              createRoute="/settings/lookups"
+              placeholder="Expense vs Payable..."
+              [required]="true"
+            ></app-searchable-select>
+          </div>
+
+          <!-- Payment Amount (BDT) -->
+          <div>
+            <app-custom-input
+              label="Payment Amount"
+              type="number"
+              [(ngModel)]="amount"
+              name="amount"
+              [required]="true"
+              suffixText="BDT"
+              placeholder="0.00"
+            ></app-custom-input>
+          </div>
+
+          <!-- Currency -->
+          <div>
+            <app-custom-input
+              label="Currency"
+              [(ngModel)]="currency"
+              name="currency"
+              placeholder="BDT"
+              [disabled]="true"
+            ></app-custom-input>
+          </div>
+
+          <!-- Specific Debit Account in COA -->
+          <div>
+            <app-searchable-select
+              label="Debit Account (COA)"
+              [options]="coaOptions()"
+              [(value)]="debit_account_id"
+              [searchable]="true"
+              [allowCreateNew]="true"
+              createRoute="/accounts/coa"
+              placeholder="Auto-resolved by category if empty..."
+              hint="Overrides default category GL account"
+            ></app-searchable-select>
+          </div>
+        </div>
+
+        <!-- Conditional AP Invoice Linkage (Only if Category == 'Payable') -->
+        @if (debit_category() === 'Payable') {
+          <div class="mt-4 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20">
+            <div class="flex items-center gap-2 text-xs font-semibold text-amber-700 dark:text-amber-300 mb-2">
+              <i class="ri-information-line text-base"></i>
+              <span>Liquidating Accounts Payable Bill (Strict Anti-Duplicate Rule)</span>
+            </div>
+            <p class="text-xs text-amber-600/90 dark:text-amber-400 mb-3">
+              If an expense was previously recorded as an AP bill, payment debits Accounts Payable [2100] instead of recognizing the expense a second time.
+            </p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <app-searchable-select
+                label="Link AP Invoice"
+                [options]="apInvoiceOptions()"
+                [(value)]="ap_invoice_id"
+                (valueChange)="onAPInvoiceSelected($event)"
+                [searchable]="true"
+                [allowCreateNew]="true"
+                createRoute="/accounts/payables"
+                placeholder="Select unpaid supplier bill..."
+              ></app-searchable-select>
+
+              <app-custom-input
+                label="Bill / Invoice Number"
+                [(ngModel)]="supporting_invoice_ref"
+                name="supporting_invoice_ref"
+                placeholder="e.g. INV-STEEL-99"
+              ></app-custom-input>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Section 4: Purpose, Narration & Document URL -->
+      <div>
+        <h3 class="text-sm font-bold text-foreground flex items-center gap-2 mb-3 pb-2 border-b border-border">
+          <i class="ri-file-text-line text-primary"></i>
+          <span>4. Purpose, Narration & Supporting Document</span>
+        </h3>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <app-custom-input
+              label="Payment Purpose / Short Description"
+              [(ngModel)]="purpose"
+              name="purpose"
+              placeholder="e.g. Office electricity bill / Site material freight"
+              [required]="true"
+            ></app-custom-input>
+          </div>
+
+          <div>
+            <app-custom-input
+              label="Attachment / Supporting Document URL"
+              [(ngModel)]="attachment_url"
+              name="attachment_url"
+              placeholder="https://... or uploaded bill PDF link"
+            ></app-custom-input>
+          </div>
+
+          <div class="sm:col-span-2">
+            <app-custom-textarea
+              label="Accounting Narration (Will be posted to General Ledger)"
+              [(ngModel)]="narration"
+              name="narration"
+              [rows]="2"
+              placeholder="Detailed narration describing the authorized outgoing payment..."
+            ></app-custom-textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 5: Live Double-Entry Balancing Preview (Matching User Prompt 8.3) -->
+      <div class="p-4 rounded-2xl bg-secondary/50 border border-border">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold text-sm">
+              <i class="ri-scales-3-line"></i>
+            </div>
+            <div>
+              <h4 class="text-xs font-bold text-foreground uppercase tracking-wider">
+                Live Double-Entry GL Journal Entry Preview
+              </h4>
+              <p class="text-[11px] text-muted-foreground">
+                Strict balance verification: Sum(Debit) == Sum(Credit) = ৳{{ amount() | number:'1.2-2' }}
+              </p>
+            </div>
+          </div>
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+            Balanced 100%
+          </span>
+        </div>
+
+        <div class="overflow-x-auto rounded-xl border border-border bg-card">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-secondary/70 text-muted-foreground uppercase text-[10px] font-semibold">
+              <tr>
+                <th class="px-3.5 py-2">Entry Type</th>
+                <th class="px-3.5 py-2">Account Title & Ledger Code</th>
+                <th class="px-3.5 py-2 text-right">Debit (৳)</th>
+                <th class="px-3.5 py-2 text-right">Credit (৳)</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border font-mono text-[11px]">
+              <!-- Debit Leg -->
+              <tr class="hover:bg-secondary/20">
+                <td class="px-3.5 py-2 font-sans font-semibold text-emerald-600 dark:text-emerald-400">
+                  DEBIT (Dr.)
+                </td>
+                <td class="px-3.5 py-2 text-foreground font-sans">
+                  {{ previewDebitAccountLabel() }}
+                </td>
+                <td class="px-3.5 py-2 text-right font-bold text-foreground">
+                  ৳{{ amount() | number:'1.2-2' }}
+                </td>
+                <td class="px-3.5 py-2 text-right text-muted-foreground">
+                  —
+                </td>
+              </tr>
+
+              <!-- Credit Leg -->
+              <tr class="hover:bg-secondary/20">
+                <td class="px-3.5 py-2 font-sans font-semibold text-blue-600 dark:text-blue-400">
+                  CREDIT (Cr.)
+                </td>
+                <td class="px-3.5 py-2 text-foreground font-sans">
+                  {{ previewCreditAccountLabel() }}
+                </td>
+                <td class="px-3.5 py-2 text-right text-muted-foreground">
+                  —
+                </td>
+                <td class="px-3.5 py-2 text-right font-bold text-foreground">
+                  ৳{{ amount() | number:'1.2-2' }}
+                </td>
+              </tr>
+
+              <!-- Total Row -->
+              <tr class="bg-secondary/40 font-bold font-sans">
+                <td colspan="2" class="px-3.5 py-2 text-right uppercase text-[10px] text-muted-foreground">
+                  Total Balanced
+                </td>
+                <td class="px-3.5 py-2 text-right font-mono text-emerald-600 dark:text-emerald-400">
+                  ৳{{ amount() | number:'1.2-2' }}
+                </td>
+                <td class="px-3.5 py-2 text-right font-mono text-emerald-600 dark:text-emerald-400">
+                  ৳{{ amount() | number:'1.2-2' }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Action Buttons Footer -->
+      <div class="flex items-center justify-end gap-3 pt-4 border-t border-border">
+        <a
+          routerLink="/accounts/payment-vouchers"
+          class="px-4 py-2 rounded-xl text-xs font-semibold bg-secondary text-foreground hover:bg-secondary/80 border border-border transition-colors"
+        >
+          Cancel
+        </a>
+
+        <button
+          type="submit"
+          [disabled]="isSaving()"
+          class="px-5 py-2 rounded-xl text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm transition-colors flex items-center gap-1.5"
+        >
+          <i class="ri-check-line text-sm" [class.animate-spin]="isSaving()"></i>
+          <span>{{ isEditMode() ? 'Update Voucher' : 'Save & Submit Voucher' }}</span>
+        </button>
+      </div>
+    </form>
+  </app-card-container>
+</div>

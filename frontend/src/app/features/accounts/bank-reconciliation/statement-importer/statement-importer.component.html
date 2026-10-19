@@ -1,0 +1,301 @@
+<div class="space-y-6">
+  <!-- Top Navigation Submodule Header -->
+  <app-bank-recon-nav></app-bank-recon-nav>
+
+  <!-- Central Card Container -->
+  <app-card-container>
+    <!-- Header Block -->
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-6 border-b border-slate-200 dark:border-slate-800 gap-4">
+      <div>
+        <div class="flex items-center gap-2">
+          <a routerLink="/accounts/bank-reconciliation" class="inline-flex items-center text-xs font-medium text-slate-500 hover:text-indigo-600 transition-colors">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Back to Sessions
+          </a>
+          <span class="text-slate-300 dark:text-slate-700">•</span>
+          <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
+            Section 15.1 & 15.2 Ingestion
+          </span>
+        </div>
+        <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mt-1">
+          Import Official Bank / MFS Statement
+        </h1>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          Ingest raw bank statements from Excel, CSV, or Corporate Online Portals (CityTouch, EBL Connect, bKash Merchant).
+        </p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <a routerLink="/accounts/bank-reconciliation" class="px-4 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 shadow-sm transition-colors">
+          Cancel
+        </a>
+        <button
+          (click)="submitStatement()"
+          [disabled]="submitting"
+          class="inline-flex items-center px-5 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition-colors disabled:opacity-50">
+          <svg *ngIf="submitting" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          {{ submitting ? 'Processing Match...' : 'Ingest & Run Auto-Matching' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Alert Messages -->
+    <div *ngIf="errorMessage" class="mt-4 p-3.5 bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-lg flex items-center justify-between">
+      <span>{{ errorMessage }}</span>
+      <button (click)="errorMessage = null" class="text-rose-500 hover:text-rose-700 font-bold">✕</button>
+    </div>
+
+    <div *ngIf="successMessage" class="mt-4 p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-lg flex items-center gap-2">
+      <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+      </svg>
+      <span>{{ successMessage }}</span>
+    </div>
+
+    <!-- Form Section 1: Parameters -->
+    <div class="mt-6 space-y-6">
+      <div class="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/40">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-4 flex items-center gap-2">
+          <span class="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 text-xs flex items-center justify-center font-bold">1</span>
+          Target Bank Account & Statement Parameters
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <!-- Bank Account (Dynamic Select) -->
+          <div>
+            <app-searchable-select
+              label="Corporate / Escrow Bank Account *"
+              [options]="bankAccountOptions"
+              [value]="formData.bank_account_id"
+              (valueChange)="formData.bank_account_id = $event"
+              placeholder="Select Bank Account..."
+              [allowCreateNew]="false">
+            </app-searchable-select>
+          </div>
+
+          <!-- Statement Format (Dynamic Lookup) -->
+          <div>
+            <app-searchable-select
+              label="Statement File Format *"
+              categoryCode="BANK_STATEMENT_FORMAT"
+              [value]="formData.statement_format"
+              (valueChange)="formData.statement_format = $event"
+              placeholder="Select statement format..."
+              [allowCreateNew]="true">
+            </app-searchable-select>
+          </div>
+
+          <!-- Statement Cutoff Date -->
+          <div>
+            <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Statement Cutoff Date *</label>
+            <input
+              type="date"
+              [(ngModel)]="formData.statement_date"
+              name="statement_date"
+              required
+              class="w-full px-3 py-2 text-xs border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100" />
+          </div>
+
+          <!-- Statement Closing Balance (৳) -->
+          <div>
+            <label class="block text-xs font-bold text-indigo-700 dark:text-indigo-400 mb-1">
+              Closing Statement Balance (৳) *
+            </label>
+            <div class="relative">
+              <span class="absolute left-3 top-2 text-xs font-bold text-slate-400">৳</span>
+              <input
+                type="number"
+                [(ngModel)]="formData.statement_balance"
+                name="statement_balance"
+                required
+                class="w-full pl-8 pr-3 py-2 text-xs font-bold border-2 border-indigo-200 dark:border-indigo-800 rounded-lg bg-white dark:bg-slate-900 text-indigo-900 dark:text-indigo-100 font-mono" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Form Section 2: File Upload & Quick Templates -->
+      <div class="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800 gap-3">
+          <div>
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-2">
+              <span class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 text-xs flex items-center justify-center font-bold">2</span>
+              Upload File or Load Sample Bank Statement
+            </h2>
+            <p class="text-xs text-slate-500 mt-0.5">
+              Choose an official file (Excel/CSV) or click one of our verified Bangladeshi banking formats.
+            </p>
+          </div>
+
+          <!-- Sample Format Loaders -->
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-slate-400">Sample Data:</span>
+            <button
+              type="button"
+              (click)="loadSampleTemplate('EBL')"
+              class="px-2.5 py-1 text-xs rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-medium transition-colors">
+              EBL Connect
+            </button>
+            <button
+              type="button"
+              (click)="loadSampleTemplate('CITY')"
+              class="px-2.5 py-1 text-xs rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-medium transition-colors">
+              CityTouch Escrow
+            </button>
+            <button
+              type="button"
+              (click)="loadSampleTemplate('BKASH')"
+              class="px-2.5 py-1 text-xs rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-medium transition-colors">
+              bKash Merchant
+            </button>
+          </div>
+        </div>
+
+        <div class="mt-4 flex flex-col md:flex-row items-center gap-4">
+          <label class="flex-1 w-full flex flex-col items-center justify-center p-6 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl hover:border-indigo-500 cursor-pointer transition-colors bg-slate-50/50 dark:bg-slate-900/50">
+            <svg class="w-8 h-8 text-slate-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+            <span class="text-xs font-semibold text-slate-700 dark:text-slate-300">Click to upload statement file (.xlsx, .csv)</span>
+            <span class="text-[11px] text-slate-400 mt-0.5">Drag and drop file here or choose sample data above</span>
+            <input type="file" (change)="onFileSelected($event)" accept=".xlsx,.xls,.csv" class="hidden" />
+          </label>
+        </div>
+      </div>
+
+      <!-- Form Section 3: Parsed Statement Lines Table -->
+      <div class="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+        <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+          <div>
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-2">
+              <span class="w-6 h-6 rounded-full bg-purple-100 text-purple-700 text-xs flex items-center justify-center font-bold">3</span>
+              Parsed Statement Transactions ({{ formData.rows.length }} Lines)
+            </h2>
+            <div class="flex items-center gap-4 text-xs font-medium text-slate-500 mt-1">
+              <span>Total Withdrawals (Debit): <strong class="text-rose-600 font-mono">৳{{ totalDebits | number:'1.2-2' }}</strong></span>
+              <span>•</span>
+              <span>Total Deposits (Credit): <strong class="text-emerald-600 font-mono">৳{{ totalCredits | number:'1.2-2' }}</strong></span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            (click)="addRow()"
+            class="px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            Add Transaction Line
+          </button>
+        </div>
+
+        <div class="mt-4 overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800">
+          <table class="w-full text-xs text-left">
+            <thead class="bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-700">
+              <tr>
+                <th class="p-2.5 w-32">Txn Date</th>
+                <th class="p-2.5 w-40">Reference / Chq</th>
+                <th class="p-2.5">Description / Narration</th>
+                <th class="p-2.5 w-36 text-right">Debit (Withdrawal ৳)</th>
+                <th class="p-2.5 w-36 text-right">Credit (Deposit ৳)</th>
+                <th class="p-2.5 w-44">Exception Type</th>
+                <th class="p-2.5 w-12 text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+              <tr *ngFor="let row of formData.rows; let i = index" class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
+                <td class="p-2">
+                  <input
+                    type="date"
+                    [(ngModel)]="row.transaction_date"
+                    name="txn_date_{{i}}"
+                    class="w-full px-2 py-1 text-xs border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-slate-900" />
+                </td>
+                <td class="p-2">
+                  <input
+                    type="text"
+                    [(ngModel)]="row.reference_no"
+                    name="ref_{{i}}"
+                    placeholder="Ref / Chq"
+                    class="w-full px-2 py-1 text-xs border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-slate-900 font-mono font-medium" />
+                </td>
+                <td class="p-2">
+                  <input
+                    type="text"
+                    [(ngModel)]="row.description"
+                    name="desc_{{i}}"
+                    placeholder="Description..."
+                    class="w-full px-2 py-1 text-xs border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-slate-900" />
+                </td>
+                <td class="p-2 text-right">
+                  <input
+                    type="number"
+                    [(ngModel)]="row.debit_amount"
+                    name="dr_{{i}}"
+                    min="0"
+                    placeholder="0.00"
+                    class="w-full px-2 py-1 text-xs border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-slate-900 text-right font-mono" />
+                </td>
+                <td class="p-2 text-right">
+                  <input
+                    type="number"
+                    [(ngModel)]="row.credit_amount"
+                    name="cr_{{i}}"
+                    min="0"
+                    placeholder="0.00"
+                    class="w-full px-2 py-1 text-xs border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-slate-900 text-right font-mono text-emerald-600" />
+                </td>
+                <td class="p-2">
+                  <select
+                    [(ngModel)]="row.exception_type"
+                    name="exc_{{i}}"
+                    class="w-full px-2 py-1 text-xs border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-slate-900">
+                    <option value="NONE">Standard</option>
+                    <option value="BANK_CHARGE">Bank Charge</option>
+                    <option value="INTEREST_EARNED">Interest Earned</option>
+                    <option value="DIRECT_DEPOSIT">Direct Deposit</option>
+                    <option value="OUTSTANDING_CHEQUE">Outstanding Cheque</option>
+                    <option value="DEPOSIT_IN_TRANSIT">Deposit in Transit</option>
+                    <option value="UNKNOWN_TRANSACTION">Unknown / Unidentified</option>
+                  </select>
+                </td>
+                <td class="p-2 text-center">
+                  <button
+                    type="button"
+                    (click)="removeRow(i)"
+                    class="text-rose-500 hover:text-rose-700 p-1"
+                    title="Delete line">
+                    ✕
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Action Footer -->
+      <div class="flex items-center justify-end gap-3 pt-6 border-t border-slate-200 dark:border-slate-800">
+        <a routerLink="/accounts/bank-reconciliation" class="px-5 py-2.5 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 shadow-sm transition-colors">
+          Cancel
+        </a>
+        <button
+          type="button"
+          (click)="submitStatement()"
+          [disabled]="submitting"
+          class="inline-flex items-center px-6 py-2.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition-colors disabled:opacity-50">
+          <svg *ngIf="submitting" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          {{ submitting ? 'Processing Matching...' : 'Ingest & Run Auto-Matching' }}
+        </button>
+      </div>
+    </div>
+  </app-card-container>
+</div>

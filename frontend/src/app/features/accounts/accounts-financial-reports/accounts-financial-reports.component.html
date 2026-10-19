@@ -1,250 +1,649 @@
-<app-card-container>
-  <!-- Header -->
-  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-5">
+<div class="space-y-6">
+  <!-- Top Title & Global Actions -->
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
     <div>
       <div class="flex items-center gap-2">
-        <h1 class="text-2xl font-bold tracking-tight text-foreground">Real-Time Financial Reports & Bank Reconciliation</h1>
-        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-          CA Audit
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+          Double-Entry Posted Ledger Engine
         </span>
+        <span class="text-xs text-slate-500 dark:text-slate-400">Bangladesh Real Estate Accounting Standard</span>
       </div>
-      <p class="text-sm text-muted-foreground mt-1">
-        Executive financial statements: Trial Balance, Project-wise P&L, Balance Sheet, and Bank/MFS statement reconciliation.
+      <h1 class="text-2xl font-bold font-display text-slate-900 dark:text-slate-100 mt-1">
+        Financial & Operational Reports Suite
+      </h1>
+      <p class="text-xs text-slate-500 dark:text-slate-400">
+        All financial statements and analytical reports are strictly computed in real time from posted ledger journals.
       </p>
     </div>
 
-    <!-- Tab Selector -->
-    <div class="flex items-center gap-1 bg-muted/60 p-1 rounded-xl border border-border">
-      <button
-        type="button"
-        (click)="activeTab.set('trial-balance')"
-        class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
-        [ngClass]="activeTab() === 'trial-balance' ? 'bg-card text-foreground shadow-xs font-bold' : 'text-muted-foreground hover:text-foreground'">
-        Trial Balance
-      </button>
-      <button
-        type="button"
-        (click)="activeTab.set('profit-loss')"
-        class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
-        [ngClass]="activeTab() === 'profit-loss' ? 'bg-card text-foreground shadow-xs font-bold' : 'text-muted-foreground hover:text-foreground'">
-        Profit & Loss (P&L)
-      </button>
-      <button
-        type="button"
-        (click)="activeTab.set('balance-sheet')"
-        class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
-        [ngClass]="activeTab() === 'balance-sheet' ? 'bg-card text-foreground shadow-xs font-bold' : 'text-muted-foreground hover:text-foreground'">
-        Balance Sheet
-      </button>
-      <button
-        type="button"
-        (click)="activeTab.set('bank-reconciliation')"
-        class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
-        [ngClass]="activeTab() === 'bank-reconciliation' ? 'bg-card text-foreground shadow-xs font-bold' : 'text-muted-foreground hover:text-foreground'">
-        Bank/MFS Recon
-      </button>
+    <div class="flex items-center gap-2.5 shrink-0">
+      <app-custom-button
+        variant="outline"
+        size="sm"
+        (btnClick)="printReport()"
+      >
+        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+        </svg>
+        Print Statement
+      </app-custom-button>
+
+      <app-custom-button
+        variant="primary"
+        size="sm"
+        (btnClick)="exportCSV()"
+      >
+        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        Export CSV
+      </app-custom-button>
     </div>
   </div>
 
-  <!-- TAB 1: TRIAL BALANCE -->
-  @if (activeTab() === 'trial-balance') {
-    <div class="my-5 space-y-4">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl bg-card border border-border">
-        <div class="flex items-center gap-3">
-          <label class="text-xs font-bold text-foreground">As of Date:</label>
-          <input
-            type="date"
-            [ngModel]="reportAsOfDate()"
-            (ngModelChange)="reportAsOfDate.set($event); loadTrialBalance()"
-            class="px-3 py-1.5 rounded-lg border border-border bg-background text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary" />
-        </div>
+  <!-- Main Card Container (Properly Centered, Standard Theme & Borders) -->
+  <app-card-container [hasHeader]="true" [title]="currentReportInfo().label" [badge]="currentReportInfo().id.toUpperCase()">
+    <div card-actions class="flex items-center gap-2">
+      <app-custom-button
+        variant="secondary"
+        size="sm"
+        (btnClick)="resetFilters()"
+      >
+        Reset Filters
+      </app-custom-button>
+      <app-custom-button
+        variant="primary"
+        size="sm"
+        [loading]="isLoading()"
+        (btnClick)="onFilterChange()"
+      >
+        Run Report
+      </app-custom-button>
+    </div>
 
+    <!-- Dynamic Filter Toolbar Grid -->
+    <div class="p-4 bg-slate-50/60 dark:bg-slate-950/40 rounded-xl border border-slate-200 dark:border-slate-800 mb-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+        <!-- Project Filter -->
         <div>
-          @if (trialBalance()?.is_balanced) {
-            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
-              ✓ Perfectly Balanced (Σ Dr = Σ Cr)
-            </span>
-          } @else {
-            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 animate-pulse">
-              Out of Balance
-            </span>
-          }
+          <app-searchable-select
+            label="Project Dimension"
+            placeholder="Search Project..."
+            [options]="projectOptions()"
+            [value]="selectedProjectId()"
+            (valueChange)="selectedProjectId.set($event); onFilterChange()"
+            [allowCreateNew]="true"
+            createRoute="/projects"
+          ></app-searchable-select>
         </div>
-      </div>
 
-      <!-- Trial Balance Table -->
-      <div class="rounded-xl border border-border overflow-hidden bg-card">
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-sm">
-            <thead class="bg-muted/50 text-muted-foreground text-xs uppercase font-semibold border-b border-border">
-              <tr>
-                <th class="px-4 py-3">Code & Account Name</th>
-                <th class="px-4 py-3 text-center">Type</th>
-                <th class="px-4 py-3 text-right">Debit (Dr) BDT</th>
-                <th class="px-4 py-3 text-right">Credit (Cr) BDT</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-border">
-              @for (item of trialBalance()?.items; track item.account_id) {
-                <tr class="hover:bg-muted/20">
-                  <td class="px-4 py-2.5 font-medium text-foreground">
-                    <span class="font-mono text-muted-foreground mr-1">{{ item.account_code }}</span> {{ item.account_name_en }}
-                  </td>
-                  <td class="px-4 py-2.5 text-center text-xs text-muted-foreground">{{ item.account_type }}</td>
-                  <td class="px-4 py-2.5 text-right font-medium" [ngClass]="item.net_debit > 0 ? 'text-foreground' : 'text-muted-foreground/30'">
-                    {{ item.net_debit > 0 ? (item.net_debit | number:'1.2-2') : '—' }}
-                  </td>
-                  <td class="px-4 py-2.5 text-right font-medium" [ngClass]="item.net_credit > 0 ? 'text-foreground' : 'text-muted-foreground/30'">
-                    {{ item.net_credit > 0 ? (item.net_credit | number:'1.2-2') : '—' }}
-                  </td>
-                </tr>
-              }
-            </tbody>
-            <tfoot class="bg-muted/40 font-bold border-t-2 border-border text-foreground">
-              <tr>
-                <td colspan="2" class="px-4 py-3 text-right uppercase text-xs">Grand Totals:</td>
-                <td class="px-4 py-3 text-right text-primary">৳{{ trialBalance()?.grand_total_debit | number:'1.2-2' }}</td>
-                <td class="px-4 py-3 text-right text-primary">৳{{ trialBalance()?.grand_total_credit | number:'1.2-2' }}</td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
+        <!-- Dynamic Account Filter (For GL, Cashbook, BRS) -->
+        @if (activeTab() === 'gl' || activeTab() === 'cashbook' || activeTab() === 'brs') {
+          <div>
+            <app-searchable-select
+              label="Account Filter"
+              placeholder="Search Chart of Accounts..."
+              [options]="accountOptions()"
+              [value]="selectedAccountId()"
+              (valueChange)="selectedAccountId.set($event); onFilterChange()"
+              [allowCreateNew]="true"
+              createRoute="/accounts/coa"
+            ></app-searchable-select>
+          </div>
+        }
+
+        <!-- Book Type Filter (For Cashbook) -->
+        @if (activeTab() === 'cashbook') {
+          <div>
+            <app-searchable-select
+              label="Book Type"
+              placeholder="Select Book Type..."
+              [options]="bookTypeOptions"
+              [value]="bookType()"
+              (valueChange)="bookType.set($event); onFilterChange()"
+              [allowCreateNew]="false"
+            ></app-searchable-select>
+          </div>
+        }
+
+        <!-- Vendor Filter (For AP Aging & Party Statement) -->
+        @if (activeTab() === 'ap-aging' || (activeTab() === 'party-statement' && partyType() === 'VENDOR')) {
+          <div>
+            <app-searchable-select
+              label="Vendor / Contractor"
+              placeholder="Search Vendor..."
+              [options]="vendorOptions()"
+              [value]="selectedVendorId()"
+              (valueChange)="selectedVendorId.set($event); onFilterChange()"
+              [allowCreateNew]="true"
+              createRoute="/procurement/vendors"
+            ></app-searchable-select>
+          </div>
+        }
+
+        <!-- Customer Filter (For AR Aging, Advances & Party Statement) -->
+        @if (activeTab() === 'ar-aging' || activeTab() === 'advances' || (activeTab() === 'party-statement' && partyType() === 'CUSTOMER')) {
+          <div>
+            <app-searchable-select
+              label="Customer / Buyer"
+              placeholder="Search Customer..."
+              [options]="customerOptions()"
+              [value]="selectedCustomerId()"
+              (valueChange)="selectedCustomerId.set($event); onFilterChange()"
+              [allowCreateNew]="true"
+              createRoute="/crm/customers"
+            ></app-searchable-select>
+          </div>
+        }
+
+        <!-- Party Type Filter (For Party Statement) -->
+        @if (activeTab() === 'party-statement') {
+          <div>
+            <app-searchable-select
+              label="Party Type"
+              placeholder="Select Type..."
+              [options]="partyTypeOptions"
+              [value]="partyType()"
+              (valueChange)="partyType.set($event); onFilterChange()"
+              [allowCreateNew]="false"
+            ></app-searchable-select>
+          </div>
+        }
+
+        <!-- Voucher Type Filter (For Voucher Register) -->
+        @if (activeTab() === 'voucher-register') {
+          <div>
+            <app-searchable-select
+              label="Voucher Type"
+              placeholder="Select Voucher Type..."
+              [options]="voucherTypeOptions"
+              [value]="voucherType()"
+              (valueChange)="voucherType.set($event); onFilterChange()"
+              [allowCreateNew]="false"
+            ></app-searchable-select>
+          </div>
+        }
+
+        <!-- Date Filters (As of Date OR From/To Range) -->
+        @if (activeTab() === 'ap-aging' || activeTab() === 'ar-aging' || activeTab() === 'cwip' || activeTab() === 'brs' || activeTab() === 'cost-to-complete') {
+          <div>
+            <label class="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1.5">Statement As of Date</label>
+            <input
+              type="date"
+              [value]="asOfDate()"
+              (change)="asOfDate.set($any($event.target).value); onFilterChange()"
+              class="erp-input text-xs w-full"
+            />
+          </div>
+        } @else {
+          <div>
+            <label class="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1.5">From Date</label>
+            <input
+              type="date"
+              [value]="fromDate()"
+              (change)="fromDate.set($any($event.target).value); onFilterChange()"
+              class="erp-input text-xs w-full"
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1.5">To Date</label>
+            <input
+              type="date"
+              [value]="toDate()"
+              (change)="toDate.set($any($event.target).value); onFilterChange()"
+              class="erp-input text-xs w-full"
+            />
+          </div>
+        }
       </div>
     </div>
-  }
 
-  <!-- TAB 2: PROFIT & LOSS -->
-  @if (activeTab() === 'profit-loss') {
-    <div class="my-5 space-y-4">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 rounded-xl bg-card border border-border">
-        <app-searchable-select
-          label="Project Cost Center"
-          placeholder="All Projects"
-          [options]="projectOptions()"
-          [ngModel]="plProjectId()"
-          (ngModelChange)="plProjectId.set($event); loadProfitLoss()">
-        </app-searchable-select>
-
-        <div>
-          <label class="text-xs font-bold text-foreground">From Date</label>
-          <input
-            type="date"
-            [ngModel]="plFromDate()"
-            (ngModelChange)="plFromDate.set($event); loadProfitLoss()"
-            class="mt-1 w-full px-3 py-2 rounded-lg border border-border bg-background text-sm text-foreground focus:outline-none" />
-        </div>
-
-        <div>
-          <label class="text-xs font-bold text-foreground">To Date</label>
-          <input
-            type="date"
-            [ngModel]="plToDate()"
-            (ngModelChange)="plToDate.set($event); loadProfitLoss()"
-            class="mt-1 w-full px-3 py-2 rounded-lg border border-border bg-background text-sm text-foreground focus:outline-none" />
-        </div>
+    <!-- Loading State -->
+    @if (isLoading()) {
+      <div class="py-16 text-center">
+        <svg class="animate-spin h-8 w-8 mx-auto text-emerald-600 mb-3" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+        </svg>
+        <p class="text-sm font-medium text-slate-600 dark:text-slate-400">Generating live report from posted ledger data...</p>
       </div>
+    } @else {
 
-      <!-- P&L KPI Result -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div class="p-4 rounded-xl bg-card border border-border">
-          <div class="text-xs text-muted-foreground">Total Revenue</div>
-          <div class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">
-            ৳{{ profitLoss()?.total_revenue | number:'1.2-2' }}
-          </div>
-        </div>
-        <div class="p-4 rounded-xl bg-card border border-border">
-          <div class="text-xs text-muted-foreground">Total Expenses</div>
-          <div class="text-2xl font-bold text-rose-600 dark:text-rose-400 mt-1">
-            ৳{{ profitLoss()?.total_expense | number:'1.2-2' }}
-          </div>
-        </div>
-        <div class="p-4 rounded-xl bg-card border border-border">
-          <div class="text-xs text-muted-foreground">Net Profit / (Loss)</div>
-          <div class="text-2xl font-bold mt-1" [ngClass]="(profitLoss()?.net_profit_or_loss || 0) >= 0 ? 'text-primary' : 'text-rose-600'">
-            ৳{{ profitLoss()?.net_profit_or_loss | number:'1.2-2' }}
-          </div>
-        </div>
-      </div>
-
-      <!-- Breakdown Tables -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- Revenue Breakdown -->
-        <div class="rounded-xl border border-border bg-card p-4">
-          <h3 class="font-bold text-foreground text-sm border-b border-border pb-2 mb-3">Revenues & Sales Income</h3>
-          <div class="space-y-2">
-            @for (r of profitLoss()?.revenue_breakdown; track r.account_id) {
-              <div class="flex justify-between text-xs py-1 border-b border-border/50">
-                <span class="text-muted-foreground">{{ r.account_code }} - {{ r.account_name_en }}</span>
-                <span class="font-bold text-foreground">৳{{ r.net_credit | number:'1.2-2' }}</span>
-              </div>
-            }
-          </div>
-        </div>
-
-        <!-- Expense Breakdown -->
-        <div class="rounded-xl border border-border bg-card p-4">
-          <h3 class="font-bold text-foreground text-sm border-b border-border pb-2 mb-3">Construction & Operating Expenses</h3>
-          <div class="space-y-2">
-            @for (e of profitLoss()?.expense_breakdown; track e.account_id) {
-              <div class="flex justify-between text-xs py-1 border-b border-border/50">
-                <span class="text-muted-foreground">{{ e.account_code }} - {{ e.account_name_en }}</span>
-                <span class="font-bold text-foreground">৳{{ e.net_debit | number:'1.2-2' }}</span>
-              </div>
-            }
-          </div>
-        </div>
-      </div>
-
-      <!-- Cost Center Budgeted vs Actual Cost Variance -->
-      @if (costCenterVariance(); as ccv) {
-        <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-card overflow-hidden shadow-sm mt-4">
-          <div class="px-5 py-3.5 bg-muted/40 border-b border-border flex items-center justify-between">
-            <h3 class="font-bold text-foreground text-sm flex items-center gap-2">
-              <span>Multi-Project Cost Center Variance (Budgeted vs Actual Cost)</span>
-              <span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300">
-                WBS Tracking
-              </span>
-            </h3>
-            <span class="text-xs text-muted-foreground">
-              Total Budget: ৳{{ ccv.total_budget_allocated | number:'1.2-2' }} • Total Spent: ৳{{ ccv.total_actual_spent | number:'1.2-2' }}
-            </span>
+      <!-- TAB 1: GENERAL LEDGER -->
+      @if (activeTab() === 'gl' && glReport()) {
+        <div class="space-y-4">
+          <!-- Summary Cards -->
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-800">
+              <span class="text-[11px] text-slate-500 font-medium">Opening Balance</span>
+              <p class="text-base font-bold text-slate-800 dark:text-slate-100">৳{{ glReport()!.opening_balance | number:'1.2-2' }}</p>
+            </div>
+            <div class="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-200 dark:border-emerald-800">
+              <span class="text-[11px] text-emerald-700 font-medium">Period Total Debits</span>
+              <p class="text-base font-bold text-emerald-700 dark:text-emerald-400">৳{{ glReport()!.total_debit | number:'1.2-2' }}</p>
+            </div>
+            <div class="p-3 bg-rose-50 dark:bg-rose-950/40 rounded-xl border border-rose-200 dark:border-rose-800">
+              <span class="text-[11px] text-rose-700 font-medium">Period Total Credits</span>
+              <p class="text-base font-bold text-rose-700 dark:text-rose-400">৳{{ glReport()!.total_credit | number:'1.2-2' }}</p>
+            </div>
+            <div class="p-3 bg-blue-50 dark:bg-blue-950/40 rounded-xl border border-blue-200 dark:border-blue-800">
+              <span class="text-[11px] text-blue-700 font-medium">Closing Balance</span>
+              <p class="text-base font-bold text-blue-700 dark:text-blue-400">৳{{ glReport()!.closing_balance | number:'1.2-2' }}</p>
+            </div>
           </div>
 
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs">
-              <thead>
-                <tr class="border-b border-border bg-muted/20 text-muted-foreground font-semibold uppercase tracking-wider">
-                  <th class="py-2.5 px-4">Code</th>
-                  <th class="py-2.5 px-4">Cost Center Name</th>
-                  <th class="py-2.5 px-4">WBS Stage</th>
-                  <th class="py-2.5 px-4 text-right">Allocated Budget</th>
-                  <th class="py-2.5 px-4 text-right">Actual Spent</th>
-                  <th class="py-2.5 px-4 text-right">Cost Variance</th>
-                  <th class="py-2.5 px-4 text-center">Variance %</th>
+          <!-- Table -->
+          <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-700">
+                <tr>
+                  <th class="p-3">Date</th>
+                  <th class="p-3">Voucher #</th>
+                  <th class="p-3">Type</th>
+                  <th class="p-3">Particulars / Narration</th>
+                  <th class="p-3">Project</th>
+                  <th class="p-3 text-right">Debit (৳)</th>
+                  <th class="p-3 text-right">Credit (৳)</th>
+                  <th class="p-3 text-right">Running Balance (৳)</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-border">
-                @for (cc of ccv.cost_centers; track cc.id) {
-                  <tr class="hover:bg-muted/30 transition">
-                    <td class="py-2.5 px-4 font-mono font-bold">{{ cc.cost_center_code }}</td>
-                    <td class="py-2.5 px-4 font-medium text-foreground">{{ cc.name }}</td>
-                    <td class="py-2.5 px-4">
-                      <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-                        {{ cc.wbs_stage }}
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                @for (row of glReport()!.rows; track row.voucher_number + row.voucher_date) {
+                  <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                    <td class="p-3 whitespace-nowrap">{{ row.voucher_date }}</td>
+                    <td class="p-3 font-semibold text-emerald-600 dark:text-emerald-400">{{ row.voucher_number }}</td>
+                    <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">{{ row.voucher_type }}</span></td>
+                    <td class="p-3 max-w-xs truncate">{{ row.particulars }}</td>
+                    <td class="p-3 text-slate-500">{{ row.project_name || 'General' }}</td>
+                    <td class="p-3 text-right font-medium text-emerald-700 dark:text-emerald-400">{{ row.debit > 0 ? (row.debit | number:'1.2-2') : '—' }}</td>
+                    <td class="p-3 text-right font-medium text-rose-700 dark:text-rose-400">{{ row.credit > 0 ? (row.credit | number:'1.2-2') : '—' }}</td>
+                    <td class="p-3 text-right font-bold text-slate-900 dark:text-slate-100">৳{{ row.running_balance | number:'1.2-2' }}</td>
+                  </tr>
+                } @empty {
+                  <tr><td colspan="8" class="p-8 text-center text-slate-500">No journal entries found for selected criteria.</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+
+      <!-- TAB 2: CASHBOOK & BANKBOOK -->
+      @if (activeTab() === 'cashbook' && cashBankReport()) {
+        <div class="space-y-4">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-800">
+              <span class="text-[11px] text-slate-500 font-medium">Opening Balance</span>
+              <p class="text-base font-bold text-slate-800 dark:text-slate-100">৳{{ cashBankReport()!.opening_balance | number:'1.2-2' }}</p>
+            </div>
+            <div class="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-200 dark:border-emerald-800">
+              <span class="text-[11px] text-emerald-700 font-medium">Total Receipts</span>
+              <p class="text-base font-bold text-emerald-700 dark:text-emerald-400">৳{{ cashBankReport()!.total_receipts | number:'1.2-2' }}</p>
+            </div>
+            <div class="p-3 bg-rose-50 dark:bg-rose-950/40 rounded-xl border border-rose-200 dark:border-rose-800">
+              <span class="text-[11px] text-rose-700 font-medium">Total Payments</span>
+              <p class="text-base font-bold text-rose-700 dark:text-rose-400">৳{{ cashBankReport()!.total_payments | number:'1.2-2' }}</p>
+            </div>
+            <div class="p-3 bg-blue-50 dark:bg-blue-950/40 rounded-xl border border-blue-200 dark:border-blue-800">
+              <span class="text-[11px] text-blue-700 font-medium">Closing Balance</span>
+              <p class="text-base font-bold text-blue-700 dark:text-blue-400">৳{{ cashBankReport()!.closing_balance | number:'1.2-2' }}</p>
+            </div>
+          </div>
+
+          <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-700">
+                <tr>
+                  <th class="p-3">Date</th>
+                  <th class="p-3">Voucher #</th>
+                  <th class="p-3">Account</th>
+                  <th class="p-3">Payment Mode</th>
+                  <th class="p-3">Particulars</th>
+                  <th class="p-3 text-right">Receipts (৳)</th>
+                  <th class="p-3 text-right">Payments (৳)</th>
+                  <th class="p-3 text-right">Running Balance (৳)</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                @for (row of cashBankReport()!.rows; track row.voucher_number + row.date) {
+                  <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                    <td class="p-3 whitespace-nowrap">{{ row.date }}</td>
+                    <td class="p-3 font-semibold text-emerald-600 dark:text-emerald-400">{{ row.voucher_number }}</td>
+                    <td class="p-3">{{ row.account_name }}</td>
+                    <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-800">{{ row.payment_mode }}</span></td>
+                    <td class="p-3 max-w-xs truncate">{{ row.description }}</td>
+                    <td class="p-3 text-right font-medium text-emerald-700 dark:text-emerald-400">{{ row.receipt_amount > 0 ? (row.receipt_amount | number:'1.2-2') : '—' }}</td>
+                    <td class="p-3 text-right font-medium text-rose-700 dark:text-rose-400">{{ row.payment_amount > 0 ? (row.payment_amount | number:'1.2-2') : '—' }}</td>
+                    <td class="p-3 text-right font-bold text-slate-900 dark:text-slate-100">৳{{ row.running_balance | number:'1.2-2' }}</td>
+                  </tr>
+                } @empty {
+                  <tr><td colspan="8" class="p-8 text-center text-slate-500">No cash or bank transactions recorded.</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+
+      <!-- TAB 3: ACCOUNTS PAYABLE (AP) AGING -->
+      @if (activeTab() === 'ap-aging' && apAgingReport()) {
+        <div class="space-y-4">
+          <div class="grid grid-cols-2 md:grid-cols-6 gap-3">
+            <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-800">
+              <span class="text-[11px] text-slate-500 font-medium">Total AP Balance</span>
+              <p class="text-base font-bold text-slate-900 dark:text-slate-100">৳{{ apAgingReport()!.total_payable_balance | number:'1.2-2' }}</p>
+            </div>
+            <div class="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-200 dark:border-emerald-800">
+              <span class="text-[11px] text-emerald-700 font-medium">Current (Not Due)</span>
+              <p class="text-base font-bold text-emerald-700 dark:text-emerald-400">৳{{ apAgingReport()!.total_current | number:'1.2-2' }}</p>
+            </div>
+            <div class="p-3 bg-blue-50 dark:bg-blue-950/40 rounded-xl border border-blue-200 dark:border-blue-800">
+              <span class="text-[11px] text-blue-700 font-medium">1 - 30 Days</span>
+              <p class="text-base font-bold text-blue-700 dark:text-blue-400">৳{{ apAgingReport()!.total_1_30 | number:'1.2-2' }}</p>
+            </div>
+            <div class="p-3 bg-amber-50 dark:bg-amber-950/40 rounded-xl border border-amber-200 dark:border-amber-800">
+              <span class="text-[11px] text-amber-700 font-medium">31 - 60 Days</span>
+              <p class="text-base font-bold text-amber-700 dark:text-amber-400">৳{{ apAgingReport()!.total_31_60 | number:'1.2-2' }}</p>
+            </div>
+            <div class="p-3 bg-orange-50 dark:bg-orange-950/40 rounded-xl border border-orange-200 dark:border-orange-800">
+              <span class="text-[11px] text-orange-700 font-medium">61 - 90 Days</span>
+              <p class="text-base font-bold text-orange-700 dark:text-orange-400">৳{{ apAgingReport()!.total_61_90 | number:'1.2-2' }}</p>
+            </div>
+            <div class="p-3 bg-rose-50 dark:bg-rose-950/40 rounded-xl border border-rose-200 dark:border-rose-800">
+              <span class="text-[11px] text-rose-700 font-medium">> 90 Days Overdue</span>
+              <p class="text-base font-bold text-rose-700 dark:text-rose-400">৳{{ apAgingReport()!.total_90_plus | number:'1.2-2' }}</p>
+            </div>
+          </div>
+
+          <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-700">
+                <tr>
+                  <th class="p-3">Vendor / Contractor</th>
+                  <th class="p-3">Phone</th>
+                  <th class="p-3 text-right">Current (৳)</th>
+                  <th class="p-3 text-right">1-30 Days (৳)</th>
+                  <th class="p-3 text-right">31-60 Days (৳)</th>
+                  <th class="p-3 text-right">61-90 Days (৳)</th>
+                  <th class="p-3 text-right">>90 Days (৳)</th>
+                  <th class="p-3 text-right">Total Payable (৳)</th>
+                  <th class="p-3 text-center">Risk Level</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                @for (row of apAgingReport()!.rows; track row.vendor_name) {
+                  <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                    <td class="p-3 font-semibold text-slate-800 dark:text-slate-200">{{ row.vendor_name }}</td>
+                    <td class="p-3 text-slate-500">{{ row.contact_phone || '—' }}</td>
+                    <td class="p-3 text-right font-medium text-emerald-600">{{ row.current_amount | number:'1.2-2' }}</td>
+                    <td class="p-3 text-right font-medium text-blue-600">{{ row.days_1_30 | number:'1.2-2' }}</td>
+                    <td class="p-3 text-right font-medium text-amber-600">{{ row.days_31_60 | number:'1.2-2' }}</td>
+                    <td class="p-3 text-right font-medium text-orange-600">{{ row.days_61_90 | number:'1.2-2' }}</td>
+                    <td class="p-3 text-right font-bold text-rose-600">{{ row.days_90_plus | number:'1.2-2' }}</td>
+                    <td class="p-3 text-right font-bold text-slate-900 dark:text-slate-100">৳{{ row.total_payable | number:'1.2-2' }}</td>
+                    <td class="p-3 text-center">
+                      <span class="px-2 py-0.5 rounded text-[10px] font-semibold"
+                        [class.bg-emerald-100.text-emerald-800]="row.risk_level === 'Low'"
+                        [class.bg-amber-100.text-amber-800]="row.risk_level === 'Medium'"
+                        [class.bg-rose-100.text-rose-800]="row.risk_level === 'High'">
+                        {{ row.risk_level }}
                       </span>
                     </td>
-                    <td class="py-2.5 px-4 text-right font-medium">৳{{ cc.budget_allocated | number:'1.2-2' }}</td>
-                    <td class="py-2.5 px-4 text-right font-medium text-blue-600 dark:text-blue-400">৳{{ cc.actual_spent | number:'1.2-2' }}</td>
-                    <td class="py-2.5 px-4 text-right font-bold" [class.text-emerald-600]="cc.variance_bdt >= 0" [class.text-rose-600]="cc.variance_bdt < 0">
-                      ৳{{ cc.variance_bdt | number:'1.2-2' }}
+                  </tr>
+                } @empty {
+                  <tr><td colspan="9" class="p-8 text-center text-slate-500">No outstanding payables found.</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+
+      <!-- TAB 4: ACCOUNTS RECEIVABLE (AR) AGING -->
+      @if (activeTab() === 'ar-aging' && arAgingReport()) {
+        <div class="space-y-4">
+          <div class="grid grid-cols-2 md:grid-cols-6 gap-3">
+            <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-800">
+              <span class="text-[11px] text-slate-500 font-medium">Total AR Balance</span>
+              <p class="text-base font-bold text-slate-900 dark:text-slate-100">৳{{ arAgingReport()!.total_receivable_balance | number:'1.2-2' }}</p>
+            </div>
+            <div class="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-200 dark:border-emerald-800">
+              <span class="text-[11px] text-emerald-700 font-medium">Current (Not Due)</span>
+              <p class="text-base font-bold text-emerald-700 dark:text-emerald-400">৳{{ arAgingReport()!.total_current | number:'1.2-2' }}</p>
+            </div>
+            <div class="p-3 bg-blue-50 dark:bg-blue-950/40 rounded-xl border border-blue-200 dark:border-blue-800">
+              <span class="text-[11px] text-blue-700 font-medium">1 - 30 Days</span>
+              <p class="text-base font-bold text-blue-700 dark:text-blue-400">৳{{ arAgingReport()!.total_1_30 | number:'1.2-2' }}</p>
+            </div>
+            <div class="p-3 bg-amber-50 dark:bg-amber-950/40 rounded-xl border border-amber-200 dark:border-amber-800">
+              <span class="text-[11px] text-amber-700 font-medium">31 - 60 Days</span>
+              <p class="text-base font-bold text-amber-700 dark:text-amber-400">৳{{ arAgingReport()!.total_31_60 | number:'1.2-2' }}</p>
+            </div>
+            <div class="p-3 bg-orange-50 dark:bg-orange-950/40 rounded-xl border border-orange-200 dark:border-orange-800">
+              <span class="text-[11px] text-orange-700 font-medium">61 - 90 Days</span>
+              <p class="text-base font-bold text-orange-700 dark:text-orange-400">৳{{ arAgingReport()!.total_61_90 | number:'1.2-2' }}</p>
+            </div>
+            <div class="p-3 bg-rose-50 dark:bg-rose-950/40 rounded-xl border border-rose-200 dark:border-rose-800">
+              <span class="text-[11px] text-rose-700 font-medium">> 90 Days Overdue</span>
+              <p class="text-base font-bold text-rose-700 dark:text-rose-400">৳{{ arAgingReport()!.total_90_plus | number:'1.2-2' }}</p>
+            </div>
+          </div>
+
+          <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-700">
+                <tr>
+                  <th class="p-3">Customer / Buyer</th>
+                  <th class="p-3">Project & Unit</th>
+                  <th class="p-3 text-right">Current (৳)</th>
+                  <th class="p-3 text-right">1-30 Days (৳)</th>
+                  <th class="p-3 text-right">31-60 Days (৳)</th>
+                  <th class="p-3 text-right">61-90 Days (৳)</th>
+                  <th class="p-3 text-right">>90 Days (৳)</th>
+                  <th class="p-3 text-right">Total Due (৳)</th>
+                  <th class="p-3 text-center">Collection Status</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                @for (row of arAgingReport()!.rows; track row.customer_name) {
+                  <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                    <td class="p-3 font-semibold text-slate-800 dark:text-slate-200">{{ row.customer_name }}</td>
+                    <td class="p-3 text-slate-500">{{ row.project_name }} • {{ row.unit_no || 'TBD' }}</td>
+                    <td class="p-3 text-right font-medium text-emerald-600">{{ row.current_not_due | number:'1.2-2' }}</td>
+                    <td class="p-3 text-right font-medium text-blue-600">{{ row.days_1_30 | number:'1.2-2' }}</td>
+                    <td class="p-3 text-right font-medium text-amber-600">{{ row.days_31_60 | number:'1.2-2' }}</td>
+                    <td class="p-3 text-right font-medium text-orange-600">{{ row.days_61_90 | number:'1.2-2' }}</td>
+                    <td class="p-3 text-right font-bold text-rose-600">{{ row.days_90_plus | number:'1.2-2' }}</td>
+                    <td class="p-3 text-right font-bold text-slate-900 dark:text-slate-100">৳{{ row.total_receivable | number:'1.2-2' }}</td>
+                    <td class="p-3 text-center">
+                      <span class="px-2 py-0.5 rounded text-[10px] font-semibold"
+                        [class.bg-emerald-100.text-emerald-800]="row.recovery_status === 'Normal'"
+                        [class.bg-amber-100.text-amber-800]="row.recovery_status === 'Follow-up'"
+                        [class.bg-rose-100.text-rose-800]="row.recovery_status.includes('Legal')">
+                        {{ row.recovery_status }}
+                      </span>
                     </td>
-                    <td class="py-2.5 px-4 text-center">
-                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold"
-                        [class.bg-emerald-100]="cc.variance_bdt >= 0"
-                        [class.text-emerald-800]="cc.variance_bdt >= 0"
-                        [class.bg-rose-100]="cc.variance_bdt < 0"
-                        [class.text-rose-800]="cc.variance_bdt < 0">
-                        {{ cc.variance_percent }}%
+                  </tr>
+                } @empty {
+                  <tr><td colspan="9" class="p-8 text-center text-slate-500">No overdue receivables recorded.</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+
+      <!-- TAB 5: CUSTOMER ADVANCES REPORT -->
+      @if (activeTab() === 'advances' && advancesReport()) {
+        <div class="space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div class="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-200 dark:border-emerald-800">
+              <span class="text-[11px] text-emerald-700 font-medium">Total Advances Received</span>
+              <p class="text-base font-bold text-emerald-700 dark:text-emerald-400">৳{{ advancesReport()!.total_advances_received | number:'1.2-2' }}</p>
+            </div>
+            <div class="p-3 bg-blue-50 dark:bg-blue-950/40 rounded-xl border border-blue-200 dark:border-blue-800">
+              <span class="text-[11px] text-blue-700 font-medium">Revenue Recognized / Allocated</span>
+              <p class="text-base font-bold text-blue-700 dark:text-blue-400">৳{{ advancesReport()!.total_revenue_recognized | number:'1.2-2' }}</p>
+            </div>
+            <div class="p-3 bg-amber-50 dark:bg-amber-950/40 rounded-xl border border-amber-200 dark:border-amber-800">
+              <span class="text-[11px] text-amber-700 font-medium">Net Customer Liability Balance</span>
+              <p class="text-base font-bold text-amber-700 dark:text-amber-400">৳{{ advancesReport()!.net_customer_liability | number:'1.2-2' }}</p>
+            </div>
+          </div>
+
+          <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-700">
+                <tr>
+                  <th class="p-3">Customer</th>
+                  <th class="p-3">Project & Unit</th>
+                  <th class="p-3">Booking Ref</th>
+                  <th class="p-3 text-right">Booking Money (৳)</th>
+                  <th class="p-3 text-right">Down Payment (৳)</th>
+                  <th class="p-3 text-right">Total Advance (৳)</th>
+                  <th class="p-3 text-right">Recognized (৳)</th>
+                  <th class="p-3 text-right">Unapplied Liability (৳)</th>
+                  <th class="p-3 text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                @for (row of advancesReport()!.rows; track row.id) {
+                  <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                    <td class="p-3 font-semibold text-slate-800 dark:text-slate-200">{{ row.customer_name }}</td>
+                    <td class="p-3 text-slate-500">{{ row.project_name }} • {{ row.unit_no || 'TBD' }}</td>
+                    <td class="p-3 font-mono text-emerald-600">{{ row.booking_reference || '—' }}</td>
+                    <td class="p-3 text-right">{{ row.booking_money_received | number:'1.2-2' }}</td>
+                    <td class="p-3 text-right">{{ row.down_payment_received | number:'1.2-2' }}</td>
+                    <td class="p-3 text-right font-bold text-slate-900 dark:text-slate-100">{{ row.total_advance_received | number:'1.2-2' }}</td>
+                    <td class="p-3 text-right font-medium text-emerald-600">{{ row.recognized_revenue | number:'1.2-2' }}</td>
+                    <td class="p-3 text-right font-bold text-amber-600">৳{{ row.unallocated_liability_balance | number:'1.2-2' }}</td>
+                    <td class="p-3 text-center">
+                      <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                        {{ row.status }}
+                      </span>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr><td colspan="9" class="p-8 text-center text-slate-500">No customer advance ledger items found.</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+
+      <!-- TAB 6: PROJECT INCOME & EXPENDITURE -->
+      @if (activeTab() === 'project-pnl' && projectIncomeExpReport()) {
+        <div class="space-y-4">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div class="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-200 dark:border-emerald-800">
+              <span class="text-[11px] text-emerald-700 font-medium">Total Portfolio Revenue</span>
+              <p class="text-base font-bold text-emerald-700 dark:text-emerald-400">৳{{ projectIncomeExpReport()!.grand_total_revenue | number:'1.2-2' }}</p>
+            </div>
+            <div class="p-3 bg-rose-50 dark:bg-rose-950/40 rounded-xl border border-rose-200 dark:border-rose-800">
+              <span class="text-[11px] text-rose-700 font-medium">Total Construction Cost</span>
+              <p class="text-base font-bold text-rose-700 dark:text-rose-400">৳{{ projectIncomeExpReport()!.grand_total_expenditure | number:'1.2-2' }}</p>
+            </div>
+            <div class="p-3 bg-blue-50 dark:bg-blue-950/40 rounded-xl border border-blue-200 dark:border-blue-800">
+              <span class="text-[11px] text-blue-700 font-medium">Net Project Surplus</span>
+              <p class="text-base font-bold text-blue-700 dark:text-blue-400">৳{{ projectIncomeExpReport()!.grand_net_surplus | number:'1.2-2' }}</p>
+            </div>
+            <div class="p-3 bg-amber-50 dark:bg-amber-950/40 rounded-xl border border-amber-200 dark:border-amber-800">
+              <span class="text-[11px] text-amber-700 font-medium">Portfolio Margin %</span>
+              <p class="text-base font-bold text-amber-700 dark:text-amber-400">{{ projectIncomeExpReport()!.portfolio_margin_percentage }}%</p>
+            </div>
+          </div>
+
+          <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-700">
+                <tr>
+                  <th class="p-3">Project Code</th>
+                  <th class="p-3">Project Name</th>
+                  <th class="p-3 text-right">Revenue (৳)</th>
+                  <th class="p-3 text-right">Direct Construction (৳)</th>
+                  <th class="p-3 text-right">Land & Dev (৳)</th>
+                  <th class="p-3 text-right">Consultancy (৳)</th>
+                  <th class="p-3 text-right">Overheads (৳)</th>
+                  <th class="p-3 text-right">Net Surplus (৳)</th>
+                  <th class="p-3 text-right">Margin %</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                @for (row of projectIncomeExpReport()!.rows; track row.project_id) {
+                  <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                    <td class="p-3 font-mono font-semibold text-emerald-600">{{ row.project_code }}</td>
+                    <td class="p-3 font-semibold text-slate-800 dark:text-slate-200">{{ row.project_name }}</td>
+                    <td class="p-3 text-right font-medium text-emerald-600">{{ row.total_revenue | number:'1.2-2' }}</td>
+                    <td class="p-3 text-right text-slate-600">{{ row.direct_construction_cost | number:'1.2-2' }}</td>
+                    <td class="p-3 text-right text-slate-600">{{ row.land_development_cost | number:'1.2-2' }}</td>
+                    <td class="p-3 text-right text-slate-600">{{ row.consultancy_legal_cost | number:'1.2-2' }}</td>
+                    <td class="p-3 text-right text-slate-600">{{ row.site_overheads | number:'1.2-2' }}</td>
+                    <td class="p-3 text-right font-bold text-slate-900 dark:text-slate-100">৳{{ row.gross_surplus | number:'1.2-2' }}</td>
+                    <td class="p-3 text-right font-bold" [class.text-emerald-600]="row.margin_percentage >= 20" [class.text-amber-600]="row.margin_percentage < 20">
+                      {{ row.margin_percentage }}%
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr><td colspan="9" class="p-8 text-center text-slate-500">No project income data available.</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+
+      <!-- TAB 7: PROJECT COST-TO-COMPLETE -->
+      @if (activeTab() === 'cost-to-complete' && costToCompleteReport()) {
+        <div class="space-y-4">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-800">
+              <span class="text-[11px] text-slate-500 font-medium">Approved BOQ Budget</span>
+              <p class="text-base font-bold text-slate-900 dark:text-slate-100">৳{{ costToCompleteReport()!.total_approved_budget | number:'1.2-2' }}</p>
+            </div>
+            <div class="p-3 bg-blue-50 dark:bg-blue-950/40 rounded-xl border border-blue-200 dark:border-blue-800">
+              <span class="text-[11px] text-blue-700 font-medium">Actual Incurred (GL)</span>
+              <p class="text-base font-bold text-blue-700 dark:text-blue-400">৳{{ costToCompleteReport()!.total_actual_incurred | number:'1.2-2' }}</p>
+            </div>
+            <div class="p-3 bg-purple-50 dark:bg-purple-950/40 rounded-xl border border-purple-200 dark:border-purple-800">
+              <span class="text-[11px] text-purple-700 font-medium">Estimate At Completion (EAC)</span>
+              <p class="text-base font-bold text-purple-700 dark:text-purple-400">৳{{ costToCompleteReport()!.total_forecast_eac | number:'1.2-2' }}</p>
+            </div>
+            <div class="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-200 dark:border-emerald-800">
+              <span class="text-[11px] text-emerald-700 font-medium">Cost Variance</span>
+              <p class="text-base font-bold text-emerald-700 dark:text-emerald-400">৳{{ costToCompleteReport()!.overall_variance | number:'1.2-2' }}</p>
+            </div>
+          </div>
+
+          <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-700">
+                <tr>
+                  <th class="p-3">Project</th>
+                  <th class="p-3 text-right">BOQ Budget (৳)</th>
+                  <th class="p-3 text-right">Committed PO/WO (৳)</th>
+                  <th class="p-3 text-right">Incurred Cost (৳)</th>
+                  <th class="p-3 text-right">Cost to Complete (ETC) (৳)</th>
+                  <th class="p-3 text-right">Forecast EAC (৳)</th>
+                  <th class="p-3 text-right">Financial %</th>
+                  <th class="p-3 text-center">Cost Health</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                @for (row of costToCompleteReport()!.rows; track row.project_id) {
+                  <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                    <td class="p-3 font-semibold text-slate-800 dark:text-slate-200">{{ row.project_name }} ({{ row.project_code }})</td>
+                    <td class="p-3 text-right font-medium">{{ row.approved_boq_budget | number:'1.2-2' }}</td>
+                    <td class="p-3 text-right text-slate-600">{{ row.committed_po_wo_cost | number:'1.2-2' }}</td>
+                    <td class="p-3 text-right font-medium text-blue-600">{{ row.actual_incurred_cost | number:'1.2-2' }}</td>
+                    <td class="p-3 text-right font-medium text-amber-600">{{ row.estimated_cost_to_complete | number:'1.2-2' }}</td>
+                    <td class="p-3 text-right font-bold text-slate-900 dark:text-slate-100">৳{{ row.estimate_at_completion | number:'1.2-2' }}</td>
+                    <td class="p-3 text-right font-semibold">{{ row.cost_utilization_pct }}%</td>
+                    <td class="p-3 text-center">
+                      <span class="px-2 py-0.5 rounded text-[10px] font-semibold"
+                        [class.bg-emerald-100.text-emerald-800]="row.cost_health === 'On Track'"
+                        [class.bg-rose-100.text-rose-800]="row.cost_health !== 'On Track'">
+                        {{ row.cost_health }}
                       </span>
                     </td>
                   </tr>
@@ -254,179 +653,504 @@
           </div>
         </div>
       }
-    </div>
-  }
 
-  <!-- TAB 3: BALANCE SHEET -->
-  @if (activeTab() === 'balance-sheet') {
-    <div class="my-5 space-y-4">
-      <!-- Balance Sheet Totals -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div class="p-4 rounded-xl bg-card border border-border">
-          <div class="text-xs text-muted-foreground">Total Assets (1000s)</div>
-          <div class="text-2xl font-bold text-foreground mt-1">৳{{ balanceSheet()?.total_assets | number:'1.2-2' }}</div>
-        </div>
-        <div class="p-4 rounded-xl bg-card border border-border">
-          <div class="text-xs text-muted-foreground">Total Liabilities (2000s)</div>
-          <div class="text-2xl font-bold text-foreground mt-1">৳{{ balanceSheet()?.total_liabilities | number:'1.2-2' }}</div>
-        </div>
-        <div class="p-4 rounded-xl bg-card border border-border">
-          <div class="text-xs text-muted-foreground">Total Equity (3000s)</div>
-          <div class="text-2xl font-bold text-foreground mt-1">৳{{ balanceSheet()?.total_equity | number:'1.2-2' }}</div>
-        </div>
-      </div>
+      <!-- TAB 8: CONSTRUCTION WIP STATEMENT -->
+      @if (activeTab() === 'cwip' && cwipReport()) {
+        <div class="space-y-4">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-800">
+              <span class="text-[11px] text-slate-500 font-medium">Opening CWIP Balance</span>
+              <p class="text-base font-bold text-slate-900 dark:text-slate-100">৳{{ cwipReport()!.total_opening_cwip | number:'1.2-2' }}</p>
+            </div>
+            <div class="p-3 bg-blue-50 dark:bg-blue-950/40 rounded-xl border border-blue-200 dark:border-blue-800">
+              <span class="text-[11px] text-blue-700 font-medium">Period Additions (WIP)</span>
+              <p class="text-base font-bold text-blue-700 dark:text-blue-400">৳{{ cwipReport()!.total_additions | number:'1.2-2' }}</p>
+            </div>
+            <div class="p-3 bg-rose-50 dark:bg-rose-950/40 rounded-xl border border-rose-200 dark:border-rose-800">
+              <span class="text-[11px] text-rose-700 font-medium">Transferred to Unit COGS</span>
+              <p class="text-base font-bold text-rose-700 dark:text-rose-400">৳{{ cwipReport()!.total_capitalized | number:'1.2-2' }}</p>
+            </div>
+            <div class="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-200 dark:border-emerald-800">
+              <span class="text-[11px] text-emerald-700 font-medium">Closing CWIP Asset</span>
+              <p class="text-base font-bold text-emerald-700 dark:text-emerald-400">৳{{ cwipReport()!.total_closing_cwip | number:'1.2-2' }}</p>
+            </div>
+          </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <!-- Assets -->
-        <div class="rounded-xl border border-border bg-card p-4">
-          <h3 class="font-bold text-foreground text-sm border-b border-border pb-2 mb-3">Assets (Resources)</h3>
-          <div class="space-y-2">
-            @for (a of balanceSheet()?.asset_breakdown; track a.account_id) {
-              <div class="flex justify-between text-xs py-1 border-b border-border/50">
-                <span class="text-muted-foreground">{{ a.account_code }} - {{ a.account_name_en }}</span>
-                <span class="font-semibold text-foreground">৳{{ a.net_debit | number:'1.2-2' }}</span>
+          <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-700">
+                <tr>
+                  <th class="p-3">Work Package / Stage</th>
+                  <th class="p-3">Project & Tower</th>
+                  <th class="p-3 text-right">Opening CWIP (৳)</th>
+                  <th class="p-3 text-right">Additions (৳)</th>
+                  <th class="p-3 text-right">Capitalized (৳)</th>
+                  <th class="p-3 text-right">Closing CWIP Balance (৳)</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                @for (row of cwipReport()!.rows; track row.work_package) {
+                  <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                    <td class="p-3 font-semibold text-emerald-700 dark:text-emerald-400">{{ row.work_package }}</td>
+                    <td class="p-3 text-slate-600">{{ row.project_name }} • {{ row.tower_name }}</td>
+                    <td class="p-3 text-right font-medium">{{ row.opening_cwip | number:'1.2-2' }}</td>
+                    <td class="p-3 text-right font-medium text-blue-600">+{{ row.period_additions | number:'1.2-2' }}</td>
+                    <td class="p-3 text-right font-medium text-rose-600">-{{ row.capitalized_to_cogs | number:'1.2-2' }}</td>
+                    <td class="p-3 text-right font-bold text-slate-900 dark:text-slate-100">৳{{ row.closing_cwip | number:'1.2-2' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+
+      <!-- TAB 9: LOAN AND INTEREST SCHEDULE -->
+      @if (activeTab() === 'loan-schedule' && loanScheduleReport()) {
+        <div class="space-y-4">
+          <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-800">
+              <span class="text-[11px] text-slate-500 font-medium">Sanctioned Facilities</span>
+              <p class="text-base font-bold text-slate-900 dark:text-slate-100">৳{{ loanScheduleReport()!.total_sanctioned | number:'1.2-2' }}</p>
+            </div>
+            <div class="p-3 bg-blue-50 dark:bg-blue-950/40 rounded-xl border border-blue-200 dark:border-blue-800">
+              <span class="text-[11px] text-blue-700 font-medium">Total Disbursed</span>
+              <p class="text-base font-bold text-blue-700 dark:text-blue-400">৳{{ loanScheduleReport()!.total_disbursed | number:'1.2-2' }}</p>
+            </div>
+            <div class="p-3 bg-rose-50 dark:bg-rose-950/40 rounded-xl border border-rose-200 dark:border-rose-800">
+              <span class="text-[11px] text-rose-700 font-medium">Principal Outstanding</span>
+              <p class="text-base font-bold text-rose-700 dark:text-rose-400">৳{{ loanScheduleReport()!.total_principal_outstanding | number:'1.2-2' }}</p>
+            </div>
+            <div class="p-3 bg-amber-50 dark:bg-amber-950/40 rounded-xl border border-amber-200 dark:border-amber-800">
+              <span class="text-[11px] text-amber-700 font-medium">Interest Accrued</span>
+              <p class="text-base font-bold text-amber-700 dark:text-amber-400">৳{{ loanScheduleReport()!.total_interest_accrued | number:'1.2-2' }}</p>
+            </div>
+            <div class="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-200 dark:border-emerald-800">
+              <span class="text-[11px] text-emerald-700 font-medium">Interest Paid</span>
+              <p class="text-base font-bold text-emerald-700 dark:text-emerald-400">৳{{ loanScheduleReport()!.total_interest_paid | number:'1.2-2' }}</p>
+            </div>
+          </div>
+
+          <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-700">
+                <tr>
+                  <th class="p-3">Facility Name</th>
+                  <th class="p-3">Lender Bank</th>
+                  <th class="p-3">Type</th>
+                  <th class="p-3 text-right">Sanctioned (৳)</th>
+                  <th class="p-3 text-right">Outstanding (৳)</th>
+                  <th class="p-3 text-right">Rate %</th>
+                  <th class="p-3 text-right">Current Liab (৳)</th>
+                  <th class="p-3 text-right">Non-Current (৳)</th>
+                  <th class="p-3 text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                @for (row of loanScheduleReport()!.rows; track row.loan_id) {
+                  <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                    <td class="p-3 font-semibold text-slate-800 dark:text-slate-200">{{ row.facility_name }}</td>
+                    <td class="p-3 text-slate-600">{{ row.lender_name }}</td>
+                    <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] bg-slate-100 dark:bg-slate-800 font-medium">{{ row.facility_type }}</span></td>
+                    <td class="p-3 text-right">{{ row.sanctioned_amount | number:'1.2-2' }}</td>
+                    <td class="p-3 text-right font-bold text-rose-600">৳{{ row.principal_outstanding | number:'1.2-2' }}</td>
+                    <td class="p-3 text-right font-semibold">{{ row.interest_rate }}%</td>
+                    <td class="p-3 text-right text-amber-600">{{ row.current_liability | number:'1.2-2' }}</td>
+                    <td class="p-3 text-right text-blue-600">{{ row.non_current_liability | number:'1.2-2' }}</td>
+                    <td class="p-3 text-center">
+                      <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800">
+                        {{ row.status }}
+                      </span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+
+      <!-- TAB 10: BANK RECONCILIATION REPORT -->
+      @if (activeTab() === 'brs' && bankReconReport()) {
+        <div class="space-y-4">
+          <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-800">
+              <span class="text-[11px] text-slate-500 font-medium">Bank Statement Balance</span>
+              <p class="text-base font-bold text-slate-900 dark:text-slate-100">৳{{ bankReconReport()!.total_statement_balance | number:'1.2-2' }}</p>
+            </div>
+            <div class="p-3 bg-blue-50 dark:bg-blue-950/40 rounded-xl border border-blue-200 dark:border-blue-800">
+              <span class="text-[11px] text-blue-700 font-medium">Deposits in Transit (+)</span>
+              <p class="text-base font-bold text-blue-700 dark:text-blue-400">৳{{ bankReconReport()!.total_deposits_in_transit | number:'1.2-2' }}</p>
+            </div>
+            <div class="p-3 bg-amber-50 dark:bg-amber-950/40 rounded-xl border border-amber-200 dark:border-amber-800">
+              <span class="text-[11px] text-amber-700 font-medium">Outstanding Cheques (-)</span>
+              <p class="text-base font-bold text-amber-700 dark:text-amber-400">৳{{ bankReconReport()!.total_outstanding_cheques | number:'1.2-2' }}</p>
+            </div>
+            <div class="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-200 dark:border-emerald-800">
+              <span class="text-[11px] text-emerald-700 font-medium">General Ledger Balance</span>
+              <p class="text-base font-bold text-emerald-700 dark:text-emerald-400">৳{{ bankReconReport()!.total_gl_balance | number:'1.2-2' }}</p>
+            </div>
+            <div class="p-3 bg-rose-50 dark:bg-rose-950/40 rounded-xl border border-rose-200 dark:border-rose-800">
+              <span class="text-[11px] text-rose-700 font-medium">Net Discrepancy</span>
+              <p class="text-base font-bold text-rose-700 dark:text-rose-400">৳{{ bankReconReport()!.reconciliation_discrepancy | number:'1.2-2' }}</p>
+            </div>
+          </div>
+
+          <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-700">
+                <tr>
+                  <th class="p-3">Bank Account</th>
+                  <th class="p-3">Code</th>
+                  <th class="p-3 text-right">Statement Balance (৳)</th>
+                  <th class="p-3 text-right">Transit Deposits (৳)</th>
+                  <th class="p-3 text-right">Outstanding Cheques (৳)</th>
+                  <th class="p-3 text-right">Adjusted Bank (৳)</th>
+                  <th class="p-3 text-right">GL Ledger (৳)</th>
+                  <th class="p-3 text-right">Variance (৳)</th>
+                  <th class="p-3 text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                @for (row of bankReconReport()!.rows; track row.bank_account_id) {
+                  <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                    <td class="p-3 font-semibold text-slate-800 dark:text-slate-200">{{ row.bank_name }}</td>
+                    <td class="p-3 font-mono text-emerald-600">{{ row.account_code }}</td>
+                    <td class="p-3 text-right">{{ row.bank_statement_balance | number:'1.2-2' }}</td>
+                    <td class="p-3 text-right text-blue-600">+{{ row.deposits_in_transit | number:'1.2-2' }}</td>
+                    <td class="p-3 text-right text-amber-600">-{{ row.outstanding_cheques | number:'1.2-2' }}</td>
+                    <td class="p-3 text-right font-medium text-slate-900 dark:text-slate-100">{{ row.adjusted_bank_balance | number:'1.2-2' }}</td>
+                    <td class="p-3 text-right font-bold text-slate-900 dark:text-slate-100">৳{{ row.general_ledger_balance | number:'1.2-2' }}</td>
+                    <td class="p-3 text-right font-bold" [class.text-emerald-600]="row.difference_amount === 0" [class.text-rose-600]="row.difference_amount !== 0">
+                      ৳{{ row.difference_amount | number:'1.2-2' }}
+                    </td>
+                    <td class="p-3 text-center">
+                      <span class="px-2 py-0.5 rounded text-[10px] font-semibold"
+                        [class.bg-emerald-100.text-emerald-800]="row.status === 'Reconciled'"
+                        [class.bg-amber-100.text-amber-800]="row.status !== 'Reconciled'">
+                        {{ row.status }}
+                      </span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+
+      <!-- TAB 11: SUPPLIER & CUSTOMER STATEMENTS -->
+      @if (activeTab() === 'party-statement' && partyStatementReport()) {
+        <div class="space-y-4">
+          <div class="p-4 bg-slate-100 dark:bg-slate-800/80 rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+            <div>
+              <span class="text-xs uppercase tracking-wider text-slate-500 font-bold">{{ partyStatementReport()!.party_type }} STATEMENT</span>
+              <h3 class="text-lg font-bold text-slate-900 dark:text-slate-100">{{ partyStatementReport()!.party_name }}</h3>
+              <p class="text-xs text-slate-500">Statement Period: {{ partyStatementReport()!.from_date }} to {{ partyStatementReport()!.to_date }}</p>
+            </div>
+            <div class="flex items-center gap-4">
+              <div class="text-right">
+                <span class="text-[11px] text-slate-500 font-medium">Opening Balance</span>
+                <p class="text-sm font-bold text-slate-800 dark:text-slate-200">৳{{ partyStatementReport()!.opening_balance | number:'1.2-2' }}</p>
+              </div>
+              <div class="text-right">
+                <span class="text-[11px] text-slate-500 font-medium">Closing Balance</span>
+                <p class="text-base font-bold text-emerald-600 dark:text-emerald-400">৳{{ partyStatementReport()!.closing_balance | number:'1.2-2' }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-700">
+                <tr>
+                  <th class="p-3">Date</th>
+                  <th class="p-3">Voucher #</th>
+                  <th class="p-3">Ref No</th>
+                  <th class="p-3">Description</th>
+                  <th class="p-3 text-right">Debit (৳)</th>
+                  <th class="p-3 text-right">Credit (৳)</th>
+                  <th class="p-3 text-right">Balance (৳)</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                @for (row of partyStatementReport()!.rows; track row.voucher_number + row.transaction_date) {
+                  <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                    <td class="p-3 whitespace-nowrap">{{ row.transaction_date }}</td>
+                    <td class="p-3 font-semibold text-emerald-600">{{ row.voucher_number }}</td>
+                    <td class="p-3 font-mono text-slate-500">{{ row.reference_no || '—' }}</td>
+                    <td class="p-3 max-w-sm truncate">{{ row.narration }}</td>
+                    <td class="p-3 text-right text-emerald-600 font-medium">{{ row.debit > 0 ? (row.debit | number:'1.2-2') : '—' }}</td>
+                    <td class="p-3 text-right text-rose-600 font-medium">{{ row.credit > 0 ? (row.credit | number:'1.2-2') : '—' }}</td>
+                    <td class="p-3 text-right font-bold text-slate-900 dark:text-slate-100">৳{{ row.running_balance | number:'1.2-2' }}</td>
+                  </tr>
+                } @empty {
+                  <tr><td colspan="7" class="p-8 text-center text-slate-500">No transactions recorded for this party.</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+
+      <!-- TAB 12: BUDGET VERSUS ACTUAL REPORT -->
+      @if (activeTab() === 'budget-variance' && budgetVarianceReport()) {
+        <div class="space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-800">
+              <span class="text-[11px] text-slate-500 font-medium">Total Approved Budget</span>
+              <p class="text-base font-bold text-slate-900 dark:text-slate-100">৳{{ budgetVarianceReport()!.total_budget_allocated | number:'1.2-2' }}</p>
+            </div>
+            <div class="p-3 bg-blue-50 dark:bg-blue-950/40 rounded-xl border border-blue-200 dark:border-blue-800">
+              <span class="text-[11px] text-blue-700 font-medium">Actual Incurred (GL)</span>
+              <p class="text-base font-bold text-blue-700 dark:text-blue-400">৳{{ budgetVarianceReport()!.total_actual_spent | number:'1.2-2' }}</p>
+            </div>
+            <div class="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-200 dark:border-emerald-800">
+              <span class="text-[11px] text-emerald-700 font-medium">Total Variance Available</span>
+              <p class="text-base font-bold text-emerald-700 dark:text-emerald-400">৳{{ budgetVarianceReport()!.total_variance | number:'1.2-2' }}</p>
+            </div>
+          </div>
+
+          <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-700">
+                <tr>
+                  <th class="p-3">Cost Center Code</th>
+                  <th class="p-3">Name</th>
+                  <th class="p-3">WBS Stage</th>
+                  <th class="p-3 text-right">Budget Allocated (৳)</th>
+                  <th class="p-3 text-right">Actual Spent (৳)</th>
+                  <th class="p-3 text-right">Variance (৳)</th>
+                  <th class="p-3 text-right">Utilization %</th>
+                  <th class="p-3 text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                @for (row of budgetVarianceReport()!.rows; track row.cost_center_code) {
+                  <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                    <td class="p-3 font-mono font-semibold text-emerald-600">{{ row.cost_center_code }}</td>
+                    <td class="p-3 font-semibold text-slate-800 dark:text-slate-200">{{ row.cost_center_name }}</td>
+                    <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] bg-slate-100 dark:bg-slate-800">{{ row.wbs_stage }}</span></td>
+                    <td class="p-3 text-right font-medium">{{ row.budget_allocated | number:'1.2-2' }}</td>
+                    <td class="p-3 text-right font-medium text-blue-600">{{ row.actual_spent | number:'1.2-2' }}</td>
+                    <td class="p-3 text-right font-bold" [class.text-emerald-600]="row.variance >= 0" [class.text-rose-600]="row.variance < 0">
+                      ৳{{ row.variance | number:'1.2-2' }}
+                    </td>
+                    <td class="p-3 text-right font-semibold">{{ row.utilization_pct }}%</td>
+                    <td class="p-3 text-center">
+                      <span class="px-2 py-0.5 rounded text-[10px] font-semibold"
+                        [class.bg-emerald-100.text-emerald-800]="row.status === 'Under Budget'"
+                        [class.bg-rose-100.text-rose-800]="row.status === 'Over Budget'">
+                        {{ row.status }}
+                      </span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+
+      <!-- TAB 13: JOURNAL & VOUCHER REGISTER -->
+      @if (activeTab() === 'voucher-register' && voucherRegisterReport()) {
+        <div class="space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-800">
+              <span class="text-[11px] text-slate-500 font-medium">Total Vouchers Registered</span>
+              <p class="text-base font-bold text-slate-900 dark:text-slate-100">{{ voucherRegisterReport()!.total_vouchers }}</p>
+            </div>
+            <div class="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-200 dark:border-emerald-800">
+              <span class="text-[11px] text-emerald-700 font-medium">Total Debits</span>
+              <p class="text-base font-bold text-emerald-700 dark:text-emerald-400">৳{{ voucherRegisterReport()!.total_debit_amount | number:'1.2-2' }}</p>
+            </div>
+            <div class="p-3 bg-rose-50 dark:bg-rose-950/40 rounded-xl border border-rose-200 dark:border-rose-800">
+              <span class="text-[11px] text-rose-700 font-medium">Total Credits</span>
+              <p class="text-base font-bold text-rose-700 dark:text-rose-400">৳{{ voucherRegisterReport()!.total_credit_amount | number:'1.2-2' }}</p>
+            </div>
+          </div>
+
+          <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-700">
+                <tr>
+                  <th class="p-3">Voucher #</th>
+                  <th class="p-3">Date</th>
+                  <th class="p-3">Type</th>
+                  <th class="p-3">Project</th>
+                  <th class="p-3">Narration</th>
+                  <th class="p-3 text-right">Debit (৳)</th>
+                  <th class="p-3 text-right">Credit (৳)</th>
+                  <th class="p-3 text-center">Items</th>
+                  <th class="p-3 text-center">Status</th>
+                  <th class="p-3">Prepared By</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                @for (row of voucherRegisterReport()!.rows; track row.id) {
+                  <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                    <td class="p-3 font-semibold text-emerald-600 font-mono">{{ row.voucher_number }}</td>
+                    <td class="p-3 whitespace-nowrap">{{ row.voucher_date }}</td>
+                    <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] bg-slate-100 dark:bg-slate-800 font-medium">{{ row.voucher_type }}</span></td>
+                    <td class="p-3 text-slate-500">{{ row.project_name || 'General' }}</td>
+                    <td class="p-3 max-w-xs truncate">{{ row.narration }}</td>
+                    <td class="p-3 text-right font-medium text-emerald-600">{{ row.total_debit | number:'1.2-2' }}</td>
+                    <td class="p-3 text-right font-medium text-rose-600">{{ row.total_credit | number:'1.2-2' }}</td>
+                    <td class="p-3 text-center font-mono">{{ row.line_item_count }}</td>
+                    <td class="p-3 text-center">
+                      <span class="px-2 py-0.5 rounded text-[10px] font-semibold"
+                        [class.bg-emerald-100.text-emerald-800]="row.status === 'Posted'"
+                        [class.bg-amber-100.text-amber-800]="row.status === 'Draft'"
+                        [class.bg-rose-100.text-rose-800]="row.status === 'Reversed'">
+                        {{ row.status }}
+                      </span>
+                    </td>
+                    <td class="p-3 text-slate-500">{{ row.prepared_by }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+
+      <!-- TAB 14: FINANCIAL-PERIOD CLOSING CHECKLIST -->
+      @if (activeTab() === 'closing-checklist' && closingChecklistReport()) {
+        <div class="space-y-4">
+          <div class="p-4 bg-slate-100 dark:bg-slate-800/80 rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+            <div>
+              <span class="text-xs uppercase tracking-wider text-slate-500 font-bold">PERIOD AUDIT READINESS</span>
+              <h3 class="text-lg font-bold text-slate-900 dark:text-slate-100">{{ closingChecklistReport()!.closing_period }} ({{ closingChecklistReport()!.fiscal_year }})</h3>
+              <p class="text-xs text-slate-500">Completed {{ closingChecklistReport()!.compliant_items }} of {{ closingChecklistReport()!.total_items }} audit procedures ({{ closingChecklistReport()!.completion_percentage }}%)</p>
+            </div>
+            <div>
+              <span class="px-3 py-1.5 rounded-full text-xs font-bold"
+                [class.bg-emerald-100.text-emerald-800]="closingChecklistReport()!.overall_status === 'READY FOR CLOSE'"
+                [class.bg-amber-100.text-amber-800]="closingChecklistReport()!.overall_status !== 'READY FOR CLOSE'">
+                {{ closingChecklistReport()!.overall_status }}
+              </span>
+            </div>
+          </div>
+
+          <div class="space-y-2.5">
+            @for (item of closingChecklistReport()!.items; track item.item_id) {
+              <div class="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl flex items-start justify-between gap-4">
+                <div class="flex items-start gap-3">
+                  <div class="mt-0.5">
+                    @if (item.status === 'COMPLIANT') {
+                      <span class="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400">
+                        <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                      </span>
+                    } @else {
+                      <span class="flex h-5 w-5 items-center justify-center rounded-full bg-amber-100 text-amber-600 dark:bg-amber-950 dark:text-amber-400">
+                        <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>
+                      </span>
+                    }
+                  </div>
+                  <div>
+                    <div class="flex items-center gap-2">
+                      <span class="text-xs font-mono font-bold text-slate-400">{{ item.item_id }}</span>
+                      <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200">{{ item.title }}</h4>
+                      <span class="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600">{{ item.category }}</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-1">{{ item.description }}</p>
+                    @if (item.pending_count > 0) {
+                      <p class="text-xs font-semibold text-rose-600 mt-1">Pending Items: {{ item.pending_count }}</p>
+                    }
+                  </div>
+                </div>
+
+                <div class="shrink-0 text-right">
+                  <span class="px-2.5 py-1 rounded text-xs font-bold"
+                    [class.bg-emerald-100.text-emerald-800]="item.status === 'COMPLIANT'"
+                    [class.bg-amber-100.text-amber-800]="item.status === 'PENDING'"
+                    [class.bg-rose-100.text-rose-800]="item.status === 'ATTENTION_REQUIRED'">
+                    {{ item.status }}
+                  </span>
+                </div>
               </div>
             }
           </div>
         </div>
+      }
 
-        <!-- Liabilities -->
-        <div class="rounded-xl border border-border bg-card p-4">
-          <h3 class="font-bold text-foreground text-sm border-b border-border pb-2 mb-3">Liabilities (Obligations)</h3>
-          <div class="space-y-2">
-            @for (l of balanceSheet()?.liability_breakdown; track l.account_id) {
-              <div class="flex justify-between text-xs py-1 border-b border-border/50">
-                <span class="text-muted-foreground">{{ l.account_code }} - {{ l.account_name_en }}</span>
-                <span class="font-semibold text-foreground">৳{{ l.net_credit | number:'1.2-2' }}</span>
-              </div>
-            }
+      <!-- TAB 15: AUDIT TRAIL AND APPROVAL HISTORY -->
+      @if (activeTab() === 'audit-trail' && auditTrailReport()) {
+        <div class="space-y-4">
+          <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-700">
+                <tr>
+                  <th class="p-3">Timestamp</th>
+                  <th class="p-3">User</th>
+                  <th class="p-3">Action</th>
+                  <th class="p-3">Entity</th>
+                  <th class="p-3">Entity Ref #</th>
+                  <th class="p-3">Audit Details</th>
+                  <th class="p-3">IP Address</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                @for (row of auditTrailReport()!.rows; track row.id) {
+                  <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                    <td class="p-3 whitespace-nowrap text-slate-500">{{ row.timestamp | date:'medium' }}</td>
+                    <td class="p-3 font-semibold text-slate-800 dark:text-slate-200">{{ row.user_name }}</td>
+                    <td class="p-3">
+                      <span class="px-2 py-0.5 rounded text-[10px] font-bold"
+                        [class.bg-blue-100.text-blue-800]="row.action_type.includes('CREATE') || row.action_type === 'POST'"
+                        [class.bg-amber-100.text-amber-800]="row.action_type.includes('UPDATE')"
+                        [class.bg-rose-100.text-rose-800]="row.action_type.includes('DELETE')">
+                        {{ row.action_type }}
+                      </span>
+                    </td>
+                    <td class="p-3 font-medium">{{ row.entity_name }}</td>
+                    <td class="p-3 font-mono text-emerald-600">{{ row.entity_id || '—' }}</td>
+                    <td class="p-3 max-w-sm truncate">{{ row.description }}</td>
+                    <td class="p-3 font-mono text-slate-400">{{ row.ip_address || '127.0.0.1' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
           </div>
         </div>
+      }
 
-        <!-- Equity -->
-        <div class="rounded-xl border border-border bg-card p-4">
-          <h3 class="font-bold text-foreground text-sm border-b border-border pb-2 mb-3">Shareholder Equity</h3>
-          <div class="space-y-2">
-            @for (eq of balanceSheet()?.equity_breakdown; track eq.account_id) {
-              <div class="flex justify-between text-xs py-1 border-b border-border/50">
-                <span class="text-muted-foreground">{{ eq.account_code }} - {{ eq.account_name_en }}</span>
-                <span class="font-semibold text-foreground">৳{{ eq.net_credit | number:'1.2-2' }}</span>
-              </div>
-            }
-          </div>
-        </div>
-      </div>
-    </div>
-  }
-
-  <!-- TAB 4: BANK RECONCILIATION -->
-  @if (activeTab() === 'bank-reconciliation') {
-    <div class="my-5 space-y-4">
-      <div class="flex justify-between items-center">
-        <h3 class="font-bold text-foreground text-base">Bank & MFS Escrow Reconciliation Audits</h3>
-        <app-custom-button variant="primary" (btnClick)="openReconModal()">
-          + Reconcile Statement
-        </app-custom-button>
-      </div>
-
-      <div class="rounded-xl border border-border overflow-hidden bg-card">
-        <table class="w-full text-left text-sm">
-          <thead class="bg-muted/50 text-muted-foreground text-xs uppercase font-semibold border-b border-border">
-            <tr>
-              <th class="px-4 py-3">Bank / Account</th>
-              <th class="px-4 py-3">Statement Date</th>
-              <th class="px-4 py-3 text-right">Bank Statement Balance</th>
-              <th class="px-4 py-3 text-right">Book Ledger Balance</th>
-              <th class="px-4 py-3 text-right">Variance</th>
-              <th class="px-4 py-3 text-center">Status</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-border">
-            @for (rec of reconciliations(); track rec.id) {
-              <tr class="hover:bg-muted/20">
-                <td class="px-4 py-3 font-medium text-foreground">
-                  {{ rec.bank_account_name }}
-                  <div class="text-xs text-muted-foreground">{{ rec.bank_account_code }}</div>
-                </td>
-                <td class="px-4 py-3 text-xs text-muted-foreground">{{ rec.statement_date }}</td>
-                <td class="px-4 py-3 text-right font-bold text-foreground">৳{{ rec.statement_balance | number:'1.2-2' }}</td>
-                <td class="px-4 py-3 text-right text-foreground">৳{{ rec.book_balance | number:'1.2-2' }}</td>
-                <td class="px-4 py-3 text-right font-bold" [ngClass]="rec.difference_amount === 0 ? 'text-emerald-600' : 'text-rose-600'">
-                  ৳{{ rec.difference_amount | number:'1.2-2' }}
-                </td>
-                <td class="px-4 py-3 text-center">
-                  @if (rec.is_reconciled) {
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
-                      ✓ Reconciled
-                    </span>
-                  } @else {
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
-                      Discrepancy Pending
-                    </span>
-                  }
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    </div>
-  }
-
-  <!-- Reconcile Modal -->
-  @if (isReconModalOpen()) {
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-      <div class="bg-card border border-border w-full max-w-md rounded-2xl shadow-2xl overflow-hidden flex flex-col">
-        <div class="px-6 py-4 border-b border-border flex items-center justify-between bg-muted/40">
-          <div>
-            <h2 class="text-lg font-bold text-foreground">Bank Statement Audit</h2>
-            <p class="text-xs text-muted-foreground">Compare statement closing balance with book ledger.</p>
-          </div>
-          <button type="button" (click)="closeReconModal()" class="text-muted-foreground hover:text-foreground">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-          </button>
+      <!-- Pagination Toolbar for Tabular Reports -->
+      <div class="mt-6 flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+        <div class="flex items-center gap-2">
+          <span class="text-xs text-slate-500">Rows per page:</span>
+          <select
+            [value]="limit()"
+            (change)="limit.set(+$any($event.target).value); onFilterChange()"
+            class="erp-input text-xs py-1 px-2 w-28"
+          >
+            <option [value]="15">15 rows</option>
+            <option [value]="25">25 rows</option>
+            <option [value]="50">50 rows</option>
+            <option [value]="100">100 rows</option>
+          </select>
+          <span class="text-xs text-slate-500 ml-2">Showing offset {{ offset() }}</span>
         </div>
 
-        <form [formGroup]="reconForm" (ngSubmit)="submitRecon()" class="p-6 space-y-4">
-          <app-searchable-select
-            label="Bank / MFS Account *"
-            placeholder="Select Bank Account"
-            [options]="bankAccountOptions()"
-            [ngModel]="reconForm.get('bank_account_id')?.value"
-            (ngModelChange)="reconForm.get('bank_account_id')?.setValue($event)"
-            [required]="true">
-          </app-searchable-select>
-
-          <app-custom-input
-            label="Statement Date *"
-            type="date"
-            formControlName="statement_date"
-            [required]="true">
-          </app-custom-input>
-
-          <app-custom-input
-            label="Bank Statement Closing Balance (BDT) *"
-            type="number"
-            placeholder="e.g. 1500000.00"
-            formControlName="statement_balance"
-            [required]="true">
-          </app-custom-input>
-
-          <app-custom-textarea
-            label="Reconciliation Observations"
-            placeholder="e.g. Cheques issued but not yet presented for payment..."
-            formControlName="reconciliation_notes"
-            [rows]="2">
-          </app-custom-textarea>
-
-          <div class="pt-4 border-t border-border flex items-center justify-end gap-3">
-            <app-custom-button variant="outline" (btnClick)="closeReconModal()">Cancel</app-custom-button>
-            <app-custom-button variant="primary" type="submit" [disabled]="isSubmitting()">
-              {{ isSubmitting() ? 'Auditing...' : 'Perform Reconciliation' }}
-            </app-custom-button>
-          </div>
-        </form>
+        <div class="flex items-center gap-2">
+          <app-custom-button
+            variant="secondary"
+            size="sm"
+            [disabled]="offset() === 0"
+            (btnClick)="prevPage()"
+          >
+            Previous
+          </app-custom-button>
+          <app-custom-button
+            variant="secondary"
+            size="sm"
+            (btnClick)="nextPage()"
+          >
+            Next
+          </app-custom-button>
+        </div>
       </div>
-    </div>
-  }
-</app-card-container>
+
+    }
+  </app-card-container>
+</div>

@@ -797,14 +797,139 @@ export const routes: Routes = [
     pathMatch: 'full'
   },
   {
+    path: 'accounts',
+    redirectTo: 'accounts/coa',
+    pathMatch: 'full'
+  },
+  {
     path: 'accounts/coa',
     loadComponent: () => import('./features/accounts/accounts-coa/accounts-coa.component').then(m => m.AccountsCoaComponent),
     title: 'Chart of Accounts (COA) - Bangladesh Real Estate ERP'
   },
   {
+    path: 'accounts/coa/create',
+    loadComponent: () => import('./features/accounts/accounts-coa/coa-form.component').then(m => m.CoaFormComponent),
+    title: 'New Account Head - Chart of Accounts (COA)'
+  },
+  {
+    path: 'accounts/coa/edit/:id',
+    loadComponent: () => import('./features/accounts/accounts-coa/coa-form.component').then(m => m.CoaFormComponent),
+    title: 'Edit Account Head - Chart of Accounts (COA)'
+  },
+  {
     path: 'accounts/vouchers',
     loadComponent: () => import('./features/accounts/accounts-vouchers/accounts-vouchers.component').then(m => m.AccountsVouchersComponent),
     title: 'General Ledger Vouchers - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'accounts/vouchers/create',
+    loadComponent: () => import('./features/accounts/accounts-vouchers/voucher-form.component').then(m => m.VoucherFormComponent),
+    title: 'Post New Journal Voucher - General Ledger'
+  },
+  {
+    path: 'accounts/vouchers/view/:id',
+    loadComponent: () => import('./features/accounts/accounts-vouchers/voucher-view.component').then(m => m.VoucherViewComponent),
+    title: 'Voucher Audit Trail - General Ledger'
+  },
+  {
+    path: 'accounts/ledger',
+    loadComponent: () => import('./features/accounts/accounts-ledger/accounts-ledger.component').then(m => m.AccountsLedgerComponent),
+    title: 'General Ledger Inquiry & Statements - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'accounts/payables',
+    loadComponent: () => import('./features/accounts/accounts-payables/accounts-payables.component').then(m => m.AccountsPayablesComponent),
+    title: '5.1 Accounts Payable (AP) & Supplier Bills - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'accounts/payables/create',
+    loadComponent: () => import('./features/accounts/accounts-payables/payable-form.component').then(m => m.PayableFormComponent),
+    title: 'Register Supplier Invoice / Contractor Bill - Accounts Payable'
+  },
+  {
+    path: 'accounts/payables/view/:id',
+    loadComponent: () => import('./features/accounts/accounts-payables/payable-view.component').then(m => m.PayableViewComponent),
+    title: 'AP Invoice Audit & Payment Disbursement - Accounts Payable'
+  },
+  {
+    path: 'accounts/payables/ledger',
+    loadComponent: () => import('./features/accounts/accounts-payables/payable-ledger.component').then(m => m.PayableLedgerComponent),
+    title: 'Supplier & Contractor Account Ledger & Aging - Accounts Payable'
+  },
+  {
+    path: 'accounts/receivables',
+    loadComponent: () => import('./features/accounts/accounts-receivables/accounts-receivables.component').then(m => m.AccountsReceivablesComponent),
+    title: '5.2 Accounts Receivable (AR) & Demand Notices - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'accounts/receivables/create',
+    loadComponent: () => import('./features/accounts/accounts-receivables/receivable-form.component').then(m => m.ReceivableFormComponent),
+    title: 'Generate Demand Notice & Milestone Billing - Accounts Receivable'
+  },
+  {
+    path: 'accounts/receivables/view/:id',
+    loadComponent: () => import('./features/accounts/accounts-receivables/receivable-view.component').then(m => m.ReceivableViewComponent),
+    title: 'AR Demand Notice Audit & Money Receipt - Accounts Receivable'
+  },
+  {
+    path: 'accounts/receivables/ledger',
+    loadComponent: () => import('./features/accounts/accounts-receivables/receivable-ledger.component').then(m => m.ReceivableLedgerComponent),
+    title: 'Customer Ledger, Aging Analysis & Advance Receipts - Accounts Receivable'
+  },
+  {
+    path: 'accounts/receivables/receipts',
+    loadComponent: () => import('./features/accounts/accounts-receivables/receipts/receipt-list.component').then(m => m.ReceiptListComponent),
+    title: '5.2.1 Customer Money Receipts & Multi-Invoice Allocation - Accounts Receivable'
+  },
+  {
+    path: 'accounts/receivables/receipts/create',
+    loadComponent: () => import('./features/accounts/accounts-receivables/receipts/receipt-form.component').then(m => m.ReceiptFormComponent),
+    title: 'Register Money Receipt & Split Allocation - Accounts Receivable'
+  },
+  {
+    path: 'accounts/receivables/receipts/view/:id',
+    loadComponent: () => import('./features/accounts/accounts-receivables/receipts/receipt-view.component').then(m => m.ReceiptViewComponent),
+    title: 'Money Receipt Audit, Clearance & Multi-Invoice Allocation Hub'
+  },
+  {
+    path: 'accounts/cash-bank',
+    loadComponent: () => import('./features/accounts/cash-bank-mfs/cash-bank-dashboard.component').then(m => m.CashBankDashboardComponent),
+    title: '5.3 Cash, Bank & Mobile Financial Services (MFS) - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'accounts/cash-bank/boxes',
+    redirectTo: 'accounts/cash-bank?tab=cash',
+    pathMatch: 'full'
+  },
+  {
+    path: 'accounts/cash-bank/accounts',
+    redirectTo: 'accounts/cash-bank?tab=bank',
+    pathMatch: 'full'
+  },
+  {
+    path: 'accounts/cash-bank/mfs',
+    redirectTo: 'accounts/cash-bank?tab=mfs',
+    pathMatch: 'full'
+  },
+  {
+    path: 'accounts/payment-vouchers',
+    loadComponent: () => import('./features/accounts/payment-vouchers/payment-vouchers-list.component').then(m => m.PaymentVouchersListComponent),
+    title: '8. Payment Vouchers Register - Approved Outgoing Payments'
+  },
+  {
+    path: 'accounts/payment-vouchers/create',
+    loadComponent: () => import('./features/accounts/payment-vouchers/payment-voucher-form.component').then(m => m.PaymentVoucherFormComponent),
+    title: '8.1 Create Outgoing Payment Voucher - Double-Entry Outflow'
+  },
+  {
+    path: 'accounts/payment-vouchers/edit/:id',
+    loadComponent: () => import('./features/accounts/payment-vouchers/payment-voucher-form.component').then(m => m.PaymentVoucherFormComponent),
+    title: '8.1 Edit Outgoing Payment Voucher - Accounts Outflow'
+  },
+  {
+    path: 'accounts/payment-vouchers/view/:id',
+    loadComponent: () => import('./features/accounts/payment-vouchers/payment-voucher-view.component').then(m => m.PaymentVoucherViewComponent),
+    title: '8.2 Payment Voucher Audit Trail & 7-Stage Workflow Governance'
   },
   {
     path: 'accounts/financial-reports',
@@ -823,8 +948,39 @@ export const routes: Routes = [
   },
   {
     path: 'accounts/bank-recon-wizard',
-    loadComponent: () => import('./features/accounts/accounts-bank-reconciliation/accounts-bank-reconciliation.component').then(m => m.AccountsBankReconciliationComponent),
-    title: 'Bank Statement Reconciliation Wizard - Bangladesh Real Estate ERP'
+    redirectTo: 'accounts/bank-reconciliation',
+    pathMatch: 'full'
+  },
+  // Section 15: Bank Reconciliation & MFS Settlement Engine
+  {
+    path: 'accounts/bank-reconciliation',
+    loadComponent: () => import('./features/accounts/bank-reconciliation/recon-sessions-list/recon-sessions-list.component').then(m => m.ReconSessionsListComponent),
+    title: '15.1 Bank & MFS Reconciliation Master - Real Estate ERP'
+  },
+  {
+    path: 'accounts/bank-reconciliation/import',
+    loadComponent: () => import('./features/accounts/bank-reconciliation/statement-importer/statement-importer.component').then(m => m.StatementImporterComponent),
+    title: '15.1 Import Bank Statement - Real Estate ERP'
+  },
+  {
+    path: 'accounts/bank-reconciliation/workspace/:id',
+    loadComponent: () => import('./features/accounts/bank-reconciliation/recon-workspace/recon-workspace.component').then(m => m.ReconWorkspaceComponent),
+    title: '15.2 Reconciliation Interactive Workbench - Real Estate ERP'
+  },
+  {
+    path: 'accounts/bank-reconciliation/mfs-settlements',
+    loadComponent: () => import('./features/accounts/bank-reconciliation/recon-sessions-list/recon-sessions-list.component').then(m => m.ReconSessionsListComponent),
+    title: '15.1 MFS Settlement Batches - Real Estate ERP'
+  },
+  {
+    path: 'accounts/bank-reconciliation/reports',
+    loadComponent: () => import('./features/accounts/bank-reconciliation/brs-report/brs-report.component').then(m => m.BRSReportComponent),
+    title: '15.1 Official Bank Reconciliation Statement - Real Estate ERP'
+  },
+  {
+    path: 'accounts/bank-reconciliation/brs-report/:id',
+    loadComponent: () => import('./features/accounts/bank-reconciliation/brs-report/brs-report.component').then(m => m.BRSReportComponent),
+    title: '15.1 Official Bank Reconciliation Statement - Real Estate ERP'
   },
   {
     path: 'accounts/vat-mushak',
@@ -841,6 +997,164 @@ export const routes: Routes = [
     loadComponent: () => import('./features/accounts/accounts-sub-registry-calc/accounts-sub-registry-calc.component').then(m => m.AccountsSubRegistryCalcComponent),
     title: 'Sub-Registry & Sec 53FF AIT Fee Calculator - Bangladesh Real Estate ERP'
   },
+  // =========================================================================
+  // Section 11: Project-wise Income & Expenditure
+  // =========================================================================
+  {
+    path: 'accounts/project-income-expenditure',
+    redirectTo: 'accounts/project-income-expenditure/profitability',
+    pathMatch: 'full'
+  },
+  {
+    path: 'accounts/project-income-expenditure/dimensions',
+    loadComponent: () => import('./features/accounts/project-income-expenditure/dimensions/dimension-config-list.component').then(m => m.DimensionConfigListComponent),
+    title: '11.1 Project Financial Dimensions Mandatory Configuration - Real Estate ERP'
+  },
+  {
+    path: 'accounts/project-income-expenditure/dimensions/create',
+    loadComponent: () => import('./features/accounts/project-income-expenditure/dimensions/dimension-config-form.component').then(m => m.DimensionConfigFormComponent),
+    title: '11.1 Add Project Financial Dimension Rule - Real Estate ERP'
+  },
+  {
+    path: 'accounts/project-income-expenditure/dimensions/edit/:id',
+    loadComponent: () => import('./features/accounts/project-income-expenditure/dimensions/dimension-config-form.component').then(m => m.DimensionConfigFormComponent),
+    title: '11.1 Edit Project Financial Dimension Rule - Real Estate ERP'
+  },
+  {
+    path: 'accounts/project-income-expenditure/income',
+    loadComponent: () => import('./features/accounts/project-income-expenditure/income/project-income-list.component').then(m => m.ProjectIncomeListComponent),
+    title: '11.2 Project Income Registry & Revenue Recognition - Real Estate ERP'
+  },
+  {
+    path: 'accounts/project-income-expenditure/income/create',
+    loadComponent: () => import('./features/accounts/project-income-expenditure/income/project-income-form.component').then(m => m.ProjectIncomeFormComponent),
+    title: '11.2 Record Project Income Transaction - Real Estate ERP'
+  },
+  {
+    path: 'accounts/project-income-expenditure/income/edit/:id',
+    loadComponent: () => import('./features/accounts/project-income-expenditure/income/project-income-form.component').then(m => m.ProjectIncomeFormComponent),
+    title: '11.2 Edit Project Income Transaction - Real Estate ERP'
+  },
+  {
+    path: 'accounts/project-income-expenditure/expenditure',
+    loadComponent: () => import('./features/accounts/project-income-expenditure/expenditure/project-expenditure-list.component').then(m => m.ProjectExpenditureListComponent),
+    title: '11.3 Project Expenditure Registry & Cost Accounting - Real Estate ERP'
+  },
+  {
+    path: 'accounts/project-income-expenditure/expenditure/create',
+    loadComponent: () => import('./features/accounts/project-income-expenditure/expenditure/project-expenditure-form.component').then(m => m.ProjectExpenditureFormComponent),
+    title: '11.3 Record Project Expenditure Transaction - Real Estate ERP'
+  },
+  {
+    path: 'accounts/project-income-expenditure/expenditure/edit/:id',
+    loadComponent: () => import('./features/accounts/project-income-expenditure/expenditure/project-expenditure-form.component').then(m => m.ProjectExpenditureFormComponent),
+    title: '11.3 Edit Project Expenditure Transaction - Real Estate ERP'
+  },
+  {
+    path: 'accounts/project-income-expenditure/profitability',
+    loadComponent: () => import('./features/accounts/project-income-expenditure/profitability/project-profitability-report.component').then(m => m.ProjectProfitabilityReportComponent),
+    title: '11.4 Project Profitability & Multi-Project Report - Real Estate ERP'
+  },
+  // Section 13: Customer Advance & Installment Accounting
+  {
+    path: 'accounts/customer-advances',
+    loadComponent: () => import('./features/accounts/customer-advances/advances-list/advances-list.component').then(m => m.AdvancesListComponent),
+    title: '13.1 Customer Advance Receipts & Accounting - Real Estate ERP'
+  },
+  {
+    path: 'accounts/customer-advances/create',
+    loadComponent: () => import('./features/accounts/customer-advances/advance-form/advance-form.component').then(m => m.AdvanceFormComponent),
+    title: '13.1 Record Customer Advance Receipt - Real Estate ERP'
+  },
+  {
+    path: 'accounts/customer-advances/edit/:id',
+    loadComponent: () => import('./features/accounts/customer-advances/advance-form/advance-form.component').then(m => m.AdvanceFormComponent),
+    title: '13.1 Edit Customer Advance Transaction - Real Estate ERP'
+  },
+  {
+    path: 'accounts/customer-advances/liability-ledger',
+    loadComponent: () => import('./features/accounts/customer-advances/liability-ledger/customer-liability-ledger.component').then(m => m.CustomerLiabilityLedgerComponent),
+    title: '13.1.4 Customer Liability Ledger - Real Estate ERP'
+  },
+  {
+    path: 'accounts/customer-advances/allocations',
+    loadComponent: () => import('./features/accounts/customer-advances/allocations/advance-allocations.component').then(m => m.AdvanceAllocationsComponent),
+    title: '13.1.5 Installment Demands & Allocations - Real Estate ERP'
+  },
+  {
+    path: 'accounts/customer-advances/adjustments',
+    loadComponent: () => import('./features/accounts/customer-advances/adjustments/advance-adjustments.component').then(m => m.AdvanceAdjustmentsComponent),
+    title: '13.1.6 Late Charges & Adjustments - Real Estate ERP'
+  },
+  {
+    path: 'accounts/customer-advances/refunds',
+    loadComponent: () => import('./features/accounts/customer-advances/cancellations-refunds/cancellations-refunds.component').then(m => m.CancellationsRefundsComponent),
+    title: '13.1.7 Cancellation & Refund Accounting - Real Estate ERP'
+  },
+  {
+    path: 'accounts/customer-advances/aging',
+    loadComponent: () => import('./features/accounts/customer-advances/aging-reconciliation/aging-reconciliation.component').then(m => m.AgingReconciliationComponent),
+    title: '13.1.10 Receivable Aging & Collection Reconciliation - Real Estate ERP'
+  },
+  // Section 14: Loans, Interest & Financing
+  {
+    path: 'accounts/loans-financing',
+    loadComponent: () => import('./features/accounts/loans-financing/loans-list/loans-list.component').then(m => m.LoansListComponent),
+    title: '14.1 Loan Management & Credit Facilities - Real Estate ERP'
+  },
+  {
+    path: 'accounts/loans-financing/create',
+    loadComponent: () => import('./features/accounts/loans-financing/loan-form/loan-form.component').then(m => m.LoanFormComponent),
+    title: '14.1 Register Loan Facility - Real Estate ERP'
+  },
+  {
+    path: 'accounts/loans-financing/:id/edit',
+    loadComponent: () => import('./features/accounts/loans-financing/loan-form/loan-form.component').then(m => m.LoanFormComponent),
+    title: '14.1 Edit Loan Facility - Real Estate ERP'
+  },
+  {
+    path: 'accounts/loans-financing/edit/:id',
+    loadComponent: () => import('./features/accounts/loans-financing/loan-form/loan-form.component').then(m => m.LoanFormComponent),
+    title: '14.1 Edit Loan Facility - Real Estate ERP'
+  },
+  {
+    path: 'accounts/loans-financing/disbursements',
+    loadComponent: () => import('./features/accounts/loans-financing/loan-disbursements/loan-disbursements.component').then(m => m.LoanDisbursementsComponent),
+    title: '14.2 Loan Disbursement Accounting & Vouchers - Real Estate ERP'
+  },
+  {
+    path: 'accounts/loans-financing/repayments',
+    loadComponent: () => import('./features/accounts/loans-financing/loan-repayments/loan-repayments.component').then(m => m.LoanRepaymentsComponent),
+    title: '14.3 Loan Repayments & Debt Service Waterfall - Real Estate ERP'
+  },
+  {
+    path: 'accounts/loans-financing/interest-cwip',
+    loadComponent: () => import('./features/accounts/loans-financing/loan-interest-cwip/loan-interest-cwip.component').then(m => m.LoanInterestCWIPComponent),
+    title: '14.3 Interest Accruals & IAS 23 CWIP Capitalization - Real Estate ERP'
+  },
+  // Section 12: Construction Cost Allocation & Work in Progress (CWIP)
+  {
+    path: 'accounts/construction-cwip',
+    loadComponent: () => import('./features/accounts/construction-cost-allocation/allocations-list/allocations-list.component').then(m => m.CWIPAllocationsListComponent),
+    title: '12.1 & 12.2 Construction Cost Allocation & CWIP - Real Estate ERP'
+  },
+  {
+    path: 'accounts/construction-cwip/create',
+    loadComponent: () => import('./features/accounts/construction-cost-allocation/allocation-form/allocation-form.component').then(m => m.CWIPAllocationFormComponent),
+    title: '12.1 New Construction Cost Allocation - Real Estate ERP'
+  },
+  {
+    path: 'accounts/construction-cwip/material-issues',
+    loadComponent: () => import('./features/accounts/construction-cost-allocation/material-issues/cwip-material-issues.component').then(m => m.CWIPMaterialIssuesComponent),
+    title: '12.3 Material Issues to Construction Ledger - Real Estate ERP'
+  },
+  {
+    path: 'accounts/construction-cwip/budget-tracking',
+    loadComponent: () => import('./features/accounts/construction-cost-allocation/budget-tracking/cwip-budget-tracking.component').then(m => m.CWIPBudgetTrackingComponent),
+    title: '12.1 Budget vs Actual Construction Cost & Forecasts - Real Estate ERP'
+  },
+
+
   {
     path: 'tax/cockpit',
     loadComponent: () => import('./features/tax/tax-cockpit/tax-cockpit.component').then(m => m.TaxCockpitComponent),

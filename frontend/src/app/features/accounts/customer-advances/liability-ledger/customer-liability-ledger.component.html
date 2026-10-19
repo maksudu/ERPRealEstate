@@ -1,0 +1,162 @@
+<div class="space-y-6">
+  <!-- Navigation Tabs -->
+  <app-customer-advances-nav activeSection="liability"></app-customer-advances-nav>
+
+  <!-- Card Container -->
+  <app-card-container>
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-border">
+      <div>
+        <div class="flex items-center gap-2.5">
+          <div class="p-2 bg-primary/10 text-primary rounded-xl">
+            <i class="ri-book-read-line text-2xl"></i>
+          </div>
+          <div>
+            <h1 class="text-xl font-bold text-foreground">13.1.4 Customer Advance & Liability Ledger</h1>
+            <p class="text-xs text-muted-foreground mt-0.5">
+              Consolidated customer-level credit balances, unapplied deposits, sale agreement linkage & running liabilities.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <button
+        (click)="loadLedger()"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-muted-foreground bg-secondary hover:bg-secondary/80 rounded-lg border border-border transition-colors">
+        <i class="ri-refresh-line text-sm"></i>
+        <span>Refresh Ledger</span>
+      </button>
+    </div>
+
+    <!-- Summary KPI Header Cards -->
+    <div *ngIf="ledgerData()" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 my-5">
+      <div class="p-4 rounded-xl border border-border/70 bg-card/60 shadow-xs">
+        <span class="text-xs font-medium text-muted-foreground">Total Active Customers</span>
+        <h3 class="text-2xl font-bold text-foreground mt-1">{{ ledgerData()?.total_customers }}</h3>
+        <span class="text-[11px] text-muted-foreground">With registered advances</span>
+      </div>
+
+      <div class="p-4 rounded-xl border border-border/70 bg-card/60 shadow-xs">
+        <span class="text-xs font-medium text-muted-foreground">Gross Advances Received</span>
+        <h3 class="text-2xl font-bold text-emerald-600 mt-1">৳ {{ ledgerData()?.total_gross_advances | number:'1.2-2' }}</h3>
+        <span class="text-[11px] text-muted-foreground">Total cash collections</span>
+      </div>
+
+      <div class="p-4 rounded-xl border border-border/70 bg-card/60 shadow-xs">
+        <span class="text-xs font-medium text-muted-foreground">Unapplied Liability Balance</span>
+        <h3 class="text-2xl font-bold text-amber-600 mt-1">৳ {{ ledgerData()?.total_unapplied_credits | number:'1.2-2' }}</h3>
+        <span class="text-[11px] text-muted-foreground">Pending demand clearance</span>
+      </div>
+
+      <div class="p-4 rounded-xl border border-border/70 bg-card/60 shadow-xs">
+        <span class="text-xs font-medium text-muted-foreground">Transferred to Revenue</span>
+        <h3 class="text-2xl font-bold text-purple-600 mt-1">৳ {{ ledgerData()?.total_recognized_revenue | number:'1.2-2' }}</h3>
+        <span class="text-[11px] text-muted-foreground">Under IFRS 15 Criteria</span>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="p-3.5 bg-secondary/30 rounded-xl border border-border/70 mb-5">
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
+        <div class="md:col-span-8">
+          <app-custom-input
+            label=""
+            [(ngModel)]="searchTerm"
+            (keyup.enter)="loadLedger()"
+            placeholder="Search by Customer Name, Agreement Reference, Project...">
+          </app-custom-input>
+        </div>
+
+        <div class="md:col-span-4">
+          <app-searchable-select
+            label=""
+            [options]="projectOptions()"
+            [(ngModel)]="selectedProject"
+            (ngModelChange)="onFilterChange()">
+          </app-searchable-select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ledger Table -->
+    <div class="overflow-x-auto rounded-xl border border-border bg-card">
+      <table class="w-full text-left border-collapse text-xs">
+        <thead>
+          <tr class="bg-secondary/40 border-b border-border text-muted-foreground uppercase tracking-wider text-[11px]">
+            <th class="py-3 px-4 font-semibold">Customer Details</th>
+            <th class="py-3 px-4 font-semibold">Sale Agreement Linkage</th>
+            <th class="py-3 px-4 font-semibold">Associated Projects</th>
+            <th class="py-3 px-4 font-semibold text-right">Total Advances</th>
+            <th class="py-3 px-4 font-semibold text-right">Allocated Demands</th>
+            <th class="py-3 px-4 font-semibold text-right">Unapplied Liability Balance</th>
+            <th class="py-3 px-4 font-semibold text-right">Recognized Revenue</th>
+            <th class="py-3 px-4 font-semibold text-center">Latest Receipt</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border/60">
+          <tr *ngIf="isLoading()" class="text-center">
+            <td colspan="8" class="py-10 text-muted-foreground">
+              <i class="ri-loader-4-line text-2xl animate-spin inline-block mb-2"></i>
+              <p>Calculating Customer Liability Balances...</p>
+            </td>
+          </tr>
+
+          <tr *ngIf="!isLoading() && customers().length === 0" class="text-center">
+            <td colspan="8" class="py-12 text-muted-foreground">
+              <i class="ri-inbox-line text-3xl inline-block mb-2 text-muted-foreground/60"></i>
+              <p>No customer records found.</p>
+            </td>
+          </tr>
+
+          <tr *ngFor="let c of customers()" class="hover:bg-secondary/20 transition-colors">
+            <td class="py-3 px-4">
+              <div class="font-bold text-foreground">{{ c.customer_name }}</div>
+              <div class="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-2">
+                <span>{{ c.customer_code }}</span>
+                <span>•</span>
+                <span>{{ c.booking_count }} Bookings</span>
+              </div>
+            </td>
+
+            <td class="py-3 px-4">
+              <div class="flex flex-wrap gap-1">
+                <span *ngFor="let agr of c.sale_agreements" class="px-2 py-0.5 rounded text-[10px] bg-secondary font-mono text-foreground border border-border">
+                  {{ agr }}
+                </span>
+                <span *ngIf="c.sale_agreements.length === 0" class="text-muted-foreground/60">—</span>
+              </div>
+            </td>
+
+            <td class="py-3 px-4">
+              <div class="flex flex-wrap gap-1">
+                <span *ngFor="let prj of c.projects" class="px-2 py-0.5 rounded text-[10px] bg-primary/10 text-primary font-medium">
+                  {{ prj }}
+                </span>
+              </div>
+            </td>
+
+            <td class="py-3 px-4 text-right font-bold text-foreground">
+              ৳ {{ c.total_advances_received | number:'1.2-2' }}
+            </td>
+
+            <td class="py-3 px-4 text-right font-medium text-blue-600">
+              ৳ {{ c.total_allocated_to_installments | number:'1.2-2' }}
+            </td>
+
+            <td class="py-3 px-4 text-right font-bold" [ngClass]="c.total_unapplied_credit_balance > 0 ? 'text-amber-600' : 'text-muted-foreground'">
+              ৳ {{ c.total_unapplied_credit_balance | number:'1.2-2' }}
+            </td>
+
+            <td class="py-3 px-4 text-right font-medium text-purple-600">
+              ৳ {{ c.total_recognized_revenue | number:'1.2-2' }}
+            </td>
+
+            <td class="py-3 px-4 text-center text-muted-foreground text-[11px]">
+              {{ c.latest_receipt_date || '—' }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </app-card-container>
+</div>

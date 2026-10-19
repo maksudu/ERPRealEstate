@@ -1,0 +1,743 @@
+<app-card-container
+  title="Demand Notice Audit & Collection Drilldown"
+  subtitle="Installment invoice details, atomic collection money receipts, contractual adjustments, and GL audit trail"
+  badge="AR Audit Core"
+>
+  <!-- Unified Module Sub-Navigation Bar -->
+  <div class="flex items-center gap-1.5 p-1.5 bg-secondary/40 rounded-2xl border border-border overflow-x-auto mb-6 print:hidden">
+    <a
+      routerLink="/accounts/coa"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-node-tree"></i>
+      <span>Chart of Accounts</span>
+    </a>
+
+    <a
+      routerLink="/accounts/vouchers"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-file-list-3-line"></i>
+      <span>General Ledger Vouchers</span>
+    </a>
+
+    <a
+      routerLink="/accounts/ledger"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-booklet-line"></i>
+      <span>Ledger Inquiry & Statements</span>
+    </a>
+
+    <a
+      routerLink="/accounts/payables"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-money-dollar-circle-line"></i>
+      <span>Accounts Payable (AP)</span>
+    </a>
+
+    <a
+      routerLink="/accounts/receivables"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-card text-foreground shadow-xs border border-border inline-flex items-center gap-1.5 whitespace-nowrap"
+    >
+      <i class="ri-hand-coin-line text-primary"></i>
+      <span>Accounts Receivable (AR)</span>
+    </a>
+
+    <a
+      routerLink="/accounts/receivables/receipts"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-refund-2-line"></i>
+      <span>Receipts & Allocations</span>
+    </a>
+
+    <a
+      routerLink="/accounts/receivables/ledger"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-user-star-line"></i>
+      <span>Customer Ledger & Aging</span>
+    </a>
+
+    <a
+      routerLink="/accounts/financial-reports"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-pie-chart-2-line"></i>
+      <span>Financial Reports (P&L / BS)</span>
+    </a>
+
+    <div class="ml-auto pl-2 flex items-center gap-2">
+      <a
+        routerLink="/settings/lookups"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-primary hover:text-primary/80 bg-card rounded-xl border border-border shadow-xs transition-colors whitespace-nowrap"
+      >
+        <i class="ri-settings-4-line"></i>
+        <span>Dropdown Settings</span>
+      </a>
+    </div>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="bg-destructive/10 text-destructive border border-destructive/20 rounded-2xl p-4 mb-6 flex items-start gap-3">
+      <i class="ri-error-warning-line text-lg mt-0.5"></i>
+      <div class="text-xs">
+        <p class="font-bold">Error</p>
+        <p class="mt-0.5">{{ errorMessage() }}</p>
+      </div>
+    </div>
+  }
+
+  @if (successMessage()) {
+    <div class="bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 rounded-2xl p-4 mb-6 flex items-start gap-3">
+      <i class="ri-checkbox-circle-line text-lg mt-0.5"></i>
+      <div class="text-xs">
+        <p class="font-bold">Success</p>
+        <p class="mt-0.5">{{ successMessage() }}</p>
+      </div>
+    </div>
+  }
+
+  @if (invoice(); as inv) {
+    <!-- TOP STATUS & ACTION BAR -->
+    <div class="bg-card rounded-2xl border border-border p-6 shadow-xs mb-6">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-3">
+            <h2 class="text-xl font-bold font-mono text-foreground">{{ inv.invoice_number }}</h2>
+            <span class="px-2.5 py-0.5 text-xs font-semibold rounded-md bg-secondary text-foreground border border-border">
+              {{ inv.invoice_type }}
+            </span>
+            @if (inv.status === 'Collected') {
+              <span class="px-3 py-1 text-xs font-bold rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                <i class="ri-check-line mr-1"></i> Fully Collected
+              </span>
+            } @else if (inv.status === 'Partially_Collected') {
+              <span class="px-3 py-1 text-xs font-bold rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20">
+                Partially Collected
+              </span>
+            } @else if (inv.status === 'Disputed') {
+              <span class="px-3 py-1 text-xs font-bold rounded-full bg-purple-500/10 text-purple-600 border border-purple-500/20">
+                Disputed
+              </span>
+            } @else {
+              <span class="px-3 py-1 text-xs font-bold rounded-full bg-primary/10 text-primary border border-primary/20">
+                Issued / Active Demand
+              </span>
+            }
+          </div>
+          <p class="text-xs text-muted-foreground mt-1">
+            Issued on <span class="font-semibold text-foreground">{{ inv.invoice_date }}</span> • Payment Due by <span class="font-semibold text-foreground">{{ inv.due_date }}</span>
+          </p>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-wrap items-center gap-2 print:hidden">
+          <button
+            type="button"
+            (click)="showFollowupModal.set(true)"
+            class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-foreground bg-secondary hover:bg-secondary/80 rounded-xl border border-border transition-colors cursor-pointer"
+          >
+            <i class="ri-chat-follow-up-line"></i>
+            <span>Follow-up Status</span>
+          </button>
+
+          <button
+            type="button"
+            (click)="showAdjustmentModal.set(true)"
+            class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-foreground bg-secondary hover:bg-secondary/80 rounded-xl border border-border transition-colors cursor-pointer"
+          >
+            <i class="ri-file-edit-line"></i>
+            <span>Credit Note / Waiver</span>
+          </button>
+
+          <button
+            type="button"
+            (click)="printDemandNotice()"
+            class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-foreground bg-secondary hover:bg-secondary/80 rounded-xl border border-border transition-colors cursor-pointer"
+          >
+            <i class="ri-printer-line"></i>
+            <span>Print Notice</span>
+          </button>
+
+          @if (inv.balance_due > 0 && inv.status !== 'Cancelled') {
+            <app-custom-button
+              variant="primary"
+              (btnClick)="openReceiptModal()"
+            >
+              <i class="ri-hand-coin-line mr-1.5"></i>
+              <span>Record Money Receipt</span>
+            </app-custom-button>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- FINANCIAL BREAKDOWN CARDS -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+      <div class="bg-card rounded-2xl border border-border p-4 shadow-xs">
+        <span class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Gross Demand</span>
+        <div class="mt-1 text-lg font-bold text-foreground">
+          ৳{{ inv.gross_amount | number:'1.2-2' }}
+        </div>
+        <span class="text-[10px] text-muted-foreground">Milestone contract value</span>
+      </div>
+
+      <div class="bg-card rounded-2xl border border-border p-4 shadow-xs">
+        <span class="text-[11px] font-semibold text-rose-600 uppercase tracking-wider">Late Surcharge</span>
+        <div class="mt-1 text-lg font-bold text-rose-600">
+          +৳{{ inv.late_fee_amount | number:'1.2-2' }}
+        </div>
+        <span class="text-[10px] text-muted-foreground">Contractual penalty</span>
+      </div>
+
+      <div class="bg-card rounded-2xl border border-border p-4 shadow-xs">
+        <span class="text-[11px] font-semibold text-emerald-600 uppercase tracking-wider">Approved Discount</span>
+        <div class="mt-1 text-lg font-bold text-emerald-600">
+          -৳{{ inv.discount_amount | number:'1.2-2' }}
+        </div>
+        <span class="text-[10px] text-muted-foreground">Concession waiver</span>
+      </div>
+
+      <div class="bg-card rounded-2xl border border-primary/30 p-4 shadow-xs bg-primary/5">
+        <span class="text-[11px] font-semibold text-primary uppercase tracking-wider">Net Receivable</span>
+        <div class="mt-1 text-lg font-bold text-primary">
+          ৳{{ inv.net_receivable_amount | number:'1.2-2' }}
+        </div>
+        <span class="text-[10px] text-muted-foreground">Total customer demand</span>
+      </div>
+
+      <div class="bg-card rounded-2xl border border-emerald-500/30 p-4 shadow-xs bg-emerald-500/5">
+        <span class="text-[11px] font-semibold text-emerald-600 uppercase tracking-wider">Total Collected</span>
+        <div class="mt-1 text-lg font-bold text-emerald-600">
+          ৳{{ inv.collected_amount | number:'1.2-2' }}
+        </div>
+        <span class="text-[10px] text-muted-foreground">Cleared money receipts</span>
+      </div>
+
+      <div class="bg-card rounded-2xl border border-border p-4 shadow-xs" [class]="inv.balance_due > 0 ? 'bg-amber-500/5 border-amber-500/30' : 'bg-secondary'">
+        <span class="text-[11px] font-semibold uppercase tracking-wider" [class]="inv.balance_due > 0 ? 'text-amber-600' : 'text-foreground'">
+          Balance Outstanding
+        </span>
+        <div class="mt-1 text-lg font-bold" [class]="inv.balance_due > 0 ? 'text-amber-600' : 'text-emerald-600'">
+          ৳{{ inv.balance_due | number:'1.2-2' }}
+        </div>
+        <span class="text-[10px] text-muted-foreground">{{ inv.balance_due > 0 ? 'Pending Collection' : 'Fully Settled' }}</span>
+      </div>
+    </div>
+
+    <!-- DETAILS GRID: Customer, Property & GL Accounts -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+      <!-- Customer & Buyer Card -->
+      <div class="bg-card rounded-2xl border border-border p-5 shadow-xs">
+        <div class="flex items-center gap-2 mb-3 pb-2 border-b border-border">
+          <i class="ri-user-star-line text-primary"></i>
+          <h3 class="text-xs font-bold text-foreground uppercase tracking-wider">Customer & Buyer Information</h3>
+        </div>
+        <div class="space-y-2.5 text-xs">
+          <div class="flex justify-between">
+            <span class="text-muted-foreground">Buyer Name:</span>
+            <span class="font-bold text-foreground">{{ inv.customer_name }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-muted-foreground">Customer ID:</span>
+            <span class="font-mono text-foreground">#{{ inv.customer_id || 'N/A' }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-muted-foreground">Follow-up Status:</span>
+            <span class="px-2 py-0.5 rounded-md font-semibold bg-secondary text-foreground">
+              {{ inv.collection_followup_status }}
+            </span>
+          </div>
+          @if (inv.followup_notes) {
+            <div class="pt-2 border-t border-border text-muted-foreground">
+              <span class="font-medium text-foreground block mb-0.5">Follow-up Notes:</span>
+              <p class="italic bg-secondary/50 p-2 rounded-lg">{{ inv.followup_notes }}</p>
+            </div>
+          }
+          <div class="pt-2">
+            <a
+              [routerLink]="['/accounts/receivables/ledger']"
+              [queryParams]="{ customer_id: inv.customer_id }"
+              class="inline-flex items-center gap-1 text-xs text-primary hover:underline font-semibold"
+            >
+              <i class="ri-booklet-line"></i>
+              <span>View Full Customer Ledger Statement</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Real Estate Property Allocation -->
+      <div class="bg-card rounded-2xl border border-border p-5 shadow-xs">
+        <div class="flex items-center gap-2 mb-3 pb-2 border-b border-border">
+          <i class="ri-building-line text-primary"></i>
+          <h3 class="text-xs font-bold text-foreground uppercase tracking-wider">Property & Unit Dimension</h3>
+        </div>
+        <div class="space-y-2.5 text-xs">
+          <div class="flex justify-between">
+            <span class="text-muted-foreground">Project:</span>
+            <span class="font-semibold text-foreground">{{ inv.project_name || 'General Corporate' }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-muted-foreground">Allotted Unit:</span>
+            <span class="font-mono font-bold text-foreground">{{ inv.unit_number || 'General Project Demand' }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-muted-foreground">Booking Link:</span>
+            <span class="font-mono text-muted-foreground">
+              {{ inv.booking_id ? ('Booking #' + inv.booking_id) : 'Direct Demand' }}
+            </span>
+          </div>
+          @if (inv.description) {
+            <div class="pt-2 border-t border-border">
+              <span class="font-medium text-foreground block mb-0.5">Milestone Description:</span>
+              <p class="text-muted-foreground bg-secondary/50 p-2 rounded-lg">{{ inv.description }}</p>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Accounting & GL Voucher Audit Trail -->
+      <div class="bg-card rounded-2xl border border-border p-5 shadow-xs">
+        <div class="flex items-center gap-2 mb-3 pb-2 border-b border-border">
+          <i class="ri-scales-3-line text-primary"></i>
+          <h3 class="text-xs font-bold text-foreground uppercase tracking-wider">Accounting & Double-Entry Audit</h3>
+        </div>
+        <div class="space-y-2.5 text-xs">
+          <div>
+            <span class="text-muted-foreground block mb-0.5">Debit: Accounts Receivable:</span>
+            <span class="font-semibold text-foreground block bg-secondary/40 p-1.5 rounded-lg font-mono text-[11px]">
+              {{ inv.receivable_account_name || '1130 - Accounts Receivable - Flat Buyers' }}
+            </span>
+          </div>
+          <div>
+            <span class="text-muted-foreground block mb-0.5">Credit: Revenue / Advances:</span>
+            <span class="font-semibold text-foreground block bg-secondary/40 p-1.5 rounded-lg font-mono text-[11px]">
+              {{ inv.revenue_account_name || '4100 - Property Sales Revenue' }}
+            </span>
+          </div>
+          <div class="flex justify-between items-center pt-2 border-t border-border">
+            <span class="text-muted-foreground">GL Billing Voucher:</span>
+            @if (inv.voucher_id) {
+              <a
+                [routerLink]="['/accounts/vouchers/view', inv.voucher_id]"
+                class="font-mono font-bold text-primary hover:underline inline-flex items-center gap-1"
+              >
+                <span>{{ inv.voucher_number || ('JV #' + inv.voucher_id) }}</span>
+                <i class="ri-external-link-line text-[10px]"></i>
+              </a>
+            } @else {
+              <span class="text-muted-foreground font-mono">Pending Posting</span>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COLLECTIONS LOG (MONEY RECEIPTS) -->
+    <div class="bg-card rounded-2xl border border-border shadow-xs overflow-hidden mb-6">
+      <div class="p-4 border-b border-border flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <i class="ri-money-dollar-circle-line text-emerald-600"></i>
+          <h3 class="text-sm font-bold text-foreground">Money Receipts & Collections Audit Log</h3>
+        </div>
+        <span class="text-xs text-muted-foreground">
+          {{ inv.receipts?.length || 0 }} Collections recorded
+        </span>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-secondary/60 text-muted-foreground uppercase text-[10px] tracking-wider font-semibold border-b border-border">
+            <tr>
+              <th class="py-3 px-4">Receipt #</th>
+              <th class="py-3 px-4">Date</th>
+              <th class="py-3 px-4">Method</th>
+              <th class="py-3 px-4">Bank / Instrument</th>
+              <th class="py-3 px-4">Cheque / Ref #</th>
+              <th class="py-3 px-4 text-right">Amount (৳)</th>
+              <th class="py-3 px-4 text-center">GL Voucher</th>
+              <th class="py-3 px-4">Remarks</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border">
+            @for (rcpt of inv.receipts; track rcpt.id) {
+              <tr class="hover:bg-secondary/30 transition-colors">
+                <td class="py-3 px-4 font-mono font-bold text-emerald-600 whitespace-nowrap">
+                  {{ rcpt.receipt_number }}
+                </td>
+                <td class="py-3 px-4 text-muted-foreground whitespace-nowrap">
+                  {{ rcpt.receipt_date }}
+                </td>
+                <td class="py-3 px-4 whitespace-nowrap">
+                  <span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                    {{ rcpt.collection_method }}
+                  </span>
+                </td>
+                <td class="py-3 px-4 text-foreground whitespace-nowrap">
+                  {{ rcpt.bank_name || 'Cash Counter' }}
+                </td>
+                <td class="py-3 px-4 font-mono text-muted-foreground whitespace-nowrap">
+                  {{ rcpt.cheque_number || rcpt.transaction_reference || 'N/A' }}
+                </td>
+                <td class="py-3 px-4 text-right font-bold text-emerald-600 whitespace-nowrap">
+                  ৳{{ rcpt.amount | number:'1.2-2' }}
+                </td>
+                <td class="py-3 px-4 text-center whitespace-nowrap">
+                  @if (rcpt.voucher_id) {
+                    <a
+                      [routerLink]="['/accounts/vouchers/view', rcpt.voucher_id]"
+                      class="font-mono text-primary hover:underline"
+                    >
+                      {{ rcpt.voucher_number || ('BR #' + rcpt.voucher_id) }}
+                    </a>
+                  } @else {
+                    <span class="text-muted-foreground font-mono">—</span>
+                  }
+                </td>
+                <td class="py-3 px-4 text-muted-foreground">
+                  {{ rcpt.notes || 'Collection recorded' }}
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="8" class="text-center py-8 text-muted-foreground">
+                  No money receipts collected against this demand notice yet.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ADJUSTMENTS LOG -->
+    @if (inv.adjustments && inv.adjustments.length > 0) {
+      <div class="bg-card rounded-2xl border border-border shadow-xs overflow-hidden mb-6">
+        <div class="p-4 border-b border-border flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <i class="ri-exchange-dollar-line text-primary"></i>
+            <h3 class="text-sm font-bold text-foreground">Credit & Debit Notes Adjustments Log</h3>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-secondary/60 text-muted-foreground uppercase text-[10px] tracking-wider font-semibold border-b border-border">
+              <tr>
+                <th class="py-3 px-4">Adjustment #</th>
+                <th class="py-3 px-4">Type</th>
+                <th class="py-3 px-4">Date</th>
+                <th class="py-3 px-4 text-right">Amount (৳)</th>
+                <th class="py-3 px-4">Reason / Particulars</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border">
+              @for (adj of inv.adjustments; track adj.id) {
+                <tr class="hover:bg-secondary/30 transition-colors">
+                  <td class="py-3 px-4 font-mono font-bold text-foreground whitespace-nowrap">
+                    {{ adj.adjustment_number }}
+                  </td>
+                  <td class="py-3 px-4 whitespace-nowrap">
+                    <span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-secondary text-foreground border border-border">
+                      {{ adj.adjustment_type }}
+                    </span>
+                  </td>
+                  <td class="py-3 px-4 text-muted-foreground whitespace-nowrap">
+                    {{ adj.adjustment_date }}
+                  </td>
+                  <td class="py-3 px-4 text-right font-bold text-foreground whitespace-nowrap">
+                    ৳{{ adj.amount | number:'1.2-2' }}
+                  </td>
+                  <td class="py-3 px-4 text-foreground">
+                    {{ adj.reason }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+  }
+
+  <!-- MODAL 1: RECORD MONEY RECEIPT -->
+  @if (showReceiptModal()) {
+    <div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+      <div class="bg-card rounded-2xl border border-border shadow-2xl max-w-lg w-full p-6 animate-in fade-in zoom-in-95 duration-200">
+        <div class="flex items-center justify-between pb-3 border-b border-border mb-4">
+          <div class="flex items-center gap-2">
+            <span class="w-8 h-8 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 font-bold">
+              <i class="ri-hand-coin-line"></i>
+            </span>
+            <h3 class="text-sm font-bold text-foreground">Record Customer Money Receipt</h3>
+          </div>
+          <button
+            type="button"
+            (click)="showReceiptModal.set(false)"
+            class="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-secondary cursor-pointer"
+          >
+            <i class="ri-close-line text-lg"></i>
+          </button>
+        </div>
+
+        <form [formGroup]="receiptForm" (ngSubmit)="submitReceipt()" class="space-y-4">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <app-custom-input
+                label="Receipt Amount (৳) *"
+                type="number"
+                formControlName="amount"
+                hint="Max: Outstanding Balance"
+              ></app-custom-input>
+            </div>
+            <div>
+              <app-custom-input
+                label="Collection Date *"
+                type="date"
+                formControlName="receipt_date"
+              ></app-custom-input>
+            </div>
+          </div>
+
+          <div>
+            <app-searchable-select
+              label="Collection Instrument / Method *"
+              placeholder="Select instrument..."
+              [options]="collectionMethodOptions"
+              [value]="receiptForm.get('collection_method')?.value"
+              (valueChange)="receiptForm.patchValue({ collection_method: $event })"
+              [allowCreateNew]="false"
+            ></app-searchable-select>
+          </div>
+
+          <div>
+            <app-searchable-select
+              label="Deposit Bank / Cash Account (COA) *"
+              placeholder="Select bank account..."
+              [options]="bankAccountOptions"
+              [value]="receiptForm.get('bank_account_id')?.value"
+              (valueChange)="receiptForm.patchValue({ bank_account_id: $event })"
+              [allowCreateNew]="true"
+              createRoute="/accounts/coa/create"
+            ></app-searchable-select>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <app-custom-input
+                label="Bank Name (Issuing Bank)"
+                placeholder="e.g. Eastern Bank Ltd."
+                formControlName="bank_name"
+              ></app-custom-input>
+            </div>
+            <div>
+              <app-custom-input
+                label="Cheque / Pay Order #"
+                placeholder="e.g. CHQ-890123"
+                formControlName="cheque_number"
+              ></app-custom-input>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <app-custom-input
+                label="Cheque Date (if PDC / Cheque)"
+                type="date"
+                formControlName="cheque_date"
+              ></app-custom-input>
+            </div>
+            <div>
+              <app-custom-input
+                label="Transaction / EFT Ref #"
+                placeholder="e.g. BEFTN-99120"
+                formControlName="transaction_reference"
+              ></app-custom-input>
+            </div>
+          </div>
+
+          <div>
+            <app-custom-textarea
+              label="Deposit Remarks / Notes"
+              placeholder="e.g. 5th installment payment received via account payee cheque..."
+              formControlName="notes"
+              [rows]="2"
+            ></app-custom-textarea>
+          </div>
+
+          <div class="flex items-center justify-end gap-3 pt-3 border-t border-border">
+            <button
+              type="button"
+              (click)="showReceiptModal.set(false)"
+              class="px-4 py-2 text-xs font-semibold rounded-xl border border-border text-foreground hover:bg-secondary cursor-pointer"
+            >
+              Cancel
+            </button>
+
+            <app-custom-button
+              type="submit"
+              variant="primary"
+              [disabled]="isSubmittingReceipt()"
+            >
+              @if (isSubmittingReceipt()) {
+                <span class="inline-block animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></span>
+                Posting Receipt & GL Voucher...
+              } @else {
+                <i class="ri-check-line mr-1.5"></i>
+                Save Money Receipt
+              }
+            </app-custom-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- MODAL 2: RECORD CREDIT NOTE / ADJUSTMENT -->
+  @if (showAdjustmentModal()) {
+    <div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+      <div class="bg-card rounded-2xl border border-border shadow-2xl max-w-md w-full p-6 animate-in fade-in zoom-in-95 duration-200">
+        <div class="flex items-center justify-between pb-3 border-b border-border mb-4">
+          <div class="flex items-center gap-2">
+            <span class="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold">
+              <i class="ri-file-edit-line"></i>
+            </span>
+            <h3 class="text-sm font-bold text-foreground">Record Adjustment / Credit Note</h3>
+          </div>
+          <button
+            type="button"
+            (click)="showAdjustmentModal.set(false)"
+            class="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-secondary cursor-pointer"
+          >
+            <i class="ri-close-line text-lg"></i>
+          </button>
+        </div>
+
+        <form [formGroup]="adjustmentForm" (ngSubmit)="submitAdjustment()" class="space-y-4">
+          <div>
+            <app-searchable-select
+              label="Adjustment Category *"
+              [options]="adjustmentTypeOptions"
+              [value]="adjustmentForm.get('adjustment_type')?.value"
+              (valueChange)="adjustmentForm.patchValue({ adjustment_type: $event })"
+              [allowCreateNew]="false"
+            ></app-searchable-select>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <app-custom-input
+                label="Adjustment Amount (৳) *"
+                type="number"
+                formControlName="amount"
+              ></app-custom-input>
+            </div>
+            <div>
+              <app-custom-input
+                label="Adjustment Date *"
+                type="date"
+                formControlName="adjustment_date"
+              ></app-custom-input>
+            </div>
+          </div>
+
+          <div>
+            <app-custom-textarea
+              label="Approved Reason / Board Resolution *"
+              placeholder="e.g. Approved 5% rebate for advance payment resolution #BR-2026..."
+              formControlName="reason"
+              [rows]="3"
+            ></app-custom-textarea>
+          </div>
+
+          <div class="flex items-center justify-end gap-3 pt-3 border-t border-border">
+            <button
+              type="button"
+              (click)="showAdjustmentModal.set(false)"
+              class="px-4 py-2 text-xs font-semibold rounded-xl border border-border text-foreground hover:bg-secondary cursor-pointer"
+            >
+              Cancel
+            </button>
+
+            <app-custom-button
+              type="submit"
+              variant="primary"
+              [disabled]="isSubmittingAdjustment()"
+            >
+              <i class="ri-check-line mr-1.5"></i>
+              Post Adjustment
+            </app-custom-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- MODAL 3: UPDATE FOLLOW-UP STATUS -->
+  @if (showFollowupModal()) {
+    <div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+      <div class="bg-card rounded-2xl border border-border shadow-2xl max-w-md w-full p-6 animate-in fade-in zoom-in-95 duration-200">
+        <div class="flex items-center justify-between pb-3 border-b border-border mb-4">
+          <div class="flex items-center gap-2">
+            <span class="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold">
+              <i class="ri-chat-follow-up-line"></i>
+            </span>
+            <h3 class="text-sm font-bold text-foreground">Update Collection Follow-up Status</h3>
+          </div>
+          <button
+            type="button"
+            (click)="showFollowupModal.set(false)"
+            class="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-secondary cursor-pointer"
+          >
+            <i class="ri-close-line text-lg"></i>
+          </button>
+        </div>
+
+        <form [formGroup]="followupForm" (ngSubmit)="submitFollowup()" class="space-y-4">
+          <div>
+            <app-searchable-select
+              categoryCode="AR_FOLLOWUP_STATUS"
+              label="Collection Follow-up Status *"
+              [value]="followupForm.get('collection_followup_status')?.value"
+              (valueChange)="followupForm.patchValue({ collection_followup_status: $event })"
+              [allowCreateNew]="true"
+              createRoute="/settings/lookups"
+            ></app-searchable-select>
+          </div>
+
+          <div>
+            <app-custom-textarea
+              label="Follow-up Notes / Customer Commitment"
+              placeholder="e.g. Spoke with customer; promised to deposit cheque on 25th of this month..."
+              formControlName="followup_notes"
+              [rows]="3"
+            ></app-custom-textarea>
+          </div>
+
+          <div class="flex items-center justify-end gap-3 pt-3 border-t border-border">
+            <button
+              type="button"
+              (click)="showFollowupModal.set(false)"
+              class="px-4 py-2 text-xs font-semibold rounded-xl border border-border text-foreground hover:bg-secondary cursor-pointer"
+            >
+              Cancel
+            </button>
+
+            <app-custom-button
+              type="submit"
+              variant="primary"
+              [disabled]="isUpdatingFollowup()"
+            >
+              <i class="ri-check-line mr-1.5"></i>
+              Save Status
+            </app-custom-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</app-card-container>

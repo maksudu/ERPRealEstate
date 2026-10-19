@@ -1,0 +1,300 @@
+<div class="space-y-6">
+  <!-- Navigation Header -->
+  <app-customer-advances-nav activeSection="advances"></app-customer-advances-nav>
+
+  <!-- Full-Screen Card Container -->
+  <app-card-container>
+    <!-- Header -->
+    <div class="flex items-center justify-between pb-4 border-b border-border">
+      <div class="flex items-center gap-3">
+        <a
+          routerLink="/accounts/customer-advances"
+          class="p-2 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg border border-border transition-colors">
+          <i class="ri-arrow-left-line text-lg"></i>
+        </a>
+        <div>
+          <h1 class="text-xl font-bold text-foreground">
+            {{ isEditMode() ? 'Edit Customer Advance Transaction' : 'Record New Customer Advance' }}
+          </h1>
+          <p class="text-xs text-muted-foreground mt-0.5">
+            Idempotent receipt posting into Double-Entry General Ledger (Debit Bank, Credit Customer Advances 2120).
+          </p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <a
+          routerLink="/accounts/customer-advances"
+          class="px-3.5 py-1.5 text-xs rounded-lg border border-border text-muted-foreground hover:bg-secondary transition-colors">
+          Cancel
+        </a>
+        <button
+          (click)="onSubmit()"
+          [disabled]="isLoading()"
+          class="px-5 py-1.5 text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg shadow-xs transition-colors flex items-center gap-1.5">
+          <i *ngIf="isLoading()" class="ri-loader-4-line animate-spin text-sm"></i>
+          <span>{{ isEditMode() ? 'Update Transaction' : 'Post to General Ledger' }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Error Alert -->
+    <div *ngIf="errorMessage()" class="p-3 my-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 text-xs flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <i class="ri-error-warning-line text-base"></i>
+        <span>{{ errorMessage() }}</span>
+      </div>
+      <button (click)="errorMessage.set(null)" class="text-red-500 hover:text-red-700">
+        <i class="ri-close-line"></i>
+      </button>
+    </div>
+
+    <!-- 13.2 Illustrative Accounting Treatment Banner -->
+    <div class="p-3.5 my-4 rounded-xl bg-primary/5 border border-primary/20 text-xs text-foreground flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="p-2 bg-primary/10 text-primary rounded-lg">
+          <i class="ri-scales-3-line text-lg"></i>
+        </div>
+        <div>
+          <span class="font-bold text-primary">13.2 Illustrative Double-Entry Treatment:</span>
+          <span class="text-muted-foreground ml-1">
+            <strong>Debit:</strong> Bank/Cash Account (1120/1110) &nbsp;|&nbsp;
+            <strong>Credit:</strong> Customer Advances Liability (2120) for ৳ {{ form.gross_amount | number:'1.2-2' }}
+          </span>
+        </div>
+      </div>
+      <div class="text-[11px] font-mono text-muted-foreground bg-secondary px-2 py-1 rounded">
+        IDEMP: {{ form.source_transaction_id }}
+      </div>
+    </div>
+
+    <!-- Form Body -->
+    <form (ngSubmit)="onSubmit()" class="space-y-6 mt-4">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- LEFT COLUMN: Transaction & Customer Details -->
+        <div class="space-y-4 p-4 rounded-xl border border-border/70 bg-card/40">
+          <h2 class="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
+            <i class="ri-file-user-line text-primary"></i>
+            <span>Customer & Contract Information</span>
+          </h2>
+
+          <!-- Source Module & Transaction ID (Idempotency Key) -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <app-searchable-select
+              label="Source Module"
+              [options]="sourceModuleOptions()"
+              [(ngModel)]="form.source_module"
+              name="source_module">
+            </app-searchable-select>
+
+            <app-custom-input
+              label="Source Transaction ID"
+              [(ngModel)]="form.source_transaction_id"
+              name="source_transaction_id"
+              hint="Unique ID preventing duplicate posting">
+            </app-custom-input>
+          </div>
+
+          <!-- Customer Selection with Inline Add -->
+          <app-searchable-select
+            label="Customer Master"
+            [options]="customerOptions()"
+            [(ngModel)]="form.customer_id"
+            (ngModelChange)="onCustomerChange($event)"
+            [allowCreateNew]="true"
+            (addNewClicked)="openQuickCustomerModal()"
+            name="customer_id">
+          </app-searchable-select>
+
+          <!-- Booking Reference & Sale Agreement -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <app-custom-input
+              label="Booking Reference #"
+              [(ngModel)]="form.booking_reference_no"
+              name="booking_reference_no"
+              placeholder="e.g. BK-2026-0042">
+            </app-custom-input>
+
+            <app-custom-input
+              label="Sale Agreement / Deed Ref"
+              [(ngModel)]="form.sale_agreement_no"
+              name="sale_agreement_no"
+              placeholder="e.g. AGR-BK-2026-0042">
+            </app-custom-input>
+          </div>
+
+          <!-- Project, Tower & Unit -->
+          <app-searchable-select
+            label="Project Master"
+            [options]="projectOptions()"
+            [(ngModel)]="form.project_id"
+            (ngModelChange)="onProjectChange($event)"
+            name="project_id">
+          </app-searchable-select>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <app-searchable-select
+              label="Building / Tower"
+              [options]="towerOptions()"
+              [(ngModel)]="form.tower_id"
+              name="tower_id">
+            </app-searchable-select>
+
+            <app-searchable-select
+              label="Unit Selection"
+              [options]="unitOptions()"
+              [(ngModel)]="form.unit_id"
+              (ngModelChange)="onUnitChange($event)"
+              name="unit_id">
+            </app-searchable-select>
+          </div>
+        </div>
+
+        <!-- RIGHT COLUMN: Financial, Amount & Bank Details -->
+        <div class="space-y-4 p-4 rounded-xl border border-border/70 bg-card/40">
+          <h2 class="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
+            <i class="ri-bank-card-line text-primary"></i>
+            <span>Financial Amount & Banking</span>
+          </h2>
+
+          <!-- Transaction Type & Receipt Date -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <app-searchable-select
+              label="Transaction Type"
+              [options]="txTypeOptions()"
+              [(ngModel)]="form.transaction_type"
+              name="transaction_type">
+            </app-searchable-select>
+
+            <app-custom-input
+              label="Receipt Date"
+              type="date"
+              [(ngModel)]="form.receipt_date"
+              name="receipt_date">
+            </app-custom-input>
+          </div>
+
+          <!-- Gross Amount Input -->
+          <app-custom-input
+            label="Gross Advance Amount (BDT ৳)"
+            type="number"
+            [(ngModel)]="form.gross_amount"
+            name="gross_amount"
+            placeholder="0.00">
+          </app-custom-input>
+
+          <!-- Payment Mode & Bank Account -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <app-searchable-select
+              label="Payment Mode"
+              [options]="paymentModeOptions()"
+              [(ngModel)]="form.payment_mode"
+              name="payment_mode">
+            </app-searchable-select>
+
+            <app-searchable-select
+              label="Deposit Bank Account"
+              [options]="bankAccountOptions()"
+              [(ngModel)]="form.bank_account_id"
+              name="bank_account_id">
+            </app-searchable-select>
+          </div>
+
+          <!-- Cheque / Instrument Reference -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <app-custom-input
+              label="Instrument / Cheque #"
+              [(ngModel)]="form.instrument_no"
+              name="instrument_no"
+              placeholder="e.g. CQ-992102 or TrxID">
+            </app-custom-input>
+
+            <app-custom-input
+              label="Instrument Date"
+              type="date"
+              [(ngModel)]="form.instrument_date"
+              name="instrument_date">
+            </app-custom-input>
+          </div>
+
+          <!-- Notes -->
+          <app-custom-textarea
+            label="Contractual Notes & Remarks"
+            [(ngModel)]="form.notes"
+            name="notes"
+            placeholder="e.g. Booking money received against Unit A-12, earnest money subject to cancellation forfeiture policy.">
+          </app-custom-textarea>
+        </div>
+      </div>
+
+      <!-- Bottom Submission Bar -->
+      <div class="flex items-center justify-end gap-3 pt-4 border-t border-border">
+        <a
+          routerLink="/accounts/customer-advances"
+          class="px-4 py-2 text-xs rounded-lg border border-border text-muted-foreground hover:bg-secondary transition-colors">
+          Cancel
+        </a>
+        <button
+          type="submit"
+          [disabled]="isLoading()"
+          class="px-6 py-2 text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg shadow-xs transition-colors flex items-center gap-1.5">
+          <i *ngIf="isLoading()" class="ri-loader-4-line animate-spin text-sm"></i>
+          <span>{{ isEditMode() ? 'Save Changes' : 'Post Customer Advance' }}</span>
+        </button>
+      </div>
+    </form>
+  </app-card-container>
+
+  <!-- ========================================================================= -->
+  <!-- INLINE MODAL: QUICK ADD NEW CUSTOMER                                      -->
+  <!-- ========================================================================= -->
+  <div *ngIf="showQuickCustomerModal()" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div class="bg-card border border-border rounded-xl shadow-xl w-full max-w-md p-5 space-y-4">
+      <div class="flex items-center justify-between border-b border-border pb-3">
+        <h3 class="text-sm font-bold text-foreground">Add New Customer</h3>
+        <button (click)="showQuickCustomerModal.set(false)" class="text-muted-foreground hover:text-foreground">
+          <i class="ri-close-line text-lg"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <app-custom-input
+          label="Customer Full Name"
+          [(ngModel)]="newCustomer.full_name_en"
+          placeholder="e.g. Engr. Tanvir Ahmed">
+        </app-custom-input>
+
+        <app-custom-input
+          label="Primary Phone Number"
+          [(ngModel)]="newCustomer.primary_phone"
+          placeholder="e.g. 01711223344">
+        </app-custom-input>
+
+        <app-custom-input
+          label="National ID (NID)"
+          [(ngModel)]="newCustomer.nid_number"
+          placeholder="e.g. 19882691234567890">
+        </app-custom-input>
+
+        <app-custom-input
+          label="Email Address"
+          [(ngModel)]="newCustomer.email"
+          placeholder="e.g. tanvir@gmail.com">
+        </app-custom-input>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-3 border-t border-border">
+        <button
+          (click)="showQuickCustomerModal.set(false)"
+          class="px-3 py-1.5 text-xs rounded-lg border border-border hover:bg-secondary">
+          Cancel
+        </button>
+        <button
+          (click)="saveQuickCustomer()"
+          class="px-4 py-1.5 text-xs font-semibold bg-primary text-primary-foreground rounded-lg hover:bg-primary/90">
+          Create & Select
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,405 @@
+<!-- Master Card Container for General Ledger Inquiry -->
+<app-card-container
+  title="General Ledger Inquiry & Account Statements"
+  subtitle="Running balance statement, transaction audit drilldown, and project-dimensioned ledger inquiry"
+  badge="GL Statement Core"
+>
+  <!-- Unified Module Sub-Navigation Bar -->
+  <div class="flex items-center gap-1.5 p-1.5 bg-secondary/40 rounded-2xl border border-border overflow-x-auto mb-6 print:hidden">
+    <a
+      routerLink="/accounts/coa"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-node-tree"></i>
+      <span>Chart of Accounts</span>
+    </a>
+
+    <a
+      routerLink="/accounts/vouchers"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-file-list-3-line"></i>
+      <span>General Ledger Vouchers</span>
+    </a>
+
+    <a
+      routerLink="/accounts/ledger"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-card text-foreground shadow-xs border border-border inline-flex items-center gap-1.5 whitespace-nowrap"
+    >
+      <i class="ri-booklet-line text-primary"></i>
+      <span>Ledger Inquiry & Statements</span>
+    </a>
+
+    <a
+      routerLink="/accounts/payables"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-money-dollar-circle-line"></i>
+      <span>Accounts Payable (AP)</span>
+    </a>
+
+    <a
+      routerLink="/accounts/payables/ledger"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-contacts-book-2-line"></i>
+      <span>Supplier Ledger & Aging</span>
+    </a>
+
+    <a
+      routerLink="/accounts/receivables"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-hand-coin-line"></i>
+      <span>Accounts Receivable (AR)</span>
+    </a>
+
+    <a
+      routerLink="/accounts/receivables/receipts"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-refund-2-line"></i>
+      <span>Receipts & Allocations</span>
+    </a>
+
+    <a
+      routerLink="/accounts/receivables/ledger"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-user-star-line"></i>
+      <span>Customer Ledger & Aging</span>
+    </a>
+
+    <a
+      routerLink="/accounts/financial-reports"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-pie-chart-2-line"></i>
+      <span>Financial Reports (P&L / BS)</span>
+    </a>
+
+    <div class="ml-auto pl-2 flex items-center gap-2">
+      <a
+        routerLink="/settings/lookups"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-primary hover:text-primary/80 bg-card rounded-xl border border-border shadow-xs transition-colors whitespace-nowrap"
+        title="Dynamic Dropdown Creation & Customization Settings"
+      >
+        <i class="ri-settings-4-line"></i>
+        <span>Dropdown Settings</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Error Alert -->
+  <div *ngIf="errorMessage()" class="p-4 rounded-2xl bg-destructive/10 border border-destructive/20 text-destructive text-sm flex items-center justify-between mb-6">
+    <div class="flex items-center gap-2">
+      <i class="ri-error-warning-line text-lg"></i>
+      <span>{{ errorMessage() }}</span>
+    </div>
+    <button (click)="errorMessage.set(null)" class="text-destructive hover:opacity-75">
+      <i class="ri-close-line"></i>
+    </button>
+  </div>
+
+  <!-- Advanced Ledger Query & Dimension Filters (hidden on print) -->
+  <div class="p-4 rounded-2xl bg-secondary/20 border border-border mb-6 space-y-4 print:hidden">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
+      <!-- Account Head Selector (spans 4) -->
+      <div class="lg:col-span-4">
+        <app-searchable-select
+          label="Account Head *"
+          [value]="selectedAccountId()"
+          (valueChange)="onAccountChange($event)"
+          [options]="accountOptions()"
+          placeholder="Search by code or account name..."
+          [allowCreateNew]="true"
+          createRoute="/accounts/coa/create"
+          [required]="true"
+        ></app-searchable-select>
+      </div>
+
+      <!-- Project Dimension (spans 3) -->
+      <div class="lg:col-span-3">
+        <app-searchable-select
+          label="Project Dimension"
+          [value]="selectedProjectId()"
+          (valueChange)="selectedProjectId.set($event); onFilterChange()"
+          [options]="projectOptions()"
+          placeholder="All Projects & Corporate"
+        ></app-searchable-select>
+      </div>
+
+      <!-- Date Range (spans 2 + 2) -->
+      <div class="lg:col-span-2">
+        <app-custom-input
+          label="Date From"
+          type="date"
+          [value]="dateFrom()"
+          (valueChange)="dateFrom.set($event); onFilterChange()"
+        ></app-custom-input>
+      </div>
+
+      <div class="lg:col-span-2">
+        <app-custom-input
+          label="Date To"
+          type="date"
+          [value]="dateTo()"
+          (valueChange)="dateTo.set($event); onFilterChange()"
+        ></app-custom-input>
+      </div>
+
+      <!-- Search in ledger narration -->
+      <div class="lg:col-span-1 flex items-center justify-end">
+        <button
+          type="button"
+          (click)="fetchLedger()"
+          class="w-full py-2.5 px-3 rounded-xl text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-all inline-flex items-center justify-center gap-1.5 shadow-xs"
+          title="Query General Ledger"
+        >
+          <i class="ri-refresh-line"></i>
+          <span>Query</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Secondary Row: Filter by memo & Action buttons -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-border/50">
+      <div class="relative flex-1 max-w-sm">
+        <i class="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xs"></i>
+        <input
+          type="text"
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event); onFilterChange()"
+          placeholder="Filter ledger entries by text..."
+          class="w-full pl-9 pr-3 py-1.5 rounded-xl text-xs bg-card border border-border text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+        />
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button
+          (click)="printStatement()"
+          class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-foreground bg-card hover:bg-secondary border border-border transition-all inline-flex items-center gap-1.5 shadow-xs"
+        >
+          <i class="ri-printer-line"></i>
+          <span>Print Statement</span>
+        </button>
+
+        <button
+          (click)="exportCSV()"
+          class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-foreground bg-card hover:bg-secondary border border-border transition-all inline-flex items-center gap-1.5 shadow-xs"
+        >
+          <i class="ri-file-download-line"></i>
+          <span>Export CSV</span>
+        </button>
+
+        <a
+          routerLink="/accounts/vouchers/create"
+          class="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-all inline-flex items-center gap-1.5 shadow-xs"
+        >
+          <i class="ri-add-line"></i>
+          <span>+ Post Voucher</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading()" class="py-20 text-center text-muted-foreground">
+    <i class="ri-loader-4-line text-3xl animate-spin text-primary inline-block mb-3"></i>
+    <p class="text-sm">Calculating running balance and fetching ledger entries...</p>
+  </div>
+
+  <!-- Ledger Inquiry Statement Details -->
+  <div *ngIf="!isLoading() && ledgerData()" class="space-y-6">
+
+    <!-- Account Details Header (Printed & Screen) -->
+    <div class="p-5 rounded-2xl bg-card border border-border shadow-xs">
+      <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-primary/10 text-primary border border-primary/20">
+              {{ ledgerData()?.account_type }}
+            </span>
+            <span class="text-xs text-muted-foreground">
+              Normal Balance: <strong class="text-foreground">{{ ledgerData()?.normal_balance }}</strong>
+            </span>
+            <span *ngIf="ledgerData()?.statement_mapping" class="text-xs text-muted-foreground">
+              • {{ ledgerData()?.statement_mapping }}
+            </span>
+          </div>
+
+          <h2 class="text-xl sm:text-2xl font-bold font-mono text-foreground">
+            {{ ledgerData()?.account_code }} — {{ ledgerData()?.account_name_en }}
+          </h2>
+          <p *ngIf="ledgerData()?.account_name_bn" class="text-xs text-muted-foreground mt-0.5 font-medium">
+            {{ ledgerData()?.account_name_bn }}
+          </p>
+        </div>
+
+        <div class="text-left sm:text-right text-xs space-y-0.5 text-muted-foreground">
+          <div>
+            Period: <strong class="font-mono text-foreground">{{ ledgerData()?.date_from | date:'dd MMM yyyy' }}</strong> to <strong class="font-mono text-foreground">{{ ledgerData()?.date_to | date:'dd MMM yyyy' }}</strong>
+          </div>
+          <div>
+            Project Scope: <strong class="text-foreground">{{ ledgerData()?.project_name || 'All Projects & Corporate' }}</strong>
+          </div>
+          <div>
+            Statement Currency: <strong class="text-foreground">BDT (৳)</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- KPI Summary Ribbon for Selected Account -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <!-- Opening Balance -->
+      <div class="p-4 rounded-2xl bg-secondary/30 border border-border flex flex-col justify-between">
+        <span class="text-xs text-muted-foreground font-medium">Opening Balance</span>
+        <span class="text-xl sm:text-2xl font-bold font-mono text-foreground mt-1">
+          ৳ {{ ledgerData()?.opening_balance | number:'1.2-2' }}
+        </span>
+        <span class="text-[10px] text-muted-foreground mt-0.5">As of {{ ledgerData()?.date_from }}</span>
+      </div>
+
+      <!-- Total Debits -->
+      <div class="p-4 rounded-2xl bg-secondary/30 border border-border flex flex-col justify-between">
+        <span class="text-xs text-muted-foreground font-medium">Period Debits (Dr.)</span>
+        <span class="text-xl sm:text-2xl font-bold font-mono text-foreground mt-1">
+          ৳ {{ ledgerData()?.total_debit | number:'1.2-2' }}
+        </span>
+        <span class="text-[10px] text-muted-foreground mt-0.5">Gross Inflows / Debits</span>
+      </div>
+
+      <!-- Total Credits -->
+      <div class="p-4 rounded-2xl bg-secondary/30 border border-border flex flex-col justify-between">
+        <span class="text-xs text-muted-foreground font-medium">Period Credits (Cr.)</span>
+        <span class="text-xl sm:text-2xl font-bold font-mono text-foreground mt-1">
+          ৳ {{ ledgerData()?.total_credit | number:'1.2-2' }}
+        </span>
+        <span class="text-[10px] text-muted-foreground mt-0.5">Gross Outflows / Credits</span>
+      </div>
+
+      <!-- Closing Balance -->
+      <div class="p-4 rounded-2xl bg-secondary/30 border border-border flex flex-col justify-between">
+        <span class="text-xs text-muted-foreground font-medium">Closing Balance</span>
+        <span
+          class="text-xl sm:text-2xl font-bold font-mono mt-1"
+          [ngClass]="(ledgerData()?.closing_balance || 0) >= 0 ? 'text-primary' : 'text-rose-500'"
+        >
+          ৳ {{ ledgerData()?.closing_balance | number:'1.2-2' }}
+        </span>
+        <span class="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 mt-0.5">
+          Cumulative Net ({{ ledgerData()?.normal_balance }})
+        </span>
+      </div>
+    </div>
+
+    <!-- Running Balance Ledger Table -->
+    <div class="overflow-x-auto rounded-2xl border border-border bg-card shadow-xs">
+      <table class="w-full text-xs text-left border-collapse">
+        <thead>
+          <tr class="bg-secondary/60 border-b border-border text-muted-foreground font-semibold uppercase tracking-wider text-[11px]">
+            <th class="py-3 px-3">Date</th>
+            <th class="py-3 px-4">Voucher No</th>
+            <th class="py-3 px-3">Type</th>
+            <th class="py-3 px-4">Dimension / Cost Centre</th>
+            <th class="py-3 px-4">Particulars / Narration</th>
+            <th class="py-3 px-4 text-right">Debit (৳)</th>
+            <th class="py-3 px-4 text-right">Credit (৳)</th>
+            <th class="py-3 px-4 text-right">Running Balance (৳)</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border">
+          <!-- Opening Balance Row -->
+          <tr class="bg-secondary/20 font-semibold text-foreground/90">
+            <td class="py-3 px-3 font-mono text-muted-foreground">{{ ledgerData()?.date_from | date:'dd MMM yyyy' }}</td>
+            <td class="py-3 px-4 font-mono text-muted-foreground">---</td>
+            <td class="py-3 px-3">
+              <span class="px-2 py-0.5 rounded text-[10px] font-medium bg-secondary text-foreground">B/F</span>
+            </td>
+            <td class="py-3 px-4 text-muted-foreground">Historical Balance</td>
+            <td class="py-3 px-4 italic text-muted-foreground">Balance brought forward as of period start</td>
+            <td class="py-3 px-4 text-right font-mono text-muted-foreground">-</td>
+            <td class="py-3 px-4 text-right font-mono text-muted-foreground">-</td>
+            <td class="py-3 px-4 text-right font-mono font-bold text-foreground">
+              ৳ {{ ledgerData()?.opening_balance | number:'1.2-2' }}
+            </td>
+          </tr>
+
+          <!-- Journal Lines -->
+          <tr
+            *ngFor="let item of ledgerData()?.entries"
+            class="hover:bg-secondary/15 transition-colors"
+          >
+            <td class="py-3 px-3 font-mono text-muted-foreground whitespace-nowrap">
+              {{ item.voucher_date | date:'dd MMM yyyy' }}
+            </td>
+            <td class="py-3 px-4 font-mono font-semibold text-primary whitespace-nowrap">
+              <a [routerLink]="['/accounts/vouchers/view', item.voucher_id]" class="hover:underline">
+                {{ item.voucher_number }}
+              </a>
+            </td>
+            <td class="py-3 px-3 whitespace-nowrap">
+              <span class="px-2 py-0.5 rounded text-[10px] font-medium bg-secondary text-foreground border border-border">
+                {{ item.voucher_type }}
+              </span>
+            </td>
+            <td class="py-3 px-4 text-muted-foreground whitespace-nowrap">
+              <div class="font-medium text-foreground">{{ item.project_name || 'Corporate' }}</div>
+              <div *ngIf="item.cost_center_name" class="text-[11px] text-muted-foreground">
+                CC: {{ item.cost_center_name }}
+              </div>
+            </td>
+            <td class="py-3 px-4 text-foreground/90 max-w-sm">
+              <div>{{ item.narration }}</div>
+              <div *ngIf="item.cheque_no" class="text-[11px] text-muted-foreground font-mono">
+                CQ: {{ item.cheque_no }} {{ item.cheque_date ? '(' + item.cheque_date + ')' : '' }}
+              </div>
+              <div *ngIf="item.bill_reference" class="text-[11px] text-muted-foreground">
+                Ref: {{ item.bill_reference }}
+              </div>
+            </td>
+            <td class="py-3 px-4 text-right font-mono font-semibold text-foreground whitespace-nowrap">
+              {{ item.debit_amount > 0 ? (item.debit_amount | number:'1.2-2') : '-' }}
+            </td>
+            <td class="py-3 px-4 text-right font-mono font-semibold text-foreground whitespace-nowrap">
+              {{ item.credit_amount > 0 ? (item.credit_amount | number:'1.2-2') : '-' }}
+            </td>
+            <td
+              class="py-3 px-4 text-right font-mono font-bold whitespace-nowrap"
+              [ngClass]="item.running_balance >= 0 ? 'text-foreground' : 'text-rose-500'"
+            >
+              ৳ {{ item.running_balance | number:'1.2-2' }}
+            </td>
+          </tr>
+
+          <!-- Empty state if no period activity -->
+          <tr *ngIf="ledgerData()?.entries?.length === 0">
+            <td colspan="8" class="py-12 text-center text-muted-foreground">
+              <p class="text-sm font-medium">No journal entries found for this account in the selected date range.</p>
+              <p class="text-xs mt-1 text-muted-foreground">Opening balance remains unchanged at ৳ {{ ledgerData()?.opening_balance | number:'1.2-2' }}.</p>
+            </td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <!-- Period Totals & Closing Balance Row -->
+          <tr class="bg-secondary/50 font-bold border-t-2 border-border text-foreground">
+            <td colspan="5" class="py-3 px-4 text-right uppercase tracking-wider text-xs">
+              Period Net Movement & Closing Balance:
+            </td>
+            <td class="py-3 px-4 text-right font-mono text-sm text-foreground">
+              ৳ {{ ledgerData()?.total_debit | number:'1.2-2' }}
+            </td>
+            <td class="py-3 px-4 text-right font-mono text-sm text-foreground">
+              ৳ {{ ledgerData()?.total_credit | number:'1.2-2' }}
+            </td>
+            <td class="py-3 px-4 text-right font-mono text-sm text-primary">
+              ৳ {{ ledgerData()?.closing_balance | number:'1.2-2' }}
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+  </div>
+</app-card-container>

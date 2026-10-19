@@ -1,0 +1,329 @@
+<div class="space-y-6">
+  <!-- Top Navigation Header -->
+  <app-bank-recon-nav></app-bank-recon-nav>
+
+  <!-- Central Card Container -->
+  <app-card-container>
+    <!-- Header Block -->
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-6 border-b border-slate-200 dark:border-slate-800 gap-4">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300">
+            Section 15.1 Reconciliation Sessions
+          </span>
+          <span class="text-slate-300 dark:text-slate-700">•</span>
+          <span class="text-xs text-slate-500">Corporate & Escrow Bank Accounts</span>
+        </div>
+        <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mt-1">
+          Bank & MFS Reconciliation Master
+        </h1>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          Match statement transactions against GL ledger vouchers, identify timing differences, and lock audited periods.
+        </p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <a
+          routerLink="/accounts/bank-reconciliation/import"
+          class="inline-flex items-center px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition-colors">
+          <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+          </svg>
+          Import Statement (CSV/Excel)
+        </a>
+      </div>
+    </div>
+
+    <!-- Executive KPI Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+      <div class="p-4 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800">
+        <span class="text-xs font-medium text-slate-500">Total Statement Value</span>
+        <div class="text-xl font-bold text-slate-900 dark:text-slate-100 mt-1 font-mono">
+          ৳{{ (kpis?.total_statement_value || 0) | number:'1.0-0' }}
+        </div>
+        <div class="text-[11px] text-slate-400 mt-0.5">Across {{ kpis?.total_reconciliations_count || 0 }} statement files</div>
+      </div>
+
+      <div class="p-4 bg-blue-50/60 dark:bg-blue-950/30 rounded-xl border border-blue-100 dark:border-blue-900/40">
+        <span class="text-xs font-medium text-blue-800 dark:text-blue-300">Active Reconciliations</span>
+        <div class="text-xl font-bold text-blue-700 dark:text-blue-300 mt-1">
+          {{ kpis?.active_in_progress_count || 0 }} Sessions
+        </div>
+        <div class="text-[11px] text-blue-600 dark:text-blue-400 mt-0.5">Awaiting review / adjustments</div>
+      </div>
+
+      <div class="p-4 bg-emerald-50/60 dark:bg-emerald-950/30 rounded-xl border border-emerald-100 dark:border-emerald-900/40">
+        <span class="text-xs font-medium text-emerald-800 dark:text-emerald-300">Locked & Certified Periods</span>
+        <div class="text-xl font-bold text-emerald-700 dark:text-emerald-300 mt-1">
+          {{ kpis?.total_locked_periods_count || 0 }} Periods
+        </div>
+        <div class="text-[11px] text-emerald-600 dark:text-emerald-400 mt-0.5">Audit sealed (Immutable)</div>
+      </div>
+
+      <div class="p-4 bg-amber-50/60 dark:bg-amber-950/30 rounded-xl border border-amber-100 dark:border-amber-900/40">
+        <span class="text-xs font-medium text-amber-800 dark:text-amber-300">Unmatched Timing Delta</span>
+        <div class="text-xl font-bold text-amber-700 dark:text-amber-300 mt-1 font-mono">
+          ৳{{ (kpis?.total_unmatched_value || 0) | number:'1.0-0' }}
+        </div>
+        <div class="text-[11px] text-amber-600 dark:text-amber-400 mt-0.5">Cheques & transit items</div>
+      </div>
+    </div>
+
+    <!-- Filter Bar (Dynamic Lookups) -->
+    <div class="mt-6 flex flex-col md:flex-row items-center justify-between gap-4 p-3 bg-slate-50/80 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-800">
+      <div class="flex-1 w-full md:w-auto relative">
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          (keyup.enter)="onSearch()"
+          placeholder="Search by reference, bank name, or account code..."
+          class="w-full pl-9 pr-4 py-2 text-xs border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+        <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+      </div>
+
+      <div class="flex items-center gap-3 w-full md:w-auto">
+        <div class="w-56">
+          <app-searchable-select
+            label=""
+            [options]="bankAccountOptions"
+            [value]="selectedBankAccountId"
+            (valueChange)="onBankAccountFilterChange($event)"
+            placeholder="All Bank Accounts"
+            [allowCreateNew]="false">
+          </app-searchable-select>
+        </div>
+
+        <div class="w-48">
+          <app-searchable-select
+            label=""
+            categoryCode="RECONCILIATION_STATUS"
+            [value]="selectedStatus"
+            (valueChange)="onStatusFilterChange($event)"
+            placeholder="All Statuses"
+            [allowCreateNew]="false">
+          </app-searchable-select>
+        </div>
+
+        <button
+          (click)="onSearch()"
+          class="px-4 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 shadow-sm transition-colors">
+          Filter
+        </button>
+      </div>
+    </div>
+
+    <!-- Sessions Table -->
+    <div class="mt-4 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+      <table class="w-full text-xs text-left">
+        <thead class="bg-slate-50 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-800">
+          <tr>
+            <th class="p-3">BRS Reference & Cutoff</th>
+            <th class="p-3">Bank Account & Format</th>
+            <th class="p-3 text-right">Statement Bal (৳)</th>
+            <th class="p-3 text-right">Book Bal (৳)</th>
+            <th class="p-3 text-right">Variance (৳)</th>
+            <th class="p-3 text-center">Matching Progress</th>
+            <th class="p-3 text-center">Status</th>
+            <th class="p-3 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
+          <tr *ngIf="loading">
+            <td colspan="8" class="p-8 text-center text-slate-500">
+              <div class="inline-flex items-center gap-2">
+                <svg class="animate-spin h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Loading reconciliation sessions...</span>
+              </div>
+            </td>
+          </tr>
+
+          <tr *ngIf="!loading && sessions.length === 0">
+            <td colspan="8" class="p-8 text-center text-slate-400">
+              No reconciliation sessions found. Click "Import Statement" to start a new reconciliation.
+            </td>
+          </tr>
+
+          <tr *ngFor="let s of sessions" class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+            <td class="p-3">
+              <div class="font-mono font-bold text-slate-900 dark:text-slate-100">{{ s.recon_reference_no }}</div>
+              <div class="text-[11px] text-slate-400 font-sans">Cutoff: {{ s.statement_date }}</div>
+            </td>
+
+            <td class="p-3">
+              <div class="font-medium text-slate-800 dark:text-slate-200">{{ s.bank_account_name }}</div>
+              <div class="flex items-center gap-1.5 text-[11px] text-slate-500 font-mono mt-0.5">
+                <span>{{ s.bank_account_code }}</span>
+                <span>•</span>
+                <span class="text-indigo-600 dark:text-indigo-400">{{ s.statement_format }}</span>
+              </div>
+            </td>
+
+            <td class="p-3 text-right font-mono font-medium text-slate-900 dark:text-slate-100 whitespace-nowrap">
+              ৳{{ s.statement_balance | number:'1.2-2' }}
+            </td>
+
+            <td class="p-3 text-right font-mono text-slate-700 dark:text-slate-300 whitespace-nowrap">
+              ৳{{ s.book_balance | number:'1.2-2' }}
+            </td>
+
+            <td class="p-3 text-right font-mono font-bold whitespace-nowrap"
+                [class.text-emerald-600]="s.difference_amount === 0"
+                [class.text-rose-600]="s.difference_amount !== 0">
+              ৳{{ s.difference_amount | number:'1.2-2' }}
+            </td>
+
+            <td class="p-3 text-center">
+              <div class="inline-flex items-center gap-1.5">
+                <span class="font-medium text-slate-700 dark:text-slate-300">
+                  {{ s.matched_count }} / {{ s.matched_count + s.unmatched_count }}
+                </span>
+                <span class="text-[10px] text-slate-400">
+                  ({{ s.matched_count + s.unmatched_count > 0 ? (s.matched_count / (s.matched_count + s.unmatched_count) * 100 | number:'1.0-0') : 0 }}%)
+                </span>
+              </div>
+            </td>
+
+            <td class="p-3 text-center whitespace-nowrap">
+              <app-status-badge
+                [status]="s.status"
+                [variant]="getStatusVariant(s.status)">
+              </app-status-badge>
+            </td>
+
+            <td class="p-3 text-right whitespace-nowrap space-x-2">
+              <a
+                [routerLink]="['/accounts/bank-reconciliation/workspace', s.id]"
+                class="inline-flex items-center px-2.5 py-1 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg border border-indigo-200 transition-colors">
+                Workbench
+              </a>
+
+              <a
+                [routerLink]="['/accounts/bank-reconciliation/brs-report', s.id]"
+                class="inline-flex items-center px-2.5 py-1 text-xs font-medium text-slate-700 bg-white hover:bg-slate-50 rounded-lg border border-slate-300 transition-colors">
+                BRS Report
+              </a>
+
+              <button
+                *ngIf="!s.is_locked"
+                (click)="openLockModal(s)"
+                class="inline-flex items-center px-2 py-1 text-xs text-amber-700 hover:text-amber-800 hover:bg-amber-50 rounded-lg transition-colors"
+                title="Lock reconciliation period">
+                <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                Lock
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Footer -->
+    <div class="mt-4 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-3">
+      <div class="flex items-center gap-2">
+        <span>Showing {{ offset + 1 }} to {{ (offset + limit) > total ? total : (offset + limit) }} of {{ total }} sessions</span>
+        <select
+          [ngModel]="limit"
+          (ngModelChange)="onLimitChange($event)"
+          class="border border-slate-300 dark:border-slate-700 rounded px-2 py-1 bg-white dark:bg-slate-900 text-xs">
+          <option [value]="5">5 per page</option>
+          <option [value]="10">10 per page</option>
+          <option [value]="25">25 per page</option>
+          <option [value]="50">50 per page</option>
+        </select>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button
+          (click)="prevPage()"
+          [disabled]="offset === 0"
+          class="px-3 py-1.5 border border-slate-300 dark:border-slate-700 rounded-lg hover:bg-slate-50 disabled:opacity-40 transition-colors">
+          Previous
+        </button>
+        <span class="font-medium">Page {{ currentPage }} of {{ totalPages }}</span>
+        <button
+          (click)="nextPage()"
+          [disabled]="offset + limit >= total"
+          class="px-3 py-1.5 border border-slate-300 dark:border-slate-700 rounded-lg hover:bg-slate-50 disabled:opacity-40 transition-colors">
+          Next
+        </button>
+      </div>
+    </div>
+  </app-card-container>
+
+  <!-- Lock Period Confirmation Modal (Section 15.3 Control) -->
+  <div *ngIf="showLockModal && selectedSessionForLock" class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center font-bold">
+            🔒
+          </div>
+          <h3 class="text-base font-bold text-slate-900 dark:text-white">Approve & Lock Reconciliation Period</h3>
+        </div>
+        <button (click)="closeLockModal()" class="text-slate-400 hover:text-slate-600 text-lg font-bold">✕</button>
+      </div>
+
+      <div *ngIf="lockError" class="mt-3 p-3 bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-lg">
+        {{ lockError }}
+      </div>
+
+      <div class="mt-4 space-y-4 text-xs">
+        <p class="text-slate-600 dark:text-slate-400">
+          Locking period <strong>{{ selectedSessionForLock.recon_reference_no }}</strong> seals all imported statement transaction lines.
+          Once locked, statement lines cannot be reconciled again or modified (Section 15.3 Control).
+        </p>
+
+        <div class="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl space-y-1">
+          <div class="flex justify-between">
+            <span class="text-slate-500">Bank Account:</span>
+            <span class="font-medium text-slate-900 dark:text-white">{{ selectedSessionForLock.bank_account_name }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-500">Statement Cutoff Date:</span>
+            <span class="font-medium text-slate-900 dark:text-white">{{ selectedSessionForLock.statement_date }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-500">Closing Statement Balance:</span>
+            <span class="font-mono font-bold text-slate-900 dark:text-white">৳{{ selectedSessionForLock.statement_balance | number:'1.2-2' }}</span>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Approved By (Financial Controller) *</label>
+          <input
+            type="text"
+            [(ngModel)]="approvedByInput"
+            required
+            class="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100" />
+        </div>
+
+        <div>
+          <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Lock Notes & Audit Certification</label>
+          <textarea
+            [(ngModel)]="lockNotesInput"
+            rows="2"
+            class="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100"></textarea>
+        </div>
+      </div>
+
+      <div class="mt-6 flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+        <button (click)="closeLockModal()" class="px-4 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50">
+          Cancel
+        </button>
+        <button
+          (click)="confirmApproveAndLock()"
+          [disabled]="locking || !approvedByInput"
+          class="inline-flex items-center px-5 py-2 text-xs font-semibold text-white bg-amber-600 hover:bg-amber-700 rounded-lg shadow-sm disabled:opacity-50">
+          {{ locking ? 'Sealing Period...' : 'Confirm Approval & Lock Period' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

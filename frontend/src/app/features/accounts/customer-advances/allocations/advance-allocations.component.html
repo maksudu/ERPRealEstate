@@ -1,0 +1,157 @@
+<div class="space-y-6">
+  <!-- Navigation Header -->
+  <app-customer-advances-nav activeSection="allocations"></app-customer-advances-nav>
+
+  <!-- Card Container -->
+  <app-card-container>
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-border">
+      <div>
+        <div class="flex items-center gap-2.5">
+          <div class="p-2 bg-primary/10 text-primary rounded-xl">
+            <i class="ri-split-cells-vertical text-2xl"></i>
+          </div>
+          <div>
+            <h1 class="text-xl font-bold text-foreground">13.1.5 Payment Allocation by Unit & Installment</h1>
+            <p class="text-xs text-muted-foreground mt-0.5">
+              Strict waterfall settlement: apply unapplied customer receipts to due installment demands, milestone stages, and late fees.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <button
+        (click)="loadAllocations()"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-muted-foreground bg-secondary hover:bg-secondary/80 rounded-lg border border-border transition-colors">
+        <i class="ri-refresh-line text-sm"></i>
+        <span>Refresh</span>
+      </button>
+    </div>
+
+    <!-- Allocation Explanation Banner -->
+    <div class="p-3.5 my-4 rounded-xl bg-blue-500/5 border border-blue-500/20 text-xs text-foreground flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <i class="ri-information-line text-blue-600 text-lg"></i>
+        <span>
+          <strong>Double-Entry Clearing:</strong> When an advance is allocated to an installment invoice demand, the system automatically posts:
+          <span class="font-mono text-primary font-bold">Debit Customer Advances (2120), Credit Accounts Receivable (1130)</span>
+        </span>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="overflow-x-auto rounded-xl border border-border bg-card mt-4">
+      <table class="w-full text-left border-collapse text-xs">
+        <thead>
+          <tr class="bg-secondary/40 border-b border-border text-muted-foreground uppercase tracking-wider text-[11px]">
+            <th class="py-3 px-4 font-semibold">Advance #</th>
+            <th class="py-3 px-4 font-semibold">Customer & Contract</th>
+            <th class="py-3 px-4 font-semibold">Project & Target Unit</th>
+            <th class="py-3 px-4 font-semibold text-right">Gross Received</th>
+            <th class="py-3 px-4 font-semibold text-right">Allocated Amount</th>
+            <th class="py-3 px-4 font-semibold text-right">Available Unapplied</th>
+            <th class="py-3 px-4 font-semibold text-center">Allocations Count</th>
+            <th class="py-3 px-4 font-semibold text-center">Action</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border/60">
+          <tr *ngIf="isLoading()" class="text-center">
+            <td colspan="8" class="py-10 text-muted-foreground">
+              <i class="ri-loader-4-line text-2xl animate-spin inline-block mb-2"></i>
+              <p>Loading Allocation Records...</p>
+            </td>
+          </tr>
+
+          <tr *ngFor="let adv of advances()" class="hover:bg-secondary/20 transition-colors">
+            <td class="py-3 px-4 font-bold text-foreground">
+              {{ adv.advance_number }}
+              <div class="text-[10px] text-muted-foreground">{{ adv.receipt_date }}</div>
+            </td>
+
+            <td class="py-3 px-4 font-medium text-foreground">
+              {{ adv.customer_name }}
+              <div class="text-[10px] text-muted-foreground font-mono">{{ adv.sale_agreement_no || adv.booking_reference_no }}</div>
+            </td>
+
+            <td class="py-3 px-4">
+              <span class="font-medium text-foreground">{{ adv.project_name }}</span>
+              <div class="text-[10px] text-primary">Unit: {{ adv.unit_number || 'All Units' }}</div>
+            </td>
+
+            <td class="py-3 px-4 text-right font-medium text-foreground">
+              ৳ {{ adv.gross_amount | number:'1.2-2' }}
+            </td>
+
+            <td class="py-3 px-4 text-right font-bold text-blue-600">
+              ৳ {{ adv.allocated_amount | number:'1.2-2' }}
+            </td>
+
+            <td class="py-3 px-4 text-right font-bold" [ngClass]="adv.unapplied_credit_balance > 0 ? 'text-amber-600' : 'text-muted-foreground'">
+              ৳ {{ adv.unapplied_credit_balance | number:'1.2-2' }}
+            </td>
+
+            <td class="py-3 px-4 text-center">
+              <span class="px-2 py-0.5 rounded-full text-[10px] bg-secondary text-foreground font-medium">
+                {{ adv.allocations?.length || 0 }} Lines
+              </span>
+            </td>
+
+            <td class="py-3 px-4 text-center">
+              <button
+                *ngIf="adv.unapplied_credit_balance > 0"
+                (click)="openAllocate(adv)"
+                class="px-2.5 py-1 text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg transition-colors">
+                + Allocate
+              </button>
+              <span *ngIf="adv.unapplied_credit_balance <= 0" class="text-muted-foreground/60 text-[11px]">
+                Fully Cleared
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </app-card-container>
+
+  <!-- Allocation Modal -->
+  <div *ngIf="showModal()" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div class="bg-card border border-border rounded-xl shadow-xl w-full max-w-md p-5 space-y-4">
+      <div class="flex items-center justify-between border-b border-border pb-3">
+        <h3 class="text-sm font-bold text-foreground">Allocate Advance to Installment Demand</h3>
+        <button (click)="showModal.set(false)" class="text-muted-foreground hover:text-foreground">
+          <i class="ri-close-line text-lg"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <span class="text-muted-foreground">Available Credit:</span>
+          <span class="font-bold text-amber-600 ml-1">৳ {{ selectedAdv()?.unapplied_credit_balance | number:'1.2-2' }}</span>
+        </div>
+
+        <app-custom-input
+          label="Allocation Amount (৳)"
+          type="number"
+          [(ngModel)]="allocAmount">
+        </app-custom-input>
+
+        <app-custom-input
+          label="Remarks / Milestone Trigger"
+          [(ngModel)]="allocNotes">
+        </app-custom-input>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-3 border-t border-border">
+        <button
+          (click)="showModal.set(false)"
+          class="px-3 py-1.5 text-xs rounded-lg border border-border hover:bg-secondary">
+          Cancel
+        </button>
+        <button
+          (click)="submitAlloc()"
+          class="px-4 py-1.5 text-xs font-semibold bg-primary text-primary-foreground rounded-lg hover:bg-primary/90">
+          Post Clearing Voucher
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

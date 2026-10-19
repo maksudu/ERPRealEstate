@@ -1,0 +1,609 @@
+<div class="w-full max-w-7xl mx-auto space-y-6">
+  <!-- Section Navigation Header -->
+  <app-loans-financing-nav></app-loans-financing-nav>
+
+  <!-- Notification Banner -->
+  <div *ngIf="feedbackMessage" 
+       [ngClass]="feedbackType === 'success' ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-400' : 'bg-rose-500/10 border-rose-500/30 text-rose-700 dark:text-rose-400'"
+       class="p-4 rounded-xl border flex items-center justify-between shadow-xs transition-all animate-in fade-in">
+    <div class="flex items-center gap-2.5 text-sm font-medium">
+      <svg *ngIf="feedbackType === 'success'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <svg *ngIf="feedbackType === 'error'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <span>{{ feedbackMessage }}</span>
+    </div>
+    <button (click)="feedbackMessage = null" class="text-xs opacity-70 hover:opacity-100 font-semibold">✕</button>
+  </div>
+
+  <!-- 14.1 Portfolio KPI Cards -->
+  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5">
+    <div class="bg-card border border-border rounded-xl p-3.5 shadow-xs">
+      <div class="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Approved Facility</div>
+      <div class="text-lg font-bold text-foreground mt-1">৳{{ (kpis?.total_approved_limit || 0) | number:'1.0-0' }}</div>
+      <div class="text-[10px] text-muted-foreground mt-0.5 flex items-center gap-1">
+        <span class="inline-block w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+        {{ kpis?.total_facilities_count || 0 }} total facilities
+      </div>
+    </div>
+
+    <div class="bg-card border border-border rounded-xl p-3.5 shadow-xs">
+      <div class="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Total Disbursed</div>
+      <div class="text-lg font-bold text-primary mt-1">৳{{ (kpis?.total_disbursed || 0) | number:'1.0-0' }}</div>
+      <div class="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium mt-0.5">
+        {{ kpis?.utilization_pct || 0 }}% drawn down
+      </div>
+    </div>
+
+    <div class="bg-card border border-border rounded-xl p-3.5 shadow-xs">
+      <div class="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Principal Outstanding</div>
+      <div class="text-lg font-bold text-amber-600 dark:text-amber-400 mt-1">৳{{ (kpis?.total_principal_outstanding || 0) | number:'1.0-0' }}</div>
+      <div class="text-[10px] text-muted-foreground mt-0.5">
+        Repaid: ৳{{ (kpis?.total_principal_repaid || 0) | number:'1.0-0' }}
+      </div>
+    </div>
+
+    <div class="bg-card border border-border rounded-xl p-3.5 shadow-xs">
+      <div class="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Current Liability (12M)</div>
+      <div class="text-lg font-bold text-rose-600 dark:text-rose-400 mt-1">৳{{ (kpis?.current_portion_liability || 0) | number:'1.0-0' }}</div>
+      <div class="text-[10px] text-muted-foreground mt-0.5">
+        Non-current: ৳{{ (kpis?.non_current_portion_liability || 0) | number:'1.0-0' }}
+      </div>
+    </div>
+
+    <div class="bg-card border border-border rounded-xl p-3.5 shadow-xs">
+      <div class="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Total Interest Paid</div>
+      <div class="text-lg font-bold text-indigo-600 dark:text-indigo-400 mt-1">৳{{ (kpis?.total_interest_paid || 0) | number:'1.0-0' }}</div>
+      <div class="text-[10px] text-muted-foreground mt-0.5">
+        Accrued: ৳{{ (kpis?.total_interest_accrued || 0) | number:'1.0-0' }}
+      </div>
+    </div>
+
+    <div class="bg-card border border-border rounded-xl p-3.5 shadow-xs">
+      <div class="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">IAS 23 CWIP Capitalized</div>
+      <div class="text-lg font-bold text-emerald-600 dark:text-emerald-400 mt-1">৳{{ (kpis?.total_interest_capitalized_cwip || 0) | number:'1.0-0' }}</div>
+      <div class="text-[10px] text-muted-foreground mt-0.5">
+        Eligible borrowing costs
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Card Container -->
+  <app-card-container>
+    <!-- Header & Action Bar -->
+    <div class="p-5 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div>
+        <h2 class="text-base font-semibold text-foreground">Bank & Financial Institution Loan Management</h2>
+        <p class="text-xs text-muted-foreground mt-0.5">
+          Spec 14.1 — Multi-facility debt management, reducing balance amortization, and covenant deadlines.
+        </p>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <a routerLink="/accounts/loans-financing/create"
+           class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg shadow-xs transition-colors">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          <span>Add Loan Facility</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="p-4 bg-muted/20 border-b border-border">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <!-- Search Input -->
+        <div class="relative">
+          <input
+            type="text"
+            [(ngModel)]="searchQuery"
+            (keyup.enter)="onSearch()"
+            placeholder="Search ref, lender, project..."
+            class="w-full pl-9 pr-3 py-2 text-xs rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:ring-1 focus:ring-primary" />
+          <svg class="w-4 h-4 absolute left-2.5 top-2.5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+
+        <!-- Facility Type Filter (Dynamic Lookup) -->
+        <app-searchable-select
+          categoryCode="LOAN_FACILITY_TYPE"
+          label=""
+          placeholder="All Facility Types"
+          (valueChange)="onFacilityTypeChange($event)">
+        </app-searchable-select>
+
+        <!-- Project Filter -->
+        <app-searchable-select
+          [options]="projectOptions"
+          label=""
+          placeholder="Filter by Project"
+          (valueChange)="onProjectChange($event)">
+        </app-searchable-select>
+
+        <!-- Status Filter -->
+        <app-searchable-select
+          [options]="statusOptions"
+          label=""
+          placeholder="Facility Status"
+          (valueChange)="onStatusChange($event)">
+        </app-searchable-select>
+      </div>
+    </div>
+
+    <!-- Table Container -->
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse text-xs">
+        <thead>
+          <tr class="border-b border-border bg-muted/40 text-muted-foreground font-semibold">
+            <th class="py-3 px-3.5">Facility Ref & Lender</th>
+            <th class="py-3 px-3.5">Project Dimension</th>
+            <th class="py-3 px-3.5 text-right">Approved Facility</th>
+            <th class="py-3 px-3.5 text-right">Disbursed</th>
+            <th class="py-3 px-3.5 text-right">Outstanding (Principal)</th>
+            <th class="py-3 px-3.5">Classification</th>
+            <th class="py-3 px-3.5">Terms / Spread</th>
+            <th class="py-3 px-3.5">Status</th>
+            <th class="py-3 px-3.5 text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border">
+          <tr *ngIf="loading" class="text-center">
+            <td colspan="9" class="py-8 text-muted-foreground text-xs">
+              <div class="flex items-center justify-center gap-2">
+                <svg class="animate-spin w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Loading loans & financing facilities...</span>
+              </div>
+            </td>
+          </tr>
+
+          <tr *ngIf="!loading && loans.length === 0" class="text-center">
+            <td colspan="9" class="py-8 text-muted-foreground text-xs">
+              No loan facilities found matching your filters.
+            </td>
+          </tr>
+
+          <tr *ngFor="let loan of loans" class="hover:bg-muted/30 transition-colors">
+            <!-- Facility Ref & Lender -->
+            <td class="py-3 px-3.5">
+              <div class="font-semibold text-foreground flex items-center gap-1.5">
+                <span>{{ loan.loan_reference_no }}</span>
+                <span *ngIf="loan.is_eligible_for_ias23" title="IAS 23 Borrowing Cost Capitalization Eligible" class="px-1.5 py-0.5 text-[9px] bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 rounded-md font-mono">
+                  IAS 23
+                </span>
+              </div>
+              <div class="text-[11px] text-muted-foreground mt-0.5 font-medium">{{ loan.lender_name }}</div>
+              <div class="text-[10px] text-muted-foreground">{{ formatFacilityType(loan.facility_type) }}</div>
+            </td>
+
+            <!-- Project Dimension -->
+            <td class="py-3 px-3.5">
+              <div class="font-medium text-foreground">{{ loan.project_name || 'General Corporate' }}</div>
+              <div class="text-[10px] text-muted-foreground">Sanctioned: {{ loan.sanction_date | date:'mediumDate' }}</div>
+            </td>
+
+            <!-- Approved Facility -->
+            <td class="py-3 px-3.5 text-right font-semibold text-foreground">
+              ৳{{ loan.approved_facility_amount | number:'1.2-2' }}
+            </td>
+
+            <!-- Disbursed -->
+            <td class="py-3 px-3.5 text-right font-medium text-primary">
+              ৳{{ loan.total_disbursed_amount | number:'1.2-2' }}
+              <div class="text-[10px] text-muted-foreground">Fees: ৳{{ loan.processing_fees_paid | number:'1.0-0' }}</div>
+            </td>
+
+            <!-- Outstanding -->
+            <td class="py-3 px-3.5 text-right">
+              <div class="font-bold text-amber-600 dark:text-amber-400">৳{{ loan.principal_outstanding | number:'1.2-2' }}</div>
+              <div class="text-[10px] text-emerald-600 dark:text-emerald-400">Repaid: ৳{{ loan.total_principal_repaid | number:'1.0-0' }}</div>
+            </td>
+
+            <!-- Classification (Current vs Non-Current) -->
+            <td class="py-3 px-3.5">
+              <div class="text-[11px] font-medium text-rose-600 dark:text-rose-400">
+                Current: ৳{{ loan.current_portion_outstanding | number:'1.0-0' }}
+              </div>
+              <div class="text-[10px] text-muted-foreground">
+                Non-Current: ৳{{ loan.non_current_portion | number:'1.0-0' }}
+              </div>
+            </td>
+
+            <!-- Terms / Spread -->
+            <td class="py-3 px-3.5">
+              <div class="font-semibold text-foreground">{{ loan.interest_rate_pct }}% p.a.</div>
+              <div class="text-[10px] text-muted-foreground">Spread: +{{ loan.smart_spread_pct }}% | {{ loan.repayment_frequency }}</div>
+            </td>
+
+            <!-- Status -->
+            <td class="py-3 px-3.5">
+              <app-status-badge [status]="loan.status" [variant]="getStatusBadgeVariant(loan.status)"></app-status-badge>
+            </td>
+
+            <!-- Actions Dropdown / Menu -->
+            <td class="py-3 px-3.5 text-center">
+              <div class="flex items-center justify-center gap-1">
+                <!-- View Details -->
+                <button
+                  (click)="viewDetails(loan)"
+                  title="View Facility Master"
+                  class="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                </button>
+
+                <!-- Disburse Tranche Modal Trigger -->
+                <button
+                  (click)="openDisburseModal(loan)"
+                  title="Disburse Tranche (14.2)"
+                  class="p-1.5 rounded-lg text-primary hover:bg-primary/10 transition-colors">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12" />
+                  </svg>
+                </button>
+
+                <!-- Repay Installment Modal Trigger -->
+                <button
+                  (click)="openRepayModal(loan)"
+                  title="Record Repayment (14.3)"
+                  class="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-500/10 transition-colors">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 13l-5 5m0 0l-5-5m5 5V6" />
+                  </svg>
+                </button>
+
+                <!-- Accrue Interest Trigger -->
+                <button
+                  (click)="openAccrueModal(loan)"
+                  title="Accrue Interest (14.3)"
+                  class="p-1.5 rounded-lg text-indigo-600 hover:bg-indigo-500/10 transition-colors">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l4-2 4 2 4-2 4 2z" />
+                  </svg>
+                </button>
+
+                <!-- IAS 23 CWIP Trigger -->
+                <button
+                  *ngIf="loan.is_eligible_for_ias23"
+                  (click)="openIAS23Modal(loan)"
+                  title="Capitalize Borrowing Costs to CWIP (IAS 23)"
+                  class="p-1.5 rounded-lg text-amber-600 hover:bg-amber-500/10 transition-colors">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                  </svg>
+                </button>
+
+                <!-- Edit Standalone -->
+                <button
+                  (click)="editLoan(loan)"
+                  title="Edit Facility"
+                  class="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Controls -->
+    <div class="p-4 border-t border-border flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
+      <div class="flex items-center gap-2">
+        <span>Show</span>
+        <select
+          [ngModel]="limit"
+          (ngModelChange)="onLimitChange($event)"
+          class="px-2 py-1 rounded-md border border-border bg-card text-foreground focus:ring-1 focus:ring-primary">
+          <option [value]="5">5</option>
+          <option [value]="10">10</option>
+          <option [value]="25">25</option>
+          <option [value]="50">50</option>
+        </select>
+        <span>records per page (Total: {{ total }})</span>
+      </div>
+
+      <div class="flex items-center gap-1.5">
+        <button
+          [disabled]="page <= 1"
+          (click)="goToPage(page - 1)"
+          class="px-2.5 py-1 rounded-md border border-border bg-card text-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed">
+          Previous
+        </button>
+
+        <span class="px-2 font-medium text-foreground">
+          Page {{ page }} of {{ totalPages }}
+        </span>
+
+        <button
+          [disabled]="page >= totalPages"
+          (click)="goToPage(page + 1)"
+          class="px-2.5 py-1 rounded-md border border-border bg-card text-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed">
+          Next
+        </button>
+      </div>
+    </div>
+  </app-card-container>
+
+  <!-- 14.2 Disburse Tranche Modal -->
+  <app-modal
+    [isOpen]="showDisburseModal"
+    [title]="'Disburse Loan Tranche — ' + selectedLoan?.loan_reference_no"
+    (close)="showDisburseModal = false">
+    <div class="space-y-4 text-xs">
+      <div class="p-3 bg-primary/5 border border-primary/20 rounded-xl space-y-1">
+        <div class="font-semibold text-primary">14.2 Double-Entry GL Voucher Generation</div>
+        <div class="text-muted-foreground">
+          Debit: Bank Account (1120) | Debit: Processing Charges (6400) | Credit: Bank Loan Payable ({{ selectedLoan?.tenure_months && selectedLoan!.tenure_months <= 12 ? '2140 Current' : '2210 Long-Term' }})
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block font-medium text-foreground mb-1">Disbursement Date</label>
+          <input type="date" [(ngModel)]="disburseForm.disbursement_date" class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground" />
+        </div>
+        <div>
+          <label class="block font-medium text-foreground mb-1">Gross Tranche Amount (৳)</label>
+          <input type="number" [(ngModel)]="disburseForm.gross_amount" class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground" />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block font-medium text-foreground mb-1">Processing Fee Deducted (৳)</label>
+          <input type="number" [(ngModel)]="disburseForm.processing_fee_deducted" class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground" />
+        </div>
+        <div>
+          <label class="block font-medium text-foreground mb-1">Net Received in Bank (৳)</label>
+          <div class="px-3 py-2 rounded-lg border border-border bg-muted/30 font-bold text-foreground">
+            ৳{{ (disburseForm.gross_amount - (disburseForm.processing_fee_deducted || 0)) | number:'1.2-2' }}
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <label class="block font-medium text-foreground mb-1">Company Bank Account</label>
+        <input type="text" [(ngModel)]="disburseForm.company_bank_name" class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground" />
+      </div>
+
+      <div>
+        <label class="block font-medium text-foreground mb-1">Tranche Notes / Purpose</label>
+        <textarea rows="2" [(ngModel)]="disburseForm.notes" class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground"></textarea>
+      </div>
+
+      <div class="pt-3 border-t border-border flex justify-end gap-2">
+        <button (click)="showDisburseModal = false" class="px-3 py-1.5 rounded-lg border border-border text-foreground hover:bg-muted">Cancel</button>
+        <button [disabled]="submittingAction || disburseForm.gross_amount <= 0" (click)="submitDisbursement()" class="px-4 py-1.5 rounded-lg bg-primary text-primary-foreground font-semibold hover:bg-primary/90 disabled:opacity-50">
+          Post Disbursement Voucher
+        </button>
+      </div>
+    </div>
+  </app-modal>
+
+  <!-- 14.3 Repayment Modal -->
+  <app-modal
+    [isOpen]="showRepayModal"
+    [title]="'Record Repayment Waterfall — ' + selectedLoan?.loan_reference_no"
+    (close)="showRepayModal = false">
+    <div class="space-y-4 text-xs">
+      <div class="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl space-y-1">
+        <div class="font-semibold text-emerald-700 dark:text-emerald-400">14.3 Payment Waterfall Allocation</div>
+        <div class="text-muted-foreground">
+          Debit: Loan Obligation (Principal) | Debit: Finance Cost / Accrued Interest | Credit: Bank Account
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block font-medium text-foreground mb-1">Payment Date</label>
+          <input type="date" [(ngModel)]="repayForm.payment_date" class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground" />
+        </div>
+        <div>
+          <label class="block font-medium text-foreground mb-1">Lender Statement Reference</label>
+          <input type="text" [(ngModel)]="repayForm.lender_statement_ref" class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground" />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-3">
+        <div>
+          <label class="block font-medium text-foreground mb-1">Principal (৳)</label>
+          <input type="number" [(ngModel)]="repayForm.principal_component" (input)="updateRepayTotal()" class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground font-semibold" />
+        </div>
+        <div>
+          <label class="block font-medium text-foreground mb-1">Interest (৳)</label>
+          <input type="number" [(ngModel)]="repayForm.interest_component" (input)="updateRepayTotal()" class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground font-semibold" />
+        </div>
+        <div>
+          <label class="block font-medium text-foreground mb-1">Penalties / Fees (৳)</label>
+          <input type="number" [(ngModel)]="repayForm.fee_or_penalty_component" (input)="updateRepayTotal()" class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground" />
+        </div>
+      </div>
+
+      <div>
+        <label class="block font-medium text-foreground mb-1">Total Cash Payment (৳)</label>
+        <div class="px-3 py-2 rounded-lg border border-border bg-muted/40 font-bold text-base text-foreground">
+          ৳{{ repayForm.total_amount_paid | number:'1.2-2' }}
+        </div>
+      </div>
+
+      <div>
+        <label class="block font-medium text-foreground mb-1">Notes</label>
+        <textarea rows="2" [(ngModel)]="repayForm.notes" class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground"></textarea>
+      </div>
+
+      <div class="pt-3 border-t border-border flex justify-end gap-2">
+        <button (click)="showRepayModal = false" class="px-3 py-1.5 rounded-lg border border-border text-foreground hover:bg-muted">Cancel</button>
+        <button [disabled]="submittingAction || repayForm.total_amount_paid <= 0" (click)="submitRepayment()" class="px-4 py-1.5 rounded-lg bg-emerald-600 text-white font-semibold hover:bg-emerald-700 disabled:opacity-50">
+          Post Repayment Voucher
+        </button>
+      </div>
+    </div>
+  </app-modal>
+
+  <!-- 14.3 Interest Accrual Modal -->
+  <app-modal
+    [isOpen]="showAccrueModal"
+    [title]="'Record Interest Accrual — ' + selectedLoan?.loan_reference_no"
+    (close)="showAccrueModal = false">
+    <div class="space-y-4 text-xs">
+      <div class="p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-xl space-y-1">
+        <div class="font-semibold text-indigo-700 dark:text-indigo-400">14.3 Accrual Accounting (Non-Cash)</div>
+        <div class="text-muted-foreground">
+          Debit: Finance Costs (6400) | Credit: Accrued Expenses / Interest Payable (2130)
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block font-medium text-foreground mb-1">Period Start</label>
+          <input type="date" [(ngModel)]="accrueForm.period_start" class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground" />
+        </div>
+        <div>
+          <label class="block font-medium text-foreground mb-1">Period End</label>
+          <input type="date" [(ngModel)]="accrueForm.period_end" class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground" />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-3">
+        <div>
+          <label class="block font-medium text-foreground mb-1">Basis Balance (৳)</label>
+          <input type="number" [(ngModel)]="accrueForm.calculation_basis_balance" class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground" />
+        </div>
+        <div>
+          <label class="block font-medium text-foreground mb-1">Applied Rate (%)</label>
+          <input type="number" [(ngModel)]="accrueForm.applied_rate_pct" class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground" />
+        </div>
+        <div>
+          <label class="block font-medium text-foreground mb-1">Accrued Interest (৳)</label>
+          <input type="number" [(ngModel)]="accrueForm.interest_accrued_amount" class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground font-bold" />
+        </div>
+      </div>
+
+      <div>
+        <label class="block font-medium text-foreground mb-1">Supporting Lender Statement Reference</label>
+        <input type="text" [(ngModel)]="accrueForm.supporting_lender_statement" class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground" />
+      </div>
+
+      <div class="pt-3 border-t border-border flex justify-end gap-2">
+        <button (click)="showAccrueModal = false" class="px-3 py-1.5 rounded-lg border border-border text-foreground hover:bg-muted">Cancel</button>
+        <button [disabled]="submittingAction || accrueForm.interest_accrued_amount <= 0" (click)="submitAccrual()" class="px-4 py-1.5 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 disabled:opacity-50">
+          Post Accrual Voucher
+        </button>
+      </div>
+    </div>
+  </app-modal>
+
+  <!-- 14.3 IAS 23 Borrowing Cost Capitalization Modal -->
+  <app-modal
+    [isOpen]="showIAS23Modal"
+    [title]="'IAS 23 Borrowing Cost Capitalization — ' + selectedLoan?.loan_reference_no"
+    (close)="showIAS23Modal = false">
+    <div class="space-y-4 text-xs">
+      <div class="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl space-y-1">
+        <div class="font-semibold text-amber-800 dark:text-amber-400">IAS 23 Qualifying Asset Capitalization</div>
+        <div class="text-muted-foreground">
+          Debit: Construction Work in Progress (CWIP 1220) | Credit: Finance Costs (6400)
+          <div class="italic text-[11px] text-amber-900/80 dark:text-amber-300 mt-1">
+            "Do not automatically capitalize every loan-interest charge into construction WIP. Eligibility depends on the applicable accounting framework and the company's documented policy."
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block font-medium text-foreground mb-1">Capitalization Date</label>
+          <input type="date" [(ngModel)]="ias23Form.capitalization_date" class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground" />
+        </div>
+        <div>
+          <label class="block font-medium text-foreground mb-1">Eligible Capitalization Amount (৳)</label>
+          <input type="number" [(ngModel)]="ias23Form.eligible_amount" class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground font-bold" />
+        </div>
+      </div>
+
+      <div>
+        <label class="block font-medium text-foreground mb-1">Documented Accounting Policy Justification</label>
+        <textarea rows="3" [(ngModel)]="ias23Form.accounting_policy_justification" class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground"></textarea>
+      </div>
+
+      <div>
+        <label class="block font-medium text-foreground mb-1">Approved By (CFO / Audit Committee)</label>
+        <input type="text" [(ngModel)]="ias23Form.approved_by" class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground" />
+      </div>
+
+      <div class="pt-3 border-t border-border flex justify-end gap-2">
+        <button (click)="showIAS23Modal = false" class="px-3 py-1.5 rounded-lg border border-border text-foreground hover:bg-muted">Cancel</button>
+        <button [disabled]="submittingAction || ias23Form.eligible_amount <= 0" (click)="submitIAS23()" class="px-4 py-1.5 rounded-lg bg-amber-600 text-white font-semibold hover:bg-amber-700 disabled:opacity-50">
+          Authorize CWIP Capitalization
+        </button>
+      </div>
+    </div>
+  </app-modal>
+
+  <!-- Facility Details Drawer / Modal -->
+  <app-modal
+    [isOpen]="showDetailModal"
+    [title]="'Facility Dossier — ' + selectedLoan?.loan_reference_no"
+    (close)="showDetailModal = false">
+    <div *ngIf="selectedLoan" class="space-y-4 text-xs max-h-[70vh] overflow-y-auto pr-1">
+      <div class="grid grid-cols-2 gap-3 p-3.5 bg-muted/20 border border-border rounded-xl">
+        <div>
+          <span class="text-muted-foreground">Lender & Branch:</span>
+          <div class="font-semibold text-foreground mt-0.5">{{ selectedLoan.lender_name }} ({{ selectedLoan.lender_branch || 'Principal' }})</div>
+        </div>
+        <div>
+          <span class="text-muted-foreground">Sanction Letter:</span>
+          <div class="font-semibold text-foreground mt-0.5">{{ selectedLoan.sanction_letter_ref || 'N/A' }}</div>
+        </div>
+        <div>
+          <span class="text-muted-foreground">Tenure:</span>
+          <div class="font-semibold text-foreground mt-0.5">{{ selectedLoan.tenure_months }} Months ({{ selectedLoan.start_date | date }} - {{ selectedLoan.maturity_date | date }})</div>
+        </div>
+        <div>
+          <span class="text-muted-foreground">Next Due Date:</span>
+          <div class="font-semibold text-foreground mt-0.5">{{ selectedLoan.next_repayment_date | date:'mediumDate' }}</div>
+        </div>
+      </div>
+
+      <!-- Security / Collateral -->
+      <div class="p-3.5 bg-muted/20 border border-border rounded-xl space-y-1">
+        <div class="font-semibold text-foreground">Security, Mortgage & Collateral References</div>
+        <div class="text-muted-foreground">{{ selectedLoan.security_collateral_description || 'No collateral recorded.' }}</div>
+        <div *ngIf="selectedLoan.mortgage_deed_no" class="text-[11px] font-mono text-primary mt-1">
+          Deed No: {{ selectedLoan.mortgage_deed_no }}
+        </div>
+      </div>
+
+      <!-- Covenants -->
+      <div class="p-3.5 bg-muted/20 border border-border rounded-xl space-y-1">
+        <div class="font-semibold text-foreground">Covenant & Reporting Deadlines</div>
+        <div class="text-muted-foreground">{{ selectedLoan.covenants_conditions || 'Standard debt covenants apply.' }}</div>
+      </div>
+
+      <!-- Tranches & Repayments Tabs/Overview -->
+      <div class="border-t border-border pt-3">
+        <div class="font-semibold text-foreground mb-2">Disbursement Tranches ({{ selectedLoan.disbursements?.length || 0 }})</div>
+        <div *ngFor="let d of selectedLoan.disbursements" class="p-2 border border-border rounded-lg mb-1.5 flex justify-between items-center bg-card">
+          <div>
+            <div class="font-medium text-foreground">{{ d.disbursement_ref }} — {{ d.disbursement_date | date:'mediumDate' }}</div>
+            <div class="text-[10px] text-muted-foreground">GL Voucher #{{ d.gl_voucher_id || 'Posted' }}</div>
+          </div>
+          <div class="text-right">
+            <div class="font-bold text-primary">৳{{ d.gross_amount | number:'1.2-2' }}</div>
+            <div class="text-[10px] text-muted-foreground">Net Bank: ৳{{ d.net_received_in_bank | number:'1.0-0' }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </app-modal>
+</div>

@@ -1,0 +1,305 @@
+<div class="w-full max-w-5xl mx-auto space-y-6">
+  <!-- Nav header -->
+  <app-loans-financing-nav></app-loans-financing-nav>
+
+  <!-- Notification Banner -->
+  <div *ngIf="errorMessage" class="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-700 dark:text-rose-400 text-xs flex items-center justify-between">
+    <span>{{ errorMessage }}</span>
+    <button (click)="errorMessage = null" class="font-bold">✕</button>
+  </div>
+
+  <app-card-container>
+    <!-- Header -->
+    <div class="p-5 border-b border-border flex items-center justify-between">
+      <div>
+        <h2 class="text-base font-semibold text-foreground">
+          {{ isEditMode ? 'Edit Loan & Financing Facility' : 'New Bank & FI Loan Facility Setup' }}
+        </h2>
+        <p class="text-xs text-muted-foreground mt-0.5">
+          Spec 14.1 — Register facility agreements, credit limits, reducing balance terms, collateral deeds, and covenants.
+        </p>
+      </div>
+
+      <a routerLink="/accounts/loans-financing" class="px-3 py-1.5 rounded-lg border border-border text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+        Cancel & Return
+      </a>
+    </div>
+
+    <!-- Form Body -->
+    <div class="p-6 space-y-6 text-xs">
+      <!-- Section 1: Facility & Institution Identification -->
+      <div>
+        <h3 class="font-semibold text-foreground text-sm mb-3 flex items-center gap-2">
+          <span class="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs">1</span>
+          <span>Institution & Facility Identification</span>
+        </h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="block font-medium text-foreground mb-1">Facility Reference No *</label>
+            <input
+              type="text"
+              [(ngModel)]="formData.loan_reference_no"
+              class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground font-mono focus:ring-1 focus:ring-primary"
+              placeholder="e.g. FAC-2024-101" />
+          </div>
+
+          <div>
+            <label class="block font-medium text-foreground mb-1">Facility Type *</label>
+            <app-searchable-select
+              categoryCode="LOAN_FACILITY_TYPE"
+              [value]="formData.facility_type"
+              label=""
+              placeholder="Select facility type"
+              (valueChange)="onFacilityTypeSelect($event)">
+            </app-searchable-select>
+          </div>
+
+          <div>
+            <label class="block font-medium text-foreground mb-1">Project Dimension</label>
+            <app-searchable-select
+              [options]="projectOptions"
+              [value]="formData.project_id || ''"
+              label=""
+              placeholder="Select project"
+              (valueChange)="onProjectSelect($event)">
+            </app-searchable-select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
+          <div>
+            <label class="block font-medium text-foreground mb-1">Bank / Financial Institution *</label>
+            <input
+              type="text"
+              [(ngModel)]="formData.lender_name"
+              class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground focus:ring-1 focus:ring-primary"
+              placeholder="e.g. Eastern Bank PLC" />
+          </div>
+
+          <div>
+            <label class="block font-medium text-foreground mb-1">Lender Branch</label>
+            <input
+              type="text"
+              [(ngModel)]="formData.lender_branch"
+              class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground focus:ring-1 focus:ring-primary"
+              placeholder="e.g. Corporate Branch, Dilkusha" />
+          </div>
+
+          <div>
+            <label class="block font-medium text-foreground mb-1">Lender Account / Facility Code</label>
+            <input
+              type="text"
+              [(ngModel)]="formData.lender_account_no"
+              class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground focus:ring-1 focus:ring-primary"
+              placeholder="e.g. EBL-TERM-88492" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2: Facility Limit, Tenure & Schedule -->
+      <div class="pt-4 border-t border-border">
+        <h3 class="font-semibold text-foreground text-sm mb-3 flex items-center gap-2">
+          <span class="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs">2</span>
+          <span>Facility Limit, Tenure & Repayment Schedule</span>
+        </h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div>
+            <label class="block font-medium text-foreground mb-1">Approved Facility Amount (৳) *</label>
+            <input
+              type="number"
+              [(ngModel)]="formData.approved_facility_amount"
+              class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground font-semibold focus:ring-1 focus:ring-primary" />
+          </div>
+
+          <div>
+            <label class="block font-medium text-foreground mb-1">Sanction Date *</label>
+            <input
+              type="date"
+              [(ngModel)]="formData.sanction_date"
+              class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground focus:ring-1 focus:ring-primary" />
+          </div>
+
+          <div>
+            <label class="block font-medium text-foreground mb-1">Tenure (Months) *</label>
+            <input
+              type="number"
+              [(ngModel)]="formData.tenure_months"
+              (input)="onTenureChange()"
+              class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground focus:ring-1 focus:ring-primary" />
+          </div>
+
+          <div>
+            <label class="block font-medium text-foreground mb-1">Maturity Date</label>
+            <input
+              type="date"
+              [(ngModel)]="formData.maturity_date"
+              class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground focus:ring-1 focus:ring-primary" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
+          <div>
+            <label class="block font-medium text-foreground mb-1">Repayment Frequency *</label>
+            <app-searchable-select
+              categoryCode="LOAN_REPAYMENT_FREQ"
+              [value]="formData.repayment_frequency"
+              label=""
+              placeholder="Select frequency"
+              (valueChange)="onRepaymentFreqSelect($event)">
+            </app-searchable-select>
+          </div>
+
+          <div>
+            <label class="block font-medium text-foreground mb-1">Sanction Letter Ref</label>
+            <input
+              type="text"
+              [(ngModel)]="formData.sanction_letter_ref"
+              class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground focus:ring-1 focus:ring-primary"
+              placeholder="e.g. SANC/EBL/2024/491" />
+          </div>
+
+          <div>
+            <label class="block font-medium text-foreground mb-1">First / Next Repayment Due Date</label>
+            <input
+              type="date"
+              [(ngModel)]="formData.next_repayment_date"
+              class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground focus:ring-1 focus:ring-primary" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 3: Interest Calculation & IAS 23 Eligibility -->
+      <div class="pt-4 border-t border-border">
+        <h3 class="font-semibold text-foreground text-sm mb-3 flex items-center gap-2">
+          <span class="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs">3</span>
+          <span>Interest Rate, Calculation Method & IAS 23 Capitalization</span>
+        </h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div>
+            <label class="block font-medium text-foreground mb-1">Interest Rate Type</label>
+            <app-searchable-select
+              [options]="interestRateTypes"
+              [value]="formData.interest_rate_type"
+              label=""
+              (valueChange)="onInterestRateTypeSelect($event)">
+            </app-searchable-select>
+          </div>
+
+          <div>
+            <label class="block font-medium text-foreground mb-1">Effective Interest Rate (% p.a.)</label>
+            <input
+              type="number"
+              step="0.01"
+              [(ngModel)]="formData.interest_rate_pct"
+              class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground font-semibold focus:ring-1 focus:ring-primary" />
+          </div>
+
+          <div>
+            <label class="block font-medium text-foreground mb-1">SMART Spread (% above benchmark)</label>
+            <input
+              type="number"
+              step="0.01"
+              [(ngModel)]="formData.smart_spread_pct"
+              class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground focus:ring-1 focus:ring-primary" />
+          </div>
+
+          <div>
+            <label class="block font-medium text-foreground mb-1">Calculation Method</label>
+            <app-searchable-select
+              categoryCode="LOAN_INTEREST_CALC"
+              [value]="formData.calculation_method"
+              label=""
+              (valueChange)="onInterestCalcSelect($event)">
+            </app-searchable-select>
+          </div>
+        </div>
+
+        <!-- IAS 23 Toggle Box -->
+        <div class="mt-4 p-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5 flex items-start justify-between gap-4">
+          <div>
+            <div class="font-semibold text-emerald-900 dark:text-emerald-300">
+              IAS 23 Borrowing Cost Capitalization Eligibility
+            </div>
+            <p class="text-[11px] text-muted-foreground mt-0.5">
+              Spec 14.3 — Enable to permit capitalization of eligible borrowing costs into qualifying construction asset (CWIP 1220). Does not auto-capitalize; requires authorized approval.
+            </p>
+          </div>
+
+          <label class="relative inline-flex items-center cursor-pointer mt-1">
+            <input type="checkbox" [(ngModel)]="formData.is_eligible_for_ias23" class="sr-only peer" />
+            <div class="w-11 h-6 bg-muted peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Section 4: Security, Collateral & Covenants -->
+      <div class="pt-4 border-t border-border">
+        <h3 class="font-semibold text-foreground text-sm mb-3 flex items-center gap-2">
+          <span class="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs">4</span>
+          <span>Security, Mortgage Deeds & Covenant Deadlines</span>
+        </h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block font-medium text-foreground mb-1">Security & Collateral Description</label>
+            <textarea
+              rows="3"
+              [(ngModel)]="formData.security_collateral_description"
+              class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground focus:ring-1 focus:ring-primary"
+              placeholder="e.g. First registered mortgage over 1.25 acres project land..."></textarea>
+          </div>
+
+          <div>
+            <label class="block font-medium text-foreground mb-1">Covenants, Reporting Conditions & Ratios</label>
+            <textarea
+              rows="3"
+              [(ngModel)]="formData.covenants_conditions"
+              class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground focus:ring-1 focus:ring-primary"
+              placeholder="e.g. Maintain minimum DSCR of 1.35x. Quarterly third-party surveyor WIP certification..."></textarea>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+          <div>
+            <label class="block font-medium text-foreground mb-1">Registered Mortgage Deed No</label>
+            <input
+              type="text"
+              [(ngModel)]="formData.mortgage_deed_no"
+              class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground font-mono focus:ring-1 focus:ring-primary"
+              placeholder="e.g. DEED-REG-99182/2024" />
+          </div>
+
+          <div>
+            <label class="block font-medium text-foreground mb-1">Facility Status</label>
+            <app-searchable-select
+              [options]="statusOptions"
+              [value]="formData.status || 'ACTIVE'"
+              label=""
+              (valueChange)="onStatusSelect($event)">
+            </app-searchable-select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 5: Action Buttons -->
+      <div class="pt-5 border-t border-border flex items-center justify-end gap-3">
+        <a routerLink="/accounts/loans-financing" class="px-4 py-2 rounded-lg border border-border text-foreground hover:bg-muted font-medium">
+          Cancel
+        </a>
+        <button
+          [disabled]="submitting"
+          (click)="saveLoan()"
+          class="px-5 py-2 rounded-lg bg-primary text-primary-foreground font-semibold hover:bg-primary/90 shadow-xs disabled:opacity-50 flex items-center gap-2">
+          <svg *ngIf="submitting" class="animate-spin w-4 h-4 text-white" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span>{{ isEditMode ? 'Update Facility Master' : 'Save & Register Facility' }}</span>
+        </button>
+      </div>
+    </div>
+  </app-card-container>
+</div>

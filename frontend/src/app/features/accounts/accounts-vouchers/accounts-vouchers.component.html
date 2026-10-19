@@ -1,318 +1,340 @@
-<app-card-container>
-  <!-- Header -->
-  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-5">
-    <div>
+<!-- Master Card Container for General Ledger Vouchers -->
+<app-card-container
+  title="General Ledger Double-Entry Vouchers"
+  subtitle="Financial transaction audit log with atomic debit-credit balance, project dimensions and reversals"
+  badge="GL Journal Core"
+>
+  <!-- Unified Module Sub-Navigation Bar -->
+  <div class="flex items-center gap-1.5 p-1.5 bg-secondary/40 rounded-2xl border border-border overflow-x-auto mb-6">
+    <a
+      routerLink="/accounts/coa"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-node-tree"></i>
+      <span>Chart of Accounts</span>
+    </a>
+
+    <a
+      routerLink="/accounts/vouchers"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-card text-foreground shadow-xs border border-border inline-flex items-center gap-1.5 whitespace-nowrap"
+    >
+      <i class="ri-file-list-3-line text-primary"></i>
+      <span>General Ledger Vouchers</span>
+    </a>
+
+    <a
+      routerLink="/accounts/ledger"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-booklet-line"></i>
+      <span>Ledger Inquiry & Statements</span>
+    </a>
+
+    <a
+      routerLink="/accounts/payables"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-money-dollar-circle-line"></i>
+      <span>Accounts Payable (AP)</span>
+    </a>
+
+    <a
+      routerLink="/accounts/payables/ledger"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-contacts-book-2-line"></i>
+      <span>Supplier Ledger & Aging</span>
+    </a>
+
+    <a
+      routerLink="/accounts/receivables"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-hand-coin-line"></i>
+      <span>Accounts Receivable (AR)</span>
+    </a>
+
+    <a
+      routerLink="/accounts/receivables/receipts"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-refund-2-line"></i>
+      <span>Receipts & Allocations</span>
+    </a>
+
+    <a
+      routerLink="/accounts/receivables/ledger"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-user-star-line"></i>
+      <span>Customer Ledger & Aging</span>
+    </a>
+
+    <a
+      routerLink="/accounts/financial-reports"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-pie-chart-2-line"></i>
+      <span>Financial Reports (P&L / BS)</span>
+    </a>
+
+    <div class="ml-auto pl-2 flex items-center gap-2">
+      <a
+        routerLink="/settings/lookups"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-primary hover:text-primary/80 bg-card rounded-xl border border-border shadow-xs transition-colors whitespace-nowrap"
+        title="Dynamic Dropdown Creation & Customization Settings"
+      >
+        <i class="ri-settings-4-line"></i>
+        <span>Dropdown Settings</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- KPI Metrics Ribbon for Vouchers -->
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+    <div class="p-4 rounded-2xl bg-secondary/30 border border-border flex flex-col justify-between">
+      <span class="text-xs text-muted-foreground font-medium">Loaded Vouchers</span>
+      <span class="text-xl sm:text-2xl font-bold font-mono text-foreground mt-1">
+        {{ totalCount() }}
+      </span>
+      <span class="text-[10px] text-muted-foreground mt-0.5">Page {{ currentPage() }}</span>
+    </div>
+
+    <div class="p-4 rounded-2xl bg-secondary/30 border border-border flex flex-col justify-between">
+      <span class="text-xs text-muted-foreground font-medium">Total Transaction Volume</span>
+      <span class="text-xl sm:text-2xl font-bold font-mono text-foreground mt-1">
+        ৳ {{ totalDebitsVolume() | number:'1.2-2' }}
+      </span>
+      <span class="text-[10px] text-emerald-500 mt-0.5">Atomic Dr = Cr</span>
+    </div>
+
+    <div class="p-4 rounded-2xl bg-secondary/30 border border-border flex flex-col justify-between">
+      <span class="text-xs text-muted-foreground font-medium">Posted Active Vouchers</span>
+      <span class="text-xl sm:text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400 mt-1">
+        {{ postedCount() }}
+      </span>
+      <span class="text-[10px] text-muted-foreground mt-0.5">Committed to GL</span>
+    </div>
+
+    <div class="p-4 rounded-2xl bg-secondary/30 border border-border flex flex-col justify-between">
+      <span class="text-xs text-muted-foreground font-medium">Reversals & Corrections</span>
+      <span class="text-xl sm:text-2xl font-bold font-mono text-rose-500 mt-1">
+        {{ reversedCount() }}
+      </span>
+      <span class="text-[10px] text-muted-foreground mt-0.5">Zero Silent Deletions</span>
+    </div>
+  </div>
+
+  <!-- Action Header & Advanced Filters Card -->
+  <div class="p-4 rounded-2xl bg-secondary/20 border border-border mb-6 space-y-4">
+    <!-- Top Row: Search and Action Buttons -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <!-- Search Bar -->
+      <div class="relative flex-1 max-w-md">
+        <i class="ri-search-line absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground text-sm"></i>
+        <input
+          type="text"
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event); onFilterChange()"
+          placeholder="Search by voucher #, narration or memo..."
+          class="w-full pl-10 pr-4 py-2 rounded-xl text-xs bg-card border border-border text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+        />
+      </div>
+
+      <!-- Action Buttons -->
       <div class="flex items-center gap-2">
-        <h1 class="text-2xl font-bold tracking-tight text-foreground">General Ledger Vouchers & Journal Register</h1>
-        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-          Double-Entry Balanced
+        <button
+          (click)="exportCSV()"
+          class="px-3.5 py-2 rounded-xl text-xs font-semibold text-foreground bg-card hover:bg-secondary border border-border transition-all inline-flex items-center gap-1.5 shadow-xs"
+          title="Export displayed vouchers to CSV"
+        >
+          <i class="ri-file-download-line"></i>
+          <span>Export CSV</span>
+        </button>
+
+        <a
+          routerLink="/accounts/vouchers/create"
+          class="px-4 py-2 rounded-xl text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-all inline-flex items-center gap-1.5 shadow-xs"
+        >
+          <i class="ri-add-line"></i>
+          <span>+ New Voucher</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Filters Row -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 pt-3 border-t border-border/50">
+      <div>
+        <app-searchable-select
+          label="Voucher Type"
+          [value]="filterType()"
+          (valueChange)="filterType.set($event); onFilterChange()"
+          [options]="voucherTypeOptions"
+          placeholder="All Types"
+        ></app-searchable-select>
+      </div>
+
+      <div>
+        <app-searchable-select
+          label="Status"
+          [value]="filterStatus()"
+          (valueChange)="filterStatus.set($event); onFilterChange()"
+          [options]="statusFilterOptions"
+          placeholder="All Statuses"
+        ></app-searchable-select>
+      </div>
+
+      <div>
+        <app-searchable-select
+          label="Project Dimension"
+          [value]="filterProjectId()"
+          (valueChange)="filterProjectId.set($event); onFilterChange()"
+          [options]="projectOptions()"
+          placeholder="All Projects"
+        ></app-searchable-select>
+      </div>
+
+      <div>
+        <app-custom-input
+          label="Date From"
+          type="date"
+          [value]="dateFrom()"
+          (valueChange)="dateFrom.set($event); onFilterChange()"
+        ></app-custom-input>
+      </div>
+
+      <div>
+        <app-custom-input
+          label="Date To"
+          type="date"
+          [value]="dateTo()"
+          (valueChange)="dateTo.set($event); onFilterChange()"
+        ></app-custom-input>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading()" class="py-20 text-center text-muted-foreground">
+    <i class="ri-loader-4-line text-3xl animate-spin text-primary inline-block mb-3"></i>
+    <p class="text-sm">Loading general ledger vouchers...</p>
+  </div>
+
+  <!-- Vouchers Table -->
+  <div *ngIf="!isLoading()" class="space-y-4">
+    <div class="overflow-x-auto rounded-2xl border border-border bg-card shadow-xs">
+      <table class="w-full text-xs text-left border-collapse">
+        <thead>
+          <tr class="bg-secondary/60 border-b border-border text-muted-foreground font-semibold uppercase tracking-wider text-[11px]">
+            <th class="py-3 px-4">Voucher No</th>
+            <th class="py-3 px-3">Date</th>
+            <th class="py-3 px-3">Type</th>
+            <th class="py-3 px-4">Project</th>
+            <th class="py-3 px-4">Narration / Memo</th>
+            <th class="py-3 px-4 text-right">Debit (৳)</th>
+            <th class="py-3 px-4 text-right">Credit (৳)</th>
+            <th class="py-3 px-3 text-center">Status</th>
+            <th class="py-3 px-3 text-center">Action</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border">
+          <tr
+            *ngFor="let v of vouchers()"
+            (click)="navigateToView(v.id)"
+            class="hover:bg-secondary/20 transition-colors cursor-pointer group"
+          >
+            <td class="py-3 px-4 font-mono font-bold text-primary">
+              <span class="hover:underline">{{ v.voucher_number }}</span>
+            </td>
+            <td class="py-3 px-3 font-mono text-muted-foreground whitespace-nowrap">
+              {{ v.voucher_date | date:'dd MMM yyyy' }}
+            </td>
+            <td class="py-3 px-3 whitespace-nowrap">
+              <span class="px-2 py-0.5 rounded text-[10px] font-medium bg-secondary text-foreground border border-border">
+                {{ v.voucher_type }}
+              </span>
+            </td>
+            <td class="py-3 px-4 font-medium text-foreground whitespace-nowrap">
+              {{ v.project_name || 'Corporate' }}
+            </td>
+            <td class="py-3 px-4 text-foreground/80 max-w-xs truncate" [title]="v.narration">
+              {{ v.narration }}
+            </td>
+            <td class="py-3 px-4 text-right font-mono font-semibold text-foreground whitespace-nowrap">
+              ৳ {{ v.total_debit_amount | number:'1.2-2' }}
+            </td>
+            <td class="py-3 px-4 text-right font-mono font-semibold text-foreground whitespace-nowrap">
+              ৳ {{ v.total_credit_amount | number:'1.2-2' }}
+            </td>
+            <td class="py-3 px-3 text-center whitespace-nowrap">
+              <span
+                class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
+                [ngClass]="{
+                  'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20': v.status === 'Posted',
+                  'bg-rose-500/10 text-rose-600 border border-rose-500/20': v.status === 'Reversed',
+                  'bg-amber-500/10 text-amber-600 border border-amber-500/20': v.status === 'Draft'
+                }"
+              >
+                {{ v.status }}
+              </span>
+            </td>
+            <td class="py-3 px-3 text-center whitespace-nowrap" (click)="$event.stopPropagation()">
+              <a
+                [routerLink]="['/accounts/vouchers/view', v.id]"
+                class="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors inline-flex items-center justify-center"
+                title="View Journal Audit Trail"
+              >
+                <i class="ri-eye-line text-sm"></i>
+              </a>
+            </td>
+          </tr>
+
+          <!-- Empty state -->
+          <tr *ngIf="vouchers().length === 0">
+            <td colspan="9" class="py-16 text-center text-muted-foreground">
+              <i class="ri-file-text-line text-4xl text-muted-foreground/40 block mb-2"></i>
+              <p class="text-sm font-medium">No vouchers found matching the selected criteria.</p>
+              <button
+                (click)="resetFilters()"
+                class="mt-3 px-3 py-1.5 rounded-xl text-xs font-semibold bg-secondary hover:bg-secondary/80 text-foreground border border-border"
+              >
+                Clear Filters
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Footer -->
+    <div class="flex items-center justify-between p-3 rounded-2xl bg-secondary/30 border border-border text-xs">
+      <span class="text-muted-foreground">
+        Showing page <span class="font-bold text-foreground">{{ currentPage() }}</span> ({{ vouchers().length }} records loaded)
+      </span>
+
+      <div class="flex items-center gap-2">
+        <button
+          (click)="goToPrevPage()"
+          [disabled]="currentPage() === 1"
+          class="px-3 py-1.5 rounded-xl border border-border bg-card text-foreground hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors inline-flex items-center gap-1 font-semibold"
+        >
+          <i class="ri-arrow-left-s-line"></i>
+          <span>Previous</span>
+        </button>
+
+        <span class="px-3 py-1 rounded-lg bg-card border border-border font-mono font-bold text-foreground">
+          {{ currentPage() }}
         </span>
-      </div>
-      <p class="text-sm text-muted-foreground mt-1">
-        Enforces statutory rule: <span class="font-mono text-xs font-bold text-foreground">Σ Debit = Σ Credit</span> with zero hard deletions (audit correction via Reversal Vouchers only).
-      </p>
-    </div>
 
-    <div class="flex items-center gap-3">
-      <app-custom-button
-        variant="outline"
-        (btnClick)="loadVouchers()">
-        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-        </svg>
-        Refresh
-      </app-custom-button>
-      <app-custom-button
-        variant="primary"
-        (btnClick)="openCreateModal()">
-        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-        </svg>
-        + Post New Voucher
-      </app-custom-button>
-    </div>
-  </div>
-
-  <!-- Filters Row -->
-  <div class="grid grid-cols-1 md:grid-cols-4 gap-4 my-5 p-4 rounded-xl bg-card border border-border">
-    <app-custom-input
-      label="Search Voucher / Narration"
-      placeholder="e.g. JV-CONT, GRN, Cheque..."
-      [ngModel]="searchQuery()"
-      (ngModelChange)="searchQuery.set($event); onFilterChange()">
-    </app-custom-input>
-
-    <app-searchable-select
-      label="Filter by Voucher Type"
-      placeholder="All Voucher Types"
-      [options]="voucherTypeOptions"
-      [ngModel]="filterType()"
-      (ngModelChange)="filterType.set($event); onFilterChange()">
-    </app-searchable-select>
-
-    <app-searchable-select
-      label="Filter by Status"
-      placeholder="All Statuses"
-      [options]="statusFilterOptions"
-      [ngModel]="filterStatus()"
-      (ngModelChange)="filterStatus.set($event); onFilterChange()">
-    </app-searchable-select>
-
-    <div class="flex items-end">
-      <app-custom-button
-        variant="secondary"
-        (btnClick)="searchQuery.set(''); filterType.set(''); filterStatus.set(''); onFilterChange()">
-        Clear Filters
-      </app-custom-button>
-    </div>
-  </div>
-
-  <!-- Vouchers List -->
-  <div class="space-y-4">
-    @if (isLoading()) {
-      <div class="p-12 text-center text-sm text-muted-foreground">Loading General Ledger vouchers...</div>
-    } @else if (vouchers().length === 0) {
-      <div class="p-12 text-center text-muted-foreground bg-card rounded-xl border border-border">
-        No vouchers found matching criteria. Click "+ Post New Voucher" to create double-entry transactions.
-      </div>
-    } @else {
-      @for (v of vouchers(); track v.id) {
-        <div class="rounded-xl border border-border bg-card shadow-xs overflow-hidden">
-          <!-- Voucher Header -->
-          <div class="px-5 py-3.5 bg-muted/40 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-3">
-            <div>
-              <div class="flex items-center gap-2">
-                <span class="font-mono font-bold text-foreground text-sm">{{ v.voucher_number }}</span>
-                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-muted text-muted-foreground">
-                  {{ v.voucher_type }}
-                </span>
-                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold border"
-                  [ngClass]="[getStatusBadge(v.status).bg, getStatusBadge(v.status).textCol, getStatusBadge(v.status).border]">
-                  {{ v.status }}
-                </span>
-                <span class="text-xs text-muted-foreground">{{ v.voucher_date }}</span>
-              </div>
-              <div class="text-xs text-muted-foreground mt-1">
-                Project: <span class="font-semibold text-foreground">{{ v.project_name }}</span> • Narration: <span class="italic text-foreground">"{{ v.narration }}"</span>
-              </div>
-            </div>
-
-            <div class="flex items-center gap-3">
-              <div class="text-right">
-                <div class="text-xs text-muted-foreground">Total Voucher Amount</div>
-                <div class="text-sm font-bold text-foreground">৳{{ v.total_debit_amount | number:'1.2-2' }}</div>
-              </div>
-
-              @if (v.status === 'Posted') {
-                <app-custom-button
-                  variant="outline"
-                  size="sm"
-                  (btnClick)="reverseVoucher(v)">
-                  Reverse Voucher
-                </app-custom-button>
-              }
-            </div>
-          </div>
-
-          <!-- Line Entries Table -->
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs">
-              <thead class="bg-muted/20 text-muted-foreground font-semibold border-b border-border">
-                <tr>
-                  <th class="px-4 py-2.5">Account Code & Title</th>
-                  <th class="px-4 py-2.5">Line Narration</th>
-                  <th class="px-4 py-2.5 text-right">Debit (Dr) BDT</th>
-                  <th class="px-4 py-2.5 text-right">Credit (Cr) BDT</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-border">
-                @for (e of v.entries; track e.id) {
-                  <tr class="hover:bg-muted/20">
-                    <td class="px-4 py-2 font-medium text-foreground">
-                      <span class="font-mono text-muted-foreground">{{ e.account_code }}</span> - {{ e.account_name_en }}
-                    </td>
-                    <td class="px-4 py-2 text-muted-foreground">{{ e.narration }}</td>
-                    <td class="px-4 py-2 text-right font-semibold" [ngClass]="e.debit_amount > 0 ? 'text-foreground' : 'text-muted-foreground/40'">
-                      {{ e.debit_amount > 0 ? (e.debit_amount | number:'1.2-2') : '—' }}
-                    </td>
-                    <td class="px-4 py-2 text-right font-semibold" [ngClass]="e.credit_amount > 0 ? 'text-foreground' : 'text-muted-foreground/40'">
-                      {{ e.credit_amount > 0 ? (e.credit_amount | number:'1.2-2') : '—' }}
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-        </div>
-      }
-    }
-  </div>
-
-  <!-- Create Voucher Modal -->
-  @if (isCreateModalOpen()) {
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-      <div class="bg-card border border-border w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
-        <div class="px-6 py-4 border-b border-border flex items-center justify-between bg-muted/40">
-          <div>
-            <h2 class="text-lg font-bold text-foreground">Post Double-Entry Voucher</h2>
-            <p class="text-xs text-muted-foreground">Every transaction must satisfy Σ Debit = Σ Credit.</p>
-          </div>
-          <button type="button" (click)="closeCreateModal()" class="text-muted-foreground hover:text-foreground">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-          </button>
-        </div>
-
-        <form [formGroup]="createForm" (ngSubmit)="submitCreate()" class="p-6 space-y-4 overflow-y-auto flex-1">
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <app-searchable-select
-              label="Voucher Type *"
-              placeholder="Select Type"
-              [options]="typeCreateOptions"
-              [ngModel]="createForm.get('voucher_type')?.value"
-              (ngModelChange)="createForm.get('voucher_type')?.setValue($event)"
-              [required]="true">
-            </app-searchable-select>
-
-            <app-searchable-select
-              label="Project Cost Center"
-              placeholder="General / Corporate"
-              [options]="projectOptions()"
-              [ngModel]="createForm.get('project_id')?.value"
-              (ngModelChange)="createForm.get('project_id')?.setValue($event)">
-            </app-searchable-select>
-
-            <app-custom-input
-              label="Voucher Date *"
-              type="date"
-              formControlName="voucher_date"
-              [required]="true">
-            </app-custom-input>
-          </div>
-
-          <app-custom-textarea
-            label="Voucher Narration / Transaction Particulars *"
-            placeholder="e.g. Being payment released to Shah Cement for Batch 01 supply against PO-2026-0001..."
-            formControlName="narration"
-            [rows]="2"
-            [required]="true">
-          </app-custom-textarea>
-
-          <!-- Entries Dynamic Table -->
-          <div class="space-y-3 pt-2">
-            <div class="flex items-center justify-between">
-              <span class="text-sm font-bold text-foreground">Double-Entry Ledger Lines (Minimum 2)</span>
-              <app-custom-button variant="outline" size="sm" (btnClick)="addEntryLine()">
-                + Add Entry Line
-              </app-custom-button>
-            </div>
-
-            <div formArrayName="entries" class="space-y-3">
-              @for (entryGroup of entriesArray.controls; track $index) {
-                <div [formGroupName]="$index" class="p-3.5 rounded-xl border border-border bg-muted/20 space-y-2">
-                  <div class="flex items-center justify-between text-xs text-muted-foreground">
-                    <span class="font-bold text-foreground">Line #{{ $index + 1 }}</span>
-                    @if (entriesArray.length > 2) {
-                      <button type="button" (click)="removeEntryLine($index)" class="text-rose-600 hover:underline">
-                        Remove Line
-                      </button>
-                    }
-                  </div>
-
-                  <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
-                    <div class="md:col-span-4">
-                      <app-searchable-select
-                        label="Account Head *"
-                        placeholder="Select Account"
-                        [options]="accountOptions()"
-                        [ngModel]="entryGroup.get('account_id')?.value"
-                        (ngModelChange)="entryGroup.get('account_id')?.setValue($event)"
-                        [required]="true">
-                      </app-searchable-select>
-                    </div>
-
-                    <div class="md:col-span-4">
-                      <app-searchable-select
-                        label="Cost Center / WBS Dimension"
-                        placeholder="General Project"
-                        [options]="costCenterOptions()"
-                        [ngModel]="entryGroup.get('cost_center_id')?.value"
-                        (ngModelChange)="entryGroup.get('cost_center_id')?.setValue($event)">
-                      </app-searchable-select>
-                    </div>
-
-                    <div class="md:col-span-2">
-                      <app-custom-input
-                        label="Debit (Dr) BDT"
-                        type="number"
-                        placeholder="0.00"
-                        formControlName="debit_amount">
-                      </app-custom-input>
-                    </div>
-
-                    <div class="md:col-span-2">
-                      <app-custom-input
-                        label="Credit (Cr) BDT"
-                        type="number"
-                        placeholder="0.00"
-                        formControlName="credit_amount">
-                      </app-custom-input>
-                    </div>
-                  </div>
-
-                  <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
-                    <app-custom-input
-                      label="Cheque No (Optional)"
-                      placeholder="e.g. CHQ-99120"
-                      formControlName="cheque_no">
-                    </app-custom-input>
-
-                    <app-custom-input
-                      label="Bill / PO Reference"
-                      placeholder="e.g. RA-004, PO-2026-9"
-                      formControlName="bill_reference">
-                    </app-custom-input>
-
-                    <app-custom-input
-                      label="Line Narration"
-                      placeholder="Specific note for this ledger entry..."
-                      formControlName="narration">
-                    </app-custom-input>
-                  </div>
-                </div>
-              }
-            </div>
-          </div>
-
-          <!-- Dynamic Double-Entry Safeguard Counter -->
-          <div class="p-4 rounded-xl bg-card border border-border flex items-center justify-between text-sm">
-            <div class="space-y-1">
-              <div class="text-xs text-muted-foreground">Double-Entry Balance Verification</div>
-              <div class="font-bold">
-                Σ Dr: ৳{{ computedTotalDebit() | number:'1.2-2' }} • Σ Cr: ৳{{ computedTotalCredit() | number:'1.2-2' }}
-              </div>
-            </div>
-
-            <div>
-              @if (computedTotalDebit() > 0 && computedTotalDebit() === computedTotalCredit()) {
-                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
-                  ✓ Perfectly Balanced
-                </span>
-              } @else {
-                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 animate-pulse">
-                  Diff: ৳{{ (computedTotalDebit() - computedTotalCredit()) | number:'1.2-2' }}
-                </span>
-              }
-            </div>
-          </div>
-
-          <div class="pt-4 border-t border-border flex items-center justify-end gap-3">
-            <app-custom-button variant="outline" (btnClick)="closeCreateModal()">Cancel</app-custom-button>
-            <app-custom-button variant="primary" type="submit" [disabled]="isSubmitting()">
-              {{ isSubmitting() ? 'Posting...' : 'Post Balanced Voucher' }}
-            </app-custom-button>
-          </div>
-        </form>
+        <button
+          (click)="goToNextPage()"
+          [disabled]="!hasMore()"
+          class="px-3 py-1.5 rounded-xl border border-border bg-card text-foreground hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors inline-flex items-center gap-1 font-semibold"
+        >
+          <span>Next</span>
+          <i class="ri-arrow-right-s-line"></i>
+        </button>
       </div>
     </div>
-  }
+  </div>
 </app-card-container>

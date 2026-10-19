@@ -1,0 +1,286 @@
+<app-card-container
+  title="Voucher Audit Trail & Journal Details"
+  subtitle="Double-entry journal drilldown with complete transaction immutability and reversal trail"
+  badge="Audit Certified"
+>
+  <!-- Unified Module Sub-Navigation Bar -->
+  <div class="flex items-center gap-1.5 p-1.5 bg-secondary/40 rounded-2xl border border-border overflow-x-auto mb-6 print:hidden">
+    <a
+      routerLink="/accounts/coa"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-node-tree"></i>
+      <span>Chart of Accounts</span>
+    </a>
+
+    <a
+      routerLink="/accounts/vouchers"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-card text-foreground shadow-xs border border-border inline-flex items-center gap-1.5 whitespace-nowrap"
+    >
+      <i class="ri-file-list-3-line text-primary"></i>
+      <span>General Ledger Vouchers</span>
+    </a>
+
+    <a
+      routerLink="/accounts/ledger"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-booklet-line"></i>
+      <span>Ledger Inquiry & Statements</span>
+    </a>
+
+    <a
+      routerLink="/accounts/financial-reports"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-pie-chart-2-line"></i>
+      <span>Financial Reports (P&L / BS)</span>
+    </a>
+
+    <div class="ml-auto pl-2 flex items-center gap-2">
+      <a
+        routerLink="/settings/lookups"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-primary hover:text-primary/80 bg-card rounded-xl border border-border shadow-xs transition-colors whitespace-nowrap"
+        title="Dynamic Dropdown Creation & Customization Settings"
+      >
+        <i class="ri-settings-4-line"></i>
+        <span>Dropdown Settings</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Notifications -->
+  <div *ngIf="errorMessage()" class="p-4 rounded-2xl bg-destructive/10 border border-destructive/20 text-destructive text-sm flex items-center justify-between mb-6">
+    <div class="flex items-center gap-2">
+      <i class="ri-error-warning-line text-lg"></i>
+      <span>{{ errorMessage() }}</span>
+    </div>
+    <button (click)="errorMessage.set(null)" class="text-destructive hover:opacity-75">
+      <i class="ri-close-line"></i>
+    </button>
+  </div>
+
+  <div *ngIf="successMessage()" class="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-sm flex items-center justify-between mb-6">
+    <div class="flex items-center gap-2">
+      <i class="ri-checkbox-circle-line text-lg"></i>
+      <span>{{ successMessage() }}</span>
+    </div>
+    <button (click)="successMessage.set(null)" class="hover:opacity-75">
+      <i class="ri-close-line"></i>
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading()" class="py-20 text-center text-muted-foreground">
+    <i class="ri-loader-4-line text-3xl animate-spin text-primary inline-block mb-3"></i>
+    <p class="text-sm">Loading voucher audit details...</p>
+  </div>
+
+  <div *ngIf="!isLoading() && voucher()" class="space-y-6">
+
+    <!-- Top Action Toolbar (hidden on print) -->
+    <div class="flex flex-wrap items-center justify-between gap-3 p-4 rounded-2xl bg-secondary/30 border border-border print:hidden">
+      <button
+        (click)="backToList()"
+        class="px-4 py-2 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground bg-card hover:bg-secondary border border-border transition-all inline-flex items-center gap-1.5"
+      >
+        <i class="ri-arrow-left-line"></i>
+        <span>Back to Vouchers List</span>
+      </button>
+
+      <div class="flex items-center gap-2">
+        <button
+          (click)="printSlip()"
+          class="px-4 py-2 rounded-xl text-xs font-semibold text-foreground bg-card hover:bg-secondary border border-border transition-all inline-flex items-center gap-1.5"
+        >
+          <i class="ri-printer-line"></i>
+          <span>Print Voucher Slip</span>
+        </button>
+
+        <button
+          *ngIf="voucher()?.status === 'Posted'"
+          (click)="handleReverse()"
+          [disabled]="isReversing()"
+          class="px-4 py-2 rounded-xl text-xs font-semibold bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 border border-rose-500/20 transition-all inline-flex items-center gap-1.5 disabled:opacity-50"
+          title="Reversal creates an opposite balancing voucher and marks this transaction as Reversed"
+        >
+          <i *ngIf="isReversing()" class="ri-loader-4-line animate-spin"></i>
+          <i *ngIf="!isReversing()" class="ri-arrow-go-back-line"></i>
+          <span>{{ isReversing() ? 'Reversing...' : 'Reverse Voucher' }}</span>
+        </button>
+
+        <a
+          routerLink="/accounts/vouchers/create"
+          class="px-4 py-2 rounded-xl text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-all inline-flex items-center gap-1.5 shadow-xs"
+        >
+          <i class="ri-add-line"></i>
+          <span>+ New Voucher</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Printable Voucher Document Card -->
+    <div class="p-6 rounded-2xl bg-card border border-border shadow-xs space-y-6 print:border-none print:shadow-none print:p-0">
+      
+      <!-- Document Header -->
+      <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-6 border-b border-border">
+        <div>
+          <div class="inline-flex items-center gap-2 mb-2">
+            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-primary/10 text-primary border border-primary/20">
+              {{ voucher()?.voucher_type }}
+            </span>
+            <span
+              class="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider"
+              [ngClass]="{
+                'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20': voucher()?.status === 'Posted',
+                'bg-rose-500/10 text-rose-600 border border-rose-500/20': voucher()?.status === 'Reversed',
+                'bg-amber-500/10 text-amber-600 border border-amber-500/20': voucher()?.status === 'Draft'
+              }"
+            >
+              {{ voucher()?.status }}
+            </span>
+          </div>
+
+          <h2 class="text-2xl font-bold font-mono text-foreground tracking-tight">
+            {{ voucher()?.voucher_number }}
+          </h2>
+          <p class="text-xs text-muted-foreground mt-1">
+            General Ledger Accounting Transaction
+          </p>
+        </div>
+
+        <div class="text-left sm:text-right space-y-1 text-xs">
+          <div>
+            <span class="text-muted-foreground">Posting Date: </span>
+            <span class="font-semibold font-mono text-foreground">{{ voucher()?.voucher_date | date:'dd MMM yyyy' }}</span>
+          </div>
+          <div>
+            <span class="text-muted-foreground">Project Dimension: </span>
+            <span class="font-semibold text-foreground">{{ voucher()?.project_name || 'General Corporate' }}</span>
+          </div>
+          <div *ngIf="voucher()?.source_document_type">
+            <span class="text-muted-foreground">Source Document: </span>
+            <span class="font-semibold text-foreground">{{ voucher()?.source_document_type }} #{{ voucher()?.source_document_id || 'N/A' }}</span>
+          </div>
+          <div *ngIf="voucher()?.reversal_voucher_id" class="text-rose-500 font-semibold">
+            Reversed by Voucher #{{ voucher()?.reversal_voucher_id }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Master Narration -->
+      <div class="p-4 rounded-xl bg-secondary/30 border border-border">
+        <span class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block mb-1">
+          Narration / Explanation
+        </span>
+        <p class="text-sm text-foreground italic">
+          "{{ voucher()?.narration }}"
+        </p>
+      </div>
+
+      <!-- Double-Entry Line Items Table -->
+      <div class="overflow-x-auto rounded-xl border border-border">
+        <table class="w-full text-xs text-left border-collapse">
+          <thead>
+            <tr class="bg-secondary/60 border-b border-border text-muted-foreground font-semibold uppercase tracking-wider text-[11px]">
+              <th class="py-3 px-3 text-center w-10">#</th>
+              <th class="py-3 px-4">Account Head</th>
+              <th class="py-3 px-3">Type</th>
+              <th class="py-3 px-4">Dimension / Cost Centre</th>
+              <th class="py-3 px-4">Line Memo & Reference</th>
+              <th class="py-3 px-4 text-right">Debit (৳)</th>
+              <th class="py-3 px-4 text-right">Credit (৳)</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border">
+            <tr *ngFor="let entry of voucher()?.entries; let idx = index" class="hover:bg-secondary/15 transition-colors">
+              <td class="py-3 px-3 text-center text-muted-foreground font-mono">{{ idx + 1 }}</td>
+              <td class="py-3 px-4">
+                <div class="font-semibold font-mono text-primary">
+                  {{ entry.account_code || '---' }}
+                </div>
+                <div class="text-foreground font-medium">
+                  {{ entry.account_name_en || 'Account #' + entry.account_id }}
+                </div>
+              </td>
+              <td class="py-3 px-3">
+                <span class="px-2 py-0.5 rounded text-[10px] font-medium bg-secondary text-foreground border border-border">
+                  {{ entry.account_type || 'GL' }}
+                </span>
+              </td>
+              <td class="py-3 px-4 text-muted-foreground">
+                <div *ngIf="entry.cost_center_name" class="inline-flex items-center gap-1 text-[11px]">
+                  <i class="ri-building-line text-muted-foreground"></i>
+                  <span>{{ entry.cost_center_name }}</span>
+                </div>
+                <div *ngIf="!entry.cost_center_name" class="text-muted-foreground text-[11px]">
+                  ---
+                </div>
+              </td>
+              <td class="py-3 px-4">
+                <div *ngIf="entry.narration" class="text-foreground">{{ entry.narration }}</div>
+                <div *ngIf="entry.cheque_no" class="text-[11px] text-muted-foreground font-mono">
+                  CQ: {{ entry.cheque_no }} {{ entry.cheque_date ? '(' + (entry.cheque_date | date:'dd/MM/yyyy') + ')' : '' }}
+                </div>
+                <div *ngIf="entry.bill_reference" class="text-[11px] text-muted-foreground">
+                  Ref: {{ entry.bill_reference }}
+                </div>
+                <div *ngIf="!entry.narration && !entry.cheque_no && !entry.bill_reference" class="text-muted-foreground">
+                  ---
+                </div>
+              </td>
+              <td class="py-3 px-4 text-right font-mono font-semibold" [ngClass]="entry.debit_amount > 0 ? 'text-foreground' : 'text-muted-foreground'">
+                {{ entry.debit_amount > 0 ? (entry.debit_amount | number:'1.2-2') : '-' }}
+              </td>
+              <td class="py-3 px-4 text-right font-mono font-semibold" [ngClass]="entry.credit_amount > 0 ? 'text-foreground' : 'text-muted-foreground'">
+                {{ entry.credit_amount > 0 ? (entry.credit_amount | number:'1.2-2') : '-' }}
+              </td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr class="bg-secondary/40 font-bold border-t-2 border-border text-foreground">
+              <td colspan="5" class="py-3 px-4 text-right uppercase tracking-wider text-xs">
+                Total Transaction Volume:
+              </td>
+              <td class="py-3 px-4 text-right font-mono text-sm text-foreground">
+                ৳ {{ voucher()?.total_debit_amount | number:'1.2-2' }}
+              </td>
+              <td class="py-3 px-4 text-right font-mono text-sm text-foreground">
+                ৳ {{ voucher()?.total_credit_amount | number:'1.2-2' }}
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <!-- Audit Metadata & Signature Block -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-border text-xs text-muted-foreground">
+        <div>
+          <span class="font-medium text-foreground">Recorded By: </span>
+          <span>{{ voucher()?.created_by_name || 'System Operator' }}</span>
+          <span class="mx-1">•</span>
+          <span>{{ voucher()?.created_at | date:'dd MMM yyyy, hh:mm a' }}</span>
+        </div>
+
+        <div class="sm:text-right">
+          <span class="font-medium text-foreground">Posting Status: </span>
+          <span class="font-mono text-emerald-600 dark:text-emerald-400 font-bold">Committed to General Ledger</span>
+        </div>
+      </div>
+
+      <!-- Printable Authorisation Signatures (visible on print) -->
+      <div class="hidden print:grid grid-cols-3 gap-8 pt-16 text-center text-xs text-foreground">
+        <div class="border-t border-border pt-2">
+          <span>Prepared By</span>
+        </div>
+        <div class="border-t border-border pt-2">
+          <span>Verified & Checked By</span>
+        </div>
+        <div class="border-t border-border pt-2">
+          <span>Approved / CFO</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</app-card-container>

@@ -540,6 +540,13 @@ async def build_hierarchical_coa_tree(db: AsyncSession, org_id: int) -> List[Dic
             "currency": acc.currency or "BDT",
             "is_reconciliation_account": acc.is_reconciliation_account,
             "is_active": acc.is_active,
+            "normal_balance": getattr(acc, "normal_balance", "Debit") or "Debit",
+            "is_control_account": getattr(acc, "is_control_account", False) or False,
+            "requires_project": getattr(acc, "requires_project", False) or False,
+            "requires_cost_center": getattr(acc, "requires_cost_center", False) or False,
+            "statement_mapping": getattr(acc, "statement_mapping", "Balance Sheet") or "Balance Sheet",
+            "opening_balance": float(getattr(acc, "opening_balance", 0.0) or 0.0),
+            "migration_reference": getattr(acc, "migration_reference", None),
             "parent_account_id": acc.parent_account_id,
             "current_balance": balance_map.get(acc.id, 0.00),
             "children": []

@@ -1,0 +1,780 @@
+<!-- Master Card Container for Customer Accounts Receivable Ledger & Aging -->
+<app-card-container
+  title="Customer Accounts Receivable Ledger & Aging Analysis"
+  subtitle="Running customer statement of account, 5-tier overdue aging schedule, and unallocated advance cash tracking"
+  badge="AR Subledger Core"
+>
+  <!-- Unified Module Sub-Navigation Bar -->
+  <div class="flex items-center gap-1.5 p-1.5 bg-secondary/40 rounded-2xl border border-border overflow-x-auto mb-6 print:hidden">
+    <a
+      routerLink="/accounts/coa"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-node-tree"></i>
+      <span>Chart of Accounts</span>
+    </a>
+
+    <a
+      routerLink="/accounts/vouchers"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-file-list-3-line"></i>
+      <span>General Ledger Vouchers</span>
+    </a>
+
+    <a
+      routerLink="/accounts/ledger"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-booklet-line"></i>
+      <span>Ledger Inquiry & Statements</span>
+    </a>
+
+    <a
+      routerLink="/accounts/payables"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-money-dollar-circle-line"></i>
+      <span>Accounts Payable (AP)</span>
+    </a>
+
+    <a
+      routerLink="/accounts/receivables"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-hand-coin-line"></i>
+      <span>Accounts Receivable (AR)</span>
+    </a>
+
+    <a
+      routerLink="/accounts/receivables/receipts"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-refund-2-line"></i>
+      <span>Receipts & Allocations</span>
+    </a>
+
+    <a
+      routerLink="/accounts/receivables/ledger"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-card text-foreground shadow-xs border border-border inline-flex items-center gap-1.5 whitespace-nowrap"
+    >
+      <i class="ri-user-star-line text-primary"></i>
+      <span>Customer Ledger & Aging</span>
+    </a>
+
+    <a
+      routerLink="/accounts/financial-reports"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-pie-chart-2-line"></i>
+      <span>Financial Reports (P&L / BS)</span>
+    </a>
+
+    <div class="ml-auto pl-2 flex items-center gap-2">
+      <a
+        routerLink="/settings/lookups"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-primary hover:text-primary/80 bg-card rounded-xl border border-border shadow-xs transition-colors whitespace-nowrap"
+      >
+        <i class="ri-settings-4-line"></i>
+        <span>Dropdown Settings</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Primary Filter Ribbon -->
+  <div class="bg-card rounded-2xl border border-border p-5 mb-6 shadow-xs print:hidden">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+      <!-- Searchable Customer Dropdown with Add New -->
+      <div class="lg:col-span-2">
+        <app-searchable-select
+          label="Select Apartment Buyer / Customer *"
+          placeholder="Search by customer name, phone, code..."
+          [options]="customerOptions()"
+          [value]="selectedCustomerId()"
+          (valueChange)="onCustomerChange($event)"
+          [allowCreateNew]="true"
+          createRoute="/crm/customers"
+          hint="Select customer to view chronological ledger, receipts and balance confirmation"
+        ></app-searchable-select>
+      </div>
+
+      <!-- Date From -->
+      <div>
+        <app-custom-input
+          label="Date From"
+          type="date"
+          [value]="dateFrom()"
+          (valueChange)="dateFrom.set($event); fetchStatement()"
+        ></app-custom-input>
+      </div>
+
+      <!-- Date To -->
+      <div>
+        <app-custom-input
+          label="Date To"
+          type="date"
+          [value]="dateTo()"
+          (valueChange)="dateTo.set($event); fetchStatement()"
+        ></app-custom-input>
+      </div>
+    </div>
+
+    <!-- Second Row: View Tabs & Action Buttons -->
+    <div class="flex flex-wrap items-center justify-between gap-3 pt-4 mt-4 border-t border-border">
+      <!-- View Mode Selector -->
+      <div class="inline-flex p-1 bg-secondary rounded-xl border border-border text-xs font-semibold">
+        <button
+          type="button"
+          (click)="activeView.set('statement')"
+          [class]="activeView() === 'statement' ? 'bg-card text-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground'"
+          class="px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer"
+        >
+          <i class="ri-list-check-2"></i>
+          <span>Customer Statement</span>
+        </button>
+
+        <button
+          type="button"
+          (click)="activeView.set('aging')"
+          [class]="activeView() === 'aging' ? 'bg-card text-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground'"
+          class="px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer"
+        >
+          <i class="ri-time-line"></i>
+          <span>Receivable Aging (5 Buckets)</span>
+        </button>
+
+        <button
+          type="button"
+          (click)="activeView.set('unallocated')"
+          [class]="activeView() === 'unallocated' ? 'bg-card text-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground'"
+          class="px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer"
+        >
+          <i class="ri-safe-2-line"></i>
+          <span>Unallocated Advance Cash</span>
+        </button>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center gap-2">
+        <app-custom-button
+          variant="outline"
+          size="sm"
+          (btnClick)="resetFilters()"
+        >
+          <i class="ri-refresh-line mr-1.5"></i>
+          <span>Reset</span>
+        </app-custom-button>
+
+        <app-custom-button
+          variant="outline"
+          size="sm"
+          (btnClick)="exportCSV()"
+          [disabled]="!statementData() || !filteredTimeline().length"
+        >
+          <i class="ri-file-excel-2-line mr-1.5 text-emerald-600"></i>
+          <span>Export CSV</span>
+        </app-custom-button>
+
+        <button
+          type="button"
+          (click)="openAdvanceModal()"
+          class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-primary bg-secondary hover:bg-secondary/80 rounded-xl border border-border transition-colors cursor-pointer"
+        >
+          <i class="ri-add-line"></i>
+          <span>Record Advance Cash</span>
+        </button>
+
+        <app-custom-button
+          variant="primary"
+          size="sm"
+          (btnClick)="printStatement()"
+          [disabled]="!statementData()"
+        >
+          <i class="ri-printer-line mr-1.5"></i>
+          <span>Print Statement</span>
+        </app-custom-button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading & Error States -->
+  @if (isLoading()) {
+    <div class="bg-card rounded-2xl border border-border p-12 text-center shadow-xs mb-6">
+      <div class="inline-block animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mb-3"></div>
+      <p class="text-sm font-medium text-foreground">Loading customer statement & aging schedules...</p>
+    </div>
+  }
+
+  @if (errorMessage()) {
+    <div class="bg-destructive/10 text-destructive border border-destructive/20 rounded-2xl p-4 mb-6 flex items-start gap-3">
+      <i class="ri-error-warning-line text-lg mt-0.5"></i>
+      <div class="text-xs">
+        <p class="font-bold">Error</p>
+        <p class="mt-0.5">{{ errorMessage() }}</p>
+      </div>
+    </div>
+  }
+
+  @if (successMessage()) {
+    <div class="bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 rounded-2xl p-4 mb-6 flex items-start gap-3">
+      <i class="ri-checkbox-circle-line text-lg mt-0.5"></i>
+      <div class="text-xs">
+        <p class="font-bold">Success</p>
+        <p class="mt-0.5">{{ successMessage() }}</p>
+      </div>
+    </div>
+  }
+
+  <!-- VIEW 1: Running Customer Statement -->
+  @if (activeView() === 'statement') {
+    @if (statementData(); as stmt) {
+      <!-- Summary Metrics Bar for Selected Customer -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div class="bg-card rounded-2xl border border-border p-4 shadow-xs">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Opening Balance</span>
+            <span class="w-8 h-8 rounded-xl bg-secondary flex items-center justify-center text-muted-foreground">
+              <i class="ri-history-line"></i>
+            </span>
+          </div>
+          <div class="mt-2 text-xl font-bold text-foreground">
+            ৳{{ stmt.opening_balance | number:'1.2-2' }}
+          </div>
+          <p class="text-[11px] text-muted-foreground mt-1">Carried forward from prior period</p>
+        </div>
+
+        <div class="bg-card rounded-2xl border border-border p-4 shadow-xs">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Demanded (Debit)</span>
+            <span class="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+              <i class="ri-file-paper-2-line"></i>
+            </span>
+          </div>
+          <div class="mt-2 text-xl font-bold text-foreground">
+            ৳{{ stmt.total_demanded | number:'1.2-2' }}
+          </div>
+          <p class="text-[11px] text-muted-foreground mt-1">Total installments & notices billed</p>
+        </div>
+
+        <div class="bg-card rounded-2xl border border-border p-4 shadow-xs">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Collected (Credit)</span>
+            <span class="w-8 h-8 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600">
+              <i class="ri-check-double-line"></i>
+            </span>
+          </div>
+          <div class="mt-2 text-xl font-bold text-emerald-600">
+            ৳{{ stmt.total_collected | number:'1.2-2' }}
+          </div>
+          <p class="text-[11px] text-muted-foreground mt-1">Cleared money receipts & bank deposits</p>
+        </div>
+
+        <div class="bg-card rounded-2xl border border-border p-4 shadow-xs">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Net Outstanding Due</span>
+            <span class="w-8 h-8 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-600">
+              <i class="ri-scales-3-line"></i>
+            </span>
+          </div>
+          <div class="mt-2 text-xl font-bold" [class]="stmt.net_closing_receivable > 0 ? 'text-amber-600' : 'text-emerald-600'">
+            ৳{{ stmt.net_closing_receivable | number:'1.2-2' }}
+          </div>
+          <p class="text-[11px] text-muted-foreground mt-1">
+            {{ stmt.net_closing_receivable > 0 ? 'Net Receivable Owed to Developer' : 'All Milestone Demands Fully Settled' }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Statement Timeline Table Container -->
+      <div class="bg-card rounded-2xl border border-border shadow-xs overflow-hidden">
+        <!-- Table Filter & Header Bar -->
+        <div class="p-4 border-b border-border flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-primary"></span>
+            <h3 class="text-sm font-bold text-foreground">
+              Statement of Account: {{ stmt.customer_name }}
+            </h3>
+            @if (stmt.total_unallocated_advance > 0) {
+              <span class="text-xs px-2.5 py-0.5 rounded-full bg-purple-500/10 text-purple-600 border border-purple-500/20 font-bold">
+                Unallocated Advance: ৳{{ stmt.total_unallocated_advance | number:'1.2-2' }}
+              </span>
+            }
+          </div>
+
+          <div class="w-full sm:w-64">
+            <app-custom-input
+              placeholder="Search reference, description..."
+              [value]="tableSearch()"
+              (valueChange)="tableSearch.set($event)"
+            ></app-custom-input>
+          </div>
+        </div>
+
+        <!-- Table -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-secondary/60 text-muted-foreground uppercase text-[10px] tracking-wider font-semibold border-b border-border">
+              <tr>
+                <th class="py-3 px-4">Date</th>
+                <th class="py-3 px-4">Type</th>
+                <th class="py-3 px-4">Reference #</th>
+                <th class="py-3 px-4">Description / Milestone Particulars</th>
+                <th class="py-3 px-4">Project / Unit</th>
+                <th class="py-3 px-4 text-right">Debit / Billed (৳)</th>
+                <th class="py-3 px-4 text-right">Credit / Paid (৳)</th>
+                <th class="py-3 px-4 text-right">Running Balance (৳)</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border">
+              <!-- Opening Balance Row -->
+              <tr class="bg-secondary/20 font-medium">
+                <td class="py-2.5 px-4 text-muted-foreground">{{ stmt.date_from || 'Opening' }}</td>
+                <td class="py-2.5 px-4">
+                  <span class="px-2 py-0.5 text-[10px] font-semibold rounded-md bg-secondary text-foreground">
+                    Opening
+                  </span>
+                </td>
+                <td class="py-2.5 px-4 font-mono text-muted-foreground">—</td>
+                <td class="py-2.5 px-4 text-muted-foreground">Opening Balance Brought Forward</td>
+                <td class="py-2.5 px-4 text-muted-foreground">—</td>
+                <td class="py-2.5 px-4 text-right">—</td>
+                <td class="py-2.5 px-4 text-right">—</td>
+                <td class="py-2.5 px-4 text-right font-bold text-foreground">
+                  ৳{{ stmt.opening_balance | number:'1.2-2' }}
+                </td>
+              </tr>
+
+              @for (item of filteredTimeline(); track $index) {
+                <tr class="hover:bg-secondary/30 transition-colors">
+                  <td class="py-3 px-4 font-medium text-foreground whitespace-nowrap">
+                    {{ item.transaction_date }}
+                  </td>
+                  <td class="py-3 px-4 whitespace-nowrap">
+                    @if (item.transaction_type === 'Demand_Notice') {
+                      <span class="px-2 py-0.5 text-[10px] font-semibold rounded-md bg-primary/10 text-primary border border-primary/20">
+                        <i class="ri-file-paper-2-line mr-0.5"></i> Demand
+                      </span>
+                    } @else if (item.transaction_type === 'Money_Receipt') {
+                      <span class="px-2 py-0.5 text-[10px] font-semibold rounded-md bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                        <i class="ri-check-line mr-0.5"></i> Receipt
+                      </span>
+                    } @else if (item.transaction_type === 'Credit_Note' || item.transaction_type === 'Late_Fee_Waiver') {
+                      <span class="px-2 py-0.5 text-[10px] font-semibold rounded-md bg-purple-500/10 text-purple-600 border border-purple-500/20">
+                        <i class="ri-subtract-line mr-0.5"></i> Concession
+                      </span>
+                    } @else {
+                      <span class="px-2 py-0.5 text-[10px] font-semibold rounded-md bg-secondary text-foreground border border-border">
+                        {{ item.transaction_type }}
+                      </span>
+                    }
+                  </td>
+                  <td class="py-3 px-4 font-mono font-semibold text-foreground whitespace-nowrap">
+                    {{ item.reference_number }}
+                  </td>
+                  <td class="py-3 px-4 text-foreground min-w-[220px]">
+                    {{ item.description }}
+                  </td>
+                  <td class="py-3 px-4 text-muted-foreground whitespace-nowrap">
+                    <span class="inline-flex items-center gap-1">
+                      <i class="ri-building-line text-xs"></i>
+                      <span>{{ item.project_name || 'Corporate' }}</span>
+                      @if (item.unit_number) {
+                        <span class="font-bold text-foreground">({{ item.unit_number }})</span>
+                      }
+                    </span>
+                  </td>
+                  <td class="py-3 px-4 text-right font-medium text-foreground whitespace-nowrap">
+                    {{ item.debit_demand > 0 ? ('৳' + (item.debit_demand | number:'1.2-2')) : '—' }}
+                  </td>
+                  <td class="py-3 px-4 text-right font-medium text-emerald-600 whitespace-nowrap">
+                    {{ item.credit_collection > 0 ? ('৳' + (item.credit_collection | number:'1.2-2')) : '—' }}
+                  </td>
+                  <td class="py-3 px-4 text-right font-bold whitespace-nowrap" [class]="item.running_receivable_balance > 0 ? 'text-amber-600' : 'text-emerald-600'">
+                    ৳{{ item.running_receivable_balance | number:'1.2-2' }}
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="8" class="text-center py-10 text-muted-foreground">
+                    <i class="ri-inbox-line text-2xl mb-1 block"></i>
+                    No transactions recorded for the selected period.
+                  </td>
+                </tr>
+              }
+            </tbody>
+            <tfoot class="bg-secondary/40 font-bold border-t border-border">
+              <tr>
+                <td colspan="5" class="py-3 px-4 text-right text-xs uppercase tracking-wider text-muted-foreground">
+                  Statement Totals & Net Closing Receivable:
+                </td>
+                <td class="py-3 px-4 text-right text-foreground text-xs">
+                  ৳{{ stmt.total_demanded | number:'1.2-2' }}
+                </td>
+                <td class="py-3 px-4 text-right text-emerald-600 text-xs">
+                  ৳{{ stmt.total_collected | number:'1.2-2' }}
+                </td>
+                <td class="py-3 px-4 text-right text-xs" [class]="stmt.net_closing_receivable > 0 ? 'text-amber-600' : 'text-emerald-600'">
+                  ৳{{ stmt.net_closing_receivable | number:'1.2-2' }}
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    } @else {
+      <!-- Prompt to Select Customer -->
+      <div class="bg-card rounded-2xl border border-dashed border-border p-12 text-center shadow-xs">
+        <div class="w-16 h-16 rounded-2xl bg-secondary mx-auto flex items-center justify-center text-muted-foreground text-2xl mb-4">
+          <i class="ri-user-star-line"></i>
+        </div>
+        <h3 class="text-base font-bold text-foreground">Select a Customer / Apartment Buyer</h3>
+        <p class="text-xs text-muted-foreground max-w-md mx-auto mt-1 mb-5">
+          Choose a registered flat buyer from the dropdown above to load their chronological ledger, verified demand notices, money receipts, and running balance.
+        </p>
+        <div class="flex items-center justify-center gap-3">
+          <a
+            routerLink="/accounts/receivables/create"
+            class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-primary-foreground bg-primary rounded-xl shadow-xs hover:bg-primary/90 transition-all"
+          >
+            <i class="ri-add-line"></i>
+            <span>Create Demand Notice</span>
+          </a>
+        </div>
+      </div>
+    }
+  }
+
+  <!-- VIEW 2: Receivable Overdue Aging Analysis (5 Buckets) -->
+  @if (activeView() === 'aging') {
+    @if (agingData(); as aging) {
+      <!-- 5 Aging Buckets Ribbon -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 mb-6">
+        <!-- Bucket 1: Not yet due -->
+        <div class="bg-card rounded-2xl border border-border p-4 shadow-xs">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-[11px] font-semibold text-muted-foreground">Not Yet Due</span>
+            <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+              {{ aging.not_yet_due_count }} Bills
+            </span>
+          </div>
+          <div class="text-lg font-bold text-foreground">
+            ৳{{ aging.not_yet_due_amount | number:'1.2-2' }}
+          </div>
+          <p class="text-[10px] text-muted-foreground mt-1">Payments not yet overdue</p>
+        </div>
+
+        <!-- Bucket 2: 1-30 days -->
+        <div class="bg-card rounded-2xl border border-border p-4 shadow-xs">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-[11px] font-semibold text-muted-foreground">1 – 30 Days</span>
+            <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20">
+              {{ aging.days_1_to_30_count }} Bills
+            </span>
+          </div>
+          <div class="text-lg font-bold text-amber-600">
+            ৳{{ aging.days_1_to_30_amount | number:'1.2-2' }}
+          </div>
+          <p class="text-[10px] text-muted-foreground mt-1">Recently overdue</p>
+        </div>
+
+        <!-- Bucket 3: 31-60 days -->
+        <div class="bg-card rounded-2xl border border-border p-4 shadow-xs">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-[11px] font-semibold text-muted-foreground">31 – 60 Days</span>
+            <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-orange-500/10 text-orange-600 border border-orange-500/20">
+              {{ aging.days_31_to_60_count }} Bills
+            </span>
+          </div>
+          <div class="text-lg font-bold text-orange-600">
+            ৳{{ aging.days_31_to_60_amount | number:'1.2-2' }}
+          </div>
+          <p class="text-[10px] text-muted-foreground mt-1">Moderate overdue</p>
+        </div>
+
+        <!-- Bucket 4: 61-90 days -->
+        <div class="bg-card rounded-2xl border border-border p-4 shadow-xs">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-[11px] font-semibold text-muted-foreground">61 – 90 Days</span>
+            <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-rose-500/10 text-rose-600 border border-rose-500/20">
+              {{ aging.days_61_to_90_count }} Bills
+            </span>
+          </div>
+          <div class="text-lg font-bold text-rose-600">
+            ৳{{ aging.days_61_to_90_amount | number:'1.2-2' }}
+          </div>
+          <p class="text-[10px] text-muted-foreground mt-1">High overdue</p>
+        </div>
+
+        <!-- Bucket 5: Over 90 days -->
+        <div class="bg-card rounded-2xl border border-border p-4 shadow-xs">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-[11px] font-semibold text-muted-foreground">Over 90 Days</span>
+            <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-red-500/10 text-red-700 border border-red-500/30">
+              {{ aging.over_90_days_count }} Bills
+            </span>
+          </div>
+          <div class="text-lg font-bold text-red-600">
+            ৳{{ aging.over_90_days_amount | number:'1.2-2' }}
+          </div>
+          <p class="text-[10px] text-muted-foreground mt-1">Long-overdue receivables</p>
+        </div>
+      </div>
+
+      <!-- Aging Schedule Table -->
+      <div class="bg-card rounded-2xl border border-border shadow-xs overflow-hidden">
+        <div class="p-4 border-b border-border flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <i class="ri-alarm-warning-line text-amber-500"></i>
+            <h3 class="text-sm font-bold text-foreground">Receivable Aging Schedule by Actual Due Date</h3>
+          </div>
+          <span class="text-xs text-muted-foreground">
+            As of {{ aging.as_of_date }} • Total: ৳{{ aging.total_receivable_balance | number:'1.2-2' }}
+          </span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-secondary/60 text-muted-foreground uppercase text-[10px] tracking-wider font-semibold border-b border-border">
+              <tr>
+                <th class="py-3 px-4">Demand #</th>
+                <th class="py-3 px-4">Customer Name</th>
+                <th class="py-3 px-4">Project & Unit</th>
+                <th class="py-3 px-4">Due Date</th>
+                <th class="py-3 px-4 text-center">Days Overdue</th>
+                <th class="py-3 px-4 text-center">Aging Bucket</th>
+                <th class="py-3 px-4 text-right">Net Demand (৳)</th>
+                <th class="py-3 px-4 text-right">Collected (৳)</th>
+                <th class="py-3 px-4 text-right">Balance Due (৳)</th>
+                <th class="py-3 px-4 text-center">Follow-up</th>
+                <th class="py-3 px-4 text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border">
+              @for (item of aging.items; track item.invoice_id) {
+                <tr class="hover:bg-secondary/30 transition-colors">
+                  <td class="py-3 px-4 font-mono font-bold text-primary whitespace-nowrap">
+                    {{ item.invoice_number }}
+                  </td>
+                  <td class="py-3 px-4 font-semibold text-foreground whitespace-nowrap">
+                    {{ item.customer_name }}
+                  </td>
+                  <td class="py-3 px-4 text-muted-foreground whitespace-nowrap">
+                    {{ item.project_name }} {{ item.unit_number ? ('(' + item.unit_number + ')') : '' }}
+                  </td>
+                  <td class="py-3 px-4 whitespace-nowrap font-medium">
+                    {{ item.due_date }}
+                  </td>
+                  <td class="py-3 px-4 text-center font-bold whitespace-nowrap" [class]="item.days_overdue > 0 ? 'text-rose-600' : 'text-emerald-600'">
+                    {{ item.days_overdue > 0 ? (item.days_overdue + ' days') : 'Current' }}
+                  </td>
+                  <td class="py-3 px-4 text-center whitespace-nowrap">
+                    @if (item.aging_bucket === 'Not yet due') {
+                      <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                        Not Yet Due
+                      </span>
+                    } @else if (item.aging_bucket === '1-30 days') {
+                      <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 border border-amber-500/20">
+                        1–30 Days
+                      </span>
+                    } @else if (item.aging_bucket === '31-60 days') {
+                      <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-orange-500/10 text-orange-600 border border-orange-500/20">
+                        31–60 Days
+                      </span>
+                    } @else {
+                      <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-600 border border-rose-500/20">
+                        {{ item.aging_bucket }}
+                      </span>
+                    }
+                  </td>
+                  <td class="py-3 px-4 text-right text-foreground font-medium whitespace-nowrap">
+                    ৳{{ item.net_receivable_amount | number:'1.2-2' }}
+                  </td>
+                  <td class="py-3 px-4 text-right text-emerald-600 font-medium whitespace-nowrap">
+                    ৳{{ item.collected_amount | number:'1.2-2' }}
+                  </td>
+                  <td class="py-3 px-4 text-right font-bold text-amber-600 whitespace-nowrap">
+                    ৳{{ item.balance_due | number:'1.2-2' }}
+                  </td>
+                  <td class="py-3 px-4 text-center whitespace-nowrap">
+                    <span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-secondary text-foreground">
+                      {{ item.collection_followup_status }}
+                    </span>
+                  </td>
+                  <td class="py-3 px-4 text-center whitespace-nowrap">
+                    <a
+                      [routerLink]="['/accounts/receivables/view', item.invoice_id]"
+                      class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                    >
+                      <i class="ri-eye-line"></i>
+                      <span>View & Collect</span>
+                    </a>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="11" class="text-center py-10 text-muted-foreground">
+                    No outstanding overdue receivables found.
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+  }
+
+  <!-- VIEW 3: Unallocated Cash Advance Tracking -->
+  @if (activeView() === 'unallocated') {
+    <div class="bg-card rounded-2xl border border-border p-6 shadow-xs mb-6">
+      <div class="flex items-center justify-between pb-4 border-b border-border mb-4">
+        <div>
+          <h3 class="text-sm font-bold text-foreground">Unallocated Cash & Advance Receipts Tracking</h3>
+          <p class="text-xs text-muted-foreground">
+            Customer advance deposits received before specific milestone demand notice allocation.
+            Tracked under GL Liability (2140 - Customer Advances) until allocated.
+          </p>
+        </div>
+        <button
+          type="button"
+          (click)="openAdvanceModal()"
+          class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-primary-foreground bg-primary rounded-xl shadow-xs hover:bg-primary/90 transition-all cursor-pointer"
+        >
+          <i class="ri-add-line"></i>
+          <span>Record New Advance Receipt</span>
+        </button>
+      </div>
+
+      <div class="p-6 rounded-xl bg-secondary/30 border border-border text-center max-w-lg mx-auto">
+        <i class="ri-safe-2-line text-3xl text-primary mb-2 block"></i>
+        <h4 class="text-sm font-bold text-foreground">Active Advance Cash Pool</h4>
+        <p class="text-xs text-muted-foreground mt-1 mb-4">
+          Advance collections can be allocated directly to upcoming construction milestone demand notices or down-payment invoices.
+        </p>
+        <button
+          type="button"
+          (click)="openAdvanceModal()"
+          class="px-4 py-2 text-xs font-semibold rounded-xl bg-card border border-border text-foreground hover:bg-secondary transition-colors cursor-pointer"
+        >
+          Record Customer Cash Deposit
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- MODAL: RECORD UNALLOCATED ADVANCE CASH -->
+  @if (showAdvanceModal()) {
+    <div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+      <div class="bg-card rounded-2xl border border-border shadow-2xl max-w-md w-full p-6 animate-in fade-in zoom-in-95 duration-200">
+        <div class="flex items-center justify-between pb-3 border-b border-border mb-4">
+          <div class="flex items-center gap-2">
+            <span class="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold">
+              <i class="ri-safe-2-line"></i>
+            </span>
+            <h3 class="text-sm font-bold text-foreground">Record Unallocated Advance Receipt</h3>
+          </div>
+          <button
+            type="button"
+            (click)="showAdvanceModal.set(false)"
+            class="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-secondary cursor-pointer"
+          >
+            <i class="ri-close-line text-lg"></i>
+          </button>
+        </div>
+
+        <form [formGroup]="advanceForm" (ngSubmit)="submitAdvance()" class="space-y-4">
+          <div>
+            <app-searchable-select
+              label="Customer / Buyer *"
+              placeholder="Select customer..."
+              [options]="customerOptions()"
+              [value]="advanceForm.get('customer_id')?.value"
+              (valueChange)="advanceForm.patchValue({ customer_id: $event })"
+              [allowCreateNew]="true"
+              createRoute="/crm/customers"
+            ></app-searchable-select>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <app-custom-input
+                label="Advance Amount (৳) *"
+                type="number"
+                formControlName="amount"
+              ></app-custom-input>
+            </div>
+            <div>
+              <app-custom-input
+                label="Deposit Date *"
+                type="date"
+                formControlName="receipt_date"
+              ></app-custom-input>
+            </div>
+          </div>
+
+          <div>
+            <app-searchable-select
+              label="Deposit Bank Account (COA) *"
+              placeholder="Select bank account..."
+              [options]="bankAccountOptions"
+              [value]="advanceForm.get('bank_account_id')?.value"
+              (valueChange)="advanceForm.patchValue({ bank_account_id: $event })"
+              [allowCreateNew]="true"
+              createRoute="/accounts/coa/create"
+            ></app-searchable-select>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <app-custom-input
+                label="Bank Name"
+                placeholder="e.g. BRAC Bank Ltd"
+                formControlName="bank_name"
+              ></app-custom-input>
+            </div>
+            <div>
+              <app-custom-input
+                label="Cheque / Ref #"
+                placeholder="e.g. CHQ-99120"
+                formControlName="cheque_number"
+              ></app-custom-input>
+            </div>
+          </div>
+
+          <div>
+            <app-custom-textarea
+              label="Particulars / Deposit Purpose"
+              placeholder="e.g. Unallocated advance token deposit..."
+              formControlName="notes"
+              [rows]="2"
+            ></app-custom-textarea>
+          </div>
+
+          <div class="flex items-center justify-end gap-3 pt-3 border-t border-border">
+            <button
+              type="button"
+              (click)="showAdvanceModal.set(false)"
+              class="px-4 py-2 text-xs font-semibold rounded-xl border border-border text-foreground hover:bg-secondary cursor-pointer"
+            >
+              Cancel
+            </button>
+
+            <app-custom-button
+              type="submit"
+              variant="primary"
+              [disabled]="isSubmittingAdvance()"
+            >
+              @if (isSubmittingAdvance()) {
+                <span class="inline-block animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></span>
+                Saving...
+              } @else {
+                <i class="ri-check-line mr-1.5"></i>
+                Save Advance Receipt
+              }
+            </app-custom-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</app-card-container>

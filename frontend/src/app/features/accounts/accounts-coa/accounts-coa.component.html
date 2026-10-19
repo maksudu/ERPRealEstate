@@ -1,303 +1,378 @@
-<div class="space-y-6">
-  <!-- Master Card Container -->
-  <app-card-container
-    title="5-Tier Hierarchical Chart of Accounts (COA)"
-    subtitle="Enterprise General Ledger Structure: Assets, Liabilities, Equity, Revenue, CWIP Direct Cost & Overheads"
-    badge="SAP/Oracle Standard">
+<!-- Master Card Container for Chart of Accounts (COA) -->
+<app-card-container
+  title="Hierarchical Chart of Accounts (COA) & Financial Dimensions"
+  subtitle="5-Tier General Ledger Hierarchy: Assets, Liabilities, Equity, Revenue, Cost of Sales, and Operating Expenses"
+  badge="SAP / Oracle ERP Standard"
+>
 
-    <!-- Action Slot -->
-    <div card-actions class="flex items-center gap-2 flex-wrap">
+  <!-- KPI Metrics Ribbon for Chart of Accounts -->
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+    <div class="p-4 rounded-2xl bg-secondary/30 border border-border flex flex-col justify-between">
+      <span class="text-xs text-muted-foreground font-medium">Total Account Heads</span>
+      <span class="text-xl sm:text-2xl font-bold font-mono text-foreground mt-1">
+        {{ totalAccountsCount() }}
+      </span>
+      <span class="text-[10px] text-muted-foreground mt-0.5">Hierarchy Levels 1 to 5</span>
+    </div>
+
+    <div class="p-4 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex flex-col justify-between">
+      <span class="text-xs text-blue-600 dark:text-blue-400 font-medium">Posting Leaf Accounts</span>
+      <span class="text-xl sm:text-2xl font-bold font-mono text-blue-600 dark:text-blue-400 mt-1">
+        {{ postingAccountsCount() }}
+      </span>
+      <span class="text-[10px] text-blue-600/70 mt-0.5">Eligible for voucher debit/credit</span>
+    </div>
+
+    <div class="p-4 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex flex-col justify-between">
+      <span class="text-xs text-purple-600 dark:text-purple-400 font-medium">Control Accounts</span>
+      <span class="text-xl sm:text-2xl font-bold font-mono text-purple-600 dark:text-purple-400 mt-1">
+        {{ controlAccountsCount() }}
+      </span>
+      <span class="text-[10px] text-purple-600/70 mt-0.5">Sub-ledger reconciliation</span>
+    </div>
+
+    <div class="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex flex-col justify-between">
+      <span class="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Double-Entry Status</span>
+      <span class="text-base sm:text-lg font-bold font-mono text-emerald-600 dark:text-emerald-400 mt-1">
+        BALANCED
+      </span>
+      <span class="text-[10px] text-emerald-600/70 mt-0.5">IAS / IFRS-15 Compliant</span>
+    </div>
+  </div>
+
+  <!-- Action Bar & View Controls -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border mb-6">
+    <div class="flex items-center gap-2 flex-wrap">
       <!-- Toggle View Mode -->
-      <div class="flex items-center bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg border border-slate-200 dark:border-slate-700">
+      <div class="flex items-center bg-secondary/50 p-1 rounded-xl border border-border">
         <button
           type="button"
           (click)="viewMode.set('tree')"
-          class="px-3 py-1 text-xs font-semibold rounded-md transition"
-          [ngClass]="viewMode() === 'tree' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-600 dark:text-slate-300'">
-          Tree View
+          class="px-3 py-1.5 text-xs font-semibold rounded-lg transition-all"
+          [ngClass]="viewMode() === 'tree' ? 'bg-card text-foreground shadow-xs border border-border' : 'text-muted-foreground hover:text-foreground'"
+        >
+          <i class="ri-node-tree mr-1"></i> Interactive Tree
         </button>
         <button
           type="button"
           (click)="viewMode.set('flat')"
-          class="px-3 py-1 text-xs font-semibold rounded-md transition"
-          [ngClass]="viewMode() === 'flat' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-600 dark:text-slate-300'">
-          Flat Table
+          class="px-3 py-1.5 text-xs font-semibold rounded-lg transition-all"
+          [ngClass]="viewMode() === 'flat' ? 'bg-card text-foreground shadow-xs border border-border' : 'text-muted-foreground hover:text-foreground'"
+        >
+          <i class="ri-table-line mr-1"></i> Flat Register Table
         </button>
       </div>
 
-      @if (viewMode() === 'tree') {
+      <!-- Tree controls when in tree mode -->
+      <div *ngIf="viewMode() === 'tree'" class="flex items-center gap-1.5">
         <button
           type="button"
           (click)="expandAll()"
-          class="px-2.5 py-1 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+          class="px-2.5 py-1.5 text-xs font-semibold rounded-xl border border-border bg-card text-foreground hover:bg-secondary transition-colors"
+          title="Expand All Nodes"
+        >
           Expand All
         </button>
         <button
           type="button"
           (click)="collapseAll()"
-          class="px-2.5 py-1 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+          class="px-2.5 py-1.5 text-xs font-semibold rounded-xl border border-border bg-card text-foreground hover:bg-secondary transition-colors"
+          title="Collapse All Nodes"
+        >
           Collapse All
         </button>
-      }
-
-      <app-custom-button
-        label="Add Head of Account"
-        variant="primary"
-        icon="plus"
-        (btnClick)="openCreateModal()">
-      </app-custom-button>
+      </div>
     </div>
 
-    <!-- Search & Filter Bar -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-      <app-custom-input
-        label="Search Account by Code, Name, or Bengali"
-        placeholder="e.g. 1020, CWIP, Escrow, অগ্রিম..."
+    <!-- Export & Create New Action -->
+    <div class="flex items-center gap-2 shrink-0">
+      <button
+        type="button"
+        (click)="exportCSV()"
+        class="px-3 py-1.5 text-xs font-semibold rounded-xl border border-border bg-card text-foreground hover:bg-secondary transition-colors inline-flex items-center gap-1.5 shadow-xs"
+        title="Download CSV"
+      >
+        <i class="ri-file-excel-line text-emerald-600"></i> Export CSV
+      </button>
+
+      <button
+        type="button"
+        (click)="printCOA()"
+        class="px-3 py-1.5 text-xs font-semibold rounded-xl border border-border bg-card text-foreground hover:bg-secondary transition-colors inline-flex items-center gap-1.5 shadow-xs"
+        title="Print COA"
+      >
+        <i class="ri-printer-line text-primary"></i> Print
+      </button>
+
+      <!-- Rule 10: Dedicated Full-Screen Standalone Component Navigation -->
+      <button
+        type="button"
+        (click)="navigateToCreate()"
+        class="px-4 py-1.5 text-xs font-semibold rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-colors inline-flex items-center gap-1.5 shadow-xs"
+      >
+        <i class="ri-add-line text-sm"></i>
+        <span>Add Head of Account</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Search & Dynamic Filter Bar -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-4 rounded-2xl bg-secondary/20 border border-border mb-6">
+    <div class="relative">
+      <i class="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm"></i>
+      <input
+        type="text"
         [(ngModel)]="searchQuery"
-        icon="search">
-      </app-custom-input>
+        placeholder="Search code, name, or বাংলা..."
+        class="w-full pl-9 pr-3 py-2 bg-card border border-border rounded-xl text-xs text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:ring-1 focus:ring-primary shadow-xs"
+      />
+    </div>
 
-      <app-searchable-select
-        label="Filter Account Type"
-        placeholder="All Account Types..."
-        [options]="accountTypeOptions"
-        [allowCreateNew]="false"
+    <div>
+      <select
         [(ngModel)]="filterType"
-        (selectionChange)="loadFlatCOA()">
-      </app-searchable-select>
+        (change)="loadFlatCOA()"
+        class="w-full px-3 py-2 bg-card border border-border rounded-xl text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary shadow-xs"
+      >
+        <option *ngFor="let opt of accountTypeOptions" [value]="opt.value">{{ opt.label }}</option>
+      </select>
     </div>
+  </div>
 
-    <!-- VIEW 1: INTERACTIVE 5-TIER TREE VIEW -->
-    @if (viewMode() === 'tree') {
-      <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 p-4 min-h-[500px]">
-        @if (isLoading()) {
-          <div class="py-16 text-center text-xs text-slate-400">Loading hierarchical accounts tree...</div>
-        } @else {
-          <div class="space-y-1">
-            @for (rootNode of coaTree(); track rootNode.id) {
-              @if (filterTreeNode(rootNode, searchQuery())) {
-                <ng-container *ngTemplateOutlet="nodeTemplate; context: { $implicit: rootNode, depth: 0 }"></ng-container>
-              }
-            }
-          </div>
-        }
-      </div>
+  <!-- Loading State -->
+  <div *ngIf="isLoading()" class="py-16 text-center text-muted-foreground flex flex-col items-center gap-2">
+    <i class="ri-loader-4-line text-3xl animate-spin text-primary"></i>
+    <span class="text-xs">Computing live accounts hierarchy and balances...</span>
+  </div>
 
-      <!-- Recursive Node Template -->
-      <ng-template #nodeTemplate let-node let-depth="depth">
-        <div class="group">
-          <div 
-            class="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/60 transition border border-transparent hover:border-slate-200 dark:hover:border-slate-700/60"
-            [style.paddingLeft.px]="depth * 24 + 12">
-            
-            <div class="flex items-center gap-2.5 min-w-0 flex-1">
-              <!-- Expand / Collapse chevron for nodes with children -->
-              @if (node.children && node.children.length > 0) {
-                <button 
-                  type="button" 
-                  (click)="toggleNode(node)" 
-                  class="w-5 h-5 flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition">
-                  <svg 
-                    class="w-3.5 h-3.5 transition-transform duration-200" 
-                    [class.rotate-90]="node.expanded" 
-                    fill="none" 
-                    viewBox="0 0 24 24" 
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-              } @else {
-                <span class="w-5 h-5 flex items-center justify-center">
-                  <span class="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600"></span>
-                </span>
-              }
+  <!-- VIEW 1: INTERACTIVE 5-TIER TREE VIEW -->
+  <div *ngIf="!isLoading() && viewMode() === 'tree'" class="rounded-2xl border border-border bg-card p-4 min-h-[500px]">
+    <div class="space-y-1">
+      <ng-container *ngFor="let rootNode of coaTree()">
+        <ng-container *ngIf="filterTreeNode(rootNode, searchQuery())">
+          <ng-container *ngTemplateOutlet="nodeTemplate; context: { $implicit: rootNode, depth: 0 }"></ng-container>
+        </ng-container>
+      </ng-container>
+    </div>
+  </div>
 
-              <!-- Level Chip -->
-              <span class="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold"
-                [class.bg-blue-100]="node.level === 1"
-                [class.text-blue-800]="node.level === 1"
-                [class.bg-indigo-100]="node.level === 2"
-                [class.text-indigo-800]="node.level === 2"
-                [class.bg-purple-100]="node.level === 3"
-                [class.text-purple-800]="node.level === 3"
-                [class.bg-slate-100]="node.level >= 4"
-                [class.text-slate-700]="node.level >= 4">
-                L{{ node.level }}
-              </span>
-
-              <!-- Code -->
-              <span class="font-mono text-xs font-bold text-slate-900 dark:text-slate-100">
-                {{ node.account_code }}
-              </span>
-
-              <!-- Name -->
-              <span class="text-xs text-slate-800 dark:text-slate-200 font-medium truncate">
-                {{ node.account_name_en }}
-              </span>
-
-              @if (node.account_name_bn) {
-                <span class="text-[11px] text-slate-400 dark:text-slate-500 truncate hidden sm:inline">
-                  ({{ node.account_name_bn }})
-                </span>
-              }
-
-              @if (node.is_reconciliation_account) {
-                <span class="px-1.5 py-0.5 text-[9px] font-semibold rounded bg-cyan-100 text-cyan-800 dark:bg-cyan-950 dark:text-cyan-300">
-                  Bank / Escrow
-                </span>
-              }
-            </div>
-
-            <!-- Right: Balance & Actions -->
-            <div class="flex items-center gap-3 shrink-0">
-              <!-- Inline Balance Indicator -->
-              <span class="px-2 py-0.5 text-xs font-mono font-bold rounded"
-                [ngClass]="node.current_balance >= 0 ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' : 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300'">
-                ৳{{ node.current_balance | number:'1.2-2' }}
-              </span>
-
-              <!-- Quick Add Child Head button on hover -->
-              <button
-                type="button"
-                (click)="openCreateModal(node)"
-                class="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-blue-600 transition"
-                title="Add Child Account">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          <!-- Child Nodes rendering -->
-          @if (node.expanded && node.children && node.children.length > 0) {
-            <div class="space-y-1">
-              @for (child of node.children; track child.id) {
-                @if (filterTreeNode(child, searchQuery())) {
-                  <ng-container *ngTemplateOutlet="nodeTemplate; context: { $implicit: child, depth: depth + 1 }"></ng-container>
-                }
-              }
-            </div>
-          }
-        </div>
-      </ng-template>
-    }
-
-    <!-- VIEW 2: FLAT LEDGER LIST -->
-    @if (viewMode() === 'flat') {
-      <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 overflow-hidden">
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs">
-            <thead>
-              <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400 font-semibold uppercase tracking-wider">
-                <th class="py-3 px-4">Account Code</th>
-                <th class="py-3 px-4">Account Name (English)</th>
-                <th class="py-3 px-4">Account Name (Bangla)</th>
-                <th class="py-3 px-4">Type</th>
-                <th class="py-3 px-4 text-center">Posting Level</th>
-                <th class="py-3 px-4 text-right">Current Ledger Balance</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-              @for (acc of coaFlatList(); track acc.id) {
-                <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition">
-                  <td class="py-3 px-4 font-mono font-bold text-slate-900 dark:text-white">{{ acc.account_code }}</td>
-                  <td class="py-3 px-4 text-slate-800 dark:text-slate-200 font-medium">{{ acc.account_name_en }}</td>
-                  <td class="py-3 px-4 text-slate-500 dark:text-slate-400">{{ acc.account_name_bn || '—' }}</td>
-                  <td class="py-3 px-4">
-                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
-                      {{ acc.account_type }}
-                    </span>
-                  </td>
-                  <td class="py-3 px-4 text-center">
-                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold">
-                      {{ acc.is_leaf_account ? 'Leaf (Posting)' : 'Group' }}
-                    </span>
-                  </td>
-                  <td class="py-3 px-4 text-right font-mono font-bold" [class.text-emerald-600]="acc.current_balance >= 0" [class.text-rose-600]="acc.current_balance < 0">
-                    ৳{{ acc.current_balance | number:'1.2-2' }}
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      </div>
-    }
-
-  </app-card-container>
-
-  <!-- Create Account Head Modal -->
-  @if (isCreateModalOpen()) {
-    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-      <div class="w-full max-w-lg bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-850/80">
-          <h3 class="text-base font-semibold text-slate-900 dark:text-slate-100">Add Head of Account (COA)</h3>
-          <button type="button" (click)="closeCreateModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
-            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+  <!-- Recursive Node Template -->
+  <ng-template #nodeTemplate let-node let-depth="depth">
+    <div class="group">
+      <div
+        class="flex items-center justify-between py-2 px-3 rounded-xl hover:bg-secondary/40 transition-colors border border-transparent hover:border-border"
+        [style.paddingLeft.px]="depth * 22 + 12"
+      >
+        <div class="flex items-center gap-2.5 min-w-0 flex-1">
+          <!-- Chevron Button for Nodes with Children -->
+          <button
+            *ngIf="node.children && node.children.length > 0"
+            type="button"
+            (click)="toggleNode(node)"
+            class="w-5 h-5 flex items-center justify-center text-muted-foreground hover:text-foreground transition-transform"
+            [class.rotate-90]="node.expanded"
+          >
+            <i class="ri-arrow-right-s-line text-base"></i>
           </button>
+          <span *ngIf="!node.children || node.children.length === 0" class="w-5 h-5 shrink-0 flex items-center justify-center">
+            <span class="w-1.5 h-1.5 rounded-full bg-border"></span>
+          </span>
+
+          <!-- Account Code Badge -->
+          <span
+            class="font-mono text-xs font-bold px-2 py-0.5 rounded-lg shrink-0"
+            [ngClass]="node.is_leaf_account ? 'bg-secondary text-foreground border border-border' : 'bg-primary/10 text-primary border border-primary/20'"
+          >
+            {{ node.account_code }}
+          </span>
+
+          <!-- Account Name (English & Bengali) -->
+          <div class="truncate flex items-center gap-1.5">
+            <span class="text-xs text-foreground font-semibold truncate">{{ node.account_name_en }}</span>
+            <span *ngIf="node.account_name_bn" class="text-[11px] text-muted-foreground truncate">
+              ({{ node.account_name_bn }})
+            </span>
+          </div>
+
+          <!-- Account Type Pill -->
+          <span class="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-secondary/80 text-muted-foreground shrink-0 border border-border">
+            {{ node.account_type }}
+          </span>
+
+          <!-- Normal Balance Tag -->
+          <span
+            class="text-[10px] font-bold px-1.5 py-0.5 rounded-md shrink-0"
+            [ngClass]="node.normal_balance === 'Debit' ? 'text-blue-600 bg-blue-500/10' : 'text-emerald-600 bg-emerald-500/10'"
+          >
+            {{ node.normal_balance === 'Debit' ? 'Dr' : 'Cr' }}
+          </span>
+
+          <!-- Control Account Badge -->
+          <span *ngIf="node.is_control_account" class="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-purple-500/10 text-purple-600 border border-purple-500/20 shrink-0">
+            Control
+          </span>
         </div>
 
-        <form [formGroup]="createForm" (ngSubmit)="submitCreate()" class="p-6 space-y-4">
-          <app-searchable-select
-            label="Parent Group Account (Hierarchy Dimension)"
-            placeholder="Select Parent Account..."
-            [options]="parentAccountOptions()"
-            [allowCreateNew]="false"
-            formControlName="parent_account_id">
-          </app-searchable-select>
+        <!-- Node Balance & Actions Slot -->
+        <div class="flex items-center gap-3 shrink-0">
+          <span
+            class="font-mono text-xs font-bold text-right"
+            [ngClass]="node.current_balance >= 0 ? 'text-foreground' : 'text-destructive'"
+          >
+            ৳{{ (node.current_balance || 0) | number:'1.2-2' }}
+          </span>
 
-          <div class="grid grid-cols-2 gap-3">
-            <app-custom-input
-              label="Account Code"
-              placeholder="e.g. 1020-01"
-              formControlName="account_code"
-              [required]="true">
-            </app-custom-input>
+          <!-- Quick Actions on Node Hover -->
+          <div class="opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-opacity">
+            <!-- Add Sub-Account -->
+            <button
+              type="button"
+              (click)="navigateToCreate(node)"
+              class="p-1 rounded-lg hover:bg-secondary text-muted-foreground hover:text-primary transition-colors"
+              title="Add Sub-Account Under This Head"
+            >
+              <i class="ri-add-line text-sm"></i>
+            </button>
 
-            <app-searchable-select
-              label="Account Type"
-              placeholder="Select Type..."
-              [options]="typeSelectOptions"
-              [allowCreateNew]="false"
-              formControlName="account_type"
-              [required]="true">
-            </app-searchable-select>
+            <!-- Edit Account Head -->
+            <button
+              type="button"
+              (click)="navigateToEdit(node.id)"
+              class="p-1 rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+              title="Edit Account Head"
+            >
+              <i class="ri-edit-line text-sm"></i>
+            </button>
+
+            <!-- View Ledger Drilldown -->
+            <button
+              *ngIf="node.is_leaf_account"
+              type="button"
+              (click)="navigateToLedger(node.id)"
+              class="p-1 rounded-lg hover:bg-secondary text-muted-foreground hover:text-primary transition-colors"
+              title="View General Ledger Statement"
+            >
+              <i class="ri-booklet-line text-sm"></i>
+            </button>
           </div>
+        </div>
+      </div>
 
-          <app-custom-input
-            label="Account Name (English)"
-            placeholder="e.g. Standard Chartered Escrow Account"
-            formControlName="account_name_en"
-            [required]="true">
-          </app-custom-input>
-
-          <app-custom-input
-            label="Account Name (Bengali - Optional)"
-            placeholder="e.g. স্ট্যান্ডার্ড চার্টার্ড ব্যাংক হিসাব"
-            formControlName="account_name_bn">
-          </app-custom-input>
-
-          <div class="flex items-center gap-4 pt-2">
-            <label class="flex items-center gap-2 cursor-pointer text-xs text-slate-700 dark:text-slate-300">
-              <input type="checkbox" formControlName="is_leaf_account" class="rounded text-blue-600 focus:ring-blue-500" />
-              <span>Allow Direct Journal Posting (Leaf Account)</span>
-            </label>
-
-            <label class="flex items-center gap-2 cursor-pointer text-xs text-slate-700 dark:text-slate-300">
-              <input type="checkbox" formControlName="is_reconciliation_account" class="rounded text-blue-600 focus:ring-blue-500" />
-              <span>Bank / Escrow Reconciliation Flag</span>
-            </label>
-          </div>
-
-          <div class="pt-4 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-3">
-            <app-custom-button label="Cancel" variant="outline" (btnClick)="closeCreateModal()"></app-custom-button>
-            <app-custom-button label="Save Account" variant="primary" type="submit" [disabled]="isSubmitting()"></app-custom-button>
-          </div>
-        </form>
+      <!-- Recursive Child Nodes Container -->
+      <div *ngIf="node.expanded && node.children && node.children.length > 0" class="space-y-0.5">
+        <ng-container *ngFor="let child of node.children">
+          <ng-container *ngIf="filterTreeNode(child, searchQuery())">
+            <ng-container *ngTemplateOutlet="nodeTemplate; context: { $implicit: child, depth: depth + 1 }"></ng-container>
+          </ng-container>
+        </ng-container>
       </div>
     </div>
-  }
-</div>
+  </ng-template>
+
+  <!-- VIEW 2: FLAT REGISTER TABLE -->
+  <div *ngIf="!isLoading() && viewMode() === 'flat'">
+    <div class="overflow-x-auto rounded-2xl border border-border">
+      <table class="w-full text-left text-xs text-muted-foreground">
+        <thead class="bg-secondary/40 text-foreground font-semibold uppercase tracking-wider text-[10px] border-b border-border">
+          <tr>
+            <th class="px-4 py-3">Account Code</th>
+            <th class="px-4 py-3">Account Name (English & Bengali)</th>
+            <th class="px-4 py-3">Account Group</th>
+            <th class="px-4 py-3 text-center">Normal Bal</th>
+            <th class="px-4 py-3 text-center">Posting Account</th>
+            <th class="px-4 py-3 text-right">Live Balance (BDT)</th>
+            <th class="px-4 py-3 text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border">
+          <tr *ngFor="let acc of pagedFlatList()" class="hover:bg-secondary/20 transition-colors">
+            <td class="px-4 py-3 font-mono font-bold text-foreground">
+              {{ acc.account_code }}
+            </td>
+            <td class="px-4 py-3">
+              <span class="text-foreground font-semibold block">{{ acc.account_name_en }}</span>
+              <span *ngIf="acc.account_name_bn" class="text-[11px] text-muted-foreground">
+                {{ acc.account_name_bn }}
+              </span>
+            </td>
+            <td class="px-4 py-3">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-secondary text-foreground border border-border">
+                {{ acc.account_type }}
+              </span>
+            </td>
+            <td class="px-4 py-3 text-center">
+              <span
+                class="px-2 py-0.5 rounded-md text-[10px] font-bold"
+                [ngClass]="acc.normal_balance === 'Debit' ? 'bg-blue-500/10 text-blue-600' : 'bg-emerald-500/10 text-emerald-600'"
+              >
+                {{ acc.normal_balance === 'Debit' ? 'Debit (Dr)' : 'Credit (Cr)' }}
+              </span>
+            </td>
+            <td class="px-4 py-3 text-center">
+              <span
+                class="px-2 py-0.5 rounded-full text-[10px] font-semibold"
+                [ngClass]="acc.is_leaf_account ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20' : 'bg-secondary text-muted-foreground border border-border'"
+              >
+                {{ acc.is_leaf_account ? 'Yes (Posting)' : 'No (Group)' }}
+              </span>
+            </td>
+            <td class="px-4 py-3 text-right font-mono font-bold" [ngClass]="acc.current_balance >= 0 ? 'text-foreground' : 'text-destructive'">
+              ৳{{ (acc.current_balance || 0) | number:'1.2-2' }}
+            </td>
+            <td class="px-4 py-3 text-center">
+              <div class="flex items-center justify-center gap-1.5">
+                <button
+                  type="button"
+                  (click)="navigateToEdit(acc.id)"
+                  class="p-1 rounded-lg border border-border bg-card hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+                  title="Edit Account Head"
+                >
+                  <i class="ri-edit-line text-sm"></i>
+                </button>
+                <button
+                  *ngIf="acc.is_leaf_account"
+                  type="button"
+                  (click)="navigateToLedger(acc.id)"
+                  class="p-1 rounded-lg border border-border bg-card hover:bg-secondary text-muted-foreground hover:text-primary transition-colors"
+                  title="General Ledger Inquiry"
+                >
+                  <i class="ri-booklet-line text-sm"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+
+          <tr *ngIf="pagedFlatList().length === 0">
+            <td colspan="7" class="px-4 py-8 text-center text-muted-foreground">
+              No accounts match the current filter criteria.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Server-Side Pagination Bar -->
+    <div *ngIf="filteredFlatList().length > 0" class="flex items-center justify-between mt-4 text-xs text-muted-foreground">
+      <span>Showing {{ pagedFlatList().length }} of {{ filteredFlatList().length }} accounts</span>
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          (click)="changePage(-1)"
+          [disabled]="page() <= 1"
+          class="px-3 py-1.5 rounded-xl border border-border bg-card text-foreground disabled:opacity-50 hover:bg-secondary transition-colors"
+        >
+          Previous
+        </button>
+        <span class="font-mono">{{ page() }} / {{ totalPages() }}</span>
+        <button
+          type="button"
+          (click)="changePage(1)"
+          [disabled]="page() >= totalPages()"
+          class="px-3 py-1.5 rounded-xl border border-border bg-card text-foreground disabled:opacity-50 hover:bg-secondary transition-colors"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  </div>
+</app-card-container>

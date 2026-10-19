@@ -1,0 +1,125 @@
+<div class="space-y-6">
+  <!-- Navigation Header -->
+  <app-customer-advances-nav activeSection="aging"></app-customer-advances-nav>
+
+  <!-- Card Container -->
+  <app-card-container>
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-border">
+      <div>
+        <div class="flex items-center gap-2.5">
+          <div class="p-2 bg-primary/10 text-primary rounded-xl">
+            <i class="ri-calendar-schedule-line text-2xl"></i>
+          </div>
+          <div>
+            <h1 class="text-xl font-bold text-foreground">13.1.10 Receivable Aging & Collection Reconciliation</h1>
+            <p class="text-xs text-muted-foreground mt-0.5">
+              Net credit risk exposure: comparing customer advance liability pools against installment receivable demands across 5 aging buckets.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <div class="w-64">
+          <app-searchable-select
+            label=""
+            [options]="projectOptions()"
+            [(ngModel)]="selectedProject"
+            (ngModelChange)="onFilterChange()">
+          </app-searchable-select>
+        </div>
+
+        <button
+          (click)="loadAging()"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-muted-foreground bg-secondary hover:bg-secondary/80 rounded-lg border border-border transition-colors">
+          <i class="ri-refresh-line text-sm"></i>
+          <span>Refresh</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Summary KPI Header Cards -->
+    <div *ngIf="agingData()" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 my-5">
+      <div class="p-4 rounded-xl border border-border/70 bg-card/60 shadow-xs">
+        <span class="text-xs font-medium text-muted-foreground">Total Receivable Demands</span>
+        <h3 class="text-2xl font-bold text-foreground mt-1">৳ {{ agingData()?.total_receivable_demands | number:'1.2-2' }}</h3>
+        <span class="text-[11px] text-muted-foreground">Billed installment demands</span>
+      </div>
+
+      <div class="p-4 rounded-xl border border-border/70 bg-card/60 shadow-xs">
+        <span class="text-xs font-medium text-muted-foreground">Customer Advance Pool</span>
+        <h3 class="text-2xl font-bold text-amber-600 mt-1">৳ {{ agingData()?.total_unapplied_advances | number:'1.2-2' }}</h3>
+        <span class="text-[11px] text-muted-foreground">Available liability coverage</span>
+      </div>
+
+      <div class="p-4 rounded-xl border border-border/70 bg-card/60 shadow-xs">
+        <span class="text-xs font-medium text-muted-foreground">Net Uncovered Exposure</span>
+        <h3 class="text-2xl font-bold text-red-600 mt-1">৳ {{ agingData()?.net_uncovered_receivables | number:'1.2-2' }}</h3>
+        <span class="text-[11px] text-muted-foreground">Demands exceeding advances</span>
+      </div>
+
+      <div class="p-4 rounded-xl border border-border/70 bg-card/60 shadow-xs">
+        <span class="text-xs font-medium text-muted-foreground">Collection Coverage Ratio</span>
+        <h3 class="text-2xl font-bold text-emerald-600 mt-1">{{ agingData()?.reconciliation_ratio_pct }}%</h3>
+        <span class="text-[11px] text-muted-foreground">Advance to demand ratio</span>
+      </div>
+    </div>
+
+    <!-- Aging Breakdown Table -->
+    <div class="overflow-x-auto rounded-xl border border-border bg-card mt-5">
+      <table class="w-full text-left border-collapse text-xs">
+        <thead>
+          <tr class="bg-secondary/40 border-b border-border text-muted-foreground uppercase tracking-wider text-[11px]">
+            <th class="py-3 px-4 font-semibold">Aging Bucket</th>
+            <th class="py-3 px-4 font-semibold text-center">Installment Count</th>
+            <th class="py-3 px-4 font-semibold text-right">Gross Receivable Demand</th>
+            <th class="py-3 px-4 font-semibold text-right">Customer Advance Coverage</th>
+            <th class="py-3 px-4 font-semibold text-right">Net Credit Risk Exposure</th>
+            <th class="py-3 px-4 font-semibold text-center">Coverage Progress</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border/60">
+          <tr *ngIf="isLoading()" class="text-center">
+            <td colspan="6" class="py-10 text-muted-foreground">
+              <i class="ri-loader-4-line text-2xl animate-spin inline-block mb-2"></i>
+              <p>Reconciling Aging Brackets...</p>
+            </td>
+          </tr>
+
+          <tr *ngFor="let b of agingData()?.buckets" class="hover:bg-secondary/20 transition-colors">
+            <td class="py-3 px-4 font-bold text-foreground">
+              {{ b.bucket_name }}
+            </td>
+
+            <td class="py-3 px-4 text-center font-medium">
+              <span class="px-2 py-0.5 rounded-full bg-secondary text-foreground text-[11px]">
+                {{ b.item_count }} Milestones
+              </span>
+            </td>
+
+            <td class="py-3 px-4 text-right font-medium text-foreground">
+              ৳ {{ b.receivable_demand_amount | number:'1.2-2' }}
+            </td>
+
+            <td class="py-3 px-4 text-right font-bold text-amber-600">
+              ৳ {{ b.customer_advance_coverage_amount | number:'1.2-2' }}
+            </td>
+
+            <td class="py-3 px-4 text-right font-bold" [ngClass]="b.net_exposure_amount > 0 ? 'text-red-600' : 'text-emerald-600'">
+              ৳ {{ b.net_exposure_amount | number:'1.2-2' }}
+            </td>
+
+            <td class="py-3 px-4 text-center">
+              <div class="w-full bg-secondary rounded-full h-2 max-w-[120px] mx-auto overflow-hidden">
+                <div
+                  class="bg-emerald-500 h-2 rounded-full transition-all duration-300"
+                  [style.width.%]="b.receivable_demand_amount > 0 ? (b.customer_advance_coverage_amount / b.receivable_demand_amount * 100) : 100">
+                </div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </app-card-container>
+</div>

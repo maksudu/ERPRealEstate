@@ -1,0 +1,171 @@
+<div class="space-y-6">
+  <!-- Navigation Header -->
+  <app-customer-advances-nav activeSection="refunds"></app-customer-advances-nav>
+
+  <!-- Card Container -->
+  <app-card-container>
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-border">
+      <div>
+        <div class="flex items-center gap-2.5">
+          <div class="p-2 bg-primary/10 text-primary rounded-xl">
+            <i class="ri-refund-2-line text-2xl"></i>
+          </div>
+          <div>
+            <h1 class="text-xl font-bold text-foreground">13.1.7 Cancellation & Refund Accounting</h1>
+            <p class="text-xs text-muted-foreground mt-0.5">
+              Statutory earnest money forfeiture recognition and buyer net deposit refund disbursements with Payment Vouchers.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <button
+        (click)="loadData()"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-muted-foreground bg-secondary hover:bg-secondary/80 rounded-lg border border-border transition-colors">
+        <i class="ri-refresh-line text-sm"></i>
+        <span>Refresh</span>
+      </button>
+    </div>
+
+    <!-- Explanatory Accounting Banner -->
+    <div class="p-3.5 my-4 rounded-xl bg-amber-500/5 border border-amber-500/20 text-xs text-foreground flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <i class="ri-scales-line text-amber-600 text-lg"></i>
+        <span>
+          <strong>Double-Entry Treatment:</strong>
+          Debit Customer Advances (2120), Credit Bank Account (1120) for net refund, and Credit Allotment Cancellation Forfeiture Income (4040) for retained penalty.
+        </span>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="overflow-x-auto rounded-xl border border-border bg-card mt-5">
+      <table class="w-full text-left border-collapse text-xs">
+        <thead>
+          <tr class="bg-secondary/40 border-b border-border text-muted-foreground uppercase tracking-wider text-[11px]">
+            <th class="py-3 px-4 font-semibold">Advance # / Date</th>
+            <th class="py-3 px-4 font-semibold">Customer & Contract</th>
+            <th class="py-3 px-4 font-semibold">Project & Unit</th>
+            <th class="py-3 px-4 font-semibold text-right">Gross Deposit</th>
+            <th class="py-3 px-4 font-semibold text-right">Refund Disbursed</th>
+            <th class="py-3 px-4 font-semibold text-right">Forfeiture Income</th>
+            <th class="py-3 px-4 font-semibold text-right">Unapplied Liability</th>
+            <th class="py-3 px-4 font-semibold text-center">Status</th>
+            <th class="py-3 px-4 font-semibold text-center">Action</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border/60">
+          <tr *ngIf="isLoading()" class="text-center">
+            <td colspan="9" class="py-10 text-muted-foreground">
+              <i class="ri-loader-4-line text-2xl animate-spin inline-block mb-2"></i>
+              <p>Loading Cancellation Records...</p>
+            </td>
+          </tr>
+
+          <tr *ngFor="let adv of advances()" class="hover:bg-secondary/20 transition-colors">
+            <td class="py-3 px-4 font-bold text-foreground">
+              {{ adv.advance_number }}
+              <div class="text-[10px] text-muted-foreground">{{ adv.receipt_date }}</div>
+            </td>
+
+            <td class="py-3 px-4 font-medium text-foreground">
+              {{ adv.customer_name }}
+              <div class="text-[10px] text-muted-foreground font-mono">{{ adv.sale_agreement_no || adv.booking_reference_no }}</div>
+            </td>
+
+            <td class="py-3 px-4">
+              <span class="font-medium text-foreground">{{ adv.project_name }}</span>
+              <div class="text-[10px] text-primary">Unit: {{ adv.unit_number || 'All Units' }}</div>
+            </td>
+
+            <td class="py-3 px-4 text-right font-medium text-foreground">
+              ৳ {{ adv.gross_amount | number:'1.2-2' }}
+            </td>
+
+            <td class="py-3 px-4 text-right font-bold text-red-600">
+              ৳ {{ adv.refunded_amount | number:'1.2-2' }}
+            </td>
+
+            <td class="py-3 px-4 text-right font-medium text-emerald-600">
+              ৳ {{ adv.forfeiture_amount | number:'1.2-2' }}
+            </td>
+
+            <td class="py-3 px-4 text-right font-bold" [ngClass]="adv.unapplied_credit_balance > 0 ? 'text-amber-600' : 'text-muted-foreground'">
+              ৳ {{ adv.unapplied_credit_balance | number:'1.2-2' }}
+            </td>
+
+            <td class="py-3 px-4 text-center">
+              <span
+                class="px-2 py-0.5 rounded-full text-[10px] font-medium"
+                [ngClass]="adv.refunded_amount > 0 ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' : 'bg-secondary text-foreground'">
+                {{ adv.refunded_amount > 0 ? 'Refunded' : 'Active Deposit' }}
+              </span>
+            </td>
+
+            <td class="py-3 px-4 text-center">
+              <button
+                *ngIf="adv.unapplied_credit_balance > 0"
+                (click)="openRefundModal(adv)"
+                class="px-2.5 py-1 text-xs font-semibold bg-red-600 text-white hover:bg-red-700 rounded-lg transition-colors">
+                Process Refund
+              </button>
+              <span *ngIf="adv.unapplied_credit_balance <= 0" class="text-muted-foreground/60 text-[11px]">
+                Settled
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </app-card-container>
+
+  <!-- Refund Settlement Modal -->
+  <div *ngIf="showModal()" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div class="bg-card border border-border rounded-xl shadow-xl w-full max-w-md p-5 space-y-4">
+      <div class="flex items-center justify-between border-b border-border pb-3">
+        <h3 class="text-sm font-bold text-foreground">Post Cancellation Settlement Voucher</h3>
+        <button (click)="showModal.set(false)" class="text-muted-foreground hover:text-foreground">
+          <i class="ri-close-line text-lg"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <span class="text-muted-foreground">Available Deposit:</span>
+          <span class="font-bold text-amber-600 ml-1">৳ {{ selectedAdv()?.unapplied_credit_balance | number:'1.2-2' }}</span>
+        </div>
+
+        <app-custom-input
+          label="Net Refund Disbursed to Buyer (৳)"
+          type="number"
+          [(ngModel)]="refundForm.refund_amount">
+        </app-custom-input>
+
+        <app-custom-input
+          label="Retained Forfeiture Penalty (৳)"
+          type="number"
+          [(ngModel)]="refundForm.forfeiture_amount"
+          hint="Credited to Forfeiture Income (4040)">
+        </app-custom-input>
+
+        <app-custom-input
+          label="Reason & Board Approval Ref"
+          [(ngModel)]="refundForm.reason">
+        </app-custom-input>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-3 border-t border-border">
+        <button
+          (click)="showModal.set(false)"
+          class="px-3 py-1.5 text-xs rounded-lg border border-border hover:bg-secondary">
+          Cancel
+        </button>
+        <button
+          (click)="submitRefund()"
+          class="px-4 py-1.5 text-xs font-semibold bg-red-600 text-white rounded-lg hover:bg-red-700">
+          Disburse Refund
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

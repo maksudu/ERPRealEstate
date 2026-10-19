@@ -1,0 +1,1600 @@
+<div class="space-y-6">
+  <!-- Top Navigation & Module Switcher Ribbon -->
+  <div class="flex flex-wrap items-center justify-between gap-4 bg-card border border-border rounded-2xl p-4 shadow-sm">
+    <div class="flex items-center gap-3">
+      <div class="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center text-2xl font-bold shadow-inner">
+        <i class="ri-bank-card-line"></i>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="text-xl font-bold text-foreground tracking-tight">Cash, Bank & Mobile Financial Services</h1>
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span>
+            Real-Time Liquidity
+          </span>
+        </div>
+        <p class="text-xs text-muted-foreground mt-0.5">
+          Multi-Cashbox Imprest, Encrypted & Masked Bank Vault, Cheque Leaf Tracker, and MFS Gateways (bKash, Nagad, Rocket)
+        </p>
+      </div>
+    </div>
+
+    <!-- Quick Dynamic Dropdown & Lookups Setting Link -->
+    <div class="flex items-center gap-2">
+      <a routerLink="/settings/lookups" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/80 border border-border transition-colors">
+        <i class="ri-settings-4-line text-sm"></i>
+        <span>Dynamic Lookups Config</span>
+      </a>
+      <a routerLink="/accounts/vouchers" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/80 border border-border transition-colors">
+        <i class="ri-file-list-3-line text-sm"></i>
+        <span>GL Journal Vouchers</span>
+      </a>
+      <button (click)="loadAllData(); loadKPIs()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20 transition-colors">
+        <i class="ri-refresh-line text-sm" [class.animate-spin]="isLoading()"></i>
+        <span>Refresh</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Unified Module Sub-Navigation Bar -->
+  <div class="flex items-center gap-1.5 p-1.5 bg-secondary/40 rounded-2xl border border-border overflow-x-auto">
+    <a
+      routerLink="/accounts/coa"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-node-tree"></i>
+      <span>Chart of Accounts</span>
+    </a>
+
+    <a
+      routerLink="/accounts/vouchers"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-file-list-3-line"></i>
+      <span>General Ledger Vouchers</span>
+    </a>
+
+    <a
+      routerLink="/accounts/ledger"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-booklet-line"></i>
+      <span>Ledger Inquiry & Statements</span>
+    </a>
+
+    <a
+      routerLink="/accounts/payables"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-money-dollar-circle-line"></i>
+      <span>Accounts Payable (AP)</span>
+    </a>
+
+    <a
+      routerLink="/accounts/receivables"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-hand-coin-line"></i>
+      <span>Accounts Receivable (AR)</span>
+    </a>
+
+    <a
+      routerLink="/accounts/receivables/receipts"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-refund-2-line"></i>
+      <span>Money Receipts</span>
+    </a>
+
+    <a
+      routerLink="/accounts/cash-bank"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-card text-foreground shadow-xs border border-border inline-flex items-center gap-1.5 whitespace-nowrap"
+    >
+      <i class="ri-bank-card-line text-primary"></i>
+      <span>Cash, Bank & MFS</span>
+    </a>
+
+    <a
+      routerLink="/accounts/financial-reports"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-pie-chart-2-line"></i>
+      <span>Financial Reports</span>
+    </a>
+  </div>
+
+  <!-- Notification Banner -->
+  @if (successMessage()) {
+    <div class="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300 flex items-center justify-between text-sm shadow-sm animate-fade-in">
+      <div class="flex items-center gap-2">
+        <i class="ri-checkbox-circle-fill text-lg text-emerald-500"></i>
+        <span>{{ successMessage() }}</span>
+      </div>
+      <button (click)="successMessage.set(null)" class="text-emerald-500 hover:text-emerald-700">
+        <i class="ri-close-line text-lg"></i>
+      </button>
+    </div>
+  }
+
+  @if (errorMessage()) {
+    <div class="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-700 dark:text-rose-300 flex items-center justify-between text-sm shadow-sm">
+      <div class="flex items-center gap-2">
+        <i class="ri-error-warning-fill text-lg text-rose-500"></i>
+        <span>{{ errorMessage() }}</span>
+      </div>
+      <button (click)="errorMessage.set(null)" class="text-rose-500 hover:text-rose-700">
+        <i class="ri-close-line text-lg"></i>
+      </button>
+    </div>
+  }
+
+  <!-- 4-Card Executive Cash Position Ribbon -->
+  @if (kpis(); as k) {
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <!-- Total Liquid Assets -->
+      <div class="bg-card border border-border rounded-2xl p-4 shadow-sm hover:border-primary/40 transition-colors">
+        <div class="flex items-center justify-between text-muted-foreground text-xs font-semibold uppercase tracking-wider">
+          <span>Net Liquid Funds</span>
+          <div class="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+            <i class="ri-wallet-3-line text-lg"></i>
+          </div>
+        </div>
+        <div class="mt-2 text-2xl font-black text-foreground tracking-tight">
+          ৳ {{ k.total_liquid_funds | number:'1.2-2' }}
+        </div>
+        <div class="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+          <span>{{ k.active_cashboxes_count }} Cash Boxes</span>
+          <span>•</span>
+          <span>{{ k.active_bank_accounts_count }} Bank Accounts</span>
+        </div>
+      </div>
+
+      <!-- Bank Total Position -->
+      <div class="bg-card border border-border rounded-2xl p-4 shadow-sm hover:border-blue-500/40 transition-colors">
+        <div class="flex items-center justify-between text-muted-foreground text-xs font-semibold uppercase tracking-wider">
+          <span>Total Bank Balances</span>
+          <div class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-600 flex items-center justify-center">
+            <i class="ri-bank-line text-lg"></i>
+          </div>
+        </div>
+        <div class="mt-2 text-2xl font-black text-blue-600 dark:text-blue-400 tracking-tight">
+          ৳ {{ k.total_bank_balance | number:'1.2-2' }}
+        </div>
+        <div class="mt-1 text-xs text-muted-foreground">
+          Corporate, Escrow, SND & Current Accounts
+        </div>
+      </div>
+
+      <!-- Cash in Hand & Imprest Funds -->
+      <div class="bg-card border border-border rounded-2xl p-4 shadow-sm hover:border-amber-500/40 transition-colors">
+        <div class="flex items-center justify-between text-muted-foreground text-xs font-semibold uppercase tracking-wider">
+          <span>Cash in Hand & Imprest</span>
+          <div class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-600 flex items-center justify-center">
+            <i class="ri-safe-2-line text-lg"></i>
+          </div>
+        </div>
+        <div class="mt-2 text-2xl font-black text-amber-600 dark:text-amber-400 tracking-tight">
+          ৳ {{ k.total_cashbox_balance | number:'1.2-2' }}
+        </div>
+        <div class="mt-1 flex items-center justify-between text-xs">
+          <span class="text-muted-foreground">Site & Office Cashboxes</span>
+          @if (k.imprest_alert_count > 0) {
+            <span class="text-rose-500 font-semibold flex items-center gap-1">
+              <i class="ri-alarm-warning-line"></i> {{ k.imprest_alert_count }} Low
+            </span>
+          } @else {
+            <span class="text-emerald-500 font-medium">All Healthy</span>
+          }
+        </div>
+      </div>
+
+      <!-- MFS Today's Collections & Fees -->
+      <div class="bg-card border border-border rounded-2xl p-4 shadow-sm hover:border-purple-500/40 transition-colors">
+        <div class="flex items-center justify-between text-muted-foreground text-xs font-semibold uppercase tracking-wider">
+          <span>MFS Today (Gross / Net)</span>
+          <div class="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-600 flex items-center justify-center">
+            <i class="ri-smartphone-line text-lg"></i>
+          </div>
+        </div>
+        <div class="mt-2 text-2xl font-black text-purple-600 dark:text-purple-400 tracking-tight">
+          ৳ {{ k.total_mfs_gross_today | number:'1.2-2' }}
+        </div>
+        <div class="mt-1 flex items-center justify-between text-xs text-muted-foreground">
+          <span>Fee: ৳ {{ k.total_mfs_fees_today | number:'1.2-2' }}</span>
+          <span class="text-emerald-600 font-semibold">Net: ৳ {{ k.total_mfs_net_today | number:'1.2-2' }}</span>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Tabbed Navigation Ribbon -->
+  <div class="flex items-center gap-2 border-b border-border pb-1 overflow-x-auto">
+    <button
+      (click)="setTab('overview')"
+      class="px-4 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 whitespace-nowrap"
+      [ngClass]="activeTab() === 'overview' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-secondary'">
+      <i class="ri-dashboard-3-line text-base"></i>
+      <span>Overview Cockpit</span>
+    </button>
+
+    <button
+      (click)="setTab('cash')"
+      class="px-4 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 whitespace-nowrap"
+      [ngClass]="activeTab() === 'cash' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-secondary'">
+      <i class="ri-safe-2-line text-base"></i>
+      <span>Cash Management</span>
+      <span class="px-2 py-0.5 rounded-full text-xs font-bold" [ngClass]="activeTab() === 'cash' ? 'bg-white/20 text-white' : 'bg-secondary text-foreground'">
+        {{ cashBoxes().length }}
+      </span>
+    </button>
+
+    <button
+      (click)="setTab('bank')"
+      class="px-4 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 whitespace-nowrap"
+      [ngClass]="activeTab() === 'bank' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-secondary'">
+      <i class="ri-bank-line text-base"></i>
+      <span>Bank Accounts & Cheques</span>
+      <span class="px-2 py-0.5 rounded-full text-xs font-bold" [ngClass]="activeTab() === 'bank' ? 'bg-white/20 text-white' : 'bg-secondary text-foreground'">
+        {{ bankAccounts().length }}
+      </span>
+    </button>
+
+    <button
+      (click)="setTab('mfs')"
+      class="px-4 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 whitespace-nowrap"
+      [ngClass]="activeTab() === 'mfs' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-secondary'">
+      <i class="ri-smartphone-line text-base"></i>
+      <span>Mobile Financial Services (MFS)</span>
+      <span class="px-2 py-0.5 rounded-full text-xs font-bold" [ngClass]="activeTab() === 'mfs' ? 'bg-white/20 text-white' : 'bg-secondary text-foreground'">
+        {{ mfsProviders().length }}
+      </span>
+    </button>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- TAB 1: OVERVIEW COCKPIT                                                  -->
+  <!-- ========================================================================= -->
+  @if (activeTab() === 'overview') {
+    <div class="space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Bank Accounts Position Column -->
+        <app-card-container [hasHeader]="true" title="Bank Liquidity Breakdown" subtitle="Encrypted & Masked Accounts">
+          <div card-header-actions>
+            <button (click)="showBankTransferModal.set(true)" class="px-3 py-1.5 rounded-xl text-xs font-medium bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 border border-blue-500/20 flex items-center gap-1.5">
+              <i class="ri-arrow-left-right-line"></i>
+              <span>Inter-Bank Transfer</span>
+            </button>
+          </div>
+
+          <div class="divide-y divide-border -mx-4 -my-2">
+            @for (ba of bankAccounts(); track ba.id) {
+              <div class="p-4 hover:bg-secondary/40 transition-colors flex items-center justify-between">
+                <div>
+                  <div class="font-bold text-sm text-foreground flex items-center gap-2">
+                    <span>{{ ba.bank_name }}</span>
+                    @if (ba.is_escrow) {
+                      <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/10 text-amber-600 border border-amber-500/20">
+                        ESCROW
+                      </span>
+                    }
+                  </div>
+                  <div class="text-xs text-muted-foreground mt-0.5 flex items-center gap-2">
+                    <span class="font-mono">{{ ba.account_number_masked }}</span>
+                    <span>•</span>
+                    <span>Routing: {{ ba.routing_number }}</span>
+                  </div>
+                  <div class="text-[11px] text-muted-foreground mt-1">
+                    {{ ba.branch_name }} • {{ ba.project_name || 'Central Holding' }}
+                  </div>
+                </div>
+
+                <div class="text-right">
+                  <div class="font-bold text-sm text-foreground">
+                    ৳ {{ ba.current_balance | number:'1.2-2' }}
+                  </div>
+                  <button (click)="openChequeBookRegister(ba)" class="mt-1 text-xs text-primary hover:underline font-medium flex items-center gap-1 justify-end">
+                    <i class="ri-booklet-line"></i>
+                    <span>Cheque Book</span>
+                  </button>
+                </div>
+              </div>
+            } @empty {
+              <div class="p-8 text-center text-muted-foreground text-sm">
+                No bank accounts configured yet.
+              </div>
+            }
+          </div>
+        </app-card-container>
+
+        <!-- Cashboxes Position Column -->
+        <app-card-container [hasHeader]="true" title="Cashbox & Imprest Status" subtitle="Physical site funds & limits">
+          <div card-header-actions>
+            <button (click)="showCashTransferModal.set(true)" class="px-3 py-1.5 rounded-xl text-xs font-medium bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 border border-amber-500/20 flex items-center gap-1.5">
+              <i class="ri-hand-coin-line"></i>
+              <span>Cash Transfer</span>
+            </button>
+          </div>
+
+          <div class="divide-y divide-border -mx-4 -my-2">
+            @for (cb of cashBoxes(); track cb.id) {
+              <div class="p-4 hover:bg-secondary/40 transition-colors flex items-center justify-between">
+                <div>
+                  <div class="font-bold text-sm text-foreground flex items-center gap-2">
+                    <span>{{ cb.box_name }}</span>
+                    @if (cb.needs_replenishment) {
+                      <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-500/10 text-rose-600 border border-rose-500/20 animate-pulse">
+                        REPLENISH
+                      </span>
+                    }
+                  </div>
+                  <div class="text-xs text-muted-foreground mt-0.5">
+                    Code: <span class="font-mono font-medium">{{ cb.box_code }}</span> • {{ cb.project_name }}
+                  </div>
+                  <div class="text-[11px] text-muted-foreground mt-1">
+                    Threshold: ৳ {{ cb.replenishment_threshold | number:'1.0-0' }} • Limit: ৳ {{ cb.imprest_limit | number:'1.0-0' }}
+                  </div>
+                </div>
+
+                <div class="text-right">
+                  <div class="font-bold text-sm" [ngClass]="cb.needs_replenishment ? 'text-rose-600' : 'text-foreground'">
+                    ৳ {{ cb.current_balance | number:'1.2-2' }}
+                  </div>
+                  <button (click)="cashAudit.cash_box_id = cb.id; showCashAuditCountModal.set(true)" class="mt-1 text-xs text-amber-600 hover:underline font-medium flex items-center gap-1 justify-end">
+                    <i class="ri-scales-3-line"></i>
+                    <span>Audit Count</span>
+                  </button>
+                </div>
+              </div>
+            } @empty {
+              <div class="p-8 text-center text-muted-foreground text-sm">
+                No cashboxes found.
+              </div>
+            }
+          </div>
+        </app-card-container>
+
+        <!-- MFS Gateways Column -->
+        <app-card-container [hasHeader]="true" title="MFS Merchant Gateways" subtitle="Configured Wallets & Webhooks">
+          <div card-header-actions>
+            <button (click)="showMFSCallbackSimulatorModal.set(true)" class="px-3 py-1.5 rounded-xl text-xs font-medium bg-purple-500/10 text-purple-600 hover:bg-purple-500/20 border border-purple-500/20 flex items-center gap-1.5">
+              <i class="ri-flask-line"></i>
+              <span>Simulate Webhook</span>
+            </button>
+          </div>
+
+          <div class="divide-y divide-border -mx-4 -my-2">
+            @for (p of mfsProviders(); track p.id) {
+              <div class="p-4 hover:bg-secondary/40 transition-colors flex items-center justify-between">
+                <div>
+                  <div class="font-bold text-sm text-foreground flex items-center gap-2">
+                    <span>{{ p.provider_name }}</span>
+                    <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-primary/10 text-primary">
+                      {{ p.fee_percentage }}% FEE
+                    </span>
+                  </div>
+                  <div class="text-xs text-muted-foreground mt-0.5">
+                    Merchant Wallet: <span class="font-mono font-medium">{{ p.merchant_number }}</span>
+                  </div>
+                  <div class="text-[11px] text-muted-foreground mt-1">
+                    Settlement: {{ p.settlement_bank_name || 'Central Bank Account' }}
+                  </div>
+                </div>
+
+                <div class="text-right">
+                  <div class="text-xs font-semibold text-muted-foreground">Volume</div>
+                  <div class="font-bold text-sm text-foreground">
+                    ৳ {{ p.total_gross_volume | number:'1.2-2' }}
+                  </div>
+                  <div class="text-[11px] text-muted-foreground mt-0.5">
+                    {{ p.total_transactions_count }} Trxs
+                  </div>
+                </div>
+              </div>
+            } @empty {
+              <div class="p-8 text-center text-muted-foreground text-sm">
+                No MFS providers configured.
+              </div>
+            }
+          </div>
+        </app-card-container>
+      </div>
+
+      <!-- User Exact Accounting Highlight Box -->
+      <div class="p-5 rounded-2xl bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-emerald-500/10 border border-border">
+        <div class="flex items-start gap-4">
+          <div class="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center text-xl shrink-0">
+            <i class="ri-scales-line"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-base text-foreground">Double-Entry Accounting Standard for MFS Settlements</h3>
+            <p class="text-xs text-muted-foreground mt-1 leading-relaxed">
+              When a customer pays <strong>৳ 100,000</strong> via an MFS provider (e.g., bKash Merchant) and the provider charges a <strong>1.5% fee (৳ 1,500)</strong>:
+            </p>
+            <div class="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+              <div class="p-3 rounded-xl bg-card border border-border">
+                <span class="text-muted-foreground font-medium">Customer Receivables (1130)</span>
+                <div class="text-emerald-600 font-bold text-sm mt-0.5">Credit: ৳ 100,000.00</div>
+                <span class="text-[10px] text-muted-foreground">Clears apartment installment</span>
+              </div>
+              <div class="p-3 rounded-xl bg-card border border-border">
+                <span class="text-muted-foreground font-medium">Gateway Fee Expense (5320)</span>
+                <div class="text-amber-600 font-bold text-sm mt-0.5">Debit: ৳ 1,500.00</div>
+                <span class="text-[10px] text-muted-foreground">Recorded as operational fee</span>
+              </div>
+              <div class="p-3 rounded-xl bg-card border border-border">
+                <span class="text-muted-foreground font-medium">Net Bank Settlement (1110)</span>
+                <div class="text-blue-600 font-bold text-sm mt-0.5">Debit: ৳ 98,500.00</div>
+                <span class="text-[10px] text-muted-foreground">Credited to corporate account</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ========================================================================= -->
+  <!-- TAB 2: CASH MANAGEMENT                                                   -->
+  <!-- ========================================================================= -->
+  @if (activeTab() === 'cash') {
+    <div class="space-y-6">
+      <app-card-container [hasHeader]="true" title="Physical Cashboxes & Project Site Imprest Funds" subtitle="Real-time balances, limits, and replenishment health">
+        <div card-header-actions class="flex items-center gap-2">
+          <button (click)="showCashAuditCountModal.set(true)" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 border border-amber-500/20 flex items-center gap-1.5 shadow-sm">
+            <i class="ri-scales-3-line text-sm"></i>
+            <span>Cash Count Audit</span>
+          </button>
+          <button (click)="showCashTransferModal.set(true)" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-secondary text-foreground hover:bg-secondary/80 border border-border flex items-center gap-1.5 shadow-sm">
+            <i class="ri-arrow-left-right-line text-sm"></i>
+            <span>Inter-Fund Transfer</span>
+          </button>
+          <button (click)="showCashDisbursementModal.set(true)" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border border-emerald-500/20 flex items-center gap-1.5 shadow-sm">
+            <i class="ri-money-dollar-circle-line text-sm"></i>
+            <span>Disburse / Claim</span>
+          </button>
+          <button (click)="showAddCashBoxModal.set(true)" class="px-4 py-2 rounded-xl text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-1.5 shadow-sm">
+            <i class="ri-add-line text-base"></i>
+            <span>Add New Cashbox</span>
+          </button>
+        </div>
+
+        <!-- Cashboxes Table -->
+        <div class="overflow-x-auto -mx-4 -my-2">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-secondary/50 text-muted-foreground text-xs font-semibold uppercase tracking-wider border-b border-border">
+              <tr>
+                <th class="px-4 py-3">Box Code & Name</th>
+                <th class="px-4 py-3">Fund Category</th>
+                <th class="px-4 py-3">Assigned Project</th>
+                <th class="px-4 py-3 text-right">Imprest Limit</th>
+                <th class="px-4 py-3 text-right">Threshold</th>
+                <th class="px-4 py-3 text-right">Current Balance</th>
+                <th class="px-4 py-3 text-center">Status</th>
+                <th class="px-4 py-3 text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border">
+              @for (cb of cashBoxes(); track cb.id) {
+                <tr class="hover:bg-secondary/30 transition-colors">
+                  <td class="px-4 py-3 font-medium">
+                    <div class="flex items-center gap-2">
+                      <div class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-600 flex items-center justify-center text-sm font-bold">
+                        <i class="ri-safe-line"></i>
+                      </div>
+                      <div>
+                        <div class="font-bold text-foreground">{{ cb.box_name }}</div>
+                        <div class="text-xs text-muted-foreground font-mono">{{ cb.box_code }}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-4 py-3">
+                    <span class="px-2.5 py-1 rounded-md text-xs font-medium bg-secondary text-foreground">
+                      {{ cb.cashbox_type }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 text-muted-foreground">
+                    {{ cb.project_name || 'Head Office' }}
+                  </td>
+                  <td class="px-4 py-3 text-right font-medium">
+                    ৳ {{ cb.imprest_limit | number:'1.2-2' }}
+                  </td>
+                  <td class="px-4 py-3 text-right font-medium text-muted-foreground">
+                    ৳ {{ cb.replenishment_threshold | number:'1.2-2' }}
+                  </td>
+                  <td class="px-4 py-3 text-right font-bold text-base" [ngClass]="cb.needs_replenishment ? 'text-rose-600' : 'text-foreground'">
+                    ৳ {{ cb.current_balance | number:'1.2-2' }}
+                  </td>
+                  <td class="px-4 py-3 text-center">
+                    @if (cb.needs_replenishment) {
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-rose-500/10 text-rose-600 border border-rose-500/20">
+                        Needs Replenish
+                      </span>
+                    } @else {
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                        Active & Healthy
+                      </span>
+                    }
+                  </td>
+                  <td class="px-4 py-3 text-center">
+                    <button (click)="cashAudit.cash_box_id = cb.id; showCashAuditCountModal.set(true)" class="p-1.5 rounded-lg text-muted-foreground hover:text-amber-600 hover:bg-amber-500/10 transition-colors" title="Physical Cash Audit">
+                      <i class="ri-scales-3-line text-lg"></i>
+                    </button>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="8" class="text-center py-8 text-muted-foreground">No cashboxes configured.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </app-card-container>
+
+      <!-- Cash Disbursements & Audit History -->
+      <app-card-container [hasHeader]="true" title="Petty Cash Disbursements & Physical Audit Register" subtitle="Supporting receipts, variances, and GL vouchers">
+        <div class="overflow-x-auto -mx-4 -my-2">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-secondary/50 text-muted-foreground text-xs font-semibold uppercase tracking-wider border-b border-border">
+              <tr>
+                <th class="px-4 py-3">Voucher #</th>
+                <th class="px-4 py-3">Date</th>
+                <th class="px-4 py-3">Cash Box</th>
+                <th class="px-4 py-3">Transaction Type</th>
+                <th class="px-4 py-3">Payee / Purpose</th>
+                <th class="px-4 py-3 text-right">Amount</th>
+                <th class="px-4 py-3 text-right">Audit Variance</th>
+                <th class="px-4 py-3 text-center">GL Voucher</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border">
+              @for (v of cashVouchers(); track v.id) {
+                <tr class="hover:bg-secondary/30 transition-colors">
+                  <td class="px-4 py-3 font-mono font-bold text-primary">{{ v.voucher_number }}</td>
+                  <td class="px-4 py-3 text-muted-foreground whitespace-nowrap">{{ v.transaction_date }}</td>
+                  <td class="px-4 py-3 font-medium">{{ v.cash_box_name }}</td>
+                  <td class="px-4 py-3">
+                    <span class="px-2 py-0.5 rounded text-xs font-medium"
+                      [ngClass]="v.transaction_type === 'Cash_Audit_Count' ? 'bg-amber-500/10 text-amber-600' : 'bg-secondary text-foreground'">
+                      {{ v.transaction_type }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3">
+                    <div class="font-medium text-foreground">{{ v.payee_name }}</div>
+                    <div class="text-xs text-muted-foreground truncate max-w-xs">{{ v.purpose }}</div>
+                  </td>
+                  <td class="px-4 py-3 text-right font-bold">
+                    ৳ {{ v.amount | number:'1.2-2' }}
+                  </td>
+                  <td class="px-4 py-3 text-right">
+                    @if (v.variance_amount !== null && v.variance_amount !== 0) {
+                      <span class="font-bold text-xs" [ngClass]="(v.variance_amount || 0) < 0 ? 'text-rose-600' : 'text-emerald-600'">
+                        {{ (v.variance_amount || 0) < 0 ? 'Short: ' : 'Over: ' }} ৳ {{ (v.variance_amount || 0) | number:'1.2-2' }}
+                      </span>
+                    } @else {
+                      <span class="text-xs text-muted-foreground">—</span>
+                    }
+                  </td>
+                  <td class="px-4 py-3 text-center">
+                    @if (v.gl_voucher_number) {
+                      <a routerLink="/accounts/vouchers" class="inline-flex items-center gap-1 font-mono text-xs font-semibold text-primary hover:underline">
+                        <i class="ri-file-text-line"></i>
+                        <span>{{ v.gl_voucher_number }}</span>
+                      </a>
+                    } @else {
+                      <span class="text-xs text-muted-foreground">—</span>
+                    }
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="8" class="text-center py-8 text-muted-foreground">No cash transactions recorded yet.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </app-card-container>
+    </div>
+  }
+
+  <!-- ========================================================================= -->
+  <!-- TAB 3: BANK MANAGEMENT                                                   -->
+  <!-- ========================================================================= -->
+  @if (activeTab() === 'bank') {
+    <div class="space-y-6">
+      <app-card-container [hasHeader]="true" title="Corporate & Escrow Bank Accounts" subtitle="Encrypted storage, masked display, and routing codes">
+        <div card-header-actions class="flex items-center gap-2">
+          <button (click)="showBankTransferModal.set(true)" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-secondary text-foreground hover:bg-secondary/80 border border-border flex items-center gap-1.5 shadow-sm">
+            <i class="ri-arrow-left-right-line text-sm"></i>
+            <span>Inter-Bank Transfer</span>
+          </button>
+          <button (click)="showBankTxModal.set(true)" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 border border-blue-500/20 flex items-center gap-1.5 shadow-sm">
+            <i class="ri-add-line text-sm"></i>
+            <span>Record Deposit / Withdrawal</span>
+          </button>
+          <button (click)="showAddBankAccountModal.set(true)" class="px-4 py-2 rounded-xl text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-1.5 shadow-sm">
+            <i class="ri-add-line text-base"></i>
+            <span>Add Bank Account</span>
+          </button>
+        </div>
+
+        <div class="overflow-x-auto -mx-4 -my-2">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-secondary/50 text-muted-foreground text-xs font-semibold uppercase tracking-wider border-b border-border">
+              <tr>
+                <th class="px-4 py-3">Bank & Account Name</th>
+                <th class="px-4 py-3">Masked Number</th>
+                <th class="px-4 py-3">Routing & Branch</th>
+                <th class="px-4 py-3">Account Type</th>
+                <th class="px-4 py-3 text-right">Cheques Used / Total</th>
+                <th class="px-4 py-3 text-right">Current Balance</th>
+                <th class="px-4 py-3 text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border">
+              @for (ba of bankAccounts(); track ba.id) {
+                <tr class="hover:bg-secondary/30 transition-colors">
+                  <td class="px-4 py-3 font-medium">
+                    <div class="flex items-center gap-2">
+                      <div class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-600 flex items-center justify-center text-sm font-bold">
+                        <i class="ri-bank-line"></i>
+                      </div>
+                      <div>
+                        <div class="font-bold text-foreground">{{ ba.bank_name }}</div>
+                        <div class="text-xs text-muted-foreground">{{ ba.account_name }}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-4 py-3 font-mono font-bold text-foreground">
+                    <span class="inline-flex items-center gap-1.5">
+                      <i class="ri-lock-line text-emerald-500 text-xs" title="Sensitive Account Number Encrypted"></i>
+                      <span>{{ ba.account_number_masked }}</span>
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 text-muted-foreground">
+                    <div>Routing: <span class="font-mono font-medium text-foreground">{{ ba.routing_number }}</span></div>
+                    <div class="text-xs">{{ ba.branch_name }}</div>
+                  </td>
+                  <td class="px-4 py-3">
+                    <span class="px-2.5 py-1 rounded-md text-xs font-medium"
+                      [ngClass]="ba.is_escrow ? 'bg-amber-500/10 text-amber-600 border border-amber-500/20' : 'bg-secondary text-foreground'">
+                      {{ ba.account_type }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 text-right font-medium">
+                    @if (ba.total_cheques_configured) {
+                      <span class="text-xs">
+                        <strong>{{ ba.cheques_used_count }}</strong> / {{ ba.total_cheques_configured }}
+                        <span class="text-muted-foreground">({{ ba.cheques_available_count }} left)</span>
+                      </span>
+                    } @else {
+                      <span class="text-xs text-muted-foreground">None</span>
+                    }
+                  </td>
+                  <td class="px-4 py-3 text-right font-bold text-base text-foreground">
+                    ৳ {{ ba.current_balance | number:'1.2-2' }}
+                  </td>
+                  <td class="px-4 py-3 text-center">
+                    <button (click)="openChequeBookRegister(ba)" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-secondary text-primary hover:bg-primary/10 border border-border flex items-center gap-1 mx-auto transition-colors">
+                      <i class="ri-booklet-line"></i>
+                      <span>Cheque Book</span>
+                    </button>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="7" class="text-center py-8 text-muted-foreground">No bank accounts added yet.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </app-card-container>
+
+      <!-- Bank Transactions Register -->
+      <app-card-container [hasHeader]="true" title="Bank Transactions & Cheque Register" subtitle="Clearance, deposits, withdrawals, and bank charges">
+        <div class="overflow-x-auto -mx-4 -my-2">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-secondary/50 text-muted-foreground text-xs font-semibold uppercase tracking-wider border-b border-border">
+              <tr>
+                <th class="px-4 py-3">Date</th>
+                <th class="px-4 py-3">Bank Account</th>
+                <th class="px-4 py-3">Type</th>
+                <th class="px-4 py-3">Cheque #</th>
+                <th class="px-4 py-3">Particulars</th>
+                <th class="px-4 py-3 text-right">Amount</th>
+                <th class="px-4 py-3 text-center">GL Voucher</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border">
+              @for (tx of bankTransactions(); track tx.id) {
+                <tr class="hover:bg-secondary/30 transition-colors">
+                  <td class="px-4 py-3 text-muted-foreground whitespace-nowrap">{{ tx.transaction_date }}</td>
+                  <td class="px-4 py-3 font-medium">
+                    <div>{{ tx.bank_name }}</div>
+                    <div class="text-xs text-muted-foreground font-mono">{{ tx.account_number_masked }}</div>
+                  </td>
+                  <td class="px-4 py-3">
+                    <span class="px-2 py-0.5 rounded text-xs font-medium"
+                      [ngClass]="tx.transaction_type === 'Deposit' ? 'bg-emerald-500/10 text-emerald-600' : (tx.transaction_type === 'Bank_Charge' ? 'bg-amber-500/10 text-amber-600' : 'bg-secondary text-foreground')">
+                      {{ tx.transaction_type }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 font-mono text-xs">
+                    {{ tx.cheque_number || '—' }}
+                  </td>
+                  <td class="px-4 py-3 text-muted-foreground max-w-sm truncate">
+                    {{ tx.particulars }}
+                  </td>
+                  <td class="px-4 py-3 text-right font-bold">
+                    ৳ {{ tx.amount | number:'1.2-2' }}
+                  </td>
+                  <td class="px-4 py-3 text-center">
+                    @if (tx.gl_voucher_number) {
+                      <a routerLink="/accounts/vouchers" class="inline-flex items-center gap-1 font-mono text-xs font-semibold text-primary hover:underline">
+                        <i class="ri-file-text-line"></i>
+                        <span>{{ tx.gl_voucher_number }}</span>
+                      </a>
+                    } @else {
+                      <span class="text-xs text-muted-foreground">—</span>
+                    }
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="7" class="text-center py-8 text-muted-foreground">No bank transactions recorded.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </app-card-container>
+    </div>
+  }
+
+  <!-- ========================================================================= -->
+  <!-- TAB 4: MOBILE FINANCIAL SERVICES (MFS)                                   -->
+  <!-- ========================================================================= -->
+  @if (activeTab() === 'mfs') {
+    <div class="space-y-6">
+      <app-card-container [hasHeader]="true" title="Configured MFS Gateways (bKash, Nagad, Rocket, Upay)" subtitle="Merchant credentials, gateway fees, and automated settlement">
+        <div card-header-actions class="flex items-center gap-2">
+          <button (click)="showMFSCallbackSimulatorModal.set(true)" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-purple-500/10 text-purple-600 hover:bg-purple-500/20 border border-purple-500/20 flex items-center gap-1.5 shadow-sm">
+            <i class="ri-flask-line text-sm"></i>
+            <span>Simulate Callback Webhook</span>
+          </button>
+          <button (click)="showMFSTransactionModal.set(true)" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border border-emerald-500/20 flex items-center gap-1.5 shadow-sm">
+            <i class="ri-add-line text-sm"></i>
+            <span>Record MFS Collection</span>
+          </button>
+          <button (click)="showAddMFSProviderModal.set(true)" class="px-4 py-2 rounded-xl text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-1.5 shadow-sm">
+            <i class="ri-add-line text-base"></i>
+            <span>Add MFS Provider</span>
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 p-2">
+          @for (p of mfsProviders(); track p.id) {
+            <div class="bg-secondary/30 border border-border rounded-xl p-4 hover:border-primary/40 transition-colors">
+              <div class="flex items-center justify-between">
+                <span class="px-2.5 py-1 rounded-md text-xs font-bold uppercase"
+                  [ngClass]="p.provider_code === 'BKASH' ? 'bg-pink-500/10 text-pink-600' : (p.provider_code === 'NAGAD' ? 'bg-orange-500/10 text-orange-600' : 'bg-purple-500/10 text-purple-600')">
+                  {{ p.provider_code }}
+                </span>
+                <span class="text-xs text-muted-foreground font-semibold">
+                  Fee: {{ p.fee_percentage }}%
+                </span>
+              </div>
+              <div class="mt-3">
+                <div class="font-bold text-base text-foreground">{{ p.provider_name }}</div>
+                <div class="text-xs text-muted-foreground mt-0.5">
+                  Merchant: <span class="font-mono font-medium text-foreground">{{ p.merchant_number }}</span>
+                </div>
+              </div>
+              <div class="mt-3 pt-3 border-t border-border flex items-center justify-between text-xs">
+                <span class="text-muted-foreground">Total Processed:</span>
+                <span class="font-bold text-foreground">৳ {{ p.total_gross_volume | number:'1.2-2' }}</span>
+              </div>
+            </div>
+          }
+        </div>
+      </app-card-container>
+
+      <!-- MFS Transactions Register with Exact Accounting Math -->
+      <app-card-container [hasHeader]="true" title="MFS Payment Register (Gross, Gateway Fees & Net Bank Settlement)" subtitle="Automated double-entry reconciliation & duplicate callback prevention">
+        <div class="overflow-x-auto -mx-4 -my-2">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-secondary/50 text-muted-foreground text-xs font-semibold uppercase tracking-wider border-b border-border">
+              <tr>
+                <th class="px-4 py-3">Gateway & TrxID</th>
+                <th class="px-4 py-3">Customer Phone</th>
+                <th class="px-4 py-3">Reference</th>
+                <th class="px-4 py-3 text-right">Gross Collection</th>
+                <th class="px-4 py-3 text-right">Gateway Fee</th>
+                <th class="px-4 py-3 text-right">Net Settlement</th>
+                <th class="px-4 py-3 text-center">Batch ID</th>
+                <th class="px-4 py-3 text-center">GL Voucher</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border">
+              @for (tx of mfsTransactions(); track tx.id) {
+                <tr class="hover:bg-secondary/30 transition-colors">
+                  <td class="px-4 py-3">
+                    <div class="font-bold text-foreground flex items-center gap-1.5">
+                      <span class="text-xs px-1.5 py-0.5 rounded font-mono font-bold"
+                        [ngClass]="tx.provider_code === 'BKASH' ? 'bg-pink-500/10 text-pink-600' : 'bg-secondary text-foreground'">
+                        {{ tx.provider_code }}
+                      </span>
+                      <span class="font-mono text-xs">{{ tx.transaction_id }}</span>
+                    </div>
+                  </td>
+                  <td class="px-4 py-3 font-mono text-xs text-foreground font-medium">
+                    {{ tx.customer_phone }}
+                  </td>
+                  <td class="px-4 py-3 text-muted-foreground text-xs">
+                    {{ tx.payment_reference || 'Installment Collection' }}
+                  </td>
+                  <td class="px-4 py-3 text-right font-bold text-foreground">
+                    ৳ {{ tx.gross_amount | number:'1.2-2' }}
+                  </td>
+                  <td class="px-4 py-3 text-right font-medium text-amber-600">
+                    ৳ {{ tx.fee_deducted | number:'1.2-2' }}
+                  </td>
+                  <td class="px-4 py-3 text-right font-bold text-emerald-600">
+                    ৳ {{ tx.net_settlement_amount | number:'1.2-2' }}
+                  </td>
+                  <td class="px-4 py-3 text-center font-mono text-xs text-muted-foreground">
+                    {{ tx.settlement_batch_id || '—' }}
+                  </td>
+                  <td class="px-4 py-3 text-center">
+                    @if (tx.gl_voucher_number) {
+                      <a routerLink="/accounts/vouchers" class="inline-flex items-center gap-1 font-mono text-xs font-semibold text-primary hover:underline">
+                        <i class="ri-file-text-line"></i>
+                        <span>{{ tx.gl_voucher_number }}</span>
+                      </a>
+                    } @else {
+                      <span class="text-xs text-muted-foreground">—</span>
+                    }
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="8" class="text-center py-8 text-muted-foreground">No MFS transactions recorded yet.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </app-card-container>
+    </div>
+  }
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL: ADD CASH BOX                                                      -->
+<!-- ========================================================================= -->
+@if (showAddCashBoxModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-fade-in">
+    <div class="bg-card border border-border rounded-2xl w-full max-w-lg shadow-2xl p-6">
+      <div class="flex items-center justify-between pb-4 border-b border-border">
+        <h3 class="font-bold text-lg text-foreground flex items-center gap-2">
+          <i class="ri-safe-2-line text-primary"></i>
+          <span>Add New Physical Cash Box / Site Fund</span>
+        </h3>
+        <button (click)="showAddCashBoxModal.set(false)" class="text-muted-foreground hover:text-foreground">
+          <i class="ri-close-line text-xl"></i>
+        </button>
+      </div>
+
+      <div class="mt-4 space-y-4">
+        <div class="grid grid-cols-2 gap-3">
+          <app-custom-input
+            label="Box Code"
+            [(ngModel)]="newCashBox.box_code"
+            placeholder="e.g. CB-SITE-02"
+            hint="Unique fund identifier">
+          </app-custom-input>
+          <app-custom-input
+            label="Box Name"
+            [(ngModel)]="newCashBox.box_name"
+            placeholder="e.g. Dhanmondi Site Imprest Box">
+          </app-custom-input>
+        </div>
+
+        <app-searchable-select
+          label="Fund Type"
+          [options]="cashboxTypeOptions()"
+          [(ngModel)]="newCashBox.cashbox_type"
+          [allowCreateNew]="true"
+          createRoute="/settings/lookups">
+        </app-searchable-select>
+
+        <app-searchable-select
+          label="Assigned Project (Optional)"
+          [options]="projectOptions()"
+          [(ngModel)]="newCashBox.project_id">
+        </app-searchable-select>
+
+        <div class="grid grid-cols-3 gap-3">
+          <app-custom-input
+            label="Imprest Limit (৳)"
+            type="number"
+            [(ngModel)]="newCashBox.imprest_limit">
+          </app-custom-input>
+          <app-custom-input
+            label="Alert Threshold (৳)"
+            type="number"
+            [(ngModel)]="newCashBox.replenishment_threshold">
+          </app-custom-input>
+          <app-custom-input
+            label="Opening Balance (৳)"
+            type="number"
+            [(ngModel)]="newCashBox.current_balance">
+          </app-custom-input>
+        </div>
+
+        <app-custom-textarea
+          label="Notes / Location / Safe Key Custody"
+          [(ngModel)]="newCashBox.notes"
+          placeholder="Custodian details and physical location">
+        </app-custom-textarea>
+      </div>
+
+      <div class="mt-6 flex items-center justify-end gap-3 pt-4 border-t border-border">
+        <button (click)="showAddCashBoxModal.set(false)" class="px-4 py-2 rounded-xl text-sm font-medium bg-secondary text-foreground hover:bg-secondary/80">
+          Cancel
+        </button>
+        <button (click)="submitCreateCashBox()" class="px-4 py-2 rounded-xl text-sm font-semibold bg-primary text-primary-foreground hover:bg-primary/90">
+          Save Cash Box
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ========================================================================= -->
+<!-- MODAL: CASH DISBURSEMENT / CLAIM                                         -->
+<!-- ========================================================================= -->
+@if (showCashDisbursementModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-fade-in">
+    <div class="bg-card border border-border rounded-2xl w-full max-w-lg shadow-2xl p-6">
+      <div class="flex items-center justify-between pb-4 border-b border-border">
+        <h3 class="font-bold text-lg text-foreground flex items-center gap-2">
+          <i class="ri-money-dollar-circle-line text-emerald-500"></i>
+          <span>Petty Cash Disbursement / Expense Claim</span>
+        </h3>
+        <button (click)="showCashDisbursementModal.set(false)" class="text-muted-foreground hover:text-foreground">
+          <i class="ri-close-line text-xl"></i>
+        </button>
+      </div>
+
+      <div class="mt-4 space-y-4">
+        <app-searchable-select
+          label="Cash Box"
+          [options]="cashBoxOptions()"
+          [(ngModel)]="newCashDisbursement.cash_box_id">
+        </app-searchable-select>
+
+        <div class="grid grid-cols-2 gap-3">
+          <app-custom-input
+            label="Transaction Date"
+            type="date"
+            [(ngModel)]="newCashDisbursement.transaction_date">
+          </app-custom-input>
+          <app-custom-input
+            label="Disbursement Amount (৳)"
+            type="number"
+            [(ngModel)]="newCashDisbursement.amount"
+            placeholder="0.00">
+          </app-custom-input>
+        </div>
+
+        <app-custom-input
+          label="Payee / Employee / Vendor Name"
+          [(ngModel)]="newCashDisbursement.payee_name"
+          placeholder="e.g. Site Engineer / Courier Service">
+        </app-custom-input>
+
+        <app-custom-input
+          label="Supporting Receipt / Voucher Ref #"
+          [(ngModel)]="newCashDisbursement.supporting_receipt_ref"
+          placeholder="e.g. Fuel Receipt # 8820">
+        </app-custom-input>
+
+        <app-custom-textarea
+          label="Expense Purpose / Particulars"
+          [(ngModel)]="newCashDisbursement.purpose"
+          placeholder="e.g. Emergency generator diesel for site construction">
+        </app-custom-textarea>
+      </div>
+
+      <div class="mt-6 flex items-center justify-end gap-3 pt-4 border-t border-border">
+        <button (click)="showCashDisbursementModal.set(false)" class="px-4 py-2 rounded-xl text-sm font-medium bg-secondary text-foreground hover:bg-secondary/80">
+          Cancel
+        </button>
+        <button (click)="submitCashDisbursement()" class="px-4 py-2 rounded-xl text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700">
+          Disburse & Post GL
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ========================================================================= -->
+<!-- MODAL: CASH COUNT AUDIT (SHORTAGE / OVERAGE)                              -->
+<!-- ========================================================================= -->
+@if (showCashAuditCountModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-fade-in">
+    <div class="bg-card border border-border rounded-2xl w-full max-w-lg shadow-2xl p-6">
+      <div class="flex items-center justify-between pb-4 border-b border-border">
+        <h3 class="font-bold text-lg text-foreground flex items-center gap-2">
+          <i class="ri-scales-3-line text-amber-500"></i>
+          <span>Physical Cash Count & Closing Balance Audit</span>
+        </h3>
+        <button (click)="showCashAuditCountModal.set(false)" class="text-muted-foreground hover:text-foreground">
+          <i class="ri-close-line text-xl"></i>
+        </button>
+      </div>
+
+      <div class="mt-4 space-y-4">
+        <app-searchable-select
+          label="Select Cash Box to Audit"
+          [options]="cashBoxOptions()"
+          [(ngModel)]="cashAudit.cash_box_id">
+        </app-searchable-select>
+
+        <div class="grid grid-cols-2 gap-3">
+          <app-custom-input
+            label="Audit Date"
+            type="date"
+            [(ngModel)]="cashAudit.audit_date">
+          </app-custom-input>
+          <app-custom-input
+            label="Actual Physical Count (৳)"
+            type="number"
+            [(ngModel)]="cashAudit.physical_count_amount"
+            placeholder="Verified cash in safe">
+          </app-custom-input>
+        </div>
+
+        <div class="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700 dark:text-amber-300">
+          <div class="font-semibold flex items-center gap-1">
+            <i class="ri-information-line"></i>
+            <span>Automated Shortage/Overage GL Adjustment</span>
+          </div>
+          <p class="mt-1">
+            If physical cash is less than system book balance, the system automatically posts a <strong>Cash Shortage Expense (5330)</strong> adjustment. If excess, it credits <strong>Miscellaneous Cash Overage Income (4250)</strong>.
+          </p>
+        </div>
+
+        <app-custom-textarea
+          label="Audit Remarks / Count Sheet Reference"
+          [(ngModel)]="cashAudit.purpose"
+          placeholder="Count conducted by Finance Manager in presence of Site Custodian">
+        </app-custom-textarea>
+      </div>
+
+      <div class="mt-6 flex items-center justify-end gap-3 pt-4 border-t border-border">
+        <button (click)="showCashAuditCountModal.set(false)" class="px-4 py-2 rounded-xl text-sm font-medium bg-secondary text-foreground hover:bg-secondary/80">
+          Cancel
+        </button>
+        <button (click)="submitCashCountAudit()" class="px-4 py-2 rounded-xl text-sm font-semibold bg-amber-600 text-white hover:bg-amber-700">
+          Record Audit & Reconcile
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ========================================================================= -->
+<!-- MODAL: CASH FUND TRANSFER                                                -->
+<!-- ========================================================================= -->
+@if (showCashTransferModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-fade-in">
+    <div class="bg-card border border-border rounded-2xl w-full max-w-lg shadow-2xl p-6">
+      <div class="flex items-center justify-between pb-4 border-b border-border">
+        <h3 class="font-bold text-lg text-foreground flex items-center gap-2">
+          <i class="ri-arrow-left-right-line text-primary"></i>
+          <span>Cash Transfer Between Authorized Funds</span>
+        </h3>
+        <button (click)="showCashTransferModal.set(false)" class="text-muted-foreground hover:text-foreground">
+          <i class="ri-close-line text-xl"></i>
+        </button>
+      </div>
+
+      <div class="mt-4 space-y-4">
+        <div class="grid grid-cols-2 gap-3">
+          <app-searchable-select
+            label="From Cash Box (Source)"
+            [options]="cashBoxOptions()"
+            [(ngModel)]="cashTransfer.from_cash_box_id">
+          </app-searchable-select>
+          <app-searchable-select
+            label="To Cash Box (Destination)"
+            [options]="cashBoxSimpleOptions()"
+            [(ngModel)]="cashTransfer.to_cash_box_id">
+          </app-searchable-select>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <app-custom-input
+            label="Transfer Amount (৳)"
+            type="number"
+            [(ngModel)]="cashTransfer.amount">
+          </app-custom-input>
+          <app-custom-input
+            label="Transfer Date"
+            type="date"
+            [(ngModel)]="cashTransfer.transfer_date">
+          </app-custom-input>
+        </div>
+
+        <app-custom-input
+          label="Particulars / Handover Slip Ref"
+          [(ngModel)]="cashTransfer.particulars">
+        </app-custom-input>
+      </div>
+
+      <div class="mt-6 flex items-center justify-end gap-3 pt-4 border-t border-border">
+        <button (click)="showCashTransferModal.set(false)" class="px-4 py-2 rounded-xl text-sm font-medium bg-secondary text-foreground hover:bg-secondary/80">
+          Cancel
+        </button>
+        <button (click)="submitCashTransfer()" class="px-4 py-2 rounded-xl text-sm font-semibold bg-primary text-primary-foreground hover:bg-primary/90">
+          Execute Contra Transfer
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ========================================================================= -->
+<!-- MODAL: ADD BANK ACCOUNT                                                   -->
+<!-- ========================================================================= -->
+@if (showAddBankAccountModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-fade-in">
+    <div class="bg-card border border-border rounded-2xl w-full max-w-xl shadow-2xl p-6">
+      <div class="flex items-center justify-between pb-4 border-b border-border">
+        <h3 class="font-bold text-lg text-foreground flex items-center gap-2">
+          <i class="ri-bank-line text-blue-600"></i>
+          <span>Add Corporate Bank Account (Encrypted & Masked)</span>
+        </h3>
+        <button (click)="showAddBankAccountModal.set(false)" class="text-muted-foreground hover:text-foreground">
+          <i class="ri-close-line text-xl"></i>
+        </button>
+      </div>
+
+      <div class="mt-4 space-y-4">
+        <div class="grid grid-cols-2 gap-3">
+          <app-custom-input
+            label="Bank Name"
+            [(ngModel)]="newBankAccount.bank_name"
+            placeholder="e.g. Dutch-Bangla Bank PLC">
+          </app-custom-input>
+          <app-custom-input
+            label="Branch Name"
+            [(ngModel)]="newBankAccount.branch_name"
+            placeholder="e.g. Gulshan Corporate Branch">
+          </app-custom-input>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <app-custom-input
+            label="Account Title / Name"
+            [(ngModel)]="newBankAccount.account_name"
+            placeholder="e.g. Maksudu Real Estate Ltd">
+          </app-custom-input>
+          <app-custom-input
+            label="Account Number (Raw)"
+            [(ngModel)]="newBankAccount.account_number"
+            placeholder="e.g. 1161200023001"
+            hint="Stored encrypted, masked for security">
+          </app-custom-input>
+        </div>
+
+        <div class="grid grid-cols-3 gap-3">
+          <app-custom-input
+            label="Routing Number"
+            [(ngModel)]="newBankAccount.routing_number"
+            placeholder="9-digit routing">
+          </app-custom-input>
+          <app-custom-input
+            label="SWIFT Code"
+            [(ngModel)]="newBankAccount.swift_code"
+            placeholder="Optional">
+          </app-custom-input>
+          <app-custom-input
+            label="Opening Balance (৳)"
+            type="number"
+            [(ngModel)]="newBankAccount.opening_balance">
+          </app-custom-input>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <app-searchable-select
+            label="Account Type"
+            [options]="bankAccountTypeOptions()"
+            [(ngModel)]="newBankAccount.account_type"
+            [allowCreateNew]="true"
+            createRoute="/settings/lookups">
+          </app-searchable-select>
+          <app-searchable-select
+            label="Assigned Project (Optional)"
+            [options]="projectOptions()"
+            [(ngModel)]="newBankAccount.project_id">
+          </app-searchable-select>
+        </div>
+
+        <!-- Cheque Leaf Setup -->
+        <div class="p-3.5 rounded-xl bg-secondary/50 border border-border">
+          <div class="text-xs font-semibold text-foreground mb-2 flex items-center gap-1.5">
+            <i class="ri-booklet-line text-primary"></i>
+            <span>Initial Cheque Book Configuration</span>
+          </div>
+          <div class="grid grid-cols-3 gap-3">
+            <app-custom-input
+              label="Cheque Prefix"
+              [(ngModel)]="newBankAccount.cheque_prefix"
+              placeholder="e.g. CQ-">
+            </app-custom-input>
+            <app-custom-input
+              label="Start Leaf #"
+              type="number"
+              [(ngModel)]="newBankAccount.active_cheque_start"
+              placeholder="1001">
+            </app-custom-input>
+            <app-custom-input
+              label="End Leaf #"
+              type="number"
+              [(ngModel)]="newBankAccount.active_cheque_end"
+              placeholder="1100">
+            </app-custom-input>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-6 flex items-center justify-end gap-3 pt-4 border-t border-border">
+        <button (click)="showAddBankAccountModal.set(false)" class="px-4 py-2 rounded-xl text-sm font-medium bg-secondary text-foreground hover:bg-secondary/80">
+          Cancel
+        </button>
+        <button (click)="submitCreateBankAccount()" class="px-4 py-2 rounded-xl text-sm font-semibold bg-primary text-primary-foreground hover:bg-primary/90">
+          Save Bank Account
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ========================================================================= -->
+<!-- MODAL: RECORD BANK TRANSACTION                                            -->
+<!-- ========================================================================= -->
+@if (showBankTxModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-fade-in">
+    <div class="bg-card border border-border rounded-2xl w-full max-w-lg shadow-2xl p-6">
+      <div class="flex items-center justify-between pb-4 border-b border-border">
+        <h3 class="font-bold text-lg text-foreground flex items-center gap-2">
+          <i class="ri-bank-line text-blue-600"></i>
+          <span>Record Bank Transaction / Cheque / Charge</span>
+        </h3>
+        <button (click)="showBankTxModal.set(false)" class="text-muted-foreground hover:text-foreground">
+          <i class="ri-close-line text-xl"></i>
+        </button>
+      </div>
+
+      <div class="mt-4 space-y-4">
+        <app-searchable-select
+          label="Bank Account"
+          [options]="bankAccountOptions()"
+          [(ngModel)]="newBankTx.bank_account_id">
+        </app-searchable-select>
+
+        <div class="grid grid-cols-2 gap-3">
+          <app-searchable-select
+            label="Transaction Type"
+            [options]="bankTxTypeOptions()"
+            [(ngModel)]="newBankTx.transaction_type"
+            [allowCreateNew]="true"
+            createRoute="/settings/lookups">
+          </app-searchable-select>
+          <app-custom-input
+            label="Transaction Date"
+            type="date"
+            [(ngModel)]="newBankTx.transaction_date">
+          </app-custom-input>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <app-custom-input
+            label="Amount (৳)"
+            type="number"
+            [(ngModel)]="newBankTx.amount"
+            placeholder="0.00">
+          </app-custom-input>
+          <app-custom-input
+            label="Cheque Number (Optional)"
+            [(ngModel)]="newBankTx.cheque_number"
+            placeholder="e.g. CQ-1004">
+          </app-custom-input>
+        </div>
+
+        <app-custom-input
+          label="Particulars / Narration"
+          [(ngModel)]="newBankTx.particulars"
+          placeholder="e.g. Monthly bank ledger maintenance fee / Supplier RTGS">
+        </app-custom-input>
+      </div>
+
+      <div class="mt-6 flex items-center justify-end gap-3 pt-4 border-t border-border">
+        <button (click)="showBankTxModal.set(false)" class="px-4 py-2 rounded-xl text-sm font-medium bg-secondary text-foreground hover:bg-secondary/80">
+          Cancel
+        </button>
+        <button (click)="submitBankTransaction()" class="px-4 py-2 rounded-xl text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700">
+          Save & Post GL
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ========================================================================= -->
+<!-- MODAL: CHEQUE BOOK REGISTER                                               -->
+<!-- ========================================================================= -->
+@if (showChequeRegisterModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-fade-in">
+    <div class="bg-card border border-border rounded-2xl w-full max-w-2xl shadow-2xl p-6">
+      <div class="flex items-center justify-between pb-4 border-b border-border">
+        <div>
+          <h3 class="font-bold text-lg text-foreground flex items-center gap-2">
+            <i class="ri-booklet-line text-primary"></i>
+            <span>Cheque Book Register: {{ selectedBankForCheques()?.bank_name }}</span>
+          </h3>
+          <p class="text-xs text-muted-foreground mt-0.5">
+            Account: {{ selectedBankForCheques()?.account_number_masked }} • Range: {{ selectedBankForCheques()?.cheque_prefix }}{{ selectedBankForCheques()?.active_cheque_start }} to {{ selectedBankForCheques()?.cheque_prefix }}{{ selectedBankForCheques()?.active_cheque_end }}
+          </p>
+        </div>
+        <button (click)="showChequeRegisterModal.set(false)" class="text-muted-foreground hover:text-foreground">
+          <i class="ri-close-line text-xl"></i>
+        </button>
+      </div>
+
+      <div class="mt-4 max-h-96 overflow-y-auto">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+          @for (leaf of chequeLeaves(); track leaf.leaf_number) {
+            <div class="p-3 rounded-xl border text-xs"
+              [ngClass]="leaf.status === 'Available' ? 'bg-secondary/30 border-border' : (leaf.status === 'Cleared' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-300' : 'bg-blue-500/10 border-blue-500/20 text-blue-700 dark:text-blue-300')">
+              <div class="font-mono font-bold">{{ leaf.leaf_number }}</div>
+              <div class="mt-1 font-semibold uppercase text-[10px]"
+                [ngClass]="leaf.status === 'Available' ? 'text-muted-foreground' : 'font-bold'">
+                {{ leaf.status }}
+              </div>
+              @if (leaf.amount) {
+                <div class="mt-1 font-bold">৳ {{ leaf.amount | number:'1.0-0' }}</div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="mt-6 flex items-center justify-end pt-4 border-t border-border">
+        <button (click)="showChequeRegisterModal.set(false)" class="px-4 py-2 rounded-xl text-sm font-semibold bg-secondary text-foreground hover:bg-secondary/80">
+          Close Register
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ========================================================================= -->
+<!-- MODAL: ADD MFS PROVIDER                                                   -->
+<!-- ========================================================================= -->
+@if (showAddMFSProviderModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-fade-in">
+    <div class="bg-card border border-border rounded-2xl w-full max-w-lg shadow-2xl p-6">
+      <div class="flex items-center justify-between pb-4 border-b border-border">
+        <h3 class="font-bold text-lg text-foreground flex items-center gap-2">
+          <i class="ri-smartphone-line text-purple-600"></i>
+          <span>Configure Mobile Financial Service (MFS)</span>
+        </h3>
+        <button (click)="showAddMFSProviderModal.set(false)" class="text-muted-foreground hover:text-foreground">
+          <i class="ri-close-line text-xl"></i>
+        </button>
+      </div>
+
+      <div class="mt-4 space-y-4">
+        <app-searchable-select
+          label="MFS Provider Gateway"
+          [options]="mfsProviderCodeLookupOptions()"
+          [(ngModel)]="newMFSProvider.provider_code"
+          [allowCreateNew]="true"
+          createRoute="/settings/lookups">
+        </app-searchable-select>
+
+        <div class="grid grid-cols-2 gap-3">
+          <app-custom-input
+            label="Provider Name"
+            [(ngModel)]="newMFSProvider.provider_name"
+            placeholder="e.g. bKash Merchant Gateway">
+          </app-custom-input>
+          <app-custom-input
+            label="Merchant Number / Wallet #"
+            [(ngModel)]="newMFSProvider.merchant_number"
+            placeholder="e.g. 01700998877">
+          </app-custom-input>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <app-custom-input
+            label="Gateway Fee (%)"
+            type="number"
+            [(ngModel)]="newMFSProvider.fee_percentage"
+            hint="e.g. 1.50%">
+          </app-custom-input>
+          <app-custom-input
+            label="Daily Limit (৳)"
+            type="number"
+            [(ngModel)]="newMFSProvider.daily_limit">
+          </app-custom-input>
+        </div>
+
+        <app-searchable-select
+          label="Settlement Corporate Bank Account"
+          [options]="bankAccountOptions()"
+          [(ngModel)]="newMFSProvider.settlement_bank_account_id">
+        </app-searchable-select>
+      </div>
+
+      <div class="mt-6 flex items-center justify-end gap-3 pt-4 border-t border-border">
+        <button (click)="showAddMFSProviderModal.set(false)" class="px-4 py-2 rounded-xl text-sm font-medium bg-secondary text-foreground hover:bg-secondary/80">
+          Cancel
+        </button>
+        <button (click)="submitCreateMFSProvider()" class="px-4 py-2 rounded-xl text-sm font-semibold bg-purple-600 text-white hover:bg-purple-700">
+          Save MFS Provider
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ========================================================================= -->
+<!-- MODAL: RECORD MFS COLLECTION (WITH LIVE MATH PREVIEW)                     -->
+<!-- ========================================================================= -->
+@if (showMFSTransactionModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-fade-in">
+    <div class="bg-card border border-border rounded-2xl w-full max-w-lg shadow-2xl p-6">
+      <div class="flex items-center justify-between pb-4 border-b border-border">
+        <h3 class="font-bold text-lg text-foreground flex items-center gap-2">
+          <i class="ri-smartphone-line text-emerald-500"></i>
+          <span>Record MFS Collection Transaction</span>
+        </h3>
+        <button (click)="showMFSTransactionModal.set(false)" class="text-muted-foreground hover:text-foreground">
+          <i class="ri-close-line text-xl"></i>
+        </button>
+      </div>
+
+      <div class="mt-4 space-y-4">
+        <app-searchable-select
+          label="Select MFS Provider"
+          [options]="mfsProviderAccountOptions()"
+          [(ngModel)]="newMFSTx.mfs_provider_id"
+          (ngModelChange)="onMfsGrossChange()">
+        </app-searchable-select>
+
+        <div class="grid grid-cols-2 gap-3">
+          <app-custom-input
+            label="Transaction ID (TrxID)"
+            [(ngModel)]="newMFSTx.transaction_id"
+            placeholder="e.g. 9J4K2L88X"
+            hint="Enforces duplicate prevention">
+          </app-custom-input>
+          <app-custom-input
+            label="Customer Mobile #"
+            [(ngModel)]="newMFSTx.customer_phone"
+            placeholder="e.g. 01711223344">
+          </app-custom-input>
+        </div>
+
+        <app-custom-input
+          label="Gross Customer Collection (৳)"
+          type="number"
+          [(ngModel)]="newMFSTx.gross_amount"
+          (ngModelChange)="onMfsGrossChange()"
+          placeholder="100000">
+        </app-custom-input>
+
+        <!-- Live Settlement Math Preview -->
+        <div class="p-4 rounded-xl bg-secondary/50 border border-border">
+          <div class="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+            Automated Settlement & Double-Entry Math
+          </div>
+          <div class="flex items-center justify-between text-sm py-1 border-b border-border">
+            <span>Customer AR Settlement (Gross):</span>
+            <span class="font-bold">৳ {{ newMFSTx.gross_amount | number:'1.2-2' }}</span>
+          </div>
+          <div class="flex items-center justify-between text-sm py-1 border-b border-border text-amber-600">
+            <span>Gateway Fee Expense (Deducted):</span>
+            <span class="font-bold">- ৳ {{ newMFSTx.fee_deducted | number:'1.2-2' }}</span>
+          </div>
+          <div class="flex items-center justify-between text-sm py-1 font-bold text-emerald-600">
+            <span>Net Bank Account Settlement:</span>
+            <span>৳ {{ newMFSTx.net_settlement_amount | number:'1.2-2' }}</span>
+          </div>
+        </div>
+
+        <app-custom-input
+          label="Payment Reference / Milestone"
+          [(ngModel)]="newMFSTx.payment_reference"
+          placeholder="e.g. Unit 5B Booking Down Payment">
+        </app-custom-input>
+      </div>
+
+      <div class="mt-6 flex items-center justify-end gap-3 pt-4 border-t border-border">
+        <button (click)="showMFSTransactionModal.set(false)" class="px-4 py-2 rounded-xl text-sm font-medium bg-secondary text-foreground hover:bg-secondary/80">
+          Cancel
+        </button>
+        <button (click)="submitMFSTransaction()" class="px-4 py-2 rounded-xl text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700">
+          Process Collection & Post GL
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ========================================================================= -->
+<!-- MODAL: SIMULATE MFS CALLBACK WEBHOOK                                      -->
+<!-- ========================================================================= -->
+@if (showMFSCallbackSimulatorModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-fade-in">
+    <div class="bg-card border border-border rounded-2xl w-full max-w-lg shadow-2xl p-6">
+      <div class="flex items-center justify-between pb-4 border-b border-border">
+        <h3 class="font-bold text-lg text-foreground flex items-center gap-2">
+          <i class="ri-flask-line text-purple-600"></i>
+          <span>Simulate Payment Gateway Webhook Callback</span>
+        </h3>
+        <button (click)="showMFSCallbackSimulatorModal.set(false)" class="text-muted-foreground hover:text-foreground">
+          <i class="ri-close-line text-xl"></i>
+        </button>
+      </div>
+
+      <div class="mt-4 space-y-4">
+        <div class="grid grid-cols-2 gap-3">
+          <app-searchable-select
+            label="Gateway Provider"
+            [options]="mfsProviderCodeLookupOptions()"
+            [(ngModel)]="mfsCallbackSim.provider_code">
+          </app-searchable-select>
+          <app-custom-input
+            label="Simulated TrxID"
+            [(ngModel)]="mfsCallbackSim.transaction_id"
+            hint="Auto-generated unique TrxID">
+          </app-custom-input>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <app-custom-input
+            label="Customer Mobile #"
+            [(ngModel)]="mfsCallbackSim.customer_phone">
+          </app-custom-input>
+          <app-custom-input
+            label="Gross Payment (৳)"
+            type="number"
+            [(ngModel)]="mfsCallbackSim.gross_amount">
+          </app-custom-input>
+        </div>
+
+        <app-custom-input
+          label="Customer Reference"
+          [(ngModel)]="mfsCallbackSim.payment_reference">
+        </app-custom-input>
+      </div>
+
+      <div class="mt-6 flex items-center justify-end gap-3 pt-4 border-t border-border">
+        <button (click)="showMFSCallbackSimulatorModal.set(false)" class="px-4 py-2 rounded-xl text-sm font-medium bg-secondary text-foreground hover:bg-secondary/80">
+          Cancel
+        </button>
+        <button (click)="submitMFSCallbackSimulation()" class="px-4 py-2 rounded-xl text-sm font-semibold bg-purple-600 text-white hover:bg-purple-700">
+          Trigger Instant Webhook
+        </button>
+      </div>
+    </div>
+  </div>
+}

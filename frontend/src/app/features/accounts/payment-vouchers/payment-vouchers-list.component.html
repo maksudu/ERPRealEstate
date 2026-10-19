@@ -1,0 +1,549 @@
+<div class="space-y-6">
+  <!-- Top Navigation & Module Switcher Ribbon -->
+  <div class="flex flex-wrap items-center justify-between gap-4 bg-card border border-border rounded-2xl p-4 shadow-sm">
+    <div class="flex items-center gap-3">
+      <div class="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center text-2xl font-bold shadow-inner">
+        <i class="ri-secure-payment-line"></i>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="text-xl font-bold text-foreground tracking-tight">Payment Vouchers Register</h1>
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span>
+            7-Stage Outflow Governance
+          </span>
+        </div>
+        <p class="text-xs text-muted-foreground mt-0.5">
+          Record approved cash, bank, cheque & MFS outgoing payments. Real-time double-entry GL posting & AP invoice liquidation.
+        </p>
+      </div>
+    </div>
+
+    <!-- Quick Dynamic Dropdown & Lookups Setting Link -->
+    <div class="flex items-center gap-2">
+      <a
+        routerLink="/settings/lookups"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/80 border border-border transition-colors"
+      >
+        <i class="ri-settings-4-line text-sm"></i>
+        <span>Dynamic Lookups Config</span>
+      </a>
+      <a
+        routerLink="/accounts/cash-bank"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/80 border border-border transition-colors"
+      >
+        <i class="ri-bank-card-line text-sm"></i>
+        <span>Cash, Bank & MFS</span>
+      </a>
+      <a
+        routerLink="/accounts/payment-vouchers/create"
+        class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm transition-colors"
+      >
+        <i class="ri-add-line text-sm"></i>
+        <span>New Payment Voucher</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Unified Module Sub-Navigation Bar -->
+  <div class="flex items-center gap-1.5 p-1.5 bg-secondary/40 rounded-2xl border border-border overflow-x-auto">
+    <a
+      routerLink="/accounts/coa"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-node-tree"></i>
+      <span>Chart of Accounts</span>
+    </a>
+
+    <a
+      routerLink="/accounts/vouchers"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-file-list-3-line"></i>
+      <span>General Ledger Vouchers</span>
+    </a>
+
+    <a
+      routerLink="/accounts/payables"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-money-dollar-circle-line"></i>
+      <span>Accounts Payable (AP)</span>
+    </a>
+
+    <a
+      routerLink="/accounts/payment-vouchers"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-card text-foreground shadow-xs border border-border inline-flex items-center gap-1.5 whitespace-nowrap"
+    >
+      <i class="ri-secure-payment-line text-primary"></i>
+      <span>Payment Vouchers</span>
+    </a>
+
+    <a
+      routerLink="/accounts/receivables"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-hand-coin-line"></i>
+      <span>Accounts Receivable (AR)</span>
+    </a>
+
+    <a
+      routerLink="/accounts/cash-bank"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-bank-card-line"></i>
+      <span>Cash, Bank & MFS</span>
+    </a>
+
+    <a
+      routerLink="/accounts/bank-reconciliation"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+    >
+      <i class="ri-check-double-line"></i>
+      <span>Bank Reconciliation</span>
+    </a>
+  </div>
+
+  <!-- Notification Banner -->
+  @if (successMessage()) {
+    <div class="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300 flex items-center justify-between text-sm shadow-sm animate-fade-in">
+      <div class="flex items-center gap-2">
+        <i class="ri-checkbox-circle-fill text-lg text-emerald-500"></i>
+        <span>{{ successMessage() }}</span>
+      </div>
+      <button (click)="successMessage.set(null)" class="text-emerald-500 hover:text-emerald-700">
+        <i class="ri-close-line text-lg"></i>
+      </button>
+    </div>
+  }
+
+  @if (errorMessage()) {
+    <div class="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-700 dark:text-rose-300 flex items-center justify-between text-sm shadow-sm">
+      <div class="flex items-center gap-2">
+        <i class="ri-error-warning-fill text-lg text-rose-500"></i>
+        <span>{{ errorMessage() }}</span>
+      </div>
+      <button (click)="errorMessage.set(null)" class="text-rose-500 hover:text-rose-700">
+        <i class="ri-close-line text-lg"></i>
+      </button>
+    </div>
+  }
+
+  <!-- Executive KPI Ribbon -->
+  @if (kpis(); as kpi) {
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div class="bg-card border border-border rounded-2xl p-4 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total Disbursed</p>
+          <h3 class="text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">৳{{ kpi.total_amount_disbursed | number:'1.2-2' }}</h3>
+          <p class="text-[11px] text-muted-foreground mt-0.5">{{ kpi.disbursed_vouchers + kpi.reconciled_vouchers }} vouchers cleared</p>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center text-xl">
+          <i class="ri-money-dollar-box-line"></i>
+        </div>
+      </div>
+
+      <div class="bg-card border border-border rounded-2xl p-4 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Pending Outflow</p>
+          <h3 class="text-xl font-bold text-amber-600 dark:text-amber-400 mt-1">৳{{ kpi.total_amount_pending | number:'1.2-2' }}</h3>
+          <p class="text-[11px] text-muted-foreground mt-0.5">{{ kpi.draft_vouchers + kpi.pending_approval_vouchers }} vouchers in pipe</p>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center text-xl">
+          <i class="ri-time-line"></i>
+        </div>
+      </div>
+
+      <div class="bg-card border border-border rounded-2xl p-4 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Approved Ready</p>
+          <h3 class="text-xl font-bold text-indigo-600 dark:text-indigo-400 mt-1">{{ kpi.approved_vouchers }}</h3>
+          <p class="text-[11px] text-muted-foreground mt-0.5">Awaiting cash/bank release</p>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-600 flex items-center justify-center text-xl">
+          <i class="ri-check-line"></i>
+        </div>
+      </div>
+
+      <div class="bg-card border border-border rounded-2xl p-4 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Cheques in Clearing</p>
+          <h3 class="text-xl font-bold text-blue-600 dark:text-blue-400 mt-1">{{ kpi.cheques_in_clearing }}</h3>
+          <p class="text-[11px] text-muted-foreground mt-0.5">Issued leaf lifecycle</p>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center text-xl">
+          <i class="ri-bill-line"></i>
+        </div>
+      </div>
+
+      <div class="bg-card border border-border rounded-2xl p-4 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Reconciled Outflows</p>
+          <h3 class="text-xl font-bold text-teal-600 dark:text-teal-400 mt-1">{{ kpi.reconciled_vouchers }}</h3>
+          <p class="text-[11px] text-muted-foreground mt-0.5">Bank statements audited</p>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-teal-500/10 text-teal-600 flex items-center justify-center text-xl">
+          <i class="ri-shield-check-line"></i>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Master Card Container: Filters, Data Table & Pagination -->
+  <app-card-container [hasHeader]="true" title="Payment Vouchers Register" subtitle="Comprehensive record of approved outgoing payments, multi-tier approvals & double-entry status">
+    <div card-actions class="flex items-center gap-2">
+      <button
+        (click)="loadKPIs(); loadVouchers()"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-secondary text-foreground hover:bg-secondary/80 border border-border transition-colors"
+      >
+        <i class="ri-refresh-line text-sm" [class.animate-spin]="isLoading()"></i>
+        <span>Refresh</span>
+      </button>
+
+      <a
+        routerLink="/accounts/payment-vouchers/create"
+        class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm transition-colors"
+      >
+        <i class="ri-add-line text-sm"></i>
+        <span>Create Voucher</span>
+      </a>
+    </div>
+
+    <!-- Filter Bar (100% Dynamic Dropdowns & Searchable) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 p-4 bg-secondary/30 rounded-2xl border border-border mb-6">
+      <!-- Search Input -->
+      <div>
+        <label class="block text-xs font-semibold text-foreground mb-1.5">Search Voucher / Payee / Cheque</label>
+        <div class="relative">
+          <input
+            type="text"
+            [(ngModel)]="searchQuery"
+            (keyup.enter)="onSearch()"
+            placeholder="PV-2026..., Payee, Chq #..."
+            class="erp-input text-xs pl-8 w-full"
+          />
+          <i class="ri-search-line absolute left-2.5 top-2.5 text-muted-foreground text-sm"></i>
+        </div>
+      </div>
+
+      <!-- Project Filter -->
+      <div>
+        <app-searchable-select
+          label="Project / Site"
+          [options]="projectOptions()"
+          [(value)]="selectedProject"
+          (valueChange)="onFilterChange()"
+          [searchable]="true"
+          [allowCreateNew]="true"
+          createRoute="/projects"
+          placeholder="All Projects..."
+        ></app-searchable-select>
+      </div>
+
+      <!-- Payment Method Filter -->
+      <div>
+        <app-searchable-select
+          label="Payment Method"
+          [options]="methodOptions()"
+          [(value)]="selectedMethod"
+          (valueChange)="onFilterChange()"
+          [searchable]="true"
+          [allowCreateNew]="true"
+          createRoute="/settings/lookups"
+          placeholder="All Payment Methods..."
+        ></app-searchable-select>
+      </div>
+
+      <!-- Debit Category Filter -->
+      <div>
+        <app-searchable-select
+          label="Debit Purpose / Category"
+          [options]="categoryOptions()"
+          [(value)]="selectedDebitCategory"
+          (valueChange)="onFilterChange()"
+          [searchable]="true"
+          [allowCreateNew]="true"
+          createRoute="/settings/lookups"
+          placeholder="All Debit Categories..."
+        ></app-searchable-select>
+      </div>
+
+      <!-- Status Filter & Reset -->
+      <div class="flex items-end gap-2">
+        <div class="flex-1">
+          <app-searchable-select
+            label="Workflow Status"
+            [options]="statusOptions()"
+            [(value)]="selectedStatus"
+            (valueChange)="onFilterChange()"
+            [searchable]="true"
+            [allowCreateNew]="true"
+            createRoute="/settings/lookups"
+            placeholder="All Statuses..."
+          ></app-searchable-select>
+        </div>
+        <button
+          (click)="resetFilters()"
+          title="Reset Filters"
+          class="h-[38px] px-3 rounded-xl bg-secondary hover:bg-secondary/80 text-muted-foreground hover:text-foreground border border-border flex items-center justify-center transition-colors"
+        >
+          <i class="ri-filter-off-line text-sm"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="relative overflow-x-auto rounded-xl border border-border">
+      <table class="w-full text-left text-xs text-foreground">
+        <thead class="bg-secondary/60 text-muted-foreground uppercase tracking-wider text-[11px] font-semibold border-b border-border">
+          <tr>
+            <th class="px-4 py-3">Voucher # & Date</th>
+            <th class="px-4 py-3">Payee / Beneficiary</th>
+            <th class="px-4 py-3">Project</th>
+            <th class="px-4 py-3">Payment Method & Source</th>
+            <th class="px-4 py-3 text-right">Amount (BDT)</th>
+            <th class="px-4 py-3">Debit Account / Purpose</th>
+            <th class="px-4 py-3 text-center">Status</th>
+            <th class="px-4 py-3 text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border">
+          @if (isLoading()) {
+            <tr>
+              <td colspan="8" class="text-center py-12 text-muted-foreground">
+                <i class="ri-loader-4-line animate-spin text-2xl text-primary inline-block mb-2"></i>
+                <p>Loading payment vouchers register...</p>
+              </td>
+            </tr>
+          } @else if (vouchers().length === 0) {
+            <tr>
+              <td colspan="8" class="text-center py-12 text-muted-foreground">
+                <div class="w-12 h-12 rounded-2xl bg-secondary flex items-center justify-center mx-auto mb-3 text-2xl">
+                  <i class="ri-inbox-line"></i>
+                </div>
+                <p class="font-medium text-foreground">No payment vouchers found</p>
+                <p class="text-xs text-muted-foreground mt-1">Try adjusting your filters or click Create Voucher to record an outgoing payment.</p>
+              </td>
+            </tr>
+          } @else {
+            @for (v of vouchers(); track v.id) {
+              <tr class="hover:bg-secondary/30 transition-colors">
+                <!-- Voucher Number & Date -->
+                <td class="px-4 py-3 font-medium whitespace-nowrap">
+                  <a [routerLink]="['/accounts/payment-vouchers/view', v.id]" class="text-primary hover:underline font-bold flex items-center gap-1.5">
+                    <i class="ri-file-text-line"></i>
+                    <span>{{ v.voucher_number }}</span>
+                  </a>
+                  <p class="text-[11px] text-muted-foreground mt-0.5">
+                    {{ v.voucher_date | date:'dd MMM yyyy' }}
+                  </p>
+                </td>
+
+                <!-- Payee / Beneficiary -->
+                <td class="px-4 py-3">
+                  <div class="font-semibold text-foreground">
+                    {{ v.effective_payee_name || 'Direct Beneficiary' }}
+                  </div>
+                  <div class="flex items-center gap-1 text-[11px] text-muted-foreground mt-0.5">
+                    <span class="inline-block px-1.5 py-0.2 rounded bg-secondary text-[10px] font-medium border border-border">
+                      {{ v.payee_type }}
+                    </span>
+                    @if (v.supporting_invoice_ref) {
+                      <span class="truncate max-w-[140px]" title="{{ v.supporting_invoice_ref }}">Ref: {{ v.supporting_invoice_ref }}</span>
+                    }
+                  </div>
+                </td>
+
+                <!-- Project -->
+                <td class="px-4 py-3 whitespace-nowrap">
+                  @if (v.project_name) {
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-medium bg-secondary text-foreground border border-border">
+                      <i class="ri-building-line text-primary"></i>
+                      <span>{{ v.project_name }}</span>
+                    </span>
+                  } @else {
+                    <span class="text-muted-foreground italic text-[11px]">Head Office / General</span>
+                  }
+                </td>
+
+                <!-- Payment Method & Source Account -->
+                <td class="px-4 py-3">
+                  <div class="flex items-center gap-1.5 font-medium">
+                    <i [class]="getMethodIcon(v.payment_method)"></i>
+                    <span>{{ v.payment_method }}</span>
+                  </div>
+                  <div class="text-[11px] text-muted-foreground mt-0.5">
+                    @if (v.source_bank_account_name) {
+                      <span>Bank: {{ v.source_bank_account_name }}</span>
+                      @if (v.cheque_number) {
+                        <span class="text-amber-600 dark:text-amber-400 block font-mono text-[10px]">Chq #{{ v.cheque_number }} ({{ v.cheque_status || 'Issued' }})</span>
+                      }
+                    } @else if (v.source_cashbox_name) {
+                      <span>Cashbox: {{ v.source_cashbox_name }}</span>
+                    } @else if (v.source_mfs_provider_name) {
+                      <span>MFS: {{ v.source_mfs_provider_name }}</span>
+                    } @else {
+                      <span>Source Account #{{ v.credit_account_code || v.credit_account_id }}</span>
+                    }
+                  </div>
+                </td>
+
+                <!-- Amount (BDT) -->
+                <td class="px-4 py-3 text-right whitespace-nowrap">
+                  <span class="font-bold text-foreground text-sm font-mono">
+                    ৳{{ v.amount | number:'1.2-2' }}
+                  </span>
+                  <span class="block text-[10px] text-muted-foreground uppercase">{{ v.currency }}</span>
+                </td>
+
+                <!-- Debit Account & Purpose -->
+                <td class="px-4 py-3 max-w-[220px]">
+                  <div class="font-medium text-foreground truncate" title="{{ v.debit_account_name }}">
+                    [{{ v.debit_account_code || 'COA' }}] {{ v.debit_account_name || 'Debit Leg' }}
+                  </div>
+                  <div class="text-[11px] text-muted-foreground truncate" title="{{ v.purpose || v.narration }}">
+                    {{ v.purpose || v.narration || 'Authorized outgoing payment' }}
+                  </div>
+                </td>
+
+                <!-- Status Badge -->
+                <td class="px-4 py-3 text-center whitespace-nowrap">
+                  <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold border shadow-2xs" [ngClass]="getStatusBadgeClass(v.status)">
+                    {{ v.status }}
+                  </span>
+                  @if (v.gl_voucher_number) {
+                    <span class="block font-mono text-[10px] text-emerald-600 dark:text-emerald-400 mt-1" title="GL Double Entry Voucher">
+                      GL: {{ v.gl_voucher_number }}
+                    </span>
+                  }
+                </td>
+
+                <!-- Actions Menu -->
+                <td class="px-4 py-3 text-center whitespace-nowrap">
+                  <div class="flex items-center justify-center gap-1.5">
+                    <!-- View Audit Trail Button -->
+                    <a
+                      [routerLink]="['/accounts/payment-vouchers/view', v.id]"
+                      class="px-2.5 py-1 rounded-lg text-xs font-medium bg-secondary text-foreground hover:bg-secondary/80 border border-border inline-flex items-center gap-1 transition-colors"
+                      title="View Details & Workflow History"
+                    >
+                      <i class="ri-eye-line text-sm"></i>
+                      <span>View</span>
+                    </a>
+
+                    <!-- Edit Button (Only allowed for Draft or Submitted) -->
+                    @if (v.status === 'Draft' || v.status === 'Submitted') {
+                      <a
+                        [routerLink]="['/accounts/payment-vouchers/edit', v.id]"
+                        class="px-2.5 py-1 rounded-lg text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20 inline-flex items-center gap-1 transition-colors"
+                        title="Edit Voucher"
+                      >
+                        <i class="ri-edit-line text-sm"></i>
+                        <span>Edit</span>
+                      </a>
+                    }
+
+                    <!-- Direct Quick Workflow Action -->
+                    @if (v.status === 'Draft') {
+                      <button
+                        (click)="executeQuickAction(v, 'submit')"
+                        [disabled]="isActionLoading()"
+                        class="px-2.5 py-1 rounded-lg text-xs font-medium bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 border border-blue-500/20 inline-flex items-center gap-1 transition-colors"
+                        title="Submit for Verification"
+                      >
+                        <i class="ri-send-plane-line text-sm"></i>
+                        <span>Submit</span>
+                      </button>
+                    } @else if (v.status === 'Submitted') {
+                      <button
+                        (click)="executeQuickAction(v, 'check')"
+                        [disabled]="isActionLoading()"
+                        class="px-2.5 py-1 rounded-lg text-xs font-medium bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 border border-amber-500/20 inline-flex items-center gap-1 transition-colors"
+                        title="Verify / Check"
+                      >
+                        <i class="ri-check-line text-sm"></i>
+                        <span>Check</span>
+                      </button>
+                    } @else if (v.status === 'Checked') {
+                      <button
+                        (click)="executeQuickAction(v, 'approve')"
+                        [disabled]="isActionLoading()"
+                        class="px-2.5 py-1 rounded-lg text-xs font-medium bg-indigo-500/10 text-indigo-600 hover:bg-indigo-500/20 border border-indigo-500/20 inline-flex items-center gap-1 transition-colors"
+                        title="Approve for Disbursement"
+                      >
+                        <i class="ri-thumb-up-line text-sm"></i>
+                        <span>Approve</span>
+                      </button>
+                    } @else if (v.status === 'Approved') {
+                      <button
+                        (click)="executeQuickAction(v, 'disburse')"
+                        [disabled]="isActionLoading()"
+                        class="px-2.5 py-1 rounded-lg text-xs font-medium bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border border-emerald-500/20 inline-flex items-center gap-1 transition-colors"
+                        title="Disburse Funds & Post to GL"
+                      >
+                        <i class="ri-hand-coin-line text-sm"></i>
+                        <span>Disburse</span>
+                      </button>
+                    } @else if (v.status === 'Disbursed') {
+                      <button
+                        (click)="executeQuickAction(v, 'reconcile')"
+                        [disabled]="isActionLoading()"
+                        class="px-2.5 py-1 rounded-lg text-xs font-medium bg-teal-500/10 text-teal-600 hover:bg-teal-500/20 border border-teal-500/20 inline-flex items-center gap-1 transition-colors"
+                        title="Reconcile with Bank Statement"
+                      >
+                        <i class="ri-shield-check-line text-sm"></i>
+                        <span>Reconcile</span>
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Controls (Limit Dropdown & Page Navigation) -->
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4 pt-4 border-t border-border text-xs text-muted-foreground">
+      <div class="flex items-center gap-2">
+        <span>Rows per page:</span>
+        <select
+          [ngModel]="pageSize()"
+          (ngModelChange)="changePageSize($event)"
+          class="erp-input py-1 px-2 text-xs w-auto rounded-lg border-border bg-card"
+        >
+          <option [value]="10">10</option>
+          <option [value]="20">20</option>
+          <option [value]="50">50</option>
+          <option [value]="100">100</option>
+        </select>
+        <span>Showing {{ totalCount() === 0 ? 0 : pageOffset() + 1 }} to {{ pageOffset() + vouchers().length }} of {{ totalCount() }} vouchers</span>
+      </div>
+
+      <div class="flex items-center gap-1.5">
+        <button
+          (click)="changePage(pageOffset() - pageSize())"
+          [disabled]="pageOffset() === 0 || isLoading()"
+          class="px-3 py-1.5 rounded-xl border border-border bg-card text-foreground disabled:opacity-40 disabled:cursor-not-allowed hover:bg-secondary transition-colors"
+        >
+          <i class="ri-arrow-left-s-line"></i>
+          <span>Prev</span>
+        </button>
+
+        <span class="px-3 py-1.5 font-medium text-foreground">
+          Page {{ currentPage }} of {{ totalPages }}
+        </span>
+
+        <button
+          (click)="changePage(pageOffset() + pageSize())"
+          [disabled]="pageOffset() + pageSize() >= totalCount() || isLoading()"
+          class="px-3 py-1.5 rounded-xl border border-border bg-card text-foreground disabled:opacity-40 disabled:cursor-not-allowed hover:bg-secondary transition-colors"
+        >
+          <span>Next</span>
+          <i class="ri-arrow-right-s-line"></i>
+        </button>
+      </div>
+    </div>
+  </app-card-container>
+</div>
