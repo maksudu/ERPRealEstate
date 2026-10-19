@@ -25,6 +25,18 @@ from app.modules.inventory.ws_manager import manager
 
 router = APIRouter(prefix="/inventory", tags=["Property Inventory & 2D Stacking Plan"])
 
+from app.modules.inventory.pricing_router import router as pricing_router
+router.include_router(pricing_router)
+
+from app.modules.inventory.availability_router import router as availability_router
+router.include_router(availability_router)
+
+from app.modules.inventory.facility_router import router as facility_router
+router.include_router(facility_router)
+
+from app.modules.inventory.document_router import router as document_router
+router.include_router(document_router)
+
 LOCK_TTL_SECONDS = 900  # 15 Minutes Distributed Mutex
 
 # -------------------------------------------------------------

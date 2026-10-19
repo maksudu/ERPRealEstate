@@ -9,7 +9,11 @@ import {
   CourtCase,
   CourtCaseDocument,
   CourtCaseHearing,
-  LegalComplianceMetrics
+  LegalComplianceMetrics,
+  LegalAuditPage,
+  LegalDashboard,
+  LegalRecord,
+  LegalRecordPage
 } from '../models/legal.model';
 
 @Injectable({
@@ -112,5 +116,53 @@ export class LegalService {
 
   recordCaseHearing(caseId: number, payload: Partial<CourtCaseHearing>): Observable<CourtCaseHearing> {
     return this.http.post<CourtCaseHearing>(`${this.baseUrl}/cases/${caseId}/hearings`, payload);
+  }
+
+  getLegalDashboard(): Observable<LegalDashboard> {
+    return this.http.get<LegalDashboard>(`${this.baseUrl}/dashboard`);
+  }
+
+  listRecords(params: {
+    area: string;
+    limit?: number;
+    offset?: number;
+    q?: string;
+    status?: string;
+    project_id?: number;
+    due_from?: string;
+    due_to?: string;
+  }): Observable<LegalRecordPage> {
+    let httpParams = new HttpParams().set('area', params.area)
+      .set('limit', params.limit ?? 25).set('offset', params.offset ?? 0);
+    Object.entries(params).forEach(([key, value]) => {
+      if (key !== 'area' && value !== undefined && value !== null && value !== '') {
+        httpParams = httpParams.set(key, value);
+      }
+    });
+    return this.http.get<LegalRecordPage>(`${this.baseUrl}/records`, { params: httpParams });
+  }
+
+  getRecord(id: number): Observable<LegalRecord> {
+    return this.http.get<LegalRecord>(`${this.baseUrl}/records/${id}`);
+  }
+
+  createRecord(payload: Partial<LegalRecord>): Observable<LegalRecord> {
+    return this.http.post<LegalRecord>(`${this.baseUrl}/records`, payload);
+  }
+
+  updateRecord(id: number, payload: Partial<LegalRecord>): Observable<LegalRecord> {
+    return this.http.patch<LegalRecord>(`${this.baseUrl}/records/${id}`, payload);
+  }
+
+  deleteRecord(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/records/${id}`);
+  }
+
+  getAuditEvents(params: { area?: string; record_id?: number; limit?: number; offset?: number } = {}): Observable<LegalAuditPage> {
+    let httpParams = new HttpParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') httpParams = httpParams.set(key, value);
+    });
+    return this.http.get<LegalAuditPage>(`${this.baseUrl}/audit`, { params: httpParams });
   }
 }

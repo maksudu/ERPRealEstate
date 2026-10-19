@@ -1,0 +1,111 @@
+<main class="space-y-6">
+  <header class="flex flex-col gap-4 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between">
+    <div>
+      <p class="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Legal operations</p>
+      <h1 class="mt-1 text-2xl font-semibold tracking-tight text-foreground">Compliance overview</h1>
+      <p class="mt-1 max-w-3xl text-sm text-muted-foreground">Track title diligence, authority approvals, customer instruments, litigation and review actions in one configurable workspace.</p>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <a routerLink="/legal/audit"><app-custom-button variant="outline" size="sm">Open audit trail</app-custom-button></a>
+      <a routerLink="/legal/compliance-vault"><app-custom-button variant="secondary" size="sm">Legacy clearances vault</app-custom-button></a>
+    </div>
+  </header>
+
+  @if (isLoading) {
+    <section class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="Loading legal dashboard">
+      @for (item of [1, 2, 3, 4]; track item) {
+        <div class="h-24 animate-pulse rounded-xl border border-border bg-muted/40"></div>
+      }
+    </section>
+    <p class="text-sm text-muted-foreground" role="status">Loading legal operations…</p>
+  } @else if (error) {
+    <app-card-container>
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <p class="text-sm text-destructive">{{ error }}</p>
+        <app-custom-button variant="outline" size="sm" (btnClick)="load()">Retry</app-custom-button>
+      </div>
+    </app-card-container>
+  } @else if (dashboard) {
+    <section class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="Key compliance indicators">
+      <a routerLink="/legal/records/litigation_notice" class="group rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+        <span class="text-xs font-medium text-muted-foreground">Active litigation / notices</span>
+        <span class="mt-2 block text-3xl font-semibold tabular-nums text-foreground">{{ dashboard.active_litigation }}</span>
+        <span class="mt-1 block text-xs text-muted-foreground">View dispute register →</span>
+      </a>
+      <a routerLink="/legal/records/approval_workflow" class="group rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+        <span class="text-xs font-medium text-muted-foreground">Pending legal reviews</span>
+        <span class="mt-2 block text-3xl font-semibold tabular-nums text-foreground">{{ dashboard.pending_approvals }}</span>
+        <span class="mt-1 block text-xs text-muted-foreground">Open approval queue →</span>
+      </a>
+      <a routerLink="/legal/records/calendar_reminder" class="group rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+        <span class="text-xs font-medium text-muted-foreground">Due in the next 30 days</span>
+        <span class="mt-2 block text-3xl font-semibold tabular-nums text-foreground">{{ dashboard.due_soon.length }}</span>
+        <span class="mt-1 block text-xs text-muted-foreground">Open compliance calendar →</span>
+      </a>
+      <a routerLink="/legal/records/land_title" class="group rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+        <span class="text-xs font-medium text-muted-foreground">Title verification queue</span>
+        <span class="mt-2 block text-3xl font-semibold tabular-nums text-foreground">{{ dashboard.areas[0]?.open_items || 0 }}</span>
+        <span class="mt-1 block text-xs text-muted-foreground">Review title records →</span>
+      </a>
+    </section>
+
+    <section>
+      <div class="mb-3 flex items-end justify-between gap-3">
+        <div>
+          <h2 class="text-base font-semibold text-foreground">Work areas</h2>
+          <p class="mt-0.5 text-xs text-muted-foreground">Configurable compliance tracking; applicability and checklist items should be confirmed for each project.</p>
+        </div>
+        <span class="text-xs text-muted-foreground">{{ dashboard.areas.length }} registers</span>
+      </div>
+      @if (dashboard.areas.length) {
+        <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          @for (area of dashboard.areas; track area.area) {
+            <a [routerLink]="areaUrl(area.area)" class="group rounded-xl border border-border bg-card p-4 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+              <div class="flex items-start justify-between gap-3">
+                <h3 class="text-sm font-semibold leading-5 text-foreground">{{ areaLabels[area.area] }}</h3>
+                <span class="shrink-0 rounded-md bg-muted px-2 py-1 text-xs font-semibold tabular-nums text-foreground">{{ area.total }}</span>
+              </div>
+              <div class="mt-4 flex items-center gap-4 border-t border-border pt-3 text-xs">
+                <span class="text-muted-foreground">{{ area.open_items }} open</span>
+                <span class="font-medium" [class.text-destructive]="area.overdue_items > 0" [class.text-muted-foreground]="area.overdue_items === 0">{{ area.overdue_items }} overdue</span>
+                <span class="ml-auto font-medium text-primary group-hover:underline">Open register →</span>
+              </div>
+            </a>
+          }
+        </div>
+      } @else {
+        <app-card-container>
+          <p class="py-6 text-center text-sm text-muted-foreground">No compliance records yet. Open a register to add its first record.</p>
+        </app-card-container>
+      }
+    </section>
+
+    <section>
+      <div class="mb-3">
+        <h2 class="text-base font-semibold text-foreground">Upcoming deadlines</h2>
+        <p class="mt-0.5 text-xs text-muted-foreground">Items with a due date in the next 30 days.</p>
+      </div>
+      @if (dashboard.due_soon.length) {
+        <div class="overflow-x-auto rounded-xl border border-border bg-card">
+          <table class="w-full min-w-[640px] text-left text-sm">
+            <thead class="bg-muted/50 text-xs uppercase tracking-wide text-muted-foreground">
+              <tr><th class="px-4 py-3 font-semibold">Item</th><th class="px-4 py-3 font-semibold">Register</th><th class="px-4 py-3 font-semibold">Due date</th><th class="px-4 py-3 font-semibold">Status</th></tr>
+            </thead>
+            <tbody class="divide-y divide-border">
+              @for (item of dashboard.due_soon; track item.id) {
+                <tr class="hover:bg-muted/30">
+                  <td class="px-4 py-3 font-medium text-foreground">{{ item.title }}</td>
+                  <td class="px-4 py-3 text-muted-foreground">{{ areaLabels[item.area] }}</td>
+                  <td class="px-4 py-3 tabular-nums text-foreground">{{ item.due_date | date:'mediumDate' }}</td>
+                  <td class="px-4 py-3 text-muted-foreground">{{ item.status || 'Unspecified' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <app-card-container><p class="py-4 text-sm text-muted-foreground">No upcoming deadlines have been recorded.</p></app-card-container>
+      }
+    </section>
+  }
+</main>

@@ -559,7 +559,7 @@ export class PropertyInventoryComponent implements OnInit, OnDestroy {
         effective_rate_per_sqft: unit.base_price_per_sft,
         total_unit_price: unit.total_base_price,
         status_id: (unit.status || 'AVAILABLE') as any,
-        is_landowner_share: unit.is_landowner_share || false
+        is_landowner_share: unit.status === 'LANDOWNER_SHARE'
       };
       this.inspectingUnit.set(mapped);
     }

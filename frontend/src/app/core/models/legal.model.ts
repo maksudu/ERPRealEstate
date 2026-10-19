@@ -143,3 +143,84 @@ export interface LegalComplianceMetrics {
   total_disputed_area_decimals: number;
   total_financial_exposure_bdt: number;
 }
+
+export type LegalArea =
+  | 'land_title'
+  | 'registered_record'
+  | 'developer_registration'
+  | 'land_use_clearance'
+  | 'approval_condition'
+  | 'noc_correspondence'
+  | 'sale_transfer'
+  | 'litigation_notice'
+  | 'document_archive'
+  | 'calendar_reminder'
+  | 'approval_workflow'
+  | 'compliance_report';
+
+export interface LegalRecord {
+  id: number;
+  area: LegalArea;
+  title: string;
+  reference_no?: string | null;
+  project_id?: number | null;
+  status?: string | null;
+  due_date?: string | null;
+  data: Record<string, any>;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface LegalRecordPage {
+  items: LegalRecord[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface LegalDashboardArea {
+  area: LegalArea;
+  total: number;
+  open_items: number;
+  overdue_items: number;
+}
+
+export interface LegalDashboard {
+  areas: LegalDashboardArea[];
+  due_soon: LegalRecord[];
+  active_litigation: number;
+  pending_approvals: number;
+}
+
+export interface LegalAuditEvent {
+  id: number;
+  record_id?: number | null;
+  area: LegalArea;
+  action: string;
+  actor: string;
+  before_data?: Record<string, any> | null;
+  after_data?: Record<string, any> | null;
+  created_at?: string;
+}
+
+export interface LegalAuditPage {
+  items: LegalAuditEvent[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export const LEGAL_AREA_LABELS: Record<LegalArea, string> = {
+  land_title: 'Land title & ownership verification',
+  registered_record: 'Deed, khatian, mutation & land-tax records',
+  developer_registration: 'Developer registration & renewal',
+  land_use_clearance: 'Land-use & building-plan clearances',
+  approval_condition: 'Approval conditions & expiry tracking',
+  noc_correspondence: 'NOCs & authority correspondence',
+  sale_transfer: 'Sale agreements & transfers',
+  litigation_notice: 'Litigation, disputes & legal notices',
+  document_archive: 'Versioned documents & secure archive',
+  calendar_reminder: 'Compliance calendar & reminders',
+  approval_workflow: 'Legal review & approval workflows',
+  compliance_report: 'Compliance reports'
+};

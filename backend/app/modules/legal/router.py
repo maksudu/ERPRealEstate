@@ -4,7 +4,7 @@ from decimal import Decimal
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import desc, func, select
+from sqlalchemy import and_, desc, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -32,7 +32,18 @@ from app.modules.legal.schemas import (
     CourtCaseUpdate,
     CourtCaseResponse,
     LegalComplianceMetrics,
+    LegalAuditResponse,
+    LegalAuditPage,
+    LegalDashboardResponse,
+    LegalRecordCreate,
+    LegalRecordPage,
+    LegalRecordResponse,
+    LegalRecordUpdate,
 )
+from app.modules.legal.models import LegalAuditEvent, LegalComplianceRecord
+from app.modules.lookups.models import LookupCategory
+from app.modules.auth.dependencies import get_current_user
+from app.modules.auth.models import User
 
 router = APIRouter(prefix="/legal", tags=["Legal & Statutory Compliance Vault"])
 
@@ -719,3 +730,287 @@ async def record_case_hearing(id: int, payload: CourtCaseHearingBase, db: AsyncS
     await db.commit()
     await db.refresh(hearing)
     return hearing
+
+
+LEGAL_AREAS = (
+    "land_title", "registered_record", "developer_registration", "land_use_clearance",
+    "approval_condition", "noc_correspondence", "sale_transfer", "litigation_notice",
+    "document_archive", "calendar_reminder", "approval_workflow", "compliance_report",
+)
+LEGAL_LOOKUP_CATEGORIES = {
+    "LEGAL_RECORD_STATUS": "Legal record status",
+    "LEGAL_REVIEW_OUTCOME": "Legal review outcomes",
+    "LEGAL_RECORD_TYPE": "Registered land record types",
+    "LEGAL_LAND_USE_TYPE": "Land-use classifications",
+    "LEGAL_CONDITION_STATUS": "Approval condition statuses",
+    "LEGAL_CORRESPONDENCE_TYPE": "Authority correspondence types",
+    "LEGAL_AGREEMENT_TYPE": "Customer agreement types",
+    "LEGAL_TRANSFER_STATUS": "Transfer statuses",
+    "LEGAL_RISK_LEVEL": "Legal risk classifications",
+    "LEGAL_DOCUMENT_TYPE": "Legal archive document types",
+    "LEGAL_CONFIDENTIALITY": "Archive confidentiality classifications",
+    "LEGAL_REMINDER_TYPE": "Compliance reminder types",
+    "LEGAL_REPEAT_RULE": "Reminder recurrence rules",
+    "LEGAL_WORKFLOW_TYPE": "Legal workflow classifications",
+    "LEGAL_APPROVAL_STAGE": "Legal approval stages",
+    "LEGAL_REPORT_TYPE": "Compliance report types",
+    "STATUTORY_AUTHORITY": "Authorities and registering offices",
+}
+TERMINAL_LEGAL_STATUSES = {"closed", "complete", "completed", "approved", "cleared", "rejected", "dismissed", "archived"}
+
+
+def _record_snapshot(record: LegalComplianceRecord) -> dict:
+    return {
+        "id": record.id,
+        "area": record.area,
+        "title": record.title,
+        "reference_no": record.reference_no,
+        "project_id": record.project_id,
+        "status": record.status,
+        "due_date": record.due_date.isoformat() if record.due_date else None,
+        "data": record.data or {},
+    }
+
+
+async def _ensure_legal_lookup_categories(db: AsyncSession) -> None:
+    result = await db.execute(
+        select(LookupCategory.category_code).where(LookupCategory.category_code.in_(LEGAL_LOOKUP_CATEGORIES))
+    )
+    existing = set(result.scalars().all())
+    if not existing.issuperset(LEGAL_LOOKUP_CATEGORIES):
+        for code, name in LEGAL_LOOKUP_CATEGORIES.items():
+            if code not in existing:
+                db.add(LookupCategory(
+                    category_code=code,
+                    category_name=name,
+                    description="Configurable legal-compliance choices; add only values applicable to the organization.",
+                    is_system_locked=False,
+                    is_active=True,
+                ))
+        await db.commit()
+
+
+def _validate_clearance_review(area: str, status_value: Optional[str], data: dict, current_user: User) -> None:
+    if area not in {"land_title", "land_use_clearance"}:
+        return
+    status_text = (status_value or "").strip().lower().replace("-", "_").replace(" ", "_")
+    if status_text not in {"approved", "cleared", "conditionally_approved", "conditional"}:
+        return
+    if not data.get("verification_outcome"):
+        raise HTTPException(status_code=422, detail="A documented verification outcome is required before clearance.")
+    if not str(data.get("reviewer_identity", "")).strip():
+        raise HTTPException(status_code=422, detail="Reviewer identity is required before clearance.")
+    if not str(data.get("authorized_approver", "")).strip() or data.get("approval_authorized") is not True:
+        raise HTTPException(status_code=422, detail="An authorized approver and explicit approval authorization are required.")
+    role_codes = {
+        str(getattr(assignment, "role_code", "")).upper()
+        for assignment in (getattr(current_user, "project_assignments", None) or [])
+    }
+    can_approve = bool(getattr(current_user, "is_group_admin", False)) or any(
+        "LEGAL" in role or "APPROVER" in role or role == "ADMIN" for role in role_codes
+    )
+    approver_names = {
+        str(getattr(current_user, "username", "")).strip().casefold(),
+        str(getattr(current_user, "full_name_en", "")).strip().casefold(),
+    }
+    if not can_approve or str(data.get("authorized_approver", "")).strip().casefold() not in approver_names:
+        raise HTTPException(status_code=403, detail="Only the authenticated legal approver or group administrator may authorize clearance.")
+    outcome = str(data.get("verification_outcome", "")).strip().lower()
+    if status_text in {"conditional", "conditionally_approved"} or outcome in {"conditional", "conditionally_clear"}:
+        conditions = data.get("conditions")
+        if not isinstance(conditions, list) or not conditions:
+            raise HTTPException(status_code=422, detail="Conditional clearance requires at least one owner-assigned condition with a deadline.")
+        for condition in conditions:
+            if not isinstance(condition, dict) or not str(condition.get("owner", "")).strip() or not condition.get("deadline"):
+                raise HTTPException(status_code=422, detail="Each conditional approval item must include an owner and deadline.")
+
+
+async def _write_legal_audit(
+    db: AsyncSession, record_id: Optional[int], area: str, action: str, actor: str,
+    before_data: Optional[dict], after_data: Optional[dict],
+) -> None:
+    db.add(LegalAuditEvent(
+        record_id=record_id, area=area, action=action, actor=actor[:128],
+        before_data=before_data, after_data=after_data,
+    ))
+
+
+@router.get("/dashboard", response_model=LegalDashboardResponse)
+async def get_legal_dashboard(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    await _ensure_legal_lookup_categories(db)
+    today = date.today()
+    count_result = await db.execute(
+        select(LegalComplianceRecord.area, func.count(LegalComplianceRecord.id))
+        .group_by(LegalComplianceRecord.area)
+    )
+    totals = {area: count for area, count in count_result.all()}
+    records_result = await db.execute(select(LegalComplianceRecord))
+    records = records_result.scalars().all()
+    areas = []
+    for area in LEGAL_AREAS:
+        area_records = [record for record in records if record.area == area]
+        active = [record for record in area_records if (record.status or "").lower() not in TERMINAL_LEGAL_STATUSES]
+        overdue = [record for record in active if record.due_date and record.due_date < today]
+        areas.append({"area": area, "total": totals.get(area, 0), "open_items": len(active), "overdue_items": len(overdue)})
+    due_soon_stmt = (
+        select(LegalComplianceRecord)
+        .where(
+            LegalComplianceRecord.due_date >= today,
+            LegalComplianceRecord.due_date <= today + timedelta(days=30),
+            LegalComplianceRecord.status.notin_(TERMINAL_LEGAL_STATUSES),
+        )
+        .order_by(LegalComplianceRecord.due_date)
+        .limit(10)
+    )
+    due_soon_result = await db.execute(due_soon_stmt)
+    active_litigation = sum(
+        1 for record in records
+        if record.area == "litigation_notice" and (record.status or "").lower() not in TERMINAL_LEGAL_STATUSES
+    )
+    pending_approvals = sum(
+        1 for record in records
+        if record.area == "approval_workflow" and (record.status or "").lower() not in TERMINAL_LEGAL_STATUSES
+    )
+    return {
+        "areas": areas,
+        "due_soon": [_record_snapshot(record) for record in due_soon_result.scalars().all()],
+        "active_litigation": active_litigation,
+        "pending_approvals": pending_approvals,
+    }
+
+
+@router.get("/records", response_model=LegalRecordPage)
+async def list_legal_records(
+    area: str = Query(...),
+    limit: int = Query(25, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+    q: Optional[str] = Query(None, max_length=128),
+    status_filter: Optional[str] = Query(None, alias="status"),
+    project_id: Optional[int] = Query(None),
+    due_from: Optional[date] = Query(None),
+    due_to: Optional[date] = Query(None),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    await _ensure_legal_lookup_categories(db)
+    if area not in LEGAL_AREAS:
+        raise HTTPException(status_code=422, detail="Unknown legal compliance area.")
+    filters = [LegalComplianceRecord.area == area]
+    if q:
+        filters.append(or_(
+            LegalComplianceRecord.title.ilike(f"%{q}%"),
+            LegalComplianceRecord.reference_no.ilike(f"%{q}%"),
+        ))
+    if status_filter:
+        filters.append(LegalComplianceRecord.status == status_filter)
+    if project_id is not None:
+        filters.append(LegalComplianceRecord.project_id == project_id)
+    if due_from:
+        filters.append(LegalComplianceRecord.due_date >= due_from)
+    if due_to:
+        filters.append(LegalComplianceRecord.due_date <= due_to)
+    total = await db.scalar(select(func.count(LegalComplianceRecord.id)).where(and_(*filters))) or 0
+    result = await db.execute(
+        select(LegalComplianceRecord).where(and_(*filters))
+        .order_by(desc(LegalComplianceRecord.updated_at), desc(LegalComplianceRecord.id))
+        .limit(limit).offset(offset)
+    )
+    return {"items": result.scalars().all(), "total": total, "limit": limit, "offset": offset}
+
+
+@router.get("/records/{record_id}", response_model=LegalRecordResponse)
+async def get_legal_record(
+    record_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    record = await db.get(LegalComplianceRecord, record_id)
+    if not record:
+        raise HTTPException(status_code=404, detail="Legal compliance record not found.")
+    return record
+
+
+@router.post("/records", response_model=LegalRecordResponse, status_code=status.HTTP_201_CREATED)
+async def create_legal_record(
+    payload: LegalRecordCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    data = payload.data or {}
+    _validate_clearance_review(payload.area, payload.status, data, current_user)
+    record = LegalComplianceRecord(
+        area=payload.area, title=payload.title.strip(), reference_no=payload.reference_no,
+        project_id=payload.project_id, status=payload.status, due_date=payload.due_date, data=data,
+    )
+    db.add(record)
+    await db.flush()
+    await _write_legal_audit(db, record.id, record.area, "CREATE", current_user.username, None, _record_snapshot(record))
+    await db.commit()
+    await db.refresh(record)
+    return record
+
+
+@router.patch("/records/{record_id}", response_model=LegalRecordResponse)
+async def update_legal_record(
+    record_id: int,
+    payload: LegalRecordUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    record = await db.get(LegalComplianceRecord, record_id)
+    if not record:
+        raise HTTPException(status_code=404, detail="Legal compliance record not found.")
+    before_data = _record_snapshot(record)
+    update_data = payload.model_dump(exclude_unset=True)
+    data = update_data.get("data", record.data or {})
+    status_value = update_data.get("status", record.status)
+    _validate_clearance_review(record.area, status_value, data or {}, current_user)
+    for field, value in update_data.items():
+        setattr(record, field, value)
+    await _write_legal_audit(db, record.id, record.area, "UPDATE", current_user.username, before_data, _record_snapshot(record))
+    await db.commit()
+    await db.refresh(record)
+    return record
+
+
+@router.delete("/records/{record_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_legal_record(
+    record_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    record = await db.get(LegalComplianceRecord, record_id)
+    if not record:
+        raise HTTPException(status_code=404, detail="Legal compliance record not found.")
+    before_data = _record_snapshot(record)
+    await _write_legal_audit(db, record.id, record.area, "DELETE", current_user.username, before_data, None)
+    await db.delete(record)
+    await db.commit()
+
+
+@router.get("/audit", response_model=LegalAuditPage)
+async def list_legal_audit_events(
+    area: Optional[str] = Query(None),
+    record_id: Optional[int] = Query(None),
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    filters = []
+    if area:
+        if area not in LEGAL_AREAS:
+            raise HTTPException(status_code=422, detail="Unknown legal compliance area.")
+        filters.append(LegalAuditEvent.area == area)
+    if record_id is not None:
+        filters.append(LegalAuditEvent.record_id == record_id)
+    total = await db.scalar(select(func.count(LegalAuditEvent.id)).where(*filters)) or 0
+    result = await db.execute(
+        select(LegalAuditEvent).where(*filters)
+        .order_by(desc(LegalAuditEvent.created_at), desc(LegalAuditEvent.id))
+        .limit(limit).offset(offset)
+    )
+    return {"items": result.scalars().all(), "total": total, "limit": limit, "offset": offset}

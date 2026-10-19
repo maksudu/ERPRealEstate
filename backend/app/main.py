@@ -77,6 +77,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# 3. Mount Static Uploads for Object Storage & Controlled Media Previews
+import os
+from fastapi.staticfiles import StaticFiles
+uploads_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "static/uploads"))
+os.makedirs(uploads_dir, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
+
 # Health & Readiness Probes
 @app.get("/health/liveness", tags=["Health"])
 async def liveness():

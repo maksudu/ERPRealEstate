@@ -1,0 +1,1148 @@
+<div class="space-y-6">
+  <!-- Top Consolidated Card Container -->
+  <app-card-container
+    title="Unit Pricing & Price List Management"
+    subtitle="Centralized project rate cards, orientation premiums, role-based discounts, unit overrides & quotation engine (Spec 3.5)">
+
+    <!-- KPI Header Strip -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div class="p-4 rounded-xl bg-gradient-to-br from-indigo-50 to-white border border-indigo-100 shadow-xs">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-indigo-700 uppercase tracking-wider">Active Rate Cards</span>
+          <span class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xs">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+          </span>
+        </div>
+        <div class="mt-2 flex items-baseline gap-2">
+          <span class="text-2xl font-black text-slate-900">{{ totalPriceLists() }}</span>
+          <span class="text-xs text-slate-500 font-medium">Versions Managed</span>
+        </div>
+        <div class="text-[11px] text-slate-500 mt-1">Gulshan, Banani, Uttara</div>
+      </div>
+
+      <div class="p-4 rounded-xl bg-gradient-to-br from-emerald-50 to-white border border-emerald-100 shadow-xs">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-emerald-700 uppercase tracking-wider">Active Baseline Rate</span>
+          <span class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs">৳</span>
+        </div>
+        <div class="mt-2 flex items-baseline gap-2">
+          <span class="text-2xl font-black text-emerald-950">৳12,500</span>
+          <span class="text-xs text-emerald-600 font-bold">/ sqft</span>
+        </div>
+        <div class="text-[11px] text-slate-500 mt-1">Min selling floor: ৳11,000/sft</div>
+      </div>
+
+      <div class="p-4 rounded-xl bg-gradient-to-br from-amber-50 to-white border border-amber-100 shadow-xs">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-amber-700 uppercase tracking-wider">Price Overrides</span>
+          <span class="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-xs">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          </span>
+        </div>
+        <div class="mt-2 flex items-baseline gap-2">
+          <span class="text-2xl font-black text-slate-900">{{ totalOverrides() }}</span>
+          <span class="text-xs text-amber-600 font-bold">Exceptions Logged</span>
+        </div>
+        <div class="text-[11px] text-slate-500 mt-1">Controlled discount workflow</div>
+      </div>
+
+      <div class="p-4 rounded-xl bg-gradient-to-br from-purple-50 to-white border border-purple-100 shadow-xs">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-purple-700 uppercase tracking-wider">Formal Quotations</span>
+          <span class="w-8 h-8 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-xs">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+          </span>
+        </div>
+        <div class="mt-2 flex items-baseline gap-2">
+          <span class="text-2xl font-black text-purple-950">{{ totalQuotations() }}</span>
+          <span class="text-xs text-slate-500 font-medium">Issued</span>
+        </div>
+        <div class="text-[11px] text-slate-500 mt-1">15-day statutory validity</div>
+      </div>
+    </div>
+
+    <!-- Modular Workspace Navigation Tabs -->
+    <div class="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-3 mb-6">
+      <button
+        (click)="activeTab.set('calculator')"
+        [class]="activeTab() === 'calculator' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
+        class="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+        Illustrative Price Calculator
+      </button>
+
+      <button
+        (click)="activeTab.set('price_lists')"
+        [class]="activeTab() === 'price_lists' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
+        class="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+        Master Price Lists & Versions
+      </button>
+
+      <button
+        (click)="activeTab.set('overrides')"
+        [class]="activeTab() === 'overrides' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
+        class="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+        Negotiated Overrides & Exceptions
+      </button>
+
+      <button
+        (click)="activeTab.set('audits')"
+        [class]="activeTab() === 'audits' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
+        class="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        Price Revision Audit Trail
+      </button>
+
+      <button
+        (click)="activeTab.set('quotations')"
+        [class]="activeTab() === 'quotations' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
+        class="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+        Issued Quotations
+      </button>
+    </div>
+
+
+    <!-- ========================================================================= -->
+    <!-- TAB 1: ILLUSTRATIVE APARTMENT PRICE CALCULATOR (SPEC 3.5 EXAMPLE)          -->
+    <!-- ========================================================================= -->
+    @if (activeTab() === 'calculator') {
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Left Controls: 7 Columns -->
+        <div class="lg:col-span-7 space-y-6 bg-slate-50/70 p-6 rounded-2xl border border-slate-200">
+          <div>
+            <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wide mb-1">Interactive Apartment Price Calculator</h3>
+            <p class="text-xs text-slate-500">Configure parameters or select quick presets to calculate itemized pricing according to approved policy.</p>
+          </div>
+
+          <!-- Parameter 1: Chargeable Area -->
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <label class="text-xs font-bold text-slate-700">Chargeable Area (sq ft)</label>
+              <span class="text-sm font-extrabold text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-lg border border-indigo-200">
+                {{ calcArea() | number:'1.0-0' }} sq ft
+              </span>
+            </div>
+            <input
+              type="range"
+              min="500"
+              max="5000"
+              step="50"
+              [value]="calcArea()"
+              (input)="calcArea.set(+$any($event.target).value)"
+              class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600" />
+            <div class="flex items-center justify-between text-[11px] text-slate-500">
+              <button (click)="setAreaPreset(500)" class="hover:text-indigo-600 font-medium cursor-pointer">500 sqft</button>
+              <button (click)="setAreaPreset(1500)" class="hover:text-indigo-600 font-bold text-indigo-600 cursor-pointer">1,500 sqft (Standard)</button>
+              <button (click)="setAreaPreset(2500)" class="hover:text-indigo-600 font-medium cursor-pointer">2,500 sqft</button>
+              <button (click)="setAreaPreset(5000)" class="hover:text-indigo-600 font-medium cursor-pointer">5,000 sqft (Penthouse)</button>
+            </div>
+          </div>
+
+          <!-- Parameter 2: Price Per Sq Ft -->
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <label class="text-xs font-bold text-slate-700">Price per sq ft (৳)</label>
+              <span class="text-sm font-extrabold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-lg border border-emerald-200">
+                ৳{{ calcRatePerSqft() | number:'1.0-0' }} / sqft
+              </span>
+            </div>
+            <input
+              type="range"
+              min="3000"
+              max="20000"
+              step="250"
+              [value]="calcRatePerSqft()"
+              (input)="calcRatePerSqft.set(+$any($event.target).value)"
+              class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-600" />
+            <div class="flex items-center justify-between text-[11px] text-slate-500">
+              <button (click)="setRatePreset(3000)" class="hover:text-emerald-700 font-medium cursor-pointer">৳3,000</button>
+              <button (click)="setRatePreset(8500)" class="hover:text-emerald-700 font-bold text-emerald-700 cursor-pointer">৳8,500 (Base Spec)</button>
+              <button (click)="setRatePreset(10000)" class="hover:text-emerald-700 font-medium cursor-pointer">৳10,000</button>
+              <button (click)="setRatePreset(20000)" class="hover:text-emerald-700 font-medium cursor-pointer">৳20,000 (Luxury)</button>
+            </div>
+          </div>
+
+          <!-- Parameter 3: Parking Price Selection -->
+          <div class="space-y-2">
+            <label class="text-xs font-bold text-slate-700">Parking Price (৳)</label>
+            <div class="grid grid-cols-3 gap-3">
+              <button
+                type="button"
+                (click)="setParkingPreset(0)"
+                [class]="calcParkingPrice() === 0 ? 'border-indigo-600 bg-indigo-50 text-indigo-900 font-bold' : 'border-slate-200 bg-white text-slate-700'"
+                class="p-3 rounded-xl border text-center transition-all cursor-pointer">
+                <div class="text-xs">No Parking</div>
+                <div class="text-[11px] text-slate-400 mt-0.5">৳0</div>
+              </button>
+
+              <button
+                type="button"
+                (click)="setParkingPreset(800000)"
+                [class]="calcParkingPrice() === 800000 ? 'border-indigo-600 bg-indigo-50 text-indigo-900 font-bold' : 'border-slate-200 bg-white text-slate-700'"
+                class="p-3 rounded-xl border text-center transition-all cursor-pointer">
+                <div class="text-xs">Standard Parking</div>
+                <div class="text-[11px] text-slate-500 mt-0.5">৳8,00,000</div>
+              </button>
+
+              <button
+                type="button"
+                (click)="setParkingPreset(1200000)"
+                [class]="calcParkingPrice() === 1200000 ? 'border-indigo-600 bg-indigo-50 text-indigo-900 font-bold' : 'border-slate-200 bg-white text-slate-700'"
+                class="p-3 rounded-xl border text-center transition-all cursor-pointer">
+                <div class="text-xs">VIP / Double Bay</div>
+                <div class="text-[11px] text-slate-500 mt-0.5">৳12,00,000</div>
+              </button>
+            </div>
+          </div>
+
+          <!-- Parameter 4: Approved Discount (%) -->
+          <div class="space-y-2">
+            <label class="text-xs font-bold text-slate-700">Approved Discount (%)</label>
+            <div class="grid grid-cols-3 gap-3">
+              <button
+                type="button"
+                (click)="setDiscountPreset(0)"
+                [class]="calcDiscountPct() === 0 ? 'border-purple-600 bg-purple-50 text-purple-900 font-bold' : 'border-slate-200 bg-white text-slate-700'"
+                class="p-2.5 rounded-xl border text-center transition-all cursor-pointer">
+                <span class="text-xs">0% Discount</span>
+              </button>
+
+              <button
+                type="button"
+                (click)="setDiscountPreset(5)"
+                [class]="calcDiscountPct() === 5 ? 'border-purple-600 bg-purple-50 text-purple-900 font-bold' : 'border-slate-200 bg-white text-slate-700'"
+                class="p-2.5 rounded-xl border text-center transition-all cursor-pointer">
+                <span class="text-xs">5% Manager Approved</span>
+              </button>
+
+              <button
+                type="button"
+                (click)="setDiscountPreset(15)"
+                [class]="calcDiscountPct() === 15 ? 'border-purple-600 bg-purple-50 text-purple-900 font-bold' : 'border-slate-200 bg-white text-slate-700'"
+                class="p-2.5 rounded-xl border text-center transition-all cursor-pointer">
+                <span class="text-xs">15% Board Maximum</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Summary Card: 5 Columns -->
+        <div class="lg:col-span-5 flex flex-col justify-between p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-6">
+          <div>
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+              <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Itemized Breakdown</span>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">FORMULA 3.5</span>
+            </div>
+
+            <div class="mt-4 space-y-3 text-xs">
+              <div class="flex items-center justify-between text-slate-600">
+                <span>Apartment Base Price:</span>
+                <span class="font-bold text-slate-900">৳{{ calcApartmentBasePrice() | number:'1.0-0' }}</span>
+              </div>
+              <div class="text-[11px] text-slate-400 pl-2">
+                {{ calcArea() }} sqft × ৳{{ calcRatePerSqft() | number:'1.0-0' }}/sqft
+              </div>
+
+              <div class="flex items-center justify-between text-slate-600 pt-2 border-t border-slate-100">
+                <span>Parking:</span>
+                <span class="font-bold text-slate-900">৳{{ calcParkingPrice() | number:'1.0-0' }}</span>
+              </div>
+
+              <div class="flex items-center justify-between text-slate-600 pt-2 border-t border-slate-100">
+                <span>Discount ({{ calcDiscountPct() }}%):</span>
+                <span class="font-bold text-rose-600">−৳{{ calcDiscountAmount() | number:'1.0-0' }}</span>
+              </div>
+            </div>
+
+            <!-- Illustrative Total Price Highlight -->
+            <div class="mt-6 p-4 rounded-xl bg-gradient-to-br from-indigo-900 to-slate-900 text-white shadow-md">
+              <span class="text-[11px] font-semibold text-indigo-300 uppercase tracking-wider">Illustrative Total Price</span>
+              <div class="text-3xl font-black mt-1 text-white">
+                ৳{{ calcIllustrativeTotalPrice() | number:'1.0-0' }}
+              </div>
+              <div class="text-xs text-indigo-200 mt-1 font-medium">
+                {{ formatBDT(calcIllustrativeTotalPrice()) }} (Excl. registration tax & utility)
+              </div>
+            </div>
+
+            <div class="mt-3 p-3 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 text-[11px]">
+              <strong>Policy Note:</strong> Actual prices must come from authorized price lists and approved quotations under Bangladesh REHAB pricing directives.
+            </div>
+          </div>
+
+          <!-- Action Button: Generate Formal Quotation -->
+          <button
+            type="button"
+            (click)="openGenerateQuotationFromCalc()"
+            class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+            Generate Official Quotation (15 Days Valid)
+          </button>
+        </div>
+      </div>
+    }
+
+
+    <!-- ========================================================================= -->
+    <!-- TAB 2: MASTER PRICE LISTS & VERSIONS (3.5.1)                               -->
+    <!-- ========================================================================= -->
+    @if (activeTab() === 'price_lists') {
+      <div class="space-y-4">
+        <!-- Control Bar -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 p-4 rounded-xl bg-slate-50 border border-slate-200">
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="w-48">
+              <app-searchable-select
+                label="Status Filter"
+                [options]="statusFilterOptions"
+                [value]="priceListFilterStatus()"
+                (selectionChange)="priceListFilterStatus.set($event); priceListPage.set(1); loadPriceLists()">
+              </app-searchable-select>
+            </div>
+
+            <div class="w-56">
+              <app-custom-input
+                placeholder="Search version code or title..."
+                [value]="priceListSearch()"
+                (input)="priceListSearch.set($any($event.target).value); priceListPage.set(1); loadPriceLists()">
+              </app-custom-input>
+            </div>
+          </div>
+
+          <button
+            (click)="openCreatePriceListModal()"
+            class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-xs">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            New Rate Card Version
+          </button>
+        </div>
+
+        <!-- Price Lists Table -->
+        <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-slate-50 text-slate-600 border-b border-slate-200 uppercase font-bold text-[11px] tracking-wider">
+                <th class="py-3 px-4">Version Code</th>
+                <th class="py-3 px-4">Rate Card Title & Project</th>
+                <th class="py-3 px-4 text-right">Base Rate (৳/sft)</th>
+                <th class="py-3 px-4 text-right">Floor Rise (৳)</th>
+                <th class="py-3 px-4">Facing Premiums</th>
+                <th class="py-3 px-4">Parking (Std / VIP)</th>
+                <th class="py-3 px-4">Max Discounts</th>
+                <th class="py-3 px-4">Status</th>
+                <th class="py-3 px-4 text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              @if (loadingLists()) {
+                <tr>
+                  <td colspan="9" class="py-12 text-center text-slate-400">
+                    <div class="inline-block animate-spin rounded-full h-6 w-6 border-2 border-indigo-600 border-t-transparent mb-2"></div>
+                    <p class="text-xs">Loading master price lists...</p>
+                  </td>
+                </tr>
+              } @else if (priceLists().length === 0) {
+                <tr>
+                  <td colspan="9" class="py-8 text-center text-slate-400">No price lists found for this criteria.</td>
+                </tr>
+              } @else {
+                @for (pl of priceLists(); track pl.id) {
+                  <tr class="hover:bg-slate-50/80 transition-colors">
+                    <td class="py-3.5 px-4 font-mono font-bold text-indigo-700">{{ pl.version_code }}</td>
+                    <td class="py-3.5 px-4">
+                      <div class="font-bold text-slate-900">{{ pl.title }}</div>
+                      <div class="text-[11px] text-slate-500">{{ pl.project_name }}</div>
+                    </td>
+                    <td class="py-3.5 px-4 text-right font-bold text-slate-800">৳{{ pl.base_rate_per_sqft | number:'1.0-0' }}</td>
+                    <td class="py-3.5 px-4 text-right font-medium text-slate-700">+৳{{ pl.floor_escalation_rate | number:'1.0-0' }}/flr</td>
+                    <td class="py-3.5 px-4 text-[11px] text-slate-600">
+                      <div>Lake: +৳{{ pl.facing_premium_lake }}</div>
+                      <div>South: +৳{{ pl.facing_premium_south }} | Corner: +৳{{ pl.facing_premium_corner }}</div>
+                    </td>
+                    <td class="py-3.5 px-4 text-[11px]">
+                      <div>Std: {{ formatBDT(pl.parking_standard_rate) }}</div>
+                      <div>VIP: {{ formatBDT(pl.parking_vip_rate) }}</div>
+                    </td>
+                    <td class="py-3.5 px-4 text-[11px] text-slate-600">
+                      <div>Exec: {{ pl.max_discount_pct_exec }}% | Mgr: {{ pl.max_discount_pct_mgr }}%</div>
+                      <div class="font-bold text-indigo-600">Director: {{ pl.max_discount_pct_dir }}%</div>
+                    </td>
+                    <td class="py-3.5 px-4">
+                      <span [class]="getStatusBadgeClass(pl.status)" class="px-2 py-0.5 rounded text-[10px] font-bold border">
+                        {{ pl.status }}
+                      </span>
+                    </td>
+                    <td class="py-3.5 px-4 text-center">
+                      <div class="flex items-center justify-center gap-1.5">
+                        <button
+                          (click)="openEditPriceListModal(pl)"
+                          class="p-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold cursor-pointer"
+                          title="Edit Rate Card">
+                          Edit
+                        </button>
+                        @if (pl.status === 'DRAFT') {
+                          <button
+                            (click)="approvePriceList(pl)"
+                            class="px-2 py-1 rounded bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-[11px] font-bold cursor-pointer">
+                            Approve
+                          </button>
+                        }
+                        @if (pl.status === 'APPROVED') {
+                          <button
+                            (click)="activatePriceList(pl)"
+                            class="px-2 py-1 rounded bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-[11px] font-bold cursor-pointer">
+                            Activate
+                          </button>
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Paging Footer -->
+        <div class="flex items-center justify-between text-xs text-slate-500 pt-2">
+          <span>Showing page {{ priceListPage() }} ({{ totalPriceLists() }} total rate cards)</span>
+          <div class="flex items-center gap-2">
+            <button
+              [disabled]="priceListPage() <= 1"
+              (click)="priceListPage.set(priceListPage() - 1); loadPriceLists()"
+              class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 cursor-pointer">
+              Previous
+            </button>
+            <button
+              [disabled]="priceLists().length < 15"
+              (click)="priceListPage.set(priceListPage() + 1); loadPriceLists()"
+              class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 cursor-pointer">
+              Next
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+
+    <!-- ========================================================================= -->
+    <!-- TAB 3: NEGOTIATED PRICE OVERRIDES & EXCEPTIONS                             -->
+    <!-- ========================================================================= -->
+    @if (activeTab() === 'overrides') {
+      <div class="space-y-4">
+        <!-- Control Bar -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 p-4 rounded-xl bg-slate-50 border border-slate-200">
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="w-48">
+              <app-searchable-select
+                label="Decision Status"
+                [options]="overrideStatusFilterOptions"
+                [value]="overrideFilterStatus()"
+                (selectionChange)="overrideFilterStatus.set($event); overridePage.set(1); loadOverrides()">
+              </app-searchable-select>
+            </div>
+
+            <div class="w-56">
+              <app-custom-input
+                placeholder="Search unit # or customer..."
+                [value]="overrideSearch()"
+                (input)="overrideSearch.set($any($event.target).value); overridePage.set(1); loadOverrides()">
+              </app-custom-input>
+            </div>
+          </div>
+
+          <button
+            (click)="openCreateOverrideModal()"
+            class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-xs">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            Request Unit Price Exception
+          </button>
+        </div>
+
+        <!-- Overrides Table -->
+        <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-slate-50 text-slate-600 border-b border-slate-200 uppercase font-bold text-[11px] tracking-wider">
+                <th class="py-3 px-4">Unit #</th>
+                <th class="py-3 px-4">Customer</th>
+                <th class="py-3 px-4 text-right">Standard Price</th>
+                <th class="py-3 px-4 text-right">Negotiated Price</th>
+                <th class="py-3 px-4 text-right">Variance / Discount</th>
+                <th class="py-3 px-4">Authority Required</th>
+                <th class="py-3 px-4">Status</th>
+                <th class="py-3 px-4">Requested / Approved By</th>
+                <th class="py-3 px-4 text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              @if (loadingOverrides()) {
+                <tr>
+                  <td colspan="9" class="py-12 text-center text-slate-400">
+                    <div class="inline-block animate-spin rounded-full h-6 w-6 border-2 border-indigo-600 border-t-transparent mb-2"></div>
+                    <p class="text-xs">Loading price override records...</p>
+                  </td>
+                </tr>
+              } @else if (overrides().length === 0) {
+                <tr>
+                  <td colspan="9" class="py-8 text-center text-slate-400">No price overrides found.</td>
+                </tr>
+              } @else {
+                @for (item of overrides(); track item.id) {
+                  <tr class="hover:bg-slate-50/80 transition-colors">
+                    <td class="py-3.5 px-4 font-mono font-bold text-slate-900">{{ item.unit_number }}</td>
+                    <td class="py-3.5 px-4 font-medium text-slate-800">{{ item.customer_name }}</td>
+                    <td class="py-3.5 px-4 text-right font-medium text-slate-600">৳{{ item.standard_price | number:'1.0-0' }}</td>
+                    <td class="py-3.5 px-4 text-right font-bold text-indigo-700">৳{{ item.negotiated_price | number:'1.0-0' }}</td>
+                    <td class="py-3.5 px-4 text-right">
+                      <div class="font-bold text-rose-600">−৳{{ item.discount_amount | number:'1.0-0' }}</div>
+                      <div class="text-[11px] text-slate-500">({{ item.discount_pct }}%)</div>
+                    </td>
+                    <td class="py-3.5 px-4">
+                      <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                        {{ item.discount_authority_level }}
+                      </span>
+                    </td>
+                    <td class="py-3.5 px-4">
+                      <span [class]="getStatusBadgeClass(item.status)" class="px-2 py-0.5 rounded text-[10px] font-bold border">
+                        {{ item.status }}
+                      </span>
+                    </td>
+                    <td class="py-3.5 px-4 text-[11px]">
+                      <div>Req: {{ item.requested_by }}</div>
+                      <div class="text-slate-500">App: {{ item.approved_by || 'Pending' }}</div>
+                    </td>
+                    <td class="py-3.5 px-4 text-center">
+                      @if (item.status === 'PENDING') {
+                        <div class="flex items-center justify-center gap-1.5">
+                          <button
+                            (click)="updateOverrideStatus(item, 'APPROVED')"
+                            class="px-2 py-1 rounded bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-[11px] font-bold cursor-pointer">
+                            Approve
+                          </button>
+                          <button
+                            (click)="updateOverrideStatus(item, 'REJECTED')"
+                            class="px-2 py-1 rounded bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-[11px] font-bold cursor-pointer">
+                            Reject
+                          </button>
+                        </div>
+                      } @else {
+                        <span class="text-slate-400 text-[11px]">Locked</span>
+                      }
+                    </td>
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Paging Footer -->
+        <div class="flex items-center justify-between text-xs text-slate-500 pt-2">
+          <span>Showing page {{ overridePage() }} ({{ totalOverrides() }} total records)</span>
+          <div class="flex items-center gap-2">
+            <button
+              [disabled]="overridePage() <= 1"
+              (click)="overridePage.set(overridePage() - 1); loadOverrides()"
+              class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 cursor-pointer">
+              Previous
+            </button>
+            <button
+              [disabled]="overrides().length < 15"
+              (click)="overridePage.set(overridePage() + 1); loadOverrides()"
+              class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 cursor-pointer">
+              Next
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+
+    <!-- ========================================================================= -->
+    <!-- TAB 4: HISTORICAL PRICE REVISION AUDIT TRAIL                               -->
+    <!-- ========================================================================= -->
+    @if (activeTab() === 'audits') {
+      <div class="space-y-4">
+        <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-slate-50 text-slate-600 border-b border-slate-200 uppercase font-bold text-[11px] tracking-wider">
+                <th class="py-3 px-4">Effective Date</th>
+                <th class="py-3 px-4">Unit / Scope</th>
+                <th class="py-3 px-4">Field Changed</th>
+                <th class="py-3 px-4">Old Value</th>
+                <th class="py-3 px-4">New Value</th>
+                <th class="py-3 px-4">Changed By</th>
+                <th class="py-3 px-4">Audit Reason & Justification</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              @if (loadingAudits()) {
+                <tr>
+                  <td colspan="7" class="py-12 text-center text-slate-400">
+                    <div class="inline-block animate-spin rounded-full h-6 w-6 border-2 border-indigo-600 border-t-transparent mb-2"></div>
+                    <p class="text-xs">Loading audit logs...</p>
+                  </td>
+                </tr>
+              } @else if (audits().length === 0) {
+                <tr>
+                  <td colspan="7" class="py-8 text-center text-slate-400">No price change logs recorded yet.</td>
+                </tr>
+              } @else {
+                @for (a of audits(); track a.id) {
+                  <tr class="hover:bg-slate-50/80 transition-colors">
+                    <td class="py-3.5 px-4 font-mono text-slate-500 text-[11px]">
+                      {{ a.effective_date ? (a.effective_date | date:'dd MMM yyyy, hh:mm a') : (a.created_at | date:'dd MMM yyyy') }}
+                    </td>
+                    <td class="py-3.5 px-4 font-semibold text-slate-900">
+                      {{ a.unit_number ? ('Unit ' + a.unit_number) : 'Rate Card Master' }}
+                    </td>
+                    <td class="py-3.5 px-4">
+                      <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                        {{ a.field_changed }}
+                      </span>
+                    </td>
+                    <td class="py-3.5 px-4 font-mono text-slate-500">{{ a.old_value }}</td>
+                    <td class="py-3.5 px-4 font-mono font-bold text-slate-900">{{ a.new_value }}</td>
+                    <td class="py-3.5 px-4 text-slate-700">{{ a.changed_by }}</td>
+                    <td class="py-3.5 px-4 text-slate-600 text-[11px]">{{ a.reason || 'Routine rate update' }}</td>
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="flex items-center justify-between text-xs text-slate-500 pt-2">
+          <span>Page {{ auditPage() }} ({{ totalAudits() }} audit entries recorded)</span>
+          <div class="flex items-center gap-2">
+            <button
+              [disabled]="auditPage() <= 1"
+              (click)="auditPage.set(auditPage() - 1); loadAudits()"
+              class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 cursor-pointer">
+              Previous
+            </button>
+            <button
+              [disabled]="audits().length < 20"
+              (click)="auditPage.set(auditPage() + 1); loadAudits()"
+              class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 cursor-pointer">
+              Next
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+
+    <!-- ========================================================================= -->
+    <!-- TAB 5: FORMAL ISSUED QUOTATIONS DIRECTORY                                  -->
+    <!-- ========================================================================= -->
+    @if (activeTab() === 'quotations') {
+      <div class="space-y-4">
+        <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-slate-50 text-slate-600 border-b border-slate-200 uppercase font-bold text-[11px] tracking-wider">
+                <th class="py-3 px-4">Quotation #</th>
+                <th class="py-3 px-4">Customer Name & Contact</th>
+                <th class="py-3 px-4">Unit</th>
+                <th class="py-3 px-4 text-right">Area (sqft)</th>
+                <th class="py-3 px-4 text-right">Rate / sqft</th>
+                <th class="py-3 px-4 text-right">Net Price (BDT)</th>
+                <th class="py-3 px-4">Valid Until</th>
+                <th class="py-3 px-4">Status</th>
+                <th class="py-3 px-4 text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              @if (loadingQuotations()) {
+                <tr>
+                  <td colspan="9" class="py-12 text-center text-slate-400">
+                    <div class="inline-block animate-spin rounded-full h-6 w-6 border-2 border-indigo-600 border-t-transparent mb-2"></div>
+                    <p class="text-xs">Loading quotations...</p>
+                  </td>
+                </tr>
+              } @else if (quotations().length === 0) {
+                <tr>
+                  <td colspan="9" class="py-8 text-center text-slate-400">No quotations generated yet.</td>
+                </tr>
+              } @else {
+                @for (q of quotations(); track q.id) {
+                  <tr class="hover:bg-slate-50/80 transition-colors">
+                    <td class="py-3.5 px-4 font-mono font-bold text-indigo-700">{{ q.quotation_number }}</td>
+                    <td class="py-3.5 px-4">
+                      <div class="font-bold text-slate-900">{{ q.customer_name }}</div>
+                      <div class="text-[11px] text-slate-500">{{ q.customer_phone }}</div>
+                    </td>
+                    <td class="py-3.5 px-4 font-mono font-semibold text-slate-700">{{ q.unit_code || 'TBD' }}</td>
+                    <td class="py-3.5 px-4 text-right font-medium text-slate-800">{{ q.chargeable_area_sqft }} sft</td>
+                    <td class="py-3.5 px-4 text-right font-medium text-slate-800">৳{{ q.rate_per_sqft | number:'1.0-0' }}</td>
+                    <td class="py-3.5 px-4 text-right font-extrabold text-indigo-900">৳{{ q.net_total_price | number:'1.0-0' }}</td>
+                    <td class="py-3.5 px-4 text-slate-500 text-[11px]">{{ q.valid_until | date:'dd MMM yyyy' }}</td>
+                    <td class="py-3.5 px-4">
+                      <span [class]="getStatusBadgeClass(q.status)" class="px-2 py-0.5 rounded text-[10px] font-bold border">
+                        {{ q.status }}
+                      </span>
+                    </td>
+                    <td class="py-3.5 px-4 text-center">
+                      <button
+                        (click)="openQuotationView(q)"
+                        class="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-xs font-semibold cursor-pointer">
+                        View Sheet
+                      </button>
+                    </td>
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="flex items-center justify-between text-xs text-slate-500 pt-2">
+          <span>Page {{ quotationPage() }} ({{ totalQuotations() }} quotations)</span>
+          <div class="flex items-center gap-2">
+            <button
+              [disabled]="quotationPage() <= 1"
+              (click)="quotationPage.set(quotationPage() - 1); loadQuotations()"
+              class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 cursor-pointer">
+              Previous
+            </button>
+            <button
+              [disabled]="quotations().length < 15"
+              (click)="quotationPage.set(quotationPage() + 1); loadQuotations()"
+              class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 cursor-pointer">
+              Next
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+  </app-card-container>
+</div>
+
+
+<!-- ========================================================================= -->
+<!-- MODAL: ADD / EDIT MASTER PRICE LIST                                       -->
+<!-- ========================================================================= -->
+<app-modal
+  [isOpen]="isPriceListModalOpen()"
+  [title]="editingPriceList() ? 'Edit Master Rate Card' : 'New Project Rate Card Version'"
+  size="xl"
+  (closed)="isPriceListModalOpen.set(false)">
+
+  <form [formGroup]="priceListForm" (ngSubmit)="savePriceList()" class="space-y-4 text-xs">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <app-searchable-select
+        label="Project Reference"
+        [options]="projectOptions()"
+        [value]="priceListForm.get('project_id')?.value"
+        (selectionChange)="priceListForm.patchValue({ project_id: +$event })"
+        createRoute="/projects">
+      </app-searchable-select>
+
+      <app-custom-input
+        label="Version Code (e.g. PL-GL-2026-V1)"
+        formControlName="version_code"
+        placeholder="PL-2026-V1">
+      </app-custom-input>
+
+      <app-custom-input
+        label="Rate Card Title"
+        formControlName="title"
+        placeholder="Gulshan Lakeview Launch Rates">
+      </app-custom-input>
+    </div>
+
+    <!-- Rate Card Rates -->
+    <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+      <div class="text-[11px] font-bold text-indigo-700 uppercase tracking-wider">Per Square Foot Base & Escalations</div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <app-custom-input
+          label="Base Rate per Sq Ft (৳)"
+          type="number"
+          formControlName="base_rate_per_sqft">
+        </app-custom-input>
+
+        <app-custom-input
+          label="Floor Rise per Floor (৳/sft)"
+          type="number"
+          formControlName="floor_escalation_rate">
+        </app-custom-input>
+
+        <app-custom-input
+          label="Min Selling Rate Floor (৳/sft)"
+          type="number"
+          formControlName="min_selling_rate_per_sqft">
+        </app-custom-input>
+      </div>
+
+      <div class="text-[11px] font-bold text-slate-700 uppercase tracking-wider pt-2 border-t border-slate-200">Orientation Premiums (৳/sft)</div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <app-custom-input label="Lake View (+৳)" type="number" formControlName="facing_premium_lake"></app-custom-input>
+        <app-custom-input label="South Facing (+৳)" type="number" formControlName="facing_premium_south"></app-custom-input>
+        <app-custom-input label="Corner Plot (+৳)" type="number" formControlName="facing_premium_corner"></app-custom-input>
+        <app-custom-input label="Road Facing (+৳)" type="number" formControlName="facing_premium_road"></app-custom-input>
+      </div>
+    </div>
+
+    <!-- Parking & Amenities -->
+    <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+      <div class="text-[11px] font-bold text-slate-700 uppercase tracking-wider">Parking & Amenities Pricing (BDT)</div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <app-custom-input label="Standard Parking (৳)" type="number" formControlName="parking_standard_rate"></app-custom-input>
+        <app-custom-input label="VIP Parking (৳)" type="number" formControlName="parking_vip_rate"></app-custom-input>
+        <app-custom-input label="Utility Fee (৳)" type="number" formControlName="utility_connection_rate"></app-custom-input>
+      </div>
+    </div>
+
+    <!-- Discount Authorization Limits -->
+    <div class="p-3.5 rounded-xl bg-amber-50/60 border border-amber-200 space-y-3">
+      <div class="text-[11px] font-bold text-amber-900 uppercase tracking-wider">Discount Authorization Ceilings (%)</div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <app-custom-input label="Sales Executive (Max %)" type="number" formControlName="max_discount_pct_exec"></app-custom-input>
+        <app-custom-input label="Sales Manager (Max %)" type="number" formControlName="max_discount_pct_mgr"></app-custom-input>
+        <app-custom-input label="Managing Director (Max %)" type="number" formControlName="max_discount_pct_dir"></app-custom-input>
+      </div>
+    </div>
+
+    <app-custom-textarea label="Policy Notes & Board Resolutions" formControlName="notes" rows="2"></app-custom-textarea>
+
+    <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
+      <button
+        type="button"
+        (click)="isPriceListModalOpen.set(false)"
+        class="px-4 py-2 border border-slate-200 rounded-xl text-slate-700 hover:bg-slate-100 cursor-pointer">
+        Cancel
+      </button>
+      <app-custom-button
+        type="submit"
+        variant="primary"
+        [loading]="actionInProgress()">
+        {{ editingPriceList() ? 'Update Rate Card' : 'Save Rate Card' }}
+      </app-custom-button>
+    </div>
+  </form>
+</app-modal>
+
+
+<!-- ========================================================================= -->
+<!-- MODAL: REQUEST UNIT PRICE OVERRIDE                                        -->
+<!-- ========================================================================= -->
+<app-modal
+  [isOpen]="isOverrideModalOpen()"
+  title="Request Unit Negotiated Price Exception"
+  size="lg"
+  (closed)="isOverrideModalOpen.set(false)">
+
+  <form [formGroup]="overrideForm" (ngSubmit)="saveOverride()" class="space-y-4 text-xs">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <app-searchable-select
+        label="Project"
+        [options]="projectOptions()"
+        [value]="overrideForm.get('project_id')?.value"
+        (selectionChange)="overrideForm.patchValue({ project_id: +$event })">
+      </app-searchable-select>
+
+      <app-custom-input
+        label="Unit Code (e.g. 12A)"
+        formControlName="unit_number">
+      </app-custom-input>
+
+      <app-custom-input
+        label="Customer Full Name"
+        formControlName="customer_name">
+      </app-custom-input>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+      <app-custom-input
+        label="Standard List Price (৳)"
+        type="number"
+        formControlName="standard_price"
+        (input)="recalculateOverrideDiscount()">
+      </app-custom-input>
+
+      <app-custom-input
+        label="Negotiated Agreed Price (৳)"
+        type="number"
+        formControlName="negotiated_price"
+        (input)="recalculateOverrideDiscount()">
+      </app-custom-input>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 p-3.5 rounded-xl bg-purple-50/70 border border-purple-200">
+      <div>
+        <span class="text-[11px] font-semibold text-purple-700">Calculated Discount:</span>
+        <div class="text-base font-black text-purple-900 mt-1">
+          ৳{{ overrideForm.get('discount_amount')?.value | number:'1.0-0' }}
+        </div>
+      </div>
+
+      <div>
+        <span class="text-[11px] font-semibold text-purple-700">Variance (%):</span>
+        <div class="text-base font-black text-purple-900 mt-1">
+          {{ overrideForm.get('discount_pct')?.value }}%
+        </div>
+      </div>
+
+      <div>
+        <span class="text-[11px] font-semibold text-purple-700">Recommended Authority:</span>
+        <div class="text-xs font-bold text-indigo-700 mt-1">
+          {{ overrideForm.get('discount_authority_level')?.value }}
+        </div>
+      </div>
+    </div>
+
+    <app-searchable-select
+      label="Approving Authority Tier"
+      [options]="authorityOptions"
+      [value]="overrideForm.get('discount_authority_level')?.value"
+      (selectionChange)="overrideForm.patchValue({ discount_authority_level: $event })">
+    </app-searchable-select>
+
+    <app-custom-textarea
+      label="Commercial Justification & Special Terms"
+      formControlName="justification"
+      placeholder="e.g. 60% advance payment within 7 days; immediate registration commitment."
+      rows="3">
+    </app-custom-textarea>
+
+    <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
+      <button
+        type="button"
+        (click)="isOverrideModalOpen.set(false)"
+        class="px-4 py-2 border border-slate-200 rounded-xl text-slate-700 hover:bg-slate-100 cursor-pointer">
+        Cancel
+      </button>
+      <app-custom-button
+        type="submit"
+        variant="primary"
+        [loading]="actionInProgress()">
+        Submit Override Request
+      </app-custom-button>
+    </div>
+  </form>
+</app-modal>
+
+
+<!-- ========================================================================= -->
+<!-- MODAL: GENERATE FORMAL QUOTATION                                          -->
+<!-- ========================================================================= -->
+<app-modal
+  [isOpen]="isQuotationModalOpen()"
+  title="Issue Official Price Quotation"
+  size="lg"
+  (closed)="isQuotationModalOpen.set(false)">
+
+  <form [formGroup]="quotationForm" (ngSubmit)="saveQuotation()" class="space-y-4 text-xs">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <app-searchable-select
+        label="Project"
+        [options]="projectOptions()"
+        [value]="quotationForm.get('project_id')?.value"
+        (selectionChange)="quotationForm.patchValue({ project_id: +$event })">
+      </app-searchable-select>
+
+      <app-custom-input
+        label="Unit Reference"
+        formControlName="unit_code">
+      </app-custom-input>
+
+      <app-custom-input
+        label="Validity (Days)"
+        type="number"
+        formControlName="validity_days">
+      </app-custom-input>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <app-custom-input
+        label="Customer Name"
+        formControlName="customer_name">
+      </app-custom-input>
+
+      <app-custom-input
+        label="Customer Phone"
+        formControlName="customer_phone">
+      </app-custom-input>
+
+      <app-custom-input
+        label="Customer Email"
+        formControlName="customer_email">
+      </app-custom-input>
+    </div>
+
+    <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div>
+        <span class="text-slate-500 text-[11px]">Area:</span>
+        <div class="font-bold text-slate-900">{{ quotationForm.get('chargeable_area_sqft')?.value }} sqft</div>
+      </div>
+      <div>
+        <span class="text-slate-500 text-[11px]">Rate:</span>
+        <div class="font-bold text-slate-900">৳{{ quotationForm.get('rate_per_sqft')?.value | number:'1.0-0' }}</div>
+      </div>
+      <div>
+        <span class="text-slate-500 text-[11px]">Parking:</span>
+        <div class="font-bold text-slate-900">৳{{ quotationForm.get('parking_charge')?.value | number:'1.0-0' }}</div>
+      </div>
+      <div>
+        <span class="text-slate-500 text-[11px]">Discount:</span>
+        <div class="font-bold text-rose-600">{{ quotationForm.get('discount_pct')?.value }}%</div>
+      </div>
+    </div>
+
+    <app-custom-textarea
+      label="Terms & Contractual Notes"
+      formControlName="notes"
+      rows="2">
+    </app-custom-textarea>
+
+    <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
+      <button
+        type="button"
+        (click)="isQuotationModalOpen.set(false)"
+        class="px-4 py-2 border border-slate-200 rounded-xl text-slate-700 hover:bg-slate-100 cursor-pointer">
+        Cancel
+      </button>
+      <app-custom-button
+        type="submit"
+        variant="primary"
+        [loading]="actionInProgress()">
+        Generate & Save Quotation
+      </app-custom-button>
+    </div>
+  </form>
+</app-modal>
+
+
+<!-- ========================================================================= -->
+<!-- MODAL: OFFICIAL QUOTATION PREVIEW & PRINT SHEET                           -->
+<!-- ========================================================================= -->
+<app-modal
+  [isOpen]="isQuotationPreviewOpen()"
+  title="Official Commercial Quotation Sheet"
+  size="xl"
+  (closed)="isQuotationPreviewOpen.set(false)">
+
+  @if (previewQuotation(); as q) {
+    <div class="space-y-6 text-xs text-slate-800 p-2 print:p-0">
+      <!-- Letterhead Header -->
+      <div class="flex items-center justify-between pb-4 border-b-2 border-indigo-900">
+        <div>
+          <h2 class="text-xl font-black text-indigo-950 uppercase tracking-wider">BlueOceans Real Estate Ltd.</h2>
+          <p class="text-slate-500 text-[11px]">Corporate Office: Gulshan Avenue, Dhaka-1212 | info&#64;blueoceansbd.com</p>
+          <p class="text-slate-500 text-[11px]">REHAB Member Registration #1048</p>
+        </div>
+        <div class="text-right">
+          <span class="px-3 py-1 rounded-lg bg-indigo-50 text-indigo-900 font-mono font-bold text-sm border border-indigo-200">
+            {{ q.quotation_number }}
+          </span>
+          <div class="text-[11px] text-slate-500 mt-1">Date: {{ q.created_at | date:'dd MMM yyyy' }}</div>
+          <div class="text-[11px] font-semibold text-rose-600">Valid Until: {{ q.valid_until | date:'dd MMM yyyy' }}</div>
+        </div>
+      </div>
+
+      <!-- Customer & Unit Meta -->
+      <div class="grid grid-cols-2 gap-4 p-4 rounded-xl bg-slate-50 border border-slate-200">
+        <div>
+          <span class="text-slate-500 font-semibold text-[11px]">Valued Client:</span>
+          <h4 class="text-sm font-bold text-slate-900 mt-0.5">{{ q.customer_name }}</h4>
+          <p class="text-slate-600">Contact: {{ q.customer_phone }}</p>
+          @if (q.customer_email) {
+            <p class="text-slate-600">Email: {{ q.customer_email }}</p>
+          }
+        </div>
+        <div>
+          <span class="text-slate-500 font-semibold text-[11px]">Property Specifications:</span>
+          <h4 class="text-sm font-bold text-indigo-900 mt-0.5">Unit {{ q.unit_code || 'Standard Resi' }}</h4>
+          <p class="text-slate-600">Chargeable Area: <strong>{{ q.chargeable_area_sqft }} sqft</strong></p>
+          <p class="text-slate-600">Base Unit Rate: <strong>৳{{ q.rate_per_sqft | number:'1.0-0' }} / sqft</strong></p>
+        </div>
+      </div>
+
+      <!-- Itemized Price Table -->
+      <div class="rounded-xl border border-slate-200 overflow-hidden">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr class="bg-slate-100 text-slate-700 uppercase font-bold text-[11px]">
+              <th class="py-2.5 px-4">Item Description</th>
+              <th class="py-2.5 px-4 text-center">Unit / Rate</th>
+              <th class="py-2.5 px-4 text-right">Amount (BDT)</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-200">
+            <tr>
+              <td class="py-3 px-4 font-semibold text-slate-900">
+                Apartment Base Price
+                <div class="text-[11px] text-slate-500">Based on approved rate card policy</div>
+              </td>
+              <td class="py-3 px-4 text-center">{{ q.chargeable_area_sqft }} sqft &#64; ৳{{ q.rate_per_sqft | number:'1.0-0' }}</td>
+              <td class="py-3 px-4 text-right font-bold text-slate-900">৳{{ q.base_apartment_price | number:'1.0-0' }}</td>
+            </tr>
+            <tr>
+              <td class="py-3 px-4 font-semibold text-slate-900">
+                Basement Car Parking Facility
+                <div class="text-[11px] text-slate-500">Dedicated parking bay allocation</div>
+              </td>
+              <td class="py-3 px-4 text-center">1 Bay</td>
+              <td class="py-3 px-4 text-right font-bold text-slate-900">৳{{ q.parking_charge | number:'1.0-0' }}</td>
+            </tr>
+            <tr>
+              <td class="py-3 px-4 font-semibold text-rose-600">
+                Special Approved Promotional Discount
+                <div class="text-[11px] text-slate-500">Board approved commercial reduction</div>
+              </td>
+              <td class="py-3 px-4 text-center text-rose-600 font-bold">{{ q.discount_pct }}%</td>
+              <td class="py-3 px-4 text-right font-bold text-rose-600">−৳{{ q.discount_amount | number:'1.0-0' }}</td>
+            </tr>
+            <tr class="bg-indigo-50/70 border-t-2 border-indigo-900 font-extrabold text-sm">
+              <td class="py-3 px-4 text-indigo-950 uppercase" colspan="2">Net Total Unit Consideration</td>
+              <td class="py-3 px-4 text-right text-indigo-950 text-base">৳{{ q.net_total_price | number:'1.0-0' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Notes -->
+      <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-600 space-y-1">
+        <p><strong>Terms:</strong> {{ q.notes || 'This quotation is issued for 15 days validity and does not constitute a booking until 20% down payment is remitted.' }}</p>
+        <p><strong>Statutory:</strong> Excludes government registration duties, 3% stamp duty, VAT Mushak 6.3, and utility security deposits which will be calculated at deed execution.</p>
+      </div>
+
+      <!-- Signatures -->
+      <div class="pt-8 grid grid-cols-2 gap-12 text-center text-xs">
+        <div>
+          <div class="border-t border-slate-300 pt-2 font-bold text-slate-800">{{ q.prepared_by }}</div>
+          <div class="text-[11px] text-slate-500">Prepared By (Sales Officer)</div>
+        </div>
+        <div>
+          <div class="border-t border-slate-300 pt-2 font-bold text-slate-800">Authorized Signature</div>
+          <div class="text-[11px] text-slate-500">Head of Sales & Marketing</div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="flex items-center justify-end gap-2 pt-4 border-t border-slate-200 print:hidden">
+        <button
+          type="button"
+          (click)="printQuotation()"
+          class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+          Print Official Quotation
+        </button>
+        <button
+          type="button"
+          (click)="isQuotationPreviewOpen.set(false)"
+          class="px-4 py-2 border border-slate-200 rounded-xl text-slate-700 hover:bg-slate-100 cursor-pointer">
+          Close
+        </button>
+      </div>
+    </div>
+  }
+</app-modal>

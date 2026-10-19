@@ -1,0 +1,787 @@
+<app-card-container>
+  <!-- Main Header & KPI Metric Strip -->
+  <div class="p-6 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300">
+            Spec 3.6
+          </span>
+          <span class="text-xs font-medium text-slate-500 dark:text-slate-400">Media, Architectural Drawings & Technical DMS</span>
+        </div>
+        <h1 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-1">
+          Floor Plans, Property Images & Documents
+        </h1>
+        <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+          Controlled object storage, RAJUK approved floor plans, 3D interior renders, version control, and public sales portal visibility governance.
+        </p>
+      </div>
+
+      <!-- Project Filter & Upload Trigger -->
+      <div class="flex flex-wrap items-center gap-3">
+        <div class="w-64">
+          <app-searchable-select
+            label=""
+            placeholder="Filter by Project..."
+            [options]="projectOptions()"
+            [value]="selectedProjectId()"
+            (valueChange)="onProjectFilterChange($event)"
+            createRoute="/projects/master"
+          ></app-searchable-select>
+        </div>
+        <app-custom-button
+          variant="primary"
+          (btnClick)="openUploadModal()"
+        >
+          <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+          </svg>
+          Upload Document / Media
+        </app-custom-button>
+      </div>
+    </div>
+
+    <!-- Summary KPI Counter Strip (Spec 3.6) -->
+    @if (summary(); as s) {
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mt-6">
+        <div class="p-3.5 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl">
+          <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Documents</p>
+          <p class="text-lg font-bold text-slate-900 dark:text-white mt-0.5">{{ s.total_documents }}</p>
+          <span class="text-[10px] text-slate-500">All registered media assets</span>
+        </div>
+        <div class="p-3.5 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-xl">
+          <p class="text-[11px] font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wider">Approved Plans</p>
+          <p class="text-lg font-bold text-blue-800 dark:text-blue-300 mt-0.5">{{ s.approved_floor_plans }}</p>
+          <span class="text-[10px] text-blue-600 dark:text-blue-400">RAJUK / Authority Plans</span>
+        </div>
+        <div class="p-3.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl">
+          <p class="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Unit Layouts</p>
+          <p class="text-lg font-bold text-emerald-800 dark:text-emerald-300 mt-0.5">{{ s.unit_plans }}</p>
+          <span class="text-[10px] text-emerald-600 dark:text-emerald-400">Flat-specific layouts</span>
+        </div>
+        <div class="p-3.5 bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 rounded-xl">
+          <p class="text-[11px] font-semibold text-purple-700 dark:text-purple-400 uppercase tracking-wider">Photos & Renders</p>
+          <p class="text-lg font-bold text-purple-800 dark:text-purple-300 mt-0.5">{{ s.unit_photographs + s.interior_renders }}</p>
+          <span class="text-[10px] text-purple-600 dark:text-purple-400">{{ s.unit_photographs }} Real · {{ s.interior_renders }} 3D</span>
+        </div>
+        <div class="p-3.5 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 rounded-xl">
+          <p class="text-[11px] font-semibold text-indigo-700 dark:text-indigo-400 uppercase tracking-wider">Public Portal</p>
+          <p class="text-lg font-bold text-indigo-800 dark:text-indigo-300 mt-0.5">{{ s.public_sales_portal_count }}</p>
+          <span class="text-[10px] text-indigo-600 dark:text-indigo-400">Published to Buyers</span>
+        </div>
+        <div class="p-3.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl">
+          <p class="text-[11px] font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wider">Superseded Archive</p>
+          <p class="text-lg font-bold text-amber-800 dark:text-amber-300 mt-0.5">{{ s.superseded_archive_count }}</p>
+          <span class="text-[10px] text-amber-600 dark:text-amber-400">Historical Revisions Kept</span>
+        </div>
+      </div>
+    }
+
+    <!-- Toast Notification Banner -->
+    @if (toastMessage()) {
+      <div 
+        class="mt-4 p-3 rounded-xl border flex items-center justify-between text-xs font-semibold animate-fadeIn"
+        [ngClass]="{
+          'bg-emerald-50 border-emerald-300 text-emerald-800 dark:bg-emerald-950 dark:border-emerald-800 dark:text-emerald-200': toastType() === 'success',
+          'bg-rose-50 border-rose-300 text-rose-800 dark:bg-rose-950 dark:border-rose-800 dark:text-rose-200': toastType() === 'error',
+          'bg-amber-50 border-amber-300 text-amber-800 dark:bg-amber-950 dark:border-amber-800 dark:text-amber-200': toastType() === 'warning',
+          'bg-blue-50 border-blue-300 text-blue-800 dark:bg-blue-950 dark:border-blue-800 dark:text-blue-200': toastType() === 'info'
+        }"
+      >
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full" [ngClass]="{'bg-emerald-500': toastType() === 'success', 'bg-rose-500': toastType() === 'error', 'bg-amber-500': toastType() === 'warning', 'bg-blue-500': toastType() === 'info'}"></span>
+          <span>{{ toastMessage() }}</span>
+        </div>
+        <button (click)="toastMessage.set(null)" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm">✕</button>
+      </div>
+    }
+
+    <!-- Navigation Tabs -->
+    <div class="flex items-center gap-2 mt-6 border-b border-slate-200 dark:border-slate-800 pb-0 overflow-x-auto">
+      <button
+        type="button"
+        (click)="switchTab('repository')"
+        class="px-4 py-2.5 text-xs font-semibold rounded-t-xl transition-all border-b-2 flex items-center gap-2 shrink-0"
+        [ngClass]="activeTab() === 'repository' 
+          ? 'border-blue-600 text-blue-700 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/20' 
+          : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+        Active Document & Plan Repository
+      </button>
+
+      <button
+        type="button"
+        (click)="switchTab('gallery')"
+        class="px-4 py-2.5 text-xs font-semibold rounded-t-xl transition-all border-b-2 flex items-center gap-2 shrink-0"
+        [ngClass]="activeTab() === 'gallery' 
+          ? 'border-blue-600 text-blue-700 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/20' 
+          : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
+        Visual Media & Gallery (Photos & Renders)
+      </button>
+
+      <button
+        type="button"
+        (click)="switchTab('superseded')"
+        class="px-4 py-2.5 text-xs font-semibold rounded-t-xl transition-all border-b-2 flex items-center gap-2 shrink-0"
+        [ngClass]="activeTab() === 'superseded' 
+          ? 'border-blue-600 text-blue-700 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/20' 
+          : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        Superseded Plans & Historical Archive
+      </button>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- TAB 1: ACTIVE DOCUMENT & FLOOR PLAN REPOSITORY -->
+  <!-- ========================================================================= -->
+  @if (activeTab() === 'repository' || activeTab() === 'superseded') {
+    <div class="p-6">
+      <!-- Filter Controls Strip -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+        <div>
+          <app-searchable-select
+            label="Document Type"
+            [options]="filterDocumentTypeOptions"
+            [value]="documentTypeFilter()"
+            (valueChange)="documentTypeFilter.set($event); documentsOffset.set(0); loadDocuments()"
+          ></app-searchable-select>
+        </div>
+        <div>
+          <app-searchable-select
+            label="Visibility Level"
+            [options]="filterVisibilityOptions"
+            [value]="visibilityFilter()"
+            (valueChange)="visibilityFilter.set($event); documentsOffset.set(0); loadDocuments()"
+          ></app-searchable-select>
+        </div>
+        <div>
+          <app-searchable-select
+            label="Approval Status"
+            [options]="statusOptions"
+            [value]="statusFilter()"
+            (valueChange)="statusFilter.set($event); documentsOffset.set(0); loadDocuments()"
+          ></app-searchable-select>
+        </div>
+        <div>
+          <app-custom-input
+            label="Search Repository"
+            placeholder="Search title, tag, or uploader..."
+            [ngModel]="searchQuery()"
+            (ngModelChange)="searchQuery.set($event); documentsOffset.set(0); loadDocuments()"
+          ></app-custom-input>
+        </div>
+      </div>
+
+      <!-- Paged Documents Table -->
+      <div class="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-xl">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-50 dark:bg-slate-850 text-slate-700 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-800 uppercase tracking-wider text-[11px]">
+            <tr>
+              <th class="p-3">Doc ID & Title</th>
+              <th class="p-3">Category Type</th>
+              <th class="p-3">Hierarchy (Tower / Floor / Unit)</th>
+              <th class="p-3">Format & Version</th>
+              <th class="p-3">Visibility</th>
+              <th class="p-3">Status</th>
+              <th class="p-3">Uploaded By</th>
+              <th class="p-3 text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+            @for (d of documents(); track d.id) {
+              <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
+                <td class="p-3">
+                  <div class="flex items-center gap-2">
+                    <span class="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-bold flex items-center justify-center text-[10px] uppercase shrink-0">
+                      {{ d.file_extension.replace('.', '') || 'DOC' }}
+                    </span>
+                    <div>
+                      <p class="font-semibold text-slate-900 dark:text-white hover:text-blue-600 cursor-pointer" (click)="openPreviewModal(d)">
+                        {{ d.title }}
+                      </p>
+                      @if (d.tags) {
+                        <p class="text-[10px] text-slate-400">Tags: {{ d.tags }}</p>
+                      }
+                    </div>
+                  </div>
+                </td>
+                <td class="p-3">
+                  <span class="inline-block px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-300">
+                    {{ formatLabel(d.document_type) }}
+                  </span>
+                </td>
+                <td class="p-3 text-slate-600 dark:text-slate-400">
+                  @if (d.unit_id) {
+                    <p class="font-medium text-slate-800 dark:text-slate-200">Unit ID: #{{ d.unit_id }}</p>
+                  }
+                  @if (d.floor_number !== null && d.floor_number !== undefined) {
+                    <p class="text-[11px]">Floor {{ d.floor_number }}</p>
+                  }
+                  @if (!d.unit_id && (d.floor_number === null || d.floor_number === undefined)) {
+                    <span class="text-slate-400 italic">Project Level</span>
+                  }
+                </td>
+                <td class="p-3">
+                  <span class="font-mono text-slate-700 dark:text-slate-300">{{ d.version_tag }}</span>
+                  <p class="text-[10px] text-slate-500">{{ d.file_size_kb }} KB · {{ d.file_extension }}</p>
+                  @if (d.is_superseded) {
+                    <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                      SUPERSEDED
+                    </span>
+                  }
+                </td>
+                <td class="p-3">
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold"
+                    [ngClass]="{
+                      'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300': d.visibility === 'PUBLIC_SALES_PORTAL',
+                      'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300': d.visibility === 'INTERNAL_SALES_AGENT',
+                      'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300': d.visibility === 'RESTRICTED_CONFIDENTIAL'
+                    }">
+                    {{ formatLabel(d.visibility) }}
+                  </span>
+                </td>
+                <td class="p-3">
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold"
+                    [ngClass]="{
+                      'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300': d.approval_status === 'APPROVED',
+                      'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300': d.approval_status === 'PENDING',
+                      'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300': d.approval_status === 'REJECTED'
+                    }">
+                    {{ d.approval_status }}
+                  </span>
+                </td>
+                <td class="p-3 text-slate-500">
+                  <p class="font-medium text-slate-700 dark:text-slate-300">{{ d.uploader_name }}</p>
+                  <p class="text-[10px]">{{ d.created_at | date:'mediumDate' }}</p>
+                </td>
+                <td class="p-3 text-center">
+                  <div class="flex items-center justify-center gap-1.5">
+                    <button
+                      (click)="openPreviewModal(d)"
+                      title="Preview Document / Drawing"
+                      class="px-2 py-1 rounded text-[11px] font-semibold bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-950 dark:text-blue-300 transition-colors"
+                    >
+                      Preview
+                    </button>
+                    @if (d.approval_status !== 'APPROVED') {
+                      <button
+                        (click)="openApproveModal(d)"
+                        title="Approve Document for Sales Portal"
+                        class="px-2 py-1 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950 dark:text-emerald-300 transition-colors"
+                      >
+                        Approve
+                      </button>
+                    }
+                    @if (!d.is_superseded) {
+                      <button
+                        (click)="openSupersedeModal(d)"
+                        title="Issue Superseding Revision"
+                        class="px-2 py-1 rounded text-[11px] font-semibold bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-950 dark:text-amber-300 transition-colors"
+                      >
+                        Supersede
+                      </button>
+                    }
+                    <button
+                      (click)="openEditModal(d)"
+                      title="Edit Metadata"
+                      class="px-2 py-1 rounded text-[11px] font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition-colors"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      (click)="deleteDocument(d)"
+                      title="Delete Document"
+                      class="px-1.5 py-1 rounded text-[11px] font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950 transition-colors"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="8" class="p-6 text-center text-slate-400 text-xs">
+                  No property documents or floor plans found matching query.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination Controls -->
+      <div class="flex items-center justify-between mt-4 text-xs text-slate-500">
+        <div>
+          Showing {{ documentsOffset() + 1 }} to {{ documentsOffset() + documents().length }} of {{ documentsTotal() }} documents
+        </div>
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            (click)="prevPage()"
+            [disabled]="documentsOffset() === 0"
+            class="px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-lg font-medium hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            Previous
+          </button>
+          <button
+            type="button"
+            (click)="nextPage()"
+            [disabled]="documentsOffset() + documentsLimit() >= documentsTotal()"
+            class="px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-lg font-medium hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            Next
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ========================================================================= -->
+  <!-- TAB 2: VISUAL MEDIA & GALLERY VIEW -->
+  <!-- ========================================================================= -->
+  @if (activeTab() === 'gallery') {
+    <div class="p-6">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h3 class="text-sm font-bold text-slate-900 dark:text-white">Property Media & 3D Interior Gallery</h3>
+          <p class="text-xs text-slate-500">Real-site construction photography, sample renders, and public portal showcases.</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        @for (item of galleryItems(); track item.id) {
+          <div 
+            class="group border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-white dark:bg-slate-900 shadow-xs hover:shadow-md transition-all cursor-pointer flex flex-col justify-between"
+            (click)="openPreviewModal(item)"
+          >
+            <div class="relative h-44 bg-slate-100 dark:bg-slate-800 overflow-hidden flex items-center justify-center">
+              @if (item.file_extension === '.jpg' || item.file_extension === '.jpeg' || item.file_extension === '.png' || item.file_extension === '.webp') {
+                <img 
+                  [src]="item.file_url" 
+                  [alt]="item.title"
+                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  loading="lazy"
+                />
+              } @else {
+                <div class="text-center p-4">
+                  <span class="w-12 h-12 rounded-xl bg-blue-100 text-blue-700 font-bold flex items-center justify-center mx-auto text-sm uppercase">
+                    {{ item.file_extension }}
+                  </span>
+                  <p class="text-[11px] text-slate-500 mt-2">Technical CAD / PDF Drawing</p>
+                </div>
+              }
+
+              <!-- Badges Overlay -->
+              <div class="absolute top-2 left-2 flex gap-1.5 flex-wrap">
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-900/80 text-white backdrop-blur-xs">
+                  {{ item.version_tag }}
+                </span>
+                @if (item.visibility === 'PUBLIC_SALES_PORTAL') {
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-600 text-white shadow-xs">
+                    Portal Active
+                  </span>
+                }
+              </div>
+            </div>
+
+            <div class="p-3">
+              <h4 class="text-xs font-bold text-slate-900 dark:text-white truncate" [title]="item.title">
+                {{ item.title }}
+              </h4>
+              <div class="flex items-center justify-between text-[11px] text-slate-500 mt-1">
+                <span>{{ formatLabel(item.document_type) }}</span>
+                <span>{{ item.file_size_kb }} KB</span>
+              </div>
+            </div>
+          </div>
+        } @empty {
+          <div class="col-span-full text-center py-12 text-xs text-slate-400">
+            No image renders or visual photographs found in current project.
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- ========================================================================= -->
+  <!-- MODAL 1: UPLOAD DOCUMENT / FLOOR PLAN (Spec 3.6) -->
+  <!-- ========================================================================= -->
+  <app-modal
+    [isOpen]="isUploadModalOpen()"
+    title="Upload Property Document / Media"
+    subtitle="Add RAJUK floor plans, unit images, brochures, or architectural schedules to object storage."
+    size="lg"
+    (closeModal)="isUploadModalOpen.set(false)"
+  >
+    <form [formGroup]="uploadForm" (ngSubmit)="submitUpload()" class="space-y-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <app-searchable-select
+          label="Target Project *"
+          [options]="projectOptionsForUpload()"
+          formControlName="project_id"
+          createRoute="/projects/master"
+        ></app-searchable-select>
+        <app-searchable-select
+          label="Document Type *"
+          [options]="documentTypeOptions"
+          formControlName="document_type"
+          createRoute="/settings/lookups"
+        ></app-searchable-select>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <app-searchable-select
+          label="Tower (Optional)"
+          [options]="towerOptions()"
+          formControlName="tower_id"
+        ></app-searchable-select>
+        <app-custom-input
+          label="Floor Number (Optional)"
+          type="number"
+          formControlName="floor_number"
+          placeholder="e.g. 14"
+        ></app-custom-input>
+        <app-searchable-select
+          label="Unit (Optional)"
+          [options]="unitOptions()"
+          formControlName="unit_id"
+        ></app-searchable-select>
+      </div>
+
+      <app-custom-input
+        label="Document Title *"
+        formControlName="title"
+        placeholder="e.g. Approved Typical Floor Plan (Floors 3-18)"
+      ></app-custom-input>
+
+      <!-- File Drag & Drop Zone -->
+      <div class="p-4 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl bg-slate-50/50 dark:bg-slate-850/50 text-center">
+        <svg class="w-8 h-8 mx-auto text-slate-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+        </svg>
+        <p class="text-xs font-semibold text-slate-700 dark:text-slate-300">
+          Select or drop technical drawing / media file
+        </p>
+        <p class="text-[11px] text-slate-400 mt-0.5">
+          Supported: PDF, DWG, DXF, JPG, PNG, WEBP, ZIP (up to 50MB)
+        </p>
+        <input 
+          type="file" 
+          (change)="onFileSelected($event)" 
+          class="mt-2 text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+        />
+        @if (selectedFile) {
+          <p class="text-xs font-bold text-emerald-600 mt-2">
+            Selected: {{ selectedFile.name }} ({{ (selectedFile.size / 1024).toFixed(0) }} KB)
+          </p>
+        }
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <app-custom-input
+          label="Version Tag *"
+          formControlName="version_tag"
+          placeholder="e.g. v1.0"
+        ></app-custom-input>
+        <app-searchable-select
+          label="Visibility Level *"
+          [options]="visibilityOptions"
+          formControlName="visibility"
+        ></app-searchable-select>
+        <app-custom-input
+          label="Uploader Name *"
+          formControlName="uploader_name"
+        ></app-custom-input>
+      </div>
+
+      <app-custom-input
+        label="Search Tags (comma separated)"
+        formControlName="tags"
+        placeholder="e.g. rajuk, 3bhk, lakeview, electrical-cad"
+      ></app-custom-input>
+
+      <app-custom-textarea
+        label="Engineering Notes & Regulatory Reference"
+        formControlName="notes"
+        placeholder="Reference approval memo numbers, drawing stamp notes, etc."
+        rows="2"
+      ></app-custom-textarea>
+
+      <div class="flex justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+        <app-custom-button
+          variant="outline"
+          (btnClick)="isUploadModalOpen.set(false)"
+        >
+          Cancel
+        </app-custom-button>
+        <app-custom-button
+          variant="primary"
+          type="submit"
+          [disabled]="isSubmitting() || uploadForm.invalid"
+        >
+          @if (isSubmitting()) { Uploading... } @else { Upload & Register Asset }
+        </app-custom-button>
+      </div>
+    </form>
+  </app-modal>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL 2: DOCUMENT PREVIEW MODAL -->
+  <!-- ========================================================================= -->
+  <app-modal
+    [isOpen]="isPreviewModalOpen()"
+    [title]="selectedDocument()?.title || 'Document Preview'"
+    [subtitle]="'Version ' + (selectedDocument()?.version_tag || 'v1.0') + ' · ' + (selectedDocument()?.document_type || '')"
+    size="xl"
+    (closeModal)="isPreviewModalOpen.set(false)"
+  >
+    @if (selectedDocument(); as doc) {
+      <div class="space-y-4">
+        <!-- Preview Container -->
+        <div class="bg-slate-900 rounded-xl overflow-hidden min-h-[400px] flex items-center justify-center p-2">
+          @if (doc.file_extension === '.jpg' || doc.file_extension === '.jpeg' || doc.file_extension === '.png' || doc.file_extension === '.webp') {
+            <img [src]="doc.file_url" [alt]="doc.title" class="max-h-[500px] max-w-full object-contain rounded-lg" />
+          } @else {
+            <div class="text-center p-8 text-white">
+              <span class="w-16 h-16 rounded-2xl bg-blue-600 font-bold flex items-center justify-center mx-auto text-xl uppercase mb-3">
+                {{ doc.file_extension.replace('.', '') }}
+              </span>
+              <h4 class="text-base font-bold">{{ doc.title }}</h4>
+              <p class="text-xs text-slate-400 mt-1">File format: {{ doc.mime_type }} ({{ doc.file_size_kb }} KB)</p>
+              <div class="mt-4 flex justify-center gap-3">
+                <a 
+                  [href]="doc.file_url" 
+                  target="_blank" 
+                  class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold inline-flex items-center gap-1.5"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                  </svg>
+                  Open in New Tab / Viewer
+                </a>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Metadata Inspection Grid -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 bg-slate-50 dark:bg-slate-850 rounded-xl border border-slate-200 dark:border-slate-800 text-xs">
+          <div>
+            <span class="text-slate-500">Document Type:</span>
+            <p class="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{{ formatLabel(doc.document_type) }}</p>
+          </div>
+          <div>
+            <span class="text-slate-500">Visibility:</span>
+            <p class="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{{ doc.visibility }}</p>
+          </div>
+          <div>
+            <span class="text-slate-500">Approval Status:</span>
+            <p class="font-bold text-emerald-700 dark:text-emerald-400 mt-0.5">{{ doc.approval_status }}</p>
+          </div>
+          <div>
+            <span class="text-slate-500">Uploaded On:</span>
+            <p class="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{{ doc.created_at | date:'medium' }}</p>
+          </div>
+        </div>
+
+        @if (doc.notes) {
+          <div class="p-3 bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl text-xs">
+            <span class="font-bold text-amber-900 dark:text-amber-200">Notes & Comments:</span>
+            <p class="text-amber-800 dark:text-amber-300 mt-0.5 whitespace-pre-line">{{ doc.notes }}</p>
+          </div>
+        }
+
+        <div class="flex justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+          <app-custom-button
+            variant="outline"
+            (btnClick)="isPreviewModalOpen.set(false)"
+          >
+            Close
+          </app-custom-button>
+        </div>
+      </div>
+    }
+  </app-modal>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL 3: SUPERSEDE VERSION MODAL (Spec 3.6) -->
+  <!-- ========================================================================= -->
+  <app-modal
+    [isOpen]="isSupersedeModalOpen()"
+    [title]="'Supersede Revision: ' + (selectedDocument()?.title || '')"
+    subtitle="Issue a new revision. The current document will be archived as superseded for statutory compliance."
+    size="md"
+    (closeModal)="isSupersedeModalOpen.set(false)"
+  >
+    <form [formGroup]="supersedeForm" (ngSubmit)="submitSupersede()" class="space-y-4">
+      <div class="p-3 bg-slate-50 dark:bg-slate-850 rounded-xl border border-slate-200 dark:border-slate-800 text-xs">
+        <span class="text-slate-500">Current Active Version:</span>
+        <p class="font-bold text-slate-800 dark:text-slate-200 mt-0.5">
+          {{ selectedDocument()?.version_tag }} · Document ID: #{{ selectedDocument()?.id }}
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <app-custom-input
+          label="New Version Tag *"
+          formControlName="new_version_tag"
+          placeholder="e.g. v2.0"
+        ></app-custom-input>
+        <app-custom-input
+          label="New File URL / Storage Ref *"
+          formControlName="new_file_url"
+          placeholder="/uploads/property_documents/rev_v2.pdf"
+        ></app-custom-input>
+      </div>
+
+      <app-custom-textarea
+        label="Reason for Revision / Supersession *"
+        formControlName="reason"
+        placeholder="Detail why this version replaces the previous floor plan..."
+        rows="2"
+      ></app-custom-textarea>
+
+      <div class="flex justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+        <app-custom-button
+          variant="outline"
+          (btnClick)="isSupersedeModalOpen.set(false)"
+        >
+          Cancel
+        </app-custom-button>
+        <app-custom-button
+          variant="primary"
+          type="submit"
+          [disabled]="isSubmitting() || supersedeForm.invalid"
+        >
+          @if (isSubmitting()) { Processing... } @else { Issue New Revision }
+        </app-custom-button>
+      </div>
+    </form>
+  </app-modal>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL 4: APPROVAL & PORTAL GOVERNANCE MODAL (Spec 3.6) -->
+  <!-- ========================================================================= -->
+  <app-modal
+    [isOpen]="isApproveModalOpen()"
+    [title]="'Approve Document: ' + (selectedDocument()?.title || '')"
+    subtitle="Authorize document and configure whether it displays publicly on the customer sales portal."
+    size="md"
+    (closeModal)="isApproveModalOpen.set(false)"
+  >
+    <form [formGroup]="approveForm" (ngSubmit)="submitApproval()" class="space-y-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <app-searchable-select
+          label="Approval Decision *"
+          [options]="[
+            { value: 'APPROVED', label: 'Approve & Validate' },
+            { value: 'REJECTED', label: 'Reject / Flag Defect' }
+          ]"
+          formControlName="approval_status"
+        ></app-searchable-select>
+        <app-searchable-select
+          label="Target Visibility"
+          [options]="visibilityOptions"
+          formControlName="visibility"
+        ></app-searchable-select>
+      </div>
+
+      <app-custom-input
+        label="Authorized Sign-off By *"
+        formControlName="approved_by"
+      ></app-custom-input>
+
+      <app-custom-textarea
+        label="Approval Remarks"
+        formControlName="notes"
+        placeholder="Verified against RAJUK building permit and engineering specs..."
+        rows="2"
+      ></app-custom-textarea>
+
+      <div class="flex justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+        <app-custom-button
+          variant="outline"
+          (btnClick)="isApproveModalOpen.set(false)"
+        >
+          Cancel
+        </app-custom-button>
+        <app-custom-button
+          variant="primary"
+          type="submit"
+          [disabled]="isSubmitting() || approveForm.invalid"
+        >
+          @if (isSubmitting()) { Submitting... } @else { Confirm Decision }
+        </app-custom-button>
+      </div>
+    </form>
+  </app-modal>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL 5: EDIT METADATA MODAL -->
+  <!-- ========================================================================= -->
+  <app-modal
+    [isOpen]="isEditModalOpen()"
+    [title]="'Edit Document: ' + (selectedDocument()?.title || '')"
+    subtitle="Update metadata, hierarchy bindings, tags, and notes."
+    size="md"
+    (closeModal)="isEditModalOpen.set(false)"
+  >
+    <form [formGroup]="editForm" (ngSubmit)="submitEdit()" class="space-y-4">
+      <app-custom-input
+        label="Title *"
+        formControlName="title"
+      ></app-custom-input>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <app-searchable-select
+          label="Document Type *"
+          [options]="documentTypeOptions"
+          formControlName="document_type"
+        ></app-searchable-select>
+        <app-searchable-select
+          label="Visibility *"
+          [options]="visibilityOptions"
+          formControlName="visibility"
+        ></app-searchable-select>
+      </div>
+
+      <app-custom-input
+        label="Search Tags"
+        formControlName="tags"
+      ></app-custom-input>
+
+      <app-custom-textarea
+        label="Notes"
+        formControlName="notes"
+        rows="2"
+      ></app-custom-textarea>
+
+      <div class="flex justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+        <app-custom-button
+          variant="outline"
+          (btnClick)="isEditModalOpen.set(false)"
+        >
+          Cancel
+        </app-custom-button>
+        <app-custom-button
+          variant="primary"
+          type="submit"
+          [disabled]="isSubmitting() || editForm.invalid"
+        >
+          @if (isSubmitting()) { Saving... } @else { Save Changes }
+        </app-custom-button>
+      </div>
+    </form>
+  </app-modal>
+</app-card-container>

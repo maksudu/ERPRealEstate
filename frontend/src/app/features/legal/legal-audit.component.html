@@ -1,0 +1,63 @@
+<main class="space-y-5">
+  <header class="flex flex-col gap-4 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between">
+    <div>
+      <nav class="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
+        <a routerLink="/legal/dashboard" class="hover:text-primary">Legal & compliance</a><span aria-hidden="true">/</span><span>Audit trail</span>
+      </nav>
+      <h1 class="text-2xl font-semibold tracking-tight text-foreground">Compliance audit trail</h1>
+      <p class="mt-1 text-sm text-muted-foreground">Append-only record of create, update and delete activity across legal registers.</p>
+    </div>
+  </header>
+
+  <app-card-container>
+    <form class="grid gap-3 sm:grid-cols-[minmax(12rem,18rem)_auto]" (ngSubmit)="applyFilter()">
+      <app-custom-input label="Record ID" type="number" placeholder="Filter by record ID" [(ngModel)]="recordIdFilter" name="recordId"></app-custom-input>
+      <div class="flex items-end"><app-custom-button type="submit" variant="outline" size="md">Apply filter</app-custom-button></div>
+    </form>
+  </app-card-container>
+
+  @if (error) {
+    <app-card-container><div class="flex items-center justify-between gap-3"><p role="alert" class="text-sm text-destructive">{{ error }}</p><app-custom-button variant="outline" size="sm" (btnClick)="load()">Retry</app-custom-button></div></app-card-container>
+  }
+
+  <section class="overflow-hidden rounded-xl border border-border bg-card">
+    <div class="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
+      <div><h2 class="text-sm font-semibold text-foreground">Change history</h2><p class="mt-0.5 text-xs text-muted-foreground">Showing {{ rangeStart }}–{{ rangeEnd }} of {{ total }}</p></div>
+      <span class="text-xs text-muted-foreground">Newest first</span>
+    </div>
+    @if (isLoading) {
+      <div class="space-y-3 p-5" role="status">@for (item of [1, 2, 3]; track item) { <div class="h-8 animate-pulse rounded bg-muted/50"></div> }<span class="sr-only">Loading audit history…</span></div>
+    } @else if (events.length) {
+      <div class="overflow-x-auto">
+        <table class="w-full min-w-[800px] text-left text-sm">
+          <thead class="bg-muted/50 text-xs uppercase tracking-wide text-muted-foreground">
+            <tr><th class="px-4 py-3 font-semibold">When</th><th class="px-4 py-3 font-semibold">Action</th><th class="px-4 py-3 font-semibold">Register</th><th class="px-4 py-3 font-semibold">Record</th><th class="px-4 py-3 font-semibold">Actor</th></tr>
+          </thead>
+          <tbody class="divide-y divide-border">
+            @for (event of events; track event.id) {
+              <tr class="hover:bg-muted/25">
+                <td class="whitespace-nowrap px-4 py-3 text-xs tabular-nums text-muted-foreground">{{ event.created_at | date:'medium' }}</td>
+                <td class="px-4 py-3"><span class="rounded-md border border-border bg-muted/40 px-2 py-1 text-xs font-medium text-foreground">{{ event.action }}</span></td>
+                <td class="px-4 py-3 text-xs text-muted-foreground">{{ labels[event.area] }}</td>
+                <td class="px-4 py-3">
+                  @if (event.record_id) {
+                    <a [routerLink]="['/legal/records', event.area, event.record_id]" class="font-medium text-primary hover:underline">{{ title(event) }} <span class="text-xs text-muted-foreground">#{{ event.record_id }}</span></a>
+                  } @else {
+                    <span class="text-muted-foreground">{{ title(event) }}</span>
+                  }
+                </td>
+                <td class="px-4 py-3 text-muted-foreground">{{ event.actor }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else if (!error) {
+      <div class="px-5 py-14 text-center"><p class="text-sm font-medium text-foreground">No audit events found</p><p class="mt-1 text-xs text-muted-foreground">Changes to legal records will appear here.</p></div>
+    }
+    <footer class="flex items-center justify-between border-t border-border px-4 py-3">
+      <span class="text-xs text-muted-foreground">Immutable audit entries · 50 per page</span>
+      <div class="flex gap-2"><app-custom-button variant="outline" size="sm" [disabled]="offset === 0 || isLoading" (btnClick)="pageBy(-1)">Previous</app-custom-button><app-custom-button variant="outline" size="sm" [disabled]="offset + limit >= total || isLoading" (btnClick)="pageBy(1)">Next</app-custom-button></div>
+    </footer>
+  </section>
+</main>

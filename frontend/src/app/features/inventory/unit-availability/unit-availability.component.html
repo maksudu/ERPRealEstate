@@ -1,0 +1,732 @@
+<div class="space-y-6">
+  <!-- Consolidated Card Container -->
+  <app-card-container
+    title="Real-Time Unit Availability & Reservation State Machine"
+    subtitle="Controlled inventory state machine, row-level pessimistic locking, 15-minute Mutex holds & immutable transition audit logs (Spec 3.6)">
+
+    <!-- KPI Metric Badges (State Machine Summary) -->
+    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 mb-6">
+      <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Units</span>
+        <div class="text-xl font-black text-slate-900 mt-0.5">{{ summary().total_units }}</div>
+        <div class="text-[10px] text-slate-400">Consolidated</div>
+      </div>
+
+      <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-200">
+        <span class="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">Available</span>
+        <div class="text-xl font-black text-emerald-900 mt-0.5">{{ summary().available }}</div>
+        <div class="text-[10px] text-emerald-600">Open for Sale</div>
+      </div>
+
+      <div class="p-3 rounded-xl bg-amber-50 border border-amber-200">
+        <span class="text-[10px] font-bold text-amber-700 uppercase tracking-wider">Reserved</span>
+        <div class="text-xl font-black text-amber-900 mt-0.5">{{ summary().reserved }}</div>
+        <div class="text-[10px] text-amber-600">Active Holds</div>
+      </div>
+
+      <div class="p-3 rounded-xl bg-indigo-50 border border-indigo-200">
+        <span class="text-[10px] font-bold text-indigo-700 uppercase tracking-wider">Booked</span>
+        <div class="text-xl font-black text-indigo-900 mt-0.5">{{ summary().booked }}</div>
+        <div class="text-[10px] text-indigo-600">Accepted</div>
+      </div>
+
+      <div class="p-3 rounded-xl bg-blue-50 border border-blue-200">
+        <span class="text-[10px] font-bold text-blue-700 uppercase tracking-wider">Sold / Cont.</span>
+        <div class="text-xl font-black text-blue-900 mt-0.5">{{ summary().sold }}</div>
+        <div class="text-[10px] text-blue-600">Deed Signed</div>
+      </div>
+
+      <div class="p-3 rounded-xl bg-rose-50 border border-rose-200">
+        <span class="text-[10px] font-bold text-rose-700 uppercase tracking-wider">Blocked</span>
+        <div class="text-xl font-black text-rose-900 mt-0.5">{{ summary().blocked }}</div>
+        <div class="text-[10px] text-rose-600">Restricted</div>
+      </div>
+
+      <div class="p-3 rounded-xl bg-purple-50 border border-purple-200">
+        <span class="text-[10px] font-bold text-purple-700 uppercase tracking-wider">Landowner</span>
+        <div class="text-xl font-black text-purple-900 mt-0.5">{{ summary().landowner_allocated }}</div>
+        <div class="text-[10px] text-purple-600">JV Share</div>
+      </div>
+
+      <div class="p-3 rounded-xl bg-teal-50 border border-teal-200">
+        <span class="text-[10px] font-bold text-teal-700 uppercase tracking-wider">Handed Over</span>
+        <div class="text-xl font-black text-teal-900 mt-0.5">{{ summary().handed_over }}</div>
+        <div class="text-[10px] text-teal-600">Possession Given</div>
+      </div>
+    </div>
+
+    <!-- Live Sync Alert Bar -->
+    <div class="flex items-center justify-between p-3 rounded-xl bg-indigo-50/60 border border-indigo-200 mb-6 text-xs text-indigo-900">
+      <div class="flex items-center gap-2">
+        <span class="relative flex h-2.5 w-2.5">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-indigo-600"></span>
+        </span>
+        <span class="font-bold">Real-Time Concurrency Active:</span>
+        <span class="text-slate-600">Database transactions (Row-Level Locking) & WebSocket matrix broadcasting actively prevent simultaneous double-reservations.</span>
+      </div>
+
+      <button
+        (click)="runBatchAutoRelease()"
+        [disabled]="actionInProgress()"
+        class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[11px] transition-all flex items-center gap-1.5 cursor-pointer shadow-xs">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+        Auto-Release Expired Holds
+      </button>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-3 mb-6">
+      <button
+        (click)="activeTab.set('units')"
+        [class]="activeTab() === 'units' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
+        class="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+        Live Unit Availability & State Governor
+      </button>
+
+      <button
+        (click)="activeTab.set('reservations')"
+        [class]="activeTab() === 'reservations' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
+        class="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        Active Holds & Reservations (15-Min Mutex)
+      </button>
+
+      <button
+        (click)="activeTab.set('history')"
+        [class]="activeTab() === 'history' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
+        class="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+        State Transition Audit History
+      </button>
+
+      <button
+        (click)="activeTab.set('rules')"
+        [class]="activeTab() === 'rules' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
+        class="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+        Statutory Governance & State Machine Rules
+      </button>
+    </div>
+
+
+    <!-- ========================================================================= -->
+    <!-- TAB 1: LIVE UNIT AVAILABILITY & INTERACTIVE STATE GOVERNOR                 -->
+    <!-- ========================================================================= -->
+    @if (activeTab() === 'units') {
+      <div class="space-y-4">
+        <!-- Control Bar -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 p-4 rounded-xl bg-slate-50 border border-slate-200">
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="w-56">
+              <app-searchable-select
+                label="State Machine Filter"
+                [options]="statusFilterOptions"
+                [value]="unitStatusFilter()"
+                (selectionChange)="unitStatusFilter.set($event); unitPage.set(1); loadUnits()">
+              </app-searchable-select>
+            </div>
+
+            <div class="w-56">
+              <app-custom-input
+                placeholder="Search unit #, floor, or facing..."
+                [value]="unitSearch()"
+                (input)="unitSearch.set($any($event.target).value); unitPage.set(1); loadUnits()">
+              </app-custom-input>
+            </div>
+          </div>
+
+          <div class="text-xs text-slate-500">
+            Total units found: <strong class="text-slate-900">{{ totalUnits() }}</strong>
+          </div>
+        </div>
+
+        <!-- Units Table -->
+        <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-slate-50 text-slate-600 border-b border-slate-200 uppercase font-bold text-[11px] tracking-wider">
+                <th class="py-3 px-4">Unit #</th>
+                <th class="py-3 px-4">Floor & Type</th>
+                <th class="py-3 px-4">Facing</th>
+                <th class="py-3 px-4 text-right">Saleable Area</th>
+                <th class="py-3 px-4 text-right">Total Price</th>
+                <th class="py-3 px-4">Controlled Status</th>
+                <th class="py-3 px-4">Lock / Active Hold Details</th>
+                <th class="py-3 px-4 text-center">State Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              @if (loadingUnits()) {
+                <tr>
+                  <td colspan="8" class="py-12 text-center text-slate-400">
+                    <div class="inline-block animate-spin rounded-full h-6 w-6 border-2 border-indigo-600 border-t-transparent mb-2"></div>
+                    <p class="text-xs">Loading unit availability states...</p>
+                  </td>
+                </tr>
+              } @else if (units().length === 0) {
+                <tr>
+                  <td colspan="8" class="py-8 text-center text-slate-400">No units match the selected state criteria.</td>
+                </tr>
+              } @else {
+                @for (u of units(); track u.id) {
+                  <tr class="hover:bg-slate-50/80 transition-colors">
+                    <td class="py-3 px-4 font-mono font-bold text-slate-900">
+                      {{ u.unit_number }}
+                      @if (u.is_landowner_share) {
+                        <span class="ml-1 px-1.5 py-0.2 rounded text-[9px] font-bold bg-purple-100 text-purple-700">JV</span>
+                      }
+                    </td>
+                    <td class="py-3 px-4">
+                      <div class="font-medium text-slate-800">Floor {{ u.floor_number }}</div>
+                      <div class="text-[11px] text-slate-500">{{ u.unit_type_id }}</div>
+                    </td>
+                    <td class="py-3 px-4 font-medium text-slate-700">{{ u.facing_id }}</td>
+                    <td class="py-3 px-4 text-right font-medium text-slate-800">{{ u.gross_saleable_area_sqft }} sqft</td>
+                    <td class="py-3 px-4 text-right font-bold text-indigo-900">{{ formatBDT(u.total_unit_price) }}</td>
+                    <td class="py-3 px-4">
+                      <span [class]="getStatusBadgeClass(u.status_id)" class="px-2 py-0.5 rounded text-[10px] font-bold border">
+                        {{ u.status_id }}
+                      </span>
+                    </td>
+                    <td class="py-3 px-4 text-[11px]">
+                      @if (u.current_locked_by_user_name) {
+                        <div class="font-semibold text-amber-700">Held by: {{ u.current_locked_by_user_name }}</div>
+                        <div class="text-slate-400">Expires: {{ u.lock_expires_at | date:'hh:mm:ss a' }}</div>
+                      } @else {
+                        <span class="text-slate-400">No active lock</span>
+                      }
+                    </td>
+                    <td class="py-3 px-4 text-center">
+                      <div class="flex items-center justify-center gap-1.5">
+                        @if (u.status_id === 'AVAILABLE') {
+                          <button
+                            (click)="openReserveModal(u)"
+                            class="px-2.5 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-xs font-bold transition-all cursor-pointer">
+                            Reserve / Hold
+                          </button>
+                        }
+
+                        <button
+                          (click)="openTransitionModal(u)"
+                          class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-all cursor-pointer">
+                          Transition State
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Paging Footer -->
+        <div class="flex items-center justify-between text-xs text-slate-500 pt-2">
+          <span>Showing page {{ unitPage() }} ({{ totalUnits() }} units)</span>
+          <div class="flex items-center gap-2">
+            <button
+              [disabled]="unitPage() <= 1"
+              (click)="unitPage.set(unitPage() - 1); loadUnits()"
+              class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 cursor-pointer">
+              Previous
+            </button>
+            <button
+              [disabled]="units().length < 15"
+              (click)="unitPage.set(unitPage() + 1); loadUnits()"
+              class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 cursor-pointer">
+              Next
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+
+    <!-- ========================================================================= -->
+    <!-- TAB 2: ACTIVE HOLDS & RESERVATIONS (15-MIN MUTEX)                         -->
+    <!-- ========================================================================= -->
+    @if (activeTab() === 'reservations') {
+      <div class="space-y-4">
+        <!-- Control Bar -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 p-4 rounded-xl bg-slate-50 border border-slate-200">
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="w-48">
+              <app-searchable-select
+                label="Reservation Status"
+                [options]="[
+                  { value: 'all', label: 'All Reservation States' },
+                  { value: 'ACTIVE_HOLD', label: 'ACTIVE_HOLD (Countdown Active)' },
+                  { value: 'CONFIRMED_BOOKING', label: 'CONFIRMED_BOOKING' },
+                  { value: 'RELEASED', label: 'RELEASED' },
+                  { value: 'EXPIRED', label: 'EXPIRED' }
+                ]"
+                [value]="reservationStatusFilter()"
+                (selectionChange)="reservationStatusFilter.set($event); reservationPage.set(1); loadReservations()">
+              </app-searchable-select>
+            </div>
+
+            <div class="w-56">
+              <app-custom-input
+                placeholder="Search unit # or customer..."
+                [value]="reservationSearch()"
+                (input)="reservationSearch.set($any($event.target).value); reservationPage.set(1); loadReservations()">
+              </app-custom-input>
+            </div>
+          </div>
+
+          <div class="text-xs text-slate-500">
+            Total reservations recorded: <strong class="text-slate-900">{{ totalReservations() }}</strong>
+          </div>
+        </div>
+
+        <!-- Reservations Table -->
+        <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-slate-50 text-slate-600 border-b border-slate-200 uppercase font-bold text-[11px] tracking-wider">
+                <th class="py-3 px-4">Hold Token</th>
+                <th class="py-3 px-4">Unit #</th>
+                <th class="py-3 px-4">Client Name & Phone</th>
+                <th class="py-3 px-4">Sales Executive</th>
+                <th class="py-3 px-4 text-center">Hold Expiry Countdown</th>
+                <th class="py-3 px-4 text-right">Hold Deposit</th>
+                <th class="py-3 px-4">Hold Status</th>
+                <th class="py-3 px-4 text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              @if (loadingReservations()) {
+                <tr>
+                  <td colspan="8" class="py-12 text-center text-slate-400">
+                    <div class="inline-block animate-spin rounded-full h-6 w-6 border-2 border-indigo-600 border-t-transparent mb-2"></div>
+                    <p class="text-xs">Loading reservation holds...</p>
+                  </td>
+                </tr>
+              } @else if (reservations().length === 0) {
+                <tr>
+                  <td colspan="8" class="py-8 text-center text-slate-400">No active or historical reservations found.</td>
+                </tr>
+              } @else {
+                @for (r of reservations(); track r.id) {
+                  <tr class="hover:bg-slate-50/80 transition-colors">
+                    <td class="py-3.5 px-4 font-mono font-bold text-indigo-700">{{ r.reservation_token }}</td>
+                    <td class="py-3.5 px-4 font-mono font-bold text-slate-900">{{ r.unit_number }}</td>
+                    <td class="py-3.5 px-4">
+                      <div class="font-bold text-slate-900">{{ r.customer_name }}</div>
+                      <div class="text-[11px] text-slate-500">{{ r.customer_phone }}</div>
+                    </td>
+                    <td class="py-3.5 px-4 text-slate-700 font-medium">{{ r.sales_agent_name }}</td>
+                    <td class="py-3.5 px-4 text-center">
+                      @if (r.status === 'ACTIVE_HOLD') {
+                        <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-100 text-amber-900 font-mono font-black text-xs border border-amber-300">
+                          <span class="w-2 h-2 rounded-full bg-amber-600 animate-pulse"></span>
+                          {{ formatCountdown(r.remaining_seconds) }}
+                        </div>
+                        <div class="text-[10px] text-slate-400 mt-0.5">Expires: {{ r.expires_at | date:'hh:mm:ss a' }}</div>
+                      } @else {
+                        <span class="text-slate-400 text-[11px]">{{ r.status }}</span>
+                      }
+                    </td>
+                    <td class="py-3.5 px-4 text-right font-medium text-slate-800">
+                      {{ r.hold_deposit_amount ? formatBDT(r.hold_deposit_amount) : '৳0 (Token)' }}
+                    </td>
+                    <td class="py-3.5 px-4">
+                      <span [class]="getStatusBadgeClass(r.status)" class="px-2 py-0.5 rounded text-[10px] font-bold border">
+                        {{ r.status }}
+                      </span>
+                    </td>
+                    <td class="py-3.5 px-4 text-center">
+                      @if (r.status === 'ACTIVE_HOLD') {
+                        <button
+                          (click)="openReleaseModal(r)"
+                          class="px-2 py-1 rounded bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-semibold cursor-pointer">
+                          Authorize Release
+                        </button>
+                      } @else {
+                        <span class="text-slate-400 text-[11px]">Finalized</span>
+                      }
+                    </td>
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Paging Footer -->
+        <div class="flex items-center justify-between text-xs text-slate-500 pt-2">
+          <span>Page {{ reservationPage() }} ({{ totalReservations() }} total holds)</span>
+          <div class="flex items-center gap-2">
+            <button
+              [disabled]="reservationPage() <= 1"
+              (click)="reservationPage.set(reservationPage() - 1); loadReservations()"
+              class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 cursor-pointer">
+              Previous
+            </button>
+            <button
+              [disabled]="reservations().length < 15"
+              (click)="reservationPage.set(reservationPage() + 1); loadReservations()"
+              class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 cursor-pointer">
+              Next
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+
+    <!-- ========================================================================= -->
+    <!-- TAB 3: IMMUTABLE STATE TRANSITION AUDIT HISTORY                            -->
+    <!-- ========================================================================= -->
+    @if (activeTab() === 'history') {
+      <div class="space-y-4">
+        <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-slate-50 text-slate-600 border-b border-slate-200 uppercase font-bold text-[11px] tracking-wider">
+                <th class="py-3 px-4">Timestamp</th>
+                <th class="py-3 px-4">Unit #</th>
+                <th class="py-3 px-4">State Transition</th>
+                <th class="py-3 px-4">Transition Event Type</th>
+                <th class="py-3 px-4">Initiated By</th>
+                <th class="py-3 px-4">Authorized By</th>
+                <th class="py-3 px-4">Reason / Audit Remarks</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              @if (loadingHistory()) {
+                <tr>
+                  <td colspan="7" class="py-12 text-center text-slate-400">
+                    <div class="inline-block animate-spin rounded-full h-6 w-6 border-2 border-indigo-600 border-t-transparent mb-2"></div>
+                    <p class="text-xs">Loading state transition history...</p>
+                  </td>
+                </tr>
+              } @else if (historyList().length === 0) {
+                <tr>
+                  <td colspan="7" class="py-8 text-center text-slate-400">No transition audit logs recorded yet.</td>
+                </tr>
+              } @else {
+                @for (h of historyList(); track h.id) {
+                  <tr class="hover:bg-slate-50/80 transition-colors">
+                    <td class="py-3 px-4 font-mono text-slate-500 text-[11px]">
+                      {{ h.transitioned_at | date:'dd MMM yyyy, hh:mm:ss a' }}
+                    </td>
+                    <td class="py-3 px-4 font-mono font-bold text-slate-900">{{ h.unit_number }}</td>
+                    <td class="py-3 px-4">
+                      <div class="flex items-center gap-1.5 font-bold">
+                        <span [class]="getStatusBadgeClass(h.from_status)" class="px-1.5 py-0.2 rounded text-[10px] border">
+                          {{ h.from_status }}
+                        </span>
+                        <span class="text-slate-400">→</span>
+                        <span [class]="getStatusBadgeClass(h.to_status)" class="px-1.5 py-0.2 rounded text-[10px] border">
+                          {{ h.to_status }}
+                        </span>
+                      </div>
+                    </td>
+                    <td class="py-3 px-4">
+                      <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                        {{ h.transition_type }}
+                      </span>
+                    </td>
+                    <td class="py-3 px-4 font-medium text-slate-800">{{ h.initiated_by }}</td>
+                    <td class="py-3 px-4 text-slate-600">{{ h.authorized_by || 'System Automatic' }}</td>
+                    <td class="py-3 px-4 text-slate-600 text-[11px]">{{ h.reason || 'Routine operational update' }}</td>
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="flex items-center justify-between text-xs text-slate-500 pt-2">
+          <span>Page {{ historyPage() }} ({{ totalHistory() }} total transition logs)</span>
+          <div class="flex items-center gap-2">
+            <button
+              [disabled]="historyPage() <= 1"
+              (click)="historyPage.set(historyPage() - 1); loadHistory()"
+              class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 cursor-pointer">
+              Previous
+            </button>
+            <button
+              [disabled]="historyList().length < 20"
+              (click)="historyPage.set(historyPage() + 1); loadHistory()"
+              class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 cursor-pointer">
+              Next
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+
+    <!-- ========================================================================= -->
+    <!-- TAB 4: STATUTORY GOVERNANCE & STATE MACHINE RULES                         -->
+    <!-- ========================================================================= -->
+    @if (activeTab() === 'rules') {
+      <div class="space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 uppercase">1. Availability States</span>
+            <h4 class="text-sm font-bold text-slate-900">AVAILABLE & RESERVED</h4>
+            <p class="text-xs text-slate-600">
+              Only <strong>AVAILABLE</strong> units can enter a temporary <strong>RESERVED</strong> hold.
+              Concurrency is guarded by DB row-level locks (<code class="text-xs bg-slate-200 px-1 py-0.5 rounded">SELECT ... FOR UPDATE</code>)
+              and distributed Redis mutexes.
+            </p>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-100 text-indigo-800 uppercase">2. Transaction States</span>
+            <h4 class="text-sm font-bold text-slate-900">BOOKED & SOLD</h4>
+            <p class="text-xs text-slate-600">
+              Moving to <strong>BOOKED</strong> requires confirmed booking deposit voucher verification.
+              <strong>SOLD</strong> indicates statutory registered sale agreement and cannot be reverted without legal clearance.
+            </p>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800 uppercase">3. Statutory Holds</span>
+            <h4 class="text-sm font-bold text-slate-900">LANDOWNER & BLOCKED</h4>
+            <p class="text-xs text-slate-600">
+              <strong>LANDOWNER_ALLOCATED</strong> units under JV agreements cannot be sold to developer buyers.
+              <strong>BLOCKED</strong> units require explicit management unblocking justification.
+            </p>
+          </div>
+        </div>
+
+        <div class="p-4 rounded-xl bg-white border border-slate-200 space-y-3">
+          <h4 class="text-xs font-bold text-slate-900 uppercase tracking-wide">Permitted State Transition Matrix</h4>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs border border-slate-200">
+              <thead class="bg-slate-50 font-bold text-slate-700">
+                <tr>
+                  <th class="p-2.5 border-b border-slate-200">Current Status</th>
+                  <th class="p-2.5 border-b border-slate-200">Permitted Next Statuses</th>
+                  <th class="p-2.5 border-b border-slate-200">Trigger & Preconditions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 text-slate-700">
+                <tr>
+                  <td class="p-2.5 font-bold text-emerald-700">AVAILABLE</td>
+                  <td class="p-2.5 font-medium">RESERVED, BOOKED, BLOCKED, LANDOWNER_ALLOCATED</td>
+                  <td class="p-2.5 text-slate-500">Pessimistic DB row lock acquired; client hold placed</td>
+                </tr>
+                <tr>
+                  <td class="p-2.5 font-bold text-amber-700">RESERVED</td>
+                  <td class="p-2.5 font-medium">BOOKED, AVAILABLE, BLOCKED, CANCELLED</td>
+                  <td class="p-2.5 text-slate-500">Earnest booking money accepted or hold expiry release</td>
+                </tr>
+                <tr>
+                  <td class="p-2.5 font-bold text-indigo-700">BOOKED</td>
+                  <td class="p-2.5 font-medium">SOLD, CANCELLED, RESERVED, AVAILABLE</td>
+                  <td class="p-2.5 text-slate-500">Sale deed execution or management authorized refund cancellation</td>
+                </tr>
+                <tr>
+                  <td class="p-2.5 font-bold text-blue-700">SOLD</td>
+                  <td class="p-2.5 font-medium">HANDED_OVER, CANCELLED</td>
+                  <td class="p-2.5 text-slate-500">Architectural completion certificate and key handover</td>
+                </tr>
+                <tr>
+                  <td class="p-2.5 font-bold text-purple-700">LANDOWNER_ALLOCATED</td>
+                  <td class="p-2.5 font-medium">HANDED_OVER</td>
+                  <td class="p-2.5 text-slate-500">Strict JV allocation; direct commercial sale forbidden</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    }
+
+  </app-card-container>
+</div>
+
+
+<!-- ========================================================================= -->
+<!-- MODAL: PLACE NEW RESERVATION HOLD                                         -->
+<!-- ========================================================================= -->
+<app-modal
+  [isOpen]="isReserveModalOpen()"
+  title="Place Temporary Unit Reservation (Row-Level Lock)"
+  size="lg"
+  (closed)="isReserveModalOpen.set(false)">
+
+  <form [formGroup]="reserveForm" (ngSubmit)="submitReservation()" class="space-y-4 text-xs">
+    @if (targetUnit(); as u) {
+      <div class="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200 flex items-center justify-between">
+        <div>
+          <span class="text-[11px] font-semibold text-amber-800">Unit Selected:</span>
+          <h4 class="text-sm font-black text-amber-950 mt-0.5">Unit {{ u.unit_number }} (Floor {{ u.floor_number }})</h4>
+          <p class="text-[11px] text-amber-700">{{ u.gross_saleable_area_sqft }} sqft | {{ u.facing_id }}</p>
+        </div>
+        <div class="text-right">
+          <span class="text-xs font-bold text-amber-900">{{ formatBDT(u.total_unit_price) }}</span>
+          <div class="text-[10px] text-amber-600">Base Unit Consideration</div>
+        </div>
+      </div>
+    }
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <app-custom-input
+        label="Customer Full Name"
+        formControlName="customer_name"
+        placeholder="e.g. Dr. Kamal Hossain">
+      </app-custom-input>
+
+      <app-custom-input
+        label="Customer Mobile Phone"
+        formControlName="customer_phone"
+        placeholder="+880 1711-XXXXXX">
+      </app-custom-input>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <app-custom-input
+        label="National ID / Passport"
+        formControlName="customer_nid_passport"
+        placeholder="NID or Passport number">
+      </app-custom-input>
+
+      <app-searchable-select
+        label="Hold Window Duration"
+        [options]="durationOptions"
+        [value]="reserveForm.get('duration_minutes')?.value?.toString()"
+        (selectionChange)="reserveForm.patchValue({ duration_minutes: +$event })">
+      </app-searchable-select>
+
+      <app-custom-input
+        label="Hold Deposit Token (৳)"
+        type="number"
+        formControlName="hold_deposit_amount">
+      </app-custom-input>
+    </div>
+
+    <app-custom-textarea
+      label="Reservation Conditions & Special Terms"
+      formControlName="conditions"
+      rows="2">
+    </app-custom-textarea>
+
+    <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
+      <button
+        type="button"
+        (click)="isReserveModalOpen.set(false)"
+        class="px-4 py-2 border border-slate-200 rounded-xl text-slate-700 hover:bg-slate-100 cursor-pointer">
+        Cancel
+      </button>
+      <app-custom-button
+        type="submit"
+        variant="primary"
+        [loading]="actionInProgress()">
+        Confirm Hold & Acquire DB Lock
+      </app-custom-button>
+    </div>
+  </form>
+</app-modal>
+
+
+<!-- ========================================================================= -->
+<!-- MODAL: CONTROLLED STATE MACHINE TRANSITION                                -->
+<!-- ========================================================================= -->
+<app-modal
+  [isOpen]="isTransitionModalOpen()"
+  title="Execute Controlled Inventory State Transition"
+  size="md"
+  (closed)="isTransitionModalOpen.set(false)">
+
+  <form [formGroup]="transitionForm" (ngSubmit)="submitTransition()" class="space-y-4 text-xs">
+    @if (targetUnit(); as u) {
+      <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+        <div class="flex items-center justify-between">
+          <span class="font-bold text-slate-900">Unit {{ u.unit_number }}</span>
+          <span [class]="getStatusBadgeClass(u.status_id)" class="px-2 py-0.5 rounded text-[10px] font-bold border">
+            Current: {{ u.status_id }}
+          </span>
+        </div>
+      </div>
+    }
+
+    <app-searchable-select
+      label="Target State (Filtered by Business Rules)"
+      [options]="nextStateOptions()"
+      [value]="transitionForm.get('to_status')?.value"
+      (selectionChange)="transitionForm.patchValue({ to_status: $event })">
+    </app-searchable-select>
+
+    <app-custom-input
+      label="Authorized By (Manager/Director)"
+      formControlName="authorized_by">
+    </app-custom-input>
+
+    <app-custom-textarea
+      label="Transition Justification & Document Reference"
+      formControlName="reason"
+      placeholder="e.g. Booking money voucher #VR-2026-081 verified by Accounts."
+      rows="3">
+    </app-custom-textarea>
+
+    <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
+      <button
+        type="button"
+        (click)="isTransitionModalOpen.set(false)"
+        class="px-4 py-2 border border-slate-200 rounded-xl text-slate-700 hover:bg-slate-100 cursor-pointer">
+        Cancel
+      </button>
+      <app-custom-button
+        type="submit"
+        variant="primary"
+        [loading]="actionInProgress()">
+        Commit State Transition
+      </app-custom-button>
+    </div>
+  </form>
+</app-modal>
+
+
+<!-- ========================================================================= -->
+<!-- MODAL: AUTHORIZE RELEASE OF RESERVATION                                   -->
+<!-- ========================================================================= -->
+<app-modal
+  [isOpen]="isReleaseModalOpen()"
+  title="Authorize Release of Unit Reservation Hold"
+  size="md"
+  (closed)="isReleaseModalOpen.set(false)">
+
+  <form [formGroup]="releaseForm" (ngSubmit)="submitRelease()" class="space-y-4 text-xs">
+    @if (targetReservation(); as r) {
+      <div class="p-3.5 rounded-xl bg-rose-50 border border-rose-200 space-y-1">
+        <div class="font-bold text-rose-900">Release Hold on Unit {{ r.unit_number }}</div>
+        <div class="text-rose-700 text-[11px]">Client: {{ r.customer_name }} ({{ r.customer_phone }})</div>
+        <div class="text-slate-500 text-[10px]">Token: {{ r.reservation_token }}</div>
+      </div>
+    }
+
+    <app-custom-input
+      label="Releasing Authority Officer"
+      formControlName="released_by">
+    </app-custom-input>
+
+    <app-custom-textarea
+      label="Formal Cancellation / Release Reason"
+      formControlName="reason"
+      rows="3">
+    </app-custom-textarea>
+
+    <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
+      <button
+        type="button"
+        (click)="isReleaseModalOpen.set(false)"
+        class="px-4 py-2 border border-slate-200 rounded-xl text-slate-700 hover:bg-slate-100 cursor-pointer">
+        Cancel
+      </button>
+      <app-custom-button
+        type="submit"
+        variant="danger"
+        [loading]="actionInProgress()">
+        Release Unit to Available
+      </app-custom-button>
+    </div>
+  </form>
+</app-modal>

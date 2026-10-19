@@ -1,0 +1,80 @@
+<main class="mx-auto max-w-5xl space-y-5">
+  <header class="flex flex-col gap-4 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between">
+    <div>
+      <nav class="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
+        <a routerLink="/legal/dashboard" class="hover:text-primary">Legal & compliance</a>
+        <span aria-hidden="true">/</span><a [routerLink]="['/legal/records', area]" class="hover:text-primary">{{ labels[area] }}</a>
+        <span aria-hidden="true">/</span><span>{{ pageTitle }}</span>
+      </nav>
+      <h1 class="text-2xl font-semibold tracking-tight text-foreground">{{ pageTitle }}</h1>
+      <p class="mt-1 text-sm text-muted-foreground">{{ labels[area] }} · Records and checklists should reflect project-specific applicability.</p>
+    </div>
+    @if (isReadOnly && recordId) {
+      <app-custom-button variant="outline" size="sm" (btnClick)="edit()">Edit record</app-custom-button>
+    }
+  </header>
+
+  @if (isLoading) {
+    <app-card-container><div class="space-y-3 py-4" role="status">@for (item of [1, 2, 3]; track item) { <div class="h-8 animate-pulse rounded bg-muted/50"></div> }<span class="sr-only">Loading record…</span></div></app-card-container>
+  } @else {
+    @if (error) {
+      <app-card-container><p role="alert" class="text-sm text-destructive">{{ error }}</p></app-card-container>
+    }
+    <form class="space-y-5" (ngSubmit)="save()">
+      <app-card-container>
+        <div class="mb-4 border-b border-border pb-3">
+          <h2 class="text-sm font-semibold text-foreground">Record information</h2>
+          <p class="mt-1 text-xs text-muted-foreground">Set a descriptive title and optional project, status, reference and due date.</p>
+        </div>
+        <div class="grid gap-4 md:grid-cols-2">
+          <app-custom-input label="Record title" placeholder="Enter a clear record title" [required]="true" [disabled]="isReadOnly" [(ngModel)]="base.title" name="title"></app-custom-input>
+          <app-custom-input label="Reference number" placeholder="Optional internal or authority reference" [disabled]="isReadOnly" [(ngModel)]="base.reference_no" name="reference_no"></app-custom-input>
+          <app-custom-input label="Project ID" type="number" placeholder="Optional project identifier" hint="Leave blank when the record is not project-specific." [disabled]="isReadOnly" [(ngModel)]="base.project_id" name="project_id"></app-custom-input>
+          <app-searchable-select label="Status" categoryCode="LEGAL_RECORD_STATUS" placeholder="Choose or add a status" [disabled]="isReadOnly" [(ngModel)]="base.status" name="status"></app-searchable-select>
+          <app-custom-input label="Next due date" type="date" [disabled]="isReadOnly" [(ngModel)]="base.due_date" name="due_date"></app-custom-input>
+        </div>
+      </app-card-container>
+
+      <app-card-container>
+        <div class="mb-4 border-b border-border pb-3">
+          <h2 class="text-sm font-semibold text-foreground">Register details</h2>
+          <p class="mt-1 text-xs text-muted-foreground">Fields vary by work area. Configure classifications and lookup choices in Dynamic Lookups.</p>
+        </div>
+        @if (area === 'land_title' || area === 'land_use_clearance') {
+          <div class="mb-4 rounded-lg border border-primary/20 bg-primary/5 p-3">
+            <p class="text-xs font-medium text-foreground">Clearance safeguard</p>
+            <p class="mt-1 text-xs leading-5 text-muted-foreground">A file upload alone cannot clear a title or land-use record. Approved or conditional status requires a recorded verification outcome, reviewer, authenticated authorized approver and explicit authorization. Conditional outcomes also require owner-assigned deadlines.</p>
+          </div>
+        }
+        <div class="grid gap-4 md:grid-cols-2">
+          @for (field of fields; track field.key) {
+            @if (field.type === 'select') {
+              <app-searchable-select [label]="fieldLabel(field)" [categoryCode]="field.lookup || ''" placeholder="Choose or add a lookup item" [hint]="field.hint || ''" [disabled]="isReadOnly" [(ngModel)]="data[field.key]" [name]="field.key"></app-searchable-select>
+            } @else if (field.type === 'textarea') {
+              <div class="md:col-span-2">
+                <app-custom-textarea [label]="fieldLabel(field)" [hint]="field.hint || ''" [disabled]="isReadOnly" [rows]="field.key === 'conditions' ? 4 : 3" [(ngModel)]="data[field.key]" [name]="field.key"></app-custom-textarea>
+              </div>
+            } @else if (field.type === 'checkbox') {
+              <label class="flex min-h-10 items-center gap-2 rounded-lg border border-border px-3 text-sm text-foreground">
+                <input type="checkbox" class="h-4 w-4 accent-primary" [disabled]="isReadOnly" [(ngModel)]="data[field.key]" [name]="field.key">
+                <span>{{ fieldLabel(field) }}</span>
+              </label>
+            } @else {
+              <app-custom-input [label]="fieldLabel(field)" [type]="field.type || 'text'" [hint]="field.hint || ''" [disabled]="isReadOnly" [(ngModel)]="data[field.key]" [name]="field.key"></app-custom-input>
+            }
+          }
+        </div>
+      </app-card-container>
+
+      <div class="flex flex-col-reverse justify-between gap-3 sm:flex-row sm:items-center">
+        <p class="max-w-2xl text-xs text-muted-foreground">This workspace tracks compliance evidence and internal review; it does not determine legal applicability or provide legal advice.</p>
+        <div class="flex justify-end gap-2">
+          <app-custom-button variant="outline" size="sm" (btnClick)="cancel()">Back to register</app-custom-button>
+          @if (!isReadOnly) {
+            <app-custom-button type="submit" variant="primary" size="sm" [loading]="isSaving">{{ recordId ? 'Save changes' : 'Create record' }}</app-custom-button>
+          }
+        </div>
+      </div>
+    </form>
+  }
+</main>

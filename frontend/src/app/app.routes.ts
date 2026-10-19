@@ -267,14 +267,29 @@ export const routes: Routes = [
     title: 'Property Inventory & 15-Min Mutex Matrix - Bangladesh Real Estate ERP'
   },
   {
+    path: 'inventory/facilities',
+    loadComponent: () => import('./features/inventory/facility-management/facility-management.component').then(m => m.FacilityManagementComponent),
+    title: '3.7 Parking & Additional Facility Allocation - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'inventory/combinations',
+    loadComponent: () => import('./features/inventory/facility-management/facility-management.component').then(m => m.FacilityManagementComponent),
+    title: '3.8 Unit Combination and Subdivision Engine - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'inventory/documents',
+    loadComponent: () => import('./features/inventory/property-documents/property-documents.component').then(m => m.PropertyDocumentsComponent),
+    title: '3.6 Floor Plans, Property Images & Technical Documents - Bangladesh Real Estate ERP'
+  },
+  {
     path: 'inventory/subdivision',
-    loadComponent: () => import('./features/inventory/unit-subdivision/unit-subdivision.component').then(m => m.UnitSubdivisionComponent),
-    title: 'Unit Subdivision & Duplex Combination - Bangladesh Real Estate ERP'
+    redirectTo: 'inventory/combinations',
+    pathMatch: 'full'
   },
   {
     path: 'inventory/parking',
-    loadComponent: () => import('./features/inventory/parking-management/parking-management.component').then(m => m.ParkingManagementComponent),
-    title: 'Basement Parking Bays Management - Bangladesh Real Estate ERP'
+    redirectTo: 'inventory/facilities',
+    pathMatch: 'full'
   },
   {
     path: 'inventory',
@@ -305,6 +320,26 @@ export const routes: Routes = [
     path: 'inventory/parking',
     loadComponent: () => import('./features/inventory/property-inventory/property-inventory.component').then(m => m.PropertyInventoryComponent),
     title: 'Basement Parking Bays - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'inventory/pricing',
+    loadComponent: () => import('./features/inventory/unit-pricing/unit-pricing.component').then(m => m.UnitPricingComponent),
+    title: 'Unit Pricing & Price List Management - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'inventory/price-lists',
+    redirectTo: 'inventory/pricing',
+    pathMatch: 'full'
+  },
+  {
+    path: 'inventory/availability',
+    loadComponent: () => import('./features/inventory/unit-availability/unit-availability.component').then(m => m.UnitAvailabilityComponent),
+    title: 'Real-Time Unit Availability & Reservation State Machine - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'inventory/reservations',
+    redirectTo: 'inventory/availability',
+    pathMatch: 'full'
   },
   {
     path: 'crm',
@@ -1234,6 +1269,41 @@ export const routes: Routes = [
     path: 'brokers/commissions',
     loadComponent: () => import('./features/sales/broker-commissions/broker-commissions.component').then(m => m.BrokerCommissionsComponent),
     title: 'Broker Commissions & Section 53 TDS - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'legal',
+    redirectTo: 'legal/dashboard',
+    pathMatch: 'full'
+  },
+  {
+    path: 'legal/dashboard',
+    loadComponent: () => import('./features/legal/legal-dashboard.component').then(m => m.LegalDashboardComponent),
+    title: 'Legal & Compliance Dashboard - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'legal/records/:area/new',
+    loadComponent: () => import('./features/legal/legal-record-form.component').then(m => m.LegalRecordFormComponent),
+    title: 'Create Legal Compliance Record - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'legal/records/:area/:id/edit',
+    loadComponent: () => import('./features/legal/legal-record-form.component').then(m => m.LegalRecordFormComponent),
+    title: 'Edit Legal Compliance Record - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'legal/records/:area/:id',
+    loadComponent: () => import('./features/legal/legal-record-form.component').then(m => m.LegalRecordFormComponent),
+    title: 'Legal Compliance Record - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'legal/records/:area',
+    loadComponent: () => import('./features/legal/legal-records.component').then(m => m.LegalRecordsComponent),
+    title: 'Legal Compliance Register - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'legal/audit',
+    loadComponent: () => import('./features/legal/legal-audit.component').then(m => m.LegalAuditComponent),
+    title: 'Legal Compliance Audit Trail - Bangladesh Real Estate ERP'
   },
   {
     path: 'legal/compliance-vault',
@@ -2313,6 +2383,5 @@ export const routes: Routes = [
     redirectTo: 'settings/lookups'
   }
 ];
-
 
 

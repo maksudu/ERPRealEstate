@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional, List
+from typing import Optional, List, Any, Literal
 from datetime import date, datetime
 from decimal import Decimal
 
@@ -268,3 +268,87 @@ class LegalComplianceMetrics(BaseModel):
     interim_stay_orders_active: int = 0
     total_disputed_area_decimals: float = 0.0
     total_financial_exposure_bdt: float = 0.0
+
+
+LegalArea = Literal[
+    "land_title", "registered_record", "developer_registration", "land_use_clearance",
+    "approval_condition", "noc_correspondence", "sale_transfer", "litigation_notice",
+    "document_archive", "calendar_reminder", "approval_workflow", "compliance_report",
+]
+
+
+class LegalRecordCreate(BaseModel):
+    area: LegalArea
+    title: str = Field(..., min_length=1, max_length=255)
+    reference_no: Optional[str] = Field(None, max_length=128)
+    project_id: Optional[int] = None
+    status: Optional[str] = Field(None, max_length=64)
+    due_date: Optional[date] = None
+    data: dict[str, Any] = Field(default_factory=dict)
+
+
+class LegalRecordUpdate(BaseModel):
+    title: Optional[str] = Field(None, min_length=1, max_length=255)
+    reference_no: Optional[str] = Field(None, max_length=128)
+    project_id: Optional[int] = None
+    status: Optional[str] = Field(None, max_length=64)
+    due_date: Optional[date] = None
+    data: Optional[dict[str, Any]] = None
+
+
+class LegalRecordResponse(BaseModel):
+    id: int
+    area: LegalArea
+    title: str
+    reference_no: Optional[str] = None
+    project_id: Optional[int] = None
+    status: Optional[str] = None
+    due_date: Optional[date] = None
+    data: dict[str, Any] = Field(default_factory=dict)
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class LegalRecordPage(BaseModel):
+    items: List[LegalRecordResponse]
+    total: int
+    limit: int
+    offset: int
+
+
+class LegalDashboardArea(BaseModel):
+    area: LegalArea
+    total: int
+    open_items: int
+    overdue_items: int
+
+
+class LegalDashboardResponse(BaseModel):
+    areas: List[LegalDashboardArea]
+    due_soon: List[LegalRecordResponse]
+    active_litigation: int
+    pending_approvals: int
+
+
+class LegalAuditResponse(BaseModel):
+    id: int
+    record_id: Optional[int] = None
+    area: LegalArea
+    action: str
+    actor: str
+    before_data: Optional[dict[str, Any]] = None
+    after_data: Optional[dict[str, Any]] = None
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class LegalAuditPage(BaseModel):
+    items: List[LegalAuditResponse]
+    total: int
+    limit: int
+    offset: int

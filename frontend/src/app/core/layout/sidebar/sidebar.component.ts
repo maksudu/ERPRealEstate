@@ -39,9 +39,9 @@ export class SidebarComponent implements OnInit {
   // In-Sidebar Quick Filter Query
   filterQuery = signal<string>('');
 
-  // Expanded menu groups state (persisted as Set of IDs, auto-expands active route)
-  expandedGroupIds = signal<Set<string>>(new Set(['land', 'procurement', 'projects']));
-  expandedSubItemIds = signal<Set<string>>(new Set(['land-reports-sub']));
+  // Expanded menu groups state (All closed/off by default; opens only upon user click)
+  expandedGroupIds = signal<Set<string>>(new Set<string>());
+  expandedSubItemIds = signal<Set<string>>(new Set<string>());
 
   // =========================================================================
   // 16 Full Enterprise HRMS Main Menus matching user specification exactly
@@ -356,7 +356,7 @@ export class SidebarComponent implements OnInit {
       items: [
         { id: 'governance', label: 'Maker-Checker Approval Engine', route: '/governance/approvals' },
         { id: 'lookups', label: 'Dynamic Dropdowns', route: '/settings/lookups' },
-        { id: 'legal', label: 'Legal & Compliance Vault', route: '/legal/compliance-vault' },
+        { id: 'legal', label: 'Legal & Compliance Operations', route: '/legal/dashboard' },
         { id: 'equipment', label: 'Machinery & Equipment Fleet', route: '/settings/equipment' },
         { id: 'migration', label: 'Legacy Data Migration', route: '/settings/data-import' }
       ]
@@ -470,10 +470,14 @@ export class SidebarComponent implements OnInit {
       title: 'Property Inventory',
       iconSvg: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10',
       items: [
-        { id: 'inv-dashboard', label: 'Inventory Dashboard (3.1)', route: '/inventory' },
-        { id: 'tower-stacking', label: 'Floor Matrix & Stacking (3.2)', route: '/inventory/matrix' },
-        { id: 'units-matrix', label: 'Unit Directory & Specs (3.3)', route: '/inventory/units' },
-        { id: 'parking-bays', label: 'Basement Parking Bays', route: '/inventory/parking' }
+        { id: 'inv-dashboard', label: 'Inventory Dashboard', route: '/inventory' },
+        { id: 'tower-stacking', label: 'Floor Matrix & Stacking', route: '/inventory/matrix' },
+        { id: 'units-matrix', label: 'Unit Directory & Specs', route: '/inventory/units' },
+        { id: 'inv-pricing', label: 'Unit Pricing & Price Lists', route: '/inventory/pricing' },
+        { id: 'inv-availability', label: 'Unit Availability & State Machine', route: '/inventory/availability' },
+        { id: 'facilities-allocation', label: 'Parking & Facility Allocation (3.7)', route: '/inventory/facilities' },
+        { id: 'unit-combinations', label: 'Combination & Subdivision (3.8)', route: '/inventory/combinations' },
+        { id: 'property-documents', label: 'Floor Plans & Documents (3.6)', route: '/inventory/documents' }
       ]
     },
     {
@@ -481,11 +485,11 @@ export class SidebarComponent implements OnInit {
       title: 'CRM & Prospects',
       iconSvg: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z',
       items: [
-        { id: 'crm-dashboard', label: 'CRM Dashboard & Sales KPIs', route: '/crm' },
-        { id: 'lead-capture', label: 'Lead Capture & Sources', route: '/crm/lead-capture' },
-        { id: 'lead-assignments', label: 'Lead Assignment & Distribution', route: '/crm/lead-assignments' },
-        { id: 'lead-qualification', label: 'Lead Qualification & Scoring', route: '/crm/lead-qualification' },
-        { id: 'leads', label: 'Omnichannel Leads & Pipeline', route: '/crm/leads' },
+        { id: 'crm-dashboard', label: 'CRM Dashboard', route: '/crm' },
+        { id: 'lead-capture', label: 'Lead Capture', route: '/crm/lead-capture' },
+        { id: 'lead-assignments', label: 'Lead Assignment', route: '/crm/lead-assignments' },
+        { id: 'lead-qualification', label: 'Lead Qualification', route: '/crm/lead-qualification' },
+        { id: 'leads', label: 'Leads & Pipeline', route: '/crm/leads' },
         { id: 'customers', label: 'Buyer Profiles & KYC', route: '/crm/customers' },
         { id: 'customer-requirements', label: 'Requirements & Budget Match', route: '/crm/requirements' },
         { id: 'crm-activities', label: 'Activities & Site Visits', route: '/crm/activities' },
@@ -724,46 +728,13 @@ export class SidebarComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    this.autoExpandActiveRoute();
-    this.router.events.pipe(
-      filter(e => e instanceof NavigationEnd)
-    ).subscribe(() => {
-      this.autoExpandActiveRoute();
-    });
+    // Menus remain off/closed by default until explicitly clicked by user
   }
 
   setSuite(suite: 'hrms' | 'erp'): void {
     this.activeSuite.set(suite);
-    this.autoExpandActiveRoute();
-  }
-
-  private autoExpandActiveRoute(): void {
-    const currentUrl = this.router.url;
-    for (const group of this.erpMenuGroups) {
-      if (group.items) {
-        for (const item of group.items) {
-          if (item.route && currentUrl.startsWith(item.route)) {
-            this.expandedGroupIds.update(set => new Set(set).add(group.id));
-          }
-          if (item.children && item.children.some(c => c.route && currentUrl.startsWith(c.route))) {
-            this.expandedGroupIds.update(set => new Set(set).add(group.id));
-            this.expandedSubItemIds.update(set => new Set(set).add(item.id));
-          }
-        }
-      }
-      if (group.subGroups) {
-        for (const sub of group.subGroups) {
-          if (sub.items && sub.items.some(item => item.route && currentUrl.startsWith(item.route))) {
-            this.expandedGroupIds.update(set => {
-              const newSet = new Set(set);
-              newSet.add(group.id);
-              newSet.add(sub.id);
-              return newSet;
-            });
-          }
-        }
-      }
-    }
+    this.expandedGroupIds.set(new Set<string>());
+    this.expandedSubItemIds.set(new Set<string>());
   }
 
   isGroupExpanded(groupId: string): boolean {
@@ -776,8 +747,9 @@ export class SidebarComponent implements OnInit {
   toggleGroup(groupId: string): void {
     const current = new Set(this.expandedGroupIds());
     if (current.has(groupId)) {
-      current.delete(groupId);
+      current.delete(groupId); // Closes current menu
     } else {
+      current.clear(); // Accordion mode: closes other menus so only clicked menu is ON
       current.add(groupId);
     }
     this.expandedGroupIds.set(current);
@@ -800,4 +772,3 @@ export class SidebarComponent implements OnInit {
     this.expandedSubItemIds.set(current);
   }
 }
-
