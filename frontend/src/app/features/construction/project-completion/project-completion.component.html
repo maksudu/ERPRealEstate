@@ -1,0 +1,559 @@
+<!-- Single Card Container for Project Completion & Handover -->
+<app-card-container
+  title="Project Completion, Handover & Commercial Closeout"
+  subtitle="WBS 100% verification, final BOQ quantity reconciliation, retention clearance, punchlist snags, and management sign-off"
+>
+  <!-- KPI Metrics Ribbon for Completion -->
+  <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 mb-6">
+    <div class="p-3.5 rounded-2xl bg-secondary/30 border border-border flex flex-col justify-between">
+      <span class="text-xs text-muted-foreground font-medium">In Closeout</span>
+      <span class="text-xl sm:text-2xl font-bold font-mono text-foreground mt-1">
+        {{ metrics()?.total_projects_in_closeout || 0 }}
+      </span>
+      <span class="text-[10px] text-muted-foreground mt-0.5">Projects nearing handover</span>
+    </div>
+
+    <div class="p-3.5 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex flex-col justify-between">
+      <span class="text-xs text-blue-600 dark:text-blue-400 font-medium">Substantially Done</span>
+      <span class="text-xl sm:text-2xl font-bold font-mono text-blue-600 dark:text-blue-400 mt-1">
+        {{ metrics()?.substantially_completed_count || 0 }}
+      </span>
+      <span class="text-[10px] text-blue-600/70 mt-0.5">Taking-Over issued</span>
+    </div>
+
+    <div class="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex flex-col justify-between">
+      <span class="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Formally Closed</span>
+      <span class="text-xl sm:text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400 mt-1">
+        {{ metrics()?.formally_closed_count || 0 }}
+      </span>
+      <span class="text-[10px] text-emerald-600/70 mt-0.5">Final certificates signed</span>
+    </div>
+
+    <div class="p-3.5 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex flex-col justify-between">
+      <span class="text-xs text-purple-600 dark:text-purple-400 font-medium">Reconciled Cost</span>
+      <span class="text-base sm:text-lg font-bold font-mono text-purple-600 dark:text-purple-400 mt-1 truncate">
+        ৳{{ (metrics()?.total_reconciled_cost_bdt || 0) | number:'1.0-0' }}
+      </span>
+      <span class="text-[10px] text-purple-600/70 mt-0.5">Certified final expenditures</span>
+    </div>
+
+    <div class="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex flex-col justify-between">
+      <span class="text-xs text-amber-600 dark:text-amber-400 font-medium">Retention Held</span>
+      <span class="text-base sm:text-lg font-bold font-mono text-amber-600 dark:text-amber-400 mt-1 truncate">
+        ৳{{ (metrics()?.total_retentions_held_bdt || 0) | number:'1.0-0' }}
+      </span>
+      <span class="text-[10px] text-amber-600/70 mt-0.5">Defect liability security</span>
+    </div>
+
+    <div class="p-3.5 rounded-2xl bg-secondary/30 border border-border flex flex-col justify-between">
+      <span class="text-xs text-muted-foreground font-medium">Total Open Snags</span>
+      <span class="text-xl sm:text-2xl font-bold font-mono text-foreground mt-1">
+        {{ metrics()?.total_open_snags || 0 }}
+      </span>
+      <span class="text-[10px] text-muted-foreground mt-0.5">Punchlist defects</span>
+    </div>
+
+    <div class="p-3.5 rounded-2xl bg-red-500/10 border border-red-500/20 flex flex-col justify-between">
+      <span class="text-xs text-red-600 dark:text-red-400 font-medium">Mandatory Snags Open</span>
+      <span class="text-xl sm:text-2xl font-bold font-mono text-red-600 dark:text-red-400 mt-1">
+        {{ metrics()?.mandatory_critical_snags_open || 0 }}
+      </span>
+      <span class="text-[10px] text-red-600/70 mt-0.5">Blocks certification</span>
+    </div>
+  </div>
+
+  <!-- Primary Navigation Tabs & Action Bar -->
+  <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-border mb-6">
+    <!-- 3 Tabs -->
+    <div class="flex items-center gap-1.5 p-1 bg-secondary/50 rounded-2xl border border-border overflow-x-auto">
+      <button
+        type="button"
+        (click)="switchTab('DOSSIERS')"
+        class="px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 whitespace-nowrap"
+        [ngClass]="activeTab() === 'DOSSIERS' ? 'bg-card text-foreground shadow-xs border border-border' : 'text-muted-foreground hover:text-foreground'"
+      >
+        <i class="ri-folder-check-line text-sm"></i>
+        <span>Completion Dossiers ({{ completionsTotal() || completions().length }})</span>
+      </button>
+
+      <button
+        type="button"
+        (click)="switchTab('PUNCHLIST')"
+        class="px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 whitespace-nowrap"
+        [ngClass]="activeTab() === 'PUNCHLIST' ? 'bg-card text-foreground shadow-xs border border-border' : 'text-muted-foreground hover:text-foreground'"
+      >
+        <i class="ri-list-check-2 text-sm"></i>
+        <span>Punchlist & Snag Register ({{ punchlistsTotal() || punchlists().length }})</span>
+      </button>
+
+      <button
+        type="button"
+        (click)="switchTab('FINANCIALS')"
+        class="px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 whitespace-nowrap"
+        [ngClass]="activeTab() === 'FINANCIALS' ? 'bg-card text-foreground shadow-xs border border-border' : 'text-muted-foreground hover:text-foreground'"
+      >
+        <i class="ri-file-chart-line text-sm"></i>
+        <span>Final Cost Statement & Budget Variance</span>
+      </button>
+    </div>
+
+    <!-- Right Side New Action Button based on Active Tab -->
+    <div class="flex items-center gap-2 shrink-0">
+      <a
+        *ngIf="activeTab() === 'DOSSIERS' || activeTab() === 'FINANCIALS'"
+        routerLink="/construction/project-completion/create"
+        class="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold rounded-xl inline-flex items-center gap-1.5 shadow-xs transition-colors"
+      >
+        <i class="ri-add-line text-sm"></i> New Completion Dossier
+      </a>
+
+      <a
+        *ngIf="activeTab() === 'PUNCHLIST'"
+        routerLink="/construction/project-completion/punchlist/create"
+        class="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold rounded-xl inline-flex items-center gap-1.5 shadow-xs transition-colors"
+      >
+        <i class="ri-add-line text-sm"></i> Log Punchlist Snag
+      </a>
+    </div>
+  </div>
+
+  <!-- Dynamic Search & Filter Controls -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-4 rounded-2xl bg-secondary/20 border border-border mb-6">
+    <div class="relative">
+      <i class="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm"></i>
+      <input
+        type="text"
+        [(ngModel)]="searchQuery"
+        (ngModelChange)="onFilterChange()"
+        placeholder="Search code, project, location, remarks..."
+        class="w-full pl-9 pr-3 py-2 bg-card border border-border rounded-xl text-xs text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+      />
+    </div>
+
+    <app-searchable-select
+      [options]="projectOptions"
+      [ngModel]="selectedProjectId()"
+      (ngModelChange)="selectedProjectId.set($event); onFilterChange()"
+      [allowCreateNew]="false"
+      placeholder="All Construction Projects"
+    ></app-searchable-select>
+
+    <app-searchable-select
+      *ngIf="activeTab() === 'DOSSIERS' || activeTab() === 'FINANCIALS'"
+      categoryCode="COMPLETION_STAGE"
+      [ngModel]="selectedStageStatus()"
+      (ngModelChange)="selectedStageStatus.set($event); onFilterChange()"
+      [allowCreateNew]="true"
+      placeholder="All Completion Stages"
+    ></app-searchable-select>
+
+    <app-searchable-select
+      *ngIf="activeTab() === 'PUNCHLIST'"
+      categoryCode="PUNCHLIST_SEVERITY"
+      [ngModel]="selectedSeverity()"
+      (ngModelChange)="selectedSeverity.set($event); onFilterChange()"
+      [allowCreateNew]="true"
+      placeholder="All Snag Severities"
+    ></app-searchable-select>
+  </div>
+
+  <!-- TAB 1: COMPLETION DOSSIERS TABLE -->
+  <div *ngIf="activeTab() === 'DOSSIERS'">
+    <div class="overflow-x-auto rounded-2xl border border-border">
+      <table class="w-full text-left text-xs text-muted-foreground">
+        <thead class="bg-secondary/40 text-foreground font-semibold uppercase tracking-wider text-[10px] border-b border-border">
+          <tr>
+            <th class="px-4 py-3">Completion Code</th>
+            <th class="px-4 py-3">Project & Target Handover</th>
+            <th class="px-4 py-3">Stage Status</th>
+            <th class="px-4 py-3">WBS Progress</th>
+            <th class="px-4 py-3">Financial Reconciliation</th>
+            <th class="px-4 py-3">Retention Status</th>
+            <th class="px-4 py-3">Handover Docs & Stores</th>
+            <th class="px-4 py-3">Sign-Offs</th>
+            <th class="px-4 py-3 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border">
+          <tr *ngFor="let comp of completions()" class="hover:bg-secondary/20 transition-colors">
+            <td class="px-4 py-3.5 font-mono font-semibold text-foreground">
+              {{ comp.completion_code }}
+              <div *ngIf="comp.mandatory_items_all_cleared" class="mt-0.5">
+                <span class="px-1.5 py-0.5 text-[9px] rounded-md bg-emerald-500/10 text-emerald-600 font-semibold border border-emerald-500/20">
+                  <i class="ri-shield-check-line"></i> Mandatories Cleared
+                </span>
+              </div>
+              <div *ngIf="!comp.mandatory_items_all_cleared" class="mt-0.5">
+                <span class="px-1.5 py-0.5 text-[9px] rounded-md bg-red-500/10 text-red-600 font-semibold border border-red-500/20">
+                  <i class="ri-alert-line"></i> Gated - Open Snags
+                </span>
+              </div>
+            </td>
+            <td class="px-4 py-3.5">
+              <div class="font-semibold text-foreground">{{ comp.project_name }}</div>
+              <div class="text-[11px] text-muted-foreground">Target: {{ comp.target_handover_date }}</div>
+              <div *ngIf="comp.actual_completion_date" class="text-[10px] text-emerald-600 font-medium">
+                Actual: {{ comp.actual_completion_date }}
+              </div>
+            </td>
+            <td class="px-4 py-3.5">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold"
+                [ngClass]="{
+                  'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20': comp.stage_status === 'FORMALLY_CLOSED',
+                  'bg-blue-500/10 text-blue-600 border border-blue-500/20': comp.stage_status === 'SUBSTANTIALLY_COMPLETED',
+                  'bg-purple-500/10 text-purple-600 border border-purple-500/20': comp.stage_status === 'MANAGEMENT_REVIEW',
+                  'bg-amber-500/10 text-amber-600 border border-amber-500/20': comp.stage_status === 'IN_RECONCILIATION'
+                }">
+                {{ comp.stage_status }}
+              </span>
+            </td>
+            <td class="px-4 py-3.5">
+              <div class="flex items-center gap-1.5">
+                <span class="font-mono font-bold text-foreground">{{ comp.wbs_activities_completion_pct }}%</span>
+                <i class="ri-check-line text-emerald-500 font-bold" *ngIf="comp.wbs_activities_completion_pct >= 100"></i>
+              </div>
+              <div class="text-[10px] text-muted-foreground">{{ comp.total_boq_reconciled_items_count }} BOQ items reconciled</div>
+            </td>
+            <td class="px-4 py-3.5">
+              <div class="font-mono font-bold text-foreground">৳{{ comp.final_reconciled_cost_bdt | number:'1.0-0' }}</div>
+              <div class="text-[10px]" [ngClass]="comp.cost_variance_amount_bdt <= 0 ? 'text-emerald-600' : 'text-red-600'">
+                Var: ৳{{ comp.cost_variance_amount_bdt | number:'1.0-0' }}
+              </div>
+            </td>
+            <td class="px-4 py-3.5">
+              <div class="font-mono text-foreground text-[11px]">৳{{ comp.retention_money_locked_bdt | number:'1.0-0' }}</div>
+              <span class="px-1.5 py-0.5 rounded text-[9px] font-semibold"
+                [ngClass]="comp.retention_release_authorized ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20' : 'bg-secondary text-muted-foreground border border-border'">
+                {{ comp.retention_release_authorized ? 'Release Authorized' : 'Locked in Escrow' }}
+              </span>
+            </td>
+            <td class="px-4 py-3.5">
+              <div class="flex items-center gap-1 text-[11px]">
+                <i class="ri-checkbox-circle-fill" [ngClass]="comp.as_built_drawings_submitted ? 'text-emerald-500' : 'text-muted-foreground/40'"></i>
+                <span>As-Built Drawings</span>
+              </div>
+              <div class="flex items-center gap-1 text-[11px]">
+                <i class="ri-checkbox-circle-fill" [ngClass]="comp.om_manuals_submitted ? 'text-emerald-500' : 'text-muted-foreground/40'"></i>
+                <span>O&M Manuals</span>
+              </div>
+              <div class="flex items-center gap-1 text-[11px]">
+                <i class="ri-checkbox-circle-fill" [ngClass]="comp.materials_store_reconciliation_cleared && comp.equipment_store_reconciliation_cleared ? 'text-emerald-500' : 'text-muted-foreground/40'"></i>
+                <span>Stores Cleared</span>
+              </div>
+            </td>
+            <td class="px-4 py-3.5">
+              <div class="flex items-center gap-1 text-[11px]">
+                <i class="ri-shield-user-fill" [ngClass]="comp.project_manager_signoff ? 'text-emerald-500' : 'text-muted-foreground/40'"></i>
+                <span [ngClass]="comp.project_manager_signoff ? 'font-semibold text-foreground' : 'text-muted-foreground'">PM Sign-Off</span>
+              </div>
+              <div class="flex items-center gap-1 text-[11px] mt-0.5">
+                <i class="ri-verified-badge-fill" [ngClass]="comp.project_director_signoff ? 'text-emerald-500' : 'text-muted-foreground/40'"></i>
+                <span [ngClass]="comp.project_director_signoff ? 'font-semibold text-foreground' : 'text-muted-foreground'">Director Sign-Off</span>
+              </div>
+            </td>
+            <td class="px-4 py-3.5 text-right whitespace-nowrap">
+              <div class="flex items-center justify-end gap-1.5">
+                <button
+                  type="button"
+                  (click)="openSignoffModal(comp)"
+                  class="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                  title="Authoritative Management Sign-off"
+                >
+                  <i class="ri-quill-pen-line"></i> Sign-Off
+                </button>
+                <a
+                  [routerLink]="['/construction/project-completion/edit', comp.id]"
+                  class="p-1.5 rounded-lg hover:bg-secondary text-foreground transition-colors"
+                  title="Edit Closeout Dossier"
+                >
+                  <i class="ri-edit-line text-sm"></i>
+                </a>
+                <button
+                  type="button"
+                  (click)="deleteCompletion(comp)"
+                  class="p-1.5 rounded-lg hover:bg-destructive/10 text-destructive transition-colors"
+                  title="Delete Record"
+                >
+                  <i class="ri-delete-bin-line text-sm"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="completions().length === 0">
+            <td colspan="9" class="px-4 py-8 text-center text-muted-foreground">
+              No completion dossiers found. Click "New Completion Dossier" to initiate final project handover.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Completions Pagination -->
+    <div *ngIf="completionsTotal() > 0" class="flex items-center justify-between mt-4 text-xs text-muted-foreground">
+      <span>Showing {{ completions().length }} of {{ completionsTotal() }} dossiers</span>
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          (click)="changePage(-1)"
+          [disabled]="completionsPage() <= 1"
+          class="px-3 py-1.5 rounded-xl border border-border bg-card text-foreground disabled:opacity-50 hover:bg-secondary transition-colors"
+        >
+          Previous
+        </button>
+        <span class="font-mono">{{ completionsPage() }} / {{ completionsTotalPages() }}</span>
+        <button
+          type="button"
+          (click)="changePage(1)"
+          [disabled]="completionsPage() >= completionsTotalPages()"
+          class="px-3 py-1.5 rounded-xl border border-border bg-card text-foreground disabled:opacity-50 hover:bg-secondary transition-colors"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: PUNCHLIST & SNAG REGISTER TABLE -->
+  <div *ngIf="activeTab() === 'PUNCHLIST'">
+    <div class="overflow-x-auto rounded-2xl border border-border">
+      <table class="w-full text-left text-xs text-muted-foreground">
+        <thead class="bg-secondary/40 text-foreground font-semibold uppercase tracking-wider text-[10px] border-b border-border">
+          <tr>
+            <th class="px-4 py-3">Snag Code</th>
+            <th class="px-4 py-3">Project & Location</th>
+            <th class="px-4 py-3">Category</th>
+            <th class="px-4 py-3">Severity & Gating</th>
+            <th class="px-4 py-3">Description</th>
+            <th class="px-4 py-3">Assigned Contractor</th>
+            <th class="px-4 py-3">Rectification Target</th>
+            <th class="px-4 py-3">Status</th>
+            <th class="px-4 py-3 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border">
+          <tr *ngFor="let snag of punchlists()" class="hover:bg-secondary/20 transition-colors">
+            <td class="px-4 py-3.5 font-mono font-semibold text-foreground">
+              {{ snag.item_code }}
+            </td>
+            <td class="px-4 py-3.5">
+              <div class="font-semibold text-foreground">{{ snag.project_name }}</div>
+              <div class="text-[11px] text-muted-foreground">{{ snag.location_floor_unit }}</div>
+            </td>
+            <td class="px-4 py-3.5">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-secondary text-foreground border border-border">
+                {{ snag.category }}
+              </span>
+            </td>
+            <td class="px-4 py-3.5">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold"
+                [ngClass]="{
+                  'bg-red-500/10 text-red-600 border border-red-500/20': snag.severity === 'MANDATORY_CRITICAL',
+                  'bg-amber-500/10 text-amber-600 border border-amber-500/20': snag.severity === 'OPERATIONAL',
+                  'bg-blue-500/10 text-blue-600 border border-blue-500/20': snag.severity === 'MINOR_COSMETIC'
+                }">
+                {{ snag.severity }}
+              </span>
+            </td>
+            <td class="px-4 py-3.5">
+              <div class="font-medium text-foreground line-clamp-1">{{ snag.description }}</div>
+            </td>
+            <td class="px-4 py-3.5">
+              <div class="font-medium text-foreground">{{ snag.contractor_name || 'General Subcontractor' }}</div>
+            </td>
+            <td class="px-4 py-3.5 font-mono text-foreground">{{ snag.target_rectification_date }}</td>
+            <td class="px-4 py-3.5">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold"
+                [ngClass]="{
+                  'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20': snag.status === 'VERIFIED_CLOSED',
+                  'bg-amber-500/10 text-amber-600 border border-amber-500/20': snag.status === 'RECTIFIED_PENDING_INSPECTION',
+                  'bg-red-500/10 text-red-600 border border-red-500/20': snag.status === 'OPEN'
+                }">
+                {{ snag.status }}
+              </span>
+            </td>
+            <td class="px-4 py-3.5 text-right whitespace-nowrap">
+              <div class="flex items-center justify-end gap-1.5">
+                <a
+                  [routerLink]="['/construction/project-completion/punchlist/edit', snag.id]"
+                  class="p-1.5 rounded-lg hover:bg-secondary text-foreground transition-colors"
+                  title="Edit Snag"
+                >
+                  <i class="ri-edit-line text-sm"></i>
+                </a>
+                <button
+                  type="button"
+                  (click)="deletePunchlist(snag)"
+                  class="p-1.5 rounded-lg hover:bg-destructive/10 text-destructive transition-colors"
+                  title="Delete Snag"
+                >
+                  <i class="ri-delete-bin-line text-sm"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="punchlists().length === 0">
+            <td colspan="9" class="px-4 py-8 text-center text-muted-foreground">
+              No punchlist items recorded. Click "Log Punchlist Snag" to record pre-handover architectural or MEP defects.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Punchlist Pagination -->
+    <div *ngIf="punchlistsTotal() > 0" class="flex items-center justify-between mt-4 text-xs text-muted-foreground">
+      <span>Showing {{ punchlists().length }} of {{ punchlistsTotal() }} snag items</span>
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          (click)="changePage(-1)"
+          [disabled]="punchlistsPage() <= 1"
+          class="px-3 py-1.5 rounded-xl border border-border bg-card text-foreground disabled:opacity-50 hover:bg-secondary transition-colors"
+        >
+          Previous
+        </button>
+        <span class="font-mono">{{ punchlistsPage() }} / {{ punchlistsTotalPages() }}</span>
+        <button
+          type="button"
+          (click)="changePage(1)"
+          [disabled]="punchlistsPage() >= punchlistsTotalPages()"
+          class="px-3 py-1.5 rounded-xl border border-border bg-card text-foreground disabled:opacity-50 hover:bg-secondary transition-colors"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: FINAL COST STATEMENT & BUDGET VARIANCE -->
+  <div *ngIf="activeTab() === 'FINANCIALS'">
+    <div class="overflow-x-auto rounded-2xl border border-border">
+      <table class="w-full text-left text-xs text-muted-foreground">
+        <thead class="bg-secondary/40 text-foreground font-semibold uppercase tracking-wider text-[10px] border-b border-border">
+          <tr>
+            <th class="px-4 py-3">Project & Dossier</th>
+            <th class="px-4 py-3">Original BOQ Budget</th>
+            <th class="px-4 py-3">Final Certified Actual Cost</th>
+            <th class="px-4 py-3">Net Cost Variance</th>
+            <th class="px-4 py-3">Outstanding Contractor Bills</th>
+            <th class="px-4 py-3">Retention Money Locked</th>
+            <th class="px-4 py-3">Commercial Clearance Status</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border">
+          <tr *ngFor="let comp of completions()" class="hover:bg-secondary/20 transition-colors">
+            <td class="px-4 py-3.5">
+              <div class="font-semibold text-foreground">{{ comp.project_name }}</div>
+              <div class="text-[10px] font-mono text-muted-foreground">#{{ comp.completion_code }}</div>
+            </td>
+            <td class="px-4 py-3.5 font-mono font-bold text-foreground">
+              ৳{{ comp.original_budget_cost_bdt | number:'1.0-0' }}
+            </td>
+            <td class="px-4 py-3.5 font-mono font-bold text-purple-600 dark:text-purple-400">
+              ৳{{ comp.final_reconciled_cost_bdt | number:'1.0-0' }}
+            </td>
+            <td class="px-4 py-3.5">
+              <span class="font-mono font-bold"
+                [ngClass]="comp.cost_variance_amount_bdt <= 0 ? 'text-emerald-600' : 'text-red-600'">
+                ৳{{ comp.cost_variance_amount_bdt | number:'1.0-0' }}
+              </span>
+              <div class="text-[10px]" [ngClass]="comp.cost_variance_amount_bdt <= 0 ? 'text-emerald-600' : 'text-red-600'">
+                {{ comp.cost_variance_amount_bdt <= 0 ? 'Under / On Budget' : 'Cost Overrun' }}
+              </div>
+            </td>
+            <td class="px-4 py-3.5 font-mono font-semibold text-amber-600">
+              ৳{{ comp.outstanding_contractor_bills_amount | number:'1.0-0' }}
+            </td>
+            <td class="px-4 py-3.5 font-mono font-semibold text-foreground">
+              ৳{{ comp.retention_money_locked_bdt | number:'1.0-0' }}
+            </td>
+            <td class="px-4 py-3.5">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold"
+                [ngClass]="comp.retention_release_authorized ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20' : 'bg-secondary text-muted-foreground border border-border'">
+                {{ comp.retention_release_authorized ? 'Settled & Released' : 'Audited - Retained' }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- MODAL: Authoritative Sign-Off & Mandatory Gating -->
+  <div *ngIf="isSignoffModalOpen()" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
+    <div class="bg-card border border-border rounded-2xl w-full max-w-lg p-6 shadow-xl flex flex-col gap-4">
+      <div class="flex items-center justify-between pb-3 border-b border-border">
+        <div>
+          <h3 class="text-base font-bold text-foreground">Management Completion Sign-Off</h3>
+          <p class="text-xs text-muted-foreground">Authorize Handover / Taking-Over Certificate for {{ selectedCompletionForSignoff()?.project_name }}</p>
+        </div>
+        <button (click)="closeSignoffModal()" class="p-1 rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground">
+          <i class="ri-close-line text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Warning if error returned from gating logic -->
+      <div *ngIf="signoffErrorMessage()" class="p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 text-xs flex items-start gap-2">
+        <i class="ri-error-warning-fill text-base shrink-0 mt-0.5"></i>
+        <div>
+          <span class="font-bold">Gating Policy Enforcement:</span>
+          <p class="mt-0.5">{{ signoffErrorMessage() }}</p>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-3 text-xs">
+        <div>
+          <label class="block font-semibold text-foreground mb-1">Sign-Off Role *</label>
+          <select [(ngModel)]="modalSignoffRole" class="w-full p-2.5 bg-secondary/30 border border-border rounded-xl text-foreground">
+            <option value="PROJECT_MANAGER">Project Manager Sign-Off (Site Technical Clearance)</option>
+            <option value="PROJECT_DIRECTOR">Project Director Sign-Off (Executive Final Closure)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-foreground mb-1">Authorizer Full Name *</label>
+          <input type="text" [(ngModel)]="modalSignerName" class="w-full p-2 bg-secondary/30 border border-border rounded-xl text-foreground" />
+        </div>
+
+        <div>
+          <label class="block font-semibold text-foreground mb-1">Authorization Remarks / Endorsement</label>
+          <textarea
+            [(ngModel)]="modalRemarks"
+            rows="3"
+            placeholder="Confirm all testing completed, municipal clearances received, and final handover verified..."
+            class="w-full p-2.5 bg-secondary/30 border border-border rounded-xl text-foreground"
+          ></textarea>
+        </div>
+
+        <div class="p-3.5 rounded-xl border border-amber-500/20 bg-amber-500/10 flex items-start gap-3">
+          <input
+            type="checkbox"
+            id="force_allow_snags"
+            [(ngModel)]="modalForceAllowSnags"
+            class="mt-1 w-4 h-4 rounded text-primary focus:ring-primary border-border"
+          />
+          <label for="force_allow_snags" class="text-xs text-foreground font-medium cursor-pointer">
+            Explicit Exception Approval for Minor Punchlist Snags
+            <span class="block text-[10px] text-muted-foreground font-normal">
+              Check ONLY if authorized management has agreed to grant conditional Taking-Over with bonded retention against open minor items. (Mandatory critical snags will still be strictly blocked).
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-3 border-t border-border">
+        <button type="button" (click)="closeSignoffModal()" class="px-4 py-2 text-xs font-semibold rounded-xl bg-secondary text-foreground">
+          Cancel
+        </button>
+        <app-custom-button
+          variant="primary"
+          [disabled]="isSubmittingSignoff() || !modalSignerName()"
+          (clicked)="submitSignoff()"
+        >
+          <i class="ri-quill-pen-line mr-1"></i>
+          {{ isSubmittingSignoff() ? 'Authorizing...' : 'Authorize Sign-Off' }}
+        </app-custom-button>
+      </div>
+    </div>
+  </div>
+</app-card-container>

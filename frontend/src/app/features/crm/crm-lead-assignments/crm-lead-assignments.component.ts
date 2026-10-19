@@ -201,6 +201,15 @@ export class CrmLeadAssignmentsComponent implements OnInit {
     this.loadQueue();
   }
 
+  refresh(): void {
+    if (this.activeTab() === 'RULES') {
+      this.loadRules();
+    } else {
+      this.loadQueue();
+      this.loadStats();
+    }
+  }
+
   queueNext(): void {
     if (this.assignmentsOffset() + this.assignmentsLimit() < this.assignmentsTotal()) {
       this.assignmentsOffset.update(v => v + this.assignmentsLimit());
@@ -471,5 +480,16 @@ export class CrmLeadAssignmentsComponent implements OnInit {
 
   trackById(index: number, item: LeadAssignment | LeadAssignmentRule): number {
     return item.id;
+  }
+
+  isOverdue(item: LeadAssignment): boolean {
+    if (!item.response_sla_deadline) return false;
+    return new Date(item.response_sla_deadline).getTime() < Date.now() && item.status === 'ACTIVE';
+  }
+
+  getManagerName(managerId?: number | null): string {
+    if (!managerId) return '—';
+    const rep = this.salesReps().find(r => r.id === managerId);
+    return rep ? rep.full_name_en : `Manager #${managerId}`;
   }
 }

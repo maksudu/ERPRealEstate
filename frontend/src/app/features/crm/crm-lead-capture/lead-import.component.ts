@@ -30,200 +30,196 @@ import { LeadImportRow } from '../../../core/models/crm.model';
     CustomTabsComponent
   ],
   template: `
-    <div class="flex flex-col gap-6 w-full max-w-6xl mx-auto pb-12">
-      <!-- Header -->
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
-        <div class="flex items-center gap-3">
-          <a
-            routerLink="/crm/lead-capture"
-            class="p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors inline-flex items-center justify-center shadow-xs"
-            title="Back to Lead Capture Register"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-            </svg>
-          </a>
-          <div>
-            <div class="flex items-center gap-2">
-              <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
-                Spec 4.2 · Bulk Import
-              </span>
-              <span class="text-xs text-slate-500 dark:text-slate-400 font-mono">Excel / CSV / JSON</span>
-            </div>
-            <h1 class="text-xl sm:text-2xl font-bold font-display text-slate-900 dark:text-slate-100 mt-1">
-              Lead Bulk Import & History
-            </h1>
-          </div>
-        </div>
+    <!-- Lead Bulk Import & History Wrapped in Single Card Container -->
+    <app-card-container
+      title="Lead Bulk Import & History"
+      subtitle="Spec 4.2 — Upload CSV exported from Excel or paste JSON rows with automatic duplicate suppression and audit tracking"
+      paddingClass="p-0"
+    >
+      <!-- Card Action Buttons -->
+      <div card-actions class="flex items-center gap-2">
         <a
           routerLink="/crm/lead-capture"
-          class="px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg border border-slate-300 dark:border-slate-700 transition-colors w-fit"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-xs"
         >
-          Back to List
+          <i class="ri-arrow-left-line text-sm"></i>
+          <span>Back to Register</span>
         </a>
       </div>
 
-      <app-card-container
-        title="Import Leads from Spreadsheet"
-        subtitle="Upload CSV exported from Excel or paste JSON rows — duplicates are auto-detected and skipped, full import history is retained"
-        paddingClass="p-0"
-      >
-        <div class="px-3.5 sm:px-6 pt-2">
-          <app-custom-tabs
-            [tabs]="tabs"
-            [activeTabId]="activeTab()"
-            variant="emerald"
-            (tabChange)="onTabChange($event)"
-          ></app-custom-tabs>
-        </div>
+      <!-- Navigation Tabs -->
+      <div class="px-4 sm:px-6 pt-3 border-b border-slate-200 dark:border-slate-800">
+        <app-custom-tabs
+          [tabs]="tabs"
+          [activeTabId]="activeTab()"
+          variant="emerald"
+          (tabChange)="onTabChange($event)"
+        ></app-custom-tabs>
+      </div>
 
-        @if (activeTab() === 'IMPORT') {
-          <div class="p-3.5 sm:p-6">
-            <form [formGroup]="importForm" class="flex flex-col gap-5">
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <app-custom-input
-                  label="Source Filename"
-                  placeholder="auto-filled from upload"
-                  formControlName="filename"
-                ></app-custom-input>
-                <app-searchable-select
-                  label="Source Channel *"
-                  [categoryCode]="LOOKUP.source"
-                  formControlName="source_channel"
-                  placeholder="Select source channel..."
-                  [required]="true"
-                ></app-searchable-select>
-              </div>
+      <!-- Tab 1: Upload & Import -->
+      @if (activeTab() === 'IMPORT') {
+        <div class="p-4 sm:p-6">
+          <form [formGroup]="importForm" class="flex flex-col gap-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <app-custom-input
+                label="Source Filename"
+                placeholder="auto-filled from upload"
+                formControlName="filename"
+              ></app-custom-input>
+              <app-searchable-select
+                label="Source Channel *"
+                [categoryCode]="LOOKUP.source"
+                formControlName="source_channel"
+                placeholder="Select source channel..."
+                [allowCreateNew]="true"
+                [required]="true"
+              ></app-searchable-select>
+            </div>
 
-              <!-- CSV File Upload -->
-              <div class="space-y-2">
-                <label class="block text-xs font-semibold text-slate-800 dark:text-slate-200 tracking-wide">
-                  Upload CSV File
-                  <span class="text-[11px] font-normal text-slate-500 dark:text-slate-400 ml-1">
-                    (Export Excel sheet as CSV — headers: lead_name, primary_phone, email, lead_source_id, campaign_name, property_type, preferred_location, budget_range_min, budget_range_max, bedrooms, notes)
-                  </span>
-                </label>
-                <input
-                  type="file"
-                  accept=".csv,text/csv"
-                  (change)="onFileSelected($event)"
-                  class="block w-full text-xs text-slate-600 dark:text-slate-300 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer erp-input"
-                />
-                @if (parsedRows().length > 0) {
-                  <p class="text-[11px] text-emerald-600 font-medium">
-                    Parsed {{ parsedRows().length }} rows from file successfully.
-                  </p>
-                }
-              </div>
-
-              <!-- JSON / Manual Paste -->
-              <app-custom-textarea
-                label="Or Paste JSON Array"
-                placeholder='[{"lead_name":"John Doe","primary_phone":"+8801711111111","email":"john@example.com","lead_source_id":"EXHIBITION","campaign_name":"Eid Fair"}]'
-                formControlName="jsonPayload"
-                [rows]="8"
-                hint="Each row must include lead_name and primary_phone. Other fields optional."
-              ></app-custom-textarea>
-
-              @if (importResult()) {
-                <div class="rounded-xl border border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/40 px-4 py-3 text-xs text-emerald-800 dark:text-emerald-300">
-                  {{ importResult() }}
+            <!-- CSV File Upload Section -->
+            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-2">
+              <label class="block text-xs font-semibold text-slate-800 dark:text-slate-200 tracking-wide">
+                Upload CSV File
+                <span class="text-[11px] font-normal text-slate-500 dark:text-slate-400 ml-1">
+                  (Export Excel sheet as CSV — headers: lead_name, primary_phone, email, lead_source_id, campaign_name, property_type, preferred_location, budget_range_min, budget_range_max, bedrooms, notes)
+                </span>
+              </label>
+              <input
+                type="file"
+                accept=".csv,text/csv"
+                (change)="onFileSelected($event)"
+                class="block w-full text-xs text-slate-600 dark:text-slate-300 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer erp-input rounded-xl"
+              />
+              @if (parsedRows().length > 0) {
+                <div class="flex items-center gap-2 text-xs text-emerald-600 font-medium pt-1">
+                  <i class="ri-checkbox-circle-line text-sm"></i>
+                  <span>Parsed {{ parsedRows().length }} rows from file successfully.</span>
                 </div>
               }
+            </div>
 
-              <div class="flex justify-end gap-3">
-                <a routerLink="/crm/lead-capture" class="erp-button-secondary text-xs">Cancel</a>
-                <app-custom-button
-                  variant="primary"
-                  [disabled]="importForm.invalid || isSubmitting() || (parsedRows().length === 0 && !importForm.get('jsonPayload')?.value)"
-                  [loading]="isSubmitting()"
-                  (clicked)="submitImport()"
-                >
-                  Import Leads
-                </app-custom-button>
+            <!-- JSON / Manual Paste -->
+            <app-custom-textarea
+              label="Or Paste JSON Array"
+              placeholder='[{"lead_name":"Rafiqul Islam","primary_phone":"+8801711000000","email":"rafiq@example.com","lead_source_id":"EXHIBITION","campaign_name":"REHAB Winter Fair"}]'
+              formControlName="jsonPayload"
+              [rows]="6"
+              hint="Each row must include lead_name and primary_phone. Other fields optional."
+            ></app-custom-textarea>
+
+            @if (importResult()) {
+              <div class="rounded-xl border border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/40 p-4 text-xs text-emerald-800 dark:text-emerald-300 flex items-start gap-2">
+                <i class="ri-checkbox-circle-line text-base shrink-0 mt-0.5"></i>
+                <span>{{ importResult() }}</span>
               </div>
-            </form>
-          </div>
-        } @else {
-          <!-- Import History (server-paged) -->
-          <div class="flex flex-col">
-            <div class="overflow-x-auto">
-              <table class="w-full text-left text-xs">
-                <thead class="bg-slate-100/80 dark:bg-slate-850 text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-200 dark:border-slate-800">
-                  <tr>
-                    <th class="px-4 py-3">Batch ID</th>
-                    <th class="px-4 py-3">Filename</th>
-                    <th class="px-4 py-3">Source Channel</th>
-                    <th class="px-4 py-3 text-right">Total Rows</th>
-                    <th class="px-4 py-3 text-right">Success</th>
-                    <th class="px-4 py-3 text-right">Duplicates</th>
-                    <th class="px-4 py-3 text-right">Failed</th>
-                    <th class="px-4 py-3">Imported At</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-200/70 dark:divide-slate-800 bg-white dark:bg-slate-900">
-                  @if (isLoadingHistory()) {
-                    @for (i of [1, 2, 3, 4, 5]; track i) {
-                      <tr>
-                        <td colspan="8" class="px-4 py-4">
-                          <div class="h-4 bg-slate-200 dark:bg-slate-800 rounded animate-pulse w-full"></div>
-                        </td>
-                      </tr>
-                    }
-                  } @else if (importHistory().length === 0) {
+            }
+
+            <div class="flex justify-end gap-3 pt-2">
+              <a
+                routerLink="/crm/lead-capture"
+                class="px-4 py-2 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-xs"
+              >
+                Cancel
+              </a>
+              <app-custom-button
+                variant="primary"
+                [disabled]="importForm.invalid || isSubmitting() || (parsedRows().length === 0 && !importForm.get('jsonPayload')?.value)"
+                [loading]="isSubmitting()"
+                (clicked)="submitImport()"
+              >
+                <span class="flex items-center gap-1.5">
+                  <i class="ri-upload-cloud-line text-sm"></i>
+                  <span>Import Leads Now</span>
+                </span>
+              </app-custom-button>
+            </div>
+          </form>
+        </div>
+      } @else {
+        <!-- Tab 2: Import History (server-side paged) -->
+        <div class="flex flex-col">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-100/80 dark:bg-slate-850 text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-200 dark:border-slate-800">
+                <tr>
+                  <th class="px-4 py-3">Batch ID</th>
+                  <th class="px-4 py-3">Filename</th>
+                  <th class="px-4 py-3">Source Channel</th>
+                  <th class="px-4 py-3 text-right">Total Rows</th>
+                  <th class="px-4 py-3 text-right">Success</th>
+                  <th class="px-4 py-3 text-right">Duplicates</th>
+                  <th class="px-4 py-3 text-right">Failed</th>
+                  <th class="px-4 py-3">Imported At</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200/70 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                @if (isLoadingHistory()) {
+                  @for (i of [1, 2, 3, 4, 5]; track i) {
                     <tr>
-                      <td colspan="8" class="px-4 py-12 text-center text-slate-400 dark:text-slate-500">
-                        No import batches yet.
+                      <td colspan="8" class="px-4 py-4">
+                        <div class="h-4 bg-slate-200 dark:bg-slate-800 rounded animate-pulse w-full"></div>
                       </td>
                     </tr>
-                  } @else {
-                    @for (batch of importHistory(); track batch.id) {
-                      <tr class="hover:bg-slate-50 dark:hover:bg-slate-850/60 transition-colors">
-                        <td class="px-4 py-3 font-mono font-semibold text-slate-900 dark:text-slate-100">
-                          IMP-{{ batch.id }}
-                        </td>
-                        <td class="px-4 py-3 text-slate-700 dark:text-slate-200">{{ batch.filename }}</td>
-                        <td class="px-4 py-3 text-slate-700 dark:text-slate-200">{{ batch.source_channel || '—' }}</td>
-                        <td class="px-4 py-3 text-right text-slate-700 dark:text-slate-200">{{ batch.total_rows }}</td>
-                        <td class="px-4 py-3 text-right font-semibold text-emerald-600">{{ batch.success_count }}</td>
-                        <td class="px-4 py-3 text-right font-semibold text-amber-600">{{ batch.duplicate_count }}</td>
-                        <td class="px-4 py-3 text-right font-semibold text-rose-600">{{ batch.failed_count }}</td>
-                        <td class="px-4 py-3 text-slate-500 dark:text-slate-400">
-                          {{ batch.imported_at ? (batch.imported_at | date:'dd MMM yyyy, h:mm a') : '—' }}
-                        </td>
-                      </tr>
-                    }
                   }
-                </tbody>
-              </table>
-            </div>
-            <div class="px-3.5 sm:px-6 py-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 flex items-center justify-between">
-              <span class="text-[11px] text-slate-500 dark:text-slate-400">
-                Showing {{ historyFromRow() }}–{{ historyToRow() }} of {{ historyTotal() }} batches · Page {{ historyPage() }} of {{ historyTotalPages() }}
-              </span>
-              <div class="flex items-center gap-2">
-                <button
-                  type="button"
-                  (click)="historyPrev()"
-                  [disabled]="historyOffset() === 0"
-                  class="erp-button-secondary text-xs h-8 px-3 disabled:opacity-40"
-                >
-                  Previous
-                </button>
-                <button
-                  type="button"
-                  (click)="historyNext()"
-                  [disabled]="historyOffset() + historyLimit() >= historyTotal()"
-                  class="erp-button-secondary text-xs h-8 px-3 disabled:opacity-40"
-                >
-                  Next
-                </button>
-              </div>
+                } @else if (importHistory().length === 0) {
+                  <tr>
+                    <td colspan="8" class="px-4 py-12 text-center text-slate-400 dark:text-slate-500">
+                      <div class="flex flex-col items-center gap-2">
+                        <i class="ri-history-line text-4xl"></i>
+                        <span>No import batches recorded yet.</span>
+                      </div>
+                    </td>
+                  </tr>
+                } @else {
+                  @for (batch of importHistory(); track batch.id) {
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-850/60 transition-colors">
+                      <td class="px-4 py-3 font-mono font-semibold text-slate-900 dark:text-slate-100">
+                        IMP-{{ batch.id }}
+                      </td>
+                      <td class="px-4 py-3 text-slate-700 dark:text-slate-200 font-medium">{{ batch.filename }}</td>
+                      <td class="px-4 py-3 text-slate-700 dark:text-slate-200">{{ batch.source_channel || '—' }}</td>
+                      <td class="px-4 py-3 text-right text-slate-700 dark:text-slate-200 font-medium">{{ batch.total_rows }}</td>
+                      <td class="px-4 py-3 text-right font-semibold text-emerald-600">{{ batch.success_count }}</td>
+                      <td class="px-4 py-3 text-right font-semibold text-amber-600">{{ batch.duplicate_count }}</td>
+                      <td class="px-4 py-3 text-right font-semibold text-rose-600">{{ batch.failed_count }}</td>
+                      <td class="px-4 py-3 text-slate-500 dark:text-slate-400">
+                        {{ batch.imported_at ? (batch.imported_at | date:'dd MMM yyyy, h:mm a') : '—' }}
+                      </td>
+                    </tr>
+                  }
+                }
+              </tbody>
+            </table>
+          </div>
+          <div class="px-4 sm:px-6 py-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 flex items-center justify-between">
+            <span class="text-[11px] text-slate-500 dark:text-slate-400">
+              Showing {{ historyFromRow() }}–{{ historyToRow() }} of {{ historyTotal() }} batches · Page {{ historyPage() }} of {{ historyTotalPages() }}
+            </span>
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                (click)="historyPrev()"
+                [disabled]="historyOffset() === 0"
+                class="erp-button-secondary text-xs h-8 px-3 rounded-xl disabled:opacity-40 inline-flex items-center gap-1"
+              >
+                <i class="ri-arrow-left-s-line text-sm"></i>
+                <span>Previous</span>
+              </button>
+              <button
+                type="button"
+                (click)="historyNext()"
+                [disabled]="historyOffset() + historyLimit() >= historyTotal()"
+                class="erp-button-secondary text-xs h-8 px-3 rounded-xl disabled:opacity-40 inline-flex items-center gap-1"
+              >
+                <span>Next</span>
+                <i class="ri-arrow-right-s-line text-sm"></i>
+              </button>
             </div>
           </div>
-        }
-      </app-card-container>
-    </div>
+        </div>
+      }
+    </app-card-container>
   `
 })
 export class LeadImportComponent implements OnInit {
@@ -240,7 +236,6 @@ export class LeadImportComponent implements OnInit {
   historyLimit = signal(20);
   historyOffset = signal(0);
   isLoadingHistory = signal(false);
-  private _historyLoaded = false;
 
   tabs: TabItem[] = [
     { id: 'IMPORT', label: 'Import Leads' },
@@ -260,9 +255,7 @@ export class LeadImportComponent implements OnInit {
     jsonPayload: ['']
   });
 
-  ngOnInit(): void {
-    // History loads lazily on first HISTORY tab open
-  }
+  ngOnInit(): void {}
 
   loadHistory(): void {
     this.isLoadingHistory.set(true);
@@ -352,7 +345,7 @@ export class LeadImportComponent implements OnInit {
         preferred_location: get('preferred_location') || null,
         budget_range_min: num('budget_range_min'),
         budget_range_max: num('budget_range_max'),
-        bedrooms: num('bedrooms'),
+        bedrooms: num('bedrooms') ? Math.floor(num('bedrooms')!) : null,
         notes: get('notes') || null
       });
     }
@@ -360,66 +353,69 @@ export class LeadImportComponent implements OnInit {
   }
 
   splitCsvLine(line: string): string[] {
-    const result: string[] = [];
-    let current = '';
+    const values: string[] = [];
+    let cur = '';
     let inQuotes = false;
     for (let i = 0; i < line.length; i++) {
-      const ch = line[i];
-      if (ch === '"') {
+      const c = line[i];
+      if (c === '"') {
         if (inQuotes && line[i + 1] === '"') {
-          current += '"';
+          cur += '"';
           i++;
         } else {
           inQuotes = !inQuotes;
         }
-      } else if (ch === ',' && !inQuotes) {
-        result.push(current);
-        current = '';
+      } else if (c === ',' && !inQuotes) {
+        values.push(cur);
+        cur = '';
       } else {
-        current += ch;
+        cur += c;
       }
     }
-    result.push(current);
-    return result;
+    values.push(cur);
+    return values;
   }
 
   submitImport(): void {
-    let rows: LeadImportRow[] = this.parsedRows();
-
-    if (rows.length === 0) {
-      const raw = this.importForm.get('jsonPayload')?.value;
-      if (!raw || !raw.trim()) {
-        alert('Upload a CSV file or paste a JSON array of lead rows.');
-        return;
-      }
+    let rows: LeadImportRow[] = [...this.parsedRows()];
+    const jsonText = this.importForm.get('jsonPayload')?.value?.trim();
+    if (rows.length === 0 && jsonText) {
       try {
-        const parsed = JSON.parse(raw);
-        if (!Array.isArray(parsed)) throw new Error('JSON must be an array of lead rows.');
-        rows = parsed;
-      } catch (e: any) {
-        alert('Invalid JSON: ' + (e?.message || 'parse error'));
+        const parsed = JSON.parse(jsonText);
+        if (Array.isArray(parsed)) {
+          rows = parsed;
+        } else {
+          alert('JSON payload must be an array of objects.');
+          return;
+        }
+      } catch (e) {
+        alert('Invalid JSON: ' + (e as Error).message);
         return;
       }
     }
 
+    if (rows.length === 0) {
+      alert('No rows to import.');
+      return;
+    }
+
     this.isSubmitting.set(true);
+    this.importResult.set(null);
+
     this.crmService.importLeads({
-      filename: this.importForm.get('filename')?.value || 'bulk_import.csv',
+      filename: this.importForm.get('filename')?.value || 'manual_entry.csv',
       source_channel: this.importForm.get('source_channel')?.value || 'MANUAL_ENTRY',
       rows
     }).subscribe({
-      next: (batch) => {
+      next: (res: any) => {
         this.isSubmitting.set(false);
         this.importResult.set(
-          `Imported ${batch.success_count}/${batch.total_rows} leads` +
-          (batch.duplicate_count ? `, ${batch.duplicate_count} duplicates skipped` : '') +
-          (batch.failed_count ? `, ${batch.failed_count} failed` : '') + '.'
+          `Import finished. Total: ${res.total_rows}, Success: ${res.success_count}, Duplicates Skipped: ${res.duplicate_count}, Failed: ${res.failed_count}. Batch: IMP-${res.batch_id}`
         );
         this.parsedRows.set([]);
-        this._historyLoaded = true;
-        this.loadHistory();
+        this.importForm.patchValue({ jsonPayload: '' });
       },
-      error: (err) => {
+      error: (err: any) => {
         this.isSubmitting.set(false);
         alert(err?.error?.detail || 'Import failed.');
       }

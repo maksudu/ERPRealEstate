@@ -1,0 +1,978 @@
+<div class="flex flex-col gap-6 w-full max-w-7xl mx-auto pb-16">
+  
+  <!-- 1. Top Unified Header & Actions -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
+    <div>
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+          Construction Operations & Procurement
+        </span>
+        <span class="text-xs text-muted-foreground font-mono">
+          Central Registry & Rate Agreements
+        </span>
+      </div>
+      <h1 class="text-xl sm:text-2xl font-bold font-display text-foreground mt-1">
+        Contractor & Subcontractor Registry
+      </h1>
+      <p class="text-xs text-muted-foreground mt-0.5">
+        Maintain a central contractor registry with project-specific contracts, approved rates, statutory compliance, and dispute resolution.
+      </p>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <app-custom-button
+        variant="outline"
+        (btnClick)="openRaiseDisputeModal()"
+        label="Log Site Dispute"
+        icon="ri-error-warning-line"
+      ></app-custom-button>
+      <app-custom-button
+        variant="primary"
+        (btnClick)="navigateToCreate()"
+        label="Onboard Contractor"
+        icon="ri-user-add-line"
+      ></app-custom-button>
+    </div>
+  </div>
+
+  <!-- 2. High-Level KPI Summary Cards -->
+  <div class="grid grid-cols-2 md:grid-cols-5 gap-3.5">
+    <!-- Card 1: Total Enlisted -->
+    <div class="p-4 rounded-xl bg-card border border-border shadow-xs flex flex-col justify-between">
+      <div class="flex items-center justify-between text-muted-foreground mb-2">
+        <span class="text-xs font-medium uppercase tracking-wider">Total Enlisted</span>
+        <div class="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+          <i class="ri-building-line text-base"></i>
+        </div>
+      </div>
+      <div>
+        <div class="text-2xl font-bold text-foreground font-mono">
+          {{ metrics()?.total_contractors || totalContractors() || 0 }}
+        </div>
+        <span class="text-[11px] text-muted-foreground">Main & Trade Entities</span>
+      </div>
+    </div>
+
+    <!-- Card 2: Active On-Site -->
+    <div class="p-4 rounded-xl bg-card border border-border shadow-xs flex flex-col justify-between">
+      <div class="flex items-center justify-between text-muted-foreground mb-2">
+        <span class="text-xs font-medium uppercase tracking-wider">Active On-Site</span>
+        <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+          <i class="ri-team-line text-base"></i>
+        </div>
+      </div>
+      <div>
+        <div class="text-2xl font-bold text-emerald-500 font-mono">
+          {{ metrics()?.active_subcontractors || 0 }}
+        </div>
+        <span class="text-[11px] text-muted-foreground">Mobilized Manpower</span>
+      </div>
+    </div>
+
+    <!-- Card 3: Approved & Enlisted -->
+    <div class="p-4 rounded-xl bg-card border border-border shadow-xs flex flex-col justify-between">
+      <div class="flex items-center justify-between text-muted-foreground mb-2">
+        <span class="text-xs font-medium uppercase tracking-wider">Approved & Verified</span>
+        <div class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center">
+          <i class="ri-shield-check-line text-base"></i>
+        </div>
+      </div>
+      <div>
+        <div class="text-2xl font-bold text-blue-500 font-mono">
+          {{ metrics()?.approved_enlisted || 0 }}
+        </div>
+        <span class="text-[11px] text-muted-foreground">Tax & Legal Cleared</span>
+      </div>
+    </div>
+
+    <!-- Card 4: Active Disputes -->
+    <div class="p-4 rounded-xl bg-card border border-border shadow-xs flex flex-col justify-between">
+      <div class="flex items-center justify-between text-muted-foreground mb-2">
+        <span class="text-xs font-medium uppercase tracking-wider">Active Disputes</span>
+        <div class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center">
+          <i class="ri-alert-line text-base"></i>
+        </div>
+      </div>
+      <div>
+        <div class="text-2xl font-bold text-amber-500 font-mono">
+          {{ metrics()?.active_disputes_count || 0 }}
+        </div>
+        <span class="text-[11px] text-amber-600/90 font-mono font-medium">
+          ৳{{ (metrics()?.total_disputed_amount || 0) | number:'1.0-0' }} Claimed
+        </span>
+      </div>
+    </div>
+
+    <!-- Card 5: Performance Rating -->
+    <div class="p-4 rounded-xl bg-card border border-border shadow-xs flex flex-col justify-between col-span-2 md:col-span-1">
+      <div class="flex items-center justify-between text-muted-foreground mb-2">
+        <span class="text-xs font-medium uppercase tracking-wider">Avg Quality Score</span>
+        <div class="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-500 flex items-center justify-center">
+          <i class="ri-star-line text-base"></i>
+        </div>
+      </div>
+      <div>
+        <div class="text-2xl font-bold text-purple-500 font-mono">
+          {{ metrics()?.avg_performance_rating || 4.50 }} <span class="text-xs text-muted-foreground font-normal">/ 5.0</span>
+        </div>
+        <span class="text-[11px] text-muted-foreground">Audited Site Quality</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Main Single Card Container -->
+  <app-card-container [hasHeader]="false">
+    
+    <!-- Sub-Tabs Navigation -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
+      <div class="flex items-center gap-1.5 p-1 rounded-xl bg-secondary/50 border border-border self-start">
+        <button
+          type="button"
+          (click)="onTabChange('CONTRACTORS')"
+          [class.bg-card]="currentTab() === 'CONTRACTORS'"
+          [class.shadow-xs]="currentTab() === 'CONTRACTORS'"
+          [class.text-foreground]="currentTab() === 'CONTRACTORS'"
+          [class.text-muted-foreground]="currentTab() !== 'CONTRACTORS'"
+          class="px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-2"
+        >
+          <i class="ri-building-4-line"></i>
+          <span>Contractors Registry</span>
+          <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-primary/10 text-primary">
+            {{ totalContractors() }}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          (click)="onTabChange('RATES')"
+          [class.bg-card]="currentTab() === 'RATES'"
+          [class.shadow-xs]="currentTab() === 'RATES'"
+          [class.text-foreground]="currentTab() === 'RATES'"
+          [class.text-muted-foreground]="currentTab() !== 'RATES'"
+          class="px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-2"
+        >
+          <i class="ri-price-tag-3-line"></i>
+          <span>Approved Rate Cards</span>
+        </button>
+
+        <button
+          type="button"
+          (click)="onTabChange('DISPUTES')"
+          [class.bg-card]="currentTab() === 'DISPUTES'"
+          [class.shadow-xs]="currentTab() === 'DISPUTES'"
+          [class.text-foreground]="currentTab() === 'DISPUTES'"
+          [class.text-muted-foreground]="currentTab() !== 'DISPUTES'"
+          class="px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-2"
+        >
+          <i class="ri-scales-3-line"></i>
+          <span>Disputes & Claims</span>
+          <span *ngIf="metrics()?.active_disputes_count" class="px-1.5 py-0.2 rounded-full text-[10px] bg-amber-500/10 text-amber-500 font-bold">
+            {{ metrics()?.active_disputes_count }}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          (click)="onTabChange('COMPLIANCE')"
+          [class.bg-card]="currentTab() === 'COMPLIANCE'"
+          [class.shadow-xs]="currentTab() === 'COMPLIANCE'"
+          [class.text-foreground]="currentTab() === 'COMPLIANCE'"
+          [class.text-muted-foreground]="currentTab() !== 'COMPLIANCE'"
+          class="px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-2"
+        >
+          <i class="ri-file-shield-line"></i>
+          <span>Statutory & HSE Compliance</span>
+        </button>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <app-custom-button
+          variant="ghost"
+          (btnClick)="resetFilters()"
+          label="Reset Filters"
+          icon="ri-refresh-line"
+        ></app-custom-button>
+      </div>
+    </div>
+
+    <!-- Filter Bar (For Contractors and Compliance Tabs) -->
+    <div *ngIf="currentTab() === 'CONTRACTORS' || currentTab() === 'COMPLIANCE'" class="py-4 border-b border-border grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+      <div class="lg:col-span-2">
+        <app-custom-input
+          [(ngModel)]="searchQuery"
+          (ngModelChange)="onSearch()"
+          placeholder="Search by company name, code, contact, TIN, BIN..."
+        ></app-custom-input>
+      </div>
+
+      <div>
+        <app-searchable-select
+          categoryCode="CONTRACTOR_TYPE"
+          [(ngModel)]="selectedType"
+          (ngModelChange)="onSearch()"
+          placeholder="All Classifications"
+          [allowCreateNew]="false"
+        ></app-searchable-select>
+      </div>
+
+      <div>
+        <app-searchable-select
+          categoryCode="CONTRACTOR_TRADE"
+          [(ngModel)]="selectedTrade"
+          (ngModelChange)="onSearch()"
+          placeholder="All Trades"
+          [allowCreateNew]="false"
+        ></app-searchable-select>
+      </div>
+
+      <div>
+        <app-searchable-select
+          categoryCode="CONTRACTOR_ONBOARDING_STATUS"
+          [(ngModel)]="selectedOnboardingStatus"
+          (ngModelChange)="onSearch()"
+          placeholder="Onboarding Status"
+          [allowCreateNew]="false"
+        ></app-searchable-select>
+      </div>
+    </div>
+
+    <!-- TAB 1: CONTRACTORS & SUBCONTRACTORS TABLE -->
+    <div *ngIf="currentTab() === 'CONTRACTORS'" class="pt-2">
+      <div class="overflow-x-auto rounded-xl border border-border">
+        <table class="w-full text-left text-xs text-foreground">
+          <thead class="bg-secondary/60 text-muted-foreground uppercase tracking-wider text-[11px] font-semibold border-b border-border">
+            <tr>
+              <th class="py-3 px-3">Contractor / Entity</th>
+              <th class="py-3 px-3">Trade & Classification</th>
+              <th class="py-3 px-3">Authorized Contact</th>
+              <th class="py-3 px-3">Tax & License</th>
+              <th class="py-3 px-3 text-center">Quality Score</th>
+              <th class="py-3 px-3 text-center">Work Orders</th>
+              <th class="py-3 px-3 text-center">Onboarding</th>
+              <th class="py-3 px-3 text-center">Execution</th>
+              <th class="py-3 px-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border/60">
+            <tr *ngIf="isLoading()" class="animate-pulse">
+              <td colspan="9" class="py-8 text-center text-muted-foreground">
+                <i class="ri-loader-4-line animate-spin text-xl mr-2"></i>
+                Loading contractors registry...
+              </td>
+            </tr>
+
+            <tr *ngIf="!isLoading() && contractors().length === 0">
+              <td colspan="9" class="py-12 text-center text-muted-foreground">
+                <i class="ri-building-line text-3xl mb-2 block"></i>
+                No contractors found matching current filters.
+              </td>
+            </tr>
+
+            <tr
+              *ngFor="let c of contractors()"
+              class="hover:bg-secondary/30 transition-colors"
+            >
+              <!-- Contractor Details -->
+              <td class="py-3 px-3">
+                <div class="font-bold text-foreground text-sm flex items-center gap-1.5">
+                  <a [routerLink]="['/construction/contractors/edit', c.id]" class="hover:text-primary transition-colors">
+                    {{ c.company_name }}
+                  </a>
+                  <span *ngIf="c.has_active_disputes" class="text-amber-500" title="Active dispute logged">
+                    <i class="ri-error-warning-fill"></i>
+                  </span>
+                </div>
+                <div class="text-[11px] text-muted-foreground font-mono">
+                  {{ c.contractor_code }}
+                </div>
+                <div *ngIf="c.parent_contractor_name" class="text-[10px] text-blue-500 font-medium">
+                  Subcontracted to: {{ c.parent_contractor_name }}
+                </div>
+              </td>
+
+              <!-- Trade & Classification -->
+              <td class="py-3 px-3">
+                <span class="inline-block px-2 py-0.5 rounded-md text-[10px] font-semibold mb-1" [ngClass]="getTypeBadgeClass(c.contractor_type)">
+                  {{ c.contractor_type }}
+                </span>
+                <div class="text-xs text-foreground font-medium">
+                  {{ c.trade_category }}
+                </div>
+                <div class="text-[11px] text-muted-foreground">
+                  {{ c.trade_specialization }}
+                </div>
+              </td>
+
+              <!-- Authorized Contact -->
+              <td class="py-3 px-3">
+                <div class="font-medium text-foreground">{{ c.contact_person }}</div>
+                <div class="text-[11px] text-muted-foreground font-mono">{{ c.primary_phone }}</div>
+                <div *ngIf="c.email" class="text-[10px] text-muted-foreground">{{ c.email }}</div>
+              </td>
+
+              <!-- Tax & License -->
+              <td class="py-3 px-3 font-mono text-[11px]">
+                <div><span class="text-muted-foreground">TIN:</span> {{ c.tin_number || 'N/A' }}</div>
+                <div><span class="text-muted-foreground">BIN:</span> {{ c.bin_number || 'N/A' }}</div>
+                <div *ngIf="c.trade_license_number" class="text-[10px] text-muted-foreground">
+                  Lic: {{ c.trade_license_number }}
+                </div>
+              </td>
+
+              <!-- Quality Rating -->
+              <td class="py-3 px-3 text-center">
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 font-mono">
+                  <i class="ri-star-fill text-[11px]"></i>
+                  {{ c.performance_rating | number:'1.2-2' }}
+                </span>
+                <div class="text-[10px] text-muted-foreground mt-0.5">
+                  {{ c.experience_years }} yrs exp
+                </div>
+              </td>
+
+              <!-- Work Orders & Rates Count -->
+              <td class="py-3 px-3 text-center font-mono">
+                <div class="text-xs font-bold text-foreground">
+                  {{ c.active_work_orders_count || 0 }} Active
+                </div>
+                <button
+                  type="button"
+                  (click)="onTabChange('RATES'); selectContractorForRates(c)"
+                  class="text-[10px] text-primary hover:underline"
+                >
+                  {{ c.rates_count || 0 }} Rate Items
+                </button>
+              </td>
+
+              <!-- Onboarding Status -->
+              <td class="py-3 px-3 text-center">
+                <button
+                  type="button"
+                  (click)="openStatusModal(c)"
+                  class="inline-block px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider cursor-pointer hover:opacity-80 transition-opacity"
+                  [ngClass]="getOnboardingBadgeClass(c.onboarding_status)"
+                  title="Click to review onboarding status"
+                >
+                  {{ c.onboarding_status }}
+                </button>
+              </td>
+
+              <!-- Execution Status -->
+              <td class="py-3 px-3 text-center">
+                <span class="inline-block px-2 py-0.5 rounded-md text-[10px] font-semibold" [ngClass]="getCompletionBadgeClass(c.completion_status)">
+                  {{ c.completion_status }}
+                </span>
+              </td>
+
+              <!-- Actions -->
+              <td class="py-3 px-3 text-right">
+                <div class="inline-flex items-center gap-1">
+                  <a
+                    [routerLink]="['/construction/contractors/edit', c.id]"
+                    class="p-1.5 rounded-lg bg-secondary hover:bg-secondary/80 text-foreground transition-colors"
+                    title="Edit Full Profile"
+                  >
+                    <i class="ri-edit-line text-sm"></i>
+                  </a>
+                  <button
+                    type="button"
+                    (click)="openAddRateModal(c)"
+                    class="p-1.5 rounded-lg bg-secondary hover:bg-secondary/80 text-primary transition-colors"
+                    title="Add Itemized Rate Card"
+                  >
+                    <i class="ri-price-tag-3-line text-sm"></i>
+                  </button>
+                  <button
+                    type="button"
+                    (click)="openRaiseDisputeModal(c)"
+                    class="p-1.5 rounded-lg bg-secondary hover:bg-secondary/80 text-amber-500 transition-colors"
+                    title="Log Site Dispute / Claim"
+                  >
+                    <i class="ri-alert-line text-sm"></i>
+                  </button>
+                  <button
+                    type="button"
+                    (click)="deleteContractor(c)"
+                    class="p-1.5 rounded-lg bg-secondary hover:bg-red-500/10 text-muted-foreground hover:text-red-500 transition-colors"
+                    title="Deactivate Contractor"
+                  >
+                    <i class="ri-delete-bin-line text-sm"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Server-Side Pagination Footer -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-4 border-t border-border mt-3 text-xs text-muted-foreground">
+        <div>
+          Showing page <span class="font-bold text-foreground">{{ currentPage }}</span> of
+          <span class="font-bold text-foreground">{{ totalPages() }}</span>
+          (<span class="font-bold text-foreground">{{ totalContractors() }}</span> total registered entities)
+        </div>
+        <div class="flex items-center gap-2">
+          <app-custom-button
+            variant="outline"
+            (btnClick)="goToPage(currentPage - 1)"
+            [disabled]="currentPage === 1"
+            label="Previous"
+            icon="ri-arrow-left-s-line"
+          ></app-custom-button>
+          <span class="px-3 py-1 font-mono font-semibold rounded-lg bg-secondary border border-border text-foreground">
+            {{ currentPage }}
+          </span>
+          <app-custom-button
+            variant="outline"
+            (btnClick)="goToPage(currentPage + 1)"
+            [disabled]="currentPage === totalPages()"
+            label="Next"
+            icon="ri-arrow-right-s-line"
+          ></app-custom-button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: APPROVED RATE CARDS -->
+    <div *ngIf="currentTab() === 'RATES'" class="pt-2">
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+        <!-- Left: Contractor Selector -->
+        <div class="lg:col-span-1 p-3 rounded-xl bg-secondary/30 border border-border flex flex-col gap-2">
+          <div class="flex items-center justify-between pb-2 border-b border-border">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-muted-foreground">Select Contractor</h3>
+            <span class="text-xs font-mono font-bold text-primary">{{ contractors().length }}</span>
+          </div>
+          <div class="space-y-1.5 max-h-[500px] overflow-y-auto">
+            <button
+              *ngFor="let c of contractors()"
+              type="button"
+              (click)="selectContractorForRates(c)"
+              [class.bg-card]="selectedContractorForRates()?.id === c.id"
+              [class.border-primary]="selectedContractorForRates()?.id === c.id"
+              [class.shadow-xs]="selectedContractorForRates()?.id === c.id"
+              class="w-full text-left p-2.5 rounded-lg border border-border hover:bg-secondary/60 transition-all flex flex-col gap-0.5"
+            >
+              <div class="font-semibold text-foreground text-xs">{{ c.company_name }}</div>
+              <div class="flex items-center justify-between text-[11px] text-muted-foreground font-mono">
+                <span>{{ c.contractor_code }}</span>
+                <span class="px-1.5 py-0.2 rounded-full bg-primary/10 text-primary text-[10px]">{{ c.rates_count || 0 }} Rates</span>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Right: Rate Card Table -->
+        <div class="lg:col-span-3 flex flex-col gap-3">
+          <div class="flex items-center justify-between pb-2 border-b border-border">
+            <div>
+              <h3 class="text-sm font-bold text-foreground">
+                Rate Agreement: {{ selectedContractorForRates()?.company_name || 'Select a contractor' }}
+              </h3>
+              <p class="text-xs text-muted-foreground">
+                Itemized trade rates with scope and responsibility boundary demarcation to eliminate duplicate measurement.
+              </p>
+            </div>
+            <app-custom-button
+              variant="primary"
+              (btnClick)="openAddRateModal()"
+              label="Add Rate Item"
+              icon="ri-add-line"
+            ></app-custom-button>
+          </div>
+
+          <div class="overflow-x-auto rounded-xl border border-border">
+            <table class="w-full text-left text-xs text-foreground">
+              <thead class="bg-secondary/60 text-muted-foreground uppercase tracking-wider text-[11px] font-semibold border-b border-border">
+                <tr>
+                  <th class="py-3 px-3">Item Code</th>
+                  <th class="py-3 px-3">Trade Scope / Work Description</th>
+                  <th class="py-3 px-3 text-center">UOM</th>
+                  <th class="py-3 px-3 text-right">Approved Rate (BDT)</th>
+                  <th class="py-3 px-3">Scope Boundary Demarcation</th>
+                  <th class="py-3 px-3">Validity</th>
+                  <th class="py-3 px-3 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-border/60">
+                <tr *ngIf="ratesList().length === 0">
+                  <td colspan="7" class="py-10 text-center text-muted-foreground">
+                    <i class="ri-price-tag-3-line text-2xl mb-1 block"></i>
+                    No approved rates registered for this contractor yet.
+                  </td>
+                </tr>
+
+                <tr *ngFor="let r of ratesList()" class="hover:bg-secondary/30 transition-colors">
+                  <td class="py-3 px-3 font-mono font-bold text-primary">{{ r.item_code }}</td>
+                  <td class="py-3 px-3">
+                    <div class="font-bold text-foreground">{{ r.trade_item_name }}</div>
+                    <div *ngIf="r.specification" class="text-[11px] text-muted-foreground">{{ r.specification }}</div>
+                  </td>
+                  <td class="py-3 px-3 text-center font-mono font-semibold">{{ r.unit_of_measure }}</td>
+                  <td class="py-3 px-3 text-right font-mono font-bold text-foreground text-sm">
+                    ৳{{ r.approved_unit_rate | number:'1.2-2' }}
+                  </td>
+                  <td class="py-3 px-3 text-xs text-muted-foreground max-w-xs">
+                    {{ r.scope_boundary_definition || 'Standard package scope' }}
+                  </td>
+                  <td class="py-3 px-3 text-[11px] font-mono text-muted-foreground">
+                    {{ r.effective_start_date }}
+                  </td>
+                  <td class="py-3 px-3 text-right">
+                    <button
+                      type="button"
+                      (click)="deleteRate(r.id)"
+                      class="p-1 rounded-md text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                      title="Remove Rate"
+                    >
+                      <i class="ri-delete-bin-line"></i>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: DISPUTES & CLAIMS -->
+    <div *ngIf="currentTab() === 'DISPUTES'" class="pt-2">
+      <div class="flex items-center justify-between pb-3 border-b border-border mb-3">
+        <div>
+          <h3 class="text-sm font-bold text-foreground">Subcontractor Disputes, Deductions & Claims</h3>
+          <p class="text-xs text-muted-foreground">
+            Track claims arising from joint measurement variances, excess rebar/cement wastage, quality defects and retention withholdings.
+          </p>
+        </div>
+        <app-custom-button
+          variant="primary"
+          (btnClick)="openRaiseDisputeModal()"
+          label="Raise Site Dispute"
+          icon="ri-alert-line"
+        ></app-custom-button>
+      </div>
+
+      <div class="overflow-x-auto rounded-xl border border-border">
+        <table class="w-full text-left text-xs text-foreground">
+          <thead class="bg-secondary/60 text-muted-foreground uppercase tracking-wider text-[11px] font-semibold border-b border-border">
+            <tr>
+              <th class="py-3 px-3">Dispute Code</th>
+              <th class="py-3 px-3">Contractor & Project</th>
+              <th class="py-3 px-3">Dispute Cause & Title</th>
+              <th class="py-3 px-3 text-right">Claimed (BDT)</th>
+              <th class="py-3 px-3 text-right">Deducted (BDT)</th>
+              <th class="py-3 px-3 text-center">Status</th>
+              <th class="py-3 px-3">Raised Date</th>
+              <th class="py-3 px-3 text-right">Resolution</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border/60">
+            <tr *ngIf="disputesList().length === 0">
+              <td colspan="8" class="py-12 text-center text-muted-foreground">
+                <i class="ri-checkbox-circle-line text-3xl text-emerald-500 mb-2 block"></i>
+                No active subcontractor disputes recorded.
+              </td>
+            </tr>
+
+            <tr *ngFor="let d of disputesList()" class="hover:bg-secondary/30 transition-colors">
+              <td class="py-3 px-3 font-mono font-bold text-foreground">{{ d.dispute_code }}</td>
+              <td class="py-3 px-3">
+                <div class="font-bold text-foreground">{{ d.contractor_name || 'Contractor #' + d.contractor_id }}</div>
+                <div class="text-[11px] text-muted-foreground">{{ d.project_name || 'Project #' + d.project_id }}</div>
+              </td>
+              <td class="py-3 px-3">
+                <span class="inline-block px-1.5 py-0.2 rounded text-[10px] font-bold uppercase bg-secondary text-foreground border border-border mb-0.5">
+                  {{ d.dispute_category }}
+                </span>
+                <div class="font-semibold text-foreground">{{ d.dispute_title }}</div>
+                <div class="text-[11px] text-muted-foreground line-clamp-2 max-w-sm">{{ d.description }}</div>
+              </td>
+              <td class="py-3 px-3 text-right font-mono font-bold text-foreground">
+                ৳{{ d.claimed_amount | number:'1.2-2' }}
+              </td>
+              <td class="py-3 px-3 text-right font-mono font-bold text-purple-600 dark:text-purple-400">
+                ৳{{ d.approved_deduction_amount | number:'1.2-2' }}
+              </td>
+              <td class="py-3 px-3 text-center">
+                <span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold uppercase" [ngClass]="getDisputeStatusClass(d.status)">
+                  {{ d.status }}
+                </span>
+              </td>
+              <td class="py-3 px-3 font-mono text-[11px] text-muted-foreground">{{ d.raised_date }}</td>
+              <td class="py-3 px-3 text-right">
+                <app-custom-button
+                  *ngIf="d.status === 'OPEN' || d.status === 'UNDER_MEDIATION'"
+                  variant="outline"
+                  (btnClick)="openResolveModal(d)"
+                  label="Resolve"
+                  icon="ri-check-line"
+                ></app-custom-button>
+                <span *ngIf="d.status !== 'OPEN' && d.status !== 'UNDER_MEDIATION'" class="text-[11px] text-muted-foreground italic">
+                  Resolved on {{ d.resolved_date }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 4: STATUTORY & HSE COMPLIANCE -->
+    <div *ngIf="currentTab() === 'COMPLIANCE'" class="pt-2">
+      <div class="overflow-x-auto rounded-xl border border-border">
+        <table class="w-full text-left text-xs text-foreground">
+          <thead class="bg-secondary/60 text-muted-foreground uppercase tracking-wider text-[11px] font-semibold border-b border-border">
+            <tr>
+              <th class="py-3 px-3">Contractor Entity</th>
+              <th class="py-3 px-3">e-TIN & Tax Circle</th>
+              <th class="py-3 px-3">BIN / VAT Reg #</th>
+              <th class="py-3 px-3">Trade License & Expiry</th>
+              <th class="py-3 px-3">Workmen Insurance Policy</th>
+              <th class="py-3 px-3 text-center">Safety Compliance</th>
+              <th class="py-3 px-3 text-center">Incidents</th>
+              <th class="py-3 px-3 text-right">Bank Status</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border/60">
+            <tr *ngFor="let c of contractors()" class="hover:bg-secondary/30 transition-colors">
+              <td class="py-3 px-3">
+                <div class="font-bold text-foreground">{{ c.company_name }}</div>
+                <div class="text-[11px] text-muted-foreground font-mono">{{ c.contractor_code }}</div>
+              </td>
+              <td class="py-3 px-3 font-mono">
+                <div>{{ c.tin_number || 'N/A' }}</div>
+                <div class="text-[10px] text-muted-foreground font-sans">{{ c.tax_circle || 'Circle Not Specified' }}</div>
+              </td>
+              <td class="py-3 px-3 font-mono">{{ c.bin_number || 'N/A' }}</td>
+              <td class="py-3 px-3">
+                <div class="font-mono">{{ c.trade_license_number || 'N/A' }}</div>
+                <div class="text-[10px] text-muted-foreground font-mono">
+                  Exp: {{ c.trade_license_expiry || 'Not Recorded' }}
+                </div>
+              </td>
+              <td class="py-3 px-3">
+                <div class="font-mono text-foreground font-medium">{{ c.insurance_policy_number || 'N/A' }}</div>
+                <div class="text-[10px] text-muted-foreground">
+                  Cov: ৳{{ c.insurance_coverage_amount | number:'1.0-0' }}
+                </div>
+              </td>
+              <td class="py-3 px-3 text-center">
+                <span *ngIf="c.safety_compliant" class="inline-flex items-center gap-1 text-emerald-500 font-bold text-xs">
+                  <i class="ri-check-line"></i> Compliant
+                </span>
+                <span *ngIf="!c.safety_compliant" class="inline-flex items-center gap-1 text-red-500 font-bold text-xs">
+                  <i class="ri-close-line"></i> Non-Compliant
+                </span>
+                <div *ngIf="c.safety_officer_name" class="text-[10px] text-muted-foreground">
+                  {{ c.safety_officer_name }}
+                </div>
+              </td>
+              <td class="py-3 px-3 text-center font-mono font-bold" [class.text-red-500]="c.safety_incident_count > 0">
+                {{ c.safety_incident_count }}
+              </td>
+              <td class="py-3 px-3 text-right">
+                <div *ngIf="c.bank_account_number" class="text-emerald-500 font-semibold text-xs flex items-center justify-end gap-1">
+                  <i class="ri-bank-line"></i>
+                  <span>{{ c.bank_name }}</span>
+                </div>
+                <div *ngIf="!c.bank_account_number" class="text-amber-500 text-xs">
+                  Pending Bank Details
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </app-card-container>
+
+  <!-- MODAL 1: REVIEW ONBOARDING STATUS -->
+  <div *ngIf="showStatusModal()" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="w-full max-w-md bg-card border border-border rounded-2xl shadow-2xl p-6 flex flex-col gap-4">
+      <div class="flex items-center justify-between pb-3 border-b border-border">
+        <h3 class="text-base font-bold text-foreground">Review Contractor Onboarding Status</h3>
+        <button type="button" (click)="showStatusModal.set(false)" class="text-muted-foreground hover:text-foreground">
+          <i class="ri-close-line text-lg"></i>
+        </button>
+      </div>
+
+      <div class="text-xs text-muted-foreground">
+        Contractor: <strong class="text-foreground">{{ selectedContractorForStatus()?.company_name }}</strong>
+        ({{ selectedContractorForStatus()?.contractor_code }})
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-foreground mb-1.5">Compliance Onboarding Status *</label>
+        <app-searchable-select
+          categoryCode="CONTRACTOR_ONBOARDING_STATUS"
+          [(ngModel)]="newOnboardingStatus"
+          placeholder="Select Status"
+          [allowCreateNew]="true"
+        ></app-searchable-select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-foreground mb-1.5">Review Remarks / Conditions</label>
+        <app-custom-textarea
+          [(ngModel)]="statusRemarks"
+          rows="3"
+          placeholder="Due diligence notes, audit results or enlistment conditions..."
+        ></app-custom-textarea>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-3 border-t border-border">
+        <app-custom-button
+          variant="outline"
+          (btnClick)="showStatusModal.set(false)"
+          label="Cancel"
+        ></app-custom-button>
+        <app-custom-button
+          variant="primary"
+          (btnClick)="saveStatusReview()"
+          [loading]="isSavingModal()"
+          label="Save Review Status"
+          icon="ri-check-line"
+        ></app-custom-button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 2: ADD RATE ITEM -->
+  <div *ngIf="showRateModal()" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="w-full max-w-xl bg-card border border-border rounded-2xl shadow-2xl p-6 flex flex-col gap-4">
+      <div class="flex items-center justify-between pb-3 border-b border-border">
+        <h3 class="text-base font-bold text-foreground">Add Approved Trade Rate Item</h3>
+        <button type="button" (click)="showRateModal.set(false)" class="text-muted-foreground hover:text-foreground">
+          <i class="ri-close-line text-lg"></i>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+        <div>
+          <label class="block text-xs font-medium text-foreground mb-1">Contractor *</label>
+          <app-searchable-select
+            [options]="contractorOptions()"
+            [(ngModel)]="rateForm.contractor_id"
+            placeholder="Select Contractor"
+            [allowCreateNew]="false"
+          ></app-searchable-select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-foreground mb-1">Project Link (Optional)</label>
+          <app-searchable-select
+            [options]="projectOptions()"
+            [(ngModel)]="rateForm.project_id"
+            placeholder="All Projects (Global Rate)"
+            [allowCreateNew]="false"
+          ></app-searchable-select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-foreground mb-1">Item Code</label>
+          <app-custom-input
+            [(ngModel)]="rateForm.item_code"
+            placeholder="Auto-generated if empty"
+          ></app-custom-input>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-foreground mb-1">Trade Item Name *</label>
+          <app-custom-input
+            [(ngModel)]="rateForm.trade_item_name"
+            placeholder="e.g. Column Concrete Casting"
+          ></app-custom-input>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-foreground mb-1">Unit of Measure (UOM) *</label>
+          <app-custom-input
+            [(ngModel)]="rateForm.unit_of_measure"
+            placeholder="SFT, CFT, KG, RFT, TON"
+          ></app-custom-input>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-foreground mb-1">Approved Unit Rate (BDT) *</label>
+          <app-custom-input
+            type="number"
+            [(ngModel)]="rateForm.approved_unit_rate"
+            placeholder="28.50"
+          ></app-custom-input>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-foreground mb-1">Scope & Responsibility Boundary Definition</label>
+        <app-custom-textarea
+          [(ngModel)]="rateForm.scope_boundary_definition"
+          rows="2"
+          placeholder="Demarcate inclusions/exclusions to prevent duplicate billing (e.g. Includes shuttering labor & props; excludes steel rebar)."
+        ></app-custom-textarea>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-3 border-t border-border">
+        <app-custom-button
+          variant="outline"
+          (btnClick)="showRateModal.set(false)"
+          label="Cancel"
+        ></app-custom-button>
+        <app-custom-button
+          variant="primary"
+          (btnClick)="saveRate()"
+          [loading]="isSavingModal()"
+          label="Save Rate Item"
+          icon="ri-check-line"
+        ></app-custom-button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 3: RAISE DISPUTE -->
+  <div *ngIf="showDisputeModal()" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="w-full max-w-xl bg-card border border-border rounded-2xl shadow-2xl p-6 flex flex-col gap-4">
+      <div class="flex items-center justify-between pb-3 border-b border-border">
+        <h3 class="text-base font-bold text-foreground">Raise Subcontractor Dispute or Claim</h3>
+        <button type="button" (click)="showDisputeModal.set(false)" class="text-muted-foreground hover:text-foreground">
+          <i class="ri-close-line text-lg"></i>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+        <div>
+          <label class="block text-xs font-medium text-foreground mb-1">Contractor *</label>
+          <app-searchable-select
+            [options]="contractorOptions()"
+            [(ngModel)]="disputeForm.contractor_id"
+            placeholder="Select Contractor"
+            [allowCreateNew]="false"
+          ></app-searchable-select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-foreground mb-1">Project *</label>
+          <app-searchable-select
+            [options]="projectOptions()"
+            [(ngModel)]="disputeForm.project_id"
+            placeholder="Select Project"
+            [allowCreateNew]="false"
+          ></app-searchable-select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-foreground mb-1">Dispute Classification *</label>
+          <app-searchable-select
+            categoryCode="DISPUTE_CATEGORY"
+            [(ngModel)]="disputeForm.dispute_category"
+            placeholder="Select Category"
+            [allowCreateNew]="true"
+          ></app-searchable-select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-foreground mb-1">Claimed Variance Amount (BDT) *</label>
+          <app-custom-input
+            type="number"
+            [(ngModel)]="disputeForm.claimed_amount"
+            placeholder="Amount in dispute"
+          ></app-custom-input>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-foreground mb-1">Dispute Title *</label>
+        <app-custom-input
+          [(ngModel)]="disputeForm.dispute_title"
+          placeholder="e.g. Rebar Cutting Wastage Exceeded 2.5% Tolerance on Floor 4"
+        ></app-custom-input>
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-foreground mb-1">Detailed Description & Engineering Findings *</label>
+        <app-custom-textarea
+          [(ngModel)]="disputeForm.description"
+          rows="3"
+          placeholder="Specify exact quantities, drawings, joint measurement sheets, or inspection failure references..."
+        ></app-custom-textarea>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-3 border-t border-border">
+        <app-custom-button
+          variant="outline"
+          (btnClick)="showDisputeModal.set(false)"
+          label="Cancel"
+        ></app-custom-button>
+        <app-custom-button
+          variant="primary"
+          (btnClick)="saveDispute()"
+          [loading]="isSavingModal()"
+          label="File Site Dispute"
+          icon="ri-alert-line"
+        ></app-custom-button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 4: RESOLVE DISPUTE -->
+  <div *ngIf="showResolveModal()" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="w-full max-w-md bg-card border border-border rounded-2xl shadow-2xl p-6 flex flex-col gap-4">
+      <div class="flex items-center justify-between pb-3 border-b border-border">
+        <h3 class="text-base font-bold text-foreground">Resolve Subcontractor Claim</h3>
+        <button type="button" (click)="showResolveModal.set(false)" class="text-muted-foreground hover:text-foreground">
+          <i class="ri-close-line text-lg"></i>
+        </button>
+      </div>
+
+      <div class="text-xs text-muted-foreground">
+        Dispute: <strong class="text-foreground">{{ selectedDisputeForResolve()?.dispute_code }}</strong> -
+        {{ selectedDisputeForResolve()?.dispute_title }}
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-foreground mb-1.5">Resolution Decision *</label>
+        <app-searchable-select
+          categoryCode="DISPUTE_STATUS"
+          [(ngModel)]="resolveForm.status"
+          placeholder="Select Resolution Status"
+          [allowCreateNew]="true"
+        ></app-searchable-select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-foreground mb-1.5">Approved Deduction Amount (BDT)</label>
+        <app-custom-input
+          type="number"
+          [(ngModel)]="resolveForm.approved_deduction_amount"
+          placeholder="Deduction from next RA bill"
+        ></app-custom-input>
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-foreground mb-1.5">Resolution Notes & Agreement Sign-off *</label>
+        <app-custom-textarea
+          [(ngModel)]="resolveForm.resolution_notes"
+          rows="3"
+          placeholder="State terms of settlement, contractor representative acknowledgement, or deduction memo..."
+        ></app-custom-textarea>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-3 border-t border-border">
+        <app-custom-button
+          variant="outline"
+          (btnClick)="showResolveModal.set(false)"
+          label="Cancel"
+        ></app-custom-button>
+        <app-custom-button
+          variant="primary"
+          (btnClick)="saveResolveDispute()"
+          [loading]="isSavingModal()"
+          label="Apply Resolution"
+          icon="ri-check-line"
+        ></app-custom-button>
+      </div>
+    </div>
+  </div>
+
+</div>

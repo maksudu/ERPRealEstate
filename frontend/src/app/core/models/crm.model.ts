@@ -157,15 +157,19 @@ export interface LeadAssignment {
   assignment_method: string;
   assignment_reason?: string | null;
   response_sla_hours?: number | null;
+  response_sla_deadline?: string | null;
   is_active: boolean;
+  status?: string | null;
   escalated_at?: string | null;
   escalation_reason?: string | null;
+  escalated_to_manager_name?: string | null;
   assigned_at?: string | null;
   released_at?: string | null;
   assigned_to_name?: string | null;
   assigned_by_name?: string | null;
   lead_name?: string | null;
   lead_code?: string | null;
+  primary_phone?: string | null;
 }
 
 export interface LeadAssignmentPaginatedResponse {
@@ -402,3 +406,159 @@ export interface LeadConversionMetrics {
   source_distribution: { [key: string]: number };
   total_verified_customers: number;
 }
+
+// ============================================================
+// 4.1 CRM Dashboard & Sales KPIs Models
+// ============================================================
+
+export interface CrmExecutiveKpis {
+  total_leads: number;
+  total_leads_target: number;
+  total_leads_mom_growth: number;
+  qualified_leads: number;
+  qualified_leads_percentage: number;
+  hot_leads_count: number;
+  warm_leads_count: number;
+  site_visits_total: number;
+  site_visits_scheduled: number;
+  site_visits_completed: number;
+  site_visits_completion_rate: number;
+  bookings_count: number;
+  booking_conversion_rate: number;
+  booking_total_value_bdt: number;
+  first_response_avg_hours: number;
+  contact_rate_percentage: number;
+  unassigned_leads_count: number;
+  overdue_followups_count: number;
+}
+
+export interface CrmLeadVelocity {
+  today: number;
+  this_week: number;
+  this_month: number;
+  today_growth: number;
+  this_week_growth: number;
+  this_month_growth: number;
+}
+
+export interface CrmProjectDistribution {
+  project_id?: number | null;
+  project_name: string;
+  lead_count: number;
+  qualified_count: number;
+  site_visits_count: number;
+  bookings_count: number;
+  conversion_rate: number;
+  sales_target_units: number;
+  sales_target_achievement_pct: number;
+}
+
+export interface CrmSourceDistribution {
+  source_id: string;
+  source_name: string;
+  lead_count: number;
+  percentage: number;
+  conversion_count: number;
+  conversion_rate: number;
+}
+
+export interface CrmCampaignPerformance {
+  campaign_name: string;
+  utm_source: string;
+  utm_campaign?: string | null;
+  leads_count: number;
+  qualified_count: number;
+  bookings_count: number;
+  conversion_rate: number;
+}
+
+export interface CrmSalesRepPerformance {
+  sales_rep_id?: number | null;
+  sales_rep_name: string;
+  email?: string | null;
+  assigned_leads: number;
+  contacted_count: number;
+  contact_rate_pct: number;
+  site_visits_completed: number;
+  bookings_count: number;
+  conversion_rate: number;
+  avg_response_hours: number;
+}
+
+export interface CrmPipelineFunnelStage {
+  stage_key: string;
+  stage_label: string;
+  count: number;
+  drop_off_count: number;
+  conversion_rate_from_first: number;
+  stage_to_stage_rate: number;
+}
+
+export interface CrmLostReasonAnalysis {
+  lost_reason: string;
+  count: number;
+  percentage: number;
+  lost_deal_value_bdt: number;
+}
+
+export interface CrmBrokerReferralPerformance {
+  partner_type: string;
+  partner_name: string;
+  contact_phone?: string | null;
+  leads_referred: number;
+  qualified_count: number;
+  bookings_count: number;
+  total_booked_value_bdt: number;
+  commission_accrued_bdt: number;
+}
+
+export interface CrmLeadAgeingBracket {
+  bracket_label: string;
+  count: number;
+  percentage: number;
+  inactive_count: number;
+}
+
+export interface CrmDashboardResponse {
+  kpis: CrmExecutiveKpis;
+  velocity: CrmLeadVelocity;
+  pipeline_funnel: CrmPipelineFunnelStage[];
+  by_project: CrmProjectDistribution[];
+  by_source: CrmSourceDistribution[];
+  by_campaign: CrmCampaignPerformance[];
+  by_sales_rep: CrmSalesRepPerformance[];
+  lost_reasons: CrmLostReasonAnalysis[];
+  broker_referrals: CrmBrokerReferralPerformance[];
+  lead_ageing: CrmLeadAgeingBracket[];
+  generated_at: string;
+}
+
+export interface CrmDrilldownLeadItem {
+  id: number;
+  lead_code?: string | null;
+  lead_name: string;
+  primary_phone: string;
+  email?: string | null;
+  lead_source_id: string;
+  lead_stage: string;
+  health_grade?: string | null;
+  priority: string;
+  project_id?: number | null;
+  project_name?: string | null;
+  assigned_sales_rep_id?: number | null;
+  sales_rep_name?: string | null;
+  lead_score: number;
+  budget_range_max?: number | null;
+  first_contacted_at?: string | null;
+  created_at?: string | null;
+}
+
+export interface CrmDrilldownResponse {
+  widget_type: string;
+  filter_value?: string | null;
+  total: number;
+  limit: number;
+  offset: number;
+  items: CrmDrilldownLeadItem[];
+}
+

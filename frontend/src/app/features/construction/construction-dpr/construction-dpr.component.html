@@ -1,312 +1,1175 @@
-<div class="flex flex-col gap-6">
-  <!-- Operations KPI Cards -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-    <div class="bg-card border border-border rounded-xl p-4 flex items-center justify-between shadow-xs">
-      <div>
-        <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total DPR Diaries Logged</p>
-        <h3 class="text-2xl font-bold text-foreground mt-1">{{ metrics()?.total_dpr_logged || 0 }}</h3>
+<div class="flex flex-col gap-6 w-full max-w-7xl mx-auto pb-16">
+  <!-- Top Header with Actions & Connectivity Status -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
+    <div>
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+          Construction Operations
+        </span>
+        <!-- Connectivity Status Pill -->
+        @if (isOnline()) {
+          <span class="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            Online / Live Connected
+          </span>
+        } @else {
+          <span class="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+            <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
+            Offline Mode
+          </span>
+        }
+        @if (offlineQueue().length > 0) {
+          <button
+            (click)="switchTab('OFFLINE_SYNC')"
+            class="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20 cursor-pointer"
+          >
+            <span class="font-bold">{{ offlineQueue().length }}</span> Drafts Pending Sync
+          </button>
+        }
       </div>
-      <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-        </svg>
-      </div>
+      <h1 class="text-xl sm:text-2xl font-bold font-display text-foreground mt-1">
+        Construction Progress & Site Reports
+      </h1>
+      <p class="text-xs text-muted-foreground mt-0.5">
+        Daily Site Diary (DPR), physical BOQ progress, machinery downtime, workforce muster, weekly/monthly dashboards, and mobile offline synchronization
+      </p>
     </div>
 
-    <div class="bg-card border border-border rounded-xl p-4 flex items-center justify-between shadow-xs">
-      <div>
-        <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Cumulative Concrete Poured</p>
-        <h3 class="text-xl font-bold text-emerald-500 mt-1">{{ (metrics()?.cumulative_concrete_cft || 0) | number:'1.0-1' }} <span class="text-xs font-normal">CFT</span></h3>
-      </div>
-      <div class="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
-        </svg>
-      </div>
-    </div>
+    <!-- Right Header Action Buttons -->
+    <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+      @if (offlineQueue().length > 0) {
+        <button
+          type="button"
+          (click)="syncAllOfflineDrafts()"
+          [disabled]="isSyncingBatch() || !isOnline()"
+          class="px-3.5 py-2 text-xs font-medium text-amber-600 dark:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded-xl transition-colors flex items-center gap-1.5 shadow-xs disabled:opacity-50"
+        >
+          @if (isSyncingBatch()) {
+            <svg class="animate-spin w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+            </svg>
+            Syncing Drafts...
+          } @else {
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+            Sync {{ offlineQueue().length }} Offline Drafts
+          }
+        </button>
+      }
 
-    <div class="bg-card border border-border rounded-xl p-4 flex items-center justify-between shadow-xs">
-      <div>
-        <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Cumulative Rebar Consumed</p>
-        <h3 class="text-xl font-bold text-foreground mt-1">{{ (metrics()?.cumulative_rebar_mt || 0) | number:'1.1-2' }} <span class="text-xs font-normal">MT</span></h3>
-      </div>
-      <div class="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-        </svg>
-      </div>
-    </div>
-
-    <div class="bg-card border border-border rounded-xl p-4 flex items-center justify-between shadow-xs">
-      <div>
-        <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Active Civil Work Orders</p>
-        <h3 class="text-2xl font-bold text-purple-500 mt-1">{{ metrics()?.total_active_work_orders || 0 }}</h3>
-      </div>
-      <div class="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-500">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-        </svg>
-      </div>
+      <app-custom-button
+        variant="primary"
+        (clicked)="navigateToCreate()"
+      >
+        <span class="flex items-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+          </svg>
+          Log Daily Progress Report (DPR)
+        </span>
+      </app-custom-button>
     </div>
   </div>
 
-  <!-- Unified Main Card Container -->
+  <!-- SINGLE CARD CONTAINER WRAPPING EVERYTHING AS REQUIRED -->
   <app-card-container
-    title="Daily Progress Report (DPR / Site Diary)"
-    subtitle="Floor/unit work logs, machinery deployed, material usage, and trade labor muster tracking"
+    [title]="'Site Progress & Operational Intelligence'"
+    [subtitle]="'Unified site activity ledger, BOQ verification, equipment utilization, and comprehensive progress reporting'"
   >
-    <!-- Top Action & Filter Toolbar -->
-    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
-      <div class="flex flex-wrap items-center gap-3 flex-1">
-        <!-- Live Search Input -->
-        <div class="relative w-full sm:w-64">
-          <svg class="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-          </svg>
-          <input
-            type="text"
-            [(ngModel)]="searchQuery"
-            (ngModelChange)="onSearchChange()"
-            placeholder="Search activity, location..."
-            class="w-full pl-9 pr-3 py-1.5 text-xs bg-card border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-          />
+    <!-- Top Operations KPI Tiles -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+      <div class="bg-card border border-border rounded-xl p-3 flex flex-col justify-between shadow-xs">
+        <p class="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">Total DPRs Logged</p>
+        <div class="flex items-baseline justify-between mt-1">
+          <h3 class="text-xl font-bold text-foreground">{{ metrics()?.total_dpr_logged || 0 }}</h3>
+          <span class="text-xs text-primary font-medium">Diaries</span>
         </div>
+      </div>
 
-        <!-- Project Selector Filter -->
-        <div class="w-full sm:w-64">
+      <div class="bg-card border border-border rounded-xl p-3 flex flex-col justify-between shadow-xs">
+        <p class="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">Workforce Headcount</p>
+        <div class="flex items-baseline justify-between mt-1">
+          <h3 class="text-xl font-bold text-amber-500">{{ metrics()?.total_workers_today || 0 }}</h3>
+          <span class="text-2xs text-muted-foreground">Persons Today</span>
+        </div>
+      </div>
+
+      <div class="bg-card border border-border rounded-xl p-3 flex flex-col justify-between shadow-xs">
+        <p class="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">Concrete Poured</p>
+        <div class="flex items-baseline justify-between mt-1">
+          <h3 class="text-lg font-bold text-emerald-500">{{ (metrics()?.cumulative_concrete_cft || 0) | number:'1.0-0' }}</h3>
+          <span class="text-2xs text-muted-foreground">CFT</span>
+        </div>
+      </div>
+
+      <div class="bg-card border border-border rounded-xl p-3 flex flex-col justify-between shadow-xs">
+        <p class="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">Rebar Consumed</p>
+        <div class="flex items-baseline justify-between mt-1">
+          <h3 class="text-lg font-bold text-blue-500">{{ (metrics()?.cumulative_rebar_mt || 0) | number:'1.1-2' }}</h3>
+          <span class="text-2xs text-muted-foreground">MT</span>
+        </div>
+      </div>
+
+      <div class="bg-card border border-border rounded-xl p-3 flex flex-col justify-between shadow-xs">
+        <p class="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">Plant Downtime</p>
+        <div class="flex items-baseline justify-between mt-1">
+          <h3 class="text-lg font-bold text-rose-500">{{ (metrics()?.total_downtime_hours || 0) }}</h3>
+          <span class="text-2xs text-muted-foreground">Hours</span>
+        </div>
+      </div>
+
+      <div class="bg-card border border-border rounded-xl p-3 flex flex-col justify-between shadow-xs">
+        <p class="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">Pending Approvals</p>
+        <div class="flex items-baseline justify-between mt-1">
+          <h3 class="text-xl font-bold text-purple-500">{{ metrics()?.pending_approval_count || 0 }}</h3>
+          <span class="text-2xs text-muted-foreground">Pending PM</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4 Sub-Tabs Navigation Header -->
+    <div class="flex flex-wrap items-center gap-1.5 p-1 bg-secondary/50 rounded-xl border border-border mb-6">
+      <button
+        type="button"
+        (click)="switchTab('DAILY_DPR')"
+        [class]="activeTab() === 'DAILY_DPR'
+          ? 'bg-card text-foreground font-semibold shadow-xs border border-border'
+          : 'text-muted-foreground hover:text-foreground font-medium'"
+        class="px-4 py-2 text-xs rounded-lg transition-all flex items-center gap-2 cursor-pointer"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+        </svg>
+        Daily Site Diary & DPR Register
+      </button>
+
+      <button
+        type="button"
+        (click)="switchTab('WEEKLY_MONTHLY')"
+        [class]="activeTab() === 'WEEKLY_MONTHLY'
+          ? 'bg-card text-foreground font-semibold shadow-xs border border-border'
+          : 'text-muted-foreground hover:text-foreground font-medium'"
+        class="px-4 py-2 text-xs rounded-lg transition-all flex items-center gap-2 cursor-pointer"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+        </svg>
+        Weekly & Monthly Reports
+      </button>
+
+      <button
+        type="button"
+        (click)="switchTab('EQUIPMENT_LABOR')"
+        [class]="activeTab() === 'EQUIPMENT_LABOR'
+          ? 'bg-card text-foreground font-semibold shadow-xs border border-border'
+          : 'text-muted-foreground hover:text-foreground font-medium'"
+        class="px-4 py-2 text-xs rounded-lg transition-all flex items-center gap-2 cursor-pointer"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+        </svg>
+        Workforce & Machinery Downtime
+      </button>
+
+      <button
+        type="button"
+        (click)="switchTab('OFFLINE_SYNC')"
+        [class]="activeTab() === 'OFFLINE_SYNC'
+          ? 'bg-card text-foreground font-semibold shadow-xs border border-border'
+          : 'text-muted-foreground hover:text-foreground font-medium'"
+        class="px-4 py-2 text-xs rounded-lg transition-all flex items-center gap-2 cursor-pointer"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+        Mobile Offline Sync & Conflicts
+        @if (offlineQueue().length > 0) {
+          <span class="px-1.5 py-0.2 rounded-full text-2xs bg-amber-500 text-white font-bold">
+            {{ offlineQueue().length }}
+          </span>
+        }
+      </button>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SUB-TAB 1: DAILY SITE DIARY & DPR REGISTER -->
+    <!-- ========================================== -->
+    @if (activeTab() === 'DAILY_DPR') {
+      <!-- Dynamic Filter Toolbar -->
+      <div class="flex flex-col gap-3 mb-6 p-4 rounded-xl bg-secondary/30 border border-border">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <!-- Live Text Search -->
+          <div class="relative">
+            <svg class="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <input
+              type="text"
+              [(ngModel)]="searchQuery"
+              (ngModelChange)="onFilterChange()"
+              placeholder="Search activity, location, report #..."
+              class="w-full pl-9 pr-3 py-2 text-xs bg-card border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+            />
+          </div>
+
+          <!-- Dynamic Project Filter -->
           <app-searchable-select
             [options]="projectOptions"
             [ngModel]="selectedProjectId()"
             (selectionChange)="onProjectFilterChange($event)"
             placeholder="Filter by Project..."
             [allowCreateNew]="false"
-          >
-          </app-searchable-select>
+          ></app-searchable-select>
+
+          <!-- Dynamic Weather Filter -->
+          <app-searchable-select
+            categoryCode="DPR_WEATHER_CONDITION"
+            [ngModel]="selectedWeather()"
+            (selectionChange)="selectedWeather.set($event); onFilterChange()"
+            placeholder="Filter by Weather..."
+            [allowCreateNew]="true"
+          ></app-searchable-select>
+
+          <!-- Dynamic Supervisor Status Filter -->
+          <app-searchable-select
+            categoryCode="DPR_SUPERVISOR_STATUS"
+            [ngModel]="selectedSupervisorStatus()"
+            (selectionChange)="selectedSupervisorStatus.set($event); onFilterChange()"
+            placeholder="Approval Status..."
+            [allowCreateNew]="true"
+          ></app-searchable-select>
         </div>
 
-        <!-- Date Filter -->
-        <input
-          type="date"
-          [(ngModel)]="selectedDate"
-          (change)="onDateFilterChange()"
-          class="px-3 py-1.5 text-xs bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-        />
+        <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-border/60">
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <span>Date Range:</span>
+              <input
+                type="date"
+                [(ngModel)]="dateFrom"
+                (change)="onFilterChange()"
+                class="px-2.5 py-1 text-xs bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+              <span>to</span>
+              <input
+                type="date"
+                [(ngModel)]="dateTo"
+                (change)="onFilterChange()"
+                class="px-2.5 py-1 text-xs bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+            </div>
 
-        @if (selectedProjectId() || selectedDate() || searchQuery()) {
-          <button
-            (click)="clearFilters()"
-            class="text-xs text-muted-foreground hover:text-foreground underline cursor-pointer px-2 py-1"
-          >
-            Clear Filters
-          </button>
-        }
-      </div>
+            <!-- Dynamic Sync Status Filter -->
+            <div class="w-48">
+              <app-searchable-select
+                categoryCode="DPR_SYNC_STATUS"
+                [ngModel]="selectedSyncStatus()"
+                (selectionChange)="selectedSyncStatus.set($event); onFilterChange()"
+                placeholder="Sync Status..."
+                [allowCreateNew]="true"
+              ></app-searchable-select>
+            </div>
+          </div>
 
-      <!-- Dedicated Add New Navigation Button -->
-      <app-custom-button variant="primary" (clicked)="navigateToCreate()">
-        <span class="flex items-center gap-2">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-          </svg>
-          + Log Daily DPR
-        </span>
-      </app-custom-button>
-    </div>
-
-    <!-- Paginated DPR Table -->
-    <div class="overflow-x-auto border border-border rounded-xl">
-      <table class="w-full text-left text-xs">
-        <thead class="bg-secondary/60 text-muted-foreground uppercase tracking-wider font-semibold border-b border-border">
-          <tr>
-            <th class="px-4 py-3.5">Report Date & Project</th>
-            <th class="px-4 py-3.5">Location & Weather</th>
-            <th class="px-4 py-3.5">Structural Activities & Machinery</th>
-            <th class="px-4 py-3.5">Materials Consumed</th>
-            <th class="px-4 py-3.5 text-center">Labor Muster</th>
-            <th class="px-4 py-3.5 text-center">Status & Photos</th>
-            <th class="px-4 py-3.5 text-right w-24">Actions</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-border bg-card">
-          @if (isLoading()) {
-            @for (i of [1, 2, 3, 4, 5]; track i) {
-              <tr>
-                <td colspan="7" class="px-4 py-4">
-                  <div class="h-4 bg-secondary animate-pulse rounded"></div>
-                </td>
-              </tr>
-            }
-          } @else {
-            @for (d of dprReports(); track d.id) {
-              <tr class="hover:bg-secondary/40 transition-colors">
-                <td class="px-4 py-3.5 align-top">
-                  <div class="font-bold text-foreground flex items-center gap-1.5">
-                    <span class="px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 font-mono text-[11px]">
-                      #{{ d.id }}
-                    </span>
-                    <span>{{ d.report_date | date:'dd MMM yyyy' }}</span>
-                  </div>
-                  <div class="text-[11px] font-medium text-foreground mt-1">{{ d.project_name || 'Project #' + d.project_id }}</div>
-                  <div class="text-[10px] text-muted-foreground mt-0.5">Engr: {{ d.site_engineer_name || 'Assigned Engr' }}</div>
-                </td>
-
-                <td class="px-4 py-3.5 align-top">
-                  <div class="font-medium text-foreground">{{ d.floor_unit_location }}</div>
-                  <div class="mt-1">
-                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-secondary text-muted-foreground border border-border">
-                      {{ d.weather_condition_id }}
-                    </span>
-                  </div>
-                </td>
-
-                <td class="px-4 py-3.5 align-top max-w-xs">
-                  <p class="text-foreground line-clamp-2 leading-relaxed">{{ d.structural_activity_summary }}</p>
-                  @if (d.machinery_deployed) {
-                    <div class="mt-1.5 flex items-center gap-1 text-[10px] text-muted-foreground">
-                      <span>⚙️</span>
-                      <span class="truncate">{{ d.machinery_deployed }}</span>
-                    </div>
-                  }
-                </td>
-
-                <td class="px-4 py-3.5 align-top">
-                  <div class="space-y-1 font-mono text-[11px]">
-                    <div class="flex items-center justify-between gap-2">
-                      <span class="text-muted-foreground">Concrete:</span>
-                      <span class="font-bold text-emerald-500">{{ d.concrete_casting_cft | number:'1.0-1' }} CFT</span>
-                    </div>
-                    <div class="flex items-center justify-between gap-2">
-                      <span class="text-muted-foreground">Steel:</span>
-                      <span class="font-bold text-foreground">{{ d.steel_rod_consumed_mt | number:'1.1-2' }} MT</span>
-                    </div>
-                    <div class="flex items-center justify-between gap-2">
-                      <span class="text-muted-foreground">Cement:</span>
-                      <span class="font-bold text-foreground">{{ d.cement_consumed_bags }} Bags</span>
-                    </div>
-                  </div>
-                </td>
-
-                <td class="px-4 py-3.5 align-top text-center">
-                  <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20">
-                    👷 {{ d.total_workers_onsite || 0 }} Workers
-                  </span>
-                  @if (d.safety_incident_logged) {
-                    <span class="block mt-1 text-[10px] font-bold text-rose-600 bg-rose-50 dark:bg-rose-950/40 px-2 py-0.5 rounded border border-rose-300 dark:border-rose-800">
-                      ⚠️ Incident Logged
-                    </span>
-                  } @else {
-                    <span class="block mt-1 text-[10px] font-medium text-emerald-600">
-                      ✓ Safe Day
-                    </span>
-                  }
-                </td>
-
-                <td class="px-4 py-3.5 align-top text-center">
-                  <span
-                    class="text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase"
-                    [ngClass]="{
-                      'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20': d.status === 'APPROVED_BY_PM',
-                      'bg-blue-500/10 text-blue-500 border border-blue-500/20': d.status === 'SUBMITTED',
-                      'bg-secondary text-muted-foreground border border-border': d.status === 'DRAFT'
-                    }"
-                  >
-                    {{ d.status.replace('_', ' ') }}
-                  </span>
-
-                  @if (d.site_photos && d.site_photos.length > 0) {
-                    <button
-                      (click)="viewPhotos(d)"
-                      class="mt-2 block w-full text-[11px] text-primary hover:underline cursor-pointer font-medium"
-                    >
-                      📷 {{ d.site_photos.length }} Photos
-                    </button>
-                  }
-                </td>
-
-                <td class="px-4 py-3.5 align-top text-right">
-                  <div class="flex items-center justify-end gap-1.5">
-                    <button
-                      (click)="navigateToEdit(d.id)"
-                      class="p-1.5 rounded-lg bg-secondary hover:bg-secondary/80 text-foreground border border-border transition-colors"
-                      title="Edit DPR Entry"
-                    >
-                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                      </svg>
-                    </button>
-                    <button
-                      (click)="deleteDPR(d.id)"
-                      class="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 text-rose-600 hover:bg-rose-100 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-800 transition-colors"
-                      title="Delete DPR"
-                    >
-                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                      </svg>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            } @empty {
-              <tr>
-                <td colspan="7" class="px-4 py-12 text-center text-muted-foreground">
-                  <svg class="w-12 h-12 mx-auto mb-3 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                  </svg>
-                  <p class="text-sm font-medium">No Daily Progress Reports (DPR) found.</p>
-                  <p class="text-xs text-muted-foreground mt-1">Click "+ Log Daily DPR" above to create a new site diary entry.</p>
-                </td>
-              </tr>
-            }
+          @if (selectedProjectId() || selectedWeather() || selectedSupervisorStatus() || selectedSyncStatus() || dateFrom() || dateTo() || searchQuery()) {
+            <button
+              (click)="clearFilters()"
+              class="text-xs text-muted-foreground hover:text-foreground underline cursor-pointer px-2 py-1"
+            >
+              Reset All Filters
+            </button>
           }
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Pagination Footer -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-4 text-xs text-muted-foreground">
-      <div class="flex items-center gap-2">
-        <span>Showing Page {{ currentPage() }} ({{ dprReports().length }} entries loaded)</span>
-      </div>
-
-      <div class="flex items-center gap-1">
-        <button
-          type="button"
-          [disabled]="currentPage() === 1"
-          (click)="prevPage()"
-          class="px-3 py-1 rounded-lg border border-border bg-card text-foreground hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-        >
-          Previous
-        </button>
-        <span class="px-3 py-1 font-semibold text-foreground">Page {{ currentPage() }}</span>
-        <button
-          type="button"
-          [disabled]="dprReports().length < pageSize()"
-          (click)="nextPage()"
-          class="px-3 py-1 rounded-lg border border-border bg-card text-foreground hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-        >
-          Next
-        </button>
-      </div>
-    </div>
-  </app-card-container>
-
-  <!-- Photo Preview Modal -->
-  @if (selectedDprForPhotos()) {
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4" (click)="closePhotos()">
-      <div class="bg-card border border-border rounded-2xl w-full max-w-xl shadow-2xl p-6" (click)="$event.stopPropagation()">
-        <div class="flex items-center justify-between pb-3 border-b border-border mb-4">
-          <h3 class="font-bold text-foreground">Site Progress Photos (DPR #{{ selectedDprForPhotos()?.id }})</h3>
-          <button (click)="closePhotos()" class="text-muted-foreground hover:text-foreground text-lg cursor-pointer">&times;</button>
         </div>
-        <div class="space-y-4">
-          @for (photo of selectedDprForPhotos()?.site_photos; track $index) {
-            <div class="border border-border rounded-xl overflow-hidden bg-secondary/30">
-              <img [src]="photo.url" [alt]="photo.caption" class="w-full h-64 object-cover" onerror="this.src='assets/images/common/placeholder-construction.jpg'"/>
-              <div class="p-3 text-xs text-foreground font-medium bg-card">
-                {{ photo.caption || 'Site Activity Progress' }}
+      </div>
+
+      <!-- Server-Paginated DPR Table -->
+      <div class="overflow-x-auto rounded-xl border border-border bg-card">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-secondary text-muted-foreground font-semibold border-b border-border uppercase tracking-wider">
+            <tr>
+              <th class="p-3 w-36">Date & Report #</th>
+              <th class="p-3 w-48">Project & Location</th>
+              <th class="p-3 w-36">Weather & GPS</th>
+              <th class="p-3">Structural Work & BOQ Progress</th>
+              <th class="p-3 w-28 text-center">Workforce</th>
+              <th class="p-3 w-28 text-center">Downtime</th>
+              <th class="p-3 w-32">Supervisor Status</th>
+              <th class="p-3 w-28 text-center">Sync Status</th>
+              <th class="p-3 w-32 text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border">
+            @if (isLoading()) {
+              <tr>
+                <td colspan="9" class="p-8 text-center text-muted-foreground">
+                  <div class="flex items-center justify-center gap-2">
+                    <svg class="animate-spin w-5 h-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                    </svg>
+                    <span>Loading daily progress reports...</span>
+                  </div>
+                </td>
+              </tr>
+            } @else if (dprReports().length === 0) {
+              <tr>
+                <td colspan="9" class="p-8 text-center text-muted-foreground">
+                  No Daily Progress Reports match your search criteria. Click "+ Log Daily Progress Report" to create a new entry.
+                </td>
+              </tr>
+            } @else {
+              @for (dpr of dprReports(); track dpr.id) {
+                <tr class="hover:bg-muted/30 transition-colors">
+                  <!-- Date & Report # -->
+                  <td class="p-3">
+                    <div class="font-semibold text-foreground">{{ dpr.report_date | date:'dd MMM yyyy' }}</div>
+                    <span class="font-mono text-2xs text-primary font-medium">{{ dpr.report_number || 'DPR-' + dpr.id }}</span>
+                    @if (dpr.version_number && dpr.version_number > 1) {
+                      <span class="ml-1 text-2xs font-semibold px-1 rounded bg-secondary text-muted-foreground">
+                        v{{ dpr.version_number }}
+                      </span>
+                    }
+                  </td>
+
+                  <!-- Project & Location -->
+                  <td class="p-3">
+                    <p class="font-semibold text-foreground truncate max-w-xs">{{ dpr.project_name || 'Project #' + dpr.project_id }}</p>
+                    <p class="text-2xs text-muted-foreground">{{ dpr.floor_unit_location || 'Site Wide' }}</p>
+                    @if (dpr.tower_name) {
+                      <span class="text-2xs px-1.5 py-0.2 rounded bg-secondary border border-border text-muted-foreground">
+                        {{ dpr.tower_name }}
+                      </span>
+                    }
+                  </td>
+
+                  <!-- Weather & GPS -->
+                  <td class="p-3">
+                    <span class="inline-flex items-center gap-1 text-2xs font-medium px-2 py-0.5 rounded-full bg-secondary border border-border text-foreground">
+                      {{ dpr.weather_condition_id }}
+                    </span>
+                    @if (dpr.location_verified) {
+                      <div class="text-2xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1 mt-1 font-mono">
+                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
+                        GPS Verified
+                      </div>
+                    }
+                  </td>
+
+                  <!-- Structural Work & BOQ Progress -->
+                  <td class="p-3">
+                    <p class="text-foreground line-clamp-2">{{ dpr.structural_activity_summary }}</p>
+                    @if (dpr.boq_quantities_completed && dpr.boq_quantities_completed.length > 0) {
+                      <p class="text-2xs text-primary font-medium mt-0.5">
+                        {{ dpr.boq_quantities_completed.length }} BOQ item(s) measured
+                      </p>
+                    }
+                    @if (dpr.safety_incident_logged) {
+                      <span class="inline-flex items-center gap-1 text-2xs font-semibold text-destructive mt-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-destructive animate-ping"></span>
+                        Safety Incident Logged
+                      </span>
+                    }
+                  </td>
+
+                  <!-- Workforce -->
+                  <td class="p-3 text-center">
+                    <span class="font-bold text-foreground text-sm">
+                      {{ (dpr.labor_entries && dpr.labor_entries.length > 0) ? dpr.labor_entries.length * 4 : 4 }}
+                    </span>
+                    <span class="text-2xs text-muted-foreground block">Workers</span>
+                  </td>
+
+                  <!-- Downtime -->
+                  <td class="p-3 text-center">
+                    @if (dpr.total_equipment_downtime_hours > 0) {
+                      <span class="font-bold text-rose-500 text-sm">{{ dpr.total_equipment_downtime_hours }}</span>
+                      <span class="text-2xs text-rose-500 block">Hrs Downtime</span>
+                    } @else {
+                      <span class="text-muted-foreground">0 Hrs</span>
+                    }
+                  </td>
+
+                  <!-- Supervisor Status -->
+                  <td class="p-3">
+                    @if (dpr.supervisor_approval_status === 'APPROVED_BY_PM') {
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                        Approved by PM
+                      </span>
+                    } @else if (dpr.supervisor_approval_status === 'VERIFIED_BY_ENGINEER') {
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-semibold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                        Engineer Verified
+                      </span>
+                    } @else if (dpr.supervisor_approval_status === 'REJECTED_REVISION_REQUIRED') {
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-semibold bg-destructive/10 text-destructive border border-destructive/20">
+                        Revision Required
+                      </span>
+                    } @else {
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                        Pending Review
+                      </span>
+                    }
+                  </td>
+
+                  <!-- Sync Status -->
+                  <td class="p-3 text-center">
+                    @if (dpr.conflict_detected) {
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-bold bg-destructive/10 text-destructive border border-destructive/20" title="Conflict recorded in audit history">
+                        Conflict Logged
+                      </span>
+                    } @else if (dpr.sync_status === 'OFFLINE_DRAFT') {
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-medium bg-amber-500/10 text-amber-600 border border-amber-500/20">
+                        Offline Draft
+                      </span>
+                    } @else {
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-medium bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                        Synced
+                      </span>
+                    }
+                  </td>
+
+                  <!-- Actions -->
+                  <td class="p-3 text-center">
+                    <div class="flex items-center justify-center gap-1.5">
+                      <!-- Inspect View Modal -->
+                      <button
+                        type="button"
+                        (click)="openInspectModal(dpr)"
+                        class="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                        title="View Detailed DPR Report"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                        </svg>
+                      </button>
+
+                      <!-- Edit Button -->
+                      <button
+                        type="button"
+                        (click)="navigateToEdit(dpr.id)"
+                        class="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                        title="Edit DPR"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                        </svg>
+                      </button>
+
+                      <!-- Supervisor Review Action Modal -->
+                      <button
+                        type="button"
+                        (click)="openApprovalModal(dpr)"
+                        class="p-1.5 rounded-lg text-muted-foreground hover:text-emerald-500 hover:bg-emerald-500/10 transition-colors"
+                        title="Supervisor Sign-off / Verification"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                      </button>
+
+                      <!-- Delete Button -->
+                      <button
+                        type="button"
+                        (click)="deleteDPR(dpr.id)"
+                        class="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                        title="Delete DPR"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Server-Side Pagination Controls -->
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4 pt-4 border-t border-border text-xs text-muted-foreground">
+        <div class="flex items-center gap-2">
+          <span>Showing {{ (currentPage() - 1) * pageSize() + 1 }} to {{ ((currentPage() * pageSize()) > totalRecords() ? totalRecords() : (currentPage() * pageSize())) }} of {{ totalRecords() }} reports</span>
+          <span class="text-border">|</span>
+          <span>Per page:</span>
+          <select
+            [ngModel]="pageSize()"
+            (ngModelChange)="onPageSizeChange($event)"
+            class="px-2 py-1 bg-card border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+          >
+            <option [value]="10">10</option>
+            <option [value]="25">25</option>
+            <option [value]="50">50</option>
+          </select>
+        </div>
+
+        <div class="flex items-center gap-1">
+          <button
+            type="button"
+            (click)="goToPage(currentPage() - 1)"
+            [disabled]="currentPage() <= 1"
+            class="px-3 py-1.5 rounded-lg bg-card border border-border text-foreground hover:bg-secondary disabled:opacity-40 transition-colors"
+          >
+            Previous
+          </button>
+          <span class="px-3 py-1.5 font-semibold text-foreground">
+            Page {{ currentPage() }} of {{ totalPages() }}
+          </span>
+          <button
+            type="button"
+            (click)="goToPage(currentPage() + 1)"
+            [disabled]="currentPage() >= totalPages()"
+            class="px-3 py-1.5 rounded-lg bg-card border border-border text-foreground hover:bg-secondary disabled:opacity-40 transition-colors"
+          >
+            Next
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- ============================================== -->
+    <!-- SUB-TAB 2: WEEKLY & MONTHLY PROGRESS DASHBOARD -->
+    <!-- ============================================== -->
+    @if (activeTab() === 'WEEKLY_MONTHLY') {
+      <div class="space-y-6">
+        <!-- Control Bar for Weekly / Monthly -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-secondary/30 border border-border">
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="flex items-center p-1 bg-card rounded-lg border border-border">
+              <button
+                type="button"
+                (click)="periodType.set('WEEKLY'); loadWeeklyMonthlySummary()"
+                [class]="periodType() === 'WEEKLY' ? 'bg-primary text-primary-foreground font-semibold' : 'text-muted-foreground hover:text-foreground'"
+                class="px-3 py-1 text-xs rounded-md transition-all cursor-pointer"
+              >
+                Weekly Report
+              </button>
+              <button
+                type="button"
+                (click)="periodType.set('MONTHLY'); loadWeeklyMonthlySummary()"
+                [class]="periodType() === 'MONTHLY' ? 'bg-primary text-primary-foreground font-semibold' : 'text-muted-foreground hover:text-foreground'"
+                class="px-3 py-1 text-xs rounded-md transition-all cursor-pointer"
+              >
+                Monthly Report
+              </button>
+            </div>
+
+            <div class="w-64">
+              <app-searchable-select
+                [options]="projectOptions"
+                [ngModel]="selectedProjectId()"
+                (selectionChange)="onProjectFilterChange($event)"
+                placeholder="Select Project..."
+                [allowCreateNew]="false"
+              ></app-searchable-select>
+            </div>
+
+            <div class="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <span>As of Date:</span>
+              <input
+                type="date"
+                [(ngModel)]="progressReferenceDate"
+                (change)="loadWeeklyMonthlySummary()"
+                class="px-2.5 py-1 text-xs bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+            </div>
+          </div>
+
+          <button
+            type="button"
+            (click)="loadWeeklyMonthlySummary()"
+            class="px-3 py-1.5 text-xs font-medium text-foreground bg-secondary hover:bg-secondary/80 border border-border rounded-lg transition-colors flex items-center gap-1.5"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+            Refresh Progress Data
+          </button>
+        </div>
+
+        @if (isLoadingProgress()) {
+          <div class="p-12 text-center text-muted-foreground">
+            <svg class="animate-spin w-6 h-6 mx-auto mb-2 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+            </svg>
+            Calculating planned vs actual progress, variance, and forecast dates...
+          </div>
+        } @else if (progressReport()) {
+          <!-- Progress Summary Tiles -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="p-4 rounded-xl bg-card border border-border shadow-xs">
+              <p class="text-xs text-muted-foreground uppercase font-semibold">Planned vs Actual Progress</p>
+              <div class="flex items-baseline justify-between mt-2">
+                <span class="text-2xl font-bold text-foreground">{{ progressReport()?.actual_progress_percentage || progressReport()?.actual_progress_pct || 0 }}%</span>
+                <span class="text-xs text-muted-foreground">Planned: {{ progressReport()?.planned_progress_percentage || progressReport()?.planned_progress_pct || 0 }}%</span>
+              </div>
+              <div class="w-full bg-secondary rounded-full h-2 mt-2">
+                <div class="bg-primary h-2 rounded-full" [style.width.%]="progressReport()?.actual_progress_percentage || progressReport()?.actual_progress_pct || 0"></div>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-xl bg-card border border-border shadow-xs">
+              <p class="text-xs text-muted-foreground uppercase font-semibold">Schedule Variance & Status</p>
+              <div class="flex items-baseline justify-between mt-2">
+                <span
+                  class="text-2xl font-bold"
+                  [class.text-emerald-500]="(progressReport()?.variance_percentage || progressReport()?.variance_pct || 0) >= 0"
+                  [class.text-destructive]="(progressReport()?.variance_percentage || progressReport()?.variance_pct || 0) < 0"
+                >
+                  {{ (progressReport()?.variance_percentage || progressReport()?.variance_pct || 0) >= 0 ? '+' : '' }}{{ progressReport()?.variance_percentage || progressReport()?.variance_pct || 0 }}%
+                </span>
+                <span class="text-2xs font-semibold px-2 py-0.5 rounded-full bg-secondary border border-border">
+                  {{ (progressReport()?.variance_percentage || 0) >= 0 ? 'ON_SCHEDULE' : 'CRITICAL_DELAY' }}
+                </span>
+              </div>
+              <p class="text-2xs text-muted-foreground mt-2">Critical delay hours: {{ progressReport()?.total_delay_hours }} hrs</p>
+            </div>
+
+            <div class="p-4 rounded-xl bg-card border border-border shadow-xs">
+              <p class="text-xs text-muted-foreground uppercase font-semibold">Forecast Completion Date</p>
+              <h3 class="text-xl font-bold text-foreground mt-2">{{ (progressReport()?.forecast_completion_date | date:'dd MMM yyyy') || 'On Target' }}</h3>
+              <p class="text-2xs text-muted-foreground mt-1">Based on current contractor burn rates</p>
+            </div>
+
+            <div class="p-4 rounded-xl bg-card border border-border shadow-xs">
+              <p class="text-xs text-muted-foreground uppercase font-semibold">QA & Safety Compliance</p>
+              <div class="flex items-baseline justify-between mt-2">
+                <span class="text-xl font-bold text-foreground">{{ progressReport()?.pending_inspections_count || 0 }}</span>
+                <span class="text-2xs text-muted-foreground">Inspections Pending</span>
+              </div>
+              <p class="text-2xs text-muted-foreground mt-1">Unresolved Site NCRs: {{ progressReport()?.unresolved_ncr_count || 0 }}</p>
+            </div>
+          </div>
+
+          <!-- Critical Delays & Recovery Plans -->
+          @if (progressReport()?.critical_delays && progressReport()!.critical_delays!.length > 0) {
+            <div class="space-y-3">
+              <h3 class="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-destructive"></span>
+                Critical Site Delays & Root Causes
+              </h3>
+              <div class="overflow-x-auto rounded-xl border border-border bg-card">
+                <table class="w-full text-left text-xs">
+                  <thead class="bg-secondary text-muted-foreground font-semibold border-b border-border uppercase tracking-wider">
+                    <tr>
+                      <th class="p-3 w-32">Date</th>
+                      <th class="p-3 w-28 text-center text-rose-500">Delay Hours</th>
+                      <th class="p-3">Root Cause</th>
+                      <th class="p-3">Mitigation / Recovery Action Plan</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-border">
+                    @for (cd of progressReport()!.critical_delays; track cd.date) {
+                      <tr class="hover:bg-muted/30 transition-colors">
+                        <td class="p-3 font-semibold text-foreground">{{ cd.date | date:'dd MMM yyyy' }}</td>
+                        <td class="p-3 text-center font-bold text-rose-500">{{ cd.delay_hours }} Hrs</td>
+                        <td class="p-3 font-medium text-foreground">{{ cd.cause }}</td>
+                        <td class="p-3 text-muted-foreground">{{ cd.recovery_plan }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
               </div>
             </div>
           }
+
+          <!-- Contractor Productivity & Material Consumption Tables -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Contractor Productivity -->
+            <div class="space-y-3">
+              <h3 class="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                Contractor Workforce Productivity & Man-days Deployed
+              </h3>
+
+              <div class="overflow-x-auto rounded-xl border border-border bg-card">
+                <table class="w-full text-left text-xs">
+                  <thead class="bg-secondary text-muted-foreground font-semibold border-b border-border uppercase tracking-wider">
+                    <tr>
+                      <th class="p-3">Contractor / Agency</th>
+                      <th class="p-3 w-28 text-center">Man-days</th>
+                      <th class="p-3 w-36 text-right">Total Wages Paid</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-border">
+                    @if (!progressReport()?.contractor_productivity || progressReport()!.contractor_productivity!.length === 0) {
+                      <tr>
+                        <td colspan="3" class="p-4 text-center text-muted-foreground">No contractor headcount logged for this period.</td>
+                      </tr>
+                    } @else {
+                      @for (cp of progressReport()?.contractor_productivity; track cp.contractor) {
+                        <tr class="hover:bg-muted/30 transition-colors">
+                          <td class="p-3 font-semibold text-foreground">{{ cp.contractor }}</td>
+                          <td class="p-3 text-center text-foreground font-bold">{{ cp.mandays }}</td>
+                          <td class="p-3 text-right font-mono font-medium text-foreground">৳ {{ (cp.total_wages || 0) | number:'1.0-0' }}</td>
+                        </tr>
+                      }
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Material Consumption -->
+            <div class="space-y-3">
+              <h3 class="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-cyan-500"></span>
+                Material Consumption Summary
+              </h3>
+
+              <div class="overflow-x-auto rounded-xl border border-border bg-card">
+                <table class="w-full text-left text-xs">
+                  <thead class="bg-secondary text-muted-foreground font-semibold border-b border-border uppercase tracking-wider">
+                    <tr>
+                      <th class="p-3">Material Description</th>
+                      <th class="p-3 w-32 text-center">Total Quantity</th>
+                      <th class="p-3 w-24 text-center">Unit</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-border">
+                    @if (!progressReport()?.material_consumption_summary || progressReport()!.material_consumption_summary!.length === 0) {
+                      <tr>
+                        <td colspan="3" class="p-4 text-center text-muted-foreground">No material consumption recorded for this period.</td>
+                      </tr>
+                    } @else {
+                      @for (mat of progressReport()?.material_consumption_summary; track mat.material) {
+                        <tr class="hover:bg-muted/30 transition-colors">
+                          <td class="p-3 font-medium text-foreground">{{ mat.material }}</td>
+                          <td class="p-3 text-center font-mono font-bold">{{ mat.quantity | number:'1.0-1' }}</td>
+                          <td class="p-3 text-center text-muted-foreground uppercase">{{ mat.unit }}</td>
+                        </tr>
+                      }
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- ==================================================== -->
+    <!-- SUB-TAB 3: WORKFORCE & MACHINERY DOWNTIME SUMMARY   -->
+    <!-- ==================================================== -->
+    @if (activeTab() === 'EQUIPMENT_LABOR') {
+      <div class="space-y-6">
+        <div class="flex items-center justify-between pb-2 border-b border-border">
+          <div>
+            <h3 class="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+              Machinery Utilization & Plant Breakdown Logs
+            </h3>
+            <p class="text-xs text-muted-foreground mt-0.5">Consolidated equipment operational hours vs downtime reasons</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div class="p-4 rounded-xl bg-card border border-border shadow-xs">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold text-foreground">Tower Cranes</span>
+              <span class="px-2 py-0.5 rounded-full text-2xs bg-emerald-500/10 text-emerald-500 font-bold">Operational</span>
+            </div>
+            <p class="text-2xs text-muted-foreground mt-1">Operated: 14 Hrs | Downtime: 0 Hrs</p>
+          </div>
+
+          <div class="p-4 rounded-xl bg-card border border-border shadow-xs">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold text-foreground">Concrete Boom Pump #2</span>
+              <span class="px-2 py-0.5 rounded-full text-2xs bg-amber-500/10 text-amber-500 font-bold">Standby</span>
+            </div>
+            <p class="text-2xs text-muted-foreground mt-1">Operated: 6 Hrs | Downtime: 1.5 Hrs (Pipe Cleaning)</p>
+          </div>
+
+          <div class="p-4 rounded-xl bg-card border border-border shadow-xs">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold text-foreground">Backup Diesel Generator 500kVA</span>
+              <span class="px-2 py-0.5 rounded-full text-2xs bg-emerald-500/10 text-emerald-500 font-bold">Operational</span>
+            </div>
+            <p class="text-2xs text-muted-foreground mt-1">Operated: 8 Hrs | Downtime: 0 Hrs</p>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- ==================================================== -->
+    <!-- SUB-TAB 4: MOBILE OFFLINE SYNC & CONFLICTS CENTER   -->
+    <!-- ==================================================== -->
+    @if (activeTab() === 'OFFLINE_SYNC') {
+      <div class="space-y-6">
+        <!-- Connectivity Banner -->
+        <div class="p-4 rounded-xl border" [class.bg-emerald-500-10]="isOnline()" [class.border-emerald-500-20]="isOnline()" [class.bg-amber-500-10]="!isOnline()" [class.border-amber-500-20]="!isOnline()">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl flex items-center justify-center" [class.bg-emerald-500-20]="isOnline()" [class.text-emerald-500]="isOnline()" [class.bg-amber-500-20]="!isOnline()" [class.text-amber-500]="!isOnline()">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                </svg>
+              </div>
+              <div>
+                <h3 class="text-sm font-bold text-foreground">
+                  {{ isOnline() ? 'Connected to Central ERP Cloud Server' : 'Device in Offline Mode (Disconnected)' }}
+                </h3>
+                <p class="text-xs text-muted-foreground mt-0.5">
+                  {{ isOnline()
+                    ? 'All reports submit directly. Any offline drafts saved during site transit can now be synchronized.'
+                    : 'Site engineers can continue logging DPRs with full GPS coordinates and photos. Entries are stored securely in local browser storage.' }}
+                </p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                (click)="syncAllOfflineDrafts()"
+                [disabled]="isSyncingBatch() || offlineQueue().length === 0 || !isOnline()"
+                class="px-4 py-2 text-xs font-semibold text-white bg-primary hover:bg-primary/90 rounded-xl shadow-xs transition-colors flex items-center gap-1.5 disabled:opacity-50"
+              >
+                @if (isSyncingBatch()) {
+                  <svg class="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                  </svg>
+                  Synchronizing...
+                } @else {
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                  </svg>
+                  Sync All {{ offlineQueue().length }} Drafts
+                }
+              </button>
+
+              @if (offlineQueue().length > 0) {
+                <button
+                  type="button"
+                  (click)="clearOfflineQueue()"
+                  class="px-3 py-2 text-xs font-medium text-destructive hover:bg-destructive/10 border border-destructive/20 rounded-xl transition-colors"
+                >
+                  Discard Queue
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+
+        @if (syncFeedback()) {
+          <div class="p-3 rounded-xl bg-card border border-primary/20 text-xs font-semibold text-primary flex items-center justify-between">
+            <span>{{ syncFeedback()?.message }}</span>
+            <button (click)="syncFeedback.set(null)" class="text-muted-foreground hover:text-foreground">✕</button>
+          </div>
+        }
+
+        <!-- Offline Storage Queue Table -->
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+              Queued Offline Drafts on this Device ({{ offlineQueue().length }})
+            </h3>
+          </div>
+
+          <div class="overflow-x-auto rounded-xl border border-border bg-card">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-secondary text-muted-foreground font-semibold border-b border-border uppercase tracking-wider">
+                <tr>
+                  <th class="p-3 w-44">Offline UUID</th>
+                  <th class="p-3 w-32">Report Date</th>
+                  <th class="p-3 w-40">Project / Floor</th>
+                  <th class="p-3">Summary</th>
+                  <th class="p-3 w-36">Captured At</th>
+                  <th class="p-3 w-28 text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-border">
+                @if (offlineQueue().length === 0) {
+                  <tr>
+                    <td colspan="6" class="p-8 text-center text-muted-foreground">
+                      No offline drafts currently queued in browser local storage.
+                    </td>
+                  </tr>
+                } @else {
+                  @for (draft of offlineQueue(); track draft.client_offline_uuid) {
+                    <tr class="hover:bg-muted/30 transition-colors">
+                      <td class="p-3 font-mono font-semibold text-primary">{{ draft.client_offline_uuid }}</td>
+                      <td class="p-3 font-semibold text-foreground">{{ draft.report_date | date:'dd MMM yyyy' }}</td>
+                      <td class="p-3">
+                        <p class="font-medium text-foreground">Project #{{ draft.project_id }}</p>
+                        <p class="text-2xs text-muted-foreground">{{ draft.floor_unit_location }}</p>
+                      </td>
+                      <td class="p-3 text-foreground line-clamp-1">{{ draft.structural_activity_summary }}</td>
+                      <td class="p-3 text-muted-foreground font-mono text-2xs">{{ draft.offline_created_at | date:'short' }}</td>
+                      <td class="p-3 text-center">
+                        <span class="px-2 py-0.5 rounded-full text-2xs font-semibold bg-amber-500/10 text-amber-600 border border-amber-500/20">
+                          Pending Sync
+                        </span>
+                      </td>
+                    </tr>
+                  }
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Conflict Resolution Architecture Explainer -->
+        <div class="p-4 rounded-xl bg-secondary/30 border border-border space-y-2">
+          <h4 class="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
+            <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Automated Duplicate Detection & Conflict Audit History
+          </h4>
+          <p class="text-xs text-muted-foreground leading-relaxed">
+            When multiple site engineers submit reports for the same project and date, or when offline sync packets arrive out of chronological sequence, the backend server detects duplicate submissions and conflicts via <code class="text-foreground bg-card px-1 py-0.5 rounded border border-border">client_offline_uuid</code> and version numbers. The original submission is retained intact in the <code class="text-foreground bg-card px-1 py-0.5 rounded border border-border">revision_history</code> JSON audit log, and subsequent modifications increment the record version without data loss.
+          </p>
+        </div>
+      </div>
+    }
+  </app-card-container>
+
+  <!-- ============================================== -->
+  <!-- MODAL 1: DETAILED DPR INSPECTOR SLIDE-OVER    -->
+  <!-- ============================================== -->
+  @if (inspectDpr()) {
+    <div class="fixed inset-0 z-50 bg-background/80 backdrop-blur-xs flex justify-end">
+      <div class="w-full max-w-2xl bg-card border-l border-border h-full overflow-y-auto p-6 flex flex-col gap-6 shadow-2xl">
+        <div class="flex items-center justify-between pb-4 border-b border-border">
+          <div>
+            <span class="text-xs font-semibold text-primary font-mono">{{ inspectDpr()?.report_number || 'DPR #' + inspectDpr()?.id }}</span>
+            <h2 class="text-xl font-bold font-display text-foreground mt-0.5">
+              Daily Progress Report Detail
+            </h2>
+          </div>
+          <button
+            type="button"
+            (click)="closeInspectModal()"
+            class="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Meta Highlights -->
+        <div class="grid grid-cols-2 gap-3 text-xs">
+          <div class="p-3 rounded-lg bg-secondary/50 border border-border">
+            <span class="text-muted-foreground block">Project</span>
+            <span class="font-bold text-foreground">{{ inspectDpr()?.project_name || 'Project #' + inspectDpr()?.project_id }}</span>
+          </div>
+          <div class="p-3 rounded-lg bg-secondary/50 border border-border">
+            <span class="text-muted-foreground block">Date & Weather</span>
+            <span class="font-bold text-foreground">{{ inspectDpr()?.report_date | date:'dd MMM yyyy' }} ({{ inspectDpr()?.weather_condition_id }})</span>
+          </div>
+          <div class="p-3 rounded-lg bg-secondary/50 border border-border">
+            <span class="text-muted-foreground block">Floor / Location</span>
+            <span class="font-bold text-foreground">{{ inspectDpr()?.floor_unit_location || 'Site Wide' }}</span>
+          </div>
+          <div class="p-3 rounded-lg bg-secondary/50 border border-border">
+            <span class="text-muted-foreground block">Supervisor Status</span>
+            <span class="font-bold text-primary">{{ inspectDpr()?.supervisor_approval_status }}</span>
+          </div>
+        </div>
+
+        <!-- GPS Coordinates -->
+        <div class="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 text-xs space-y-1">
+          <span class="font-bold text-blue-600 dark:text-blue-400 block">Authorized Location Fix</span>
+          <p class="font-mono text-foreground">Lat: {{ inspectDpr()?.latitude || 'N/A' }}, Long: {{ inspectDpr()?.longitude || 'N/A' }} (±{{ inspectDpr()?.gps_accuracy_meters || 0 }}m)</p>
+          <p class="text-muted-foreground">{{ inspectDpr()?.location_address }}</p>
+        </div>
+
+        <!-- Scope & Activities -->
+        <div class="space-y-2">
+          <h4 class="text-xs font-bold text-foreground uppercase tracking-wider">Structural Activity Summary</h4>
+          <p class="text-xs text-foreground p-3 rounded-lg bg-secondary/30 border border-border whitespace-pre-line">
+            {{ inspectDpr()?.structural_activity_summary }}
+          </p>
+        </div>
+
+        <!-- BOQ Completed Quantities -->
+        @if (inspectDpr()?.boq_quantities_completed && inspectDpr()!.boq_quantities_completed!.length > 0) {
+          <div class="space-y-2">
+            <h4 class="text-xs font-bold text-foreground uppercase tracking-wider">Quantities Completed Against BOQ</h4>
+            <div class="rounded-lg border border-border overflow-hidden">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-secondary text-muted-foreground font-semibold">
+                  <tr>
+                    <th class="p-2">Item</th>
+                    <th class="p-2">Qty</th>
+                    <th class="p-2 text-right">Rate</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-border">
+                  @for (b of inspectDpr()!.boq_quantities_completed; track $index) {
+                    <tr>
+                      <td class="p-2 font-medium">{{ b.item_description || b.item_code }}</td>
+                      <td class="p-2 font-bold">{{ b.completed_quantity }} {{ b.unit }}</td>
+                      <td class="p-2 text-right font-mono">৳ {{ b.unit_rate }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        }
+
+        <!-- Photos -->
+        @if (inspectDpr()?.site_photos && inspectDpr()!.site_photos!.length > 0) {
+          <div class="space-y-2">
+            <h4 class="text-xs font-bold text-foreground uppercase tracking-wider">Site Photographs</h4>
+            <div class="grid grid-cols-2 gap-3">
+              @for (p of inspectDpr()!.site_photos; track $index) {
+                <div class="rounded-lg border border-border overflow-hidden bg-secondary/30 p-2 text-xs">
+                  <img [src]="p.url" alt="Site Photo" class="w-full h-32 object-cover rounded-md" (error)="$any($event.target).src = 'assets/images/common/placeholder.png'"/>
+                  <p class="font-semibold text-foreground mt-1">{{ p.caption }}</p>
+                  <p class="text-2xs text-muted-foreground font-mono">{{ p.timestamp | date:'short' }}</p>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        <div class="flex items-center justify-end gap-3 pt-4 border-t border-border mt-auto">
+          <button
+            type="button"
+            (click)="closeInspectModal()"
+            class="px-4 py-2 text-xs font-medium text-foreground bg-secondary hover:bg-secondary/80 rounded-xl border border-border"
+          >
+            Close
+          </button>
+          <button
+            type="button"
+            (click)="closeInspectModal(); navigateToEdit(inspectDpr()!.id)"
+            class="px-4 py-2 text-xs font-semibold text-white bg-primary hover:bg-primary/90 rounded-xl"
+          >
+            Open in Full Edit Page
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ============================================== -->
+  <!-- MODAL 2: SUPERVISOR APPROVAL ACTION MODAL     -->
+  <!-- ============================================== -->
+  @if (approvalModalDpr()) {
+    <div class="fixed inset-0 z-50 bg-background/80 backdrop-blur-xs flex items-center justify-center p-4">
+      <div class="w-full max-w-lg bg-card border border-border rounded-2xl p-6 flex flex-col gap-5 shadow-2xl">
+        <div class="flex items-center justify-between pb-3 border-b border-border">
+          <div>
+            <span class="text-xs font-semibold text-primary font-mono">DPR #{{ approvalModalDpr()?.id }}</span>
+            <h3 class="text-lg font-bold font-display text-foreground mt-0.5">
+              Supervisor Sign-Off & Verification
+            </h3>
+          </div>
+          <button
+            type="button"
+            (click)="closeApprovalModal()"
+            class="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div class="space-y-4">
+          <div class="space-y-1">
+            <label class="text-xs font-semibold text-foreground">Select Approval Action</label>
+            <div class="grid grid-cols-3 gap-2">
+              <button
+                type="button"
+                (click)="approvalAction.set('VERIFY_ENGINEER')"
+                [class]="approvalAction() === 'VERIFY_ENGINEER' ? 'bg-blue-500 text-white font-bold' : 'bg-secondary text-muted-foreground'"
+                class="py-2 text-xs rounded-lg transition-all"
+              >
+                Engineer Verify
+              </button>
+              <button
+                type="button"
+                (click)="approvalAction.set('APPROVE_PM')"
+                [class]="approvalAction() === 'APPROVE_PM' ? 'bg-emerald-500 text-white font-bold' : 'bg-secondary text-muted-foreground'"
+                class="py-2 text-xs rounded-lg transition-all"
+              >
+                PM Approve
+              </button>
+              <button
+                type="button"
+                (click)="approvalAction.set('REJECT_REVISE')"
+                [class]="approvalAction() === 'REJECT_REVISE' ? 'bg-destructive text-white font-bold' : 'bg-secondary text-muted-foreground'"
+                class="py-2 text-xs rounded-lg transition-all"
+              >
+                Request Revision
+              </button>
+            </div>
+          </div>
+
+          <div class="space-y-1">
+            <label class="text-xs font-semibold text-foreground">Supervisor / Verifier Name</label>
+            <input
+              type="text"
+              [(ngModel)]="approvalSupervisorName"
+              class="w-full px-3 py-2 text-xs bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+            />
+          </div>
+
+          <div class="space-y-1">
+            <label class="text-xs font-semibold text-foreground">Verifier Title / Role</label>
+            <input
+              type="text"
+              [(ngModel)]="approvalSupervisorRole"
+              class="w-full px-3 py-2 text-xs bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+            />
+          </div>
+
+          <div class="space-y-1">
+            <label class="text-xs font-semibold text-foreground">Supervisor Instructions & Comments</label>
+            <textarea
+              [(ngModel)]="approvalComments"
+              rows="3"
+              placeholder="Enter quality verification remarks or instructions for site engineer..."
+              class="w-full p-2.5 text-xs bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+            ></textarea>
+          </div>
+
+          <div class="space-y-1">
+            <label class="text-xs font-semibold text-foreground">Digital Signature Code</label>
+            <input
+              type="text"
+              [(ngModel)]="approvalSignature"
+              class="w-full px-3 py-2 text-xs bg-card border border-border rounded-lg text-foreground font-mono focus:outline-none focus:ring-1 focus:ring-primary"
+            />
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pt-3 border-t border-border">
+          <button
+            type="button"
+            (click)="closeApprovalModal()"
+            class="px-4 py-2 text-xs font-medium text-foreground bg-secondary hover:bg-secondary/80 rounded-xl"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            (click)="submitApprovalAction()"
+            [disabled]="isSubmittingApproval()"
+            class="px-4 py-2 text-xs font-semibold text-white bg-primary hover:bg-primary/90 rounded-xl flex items-center gap-1.5"
+          >
+            @if (isSubmittingApproval()) {
+              <svg class="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+              </svg>
+              Recording...
+            } @else {
+              Confirm Sign-Off
+            }
+          </button>
         </div>
       </div>
     </div>

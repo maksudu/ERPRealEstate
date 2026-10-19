@@ -29,7 +29,9 @@ import {
   CustomerDuplicateCheckResponse,
   CustomerMergeRequest,
   CustomerServiceRequest,
-  ServiceRequestPaginatedResponse
+  ServiceRequestPaginatedResponse,
+  CrmDashboardResponse,
+  CrmDrilldownResponse
 } from '../models/crm.model';
 
 export interface LeadTableFilters {
@@ -437,5 +439,29 @@ export class CrmService {
 
   submitWebsiteInquiry(payload: WebsiteInquiryPayload): Observable<any> {
     return this.http.post<any>(`${this.baseUrl}/webhooks/website-inquiry`, payload);
+  }
+
+  // ============================================================
+  // 4.1 CRM Dashboard & Sales KPIs
+  // ============================================================
+  getCrmDashboardKpis(filters?: { project_id?: number; sales_rep_id?: number; date_from?: string; date_to?: string }): Observable<CrmDashboardResponse> {
+    let params = new HttpParams();
+    if (filters?.project_id) params = params.set('project_id', String(filters.project_id));
+    if (filters?.sales_rep_id) params = params.set('sales_rep_id', String(filters.sales_rep_id));
+    if (filters?.date_from) params = params.set('date_from', filters.date_from);
+    if (filters?.date_to) params = params.set('date_to', filters.date_to);
+    return this.http.get<CrmDashboardResponse>(`${this.baseUrl}/dashboard/kpis`, { params });
+  }
+
+  getCrmDashboardDrilldown(widgetType: string, filters?: { filter_value?: string; project_id?: number; sales_rep_id?: number; search?: string; limit?: number; offset?: number }): Observable<CrmDrilldownResponse> {
+    let params = new HttpParams()
+      .set('widget_type', widgetType)
+      .set('limit', String(filters?.limit ?? 20))
+      .set('offset', String(filters?.offset ?? 0));
+    if (filters?.filter_value) params = params.set('filter_value', filters.filter_value);
+    if (filters?.project_id) params = params.set('project_id', String(filters.project_id));
+    if (filters?.sales_rep_id) params = params.set('sales_rep_id', String(filters.sales_rep_id));
+    if (filters?.search) params = params.set('search', filters.search);
+    return this.http.get<CrmDrilldownResponse>(`${this.baseUrl}/dashboard/drilldown`, { params });
   }
 }

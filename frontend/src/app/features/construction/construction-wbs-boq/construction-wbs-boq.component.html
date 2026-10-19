@@ -9,11 +9,16 @@
           </svg>
         </div>
         <div>
-          <h1 class="text-xl font-bold text-foreground tracking-tight">
-            Construction WBS & BOQ Hard Budget Locks
-          </h1>
+          <div class="flex items-center gap-2">
+            <h1 class="text-xl font-bold text-foreground tracking-tight">
+              WBS Scheduling & BOQ Scope Management
+            </h1>
+            <span class="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium border border-primary/20">
+              CPM, BOQ & Hard Budget Locks
+            </span>
+          </div>
           <p class="text-xs text-muted-foreground mt-0.5">
-            Work Breakdown Structure tree, 105% dynamic variance control, Variation Orders (VO) & Milestone progress tracking
+            Measurable scope estimation, rate analysis, 4 cost components (Material, Labour, Equipment, Subcontract), tender/contract baselines & 105% ceiling locks
           </p>
         </div>
       </div>
@@ -32,184 +37,1109 @@
         </app-searchable-select>
       </div>
 
-      @if (activeTab() === 'WBS') {
-        <app-custom-button
-          variant="primary"
-          (clicked)="navigateToAddWBS()">
-          <span class="flex items-center gap-1.5">
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-            </svg>
-            + Add WBS Node
-          </span>
-        </app-custom-button>
-      }
-
-      @if (activeTab() === 'BOQ' || activeTab() === 'VARIATION_ORDERS') {
-        <app-custom-button
-          variant="primary"
-          (clicked)="navigateToCreateVO()">
-          <span class="flex items-center gap-1.5">
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            + New Variation Order (VO)
-          </span>
-        </app-custom-button>
-      }
-    </div>
-  </div>
-
-  <!-- KPI Summary Banner -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 my-6">
-    <div class="p-4 rounded-xl border border-border bg-card shadow-xs">
-      <div class="flex items-center justify-between">
-        <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">BOQ Estimated Budget</span>
-        <span class="p-1.5 rounded-lg bg-blue-500/10 text-blue-500">
+      <app-custom-button
+        variant="primary"
+        (clicked)="navigateToAddWBS()">
+        <span class="flex items-center gap-1.5">
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
+          + Add WBS Node
         </span>
-      </div>
-      <p class="text-xl font-bold text-foreground mt-2 font-mono">
-        BDT {{ totalBOQBudget() | number:'1.2-2' }}
-      </p>
-      <p class="text-[11px] text-muted-foreground mt-0.5">Approved Civil & Structural Items</p>
-    </div>
+      </app-custom-button>
 
-    <div class="p-4 rounded-xl border border-border bg-card shadow-xs">
-      <div class="flex items-center justify-between">
-        <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Site Requisitioned</span>
-        <span class="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500">
+      <app-custom-button
+        variant="secondary"
+        (clicked)="navigateToAddBOQ()">
+        <span class="flex items-center gap-1.5">
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
+          + Add BOQ Item
         </span>
-      </div>
-      <p class="text-xl font-bold text-emerald-500 mt-2 font-mono">
-        BDT {{ totalRequisitioned() | number:'1.2-2' }}
-      </p>
-      <p class="text-[11px] text-muted-foreground mt-0.5">Physical Material Utilized</p>
-    </div>
+      </app-custom-button>
 
-    <div class="p-4 rounded-xl border border-border bg-card shadow-xs">
-      <div class="flex items-center justify-between">
-        <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Hard Budget Locks</span>
-        <span class="p-1.5 rounded-lg bg-rose-500/10 text-rose-500">
-          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-          </svg>
-        </span>
-      </div>
-      <p class="text-xl font-bold text-rose-500 mt-2 font-mono">
-        {{ hardLockedCount() }} Items
-      </p>
-      <p class="text-[11px] text-muted-foreground mt-0.5">Exceeded 105% Threshold</p>
-    </div>
-
-    <div class="p-4 rounded-xl border border-border bg-card shadow-xs">
-      <div class="flex items-center justify-between">
-        <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Approved Variations (VO)</span>
-        <span class="p-1.5 rounded-lg bg-purple-500/10 text-purple-500">
+      <app-custom-button
+        variant="secondary"
+        (clicked)="navigateToCreateVO()">
+        <span class="flex items-center gap-1.5">
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
+          + New VO
         </span>
-      </div>
-      <p class="text-xl font-bold text-purple-500 mt-2 font-mono">
-        {{ variationOrders().length }} Orders
-      </p>
-      <p class="text-[11px] text-muted-foreground mt-0.5">Ceiling Adjustments Logged</p>
+      </app-custom-button>
     </div>
   </div>
 
+  <!-- Real-Time Metrics Banner (Switchable between WBS and BOQ) -->
+  @if (activeTab() === 'BOQ_MASTER' || activeTab() === 'BOQ_LOCKS') {
+    <!-- BOQ Executive Cost & Rate Analysis Metrics -->
+    @if (boqMetrics(); as bm) {
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 my-6">
+        <!-- 1. Approved Contract Amount -->
+        <div class="p-4 rounded-xl border border-border bg-card shadow-xs">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Approved Contract BOQ</span>
+            <span class="p-1 rounded-md bg-emerald-500/10 text-emerald-500">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </span>
+          </div>
+          <p class="text-2xl font-bold text-emerald-500 mt-2 font-mono">
+            BDT {{ (bm.total_contract_amount / 100000) | number:'1.2-2' }} L
+          </p>
+          <p class="text-[11px] text-muted-foreground mt-0.5">
+            {{ bm.total_boq_items }} Approved Scope Items
+          </p>
+        </div>
+
+        <!-- 2. Tender Baseline Comparison -->
+        <div class="p-4 rounded-xl border border-border bg-card shadow-xs">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Tender Baseline</span>
+            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-500">
+              Original Bid
+            </span>
+          </div>
+          <p class="text-xl font-bold text-foreground mt-2 font-mono">
+            BDT {{ (bm.total_tender_amount / 100000) | number:'1.2-2' }} L
+          </p>
+          <p class="text-[11px] text-muted-foreground mt-0.5">
+            Est: BDT {{ (bm.total_estimated_amount / 100000) | number:'1.2-2' }} L
+          </p>
+        </div>
+
+        <!-- 3. Actual Incurred Cost & Variance -->
+        <div class="p-4 rounded-xl border border-border bg-card shadow-xs">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Actual Incurred Cost</span>
+            <span
+              class="text-[10px] font-bold px-1.5 py-0.5 rounded"
+              [ngClass]="bm.cost_variance_amount > 0 ? 'bg-rose-500/10 text-rose-500' : 'bg-emerald-500/10 text-emerald-500'"
+            >
+              {{ bm.cost_variance_percentage }}%
+            </span>
+          </div>
+          <p class="text-2xl font-bold text-foreground mt-2 font-mono">
+            BDT {{ (bm.total_actual_cost / 100000) | number:'1.2-2' }} L
+          </p>
+          <p class="text-[11px] text-muted-foreground mt-0.5">
+            Variance: BDT {{ (bm.cost_variance_amount / 100000) | number:'1.2-2' }} L
+          </p>
+        </div>
+
+        <!-- 4. Rate Components Breakdown -->
+        <div class="p-4 rounded-xl border border-border bg-card shadow-xs">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Cost Composition</span>
+            <span class="text-[10px] font-mono text-muted-foreground">4 Components</span>
+          </div>
+          <div class="grid grid-cols-2 gap-1.5 mt-2 text-[10px] font-mono">
+            <span class="text-blue-500">Mat: BDT {{ (bm.component_breakdown.MATERIAL / 100000) | number:'1.1-1' }}L</span>
+            <span class="text-emerald-500">Lab: BDT {{ (bm.component_breakdown.LABOUR / 100000) | number:'1.1-1' }}L</span>
+            <span class="text-amber-500">Eq: BDT {{ (bm.component_breakdown.EQUIPMENT / 100000) | number:'1.1-1' }}L</span>
+            <span class="text-purple-500">Sub: BDT {{ (bm.component_breakdown.SUBCONTRACT / 100000) | number:'1.1-1' }}L</span>
+          </div>
+        </div>
+
+        <!-- 5. Controls & Hard Lock Ceilings -->
+        <div class="p-4 rounded-xl border border-border bg-card shadow-xs">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Budget Locks</span>
+            <span class="p-1 rounded-md bg-rose-500/10 text-rose-500">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </span>
+          </div>
+          <p class="text-2xl font-bold text-foreground mt-2 font-mono">
+            {{ bm.total_locked_items }} <span class="text-xs text-rose-500 font-sans font-bold">({{ bm.total_hard_locked_items }} >105%)</span>
+          </p>
+          <p class="text-[11px] text-muted-foreground mt-0.5">VO Ceiling: BDT {{ (bm.total_variation_amount / 100000) | number:'1.2-2' }} L</p>
+        </div>
+      </div>
+    }
+  } @else {
+    <!-- WBS Schedule & CPM Metrics Banner -->
+    @if (metrics(); as m) {
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 my-6">
+        <!-- 1. Weighted Physical Progress -->
+        <div class="p-4 rounded-xl border border-border bg-card shadow-xs">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Weighted Progress</span>
+            <span class="p-1 rounded-md bg-emerald-500/10 text-emerald-500">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+              </svg>
+            </span>
+          </div>
+          <div class="flex items-baseline gap-2 mt-2">
+            <p class="text-2xl font-bold text-foreground font-mono">
+              {{ m.overall_weighted_progress }}%
+            </p>
+            <span class="text-[11px] text-muted-foreground">overall</span>
+          </div>
+          <div class="w-full bg-secondary rounded-full h-1.5 mt-2 overflow-hidden">
+            <div class="bg-emerald-500 h-1.5 rounded-full transition-all" [style.width.%]="m.overall_weighted_progress"></div>
+          </div>
+          <p class="text-[11px] text-muted-foreground mt-1.5">Weighted by Activity & Tier</p>
+        </div>
+
+        <!-- 2. Schedule Index (SPI) -->
+        <div class="p-4 rounded-xl border border-border bg-card shadow-xs">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Schedule Index (SPI)</span>
+            <span
+              class="text-[10px] font-bold px-1.5 py-0.5 rounded"
+              [ngClass]="m.schedule_performance_index >= 1.0 ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'"
+            >
+              SPI: {{ m.schedule_performance_index }}
+            </span>
+          </div>
+          <p class="text-xl font-bold text-foreground mt-2 font-mono">
+            BDT {{ (m.total_earned_value / 10000000) | number:'1.2-2' }} Cr
+          </p>
+          <p class="text-[11px] text-muted-foreground mt-0.5">
+            EV of BDT {{ (m.total_planned_value / 10000000) | number:'1.2-2' }} Cr PV
+          </p>
+        </div>
+
+        <!-- 3. Critical Path -->
+        <div class="p-4 rounded-xl border border-border bg-card shadow-xs">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Critical Path (CPM)</span>
+            <span class="p-1 rounded-md bg-rose-500/10 text-rose-500">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </span>
+          </div>
+          <p class="text-2xl font-bold text-rose-500 mt-2 font-mono">
+            {{ m.critical_path_activities }}
+          </p>
+          <p class="text-[11px] text-muted-foreground mt-0.5">Zero Float Activities</p>
+        </div>
+
+        <!-- 4. Delayed Tasks -->
+        <div class="p-4 rounded-xl border border-border bg-card shadow-xs">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Delayed Tasks</span>
+            <span class="p-1 rounded-md bg-amber-500/10 text-amber-500">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </span>
+          </div>
+          <p class="text-2xl font-bold text-amber-500 mt-2 font-mono">
+            {{ m.delayed_activities }}
+          </p>
+          <p class="text-[11px] text-muted-foreground mt-0.5">Avg Variance: {{ m.average_variance_days }} Days</p>
+        </div>
+
+        <!-- 5. Milestones -->
+        <div class="p-4 rounded-xl border border-border bg-card shadow-xs">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Milestones & Tasks</span>
+            <span class="p-1 rounded-md bg-blue-500/10 text-blue-500">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+              </svg>
+            </span>
+          </div>
+          <p class="text-2xl font-bold text-foreground mt-2 font-mono">
+            {{ m.milestones_count }} <span class="text-xs text-muted-foreground font-sans font-normal">/ {{ m.total_activities }} total</span>
+          </p>
+          <p class="text-[11px] text-muted-foreground mt-0.5">{{ m.completed_activities }} Completed</p>
+        </div>
+      </div>
+    }
+  }
+
   <!-- Navigation Tabs -->
-  <div class="flex border-b border-border mb-6">
+  <div class="flex border-b border-border mb-6 overflow-x-auto">
     <button
-      (click)="setTab('WBS')"
-      class="px-5 py-2.5 text-xs font-bold border-b-2 transition-colors cursor-pointer flex items-center gap-2"
-      [ngClass]="activeTab() === 'WBS' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'">
-      <span>🌳</span>
-      <span>WBS Milestone Hierarchy ({{ wbsNodes().length }})</span>
+      (click)="setTab('BOQ_MASTER')"
+      class="px-5 py-2.5 text-xs font-bold border-b-2 transition-colors cursor-pointer flex items-center gap-2 whitespace-nowrap"
+      [ngClass]="activeTab() === 'BOQ_MASTER' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'">
+      <span>📊</span>
+      <span>BOQ Scope & Rate Analysis ({{ boqTotalCount() }})</span>
     </button>
     <button
-      (click)="setTab('BOQ')"
-      class="px-5 py-2.5 text-xs font-bold border-b-2 transition-colors cursor-pointer flex items-center gap-2"
-      [ngClass]="activeTab() === 'BOQ' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'">
+      (click)="setTab('WBS_TABLE')"
+      class="px-5 py-2.5 text-xs font-bold border-b-2 transition-colors cursor-pointer flex items-center gap-2 whitespace-nowrap"
+      [ngClass]="activeTab() === 'WBS_TABLE' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'">
+      <span>📋</span>
+      <span>Activity Scheduling & CPM</span>
+    </button>
+    <button
+      (click)="setTab('WBS_TREE')"
+      class="px-5 py-2.5 text-xs font-bold border-b-2 transition-colors cursor-pointer flex items-center gap-2 whitespace-nowrap"
+      [ngClass]="activeTab() === 'WBS_TREE' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'">
+      <span>🌳</span>
+      <span>Deliverable Decomposition Tree</span>
+    </button>
+    <button
+      (click)="setTab('CALENDAR')"
+      class="px-5 py-2.5 text-xs font-bold border-b-2 transition-colors cursor-pointer flex items-center gap-2 whitespace-nowrap"
+      [ngClass]="activeTab() === 'CALENDAR' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'">
+      <span>📅</span>
+      <span>Project Calendar & Shifts</span>
+    </button>
+    <button
+      (click)="setTab('BOQ_LOCKS')"
+      class="px-5 py-2.5 text-xs font-bold border-b-2 transition-colors cursor-pointer flex items-center gap-2 whitespace-nowrap"
+      [ngClass]="activeTab() === 'BOQ_LOCKS' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'">
       <span>🔒</span>
-      <span>BOQ Hard Budget Locks & 105% Variance ({{ boqItems().length }})</span>
+      <span>105% Hard Budget Locks ({{ boqItems().length }})</span>
     </button>
     <button
       (click)="setTab('VARIATION_ORDERS')"
-      class="px-5 py-2.5 text-xs font-bold border-b-2 transition-colors cursor-pointer flex items-center gap-2"
+      class="px-5 py-2.5 text-xs font-bold border-b-2 transition-colors cursor-pointer flex items-center gap-2 whitespace-nowrap"
       [ngClass]="activeTab() === 'VARIATION_ORDERS' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'">
       <span>📝</span>
-      <span>Variation Orders (VO) Register ({{ variationOrders().length }})</span>
+      <span>Variation Orders ({{ variationOrders().length }})</span>
     </button>
   </div>
 
-  <!-- TAB 1: WBS Milestone Tree & Table -->
-  @if (activeTab() === 'WBS') {
-    <div class="overflow-x-auto border border-border rounded-xl">
-      <table class="w-full text-left text-xs">
-        <thead class="bg-secondary/60 text-muted-foreground uppercase tracking-wider font-semibold border-b border-border">
-          <tr>
-            <th class="px-4 py-3.5">Node Code</th>
-            <th class="px-4 py-3.5">Activity / Milestone Name</th>
-            <th class="px-4 py-3.5">Phase Category</th>
-            <th class="px-4 py-3.5">Tier</th>
-            <th class="px-4 py-3.5 text-center">Weightage</th>
-            <th class="px-4 py-3.5 text-center">Progress %</th>
-            <th class="px-4 py-3.5 text-center">Status</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-border bg-card">
-          @for (n of wbsNodes(); track n.id) {
-            <tr class="hover:bg-secondary/40 transition-colors">
-              <td class="px-4 py-3.5 font-mono font-bold text-primary">{{ n.node_code }}</td>
-              <td class="px-4 py-3.5 font-medium text-foreground">{{ n.node_name }}</td>
-              <td class="px-4 py-3.5 text-muted-foreground">{{ n.phase_category }}</td>
-              <td class="px-4 py-3.5">
-                <span class="px-2 py-0.5 rounded text-[10px] bg-secondary text-foreground border border-border">
-                  {{ n.wbs_tier }}
-                </span>
-              </td>
-              <td class="px-4 py-3.5 text-center font-mono font-semibold">{{ n.weightage_percentage }}%</td>
-              <td class="px-4 py-3.5 text-center">
-                <div class="flex items-center justify-center gap-2">
-                  <div class="w-16 bg-secondary rounded-full h-1.5 overflow-hidden">
-                    <div class="bg-primary h-1.5 rounded-full" [style.width.%]="n.progress_percentage"></div>
-                  </div>
-                  <span class="font-mono text-[11px] font-bold text-foreground">{{ n.progress_percentage }}%</span>
-                </div>
-              </td>
-              <td class="px-4 py-3.5 text-center">
-                <span
-                  class="text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase"
-                  [ngClass]="{
-                    'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20': n.status === 'COMPLETED',
-                    'bg-blue-500/10 text-blue-500 border border-blue-500/20': n.status === 'IN_PROGRESS',
-                    'bg-secondary text-muted-foreground border border-border': n.status === 'NOT_STARTED'
-                  }"
-                >
-                  {{ n.status.replace('_', ' ') }}
-                </span>
-              </td>
-            </tr>
-          } @empty {
+  <!-- ========================================================================= -->
+  <!-- TAB: BOQ Master Scope & Rate Analysis (NEW) -->
+  <!-- ========================================================================= -->
+  @if (activeTab() === 'BOQ_MASTER') {
+    <div class="flex flex-col gap-4">
+      <!-- Search & Filters Bar -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 p-3.5 rounded-xl border border-border bg-secondary/30">
+        <!-- Search Input -->
+        <div class="lg:col-span-2">
+          <input
+            type="text"
+            [(ngModel)]="boqSearchTerm"
+            (ngModelChange)="onBOQSearchChange()"
+            placeholder="Search BOQ code, description, spec..."
+            class="w-full px-3 py-2 text-xs rounded-lg border border-border bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+          />
+        </div>
+
+        <!-- Filter Phase -->
+        <div>
+          <select
+            [(ngModel)]="boqFilterPhase"
+            (ngModelChange)="onBOQFilterChange()"
+            class="w-full px-3 py-2 text-xs rounded-lg border border-border bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+          >
+            <option value="">All Phases</option>
+            <option value="SITE_PREPARATION">Site Preparation</option>
+            <option value="FOUNDATION_STRUCTURE">Foundation & Structure</option>
+            <option value="MASONRY_FINISHING">Masonry & Finishing</option>
+            <option value="MEP_WORKS">MEP Works</option>
+            <option value="EXTERNAL_WORKS">External Works</option>
+          </select>
+        </div>
+
+        <!-- Filter Category -->
+        <div>
+          <select
+            [(ngModel)]="boqFilterCategory"
+            (ngModelChange)="onBOQFilterChange()"
+            class="w-full px-3 py-2 text-xs rounded-lg border border-border bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+          >
+            <option value="">All Categories</option>
+            <option value="REBAR_STEEL">Reinforcement Steel</option>
+            <option value="READYMIX_CONCRETE">Ready-Mix Concrete</option>
+            <option value="BRICK_MASONRY">Brickwork</option>
+            <option value="CEMENT_MORTAR">Cement & Mortar</option>
+            <option value="TILES_MARBLE">Tiles & Marble</option>
+          </select>
+        </div>
+
+        <!-- Filter Stage -->
+        <div>
+          <select
+            [(ngModel)]="boqFilterStage"
+            (ngModelChange)="onBOQFilterChange()"
+            class="w-full px-3 py-2 text-xs rounded-lg border border-border bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+          >
+            <option value="">All Stages</option>
+            <option value="APPROVED_CONTRACT_BOQ">Approved Contract BOQ</option>
+            <option value="TENDER_BOQ">Tender BOQ</option>
+            <option value="REVISED_BOQ">Revised BOQ (VO Adjusted)</option>
+          </select>
+        </div>
+
+        <!-- Filter Lock / Reset -->
+        <div class="flex items-center gap-2">
+          <select
+            [(ngModel)]="boqFilterLock"
+            (ngModelChange)="onBOQFilterChange()"
+            class="w-full px-3 py-2 text-xs rounded-lg border border-border bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+          >
+            <option value="">All Locks</option>
+            <option value="LOCKED">Approved & Locked</option>
+            <option value="UNLOCKED">Unlocked / Editable</option>
+          </select>
+          <button
+            (click)="resetBOQFilters()"
+            class="p-2 rounded-lg border border-border bg-card text-muted-foreground hover:text-foreground transition-colors"
+            title="Reset Filters"
+          >
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Main BOQ Items Table -->
+      <div class="overflow-x-auto border border-border rounded-xl">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-secondary/60 text-muted-foreground uppercase tracking-wider font-semibold border-b border-border">
             <tr>
-              <td colspan="7" class="px-4 py-12 text-center text-muted-foreground">
-                No WBS milestone nodes found for this project. Click "+ Add WBS Node" above.
-              </td>
+              <th class="px-4 py-3.5">Item Code & Description</th>
+              <th class="px-4 py-3.5">Building & Phase</th>
+              <th class="px-4 py-3.5 text-right">Estimated Qty</th>
+              <th class="px-4 py-3.5 text-right">Unit Rate (BDT)</th>
+              <th class="px-4 py-3.5 text-right">Estimated Amount</th>
+              <th class="px-4 py-3.5 text-right">Contract vs Actual</th>
+              <th class="px-4 py-3.5 text-center">Cost Breakdown</th>
+              <th class="px-4 py-3.5 text-center">Version & Lock</th>
+              <th class="px-4 py-3.5 text-right w-32">Actions</th>
             </tr>
-          }
-        </tbody>
-      </table>
+          </thead>
+          <tbody class="divide-y divide-border bg-card">
+            @for (b of boqItemsPaged(); track b.id) {
+              <tr class="hover:bg-secondary/40 transition-colors">
+                <!-- Code & Description -->
+                <td class="px-4 py-3.5">
+                  <div class="flex items-center gap-1.5">
+                    <span class="font-mono font-bold text-primary">{{ b.item_code || 'BOQ-' + b.id }}</span>
+                    @if (b.wbs_node_code) {
+                      <span class="text-[10px] px-1 py-0.2 rounded bg-secondary font-mono text-muted-foreground" title="Linked WBS Node">
+                        {{ b.wbs_node_code }}
+                      </span>
+                    }
+                  </div>
+                  <div class="font-bold text-foreground mt-0.5">{{ b.item_description }}</div>
+                  @if (b.specification) {
+                    <p class="text-[10px] text-muted-foreground truncate max-w-xs mt-0.5">{{ b.specification }}</p>
+                  }
+                </td>
+
+                <!-- Building & Phase -->
+                <td class="px-4 py-3.5">
+                  <span class="text-xs text-foreground font-medium block">
+                    {{ b.tower_name || 'Entire Project' }}
+                  </span>
+                  <span class="text-[10px] text-muted-foreground block mt-0.5">
+                    {{ b.wbs_phase_id.replace('_', ' ') }}
+                  </span>
+                </td>
+
+                <!-- Quantity & UOM -->
+                <td class="px-4 py-3.5 text-right font-mono">
+                  <span class="font-bold text-foreground block">{{ b.estimated_quantity | number:'1.1-2' }}</span>
+                  <span class="text-[10px] text-muted-foreground block">{{ b.unit_of_measure_id }}</span>
+                </td>
+
+                <!-- Unit Rate -->
+                <td class="px-4 py-3.5 text-right font-mono">
+                  <span class="font-bold text-foreground">৳{{ b.estimated_unit_rate | number:'1.2-2' }}</span>
+                  <span class="text-[10px] text-muted-foreground block">/ {{ b.unit_of_measure_id }}</span>
+                </td>
+
+                <!-- Estimated Amount -->
+                <td class="px-4 py-3.5 text-right font-mono">
+                  <span class="font-bold text-primary text-xs">
+                    ৳{{ b.total_estimated_cost | number:'1.2-2' }}
+                  </span>
+                  <span class="text-[10px] text-muted-foreground block">
+                    Tender: ৳{{ (b.tender_total_amount || b.total_estimated_cost) | number:'1.0-0' }}
+                  </span>
+                </td>
+
+                <!-- Contract vs Actual -->
+                <td class="px-4 py-3.5 text-right font-mono">
+                  <div class="text-[11px] font-semibold text-foreground">
+                    Actual: ৳{{ (b.actual_cost || 0) | number:'1.2-2' }}
+                  </div>
+                  <div class="text-[10px] text-muted-foreground">
+                    Rem: {{ b.remaining_quantity | number:'1.1-2' }} {{ b.unit_of_measure_id }}
+                  </div>
+                </td>
+
+                <!-- 4 Components Badges -->
+                <td class="px-4 py-3.5 text-center">
+                  <button
+                    (click)="openBOQDetailsModal(b)"
+                    class="p-1 rounded-lg border border-border bg-secondary/40 hover:bg-secondary transition-colors inline-flex flex-col gap-0.5 text-[9px] font-mono text-left w-24"
+                    title="Click to view Rate Analysis"
+                  >
+                    <span class="text-blue-500 font-semibold truncate">M: ৳{{ b.material_rate || 0 }}</span>
+                    <span class="text-emerald-500 font-semibold truncate">L: ৳{{ b.labour_rate || 0 }}</span>
+                    <span class="text-amber-500 font-semibold truncate">E: ৳{{ b.equipment_rate || 0 }}</span>
+                    <span class="text-purple-500 font-semibold truncate">S: ৳{{ b.subcontract_rate || 0 }}</span>
+                  </button>
+                </td>
+
+                <!-- Version & Lock Status -->
+                <td class="px-4 py-3.5 text-center">
+                  @if (b.is_locked) {
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-500 border border-rose-500/20" title="Approved & Locked">
+                      🔒 v{{ b.version_no || 1 }} Locked
+                    </span>
+                  } @else {
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                      ✓ Open v{{ b.version_no || 1 }}
+                    </span>
+                  }
+                </td>
+
+                <!-- Actions -->
+                <td class="px-4 py-3.5 text-right">
+                  <div class="flex items-center justify-end gap-1.5">
+                    <button
+                      (click)="openBOQDetailsModal(b)"
+                      class="p-1.5 rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 transition-colors"
+                      title="View Rate Analysis & Specs"
+                    >
+                      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    </button>
+
+                    <button
+                      (click)="navigateToEditBOQ(b.id)"
+                      class="p-1.5 rounded-lg bg-secondary text-foreground hover:bg-secondary/80 transition-colors"
+                      title="Edit BOQ Scope"
+                    >
+                      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                      </svg>
+                    </button>
+
+                    @if (!b.is_locked) {
+                      <button
+                        (click)="lockBOQItem(b)"
+                        class="p-1.5 rounded-lg bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 transition-colors"
+                        title="Authorize & Lock BOQ Version"
+                      >
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                      </button>
+                    } @else {
+                      <button
+                        (click)="unlockBOQItem(b)"
+                        class="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 transition-colors"
+                        title="Authorized Unlock"
+                      >
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
+                        </svg>
+                      </button>
+                    }
+
+                    <button
+                      (click)="deleteBOQItem(b)"
+                      class="p-1.5 rounded-lg bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 transition-colors"
+                      title="Delete BOQ Item"
+                    >
+                      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="9" class="px-4 py-12 text-center text-muted-foreground">
+                  No BOQ line items registered for this project. Click "+ Add BOQ Item" above.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Server Pagination Controls -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
+        <span class="text-xs text-muted-foreground font-mono">
+          Showing {{ ((boqCurrentPage() - 1) * boqPageSize()) + (boqItemsPaged().length > 0 ? 1 : 0) }} to
+          {{ ((boqCurrentPage() - 1) * boqPageSize()) + boqItemsPaged().length }} of {{ boqTotalCount() }} BOQ items
+        </span>
+
+        <div class="flex items-center gap-2">
+          <button
+            [disabled]="boqCurrentPage() === 1"
+            (click)="goToBOQPage(boqCurrentPage() - 1)"
+            class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-border bg-card text-foreground hover:bg-secondary disabled:opacity-40 transition-colors"
+          >
+            Previous
+          </button>
+          <span class="text-xs font-mono px-2 text-foreground font-bold">
+            Page {{ boqCurrentPage() }} of {{ boqTotalPages() }}
+          </span>
+          <button
+            [disabled]="boqCurrentPage() === boqTotalPages()"
+            (click)="goToBOQPage(boqCurrentPage() + 1)"
+            class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-border bg-card text-foreground hover:bg-secondary disabled:opacity-40 transition-colors"
+          >
+            Next
+          </button>
+        </div>
+      </div>
     </div>
   }
 
-  <!-- TAB 2: BOQ Hard Budget Locks & 105% Variance Table -->
-  @if (activeTab() === 'BOQ') {
+  <!-- ========================================================================= -->
+  <!-- TAB 2: WBS Activities Table -->
+  <!-- ========================================================================= -->
+  @if (activeTab() === 'WBS_TABLE') {
+    <div class="flex flex-col gap-4">
+      <!-- Search & Filters Bar -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 p-3.5 rounded-xl border border-border bg-secondary/30">
+        <div class="lg:col-span-2">
+          <input
+            type="text"
+            [(ngModel)]="searchTerm"
+            (ngModelChange)="onSearchChange()"
+            placeholder="Search activity code, name, engineer..."
+            class="w-full px-3 py-2 text-xs rounded-lg border border-border bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+          />
+        </div>
+
+        <div>
+          <select
+            [(ngModel)]="filterPhase"
+            (ngModelChange)="onFilterChange()"
+            class="w-full px-3 py-2 text-xs rounded-lg border border-border bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+          >
+            <option value="">All Phases</option>
+            <option value="SITE_PREPARATION">Site Preparation</option>
+            <option value="FOUNDATION_STRUCTURE">Foundation & Structure</option>
+            <option value="MASONRY_FINISHING">Masonry & Finishing</option>
+            <option value="MEP_WORKS">MEP Works</option>
+            <option value="EXTERNAL_WORKS">External Works</option>
+          </select>
+        </div>
+
+        <div>
+          <select
+            [(ngModel)]="filterTier"
+            (ngModelChange)="onFilterChange()"
+            class="w-full px-3 py-2 text-xs rounded-lg border border-border bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+          >
+            <option value="">All Tiers</option>
+            <option value="PHASE">Phase</option>
+            <option value="SUB_PHASE">Sub-Phase</option>
+            <option value="WORK_PACKAGE">Work Package</option>
+            <option value="ACTIVITY">Activity</option>
+            <option value="TASK">Task</option>
+            <option value="MILESTONE">Milestone</option>
+          </select>
+        </div>
+
+        <div>
+          <select
+            [(ngModel)]="filterStatus"
+            (ngModelChange)="onFilterChange()"
+            class="w-full px-3 py-2 text-xs rounded-lg border border-border bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+          >
+            <option value="">All Statuses</option>
+            <option value="NOT_STARTED">Not Started</option>
+            <option value="IN_PROGRESS">In Progress</option>
+            <option value="COMPLETED">Completed</option>
+            <option value="DELAYED">Delayed</option>
+            <option value="CRITICAL_PATH">Critical Path</option>
+          </select>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <select
+            [(ngModel)]="filterCritical"
+            (ngModelChange)="onFilterChange()"
+            class="w-full px-3 py-2 text-xs rounded-lg border border-border bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+          >
+            <option value="">All Flags</option>
+            <option value="CRITICAL">Critical Path (CPM)</option>
+            <option value="MILESTONE">Milestone</option>
+          </select>
+          <button
+            (click)="resetFilters()"
+            class="p-2 rounded-lg border border-border bg-card text-muted-foreground hover:text-foreground transition-colors"
+            title="Reset Filters"
+          >
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Main WBS Table -->
+      <div class="overflow-x-auto border border-border rounded-xl">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-secondary/60 text-muted-foreground uppercase tracking-wider font-semibold border-b border-border">
+            <tr>
+              <th class="px-4 py-3.5">Activity Code & Name</th>
+              <th class="px-4 py-3.5">Phase & Tier</th>
+              <th class="px-4 py-3.5 text-right">Quantities (Ver / App)</th>
+              <th class="px-4 py-3.5 text-center">Progress %</th>
+              <th class="px-4 py-3.5">Timeline & Duration</th>
+              <th class="px-4 py-3.5">Predecessor & Lag</th>
+              <th class="px-4 py-3.5">Contractor / Engineer</th>
+              <th class="px-4 py-3.5 text-center">Status</th>
+              <th class="px-4 py-3.5 text-right w-28">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border bg-card">
+            @for (n of wbsNodes(); track n.id) {
+              <tr class="hover:bg-secondary/40 transition-colors">
+                <td class="px-4 py-3.5">
+                  <div class="flex items-center gap-2">
+                    <span class="font-mono font-bold text-primary">{{ n.node_code }}</span>
+                    @if (n.is_critical_path) {
+                      <span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-rose-500/10 text-rose-500 border border-rose-500/20">
+                        CPM
+                      </span>
+                    }
+                    @if (n.is_milestone) {
+                      <span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                        ★
+                      </span>
+                    }
+                  </div>
+                  <div class="font-semibold text-foreground mt-0.5">{{ n.node_name }}</div>
+                  @if (n.activity_type) {
+                    <span class="text-[10px] text-muted-foreground block">{{ n.activity_type }}</span>
+                  }
+                </td>
+
+                <td class="px-4 py-3.5">
+                  <span class="text-xs text-foreground font-medium block">{{ n.phase_category.replace('_', ' ') }}</span>
+                  <span class="px-1.5 py-0.5 rounded text-[10px] bg-secondary text-muted-foreground border border-border inline-block mt-0.5">
+                    {{ n.wbs_tier }}
+                  </span>
+                </td>
+
+                <td class="px-4 py-3.5 text-right font-mono">
+                  @if (n.approved_total_quantity && n.approved_total_quantity > 0) {
+                    <div class="font-bold text-foreground">
+                      {{ n.verified_completed_quantity | number:'1.1-2' }} / {{ n.approved_total_quantity | number:'1.1-2' }}
+                    </div>
+                    <span class="text-[10px] text-muted-foreground">{{ n.unit_of_measure }}</span>
+                  } @else {
+                    <span class="text-muted-foreground">--</span>
+                  }
+                </td>
+
+                <td class="px-4 py-3.5 text-center">
+                  <div class="flex items-center justify-center gap-2">
+                    <div class="w-16 bg-secondary rounded-full h-1.5 overflow-hidden">
+                      <div
+                        class="h-1.5 rounded-full"
+                        [ngClass]="n.progress_percentage >= 100 ? 'bg-emerald-500' : 'bg-primary'"
+                        [style.width.%]="n.progress_percentage"
+                      ></div>
+                    </div>
+                    <span class="font-mono text-[11px] font-bold text-foreground">{{ n.progress_percentage }}%</span>
+                  </div>
+                  <span class="text-[10px] text-muted-foreground font-mono block mt-0.5">Weight: {{ n.weightage_percentage }}%</span>
+                </td>
+
+                <td class="px-4 py-3.5">
+                  <div class="text-[11px] font-mono text-foreground font-medium">
+                    {{ n.planned_start_date }} → {{ n.planned_end_date }}
+                  </div>
+                  <div class="text-[10px] text-muted-foreground mt-0.5 flex items-center gap-2">
+                    <span>{{ n.duration_days }} Days</span>
+                    @if (n.variance_days && n.variance_days > 0) {
+                      <span class="text-rose-500 font-bold">+{{ n.variance_days }}d delay</span>
+                    }
+                  </div>
+                </td>
+
+                <td class="px-4 py-3.5">
+                  @if (n.predecessor_code) {
+                    <div class="font-mono text-xs font-semibold text-foreground">
+                      {{ n.predecessor_code }}
+                    </div>
+                    <span class="text-[10px] text-muted-foreground">
+                      {{ n.dependency_type }} (Lag: {{ n.lag_days }}d)
+                    </span>
+                  } @else {
+                    <span class="text-muted-foreground text-[11px]">Start Node</span>
+                  }
+                </td>
+
+                <td class="px-4 py-3.5">
+                  @if (n.contractor_name) {
+                    <div class="font-medium text-foreground text-xs">{{ n.contractor_name }}</div>
+                  }
+                  @if (n.responsible_engineer) {
+                    <div class="text-[11px] text-muted-foreground mt-0.5">{{ n.responsible_engineer }}</div>
+                  } @else if (!n.contractor_name) {
+                    <span class="text-muted-foreground text-[11px]">Unassigned</span>
+                  }
+                </td>
+
+                <td class="px-4 py-3.5 text-center">
+                  <span
+                    class="text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase"
+                    [ngClass]="{
+                      'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20': n.status === 'COMPLETED',
+                      'bg-blue-500/10 text-blue-500 border border-blue-500/20': n.status === 'IN_PROGRESS',
+                      'bg-amber-500/10 text-amber-500 border border-amber-500/20': n.status === 'DELAYED',
+                      'bg-rose-500/10 text-rose-500 border border-rose-500/20': n.status === 'CRITICAL_PATH',
+                      'bg-secondary text-muted-foreground border border-border': n.status === 'NOT_STARTED'
+                    }"
+                  >
+                    {{ n.status.replace('_', ' ') }}
+                  </span>
+                </td>
+
+                <td class="px-4 py-3.5 text-right">
+                  <div class="flex items-center justify-end gap-1.5">
+                    <button
+                      (click)="openProgressModal(n)"
+                      class="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 transition-colors"
+                      title="Update Progress & Delay"
+                    >
+                      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                    </button>
+                    <button
+                      (click)="navigateToEditWBS(n.id)"
+                      class="p-1.5 rounded-lg bg-secondary text-foreground hover:bg-secondary/80 transition-colors"
+                      title="Edit Node Full Details"
+                    >
+                      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                      </svg>
+                    </button>
+                    <button
+                      (click)="deleteWBSNode(n)"
+                      class="p-1.5 rounded-lg bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 transition-colors"
+                      title="Delete Node"
+                    >
+                      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="9" class="px-4 py-12 text-center text-muted-foreground">
+                  No WBS activities found matching filters. Click "+ Add WBS Node" to register work packages.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Server Pagination Controls -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
+        <span class="text-xs text-muted-foreground font-mono">
+          Showing {{ ((currentPage() - 1) * pageSize()) + (wbsNodes().length > 0 ? 1 : 0) }} to
+          {{ ((currentPage() - 1) * pageSize()) + wbsNodes().length }} of {{ totalCount() }} activities
+        </span>
+
+        <div class="flex items-center gap-2">
+          <button
+            [disabled]="currentPage() === 1"
+            (click)="goToPage(currentPage() - 1)"
+            class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-border bg-card text-foreground hover:bg-secondary disabled:opacity-40 transition-colors"
+          >
+            Previous
+          </button>
+          <span class="text-xs font-mono px-2 text-foreground font-bold">
+            Page {{ currentPage() }} of {{ totalPages() }}
+          </span>
+          <button
+            [disabled]="currentPage() === totalPages()"
+            (click)="goToPage(currentPage() + 1)"
+            class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-border bg-card text-foreground hover:bg-secondary disabled:opacity-40 transition-colors"
+          >
+            Next
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ========================================================================= -->
+  <!-- TAB 3: WBS Deliverable Decomposition Tree -->
+  <!-- ========================================================================= -->
+  @if (activeTab() === 'WBS_TREE') {
+    <div class="flex flex-col gap-4">
+      <div class="flex items-center justify-between p-4 rounded-xl border border-border bg-secondary/30">
+        <div>
+          <h2 class="text-sm font-bold text-foreground">
+            WBS Decomposition Hierarchy: {{ selectedProjectName() }}
+          </h2>
+          <p class="text-xs text-muted-foreground mt-0.5">
+            5 Master Phase Categories broken down into Work Packages and Deliverable Activities
+          </p>
+        </div>
+        <app-custom-button variant="primary" (clicked)="navigateToAddWBS()">
+          + Add Child Node
+        </app-custom-button>
+      </div>
+
+      <div class="flex flex-col gap-3">
+        @for (root of wbsTree(); track root.id) {
+          <div class="p-4 rounded-xl border border-border bg-card shadow-xs">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border/60">
+              <div class="flex items-center gap-3">
+                <span class="px-2 py-0.5 rounded text-xs font-mono font-bold bg-primary/10 text-primary border border-primary/20">
+                  {{ root.node_code }}
+                </span>
+                <div>
+                  <h3 class="text-sm font-bold text-foreground">{{ root.node_name }}</h3>
+                  <span class="text-[11px] text-muted-foreground">{{ root.phase_category.replace('_', ' ') }} • {{ root.wbs_tier }}</span>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2">
+                  <div class="w-20 bg-secondary rounded-full h-1.5 overflow-hidden">
+                    <div class="bg-primary h-1.5 rounded-full" [style.width.%]="root.progress_percentage"></div>
+                  </div>
+                  <span class="font-mono text-xs font-bold">{{ root.progress_percentage }}%</span>
+                </div>
+                <button
+                  (click)="navigateToEditWBS(root.id)"
+                  class="px-2.5 py-1 text-xs font-medium rounded-lg bg-secondary hover:bg-secondary/80 text-foreground transition-colors"
+                >
+                  Edit
+                </button>
+              </div>
+            </div>
+
+            @if (root.children && root.children.length > 0) {
+              <div class="flex flex-col gap-2 mt-3 pl-4 sm:pl-6 border-l-2 border-primary/20">
+                @for (child of root.children; track child.id) {
+                  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors">
+                    <div class="flex items-center gap-2.5">
+                      <span class="font-mono text-xs text-primary font-bold">{{ child.node_code }}</span>
+                      <span class="text-xs font-medium text-foreground">{{ child.node_name }}</span>
+                      @if (child.is_critical_path) {
+                        <span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-rose-500/10 text-rose-500 border border-rose-500/20">
+                          CPM
+                        </span>
+                      }
+                      @if (child.is_milestone) {
+                        <span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                          Milestone
+                        </span>
+                      }
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                      <span class="text-[11px] font-mono text-muted-foreground">
+                        {{ child.verified_completed_quantity || 0 }}/{{ child.approved_total_quantity || 0 }} {{ child.unit_of_measure }}
+                      </span>
+                      <span class="text-xs font-mono font-bold">{{ child.progress_percentage }}%</span>
+                      <button
+                        (click)="openProgressModal(child)"
+                        class="p-1 rounded text-emerald-500 hover:bg-emerald-500/10"
+                        title="Update Progress"
+                      >
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                }
+              </div>
+            } @else {
+              <p class="text-xs text-muted-foreground mt-3 italic pl-2">No child activities decomposed under this phase yet.</p>
+            }
+          </div>
+        } @empty {
+          <div class="p-12 text-center text-muted-foreground border border-border rounded-xl">
+            No WBS hierarchy tree registered for this project. Click "+ Add WBS Node" above.
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- ========================================================================= -->
+  <!-- TAB 4: Project Calendar, Shifts & Holidays -->
+  <!-- ========================================================================= -->
+  @if (activeTab() === 'CALENDAR') {
+    <div class="flex flex-col gap-6">
+      @if (projectCalendar(); as cal) {
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="p-5 rounded-xl border border-border bg-card shadow-xs flex flex-col gap-4">
+            <h3 class="text-sm font-bold text-foreground pb-2 border-b border-border flex items-center justify-between">
+              <span>Working Days & Schedule Rules</span>
+              <span class="text-xs font-mono text-primary font-normal">Project #{{ selectedProjectId() }}</span>
+            </h3>
+
+            <div>
+              <label class="text-xs font-semibold text-muted-foreground block mb-1">Calendar Profile Name</label>
+              <input
+                type="text"
+                [(ngModel)]="cal.calendar_name"
+                class="w-full px-3 py-2 text-xs rounded-lg border border-border bg-card text-foreground"
+              />
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="text-xs font-semibold text-muted-foreground block mb-1">Working Days / Week</label>
+                <input
+                  type="number"
+                  min="5"
+                  max="7"
+                  [(ngModel)]="cal.working_days_per_week"
+                  class="w-full px-3 py-2 text-xs rounded-lg border border-border bg-card text-foreground font-mono"
+                />
+              </div>
+              <div>
+                <label class="text-xs font-semibold text-muted-foreground block mb-1">Working Hours / Day</label>
+                <input
+                  type="number"
+                  min="4"
+                  max="16"
+                  step="0.5"
+                  [(ngModel)]="cal.working_hours_per_day"
+                  class="w-full px-3 py-2 text-xs rounded-lg border border-border bg-card text-foreground font-mono"
+                />
+              </div>
+            </div>
+
+            <div class="pt-2">
+              <span class="text-xs font-semibold text-muted-foreground block mb-1">Weekly Off-Day</span>
+              <div class="p-2.5 rounded-lg border border-border bg-secondary/30 flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+                <span class="text-xs font-bold text-foreground">FRIDAY (Bangladesh Standard Site Weekend)</span>
+              </div>
+            </div>
+
+            <div class="pt-4 border-t border-border mt-auto">
+              <app-custom-button
+                variant="primary"
+                [disabled]="isSavingCalendar()"
+                (clicked)="saveCalendar()"
+              >
+                {{ isSavingCalendar() ? 'Saving Calendar...' : 'Save Calendar Settings' }}
+              </app-custom-button>
+            </div>
+          </div>
+
+          <!-- Shifts Configuration -->
+          <div class="p-5 rounded-xl border border-border bg-card shadow-xs flex flex-col gap-4">
+            <div class="flex items-center justify-between pb-2 border-b border-border">
+              <h3 class="text-sm font-bold text-foreground">Daily Work Shifts</h3>
+              <button
+                (click)="addShift()"
+                class="text-xs font-semibold text-primary hover:underline"
+              >
+                + Add Shift
+              </button>
+            </div>
+
+            <div class="flex flex-col gap-3">
+              @for (shift of cal.shifts; track $index) {
+                <div class="p-3 rounded-lg border border-border bg-secondary/20 flex flex-col gap-2">
+                  <div class="flex items-center justify-between">
+                    <input
+                      type="text"
+                      [(ngModel)]="shift.name"
+                      class="text-xs font-bold bg-transparent text-foreground border-b border-border focus:outline-none w-44"
+                    />
+                    <button
+                      (click)="removeShift($index)"
+                      class="text-rose-500 hover:text-rose-600 text-xs font-bold"
+                      title="Remove Shift"
+                    >
+                      ×
+                    </button>
+                  </div>
+                  <div class="grid grid-cols-2 gap-2 text-xs font-mono">
+                    <div>
+                      <span class="text-[10px] text-muted-foreground block">Start Time</span>
+                      <input
+                        type="time"
+                        [(ngModel)]="shift.start_time"
+                        class="px-2 py-1 text-xs rounded border border-border bg-card text-foreground"
+                      />
+                    </div>
+                    <div>
+                      <span class="text-[10px] text-muted-foreground block">End Time</span>
+                      <input
+                        type="time"
+                        [(ngModel)]="shift.end_time"
+                        class="px-2 py-1 text-xs rounded border border-border bg-card text-foreground"
+                      />
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Holidays Register -->
+          <div class="p-5 rounded-xl border border-border bg-card shadow-xs flex flex-col gap-4">
+            <div class="flex items-center justify-between pb-2 border-b border-border">
+              <h3 class="text-sm font-bold text-foreground">Official Site Holidays</h3>
+              <button
+                (click)="addHoliday()"
+                class="text-xs font-semibold text-primary hover:underline"
+              >
+                + Add Holiday
+              </button>
+            </div>
+
+            <div class="flex flex-col gap-2.5 max-h-96 overflow-y-auto pr-1">
+              @for (h of cal.holidays; track $index) {
+                <div class="flex items-center justify-between gap-2 p-2.5 rounded-lg border border-border bg-secondary/20">
+                  <div class="flex flex-col gap-1 flex-1">
+                    <input
+                      type="text"
+                      [(ngModel)]="h.name"
+                      class="text-xs font-medium text-foreground bg-transparent border-b border-transparent focus:border-border focus:outline-none"
+                    />
+                    <input
+                      type="date"
+                      [(ngModel)]="h.date"
+                      class="text-[11px] font-mono text-muted-foreground bg-transparent border-none p-0 focus:outline-none"
+                    />
+                  </div>
+                  <button
+                    (click)="removeHoliday($index)"
+                    class="text-rose-500 hover:text-rose-600 text-xs font-bold px-2 py-1"
+                    title="Remove Holiday"
+                  >
+                    ×
+                  </button>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      } @else {
+        <div class="p-12 text-center text-muted-foreground border border-border rounded-xl">
+          Loading project calendar profile...
+        </div>
+      }
+    </div>
+  }
+
+  <!-- ========================================================================= -->
+  <!-- TAB 5: 105% BOQ Hard Budget Locks -->
+  <!-- ========================================================================= -->
+  @if (activeTab() === 'BOQ_LOCKS') {
     <div class="overflow-x-auto border border-border rounded-xl">
       <table class="w-full text-left text-xs">
         <thead class="bg-secondary/60 text-muted-foreground uppercase tracking-wider font-semibold border-b border-border">
@@ -285,7 +1215,9 @@
     </div>
   }
 
-  <!-- TAB 3: Variation Orders (VO) Table -->
+  <!-- ========================================================================= -->
+  <!-- TAB 6: Variation Orders (VO) Table -->
+  <!-- ========================================================================= -->
   @if (activeTab() === 'VARIATION_ORDERS') {
     <div class="overflow-x-auto border border-border rounded-xl">
       <table class="w-full text-left text-xs">
@@ -297,46 +1229,35 @@
             <th class="px-4 py-3.5 text-right">Approved Rate</th>
             <th class="px-4 py-3.5 text-right">Total VO Amount</th>
             <th class="px-4 py-3.5 text-center">Status</th>
-            <th class="px-4 py-3.5 text-right w-24">Action</th>
+            <th class="px-4 py-3.5">Approved By</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-border bg-card">
-          @for (v of variationOrders(); track v.id) {
+          @for (vo of variationOrders(); track vo.id) {
             <tr class="hover:bg-secondary/40 transition-colors">
-              <td class="px-4 py-3.5 font-mono font-bold text-amber-500">{{ v.vo_number }}</td>
-              <td class="px-4 py-3.5 font-medium text-foreground">BOQ Item #{{ v.boq_item_id }}</td>
-              <td class="px-4 py-3.5 text-right font-mono font-bold text-foreground">{{ v.additional_quantity | number:'1.2-2' }}</td>
-              <td class="px-4 py-3.5 text-right font-mono text-muted-foreground">BDT {{ (v.revised_rate || 0) | number:'1.2-2' }}</td>
-              <td class="px-4 py-3.5 text-right font-mono font-bold text-emerald-500">BDT {{ v.additional_budget | number:'1.2-2' }}</td>
+              <td class="px-4 py-3.5 font-mono font-bold text-primary">{{ vo.vo_number }}</td>
+              <td class="px-4 py-3.5 font-medium text-foreground">BOQ Item #{{ vo.boq_item_id }}</td>
+              <td class="px-4 py-3.5 text-right font-mono font-semibold">{{ vo.additional_quantity | number:'1.2-2' }}</td>
+              <td class="px-4 py-3.5 text-right font-mono">BDT {{ vo.revised_rate || 0 | number:'1.2-2' }}</td>
+              <td class="px-4 py-3.5 text-right font-mono font-bold text-primary">BDT {{ vo.additional_budget | number:'1.2-2' }}</td>
               <td class="px-4 py-3.5 text-center">
                 <span
-                  class="text-[10px] font-semibold px-2.5 py-0.5 rounded-full uppercase"
+                  class="text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase"
                   [ngClass]="{
-                    'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20': v.status === 'APPROVED',
-                    'bg-amber-500/10 text-amber-500 border border-amber-500/20': v.status === 'PENDING',
-                    'bg-rose-500/10 text-rose-500 border border-rose-500/20': v.status === 'REJECTED'
+                    'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20': vo.status === 'APPROVED',
+                    'bg-amber-500/10 text-amber-500 border border-amber-500/20': vo.status === 'PENDING',
+                    'bg-rose-500/10 text-rose-500 border border-rose-500/20': vo.status === 'REJECTED'
                   }"
                 >
-                  {{ v.status }}
+                  {{ vo.status }}
                 </span>
               </td>
-              <td class="px-4 py-3.5 text-right">
-                @if (v.status === 'PENDING') {
-                  <button
-                    (click)="approveVO(v)"
-                    class="px-2.5 py-1 text-xs font-semibold rounded bg-emerald-600 hover:bg-emerald-700 text-white transition-colors cursor-pointer"
-                  >
-                    Approve
-                  </button>
-                } @else {
-                  <span class="text-[11px] text-muted-foreground font-mono">Approved</span>
-                }
-              </td>
+              <td class="px-4 py-3.5 text-muted-foreground">{{ vo.approved_by_pm || 'Pending PM Review' }}</td>
             </tr>
           } @empty {
             <tr>
               <td colspan="7" class="px-4 py-12 text-center text-muted-foreground">
-                No Variation Orders logged. Click "+ New Variation Order (VO)" to expand budget ceiling.
+                No Variation Orders logged for this project. Click "+ New VO" above.
               </td>
             </tr>
           }
@@ -345,3 +1266,327 @@
     </div>
   }
 </app-card-container>
+
+<!-- ========================================================================= -->
+<!-- Rate Analysis & Technical Specification Drawer / Modal -->
+<!-- ========================================================================= -->
+@if (isBOQDetailsModalOpen(); ) {
+  @if (selectedBOQForDetails(); as item) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+      <div class="w-full max-w-3xl bg-card border border-border rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+        <!-- Header -->
+        <div class="flex items-center justify-between p-5 border-b border-border bg-secondary/20">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                {{ item.item_code || 'BOQ-' + item.id }}
+              </span>
+              <span class="text-xs px-2 py-0.5 rounded-full bg-secondary text-foreground border border-border">
+                {{ item.stage || 'APPROVED_CONTRACT_BOQ' }}
+              </span>
+            </div>
+            <h3 class="text-base font-bold text-foreground mt-1">
+              {{ item.item_description }}
+            </h3>
+          </div>
+          <button
+            (click)="closeBOQDetailsModal()"
+            class="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+          >
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Body -->
+        <div class="p-6 flex flex-col gap-5 max-h-[80vh] overflow-y-auto">
+          <!-- Rate Analysis Breakdown Cards -->
+          <div>
+            <h4 class="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">
+              1. Unit Rate Cost Composition Analysis (Per {{ item.unit_of_measure_id }})
+            </h4>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div class="p-3 rounded-xl border border-blue-500/20 bg-blue-500/5">
+                <span class="text-[10px] font-semibold text-blue-500 uppercase block">Material Supply</span>
+                <p class="text-lg font-bold font-mono text-foreground mt-1">৳{{ item.material_rate || 0 | number:'1.2-2' }}</p>
+                <span class="text-[10px] text-muted-foreground">Supply to site</span>
+              </div>
+              <div class="p-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5">
+                <span class="text-[10px] font-semibold text-emerald-500 uppercase block">Direct Labour</span>
+                <p class="text-lg font-bold font-mono text-foreground mt-1">৳{{ item.labour_rate || 0 | number:'1.2-2' }}</p>
+                <span class="text-[10px] text-muted-foreground">Gang wage rate</span>
+              </div>
+              <div class="p-3 rounded-xl border border-amber-500/20 bg-amber-500/5">
+                <span class="text-[10px] font-semibold text-amber-500 uppercase block">Equipment & Tools</span>
+                <p class="text-lg font-bold font-mono text-foreground mt-1">৳{{ item.equipment_rate || 0 | number:'1.2-2' }}</p>
+                <span class="text-[10px] text-muted-foreground">Machinery / crane</span>
+              </div>
+              <div class="p-3 rounded-xl border border-purple-500/20 bg-purple-500/5">
+                <span class="text-[10px] font-semibold text-purple-500 uppercase block">Trade Subcontract</span>
+                <p class="text-lg font-bold font-mono text-foreground mt-1">৳{{ item.subcontract_rate || 0 | number:'1.2-2' }}</p>
+                <span class="text-[10px] text-muted-foreground">Subcon overhead</span>
+              </div>
+            </div>
+            <div class="mt-2 text-right">
+              <span class="text-xs text-muted-foreground font-mono">Total Approved Unit Rate: </span>
+              <span class="text-sm font-bold font-mono text-primary">৳{{ item.estimated_unit_rate | number:'1.2-2' }} / {{ item.unit_of_measure_id }}</span>
+            </div>
+          </div>
+
+          <!-- Specifications & Notes -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="p-3.5 rounded-xl border border-border bg-secondary/20">
+              <span class="text-xs font-bold text-foreground block mb-1">Technical Specifications</span>
+              <p class="text-xs text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                {{ item.specification || 'No detailed technical specification attached.' }}
+              </p>
+            </div>
+
+            <div class="p-3.5 rounded-xl border border-border bg-secondary/20">
+              <span class="text-xs font-bold text-foreground block mb-1">Rate Analysis Justification Notes</span>
+              <p class="text-xs text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                {{ item.rate_analysis_notes || 'Standard schedule of rates applied.' }}
+              </p>
+              @if (item.supporting_document_url) {
+                <div class="mt-3 pt-2 border-t border-border/60">
+                  <a [href]="item.supporting_document_url" target="_blank" class="text-xs text-primary hover:underline font-semibold flex items-center gap-1">
+                    <span>📎 View Supporting Analysis File</span>
+                  </a>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Baselines Comparison: Tender vs Contract vs Revised -->
+          <div>
+            <h4 class="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">
+              2. Scope Baseline Audit Trail
+            </h4>
+            <div class="grid grid-cols-3 gap-3 text-xs font-mono">
+              <div class="p-3 rounded-lg border border-border bg-secondary/30">
+                <span class="text-[10px] font-semibold text-muted-foreground block">Tender BOQ</span>
+                <p class="font-bold text-foreground mt-1">{{ item.tender_quantity || item.estimated_quantity | number:'1.1-2' }} {{ item.unit_of_measure_id }}</p>
+                <span class="text-[11px] text-primary">৳{{ item.tender_total_amount || item.total_estimated_cost | number:'1.0-0' }}</span>
+              </div>
+              <div class="p-3 rounded-lg border border-emerald-500/20 bg-emerald-500/5">
+                <span class="text-[10px] font-semibold text-emerald-500 block">Contract BOQ</span>
+                <p class="font-bold text-emerald-500 mt-1">{{ item.contract_quantity || item.estimated_quantity | number:'1.1-2' }} {{ item.unit_of_measure_id }}</p>
+                <span class="text-[11px] font-bold text-foreground">৳{{ item.contract_total_amount || item.total_estimated_cost | number:'1.0-0' }}</span>
+              </div>
+              <div class="p-3 rounded-lg border border-border bg-secondary/30">
+                <span class="text-[10px] font-semibold text-muted-foreground block">Revised BOQ</span>
+                <p class="font-bold text-foreground mt-1">{{ item.revised_quantity || item.estimated_quantity | number:'1.1-2' }} {{ item.unit_of_measure_id }}</p>
+                <span class="text-[11px] text-amber-500">৳{{ item.revised_total_amount || item.total_estimated_cost | number:'1.0-0' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Approval Signature -->
+          @if (item.approved_by) {
+            <div class="p-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5 flex items-center justify-between">
+              <div>
+                <span class="text-[10px] font-bold text-emerald-500 uppercase block">Version Authorization Lock</span>
+                <span class="text-xs font-semibold text-foreground">{{ item.approved_by }}</span>
+              </div>
+              <span class="text-xs font-mono text-muted-foreground">Approved on: {{ item.approval_date || 'N/A' }}</span>
+            </div>
+          }
+        </div>
+
+        <!-- Footer -->
+        <div class="flex items-center justify-end gap-3 p-4 border-t border-border bg-secondary/10">
+          <button
+            (click)="closeBOQDetailsModal()"
+            class="px-4 py-2 text-xs font-semibold text-muted-foreground hover:text-foreground bg-secondary hover:bg-secondary/80 rounded-xl border border-border transition-colors"
+          >
+            Close
+          </button>
+          <app-custom-button
+            variant="primary"
+            (clicked)="closeBOQDetailsModal(); navigateToEditBOQ(item.id)"
+          >
+            Edit BOQ Line Item
+          </app-custom-button>
+        </div>
+      </div>
+    </div>
+  }
+}
+
+<!-- ========================================================================= -->
+<!-- Quick Progress & Delay Update Modal (WBS) -->
+<!-- ========================================================================= -->
+@if (isProgressModalOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+    <div class="w-full max-w-2xl bg-card border border-border rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+      <div class="flex items-center justify-between p-5 border-b border-border bg-secondary/20">
+        <div>
+          <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+            Site Engineering Progress Log
+          </span>
+          <h3 class="text-base font-bold text-foreground mt-1">
+            Update Activity: {{ selectedNodeForProgress()?.node_code }} - {{ selectedNodeForProgress()?.node_name }}
+          </h3>
+        </div>
+        <button
+          (click)="closeProgressModal()"
+          class="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+        >
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="p-6 flex flex-col gap-4 max-h-[80vh] overflow-y-auto">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="text-xs font-semibold text-muted-foreground block mb-1">Approved Total Qty</label>
+            <input
+              type="number"
+              [ngModel]="progressApprovedQty()"
+              (ngModelChange)="progressApprovedQty.set($event)"
+              class="w-full px-3 py-2 text-xs rounded-lg border border-border bg-card text-foreground font-mono"
+            />
+          </div>
+
+          <div>
+            <label class="text-xs font-semibold text-muted-foreground block mb-1">Verified Completed Qty</label>
+            <input
+              type="number"
+              [ngModel]="progressVerifiedQty()"
+              (ngModelChange)="onVerifiedQtyChange($event)"
+              class="w-full px-3 py-2 text-xs rounded-lg border border-border bg-card text-foreground font-mono font-bold text-primary"
+            />
+          </div>
+
+          <div>
+            <label class="text-xs font-semibold text-muted-foreground block mb-1">Calculated Progress %</label>
+            <input
+              type="number"
+              min="0"
+              max="100"
+              [ngModel]="progressPercentage()"
+              (ngModelChange)="progressPercentage.set($event)"
+              class="w-full px-3 py-2 text-xs rounded-lg border border-border bg-card text-foreground font-mono font-bold"
+            />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="text-xs font-semibold text-muted-foreground block mb-1">Actual Start Date</label>
+            <input
+              type="date"
+              [ngModel]="progressActualStart()"
+              (ngModelChange)="progressActualStart.set($event)"
+              class="w-full px-3 py-2 text-xs rounded-lg border border-border bg-card text-foreground font-mono"
+            />
+          </div>
+
+          <div>
+            <label class="text-xs font-semibold text-muted-foreground block mb-1">Actual End Date</label>
+            <input
+              type="date"
+              [ngModel]="progressActualEnd()"
+              (ngModelChange)="progressActualEnd.set($event)"
+              class="w-full px-3 py-2 text-xs rounded-lg border border-border bg-card text-foreground font-mono"
+            />
+          </div>
+
+          <div>
+            <label class="text-xs font-semibold text-muted-foreground block mb-1">Status</label>
+            <select
+              [ngModel]="progressStatus()"
+              (ngModelChange)="progressStatus.set($event)"
+              class="w-full px-3 py-2 text-xs rounded-lg border border-border bg-card text-foreground"
+            >
+              <option value="NOT_STARTED">Not Started</option>
+              <option value="IN_PROGRESS">In Progress</option>
+              <option value="COMPLETED">Completed</option>
+              <option value="DELAYED">Delayed</option>
+              <option value="CRITICAL_PATH">Critical Path</option>
+              <option value="ON_HOLD">On Hold</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="text-xs font-semibold text-muted-foreground block mb-1">Delay Days</label>
+            <input
+              type="number"
+              min="0"
+              [ngModel]="progressDelayDays()"
+              (ngModelChange)="progressDelayDays.set($event)"
+              class="w-full px-3 py-2 text-xs rounded-lg border border-border bg-card text-rose-500 font-mono font-bold"
+            />
+          </div>
+
+          <div>
+            <label class="text-xs font-semibold text-muted-foreground block mb-1">Forecasted Completion Date</label>
+            <input
+              type="date"
+              [ngModel]="progressForecastedDate()"
+              (ngModelChange)="progressForecastedDate.set($event)"
+              class="w-full px-3 py-2 text-xs rounded-lg border border-border bg-card text-foreground font-mono"
+            />
+          </div>
+
+          <div>
+            <app-searchable-select
+              label="Delay Reason Category"
+              categoryCode="DELAY_REASON"
+              [allowCreateNew]="true"
+              [ngModel]="progressDelayReason()"
+              (selectionChange)="progressDelayReason.set($event)"
+              placeholder="Select delay reason..."
+            >
+            </app-searchable-select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-semibold text-muted-foreground block mb-1">Weather & Site Constraints</label>
+            <textarea
+              rows="2"
+              [ngModel]="progressWeatherConstraints()"
+              (ngModelChange)="progressWeatherConstraints.set($event)"
+              placeholder="e.g. Incessant rain, low water table, dewatering needed..."
+              class="w-full px-3 py-2 text-xs rounded-lg border border-border bg-card text-foreground"
+            ></textarea>
+          </div>
+
+          <div>
+            <label class="text-xs font-semibold text-muted-foreground block mb-1">Corrective Action Plan</label>
+            <textarea
+              rows="2"
+              [ngModel]="progressCorrectiveAction()"
+              (ngModelChange)="progressCorrectiveAction.set($event)"
+              placeholder="e.g. Added extra labor crew, night shift mobilization..."
+              class="w-full px-3 py-2 text-xs rounded-lg border border-border bg-card text-foreground"
+            ></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 p-4 border-t border-border bg-secondary/10">
+        <button
+          (click)="closeProgressModal()"
+          class="px-4 py-2 text-xs font-semibold text-muted-foreground hover:text-foreground bg-secondary hover:bg-secondary/80 rounded-xl border border-border transition-colors"
+        >
+          Cancel
+        </button>
+        <app-custom-button
+          variant="primary"
+          [disabled]="isUpdatingProgress()"
+          (clicked)="submitProgressUpdate()"
+        >
+          {{ isUpdatingProgress() ? 'Saving Progress...' : 'Save Verified Progress' }}
+        </app-custom-button>
+      </div>
+    </div>
+  </div>
+}

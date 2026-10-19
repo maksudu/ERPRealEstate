@@ -32,121 +32,121 @@ import { Project } from '../../../core/models/project.model';
     StatusBadgeComponent
   ],
   template: `
-    <div class="flex flex-col gap-6 w-full max-w-6xl mx-auto pb-12">
-      <!-- Unified Top Header with Navigation -->
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
-        <div class="flex items-center gap-3">
-          <a
-            routerLink="/crm/lead-capture"
-            class="p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors inline-flex items-center justify-center shadow-xs"
-            title="Back to Lead Capture Register"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-            </svg>
-          </a>
-          <div>
-            <div class="flex items-center gap-2 flex-wrap">
-              <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
-                Spec 4.2 · Lead Capture
-              </span>
-              <span class="text-xs text-slate-500 dark:text-slate-400 font-mono">
-                {{ isEditMode() ? (existingLead()?.lead_code || 'Lead #' + leadId) : 'New Lead Registration' }}
-              </span>
-              @if (existingLead()?.is_opted_out) {
-                <app-status-badge status="OPTED OUT" variant="danger" size="sm"></app-status-badge>
-              }
-            </div>
-            <h1 class="text-xl sm:text-2xl font-bold font-display text-slate-900 dark:text-slate-100 mt-1">
-              {{ isEditMode() ? 'Edit Lead & Requirement Profile' : 'Capture New Lead' }}
-            </h1>
+    <!-- Dedicated Full-Screen Routed Lead Capture Component Wrapped in Single Card Container -->
+    <app-card-container
+      [title]="isEditMode() ? 'Edit Lead & Requirement Profile' : 'Capture New Lead'"
+      [subtitle]="'Omnichannel lead registration (Spec 4.2) — ' + (isEditMode() ? (existingLead()?.lead_code || 'Lead #' + leadId) : 'New prospect intake with duplicate detection & dynamic lookups')"
+    >
+      <!-- Action Buttons in Card Container Header -->
+      <div card-actions class="flex flex-wrap items-center gap-2">
+        <a
+          routerLink="/crm/lead-capture"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-xs"
+        >
+          <i class="ri-arrow-left-line text-sm"></i>
+          <span>Back to List</span>
+        </a>
+        <app-custom-button
+          variant="primary"
+          size="sm"
+          [disabled]="leadForm.invalid || isSubmitting()"
+          [loading]="isSubmitting()"
+          (clicked)="saveLead()"
+        >
+          <span class="flex items-center gap-1.5">
+            <i class="ri-save-line text-sm"></i>
+            <span>{{ isEditMode() ? 'Update Lead' : 'Save Lead' }}</span>
+          </span>
+        </app-custom-button>
+      </div>
+
+      <div class="flex flex-col gap-6">
+        <!-- Spec & Status Banner -->
+        <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+              Spec 4.2 · Omnichannel Ingestion
+            </span>
+            <span class="text-xs text-slate-500 dark:text-slate-400 font-mono">
+              {{ isEditMode() ? (existingLead()?.lead_code || 'Lead #' + leadId) : 'New Inbound Record' }}
+            </span>
+            @if (existingLead()?.is_opted_out) {
+              <app-status-badge status="OPTED OUT" variant="danger" size="sm"></app-status-badge>
+            }
+          </div>
+          <div class="text-[11px] text-slate-500 dark:text-slate-400">
+            All dropdown options are managed dynamically with inline creation support.
           </div>
         </div>
 
-        <div class="flex items-center gap-3">
-          <a
-            routerLink="/crm/lead-capture"
-            class="px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg border border-slate-300 dark:border-slate-700 transition-colors"
-          >
-            Back to List
-          </a>
-          <app-custom-button
-            variant="primary"
-            [disabled]="leadForm.invalid || isSubmitting()"
-            [loading]="isSubmitting()"
-            (clicked)="saveLead()"
-          >
-            <span class="flex items-center gap-2">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-              </svg>
-              {{ isEditMode() ? 'Update Lead' : 'Save Lead' }}
-            </span>
-          </app-custom-button>
-        </div>
-      </div>
+        <!-- Duplicate Warning Alert -->
+        @if (duplicateWarning()) {
+          <div class="rounded-xl border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 p-4 text-xs text-amber-800 dark:text-amber-300 flex items-start gap-2.5 shadow-xs">
+            <i class="ri-alert-line text-amber-500 text-base shrink-0 mt-0.5"></i>
+            <div>
+              <p class="font-semibold">Potential Duplicate Detected</p>
+              <p class="mt-0.5 text-slate-600 dark:text-slate-300">{{ duplicateWarning() }}</p>
+            </div>
+          </div>
+        }
 
-      <!-- Duplicate Warning -->
-      @if (duplicateWarning()) {
-        <div class="rounded-xl border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 px-4 py-3 text-xs text-amber-800 dark:text-amber-300 flex items-start gap-2">
-          <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-          </svg>
-          <span>{{ duplicateWarning() }}</span>
-        </div>
-      }
-
-      <!-- Main Form Card -->
-      <app-card-container
-        title="Lead Intake Form"
-        subtitle="Customer contact, campaign attribution, property requirements, consent and assignment — all dropdowns are dynamic lookup values"
-      >
+        <!-- Main Lead Form -->
         <form [formGroup]="leadForm" class="flex flex-col gap-8">
           <!-- 1. Lead Source & Attribution -->
           <section class="space-y-4">
-            <h3 class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2">
-              <span class="w-2 h-2 rounded-full bg-primary"></span>
-              1. Lead Source & Campaign Attribution
-            </h3>
+            <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
+              <h3 class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-primary"></span>
+                1. Lead Source & Attribution (Spec 4.2 Channels)
+              </h3>
+              <span class="text-[11px] text-slate-400">11 Omnichannel Sources</span>
+            </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <app-searchable-select
                 label="Lead Source *"
                 [categoryCode]="LOOKUP.source"
                 formControlName="lead_source_id"
                 placeholder="Select lead source..."
+                [allowCreateNew]="true"
                 [required]="true"
               ></app-searchable-select>
               <app-custom-input
                 label="Campaign Name"
-                placeholder="e.g. Eid Flat Fair 2026"
+                placeholder="e.g. Eid Flat Fair 2026 / Gulshan Launch"
                 formControlName="campaign_name"
               ></app-custom-input>
               <app-custom-input
+                label="Lead Date / Time Received"
+                type="datetime-local"
+                formControlName="lead_date"
+              ></app-custom-input>
+              <app-custom-input
                 label="UTM Source"
-                placeholder="e.g. facebook, google"
+                placeholder="e.g. facebook, google, email"
                 formControlName="utm_source"
               ></app-custom-input>
               <app-custom-input
                 label="UTM Medium"
-                placeholder="e.g. cpc, email"
+                placeholder="e.g. cpc, display, referral"
                 formControlName="utm_medium"
               ></app-custom-input>
               <app-custom-input
                 label="UTM Campaign"
-                placeholder="e.g. gulshan-launch"
+                placeholder="e.g. summer-promo-2026"
                 formControlName="utm_campaign"
               ></app-custom-input>
             </div>
           </section>
 
-          <div class="border-t border-slate-200 dark:border-slate-800"></div>
-
-          <!-- 2. Customer Contact -->
+          <!-- 2. Customer Contact & Consent -->
           <section class="space-y-4">
-            <h3 class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2">
-              <span class="w-2 h-2 rounded-full bg-primary"></span>
-              2. Customer Contact & Consent
-            </h3>
+            <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
+              <h3 class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                2. Customer Contact & Communication Consent
+              </h3>
+              <span class="text-[11px] text-slate-400">Direct Contact Details</span>
+            </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <app-custom-input
                 label="Customer Name *"
@@ -159,7 +159,7 @@ import { Project } from '../../../core/models/project.model';
                 placeholder="+8801XXXXXXXXX"
                 formControlName="primary_phone"
                 [required]="true"
-                hint="10–15 digits, optional leading +"
+                hint="10–15 digits, automated duplicate check enabled"
               ></app-custom-input>
               <app-custom-input
                 label="Email Address"
@@ -172,28 +172,32 @@ import { Project } from '../../../core/models/project.model';
                 [categoryCode]="LOOKUP.contactMethod"
                 formControlName="preferred_contact_method"
                 placeholder="Select channel..."
+                [allowCreateNew]="true"
               ></app-searchable-select>
+              <div class="sm:col-span-2 flex items-center pt-6">
+                <label class="flex items-start gap-3 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    formControlName="is_consent_given"
+                    class="mt-0.5 rounded border-slate-300 dark:border-slate-600 cursor-pointer"
+                  />
+                  <span class="text-xs text-slate-700 dark:text-slate-300">
+                    Customer has given consent to receive calls, SMS and WhatsApp messages regarding real estate inquiries (Spec 4.2).
+                  </span>
+                </label>
+              </div>
             </div>
-            <label class="flex items-start gap-3 cursor-pointer select-none w-fit">
-              <input
-                type="checkbox"
-                formControlName="is_consent_given"
-                class="mt-0.5 rounded border-slate-300 dark:border-slate-600 cursor-pointer"
-              />
-              <span class="text-xs text-slate-700 dark:text-slate-300">
-                Customer has given consent to be contacted via the preferred channel (Spec 4.2 — consent & communication preferences)
-              </span>
-            </label>
           </section>
 
-          <div class="border-t border-slate-200 dark:border-slate-800"></div>
-
-          <!-- 3. Property Requirements -->
+          <!-- 3. Property Requirements Profile -->
           <section class="space-y-4">
-            <h3 class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2">
-              <span class="w-2 h-2 rounded-full bg-primary"></span>
-              3. Property Requirement Profile
-            </h3>
+            <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
+              <h3 class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                3. Property Requirement Profile
+              </h3>
+              <span class="text-[11px] text-slate-400">Customer Specification</span>
+            </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <app-searchable-select
                 label="Interested Project"
@@ -206,11 +210,12 @@ import { Project } from '../../../core/models/project.model';
                 label="Property Type"
                 [categoryCode]="LOOKUP.propertyType"
                 formControlName="property_type"
-                placeholder="Select property type..."
+                placeholder="Apartment, Commercial, Shop..."
+                [allowCreateNew]="true"
               ></app-searchable-select>
               <app-custom-input
                 label="Preferred Location"
-                placeholder="e.g. Gulshan, Banani"
+                placeholder="e.g. Gulshan, Banani, Dhanmondi, Uttara"
                 formControlName="preferred_location"
               ></app-custom-input>
               <app-custom-input
@@ -230,7 +235,7 @@ import { Project } from '../../../core/models/project.model';
               <app-custom-input
                 label="Required Area"
                 type="number"
-                placeholder="e.g. 1200"
+                placeholder="e.g. 1850"
                 formControlName="required_area_sqft"
                 suffixText="sqft"
               ></app-custom-input>
@@ -248,20 +253,22 @@ import { Project } from '../../../core/models/project.model';
             </div>
           </section>
 
-          <div class="border-t border-slate-200 dark:border-slate-800"></div>
-
-          <!-- 4. Priority, Stage & Assignment -->
+          <!-- 4. Priority, Stage & Assignment Routing -->
           <section class="space-y-4">
-            <h3 class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2">
-              <span class="w-2 h-2 rounded-full bg-primary"></span>
-              4. Priority, Pipeline Stage & Assignment
-            </h3>
+            <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
+              <h3 class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                4. Priority, Pipeline Stage & Assignment
+              </h3>
+              <span class="text-[11px] text-slate-400">Distribution Controls</span>
+            </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <app-searchable-select
                 label="Lead Priority *"
                 [categoryCode]="LOOKUP.priority"
                 formControlName="priority"
                 placeholder="Select priority..."
+                [allowCreateNew]="true"
                 [required]="true"
               ></app-searchable-select>
               <app-searchable-select
@@ -269,6 +276,7 @@ import { Project } from '../../../core/models/project.model';
                 [categoryCode]="LOOKUP.stage"
                 formControlName="lead_stage"
                 placeholder="Select stage..."
+                [allowCreateNew]="true"
                 [required]="true"
               ></app-searchable-select>
               @if (!isEditMode()) {
@@ -276,103 +284,76 @@ import { Project } from '../../../core/models/project.model';
                   label="Assign to Sales Representative"
                   [options]="salesRepOptions()"
                   formControlName="assigned_sales_rep_id"
-                  placeholder="Leave unassigned (rules can assign later)"
+                  placeholder="Leave unassigned (auto-assign rules apply)"
                   [allowCreateNew]="false"
                 ></app-searchable-select>
               } @else {
                 <div class="space-y-1.5">
                   <label class="block text-xs font-semibold text-slate-800 dark:text-slate-200 tracking-wide">Assigned Representative</label>
-                  <div class="erp-input text-xs flex items-center justify-between">
-                    <span>{{ existingLead()?.assigned_sales_rep_name || 'Unassigned' }}</span>
+                  <div class="erp-input text-xs flex items-center justify-between rounded-xl">
+                    <span class="font-medium">{{ existingLead()?.assigned_sales_rep_name || 'Unassigned' }}</span>
                     <a routerLink="/crm/lead-assignments" class="text-primary underline text-[11px] font-medium">Manage in Assignment Queue</a>
                   </div>
-                  <p class="text-[11px] text-slate-500 dark:text-slate-400">Reassignment preserves owner history (Spec 4.3)</p>
+                  <p class="text-[11px] text-slate-500 dark:text-slate-400">Reassignment preserves previous owners and complete history (Spec 4.3)</p>
                 </div>
               }
             </div>
             <app-custom-textarea
-              label="Notes / Requirements Summary"
-              placeholder="Customer requirements, objections, follow-up notes..."
+              label="Notes & Customer Comments"
+              placeholder="Customer requirements, special requests, follow-up summary..."
               formControlName="notes"
               [rows]="3"
             ></app-custom-textarea>
           </section>
 
-          <div class="border-t border-slate-200 dark:border-slate-800"></div>
-
-          <!-- 4.4 Qualification Signals -->
-          <section class="space-y-4">
-            <h3 class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2">
-              <span class="w-2 h-2 rounded-full bg-amber-500"></span>
-              4.4 Qualification Signals (Score Assists — Never Auto-Rejects)
-            </h3>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <app-searchable-select
-                label="Financing Readiness"
-                [options]="[{ value: 'true', label: 'Yes — Cash / Loan Approved' }, { value: 'false', label: 'No — Not Yet Ready' }]"
-                formControlName="financing_ready"
-                placeholder="Not provided"
-                [allowCreateNew]="false"
-              ></app-searchable-select>
-              <app-searchable-select
-                label="Decision-Maker Available"
-                [options]="[{ value: 'true', label: 'Yes — Decision Maker Present' }, { value: 'false', label: 'No — Not Yet Available' }]"
-                formControlName="decision_maker_available"
-                placeholder="Not provided"
-                [allowCreateNew]="false"
-              ></app-searchable-select>
-            </div>
-            @if (isEditMode() && existingLead()) {
-              <div class="erp-card p-3 text-xs space-y-1">
-                <p class="text-[11px] text-slate-500 uppercase font-semibold">Current Qualification</p>
-                <p>Score: <strong>{{ existingLead()?.lead_score }}</strong> · Grade: <strong>{{ existingLead()?.health_grade || '—' }}</strong></p>
-                @if (existingLead()?.qualification_reasons) {
-                  <p class="text-slate-600 dark:text-slate-400">{{ existingLead()?.qualification_reasons }}</p>
-                }
-                <a routerLink="/crm/lead-qualification" class="text-primary underline text-[11px] font-medium">Open Qualification Workbench</a>
-              </div>
-            }
-          </section>
-
+          <!-- 5. Consent & Opt-Out Audit (Edit Mode) -->
           @if (isEditMode() && existingLead()) {
-            <div class="border-t border-slate-200 dark:border-slate-800"></div>
-            <section class="space-y-3">
-              <h3 class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-rose-500"></span>
-                5. Consent & Opt-out Status
-              </h3>
+            <section class="space-y-3 pt-2">
+              <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
+                <h3 class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+                  5. Source Preservation & Opt-Out Status
+                </h3>
+                <span class="text-[11px] text-slate-400">Spec 4.2 Compliance</span>
+              </div>
               <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-                <div class="erp-card p-3">
+                <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
                   <p class="text-[11px] text-slate-500 dark:text-slate-400 uppercase font-semibold">Original Source</p>
-                  <p class="mt-1 font-medium text-slate-800 dark:text-slate-200">{{ existingLead()?.original_source_id || existingLead()?.lead_source_id }}</p>
-                  <p class="text-[10px] text-slate-400 mt-1">Preserved forever even on reassignment</p>
-                </div>
-                <div class="erp-card p-3">
-                  <p class="text-[11px] text-slate-500 dark:text-slate-400 uppercase font-semibold">Consent Given</p>
-                  <p class="mt-1 font-medium" [class.text-emerald-600]="existingLead()?.is_consent_given" [class.text-rose-600]="!existingLead()?.is_consent_given">
-                    {{ existingLead()?.is_consent_given ? 'Yes' : 'No' }}
+                  <p class="mt-1 font-bold text-slate-800 dark:text-slate-200">
+                    {{ existingLead()?.original_source_id || existingLead()?.lead_source_id }}
                   </p>
+                  <p class="text-[10px] text-slate-400 mt-1">Preserved even if lead ownership changes</p>
                 </div>
-                <div class="erp-card p-3">
-                  <p class="text-[11px] text-slate-500 dark:text-slate-400 uppercase font-semibold">Opt-out Status</p>
-                  <p class="mt-1 font-medium" [class.text-rose-600]="existingLead()?.is_opted_out" [class.text-emerald-600]="!existingLead()?.is_opted_out">
-                    {{ existingLead()?.is_opted_out ? 'Opted Out' : 'Active' }}
+                <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+                  <p class="text-[11px] text-slate-500 dark:text-slate-400 uppercase font-semibold">Consent Status</p>
+                  <p class="mt-1 font-bold" [class.text-emerald-600]="existingLead()?.is_consent_given" [class.text-rose-600]="!existingLead()?.is_consent_given">
+                    {{ existingLead()?.is_consent_given ? 'CONSENT GIVEN' : 'NO CONSENT' }}
                   </p>
+                  <p class="text-[10px] text-slate-400 mt-1">Recorded during initial intake</p>
+                </div>
+                <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+                  <p class="text-[11px] text-slate-500 dark:text-slate-400 uppercase font-semibold">Marketing Opt-Out</p>
+                  <p class="mt-1 font-bold" [class.text-rose-600]="existingLead()?.is_opted_out" [class.text-emerald-600]="!existingLead()?.is_opted_out">
+                    {{ existingLead()?.is_opted_out ? 'OPTED OUT' : 'ACTIVE PROSPECT' }}
+                  </p>
+                  <p class="text-[10px] text-slate-400 mt-1">Stops promotional campaigns</p>
                 </div>
               </div>
-              <label class="flex items-center gap-3 cursor-pointer select-none w-fit">
+              <label class="flex items-center gap-3 cursor-pointer select-none w-fit pt-1">
                 <input
                   type="checkbox"
                   formControlName="is_opted_out"
                   class="rounded border-slate-300 dark:border-slate-600 cursor-pointer"
                 />
-                <span class="text-xs text-slate-700 dark:text-slate-300">Mark as opted out (stops all marketing communication)</span>
+                <span class="text-xs text-slate-700 dark:text-slate-300">
+                  Mark as opted out (immediately removes prospect from active marketing cadences)
+                </span>
               </label>
             </section>
           }
         </form>
-      </app-card-container>
-    </div>
+      </div>
+    </app-card-container>
   `
 })
 export class LeadCaptureFormComponent implements OnInit {
@@ -407,6 +388,7 @@ export class LeadCaptureFormComponent implements OnInit {
     email: ['', Validators.email],
     lead_source_id: ['MANUAL_ENTRY', Validators.required],
     campaign_name: [''],
+    lead_date: [this.formatCurrentDateTime()],
     utm_source: [''],
     utm_medium: [''],
     utm_campaign: [''],
@@ -424,10 +406,14 @@ export class LeadCaptureFormComponent implements OnInit {
     priority: ['MEDIUM', Validators.required],
     lead_stage: ['NEW', Validators.required],
     notes: [''],
-    is_opted_out: [false],
-    financing_ready: [null],
-    decision_maker_available: [null]
+    is_opted_out: [false]
   });
+
+  formatCurrentDateTime(): string {
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  }
 
   ngOnInit(): void {
     const idParam = this.route.snapshot.paramMap.get('id');
@@ -452,12 +438,19 @@ export class LeadCaptureFormComponent implements OnInit {
     this.crmService.getLead(id).subscribe({
       next: (lead) => {
         this.existingLead.set(lead);
+        let leadDateVal = '';
+        if (lead.created_at) {
+          const d = new Date(lead.created_at);
+          const pad = (n: number) => String(n).padStart(2, '0');
+          leadDateVal = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        }
         this.leadForm.patchValue({
           lead_name: lead.lead_name,
           primary_phone: lead.primary_phone,
           email: lead.email || '',
           lead_source_id: lead.lead_source_id,
           campaign_name: lead.campaign_name || '',
+          lead_date: leadDateVal || this.formatCurrentDateTime(),
           utm_source: lead.utm_source || '',
           utm_medium: lead.utm_medium || '',
           utm_campaign: lead.utm_campaign || '',
@@ -474,9 +467,7 @@ export class LeadCaptureFormComponent implements OnInit {
           priority: lead.priority,
           lead_stage: lead.lead_stage,
           notes: lead.notes || '',
-          is_opted_out: lead.is_opted_out,
-          financing_ready: lead.financing_ready === true ? 'true' : lead.financing_ready === false ? 'false' : null,
-          decision_maker_available: lead.decision_maker_available === true ? 'true' : lead.decision_maker_available === false ? 'false' : null
+          is_opted_out: lead.is_opted_out
         });
       },
       error: (err) => {
@@ -513,7 +504,7 @@ export class LeadCaptureFormComponent implements OnInit {
         next: (res) => {
           if (res.is_duplicate && res.matching_leads.length > 0) {
             const codes = res.matching_leads.map(l => l.lead_code || `#${l.id}`).join(', ');
-            this.duplicateWarning.set(`Possible duplicate lead(s) found: ${codes}. You may still save this lead.`);
+            this.duplicateWarning.set(`Possible duplicate lead(s) found: ${codes}. You may still proceed and save if this is an intentional secondary inquiry.`);
           } else {
             this.duplicateWarning.set(null);
           }
@@ -535,13 +526,8 @@ export class LeadCaptureFormComponent implements OnInit {
     if (formValue.assigned_sales_rep_id) formValue.assigned_sales_rep_id = +formValue.assigned_sales_rep_id;
     if (!formValue.email) formValue.email = null;
     if (!formValue.expected_purchase_date) formValue.expected_purchase_date = null;
-    // 4.4 boolean coercion
-    if (formValue.financing_ready === 'true') formValue.financing_ready = true;
-    else if (formValue.financing_ready === 'false') formValue.financing_ready = false;
-    else formValue.financing_ready = null;
-    if (formValue.decision_maker_available === 'true') formValue.decision_maker_available = true;
-    else if (formValue.decision_maker_available === 'false') formValue.decision_maker_available = false;
-    else formValue.decision_maker_available = null;
+    // Don't send lead_date to update if not in schema
+    delete formValue.lead_date;
 
     const request$ = this.isEditMode() && this.leadId
       ? this.crmService.updateLead(this.leadId, formValue)

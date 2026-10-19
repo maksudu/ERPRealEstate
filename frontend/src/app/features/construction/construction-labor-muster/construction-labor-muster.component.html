@@ -1,247 +1,860 @@
-<div class="flex flex-col gap-6">
-  <!-- Unified Main Card Container -->
-  <app-card-container
-    title="Subcontractor Master Registry & Daily Labor Muster Roll"
-    subtitle="Multi-trade Labor Headcounts, Wage Ledgers & Civil Subcontractor Verification"
-  >
-    <!-- Top Action Buttons & Metrics Overview -->
-    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
-      <div>
-        <span class="text-xs text-muted-foreground font-mono">
-          Enlisted Contractors: <strong class="text-foreground">{{ contractors().length }}</strong> | Loaded Muster Records: <strong class="text-foreground">{{ laborEntries().length }}</strong>
-        </span>
-      </div>
-
-      <div class="flex items-center gap-3">
-        <app-custom-button variant="secondary" (clicked)="navigateToEnlistContractor()">
-          <span class="flex items-center gap-1.5">
-            <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
-            </svg>
-            + Enlist Subcontractor
-          </span>
-        </app-custom-button>
-
-        <app-custom-button variant="primary" (clicked)="navigateToCreateMuster()">
-          <span class="flex items-center gap-1.5">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-            </svg>
-            + Record Labor Muster
-          </span>
-        </app-custom-button>
-      </div>
+<!-- Single Card Container for Workforce Management & Subcontractor Payments -->
+<app-card-container
+  title="Workforce Management & Subcontractor Payments"
+  subtitle="Daily attendance muster roll, contractor worker records, GPS & biometric shifts, and certified payment vouchers"
+>
+  <!-- KPI Metrics Ribbon -->
+  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+    <div class="p-3.5 rounded-2xl bg-secondary/30 border border-border flex flex-col justify-between">
+      <span class="text-xs text-muted-foreground font-medium">Total Shift Records</span>
+      <span class="text-xl sm:text-2xl font-bold font-mono text-foreground mt-1">
+        {{ metrics()?.total_records || 0 }}
+      </span>
+      <span class="text-[10px] text-muted-foreground mt-0.5">Recorded headcount</span>
     </div>
 
-    <!-- Enlisted Subcontractors Cards Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-      @for (c of contractors(); track c.id) {
-        <div class="bg-card border border-border rounded-xl p-4 shadow-xs flex flex-col justify-between hover:border-primary/50 transition-colors">
-          <div>
-            <div class="flex items-center justify-between mb-2">
-              <span class="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-secondary text-primary border border-border">
-                {{ c.contractor_code }}
+    <div class="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex flex-col justify-between">
+      <span class="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Present on Site</span>
+      <span class="text-xl sm:text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400 mt-1">
+        {{ metrics()?.present_count || 0 }}
+      </span>
+      <span class="text-[10px] text-emerald-600/70 mt-0.5">{{ metrics()?.total_mandays || 0 }} Mandays</span>
+    </div>
+
+    <div class="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex flex-col justify-between">
+      <span class="text-xs text-amber-600 dark:text-amber-400 font-medium">Overtime Hours</span>
+      <span class="text-xl sm:text-2xl font-bold font-mono text-amber-600 dark:text-amber-400 mt-1">
+        {{ metrics()?.total_overtime_hours || 0 }}h
+      </span>
+      <span class="text-[10px] text-amber-600/70 mt-0.5">Extra duty shifts</span>
+    </div>
+
+    <div class="p-3.5 rounded-2xl bg-primary/10 border border-primary/20 flex flex-col justify-between">
+      <span class="text-xs text-primary font-medium">Gross Wages Accrued</span>
+      <span class="text-xl sm:text-2xl font-bold font-mono text-primary mt-1">
+        ৳{{ (metrics()?.total_wage_cost || 0) | number:'1.0-0' }}
+      </span>
+      <span class="text-[10px] text-primary/70 mt-0.5">Direct & subcon labor</span>
+    </div>
+
+    <div class="p-3.5 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex flex-col justify-between">
+      <span class="text-xs text-purple-600 dark:text-purple-400 font-medium">Pending Approvals</span>
+      <span class="text-xl sm:text-2xl font-bold font-mono text-purple-600 dark:text-purple-400 mt-1">
+        {{ metrics()?.pending_approvals || 0 }}
+      </span>
+      <span class="text-[10px] text-purple-600/70 mt-0.5">Awaiting supervisor sign-off</span>
+    </div>
+
+    <div class="p-3.5 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex flex-col justify-between">
+      <span class="text-xs text-blue-600 dark:text-blue-400 font-medium">Verified Shifts</span>
+      <span class="text-xl sm:text-2xl font-bold font-mono text-blue-600 dark:text-blue-400 mt-1">
+        {{ metrics()?.biometric_or_gps_verified_count || 0 }}
+      </span>
+      <span class="text-[10px] text-blue-600/70 mt-0.5">GPS / Biometric matched</span>
+    </div>
+  </div>
+
+  <!-- Primary Navigation Tabs & Action Bar -->
+  <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-border mb-6">
+    <!-- 4 Tabs -->
+    <div class="flex items-center gap-1.5 p-1 bg-secondary/50 rounded-2xl border border-border overflow-x-auto">
+      <button
+        type="button"
+        (click)="switchTab('ATTENDANCE')"
+        class="px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 whitespace-nowrap"
+        [ngClass]="activeTab() === 'ATTENDANCE' ? 'bg-card text-foreground shadow-xs border border-border' : 'text-muted-foreground hover:text-foreground'"
+      >
+        <i class="ri-calendar-check-line text-sm"></i>
+        <span>Daily Attendance & Muster Roll</span>
+      </button>
+
+      <button
+        type="button"
+        (click)="switchTab('WORKERS')"
+        class="px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 whitespace-nowrap"
+        [ngClass]="activeTab() === 'WORKERS' ? 'bg-card text-foreground shadow-xs border border-border' : 'text-muted-foreground hover:text-foreground'"
+      >
+        <i class="ri-team-line text-sm"></i>
+        <span>Worker Registry ({{ workersTotal() || workers().length }})</span>
+      </button>
+
+      <button
+        type="button"
+        (click)="switchTab('PAYMENTS')"
+        class="px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 whitespace-nowrap"
+        [ngClass]="activeTab() === 'PAYMENTS' ? 'bg-card text-foreground shadow-xs border border-border' : 'text-muted-foreground hover:text-foreground'"
+      >
+        <i class="ri-file-text-line text-sm"></i>
+        <span>Payment Vouchers & Payroll</span>
+      </button>
+
+      <button
+        type="button"
+        (click)="switchTab('PRODUCTIVITY')"
+        class="px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 whitespace-nowrap"
+        [ngClass]="activeTab() === 'PRODUCTIVITY' ? 'bg-card text-foreground shadow-xs border border-border' : 'text-muted-foreground hover:text-foreground'"
+      >
+        <i class="ri-line-chart-line text-sm"></i>
+        <span>Productivity & Cost Analysis</span>
+      </button>
+    </div>
+
+    <!-- Contextual Add Action Buttons -->
+    <div class="flex items-center gap-2 flex-wrap">
+      <button
+        *ngIf="activeTab() === 'ATTENDANCE'"
+        type="button"
+        (click)="openGangBatchModal()"
+        class="px-3.5 py-2 text-xs font-medium bg-secondary text-foreground hover:bg-secondary/80 rounded-xl border border-border transition-colors flex items-center gap-1.5 shadow-xs"
+      >
+        <i class="ri-group-line text-sm"></i>
+        <span>Gang / Crew Batch Entry</span>
+      </button>
+
+      <app-custom-button
+        *ngIf="activeTab() === 'ATTENDANCE'"
+        variant="primary"
+        (clicked)="navigateToLogAttendance()"
+      >
+        <span class="flex items-center gap-1.5">
+          <i class="ri-add-line text-sm"></i>
+          <span>Log Individual Attendance</span>
+        </span>
+      </app-custom-button>
+
+      <app-custom-button
+        *ngIf="activeTab() === 'WORKERS'"
+        variant="primary"
+        (clicked)="navigateToOnboardWorker()"
+      >
+        <span class="flex items-center gap-1.5">
+          <i class="ri-user-add-line text-sm"></i>
+          <span>Onboard New Worker</span>
+        </span>
+      </app-custom-button>
+
+      <app-custom-button
+        *ngIf="activeTab() === 'PAYMENTS'"
+        variant="primary"
+        (clicked)="navigateToCreatePayment()"
+      >
+        <span class="flex items-center gap-1.5">
+          <i class="ri-add-line text-sm"></i>
+          <span>Issue Payment Voucher</span>
+        </span>
+      </app-custom-button>
+    </div>
+  </div>
+
+  <!-- Dynamic Filter Bar (Searchable Selects with inline Create New) -->
+  <div class="p-4 rounded-2xl bg-secondary/20 border border-border mb-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <!-- Project Filter -->
+      <app-searchable-select
+        label="Construction Project"
+        [options]="projectOptions"
+        [value]="selectedProjectId()"
+        (valueChange)="onProjectFilter($event)"
+        [allowCreateNew]="false"
+        placeholder="Filter by project..."
+      ></app-searchable-select>
+
+      <!-- Subcontractor Filter -->
+      <app-searchable-select
+        label="Trade Subcontractor"
+        [options]="contractorOptions"
+        [value]="selectedContractorId()"
+        (valueChange)="onContractorFilter($event)"
+        [allowCreateNew]="false"
+        placeholder="Filter by contractor..."
+      ></app-searchable-select>
+
+      <!-- Contextual Filter 1 -->
+      <ng-container *ngIf="activeTab() === 'ATTENDANCE'">
+        <app-searchable-select
+          label="Shift Type"
+          categoryCode="SHIFT_TYPE"
+          [value]="selectedShiftType()"
+          (valueChange)="selectedShiftType.set($event); onSearch()"
+          [allowCreateNew]="true"
+          placeholder="All shifts..."
+        ></app-searchable-select>
+      </ng-container>
+
+      <ng-container *ngIf="activeTab() === 'WORKERS'">
+        <app-searchable-select
+          label="Worker Employment Type"
+          categoryCode="WORKER_TYPE"
+          [value]="selectedWorkerType()"
+          (valueChange)="selectedWorkerType.set($event); onSearch()"
+          [allowCreateNew]="true"
+          placeholder="All worker types..."
+        ></app-searchable-select>
+      </ng-container>
+
+      <ng-container *ngIf="activeTab() === 'PAYMENTS'">
+        <app-searchable-select
+          label="Payment Classification"
+          categoryCode="SUBCON_PAYMENT_TYPE"
+          [value]="selectedPaymentType()"
+          (valueChange)="selectedPaymentType.set($event); onSearch()"
+          [allowCreateNew]="false"
+          placeholder="All payment types..."
+        ></app-searchable-select>
+      </ng-container>
+
+      <!-- Search Input & Reset Button -->
+      <div class="flex items-end gap-2">
+        <div class="relative flex-1">
+          <input
+            type="text"
+            [(ngModel)]="searchQuery"
+            (keyup.enter)="onSearch()"
+            placeholder="Search code, name, phone..."
+            class="w-full px-3.5 py-2 text-xs rounded-xl bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary h-[38px]"
+          />
+          <button
+            type="button"
+            (click)="onSearch()"
+            class="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          >
+            <i class="ri-search-line"></i>
+          </button>
+        </div>
+
+        <button
+          type="button"
+          (click)="clearFilters()"
+          class="px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground bg-secondary hover:bg-secondary/80 rounded-xl border border-border h-[38px] transition-colors"
+          title="Reset filters"
+        >
+          <i class="ri-refresh-line"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 1: ATTENDANCE & MUSTER ROLL TABLE -->
+  <div *ngIf="activeTab() === 'ATTENDANCE'" class="flex flex-col gap-4">
+    <div class="overflow-x-auto rounded-2xl border border-border bg-card">
+      <table class="w-full text-xs text-left">
+        <thead class="bg-secondary/40 text-muted-foreground uppercase font-semibold border-b border-border">
+          <tr>
+            <th class="py-3 px-4">Date & Shift</th>
+            <th class="py-3 px-4">Worker & Trade</th>
+            <th class="py-3 px-4">Subcontractor / Crew</th>
+            <th class="py-3 px-3 text-center">Timestamps & OT</th>
+            <th class="py-3 px-3 text-right">Wage Earned</th>
+            <th class="py-3 px-3 text-center">Method & GPS</th>
+            <th class="py-3 px-3 text-center">Supervisor Approval</th>
+            <th class="py-3 px-4 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border">
+          <tr *ngIf="isLoading()">
+            <td colspan="8" class="py-8 text-center text-muted-foreground">
+              <i class="ri-loader-4-line animate-spin text-lg inline-block mr-2"></i>
+              Loading attendance logs...
+            </td>
+          </tr>
+          <tr *ngIf="!isLoading() && attendanceLogs().length === 0">
+            <td colspan="8" class="py-8 text-center text-muted-foreground">
+              No daily attendance records found matching filters.
+            </td>
+          </tr>
+          <tr *ngFor="let item of attendanceLogs()" class="hover:bg-secondary/20 transition-colors">
+            <td class="py-3 px-4 font-medium text-foreground">
+              <div class="font-mono text-xs">{{ item.attendance_date }}</div>
+              <span class="inline-block px-2 py-0.5 mt-1 rounded text-[10px] font-semibold bg-secondary text-muted-foreground uppercase">
+                {{ item.shift_type }}
               </span>
-              <div class="flex items-center gap-2">
-                <span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
-                  Active
+            </td>
+
+            <td class="py-3 px-4">
+              <div class="font-semibold text-foreground">{{ item.worker_name || 'Worker #' + item.worker_id }}</div>
+              <div class="text-[11px] text-muted-foreground font-mono">{{ item.worker_code }} &bull; {{ item.trade_category }}</div>
+            </td>
+
+            <td class="py-3 px-4 text-muted-foreground">
+              <span class="font-medium text-foreground">{{ item.contractor_name || 'Direct Employment' }}</span>
+              <div class="text-[10px]">{{ item.project_name }}</div>
+            </td>
+
+            <td class="py-3 px-3 text-center">
+              <div class="font-mono text-xs">
+                {{ item.check_in_time || '08:00' }} - {{ item.check_out_time || '17:00' }}
+              </div>
+              <div class="text-[10px] font-semibold text-amber-600 mt-0.5" *ngIf="item.overtime_hours > 0">
+                +{{ item.overtime_hours }}h Overtime
+              </div>
+              <span class="px-1.5 py-0.5 rounded text-[10px] font-medium"
+                [ngClass]="item.attendance_status === 'PRESENT' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-red-500/10 text-red-600'">
+                {{ item.attendance_status }} ({{ item.manday_fraction }}d)
+              </span>
+            </td>
+
+            <td class="py-3 px-3 text-right font-mono font-bold text-foreground">
+              ৳{{ (item.total_earned_amount || 0) | number:'1.2-2' }}
+            </td>
+
+            <td class="py-3 px-3 text-center">
+              <div class="flex items-center justify-center gap-1">
+                <span *ngIf="item.biometric_verified" class="p-1 rounded bg-blue-500/10 text-blue-600" title="Biometric Verified">
+                  <i class="ri-fingerprint-line text-sm"></i>
                 </span>
+                <span *ngIf="item.gps_latitude" class="p-1 rounded bg-emerald-500/10 text-emerald-600" title="GPS Captured">
+                  <i class="ri-map-pin-line text-sm"></i>
+                </span>
+                <span class="text-[10px] text-muted-foreground font-mono">
+                  {{ item.attendance_method }}
+                </span>
+              </div>
+            </td>
+
+            <td class="py-3 px-3 text-center">
+              <span *ngIf="item.supervisor_approved" class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                <i class="ri-checkbox-circle-line"></i> Signed Off
+              </span>
+              <button
+                *ngIf="!item.supervisor_approved"
+                type="button"
+                (click)="quickApproveAttendance(item)"
+                class="px-2.5 py-1 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 text-xs font-medium border border-primary/20 transition-colors"
+              >
+                Sign Off
+              </button>
+            </td>
+
+            <td class="py-3 px-4 text-right">
+              <a
+                [routerLink]="['/construction/labor-muster/edit', item.id]"
+                class="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary inline-block transition-colors"
+                title="Edit Entry"
+              >
+                <i class="ri-edit-line text-base"></i>
+              </a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Footer -->
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground px-2">
+      <div>
+        Showing {{ attendanceLogs().length }} of {{ attendanceTotal() }} attendance logs (Page {{ attendancePage() }} of {{ attendanceTotalPages() }})
+      </div>
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          (click)="prevPage()"
+          [disabled]="attendancePage() <= 1"
+          class="px-3 py-1.5 rounded-xl border border-border bg-card text-foreground hover:bg-secondary disabled:opacity-50 transition-colors"
+        >
+          Previous
+        </button>
+        <button
+          type="button"
+          (click)="nextPage()"
+          [disabled]="attendancePage() >= attendanceTotalPages()"
+          class="px-3 py-1.5 rounded-xl border border-border bg-card text-foreground hover:bg-secondary disabled:opacity-50 transition-colors"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: WORKER REGISTRY TABLE -->
+  <div *ngIf="activeTab() === 'WORKERS'" class="flex flex-col gap-4">
+    <div class="overflow-x-auto rounded-2xl border border-border bg-card">
+      <table class="w-full text-xs text-left">
+        <thead class="bg-secondary/40 text-muted-foreground uppercase font-semibold border-b border-border">
+          <tr>
+            <th class="py-3 px-4">Worker Code & Name</th>
+            <th class="py-3 px-4">Employment Classification</th>
+            <th class="py-3 px-4">Trade & Skill Level</th>
+            <th class="py-3 px-4">Contractor / Gang</th>
+            <th class="py-3 px-3 text-right">Daily Wage (8h)</th>
+            <th class="py-3 px-3 text-right">OT Rate (1h)</th>
+            <th class="py-3 px-4">NID / Phone</th>
+            <th class="py-3 px-3 text-center">Status</th>
+            <th class="py-3 px-4 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border">
+          <tr *ngIf="isLoading()">
+            <td colspan="9" class="py-8 text-center text-muted-foreground">
+              <i class="ri-loader-4-line animate-spin text-lg inline-block mr-2"></i>
+              Loading worker registry...
+            </td>
+          </tr>
+          <tr *ngIf="!isLoading() && workers().length === 0">
+            <td colspan="9" class="py-8 text-center text-muted-foreground">
+              No workers registered matching filters.
+            </td>
+          </tr>
+          <tr *ngFor="let w of workers()" class="hover:bg-secondary/20 transition-colors">
+            <td class="py-3 px-4">
+              <div class="font-bold text-foreground">{{ w.worker_name }}</div>
+              <div class="text-[11px] font-mono text-muted-foreground">{{ w.worker_code }}</div>
+            </td>
+
+            <td class="py-3 px-4">
+              <span class="px-2 py-0.5 rounded text-[11px] font-semibold"
+                [ngClass]="w.worker_type === 'DIRECT_EMPLOYEE' ? 'bg-blue-500/10 text-blue-600 border border-blue-500/20' : 'bg-purple-500/10 text-purple-600 border border-purple-500/20'">
+                {{ w.worker_type }}
+              </span>
+            </td>
+
+            <td class="py-3 px-4 font-medium text-foreground">
+              {{ w.trade_category }}
+              <div class="text-[10px] text-muted-foreground">{{ w.skill_level }}</div>
+            </td>
+
+            <td class="py-3 px-4 text-muted-foreground">
+              {{ w.contractor_name || 'Direct Employment' }}
+            </td>
+
+            <td class="py-3 px-3 text-right font-mono font-bold text-foreground">
+              ৳{{ w.daily_wage_rate | number:'1.2-2' }}
+            </td>
+
+            <td class="py-3 px-3 text-right font-mono text-muted-foreground">
+              ৳{{ w.hourly_overtime_rate | number:'1.2-2' }}
+            </td>
+
+            <td class="py-3 px-4 font-mono text-xs text-muted-foreground">
+              <div>{{ w.phone_number || 'No phone' }}</div>
+              <div class="text-[10px]">{{ w.nid_number || 'NID not verified' }}</div>
+            </td>
+
+            <td class="py-3 px-3 text-center">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold"
+                [ngClass]="w.is_active ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20' : 'bg-secondary text-muted-foreground'">
+                {{ w.is_active ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+
+            <td class="py-3 px-4 text-right">
+              <button
+                type="button"
+                (click)="navigateToEditWorker(w.id)"
+                class="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary inline-block transition-colors"
+                title="Edit Worker Profile"
+              >
+                <i class="ri-edit-line text-base"></i>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Workers Pagination -->
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground px-2">
+      <div>
+        Showing {{ workers().length }} of {{ workersTotal() }} registered workers (Page {{ workersPage() }} of {{ workersTotalPages() }})
+      </div>
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          (click)="prevPage()"
+          [disabled]="workersPage() <= 1"
+          class="px-3 py-1.5 rounded-xl border border-border bg-card text-foreground hover:bg-secondary disabled:opacity-50 transition-colors"
+        >
+          Previous
+        </button>
+        <button
+          type="button"
+          (click)="nextPage()"
+          [disabled]="workersPage() >= workersTotalPages()"
+          class="px-3 py-1.5 rounded-xl border border-border bg-card text-foreground hover:bg-secondary disabled:opacity-50 transition-colors"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: PAYMENT VOUCHERS & DIRECT PAYROLL TABLE -->
+  <div *ngIf="activeTab() === 'PAYMENTS'" class="flex flex-col gap-4">
+    <div class="overflow-x-auto rounded-2xl border border-border bg-card">
+      <table class="w-full text-xs text-left">
+        <thead class="bg-secondary/40 text-muted-foreground uppercase font-semibold border-b border-border">
+          <tr>
+            <th class="py-3 px-4">Voucher No & Date</th>
+            <th class="py-3 px-4">Classification</th>
+            <th class="py-3 px-4">Payee (Contractor / Worker)</th>
+            <th class="py-3 px-3 text-right">Gross Certified</th>
+            <th class="py-3 px-3 text-right">5% Retention</th>
+            <th class="py-3 px-3 text-right">TDS / VDS</th>
+            <th class="py-3 px-3 text-right">Net Payable</th>
+            <th class="py-3 px-3 text-center">Certification Status</th>
+            <th class="py-3 px-4 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border">
+          <tr *ngIf="isLoading()">
+            <td colspan="9" class="py-8 text-center text-muted-foreground">
+              <i class="ri-loader-4-line animate-spin text-lg inline-block mr-2"></i>
+              Loading certified payment vouchers...
+            </td>
+          </tr>
+          <tr *ngIf="!isLoading() && payments().length === 0">
+            <td colspan="9" class="py-8 text-center text-muted-foreground">
+              No certified payment vouchers found matching filters.
+            </td>
+          </tr>
+          <tr *ngFor="let p of payments()" class="hover:bg-secondary/20 transition-colors">
+            <td class="py-3 px-4">
+              <div class="font-mono font-bold text-foreground">{{ p.voucher_number }}</div>
+              <div class="text-[10px] text-muted-foreground">{{ p.period_start_date }} to {{ p.period_end_date }}</div>
+            </td>
+
+            <td class="py-3 px-4">
+              <span class="px-2 py-0.5 rounded text-[11px] font-semibold"
+                [ngClass]="p.payment_type === 'DIRECT_PAYROLL' ? 'bg-blue-500/10 text-blue-600 border border-blue-500/20' : 'bg-purple-500/10 text-purple-600 border border-purple-500/20'">
+                {{ p.payment_type === 'DIRECT_PAYROLL' ? 'Direct Payroll' : 'Subcon Invoice' }}
+              </span>
+            </td>
+
+            <td class="py-3 px-4">
+              <div class="font-semibold text-foreground">{{ p.contractor_name || p.worker_name || 'Subcontractor' }}</div>
+              <div class="text-[10px] text-muted-foreground">{{ p.project_name }}</div>
+            </td>
+
+            <td class="py-3 px-3 text-right font-mono font-bold text-foreground">
+              ৳{{ (p.gross_payable_amount || 0) | number:'1.2-2' }}
+            </td>
+
+            <td class="py-3 px-3 text-right font-mono text-muted-foreground">
+              ৳{{ (p.retention_deduction_amount || 0) | number:'1.2-2' }}
+            </td>
+
+            <td class="py-3 px-3 text-right font-mono text-muted-foreground">
+              ৳{{ ((p.tds_amount || 0) + (p.vds_amount || 0)) | number:'1.2-2' }}
+            </td>
+
+            <td class="py-3 px-3 text-right font-mono font-extrabold text-primary">
+              ৳{{ (p.net_certified_payable || 0) | number:'1.2-2' }}
+            </td>
+
+            <td class="py-3 px-3 text-center">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold"
+                [ngClass]="p.certification_status === 'PAID' ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20' : (p.certification_status === 'CERTIFIED' ? 'bg-blue-500/10 text-blue-600 border border-blue-500/20' : 'bg-amber-500/10 text-amber-600 border border-amber-500/20')">
+                {{ p.certification_status }}
+              </span>
+            </td>
+
+            <td class="py-3 px-4 text-right">
+              <div class="flex items-center justify-end gap-1.5">
                 <button
-                  (click)="navigateToEditContractor(c.id)"
-                  class="text-muted-foreground hover:text-foreground p-1 rounded hover:bg-secondary transition-colors"
-                  title="Edit Subcontractor"
+                  *ngIf="p.certification_status !== 'PAID'"
+                  type="button"
+                  (click)="openCertifyModal(p)"
+                  class="px-2.5 py-1 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 text-xs font-medium border border-primary/20 transition-colors"
                 >
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
-                  </svg>
+                  Certify
+                </button>
+                <button
+                  type="button"
+                  (click)="navigateToViewPayment(p.id)"
+                  class="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary inline-block transition-colors"
+                  title="View Voucher Certificate"
+                >
+                  <i class="ri-file-search-line text-base"></i>
                 </button>
               </div>
-            </div>
-
-            <h4 class="font-bold text-sm text-foreground mb-1">{{ c.company_name }}</h4>
-            <div class="text-xs text-primary font-medium mb-3">
-              Trade: {{ c.trade_specialization.replace('_', ' ') }}
-            </div>
-
-            <div class="grid grid-cols-2 gap-2 text-xs bg-secondary/30 p-2.5 rounded-lg border border-border">
-              <div>
-                <span class="text-muted-foreground block text-[10px]">Contact Person:</span>
-                <span class="font-medium text-foreground truncate block">{{ c.contact_person }}</span>
-              </div>
-              <div>
-                <span class="text-muted-foreground block text-[10px]">Mobile:</span>
-                <span class="font-mono text-foreground truncate block">{{ c.primary_phone }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      }
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
-    <!-- Labor Muster Ledger Table Section -->
-    <div class="border-t border-border pt-6">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-        <div>
-          <h4 class="text-sm font-bold text-foreground">Subcontractor Labor Muster Roll Ledger</h4>
-          <p class="text-xs text-muted-foreground">Historical records of daily headcount deployments and wage rolls</p>
-        </div>
+    <!-- Payments Pagination -->
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground px-2">
+      <div>
+        Showing {{ payments().length }} of {{ paymentsTotal() }} vouchers (Page {{ paymentsPage() }} of {{ paymentsTotalPages() }})
+      </div>
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          (click)="prevPage()"
+          [disabled]="paymentsPage() <= 1"
+          class="px-3 py-1.5 rounded-xl border border-border bg-card text-foreground hover:bg-secondary disabled:opacity-50 transition-colors"
+        >
+          Previous
+        </button>
+        <button
+          type="button"
+          (click)="nextPage()"
+          [disabled]="paymentsPage() >= paymentsTotalPages()"
+          class="px-3 py-1.5 rounded-xl border border-border bg-card text-foreground hover:bg-secondary disabled:opacity-50 transition-colors"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  </div>
 
-        <!-- Filter Bar -->
-        <div class="flex flex-wrap items-center gap-3">
-          <div class="relative w-full sm:w-56">
-            <svg class="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-            </svg>
-            <input
-              type="text"
-              [(ngModel)]="searchQuery"
-              (ngModelChange)="onSearch()"
-              placeholder="Search trade..."
-              class="w-full pl-9 pr-3 py-1.5 text-xs bg-card border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-            />
+  <!-- TAB 4: PRODUCTIVITY & COST ANALYSIS -->
+  <div *ngIf="activeTab() === 'PRODUCTIVITY'" class="flex flex-col gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- Trade-wise Distribution -->
+      <div class="p-5 rounded-2xl bg-secondary/30 border border-border flex flex-col gap-4">
+        <h3 class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+          Trade-Wise Workforce Allocation & Spend
+        </h3>
+        <div class="space-y-3">
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs">
+              <span class="font-medium text-foreground">Reinforcement & Steel Fixing</span>
+              <span class="font-mono text-muted-foreground">35% Headcount &bull; ৳48,500</span>
+            </div>
+            <div class="w-full bg-secondary h-2 rounded-full overflow-hidden">
+              <div class="bg-primary h-full rounded-full" style="width: 35%"></div>
+            </div>
           </div>
 
-          <div class="w-full sm:w-56">
-            <app-searchable-select
-              [options]="contractorOptions"
-              [ngModel]="selectedContractorId()"
-              (selectionChange)="onContractorFilter($event)"
-              placeholder="Filter by Subcontractor..."
-              [allowCreateNew]="false"
-            >
-            </app-searchable-select>
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs">
+              <span class="font-medium text-foreground">Concrete Casting & Staging</span>
+              <span class="font-mono text-muted-foreground">28% Headcount &bull; ৳36,200</span>
+            </div>
+            <div class="w-full bg-secondary h-2 rounded-full overflow-hidden">
+              <div class="bg-emerald-500 h-full rounded-full" style="width: 28%"></div>
+            </div>
           </div>
 
-          @if (selectedContractorId() || searchQuery()) {
-            <button
-              (click)="clearFilters()"
-              class="text-xs text-muted-foreground hover:text-foreground underline cursor-pointer"
-            >
-              Clear
-            </button>
-          }
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs">
+              <span class="font-medium text-foreground">Brick Masonry & Plaster</span>
+              <span class="font-mono text-muted-foreground">22% Headcount &bull; ৳29,400</span>
+            </div>
+            <div class="w-full bg-secondary h-2 rounded-full overflow-hidden">
+              <div class="bg-amber-500 h-full rounded-full" style="width: 22%"></div>
+            </div>
+          </div>
+
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs">
+              <span class="font-medium text-foreground">MEP, Electrical & Plumbing</span>
+              <span class="font-mono text-muted-foreground">15% Headcount &bull; ৳21,000</span>
+            </div>
+            <div class="w-full bg-secondary h-2 rounded-full overflow-hidden">
+              <div class="bg-purple-500 h-full rounded-full" style="width: 15%"></div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- Paginated Table -->
-      <div class="overflow-x-auto border border-border rounded-xl">
-        <table class="w-full text-left text-xs">
-          <thead class="bg-secondary/60 text-muted-foreground uppercase tracking-wider font-semibold border-b border-border">
+      <!-- Compliance & Recovery Breakdown -->
+      <div class="p-5 rounded-2xl bg-secondary/30 border border-border flex flex-col justify-between gap-4">
+        <div>
+          <h3 class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            Subcontractor Statutory Tax & Retention Compliance
+          </h3>
+          <p class="text-xs text-muted-foreground mt-1">
+            Audit breakdown of cumulative retentions and tax deductions withheld under Bangladesh NBR income tax & VAT acts:
+          </p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 text-xs">
+          <div class="p-3 rounded-xl bg-card border border-border">
+            <span class="text-muted-foreground block text-[11px]">Cumulative 5% Retentions</span>
+            <span class="text-lg font-bold font-mono text-foreground mt-1 block">৳142,500</span>
+            <span class="text-[10px] text-muted-foreground">Defect liability lock</span>
+          </div>
+
+          <div class="p-3 rounded-xl bg-card border border-border">
+            <span class="text-muted-foreground block text-[11px]">Advance Recoveries</span>
+            <span class="text-lg font-bold font-mono text-foreground mt-1 block">৳85,000</span>
+            <span class="text-[10px] text-muted-foreground">Deducted from gross</span>
+          </div>
+
+          <div class="p-3 rounded-xl bg-card border border-border">
+            <span class="text-muted-foreground block text-[11px]">TDS Withheld (5.0%)</span>
+            <span class="text-lg font-bold font-mono text-foreground mt-1 block">৳68,400</span>
+            <span class="text-[10px] text-muted-foreground">Sec 52 Income Tax</span>
+          </div>
+
+          <div class="p-3 rounded-xl bg-card border border-border">
+            <span class="text-muted-foreground block text-[11px]">VDS Withheld (7.5%)</span>
+            <span class="text-lg font-bold font-mono text-foreground mt-1 block">৳102,600</span>
+            <span class="text-[10px] text-muted-foreground">Mushak 6.6 Challan</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</app-card-container>
+
+<!-- MODAL: GANG / CREW BATCH ATTENDANCE ENTRY -->
+<div *ngIf="isGangModalOpen()" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+  <div class="w-full max-w-3xl bg-card border border-border rounded-2xl shadow-xl flex flex-col max-h-[90vh]">
+    <!-- Modal Header -->
+    <div class="p-4 border-b border-border flex items-center justify-between">
+      <div>
+        <h3 class="text-base font-bold text-foreground">Supervisor Gang / Crew Muster Batch Entry</h3>
+        <p class="text-xs text-muted-foreground">Log attendance and shift allocation for multiple workers at once</p>
+      </div>
+      <button type="button" (click)="closeGangBatchModal()" class="text-muted-foreground hover:text-foreground">
+        <i class="ri-close-line text-xl"></i>
+      </button>
+    </div>
+
+    <!-- Modal Body -->
+    <div class="p-4 overflow-y-auto space-y-4">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div>
+          <label class="text-xs font-medium text-foreground block mb-1">Project *</label>
+          <select [(ngModel)]="gangProjectId" class="w-full px-3 py-1.5 text-xs rounded-xl bg-background border border-border text-foreground">
+            <option *ngFor="let p of projects()" [value]="p.id">{{ p.project_name }}</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="text-xs font-medium text-foreground block mb-1">Date *</label>
+          <input type="date" [(ngModel)]="gangDate" class="w-full px-3 py-1.5 text-xs rounded-xl bg-background border border-border text-foreground" />
+        </div>
+
+        <div>
+          <label class="text-xs font-medium text-foreground block mb-1">Shift Type *</label>
+          <select [(ngModel)]="gangShift" class="w-full px-3 py-1.5 text-xs rounded-xl bg-background border border-border text-foreground">
+            <option value="DAY">Day Shift (08:00 - 17:00)</option>
+            <option value="NIGHT">Night Shift (20:00 - 05:00)</option>
+            <option value="OVERTIME">Overtime Duty</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between p-3 rounded-xl bg-secondary/30 border border-border text-xs">
+        <span>Site GPS Coordinates: <strong>{{ gangGpsLat() || 'Not captured' }}, {{ gangGpsLng() || '' }}</strong></span>
+        <button type="button" (click)="captureGangGps()" class="px-2.5 py-1 rounded bg-primary/10 text-primary text-xs font-medium border border-primary/20">
+          <i class="ri-map-pin-line"></i> Capture GPS
+        </button>
+      </div>
+
+      <!-- Gang Workers Table -->
+      <div class="border border-border rounded-xl overflow-hidden">
+        <table class="w-full text-xs text-left">
+          <thead class="bg-secondary/40 text-muted-foreground uppercase font-semibold">
             <tr>
-              <th class="px-4 py-3.5">Muster # / DPR Diary</th>
-              <th class="px-4 py-3.5">Subcontractor</th>
-              <th class="px-4 py-3.5">Trade Category</th>
-              <th class="px-4 py-3.5 text-center">Worker Count</th>
-              <th class="px-4 py-3.5 text-right">Daily Wage Rate</th>
-              <th class="px-4 py-3.5 text-right">Total Wage Bill</th>
-              <th class="px-4 py-3.5 text-right w-24">Actions</th>
+              <th class="py-2 px-3">Worker Name & Trade</th>
+              <th class="py-2 px-3 text-center w-28">Status</th>
+              <th class="py-2 px-3 text-center w-24">Manday</th>
+              <th class="py-2 px-3 text-center w-24">OT Hours</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-border bg-card">
-            @if (isLoading()) {
-              @for (i of [1, 2, 3, 4, 5]; track i) {
-                <tr>
-                  <td colspan="7" class="px-4 py-4">
-                    <div class="h-4 bg-secondary animate-pulse rounded"></div>
-                  </td>
-                </tr>
-              }
-            } @else {
-              @for (l of laborEntries(); track l.id) {
-                <tr class="hover:bg-secondary/40 transition-colors">
-                  <td class="px-4 py-3.5 font-mono text-muted-foreground">
-                    <span class="font-bold text-foreground">#{{ l.id }}</span>
-                    <span class="text-[10px] ml-1.5 px-1.5 py-0.5 rounded bg-secondary text-primary">DPR #{{ l.dpr_id }}</span>
-                  </td>
-                  <td class="px-4 py-3.5 font-medium text-foreground">
-                    {{ l.contractor_name || 'Subcontractor #' + l.contractor_id }}
-                  </td>
-                  <td class="px-4 py-3.5">
-                    <span class="px-2 py-0.5 rounded text-[11px] font-medium bg-primary/10 text-primary border border-primary/20">
-                      {{ l.trade_category.replace('_', ' ') }}
-                    </span>
-                  </td>
-                  <td class="px-4 py-3.5 text-center font-bold text-foreground">
-                    {{ l.worker_count }}
-                  </td>
-                  <td class="px-4 py-3.5 text-right font-mono text-muted-foreground">
-                    BDT {{ l.daily_wage_rate | number:'1.2-2' }}
-                  </td>
-                  <td class="px-4 py-3.5 text-right font-mono font-bold text-emerald-500">
-                    BDT {{ l.total_wage | number:'1.2-2' }}
-                  </td>
-                  <td class="px-4 py-3.5 text-right">
-                    <div class="flex items-center justify-end gap-1.5">
-                      <button
-                        (click)="navigateToEditMuster(l.id!)"
-                        class="p-1.5 rounded-lg bg-secondary hover:bg-secondary/80 text-foreground border border-border transition-colors"
-                        title="Edit Muster Record"
-                      >
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                        </svg>
-                      </button>
-                      <button
-                        (click)="deleteMuster(l.id!)"
-                        class="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 text-rose-600 hover:bg-rose-100 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-800 transition-colors"
-                        title="Delete Record"
-                      >
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                        </svg>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              } @empty {
-                <tr>
-                  <td colspan="7" class="px-4 py-12 text-center text-muted-foreground">
-                    No labor muster entries found. Click "+ Record Labor Muster" above to add records.
-                  </td>
-                </tr>
-              }
-            }
+          <tbody class="divide-y divide-border">
+            <tr *ngFor="let w of gangWorkers(); let i = index">
+              <td class="py-2 px-3 font-medium text-foreground">
+                {{ w.worker_name }}
+                <span class="text-muted-foreground text-[10px] block font-mono">{{ w.trade }}</span>
+              </td>
+              <td class="py-2 px-3 text-center">
+                <select
+                  [value]="w.status"
+                  (change)="updateGangWorkerStatus(i, $any($event.target).value)"
+                  class="px-2 py-1 text-xs rounded bg-background border border-border text-foreground"
+                >
+                  <option value="PRESENT">Present</option>
+                  <option value="HALF_DAY">Half-Day</option>
+                  <option value="ABSENT">Absent</option>
+                </select>
+              </td>
+              <td class="py-2 px-3 text-center">
+                <input
+                  type="number"
+                  [value]="w.manday"
+                  (change)="updateGangWorkerManday(i, $any($event.target).value)"
+                  step="0.5"
+                  class="w-16 px-2 py-1 text-xs text-center rounded bg-background border border-border text-foreground"
+                />
+              </td>
+              <td class="py-2 px-3 text-center">
+                <input
+                  type="number"
+                  [value]="w.ot"
+                  (change)="updateGangWorkerOt(i, $any($event.target).value)"
+                  class="w-16 px-2 py-1 text-xs text-center rounded bg-background border border-border text-foreground"
+                />
+              </td>
+            </tr>
           </tbody>
-          @if (laborEntries().length > 0) {
-            <tfoot class="bg-secondary/40 font-semibold text-xs border-t border-border">
-              <tr>
-                <td colspan="3" class="px-4 py-2 text-muted-foreground">Page Totals:</td>
-                <td class="px-4 py-2 text-center font-mono text-primary font-bold">{{ getTotalWorkers() }} Workers</td>
-                <td></td>
-                <td class="px-4 py-2 text-right font-mono text-emerald-500 font-bold">BDT {{ getTotalWage() | number:'1.2-2' }}</td>
-                <td></td>
-              </tr>
-            </tfoot>
-          }
         </table>
       </div>
+    </div>
 
-      <!-- Pagination Footer -->
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-4 text-xs text-muted-foreground">
-        <div class="flex items-center gap-2">
-          <span>Showing Page {{ currentPage() }} ({{ laborEntries().length }} muster records loaded)</span>
+    <!-- Modal Footer -->
+    <div class="p-4 border-t border-border flex items-center justify-end gap-3">
+      <button type="button" (click)="closeGangBatchModal()" class="px-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground">
+        Cancel
+      </button>
+      <app-custom-button variant="primary" [disabled]="isSavingGang()" (clicked)="submitGangBatchAttendance()">
+        {{ isSavingGang() ? 'Saving Batch...' : 'Submit Gang Attendance' }}
+      </app-custom-button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: QUICK PAYMENT CERTIFICATION -->
+<div *ngIf="isCertifyModalOpen()" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+  <div class="w-full max-w-lg bg-card border border-border rounded-2xl shadow-xl flex flex-col">
+    <div class="p-4 border-b border-border flex items-center justify-between">
+      <h3 class="text-base font-bold text-foreground">Certify Payment Voucher</h3>
+      <button type="button" (click)="closeCertifyModal()" class="text-muted-foreground hover:text-foreground">
+        <i class="ri-close-line text-xl"></i>
+      </button>
+    </div>
+
+    <div class="p-4 space-y-4 text-xs">
+      <div class="p-3 rounded-xl bg-secondary/30 border border-border">
+        <div class="flex justify-between font-mono font-bold text-foreground">
+          <span>{{ selectedPaymentToCertify()?.voucher_number }}</span>
+          <span class="text-primary font-extrabold text-sm">৳{{ (selectedPaymentToCertify()?.net_certified_payable || 0) | number:'1.2-2' }}</span>
         </div>
+        <div class="text-muted-foreground mt-1">{{ selectedPaymentToCertify()?.contractor_name || selectedPaymentToCertify()?.worker_name }}</div>
+      </div>
 
-        <div class="flex items-center gap-1">
-          <button
-            type="button"
-            [disabled]="currentPage() === 1"
-            (click)="prevPage()"
-            class="px-3 py-1 rounded-lg border border-border bg-card text-foreground hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          >
-            Previous
-          </button>
-          <span class="px-3 py-1 font-semibold text-foreground">Page {{ currentPage() }}</span>
-          <button
-            type="button"
-            [disabled]="laborEntries().length < pageSize()"
-            (click)="nextPage()"
-            class="px-3 py-1 rounded-lg border border-border bg-card text-foreground hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          >
-            Next
-          </button>
+      <div>
+        <label class="block font-medium text-foreground mb-1">New Certification Status *</label>
+        <select [(ngModel)]="certifyStatus" class="w-full px-3 py-2 rounded-xl bg-background border border-border text-foreground">
+          <option value="CERTIFIED">Certified by Project QS / PM</option>
+          <option value="ACCOUNTS_POSTED">Accounts Approved</option>
+          <option value="PAID">Disbursed & Paid</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block font-medium text-foreground mb-1">Certifying Officer Name *</label>
+        <input type="text" [(ngModel)]="certifyOfficer" class="w-full px-3 py-2 rounded-xl bg-background border border-border text-foreground" />
+      </div>
+
+      <div class="grid grid-cols-2 gap-3" *ngIf="certifyStatus() === 'PAID'">
+        <div>
+          <label class="block font-medium text-foreground mb-1">Payment Method</label>
+          <select [(ngModel)]="certifyMethod" class="w-full px-3 py-2 rounded-xl bg-background border border-border text-foreground">
+            <option value="BANK_TRANSFER">Bank Transfer (BEFTN)</option>
+            <option value="CHEQUE">Cheque</option>
+            <option value="CASH">Cash</option>
+          </select>
+        </div>
+        <div>
+          <label class="block font-medium text-foreground mb-1">Payment Ref</label>
+          <input type="text" [(ngModel)]="certifyRef" placeholder="CHQ-12345" class="w-full px-3 py-2 rounded-xl bg-background border border-border text-foreground" />
         </div>
       </div>
     </div>
-  </app-card-container>
+
+    <div class="p-4 border-t border-border flex items-center justify-end gap-3">
+      <button type="button" (click)="closeCertifyModal()" class="px-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground">
+        Cancel
+      </button>
+      <app-custom-button variant="primary" [disabled]="isCertifying()" (clicked)="submitCertification()">
+        {{ isCertifying() ? 'Processing...' : 'Confirm Certification' }}
+      </app-custom-button>
+    </div>
+  </div>
 </div>

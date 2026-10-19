@@ -1,0 +1,1106 @@
+<div class="flex flex-col gap-6 w-full max-w-7xl mx-auto pb-16">
+  <!-- Unified Top Header with Navigation & Network Status -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
+    <div class="flex items-center gap-3">
+      <a
+        routerLink="/construction/dpr"
+        class="p-2.5 rounded-xl bg-card border border-border text-foreground hover:bg-secondary transition-colors inline-flex items-center justify-center shadow-xs"
+        title="Back to Daily Progress Reports"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+        </svg>
+      </a>
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+            Site Progress Operations
+          </span>
+          <span class="text-xs text-muted-foreground font-mono">
+            {{ isViewMode() ? 'View Audit Mode' : isEditMode() ? 'Editing DPR #' + dprId() : 'New Mobile/Site DPR' }}
+          </span>
+          <!-- Connectivity Pill -->
+          @if (isOnline()) {
+            <span class="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              Online / Live Sync
+            </span>
+          } @else {
+            <span class="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
+              Offline Mode (LocalStorage Active)
+            </span>
+          }
+        </div>
+        <h1 class="text-xl sm:text-2xl font-bold font-display text-foreground mt-1">
+          {{ isViewMode() ? 'Daily Progress Report (DPR) Audit' : isEditMode() ? 'Edit Daily Progress Report (DPR)' : 'Log Daily Progress Report (DPR)' }}
+        </h1>
+      </div>
+    </div>
+
+    <!-- Header Actions -->
+    <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+      <a
+        routerLink="/construction/dpr"
+        class="px-3.5 py-2 text-xs font-medium text-muted-foreground hover:text-foreground bg-secondary hover:bg-secondary/80 rounded-xl border border-border transition-colors"
+      >
+        Cancel
+      </a>
+
+      @if (!isViewMode()) {
+        <!-- Save Offline Draft Button -->
+        <button
+          type="button"
+          (click)="saveOfflineDraft()"
+          class="px-3.5 py-2 text-xs font-medium text-amber-600 dark:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded-xl transition-colors flex items-center gap-1.5"
+          title="Save draft to mobile device local storage without submitting to network"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>
+          </svg>
+          Save Offline Draft
+        </button>
+
+        <!-- Submit to Server Button -->
+        <app-custom-button
+          variant="primary"
+          [disabled]="dprForm.invalid || isSaving()"
+          (clicked)="saveDPR()"
+        >
+          <span class="flex items-center gap-2">
+            @if (isSaving()) {
+              <svg class="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+              </svg>
+              Synchronizing...
+            } @else {
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              {{ isEditMode() ? 'Update & Synchronize DPR' : 'Submit & Synchronize DPR' }}
+            }
+          </span>
+        </app-custom-button>
+      }
+    </div>
+  </div>
+
+  <!-- Main Unified Card Container -->
+  <app-card-container
+    [title]="'Site Activity, Quantities & Progress Log'"
+    [subtitle]="'Comprehensive Daily Site Diary capturing actual field progress, BOQ measurements, workforce muster, machinery downtime, and site photographs'"
+  >
+    <form [formGroup]="dprForm" class="flex flex-col gap-8">
+
+      <!-- SECTION 1: PROJECT & LOCATION CONTEXT -->
+      <div class="space-y-4">
+        <div class="flex items-center justify-between pb-2 border-b border-border">
+          <h3 class="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-primary"></span>
+            1. Project, Tower, Floor & Weather Context
+          </h3>
+          <span class="text-xs text-muted-foreground italic">* All dropdowns dynamic from settings</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <!-- Project Selector -->
+          <div class="space-y-1">
+            <label class="text-xs font-semibold text-foreground">
+              Construction Project <span class="text-destructive">*</span>
+            </label>
+            <app-searchable-select
+              [options]="projectOptions"
+              formControlName="project_id"
+              (selectionChange)="onProjectSelect($event)"
+              placeholder="Select Construction Project..."
+              [allowCreateNew]="false"
+              [required]="true"
+            ></app-searchable-select>
+          </div>
+
+          <!-- Tower / Building Selector -->
+          <div class="space-y-1">
+            <label class="text-xs font-semibold text-foreground">
+              Tower / Building Zone
+            </label>
+            <app-searchable-select
+              [options]="towerOptions"
+              formControlName="tower_id"
+              placeholder="Select Tower / Building Zone..."
+              [allowCreateNew]="false"
+            ></app-searchable-select>
+          </div>
+
+          <!-- Report Date -->
+          <app-custom-input
+            label="Report Date"
+            type="date"
+            formControlName="report_date"
+            [required]="true"
+          ></app-custom-input>
+
+          <!-- Floor / Location -->
+          <app-custom-input
+            label="Floor / Level / Grid Location"
+            type="text"
+            formControlName="floor_unit_location"
+            placeholder="e.g. 5th Floor Slab Grid C-D"
+            [required]="true"
+          ></app-custom-input>
+
+          <!-- Weather Condition (Dynamic from Settings) -->
+          <div class="space-y-1">
+            <label class="text-xs font-semibold text-foreground">
+              Weather Conditions <span class="text-destructive">*</span>
+            </label>
+            <app-searchable-select
+              categoryCode="DPR_WEATHER_CONDITION"
+              formControlName="weather_condition_id"
+              placeholder="Select Weather Condition..."
+              [allowCreateNew]="true"
+              [required]="true"
+            ></app-searchable-select>
+          </div>
+
+          <!-- WBS Activity Node -->
+          <div class="space-y-1">
+            <label class="text-xs font-semibold text-foreground">
+              WBS Milestone / Activity Node
+            </label>
+            <app-searchable-select
+              [options]="wbsOptions"
+              formControlName="wbs_node_id"
+              placeholder="Link to WBS Milestone..."
+              [allowCreateNew]="false"
+            ></app-searchable-select>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 2: AUTHORIZED GPS & GEOLOCATION CAPTURE -->
+      <div class="space-y-4 p-4 rounded-xl bg-secondary/30 border border-border">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-border/60">
+          <div>
+            <h3 class="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+              2. Authorized Site Geolocation & Timestamp Capture
+            </h3>
+            <p class="text-xs text-muted-foreground mt-0.5">Authorized location validation prevents ghost site reporting</p>
+          </div>
+          @if (!isViewMode()) {
+            <button
+              type="button"
+              (click)="captureCurrentGps()"
+              [disabled]="isCapturingGps()"
+              class="px-3.5 py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 rounded-lg transition-colors flex items-center gap-1.5 shadow-xs"
+            >
+              @if (isCapturingGps()) {
+                <svg class="animate-spin w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                </svg>
+                Acquiring GPS Fix...
+              } @else {
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                Capture Authorized GPS Coordinate
+              }
+            </button>
+          }
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <app-custom-input
+            label="Latitude"
+            type="number"
+            formControlName="latitude"
+            placeholder="e.g. 23.7806"
+          ></app-custom-input>
+
+          <app-custom-input
+            label="Longitude"
+            type="number"
+            formControlName="longitude"
+            placeholder="e.g. 90.4193"
+          ></app-custom-input>
+
+          <app-custom-input
+            label="GPS Accuracy (meters)"
+            type="number"
+            formControlName="gps_accuracy_meters"
+            placeholder="± Accuracy in meters"
+          ></app-custom-input>
+
+          <div class="space-y-1">
+            <label class="text-xs font-semibold text-foreground">Location Verification</label>
+            <div class="flex items-center h-10 px-3 rounded-lg border border-border bg-card">
+              @if (gpsCaptured() || dprForm.get('location_verified')?.value) {
+                <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                  <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                  </svg>
+                  Authorized On-Site Fix
+                </span>
+              } @else {
+                <span class="text-xs text-muted-foreground flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                  Pending Verification
+                </span>
+              }
+            </div>
+          </div>
+        </div>
+
+        <app-custom-input
+          label="GPS Location Address / Reference Tag"
+          type="text"
+          formControlName="location_address"
+          placeholder="e.g. Plot 14, Road 11, Gulshan-2, Dhaka"
+        ></app-custom-input>
+      </div>
+
+      <!-- SECTION 3: ACTIVITIES PLANNED AND COMPLETED -->
+      <div class="space-y-4">
+        <h3 class="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-border">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+          3. Activities Planned & Completed
+        </h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <app-custom-textarea
+            label="Activities Planned for the Day"
+            formControlName="activities_planned"
+            placeholder="Outline all targets scheduled for today across civil, MEP, and finishing trades..."
+            [rows]="3"
+          ></app-custom-textarea>
+
+          <app-custom-textarea
+            label="Activities Actually Completed"
+            formControlName="activities_completed"
+            placeholder="Record actual progress achieved by the close of shift..."
+            [rows]="3"
+          ></app-custom-textarea>
+        </div>
+
+        <app-custom-textarea
+          label="Overall Structural Activity Summary"
+          formControlName="structural_activity_summary"
+          placeholder="Detailed narrative of concrete pouring, formwork, reinforcement tying, curing, or masonry..."
+          [rows]="3"
+          [required]="true"
+        ></app-custom-textarea>
+      </div>
+
+      <!-- SECTION 4: QUANTITIES COMPLETED AGAINST THE BOQ -->
+      <div class="space-y-4">
+        <div class="flex items-center justify-between pb-2 border-b border-border">
+          <div>
+            <h3 class="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span>
+              4. Quantities Completed Against the BOQ
+            </h3>
+            <p class="text-xs text-muted-foreground mt-0.5">Physical progress measurements for daily quantity surveyor verification</p>
+          </div>
+          @if (!isViewMode()) {
+            <button
+              type="button"
+              (click)="addBoqRow()"
+              class="px-3 py-1.5 text-xs font-medium text-primary bg-primary/10 hover:bg-primary/20 border border-primary/20 rounded-lg transition-colors flex items-center gap-1 shadow-xs"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+              </svg>
+              + Add BOQ Measurement
+            </button>
+          }
+        </div>
+
+        <!-- BOQ Table Repeater -->
+        <div class="overflow-x-auto rounded-xl border border-border bg-card">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-secondary text-muted-foreground font-semibold border-b border-border uppercase tracking-wider">
+              <tr>
+                <th class="p-3">BOQ Item Code</th>
+                <th class="p-3">Item Description</th>
+                <th class="p-3 w-24">Unit</th>
+                <th class="p-3 w-32">Completed Qty</th>
+                <th class="p-3 w-32">Contract Rate (৳)</th>
+                <th class="p-3 w-36 text-right">Value (৳)</th>
+                @if (!isViewMode()) {
+                  <th class="p-3 w-12 text-center">Action</th>
+                }
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border">
+              @for (ctrl of boqArray.controls; track $index) {
+                <tr [formGroup]="$any(ctrl)" class="hover:bg-muted/30 transition-colors">
+                  <td class="p-2">
+                    <input
+                      type="text"
+                      formControlName="item_code"
+                      placeholder="e.g. BOQ-CIV-001"
+                      class="w-full px-2.5 py-1.5 text-xs bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono"
+                    />
+                  </td>
+                  <td class="p-2">
+                    <input
+                      type="text"
+                      formControlName="item_description"
+                      placeholder="e.g. 1st Floor Slab Concreting C-25"
+                      class="w-full px-2.5 py-1.5 text-xs bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                    />
+                  </td>
+                  <td class="p-2">
+                    <input
+                      type="text"
+                      formControlName="unit"
+                      placeholder="CFT / SQFT"
+                      class="w-full px-2.5 py-1.5 text-xs bg-card border border-border rounded-lg text-foreground uppercase focus:outline-none focus:ring-1 focus:ring-primary"
+                    />
+                  </td>
+                  <td class="p-2">
+                    <input
+                      type="number"
+                      formControlName="completed_quantity"
+                      min="0"
+                      class="w-full px-2.5 py-1.5 text-xs bg-card border border-border rounded-lg text-foreground font-bold focus:outline-none focus:ring-1 focus:ring-primary"
+                    />
+                  </td>
+                  <td class="p-2">
+                    <input
+                      type="number"
+                      formControlName="unit_rate"
+                      min="0"
+                      class="w-full px-2.5 py-1.5 text-xs bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                    />
+                  </td>
+                  <td class="p-2 text-right font-mono font-semibold text-foreground">
+                    ৳ {{ ((ctrl.get('completed_quantity')?.value || 0) * (ctrl.get('unit_rate')?.value || 0)) | number:'1.2-2' }}
+                  </td>
+                  @if (!isViewMode()) {
+                    <td class="p-2 text-center">
+                      <button
+                        type="button"
+                        (click)="removeBoqRow($index)"
+                        [disabled]="boqArray.length <= 1"
+                        class="p-1 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-40"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                      </button>
+                    </td>
+                  }
+                </tr>
+              }
+            </tbody>
+            <tfoot class="bg-secondary/60 font-semibold border-t border-border">
+              <tr>
+                <td colspan="5" class="p-3 text-right text-muted-foreground uppercase text-xs">
+                  Total Daily BOQ Work Value:
+                </td>
+                <td class="p-3 text-right font-mono text-primary text-sm font-bold">
+                  ৳ {{ getTotalBoqValue() | number:'1.2-2' }}
+                </td>
+                @if (!isViewMode()) { <td></td> }
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+      <!-- SECTION 5: LABOUR & CONTRACTOR WORKFORCE PRESENT -->
+      <div class="space-y-4">
+        <div class="flex items-center justify-between pb-2 border-b border-border">
+          <div>
+            <h3 class="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+              5. Labour & Contractor Workforce Present
+            </h3>
+            <p class="text-xs text-muted-foreground mt-0.5">Headcount by trade category and contractor for productivity metrics</p>
+          </div>
+          @if (!isViewMode()) {
+            <button
+              type="button"
+              (click)="addLaborRow()"
+              class="px-3 py-1.5 text-xs font-medium text-amber-600 dark:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 rounded-lg transition-colors flex items-center gap-1 shadow-xs"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+              </svg>
+              + Add Trade / Workforce Row
+            </button>
+          }
+        </div>
+
+        <!-- Labor Muster Repeater -->
+        <div class="overflow-x-auto rounded-xl border border-border bg-card">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-secondary text-muted-foreground font-semibold border-b border-border uppercase tracking-wider">
+              <tr>
+                <th class="p-3 w-1/3">Contractor / Agency</th>
+                <th class="p-3 w-1/4">Trade Category</th>
+                <th class="p-3 w-28 text-center">Workers</th>
+                <th class="p-3 w-32 text-right">Daily Wage (৳)</th>
+                <th class="p-3 w-36 text-right">Subtotal (৳)</th>
+                @if (!isViewMode()) {
+                  <th class="p-3 w-12 text-center">Action</th>
+                }
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border">
+              @for (ctrl of laborArray.controls; track $index) {
+                <tr [formGroup]="$any(ctrl)" class="hover:bg-muted/30 transition-colors">
+                  <td class="p-2">
+                    <select
+                      formControlName="contractor_id"
+                      class="w-full px-2.5 py-1.5 text-xs bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                    >
+                      <option [ngValue]="null">Direct / Departmental Labor</option>
+                      @for (c of contractors(); track c.id) {
+                        <option [ngValue]="c.id">{{ c.company_name || c.contractor_name }} ({{ c.trade_category }})</option>
+                      }
+                    </select>
+                  </td>
+                  <td class="p-2">
+                    <select
+                      formControlName="trade_category"
+                      class="w-full px-2.5 py-1.5 text-xs bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                    >
+                      <option value="CIVIL_MASONRY">Civil Masonry / Brickwork</option>
+                      <option value="REBAR_FITTER">Rebar Fitter / Rod Binder</option>
+                      <option value="SHUTTERING_CARPENTER">Shuttering Carpenter</option>
+                      <option value="CONCRETE_LABOR">Concrete Pouring Labor</option>
+                      <option value="PLUMBING_MEP">Plumbing & Sanitary MEP</option>
+                      <option value="ELECTRICAL">Electrical Works</option>
+                      <option value="TILE_MARBLE">Tile & Marble Mason</option>
+                      <option value="PAINTING">Painting & Finishing</option>
+                      <option value="HEAVY_EQUIP_OPERATOR">Equipment Operator</option>
+                    </select>
+                  </td>
+                  <td class="p-2">
+                    <input
+                      type="number"
+                      formControlName="worker_count"
+                      min="1"
+                      class="w-full px-2.5 py-1.5 text-xs text-center bg-card border border-border rounded-lg text-foreground font-bold focus:outline-none focus:ring-1 focus:ring-primary"
+                    />
+                  </td>
+                  <td class="p-2">
+                    <input
+                      type="number"
+                      formControlName="daily_wage_rate"
+                      min="0"
+                      class="w-full px-2.5 py-1.5 text-xs text-right bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                    />
+                  </td>
+                  <td class="p-2 text-right font-mono font-semibold text-foreground">
+                    ৳ {{ ((ctrl.get('worker_count')?.value || 0) * (ctrl.get('daily_wage_rate')?.value || 0)) | number:'1.0-0' }}
+                  </td>
+                  @if (!isViewMode()) {
+                    <td class="p-2 text-center">
+                      <button
+                        type="button"
+                        (click)="removeLaborRow($index)"
+                        [disabled]="laborArray.length <= 1"
+                        class="p-1 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-40"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                      </button>
+                    </td>
+                  }
+                </tr>
+              }
+            </tbody>
+            <tfoot class="bg-secondary/60 font-semibold border-t border-border">
+              <tr>
+                <td colspan="2" class="p-3 text-right text-muted-foreground uppercase text-xs">
+                  Total Site Workforce & Wages:
+                </td>
+                <td class="p-3 text-center font-bold text-foreground text-sm">
+                  {{ getTotalWorkers() }} Workers
+                </td>
+                <td></td>
+                <td class="p-3 text-right font-mono text-foreground text-sm font-bold">
+                  ৳ {{ getTotalWageBill() | number:'1.0-0' }}
+                </td>
+                @if (!isViewMode()) { <td></td> }
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+      <!-- SECTION 6: EQUIPMENT USED & DOWNTIME -->
+      <div class="space-y-4">
+        <div class="flex items-center justify-between pb-2 border-b border-border">
+          <div>
+            <h3 class="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+              6. Equipment Deployed & Downtime Tracker
+            </h3>
+            <p class="text-xs text-muted-foreground mt-0.5">Track machinery utilization and breakdown hours for productivity analysis</p>
+          </div>
+          @if (!isViewMode()) {
+            <button
+              type="button"
+              (click)="addEquipmentRow()"
+              class="px-3 py-1.5 text-xs font-medium text-rose-600 dark:text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 rounded-lg transition-colors flex items-center gap-1 shadow-xs"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+              </svg>
+              + Add Machinery / Plant
+            </button>
+          }
+        </div>
+
+        <div class="overflow-x-auto rounded-xl border border-border bg-card">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-secondary text-muted-foreground font-semibold border-b border-border uppercase tracking-wider">
+              <tr>
+                <th class="p-3">Equipment / Machinery</th>
+                <th class="p-3 w-20 text-center">Qty</th>
+                <th class="p-3 w-28 text-center">Operated (Hrs)</th>
+                <th class="p-3 w-28 text-center text-rose-500">Downtime (Hrs)</th>
+                <th class="p-3">Downtime Reason / Cause</th>
+                <th class="p-3 w-32">Status</th>
+                @if (!isViewMode()) {
+                  <th class="p-3 w-12 text-center">Action</th>
+                }
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border">
+              @for (ctrl of equipmentArray.controls; track $index) {
+                <tr [formGroup]="$any(ctrl)" class="hover:bg-muted/30 transition-colors">
+                  <td class="p-2">
+                    <input
+                      type="text"
+                      formControlName="equipment_name"
+                      placeholder="e.g. Tower Crane TC-01"
+                      class="w-full px-2.5 py-1.5 text-xs bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                    />
+                  </td>
+                  <td class="p-2">
+                    <input
+                      type="number"
+                      formControlName="qty"
+                      min="1"
+                      class="w-full px-2.5 py-1.5 text-xs text-center bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                    />
+                  </td>
+                  <td class="p-2">
+                    <input
+                      type="number"
+                      formControlName="hours_operated"
+                      min="0"
+                      class="w-full px-2.5 py-1.5 text-xs text-center bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                    />
+                  </td>
+                  <td class="p-2">
+                    <input
+                      type="number"
+                      formControlName="downtime_hours"
+                      (input)="calculateEquipmentDowntime()"
+                      min="0"
+                      class="w-full px-2.5 py-1.5 text-xs text-center bg-card border border-border rounded-lg text-rose-500 font-bold focus:outline-none focus:ring-1 focus:ring-primary"
+                    />
+                  </td>
+                  <td class="p-2">
+                    <input
+                      type="text"
+                      formControlName="downtime_reason"
+                      placeholder="e.g. Hydraulic pipe leakage / Power failure"
+                      class="w-full px-2.5 py-1.5 text-xs bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                    />
+                  </td>
+                  <td class="p-2">
+                    <select
+                      formControlName="status"
+                      class="w-full px-2.5 py-1.5 text-xs bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                    >
+                      <option value="OPERATIONAL">Operational</option>
+                      <option value="STANDBY">Standby</option>
+                      <option value="BREAKDOWN">Breakdown</option>
+                    </select>
+                  </td>
+                  @if (!isViewMode()) {
+                    <td class="p-2 text-center">
+                      <button
+                        type="button"
+                        (click)="removeEquipmentRow($index)"
+                        [disabled]="equipmentArray.length <= 1"
+                        class="p-1 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-40"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                      </button>
+                    </td>
+                  }
+                </tr>
+              }
+            </tbody>
+            <tfoot class="bg-secondary/60 font-semibold border-t border-border">
+              <tr>
+                <td colspan="3" class="p-3 text-right text-muted-foreground uppercase text-xs">
+                  Total Plant Downtime Logged:
+                </td>
+                <td class="p-3 text-center font-bold text-rose-500 text-sm">
+                  {{ dprForm.get('total_equipment_downtime_hours')?.value || 0 }} Hrs
+                </td>
+                <td colspan="2"></td>
+                @if (!isViewMode()) { <td></td> }
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+      <!-- SECTION 7: MATERIALS RECEIVED, ISSUED, CONSUMED & WASTAGE -->
+      <div class="space-y-4">
+        <div class="flex items-center justify-between pb-2 border-b border-border">
+          <div>
+            <h3 class="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-cyan-500"></span>
+              7. Materials Received, Issued, Consumed & Wastage
+            </h3>
+            <p class="text-xs text-muted-foreground mt-0.5">Reconcile daily site material inventory and record wastage</p>
+          </div>
+          @if (!isViewMode()) {
+            <button
+              type="button"
+              (click)="addMaterialRow()"
+              class="px-3 py-1.5 text-xs font-medium text-cyan-600 dark:text-cyan-400 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/20 rounded-lg transition-colors flex items-center gap-1 shadow-xs"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+              </svg>
+              + Add Material Item
+            </button>
+          }
+        </div>
+
+        <!-- Material Summary Table Repeater -->
+        <div class="overflow-x-auto rounded-xl border border-border bg-card">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-secondary text-muted-foreground font-semibold border-b border-border uppercase tracking-wider">
+              <tr>
+                <th class="p-3">Material Description</th>
+                <th class="p-3 w-24">Unit</th>
+                <th class="p-3 w-28 text-center">Received Qty</th>
+                <th class="p-3 w-28 text-center">Issued Qty</th>
+                <th class="p-3 w-28 text-center">Consumed Qty</th>
+                <th class="p-3 w-28 text-center text-amber-500">Wastage Qty</th>
+                @if (!isViewMode()) {
+                  <th class="p-3 w-12 text-center">Action</th>
+                }
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border">
+              @for (ctrl of materialsArray.controls; track $index) {
+                <tr [formGroup]="$any(ctrl)" class="hover:bg-muted/30 transition-colors">
+                  <td class="p-2">
+                    <input
+                      type="text"
+                      formControlName="material_name"
+                      placeholder="e.g. 500W Deformed Steel Rod (16mm)"
+                      class="w-full px-2.5 py-1.5 text-xs bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                    />
+                  </td>
+                  <td class="p-2">
+                    <input
+                      type="text"
+                      formControlName="unit"
+                      placeholder="MT / Bags / CFT"
+                      class="w-full px-2.5 py-1.5 text-xs bg-card border border-border rounded-lg text-foreground uppercase focus:outline-none focus:ring-1 focus:ring-primary"
+                    />
+                  </td>
+                  <td class="p-2">
+                    <input
+                      type="number"
+                      formControlName="received_qty"
+                      min="0"
+                      class="w-full px-2.5 py-1.5 text-xs text-center bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                    />
+                  </td>
+                  <td class="p-2">
+                    <input
+                      type="number"
+                      formControlName="issued_qty"
+                      min="0"
+                      class="w-full px-2.5 py-1.5 text-xs text-center bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                    />
+                  </td>
+                  <td class="p-2">
+                    <input
+                      type="number"
+                      formControlName="consumed_qty"
+                      min="0"
+                      class="w-full px-2.5 py-1.5 text-xs text-center bg-card border border-border rounded-lg text-foreground font-bold focus:outline-none focus:ring-1 focus:ring-primary"
+                    />
+                  </td>
+                  <td class="p-2">
+                    <input
+                      type="number"
+                      formControlName="wastage_qty"
+                      min="0"
+                      class="w-full px-2.5 py-1.5 text-xs text-center bg-card border border-border rounded-lg text-amber-500 focus:outline-none focus:ring-1 focus:ring-primary"
+                    />
+                  </td>
+                  @if (!isViewMode()) {
+                    <td class="p-2 text-center">
+                      <button
+                        type="button"
+                        (click)="removeMaterialRow($index)"
+                        [disabled]="materialsArray.length <= 1"
+                        class="p-1 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-40"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                      </button>
+                    </td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Major Construction Materials Rollup -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 rounded-xl bg-secondary/30 border border-border">
+          <app-custom-input
+            label="Concrete Casting Volume (CFT)"
+            type="number"
+            formControlName="concrete_casting_cft"
+            placeholder="0"
+          ></app-custom-input>
+
+          <app-custom-input
+            label="Steel Rod Consumed (Metric Tons)"
+            type="number"
+            formControlName="steel_rod_consumed_mt"
+            placeholder="0.0"
+          ></app-custom-input>
+
+          <app-custom-input
+            label="Cement Consumed (Bags)"
+            type="number"
+            formControlName="cement_consumed_bags"
+            placeholder="0"
+          ></app-custom-input>
+        </div>
+
+        <app-custom-textarea
+          label="Material Wastage & Reconciliation Notes"
+          formControlName="material_wastage_notes"
+          placeholder="Record causes of any cut-piece rebar wastage, concrete spill, broken bricks, or storage damages..."
+          [rows]="2"
+        ></app-custom-textarea>
+      </div>
+
+      <!-- SECTION 8: INSPECTION REQUESTS & QUALITY OBSERVATIONS -->
+      <div class="space-y-4">
+        <h3 class="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-border">
+          <span class="w-2.5 h-2.5 rounded-full bg-teal-500"></span>
+          8. Inspection Requests & Quality Observations
+        </h3>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <app-custom-textarea
+            label="Inspection Requests Submitted to Consultant"
+            formControlName="inspection_requests"
+            placeholder="e.g. Pre-pour slab inspection request submitted for Grid 4-8..."
+            [rows]="3"
+          ></app-custom-textarea>
+
+          <app-custom-textarea
+            label="Quality / QA-QC Observations"
+            formControlName="quality_observations"
+            placeholder="Observations on slump test, cube casting, cover blocks, lap lengths, or honeycombing..."
+            [rows]="3"
+          ></app-custom-textarea>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="space-y-1">
+            <label class="text-xs font-semibold text-foreground">
+              Inspection Status <span class="text-destructive">*</span>
+            </label>
+            <app-searchable-select
+              categoryCode="DPR_INSPECTION_STATUS"
+              formControlName="inspection_status"
+              placeholder="Select Inspection Outcome..."
+              [allowCreateNew]="true"
+            ></app-searchable-select>
+          </div>
+
+          <div class="flex items-center gap-3 pt-6">
+            <input
+              type="checkbox"
+              id="safetyCheck"
+              formControlName="safety_incident_logged"
+              class="w-4 h-4 rounded text-primary focus:ring-primary border-border bg-card"
+            />
+            <label for="safetyCheck" class="text-xs font-semibold text-foreground cursor-pointer">
+              Site Safety Incident or Near-Miss Logged Today
+            </label>
+          </div>
+        </div>
+
+        @if (dprForm.get('safety_incident_logged')?.value) {
+          <div class="p-4 rounded-xl bg-destructive/10 border border-destructive/20 space-y-2">
+            <label class="text-xs font-bold text-destructive uppercase tracking-wider">
+              Safety Incident & Corrective Measures Log
+            </label>
+            <textarea
+              formControlName="safety_incident_notes"
+              rows="3"
+              placeholder="Describe incident, PPE non-compliance, worker injuries, medical aid administered, and preventive action taken..."
+              class="w-full p-2.5 text-xs bg-card border border-destructive/30 rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-destructive"
+            ></textarea>
+          </div>
+        }
+      </div>
+
+      <!-- SECTION 9: SITE CONSTRAINTS, DELAYS & RECOVERY PLANS -->
+      <div class="space-y-4">
+        <h3 class="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-border">
+          <span class="w-2.5 h-2.5 rounded-full bg-orange-500"></span>
+          9. Site Constraints, Delays & Recovery Plans
+        </h3>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <app-custom-input
+            label="Delay Duration (Hours)"
+            type="number"
+            formControlName="delay_hours"
+            placeholder="0"
+          ></app-custom-input>
+
+          <div class="space-y-1 sm:col-span-2">
+            <label class="text-xs font-semibold text-foreground">
+              Primary Delay Root Cause <span class="text-destructive">*</span>
+            </label>
+            <app-searchable-select
+              categoryCode="DPR_DELAY_CAUSE"
+              formControlName="delay_root_cause_id"
+              placeholder="Select Delay Root Cause..."
+              [allowCreateNew]="true"
+            ></app-searchable-select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <app-custom-textarea
+            label="Site Constraints & Impediments"
+            formControlName="site_constraints"
+            placeholder="Drawings pending, utility line shifting, access road blockage, neighbor dispute, water logging..."
+            [rows]="3"
+          ></app-custom-textarea>
+
+          <app-custom-textarea
+            label="Delay Recovery Plan"
+            formControlName="recovery_plan"
+            placeholder="Overtime shift, additional pump deployment, weekend work, re-sequencing critical path..."
+            [rows]="3"
+          ></app-custom-textarea>
+        </div>
+      </div>
+
+      <!-- SECTION 10: SITE PHOTOGRAPHS WITH LOCATION & TIMESTAMPS -->
+      <div class="space-y-4">
+        <h3 class="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-border">
+          <span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
+          10. Site Photographs with Authorized Location Capture
+        </h3>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <app-custom-input
+            label="Site Photo URL / Attachment Path"
+            type="text"
+            formControlName="site_photo_url"
+            placeholder="https://... or assets/images/dpr/sample.jpg"
+          ></app-custom-input>
+
+          <app-custom-input
+            label="Photo Caption / Description"
+            type="text"
+            formControlName="site_photo_caption"
+            placeholder="e.g. 5th Floor Slab Rebar Tying & Electrical Conduiting"
+          ></app-custom-input>
+        </div>
+
+        @if (dprForm.get('site_photo_url')?.value) {
+          <div class="p-3 rounded-xl border border-border bg-card flex flex-col sm:flex-row items-center gap-4">
+            <img
+              [src]="dprForm.get('site_photo_url')?.value"
+              alt="Site Photo Preview"
+              class="w-36 h-24 object-cover rounded-lg border border-border"
+              (error)="$any($event.target).src = 'assets/images/common/placeholder.png'"
+            />
+            <div class="text-xs space-y-1">
+              <p class="font-semibold text-foreground">{{ dprForm.get('site_photo_caption')?.value }}</p>
+              <p class="text-muted-foreground font-mono">Timestamp: {{ dprForm.get('photo_timestamp')?.value || 'Pending' }}</p>
+              <p class="text-muted-foreground font-mono">
+                GPS Location: Lat {{ dprForm.get('latitude')?.value || 'N/A' }}, Lng {{ dprForm.get('longitude')?.value || 'N/A' }}
+              </p>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- SECTION 11: ENGINEER COMMENTS & SUPERVISOR APPROVAL -->
+      <div class="space-y-4">
+        <h3 class="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-border">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>
+          11. Engineer Comments & Supervisor Approval
+        </h3>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="space-y-1">
+            <label class="text-xs font-semibold text-foreground">
+              Supervisor Approval Status
+            </label>
+            <app-searchable-select
+              categoryCode="DPR_SUPERVISOR_STATUS"
+              formControlName="supervisor_approval_status"
+              placeholder="Select Approval Status..."
+              [allowCreateNew]="true"
+            ></app-searchable-select>
+          </div>
+
+          <app-custom-input
+            label="Reviewing Supervisor / PM Name"
+            type="text"
+            formControlName="supervisor_name"
+            placeholder="e.g. Engr. Tanvir Ahmed, Project Director"
+          ></app-custom-input>
+
+          <app-custom-input
+            label="Digital Verification Code / Signature"
+            type="text"
+            formControlName="supervisor_signature"
+            placeholder="e.g. SIGNED-PM-2026-0819"
+          ></app-custom-input>
+        </div>
+
+        <app-custom-textarea
+          label="Supervisor / Project Manager Review Comments"
+          formControlName="supervisor_comments"
+          placeholder="Enter supervisory instructions, quality rectifications, or progress approvals..."
+          [rows]="3"
+        ></app-custom-textarea>
+      </div>
+
+      <!-- SECTION 12: AUDIT TRAIL & REVISIONS (FOR EXISTING RECORDS) -->
+      @if (existingDPR()) {
+        <div class="space-y-4 p-4 rounded-xl bg-secondary/30 border border-border">
+          <div class="flex items-center justify-between pb-2 border-b border-border/60">
+            <h3 class="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-slate-500"></span>
+              12. Mobile Offline Sync Audit & Revision History
+            </h3>
+            <span class="text-xs font-mono text-muted-foreground">
+              Version: v{{ existingDPR()?.version_number || 1 }}
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+            <div>
+              <p class="text-muted-foreground">Client Offline UUID</p>
+              <p class="font-mono font-semibold text-foreground">{{ existingDPR()?.client_offline_uuid || 'N/A' }}</p>
+            </div>
+            <div>
+              <p class="text-muted-foreground">Sync Status</p>
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                {{ existingDPR()?.sync_status }}
+              </span>
+            </div>
+            <div>
+              <p class="text-muted-foreground">Conflict Detected</p>
+              <p class="font-semibold" [class.text-destructive]="existingDPR()?.conflict_detected">
+                {{ existingDPR()?.conflict_detected ? 'YES - Conflict Logged' : 'No Conflicts' }}
+              </p>
+            </div>
+          </div>
+
+          @if (existingDPR()?.revision_history && existingDPR()!.revision_history!.length > 0) {
+            <div class="space-y-2 mt-2">
+              <p class="text-xs font-semibold text-foreground">Audit Log Trail:</p>
+              <div class="space-y-1.5 max-h-40 overflow-y-auto">
+                @for (rev of existingDPR()!.revision_history; track $index) {
+                  <div class="p-2.5 rounded-lg bg-card border border-border text-xs flex items-center justify-between">
+                    <div>
+                      <span class="font-semibold text-primary">v{{ rev.version || $index + 1 }}</span>
+                      <span class="text-muted-foreground ml-2">by {{ rev.updated_by || 'User' }}</span>
+                      <span class="text-muted-foreground ml-2 font-mono text-2xs">{{ rev.timestamp | date:'short' }}</span>
+                    </div>
+                    <span class="text-muted-foreground text-2xs font-mono">Synced Audit Snapshot</span>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Bottom Floating Form Action Bar -->
+      @if (!isViewMode()) {
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-border">
+          <div class="text-xs text-muted-foreground flex items-center gap-2">
+            <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+            </svg>
+            <span>Auto conflict detection and revision audit history active</span>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <a
+              routerLink="/construction/dpr"
+              class="px-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground bg-secondary hover:bg-secondary/80 rounded-xl border border-border transition-colors"
+            >
+              Cancel
+            </a>
+            <button
+              type="button"
+              (click)="saveOfflineDraft()"
+              class="px-4 py-2 text-xs font-medium text-amber-600 dark:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded-xl transition-colors flex items-center gap-1.5"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>
+              </svg>
+              Save Offline Mobile Draft
+            </button>
+            <app-custom-button
+              variant="primary"
+              [disabled]="dprForm.invalid || isSaving()"
+              (clicked)="saveDPR()"
+            >
+              <span class="flex items-center gap-2">
+                @if (isSaving()) {
+                  <svg class="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                  </svg>
+                  Synchronizing...
+                } @else {
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                  </svg>
+                  {{ isEditMode() ? 'Update & Synchronize DPR' : 'Submit & Synchronize DPR' }}
+                }
+              </span>
+            </app-custom-button>
+          </div>
+        </div>
+      }
+    </form>
+  </app-card-container>
+</div>

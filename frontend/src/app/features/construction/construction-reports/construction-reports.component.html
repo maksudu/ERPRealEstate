@@ -1,0 +1,309 @@
+<!-- Single Card Container for Construction Management Reports -->
+<app-card-container
+  title="Construction Management Intelligence & Executive Reports"
+  subtitle="Standard project management reports, WBS activity delay tracking, BOQ cost reconciliation, contractor liabilities, and WIP capitalization"
+>
+  <!-- KPI Metrics Ribbon for Construction Operations -->
+  <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 mb-6">
+    <div class="p-3.5 rounded-2xl bg-secondary/30 border border-border flex flex-col justify-between">
+      <span class="text-xs text-muted-foreground font-medium">Active Sites</span>
+      <span class="text-xl sm:text-2xl font-bold font-mono text-foreground mt-1">
+        {{ kpis()?.total_active_projects || 0 }}
+      </span>
+      <span class="text-[10px] text-muted-foreground mt-0.5">Live construction projects</span>
+    </div>
+
+    <div class="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex flex-col justify-between">
+      <span class="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Schedule Health</span>
+      <span class="text-xl sm:text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400 mt-1">
+        {{ kpis()?.overall_schedule_health_pct || 92.5 }}%
+      </span>
+      <span class="text-[10px] text-emerald-600/70 mt-0.5">Critical path adherence</span>
+    </div>
+
+    <div class="p-3.5 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex flex-col justify-between">
+      <span class="text-xs text-blue-600 dark:text-blue-400 font-medium">Committed Contracts</span>
+      <span class="text-base sm:text-lg font-bold font-mono text-blue-600 dark:text-blue-400 mt-1 truncate">
+        ৳{{ (kpis()?.total_committed_cost_bdt || 0) | number:'1.0-0' }}
+      </span>
+      <span class="text-[10px] text-blue-600/70 mt-0.5">Approved Work Orders</span>
+    </div>
+
+    <div class="p-3.5 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex flex-col justify-between">
+      <span class="text-xs text-purple-600 dark:text-purple-400 font-medium">Certified Actuals</span>
+      <span class="text-base sm:text-lg font-bold font-mono text-purple-600 dark:text-purple-400 mt-1 truncate">
+        ৳{{ (kpis()?.total_actual_expenditure_bdt || 0) | number:'1.0-0' }}
+      </span>
+      <span class="text-[10px] text-purple-600/70 mt-0.5">RA bill expenditures</span>
+    </div>
+
+    <div class="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex flex-col justify-between">
+      <span class="text-xs text-amber-600 dark:text-amber-400 font-medium">Retention Held</span>
+      <span class="text-base sm:text-lg font-bold font-mono text-amber-600 dark:text-amber-400 mt-1 truncate">
+        ৳{{ (kpis()?.total_retention_liability_bdt || 0) | number:'1.0-0' }}
+      </span>
+      <span class="text-[10px] text-amber-600/70 mt-0.5">Contractor security fund</span>
+    </div>
+
+    <div class="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex flex-col justify-between">
+      <span class="text-xs text-rose-600 dark:text-rose-400 font-medium">Open Hazards & Snags</span>
+      <span class="text-xl sm:text-2xl font-bold font-mono text-rose-600 dark:text-rose-400 mt-1">
+        {{ kpis()?.open_defects_and_incidents || 0 }}
+      </span>
+      <span class="text-[10px] text-rose-600/70 mt-0.5">NCRs, Incidents & Snags</span>
+    </div>
+
+    <div class="p-3.5 rounded-2xl bg-secondary/30 border border-border flex flex-col justify-between">
+      <span class="text-xs text-muted-foreground font-medium">Material Wastage</span>
+      <span class="text-xl sm:text-2xl font-bold font-mono text-foreground mt-1">
+        {{ kpis()?.material_wastage_rate_pct || 2.15 }}%
+      </span>
+      <span class="text-[10px] text-muted-foreground mt-0.5">Site allowable: 2.5%</span>
+    </div>
+  </div>
+
+  <!-- Functional Category Filter Pills -->
+  <div class="flex items-center gap-1.5 p-1 bg-secondary/50 rounded-2xl border border-border overflow-x-auto mb-4">
+    <button
+      *ngFor="let cat of categoryList"
+      type="button"
+      (click)="selectCategory(cat.id)"
+      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap"
+      [ngClass]="selectedCategory() === cat.id ? 'bg-card text-foreground shadow-xs border border-border' : 'text-muted-foreground hover:text-foreground'"
+    >
+      {{ cat.label }}
+    </button>
+  </div>
+
+  <!-- 14 Standard Reports Selection Carousel / Grid -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 mb-6">
+    <button
+      *ngFor="let rep of filteredReportTypes()"
+      type="button"
+      (click)="selectReport(rep.code)"
+      class="p-3 rounded-2xl border text-left transition-all flex items-start gap-3 group relative overflow-hidden"
+      [ngClass]="selectedReportCode() === rep.code ? 'bg-primary/10 border-primary shadow-xs ring-1 ring-primary' : 'bg-card border-border hover:bg-secondary/40'"
+    >
+      <div class="p-2 rounded-xl text-base shrink-0 transition-colors"
+        [ngClass]="selectedReportCode() === rep.code ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground group-hover:text-foreground'">
+        <i [class]="rep.icon"></i>
+      </div>
+      <div class="min-w-0">
+        <span class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block line-clamp-1">
+          {{ rep.category }}
+        </span>
+        <h4 class="text-xs font-bold text-foreground mt-0.5 line-clamp-1" [title]="rep.name">
+          {{ rep.name }}
+        </h4>
+        <p class="text-[11px] text-muted-foreground mt-0.5 line-clamp-1" [title]="rep.description">
+          {{ rep.description }}
+        </p>
+      </div>
+    </button>
+  </div>
+
+  <!-- Report Title Header & Action Bar -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border mb-6">
+    <div>
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+          {{ activeReportMeta()?.category || 'Standard Report' }}
+        </span>
+        <span class="text-xs font-mono text-muted-foreground">
+          Code: {{ selectedReportCode() }}
+        </span>
+      </div>
+      <h2 class="text-xl sm:text-2xl font-bold font-display text-foreground mt-1">
+        {{ reportData()?.report_title || activeReportMeta()?.name || 'Standard Management Report' }}
+      </h2>
+      <p class="text-xs text-muted-foreground mt-0.5">
+        {{ activeReportMeta()?.description }}
+      </p>
+    </div>
+
+    <!-- Export & Print Actions -->
+    <div class="flex items-center gap-2 shrink-0">
+      <button
+        type="button"
+        (click)="exportCSV()"
+        [disabled]="isExporting() || isLoading()"
+        class="px-3.5 py-2 text-xs font-semibold rounded-xl bg-card border border-border text-foreground hover:bg-secondary transition-colors inline-flex items-center gap-1.5 shadow-xs"
+        title="Download CSV / Excel"
+      >
+        <i class="ri-file-excel-line text-emerald-600"></i> Export CSV
+      </button>
+
+      <button
+        type="button"
+        (click)="printReport()"
+        class="px-3.5 py-2 text-xs font-semibold rounded-xl bg-card border border-border text-foreground hover:bg-secondary transition-colors inline-flex items-center gap-1.5 shadow-xs"
+        title="Print / Save PDF"
+      >
+        <i class="ri-printer-line text-primary"></i> Print / PDF
+      </button>
+    </div>
+  </div>
+
+  <!-- Dynamic Search & Filter Controls -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-4 rounded-2xl bg-secondary/20 border border-border mb-6">
+    <div class="relative">
+      <i class="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm"></i>
+      <input
+        type="text"
+        [(ngModel)]="searchQuery"
+        (ngModelChange)="onFilterChange()"
+        placeholder="Search code, item, contractor, description..."
+        class="w-full pl-9 pr-3 py-2 bg-card border border-border rounded-xl text-xs text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+      />
+    </div>
+
+    <app-searchable-select
+      [options]="projectOptions"
+      [ngModel]="selectedProjectId()"
+      (ngModelChange)="selectedProjectId.set($event); onFilterChange()"
+      [allowCreateNew]="false"
+      placeholder="All Construction Projects"
+    ></app-searchable-select>
+
+    <app-searchable-select
+      [options]="contractorOptions"
+      [ngModel]="selectedContractorId()"
+      (ngModelChange)="selectedContractorId.set($event); onFilterChange()"
+      [allowCreateNew]="false"
+      placeholder="All Trade Contractors"
+    ></app-searchable-select>
+  </div>
+
+  <!-- Loading State Indicator -->
+  <div *ngIf="isLoading()" class="py-12 flex flex-col items-center justify-center text-muted-foreground gap-3">
+    <i class="ri-loader-4-line text-3xl animate-spin text-primary"></i>
+    <span class="text-xs">Computing report metrics and live data...</span>
+  </div>
+
+  <!-- Dynamic Management Report Data Table -->
+  <div *ngIf="!isLoading()" class="overflow-x-auto rounded-2xl border border-border">
+    <table class="w-full text-left text-xs text-muted-foreground">
+      <thead class="bg-secondary/40 text-foreground font-semibold uppercase tracking-wider text-[10px] border-b border-border">
+        <tr>
+          <th
+            *ngFor="let col of reportData()?.columns"
+            class="px-4 py-3"
+            [ngClass]="{
+              'text-right': col.align === 'right',
+              'text-center': col.align === 'center',
+              'text-left': !col.align || col.align === 'left'
+            }"
+          >
+            {{ col.label }}
+          </th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-border">
+        <tr *ngFor="let item of reportData()?.items" class="hover:bg-secondary/20 transition-colors">
+          <td
+            *ngFor="let col of reportData()?.columns"
+            class="px-4 py-3.5"
+            [ngClass]="{
+              'text-right font-mono': col.format_type === 'currency' || col.format_type === 'number' || col.format_type === 'percent',
+              'text-center': col.align === 'center',
+              'text-left': !col.align || col.align === 'left'
+            }"
+          >
+            <!-- Currency Format (BDT) -->
+            <ng-container *ngIf="col.format_type === 'currency'">
+              <span class="font-bold text-foreground">
+                ৳{{ (item[col.key] || 0) | number:'1.0-2' }}
+              </span>
+            </ng-container>
+
+            <!-- Percent Format -->
+            <ng-container *ngIf="col.format_type === 'percent'">
+              <span class="font-bold" [ngClass]="item[col.key] >= 0 ? 'text-emerald-600' : 'text-red-600'">
+                {{ item[col.key] }}%
+              </span>
+            </ng-container>
+
+            <!-- Badge Format -->
+            <ng-container *ngIf="col.format_type === 'badge'">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold"
+                [ngClass]="{
+                  'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20': item[col.key] === 'ON_TRACK' || item[col.key] === 'APPROVED' || item[col.key] === 'EFFICIENT' || item[col.key] === 'PASSED' || item[col.key] === 'RESOLVED' || item[col.key] === 'VERIFIED_CLOSED' || item[col.key] === 'SETTLED' || item[col.key] === 'CLEARED_FOR_HANDOVER' || item[col.key] === 'HIGH_OUTPUT' || item[col.key] === 'POSTED_TO_BALANCE_SHEET',
+                  'bg-red-500/10 text-red-600 border border-red-500/20': item[col.key] === 'DELAYED' || item[col.key] === 'FAILED' || item[col.key] === 'CRITICAL' || item[col.key] === 'CRITICAL_PATH' || item[col.key] === 'EXCESS_WASTAGE' || item[col.key] === 'GATED_BY_SNAGS' || item[col.key] === 'OVERRUN',
+                  'bg-amber-500/10 text-amber-600 border border-amber-500/20': item[col.key] === 'MINOR_SLIPPAGE' || item[col.key] === 'UNDER_INVESTIGATION' || item[col.key] === 'CAPA_ASSIGNED' || item[col.key] === '0 - 30 DAYS' || item[col.key] === 'OPERATIONAL',
+                  'bg-secondary text-foreground border border-border': item[col.key] !== 'ON_TRACK' && item[col.key] !== 'DELAYED' && item[col.key] !== 'CRITICAL' && item[col.key] !== 'CRITICAL_PATH'
+                }">
+                {{ item[col.key] }}
+              </span>
+            </ng-container>
+
+            <!-- Date Format -->
+            <ng-container *ngIf="col.format_type === 'date'">
+              <span class="font-mono text-foreground">{{ item[col.key] || '-' }}</span>
+            </ng-container>
+
+            <!-- Number Format -->
+            <ng-container *ngIf="col.format_type === 'number'">
+              <span class="font-bold text-foreground">{{ (item[col.key] || 0) | number }}</span>
+            </ng-container>
+
+            <!-- Default Plain Text -->
+            <ng-container *ngIf="!col.format_type || col.format_type === 'text'">
+              <span class="text-foreground font-medium">{{ item[col.key] }}</span>
+            </ng-container>
+          </td>
+        </tr>
+
+        <!-- Empty State -->
+        <tr *ngIf="!reportData()?.items || reportData()?.items?.length === 0">
+          <td [attr.colspan]="reportData()?.columns?.length || 8" class="px-4 py-8 text-center text-muted-foreground">
+            No records found for the selected criteria in this report.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Server-Side Pagination Bar -->
+  <div *ngIf="!isLoading() && (reportData()?.total_items || 0) > 0" class="flex items-center justify-between mt-4 text-xs text-muted-foreground">
+    <span>Showing {{ reportData()?.items?.length || 0 }} of {{ reportData()?.total_items || 0 }} rows</span>
+    <div class="flex items-center gap-2">
+      <button
+        type="button"
+        (click)="changePage(-1)"
+        [disabled]="page() <= 1"
+        class="px-3 py-1.5 rounded-xl border border-border bg-card text-foreground disabled:opacity-50 hover:bg-secondary transition-colors"
+      >
+        Previous
+      </button>
+      <span class="font-mono">{{ page() }} / {{ totalPages() }}</span>
+      <button
+        type="button"
+        (click)="changePage(1)"
+        [disabled]="page() >= totalPages()"
+        class="px-3 py-1.5 rounded-xl border border-border bg-card text-foreground disabled:opacity-50 hover:bg-secondary transition-colors"
+      >
+        Next
+      </button>
+    </div>
+  </div>
+
+  <!-- Report Navigation Footnote & Cross-Module Quick Links -->
+  <div class="mt-8 pt-4 border-t border-border flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
+    <div class="flex items-center gap-1 text-[11px]">
+      <i class="ri-information-line text-primary"></i>
+      <span>Reports calculate live real-time values from WBS, BOQ Budget Locks, Contractor RA Bills, and Store Registers.</span>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <a routerLink="/construction/wbs-boq" class="hover:text-foreground hover:underline">WBS & BOQ</a>
+      <span>•</span>
+      <a routerLink="/construction/work-orders" class="hover:text-foreground hover:underline">Work Orders</a>
+      <span>•</span>
+      <a routerLink="/construction/ra-bills" class="hover:text-foreground hover:underline">RA Bills</a>
+      <span>•</span>
+      <a routerLink="/construction/safety-ncr" class="hover:text-foreground hover:underline">HSE & Defect NCR</a>
+      <span>•</span>
+      <a routerLink="/construction/project-completion" class="hover:text-foreground hover:underline">Closeout & Handover</a>
+    </div>
+  </div>
+</app-card-container>

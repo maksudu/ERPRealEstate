@@ -17,8 +17,8 @@ class LookupItemBase(BaseModel):
         serialization_alias="metadata",
         validation_alias=AliasChoices("metadata_json", "metadata")
     )
-    is_default: bool = False
-    is_active: bool = True
+    is_default: Optional[bool] = False
+    is_active: Optional[bool] = True
 
 class LookupItemCreate(LookupItemBase):
     pass

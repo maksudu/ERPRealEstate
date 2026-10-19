@@ -336,43 +336,162 @@ class BOQItemBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     item_code: Optional[str] = None
+    specification: Optional[str] = None
     wbs_node_id: Optional[int] = None
     wbs_phase_id: str
     material_category_id: str
     item_description: str
     unit_of_measure_id: str = "CFT"
-    estimated_quantity: float
-    estimated_unit_rate: float
-    total_estimated_cost: float
+    
+    # Cost Breakdown Components
+    estimated_quantity: float = 0.0
+    estimated_unit_rate: float = 0.0
+    total_estimated_cost: float = 0.0
+    material_rate: float = 0.0
+    labour_rate: float = 0.0
+    equipment_rate: float = 0.0
+    subcontract_rate: float = 0.0
+
+    # Lifecycle Stage & Baselines
+    stage: str = "APPROVED_CONTRACT_BOQ"
+
+    tender_quantity: float = 0.0
+    tender_unit_rate: float = 0.0
+    tender_total_amount: float = 0.0
+
+    contract_quantity: float = 0.0
+    contract_unit_rate: float = 0.0
+    contract_total_amount: float = 0.0
+
+    revised_quantity: float = 0.0
+    revised_unit_rate: float = 0.0
+    revised_total_amount: float = 0.0
+
+    # Actuals & Progress Tracking
     actual_consumed_quantity: float = 0.0
+    completed_quantity: float = 0.0
+    remaining_quantity: float = 0.0
     requisitioned_quantity: float = 0.0
     variation_order_quantity: float = 0.0
+    actual_cost: float = 0.0
+    cost_variance: float = 0.0
+
+    # Controls & Approvals
     hard_lock_percentage: float = 105.00
     is_locked: bool = False
+    version_no: int = 1
+    approved_by: Optional[str] = None
+    approval_date: Optional[date] = None
+    rate_analysis_notes: Optional[str] = None
+    supporting_document_url: Optional[str] = None
 
 class BOQItemCreate(BaseModel):
     project_id: int
     tower_id: Optional[int] = None
     wbs_node_id: Optional[int] = None
     item_code: Optional[str] = None
+    specification: Optional[str] = None
     wbs_phase_id: str
     material_category_id: str
     item_description: str
     unit_of_measure_id: str = "CFT"
+
     estimated_quantity: float
     estimated_unit_rate: float
+    
+    material_rate: Optional[float] = 0.0
+    labour_rate: Optional[float] = 0.0
+    equipment_rate: Optional[float] = 0.0
+    subcontract_rate: Optional[float] = 0.0
+
+    stage: Optional[str] = "APPROVED_CONTRACT_BOQ"
+
+    tender_quantity: Optional[float] = None
+    tender_unit_rate: Optional[float] = None
+    contract_quantity: Optional[float] = None
+    contract_unit_rate: Optional[float] = None
+
     actual_consumed_quantity: Optional[float] = 0.0
-    requisitioned_quantity: Optional[float] = 0.0
-    variation_order_quantity: Optional[float] = 0.0
+    completed_quantity: Optional[float] = 0.0
     hard_lock_percentage: Optional[float] = 105.00
+    is_locked: Optional[bool] = False
+    version_no: Optional[int] = 1
+    approved_by: Optional[str] = None
+    approval_date: Optional[date] = None
+    rate_analysis_notes: Optional[str] = None
+    supporting_document_url: Optional[str] = None
+
+class BOQItemUpdate(BaseModel):
+    tower_id: Optional[int] = None
+    wbs_node_id: Optional[int] = None
+    item_code: Optional[str] = None
+    specification: Optional[str] = None
+    wbs_phase_id: Optional[str] = None
+    material_category_id: Optional[str] = None
+    item_description: Optional[str] = None
+    unit_of_measure_id: Optional[str] = None
+
+    estimated_quantity: Optional[float] = None
+    estimated_unit_rate: Optional[float] = None
+    
+    material_rate: Optional[float] = None
+    labour_rate: Optional[float] = None
+    equipment_rate: Optional[float] = None
+    subcontract_rate: Optional[float] = None
+
+    stage: Optional[str] = None
+
+    tender_quantity: Optional[float] = None
+    tender_unit_rate: Optional[float] = None
+    contract_quantity: Optional[float] = None
+    contract_unit_rate: Optional[float] = None
+    revised_quantity: Optional[float] = None
+    revised_unit_rate: Optional[float] = None
+
+    actual_consumed_quantity: Optional[float] = None
+    completed_quantity: Optional[float] = None
+    hard_lock_percentage: Optional[float] = None
+    is_locked: Optional[bool] = None
+    version_no: Optional[int] = None
+    approved_by: Optional[str] = None
+    approval_date: Optional[date] = None
+    rate_analysis_notes: Optional[str] = None
+    supporting_document_url: Optional[str] = None
 
 class BOQItemResponse(BOQItemBase):
     id: int
     project_id: int
     tower_id: Optional[int] = None
+    project_name: Optional[str] = None
+    tower_name: Optional[str] = None
+    wbs_node_code: Optional[str] = None
+    wbs_node_name: Optional[str] = None
     allowable_quantity: Optional[float] = None
     variance_percentage: Optional[float] = None
     created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+class BOQItemListResponse(BaseModel):
+    items: List[BOQItemResponse]
+    total: int
+    limit: int
+    offset: int
+
+class BOQMetricsResponse(BaseModel):
+    project_id: int
+    project_name: str
+    total_boq_items: int
+    total_estimated_amount: float
+    total_contract_amount: float
+    total_tender_amount: float
+    total_actual_cost: float
+    total_requisitioned_amount: float
+    total_variation_amount: float
+    total_locked_items: int
+    total_hard_locked_items: int
+    cost_variance_amount: float
+    cost_variance_percentage: float
+    component_breakdown: Dict[str, float]
 
 
 # -------------------------------------------------------------

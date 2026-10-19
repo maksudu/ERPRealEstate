@@ -1,206 +1,882 @@
-<div class="flex flex-col gap-6">
-  <!-- Unified Main Card Container -->
-  <app-card-container
-    title="Site Safety, Environmental & Quality Non-Conformance Register (NCR)"
-    subtitle="Active Violation Tracking, Risk Severity Scoring & Rectification Enforcement"
-  >
-    <!-- Top Action & Filter Toolbar -->
-    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
-      <div class="flex flex-wrap items-center gap-3 flex-1">
-        <div class="relative w-full sm:w-60">
-          <svg class="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-          </svg>
-          <input
-            type="text"
-            [(ngModel)]="searchQuery"
-            (ngModelChange)="onSearch()"
-            placeholder="Search NCR # or details..."
-            class="w-full pl-9 pr-3 py-1.5 text-xs bg-card border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-          />
-        </div>
-
-        <div class="w-full sm:w-60">
-          <app-searchable-select
-            [options]="projectOptions"
-            [ngModel]="filterProjectId()"
-            (selectionChange)="onFilterProject($event)"
-            placeholder="Filter by Project..."
-            [allowCreateNew]="false"
-          >
-          </app-searchable-select>
-        </div>
-
-        <div class="w-full sm:w-52">
-          <app-searchable-select
-            [options]="statusOptions"
-            [ngModel]="filterStatus()"
-            (selectionChange)="onFilterStatus($event)"
-            placeholder="Filter by Status..."
-            [allowCreateNew]="false"
-          >
-          </app-searchable-select>
-        </div>
-
-        @if (filterProjectId() || filterStatus() || filterCategory() || searchQuery()) {
-          <button (click)="clearFilters()" class="text-xs text-muted-foreground hover:text-foreground underline cursor-pointer">
-            Clear
-          </button>
-        }
-      </div>
-
-      <app-custom-button variant="primary" (clicked)="navigateToCreate()">
-        <span class="flex items-center gap-2">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-          </svg>
-          + Issue Safety NCR
-        </span>
-      </app-custom-button>
+<!-- Single Card Container for Health, Safety, Environment (HSE) & Quality Assurance -->
+<app-card-container
+  title="Health, Safety & Environment (HSE) and QA/QC Management"
+  subtitle="Incident reporting, hazard investigations, Permits-to-Work (PTW), site safety inductions, toolbox talks, and defect CAPA lifecycle"
+>
+  <!-- KPI Metrics Ribbon for HSE & Quality -->
+  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+    <div class="p-3.5 rounded-2xl bg-secondary/30 border border-border flex flex-col justify-between">
+      <span class="text-xs text-muted-foreground font-medium">Total Incidents</span>
+      <span class="text-xl sm:text-2xl font-bold font-mono text-foreground mt-1">
+        {{ hseMetrics()?.total_incidents || 0 }}
+      </span>
+      <span class="text-[10px] text-muted-foreground mt-0.5">Near-miss & injuries</span>
     </div>
 
-    <!-- Paginated NCR Table -->
-    <div class="overflow-x-auto border border-border rounded-xl">
-      <table class="w-full text-left text-xs">
-        <thead class="bg-secondary/60 text-muted-foreground uppercase tracking-wider font-semibold border-b border-border">
+    <div class="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex flex-col justify-between">
+      <span class="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Near-Miss Reports</span>
+      <span class="text-xl sm:text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400 mt-1">
+        {{ hseMetrics()?.near_miss_count || 0 }}
+      </span>
+      <span class="text-[10px] text-emerald-600/70 mt-0.5">Proactive hazard reporting</span>
+    </div>
+
+    <div class="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex flex-col justify-between">
+      <span class="text-xs text-amber-600 dark:text-amber-400 font-medium">Days Lost (LTI)</span>
+      <span class="text-xl sm:text-2xl font-bold font-mono text-amber-600 dark:text-amber-400 mt-1">
+        {{ hseMetrics()?.total_days_lost || 0 }}
+      </span>
+      <span class="text-[10px] text-amber-600/70 mt-0.5">Lost-time injury days</span>
+    </div>
+
+    <div class="p-3.5 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex flex-col justify-between">
+      <span class="text-xs text-blue-600 dark:text-blue-400 font-medium">Active PTW Permits</span>
+      <span class="text-xl sm:text-2xl font-bold font-mono text-blue-600 dark:text-blue-400 mt-1">
+        {{ hseMetrics()?.active_ptw_count || 0 }}
+      </span>
+      <span class="text-[10px] text-blue-600/70 mt-0.5">Authorized hazardous works</span>
+    </div>
+
+    <div class="p-3.5 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex flex-col justify-between">
+      <span class="text-xs text-purple-600 dark:text-purple-400 font-medium">Workers Inducted</span>
+      <span class="text-xl sm:text-2xl font-bold font-mono text-purple-600 dark:text-purple-400 mt-1">
+        {{ hseMetrics()?.total_workers_inducted || 0 }}
+      </span>
+      <span class="text-[10px] text-purple-600/70 mt-0.5">Trained & TBT attended</span>
+    </div>
+
+    <div class="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex flex-col justify-between">
+      <span class="text-xs text-rose-600 dark:text-rose-400 font-medium">Open CAPA Defects</span>
+      <span class="text-xl sm:text-2xl font-bold font-mono text-rose-600 dark:text-rose-400 mt-1">
+        {{ metrics()?.open_defects || 0 }}
+      </span>
+      <span class="text-[10px] text-rose-600/70 mt-0.5">Pending contractor closure</span>
+    </div>
+  </div>
+
+  <!-- Primary Navigation Tabs & Action Bar -->
+  <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-border mb-6">
+    <!-- 5 Distinct Tabs -->
+    <div class="flex items-center gap-1.5 p-1 bg-secondary/50 rounded-2xl border border-border overflow-x-auto max-w-full">
+      <button
+        type="button"
+        (click)="switchTab('INCIDENTS')"
+        class="px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 whitespace-nowrap"
+        [ngClass]="activeTab() === 'INCIDENTS' ? 'bg-card text-foreground shadow-xs border border-border' : 'text-muted-foreground hover:text-foreground'"
+      >
+        <i class="ri-alarm-warning-line text-sm"></i>
+        <span>Safety Incidents ({{ incidentsTotal() || incidents().length }})</span>
+      </button>
+
+      <button
+        type="button"
+        (click)="switchTab('PERMITS')"
+        class="px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 whitespace-nowrap"
+        [ngClass]="activeTab() === 'PERMITS' ? 'bg-card text-foreground shadow-xs border border-border' : 'text-muted-foreground hover:text-foreground'"
+      >
+        <i class="ri-shield-keyhole-line text-sm"></i>
+        <span>Permit to Work - PTW ({{ permitsTotal() || permits().length }})</span>
+      </button>
+
+      <button
+        type="button"
+        (click)="switchTab('TRAININGS')"
+        class="px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 whitespace-nowrap"
+        [ngClass]="activeTab() === 'TRAININGS' ? 'bg-card text-foreground shadow-xs border border-border' : 'text-muted-foreground hover:text-foreground'"
+      >
+        <i class="ri-user-voice-line text-sm"></i>
+        <span>Inductions & Toolbox Talks ({{ trainingsTotal() || trainings().length }})</span>
+      </button>
+
+      <button
+        type="button"
+        (click)="switchTab('INSPECTIONS')"
+        class="px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 whitespace-nowrap"
+        [ngClass]="activeTab() === 'INSPECTIONS' ? 'bg-card text-foreground shadow-xs border border-border' : 'text-muted-foreground hover:text-foreground'"
+      >
+        <i class="ri-checkbox-circle-line text-sm"></i>
+        <span>Stage Inspections ({{ inspectionsTotal() || inspections().length }})</span>
+      </button>
+
+      <button
+        type="button"
+        (click)="switchTab('DEFECTS')"
+        class="px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 whitespace-nowrap"
+        [ngClass]="activeTab() === 'DEFECTS' ? 'bg-card text-foreground shadow-xs border border-border' : 'text-muted-foreground hover:text-foreground'"
+      >
+        <i class="ri-tools-line text-sm"></i>
+        <span>Defect NCRs ({{ ncrsTotal() || ncrs().length }})</span>
+      </button>
+    </div>
+
+    <!-- Right Side New Action Button based on Active Tab -->
+    <div class="flex items-center gap-2 shrink-0">
+      <a
+        *ngIf="activeTab() === 'INCIDENTS'"
+        routerLink="/construction/safety-ncr/incidents/create"
+        class="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold rounded-xl inline-flex items-center gap-1.5 shadow-xs transition-colors"
+      >
+        <i class="ri-add-line text-sm"></i> Report Safety Incident
+      </a>
+
+      <a
+        *ngIf="activeTab() === 'PERMITS'"
+        routerLink="/construction/safety-ncr/permits/create"
+        class="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold rounded-xl inline-flex items-center gap-1.5 shadow-xs transition-colors"
+      >
+        <i class="ri-add-line text-sm"></i> Issue PTW Request
+      </a>
+
+      <a
+        *ngIf="activeTab() === 'TRAININGS'"
+        routerLink="/construction/safety-ncr/trainings/create"
+        class="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold rounded-xl inline-flex items-center gap-1.5 shadow-xs transition-colors"
+      >
+        <i class="ri-add-line text-sm"></i> Log Induction / TBT
+      </a>
+
+      <a
+        *ngIf="activeTab() === 'INSPECTIONS'"
+        routerLink="/construction/safety-ncr/inspections/create"
+        class="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold rounded-xl inline-flex items-center gap-1.5 shadow-xs transition-colors"
+      >
+        <i class="ri-add-line text-sm"></i> Request Stage Inspection
+      </a>
+
+      <a
+        *ngIf="activeTab() === 'DEFECTS'"
+        routerLink="/construction/safety-ncr/create"
+        class="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold rounded-xl inline-flex items-center gap-1.5 shadow-xs transition-colors"
+      >
+        <i class="ri-add-line text-sm"></i> Log Defect / NCR
+      </a>
+    </div>
+  </div>
+
+  <!-- Dynamic Search & Filter Controls -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-4 rounded-2xl bg-secondary/20 border border-border mb-6">
+    <div class="relative">
+      <i class="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm"></i>
+      <input
+        type="text"
+        [(ngModel)]="searchQuery"
+        (ngModelChange)="onFilterChange()"
+        placeholder="Search code, title, location, person..."
+        class="w-full pl-9 pr-3 py-2 bg-card border border-border rounded-xl text-xs text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+      />
+    </div>
+
+    <app-searchable-select
+      [options]="projectOptions"
+      [ngModel]="selectedProjectId()"
+      (ngModelChange)="selectedProjectId.set($event); onFilterChange()"
+      [allowCreateNew]="false"
+      placeholder="All Construction Projects"
+    ></app-searchable-select>
+
+    <app-searchable-select
+      [options]="contractorOptions"
+      [ngModel]="selectedContractorId()"
+      (ngModelChange)="selectedContractorId.set($event); onFilterChange()"
+      [allowCreateNew]="false"
+      placeholder="All Subcontractors"
+    ></app-searchable-select>
+
+    <div *ngIf="activeTab() === 'INCIDENTS'" class="flex items-center justify-between px-3 py-2 bg-card rounded-xl border border-border">
+      <label class="text-xs text-foreground font-medium flex items-center gap-2 cursor-pointer">
+        <input
+          type="checkbox"
+          [checked]="includeConfidential()"
+          (change)="includeConfidential.set(!includeConfidential()); onFilterChange()"
+          class="rounded text-primary focus:ring-primary border-border"
+        />
+        <span>Show Sensitive Medical Records</span>
+      </label>
+      <span class="text-[10px] text-muted-foreground font-mono">Restricted</span>
+    </div>
+  </div>
+
+  <!-- TAB 1: SAFETY INCIDENTS TABLE -->
+  <div *ngIf="activeTab() === 'INCIDENTS'">
+    <div class="overflow-x-auto rounded-2xl border border-border">
+      <table class="w-full text-left text-xs text-muted-foreground">
+        <thead class="bg-secondary/40 text-foreground font-semibold uppercase tracking-wider text-[10px] border-b border-border">
           <tr>
-            <th class="px-4 py-3.5">NCR # & Date</th>
-            <th class="px-4 py-3.5">Project & Location</th>
-            <th class="px-4 py-3.5">Category & Description</th>
-            <th class="px-4 py-3.5 text-center">Severity</th>
-            <th class="px-4 py-3.5 text-center">Deadline</th>
-            <th class="px-4 py-3.5 text-center">Status</th>
-            <th class="px-4 py-3.5 text-right w-28">Actions</th>
+            <th class="px-4 py-3">Incident Code</th>
+            <th class="px-4 py-3">Date & Location</th>
+            <th class="px-4 py-3">Headline / Title</th>
+            <th class="px-4 py-3">Classification</th>
+            <th class="px-4 py-3">Severity</th>
+            <th class="px-4 py-3">Injured Person & Impact</th>
+            <th class="px-4 py-3">Investigation Status</th>
+            <th class="px-4 py-3 text-right">Actions</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-border bg-card">
-          @if (isLoading()) {
-            @for (i of [1, 2, 3, 4, 5]; track i) {
-              <tr>
-                <td colspan="7" class="px-4 py-4">
-                  <div class="h-4 bg-secondary animate-pulse rounded"></div>
-                </td>
-              </tr>
-            }
-          } @else {
-            @for (n of ncrs(); track n.id) {
-              <tr class="hover:bg-secondary/40 transition-colors">
-                <td class="px-4 py-3.5 align-top">
-                  <span class="font-mono font-bold text-rose-500 block">{{ n.ncr_number }}</span>
-                  <span class="text-[10px] text-muted-foreground">{{ n.created_at | date:'dd MMM yyyy' }}</span>
-                </td>
-
-                <td class="px-4 py-3.5 align-top">
-                  <div class="font-bold text-foreground">{{ n.project_name || 'Project #' + n.project_id }}</div>
-                  <div class="text-[11px] text-muted-foreground mt-0.5">{{ n.location_details }}</div>
-                  <div class="text-[10px] text-primary mt-0.5">{{ n.contractor_name }}</div>
-                </td>
-
-                <td class="px-4 py-3.5 align-top max-w-xs">
-                  <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-secondary text-foreground border border-border inline-block mb-1">
-                    {{ n.category }}
-                  </span>
-                  <p class="text-foreground line-clamp-2 leading-relaxed">{{ n.description }}</p>
-                </td>
-
-                <td class="px-4 py-3.5 align-top text-center">
-                  <span
-                    class="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase"
-                    [ngClass]="{
-                      'bg-rose-500/10 text-rose-500 border border-rose-500/20': n.severity === 'High',
-                      'bg-amber-500/10 text-amber-500 border border-amber-500/20': n.severity === 'Medium',
-                      'bg-blue-500/10 text-blue-500 border border-blue-500/20': n.severity === 'Low'
-                    }"
-                  >
-                    {{ n.severity }}
-                  </span>
-                </td>
-
-                <td class="px-4 py-3.5 align-top text-center font-mono">
-                  <div [ngClass]="n.is_overdue ? 'text-rose-500 font-bold' : 'text-foreground'">
-                    {{ n.rectification_deadline | date:'dd MMM yyyy' }}
-                  </div>
-                  @if (n.is_overdue) {
-                    <span class="text-[9px] px-1.5 py-0.2 rounded bg-rose-500/10 text-rose-500 border border-rose-500/20 font-bold uppercase inline-block mt-0.5">
-                      Overdue
-                    </span>
-                  }
-                </td>
-
-                <td class="px-4 py-3.5 align-top text-center">
-                  <span
-                    class="text-[10px] font-semibold px-2.5 py-1 rounded-full uppercase"
-                    [ngClass]="{
-                      'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20': n.status === 'Verified_Closed',
-                      'bg-blue-500/10 text-blue-500 border border-blue-500/20': n.status === 'Rectified',
-                      'bg-rose-500/10 text-rose-500 border border-rose-500/20': n.status === 'Open'
-                    }"
-                  >
-                    {{ n.status.replace('_', ' ') }}
-                  </span>
-                </td>
-
-                <td class="px-4 py-3.5 align-top text-right">
-                  <div class="flex items-center justify-end gap-1.5">
-                    @if (n.status === 'Open') {
-                      <button
-                        (click)="navigateToRectify(n.id)"
-                        class="px-2 py-1 text-xs font-semibold rounded bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/20 transition-colors cursor-pointer"
-                        title="Submit Rectification Work"
-                      >
-                        Rectify
-                      </button>
-                    } @else if (n.status === 'Rectified') {
-                      <button
-                        (click)="verifyAndClose(n)"
-                        class="px-2 py-1 text-xs font-semibold rounded bg-emerald-600 hover:bg-emerald-700 text-white transition-colors cursor-pointer"
-                        title="QA Verify & Close"
-                      >
-                        Verify
-                      </button>
-                    } @else {
-                      <span class="text-[10px] text-muted-foreground font-mono">Closed</span>
-                    }
-                  </div>
-                </td>
-              </tr>
-            } @empty {
-              <tr>
-                <td colspan="7" class="px-4 py-12 text-center text-muted-foreground">
-                  No Non-Conformance Reports (NCR) found. Click "+ Issue Safety NCR" above to log a safety violation.
-                </td>
-              </tr>
-            }
-          }
+        <tbody class="divide-y divide-border">
+          <tr *ngFor="let inc of incidents()" class="hover:bg-secondary/20 transition-colors">
+            <td class="px-4 py-3.5 font-mono font-semibold text-foreground">
+              {{ inc.incident_code }}
+              <div *ngIf="inc.is_confidential_medical" class="mt-0.5">
+                <span class="px-1.5 py-0.5 text-[9px] rounded-md bg-purple-500/10 text-purple-600 font-semibold border border-purple-500/20">
+                  <i class="ri-lock-2-line"></i> Confidential
+                </span>
+              </div>
+            </td>
+            <td class="px-4 py-3.5">
+              <div class="font-medium text-foreground">{{ inc.incident_date }}</div>
+              <div class="text-[11px] text-muted-foreground truncate max-w-xs">{{ inc.exact_location }}</div>
+              <div class="text-[10px] text-primary/80">{{ inc.project_name }}</div>
+            </td>
+            <td class="px-4 py-3.5">
+              <div class="font-semibold text-foreground line-clamp-1">{{ inc.incident_title }}</div>
+              <div class="text-[10px] text-muted-foreground line-clamp-1">{{ inc.incident_description }}</div>
+            </td>
+            <td class="px-4 py-3.5">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-secondary text-foreground border border-border">
+                {{ inc.incident_type }}
+              </span>
+            </td>
+            <td class="px-4 py-3.5">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold"
+                [ngClass]="{
+                  'bg-red-500/10 text-red-600 border border-red-500/20': inc.severity_level === 'CRITICAL' || inc.severity_level === 'HIGH',
+                  'bg-amber-500/10 text-amber-600 border border-amber-500/20': inc.severity_level === 'MEDIUM',
+                  'bg-blue-500/10 text-blue-600 border border-blue-500/20': inc.severity_level === 'LOW'
+                }">
+                {{ inc.severity_level }}
+              </span>
+            </td>
+            <td class="px-4 py-3.5">
+              <div *ngIf="inc.injured_person_name" class="font-medium text-foreground">{{ inc.injured_person_name }}</div>
+              <div *ngIf="inc.injury_nature" class="text-[10px] text-muted-foreground">{{ inc.injury_nature }} ({{ inc.body_part_affected || 'N/A' }})</div>
+              <div *ngIf="inc.days_lost_count > 0" class="text-[10px] font-semibold text-amber-600">{{ inc.days_lost_count }} days lost</div>
+              <div *ngIf="!inc.injured_person_name" class="text-[10px] text-muted-foreground italic">No personal injury</div>
+            </td>
+            <td class="px-4 py-3.5">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold"
+                [ngClass]="{
+                  'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20': inc.investigation_status === 'RESOLVED' || inc.investigation_status === 'CLOSED',
+                  'bg-amber-500/10 text-amber-600 border border-amber-500/20': inc.investigation_status === 'CAPA_ASSIGNED' || inc.investigation_status === 'UNDER_INVESTIGATION',
+                  'bg-secondary text-muted-foreground border border-border': inc.investigation_status === 'REPORTED'
+                }">
+                {{ inc.investigation_status }}
+              </span>
+              <div *ngIf="inc.responsible_person_name" class="text-[10px] text-muted-foreground mt-0.5">
+                CAPA: {{ inc.responsible_person_name }}
+              </div>
+            </td>
+            <td class="px-4 py-3.5 text-right whitespace-nowrap">
+              <div class="flex items-center justify-end gap-1.5">
+                <button
+                  type="button"
+                  (click)="openInvestigateModal(inc)"
+                  class="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                  title="Quick RCA & CAPA Investigation"
+                >
+                  <i class="ri-microscope-line"></i> Investigate
+                </button>
+                <a
+                  [routerLink]="['/construction/safety-ncr/incidents/edit', inc.id]"
+                  class="p-1.5 rounded-lg hover:bg-secondary text-foreground transition-colors"
+                  title="Full-Screen Edit"
+                >
+                  <i class="ri-edit-line text-sm"></i>
+                </a>
+                <button
+                  type="button"
+                  (click)="escalateIncident(inc)"
+                  class="p-1.5 rounded-lg hover:bg-red-500/10 text-red-600 transition-colors"
+                  title="Direct Emergency Escalation"
+                >
+                  <i class="ri-alarm-warning-line text-sm"></i>
+                </button>
+                <button
+                  type="button"
+                  (click)="deleteIncident(inc)"
+                  class="p-1.5 rounded-lg hover:bg-destructive/10 text-destructive transition-colors"
+                  title="Delete Record"
+                >
+                  <i class="ri-delete-bin-line text-sm"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="incidents().length === 0">
+            <td colspan="8" class="px-4 py-8 text-center text-muted-foreground">
+              No safety incidents logged. Click "Report Safety Incident" to log near-misses, injuries, or hazards.
+            </td>
+          </tr>
         </tbody>
       </table>
     </div>
 
-    <!-- Pagination Footer -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-4 text-xs text-muted-foreground">
+    <!-- Incident Pagination -->
+    <div *ngIf="incidentsTotal() > 0" class="flex items-center justify-between mt-4 text-xs text-muted-foreground">
+      <span>Showing {{ incidents().length }} of {{ incidentsTotal() }} incidents</span>
       <div class="flex items-center gap-2">
-        <span>Showing Page {{ currentPage() }} ({{ ncrs().length }} NCRs loaded)</span>
-      </div>
-
-      <div class="flex items-center gap-1">
         <button
           type="button"
-          [disabled]="currentPage() === 1"
-          (click)="prevPage()"
-          class="px-3 py-1 rounded-lg border border-border bg-card text-foreground hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          (click)="changePage(-1)"
+          [disabled]="incidentsPage() <= 1"
+          class="px-3 py-1.5 rounded-xl border border-border bg-card text-foreground disabled:opacity-50 hover:bg-secondary transition-colors"
         >
           Previous
         </button>
-        <span class="px-3 py-1 font-semibold text-foreground">Page {{ currentPage() }}</span>
+        <span class="font-mono">{{ incidentsPage() }} / {{ incidentsTotalPages() }}</span>
         <button
           type="button"
-          [disabled]="ncrs().length < pageSize()"
-          (click)="nextPage()"
-          class="px-3 py-1 rounded-lg border border-border bg-card text-foreground hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          (click)="changePage(1)"
+          [disabled]="incidentsPage() >= incidentsTotalPages()"
+          class="px-3 py-1.5 rounded-xl border border-border bg-card text-foreground disabled:opacity-50 hover:bg-secondary transition-colors"
         >
           Next
         </button>
       </div>
     </div>
-  </app-card-container>
-</div>
+  </div>
+
+  <!-- TAB 2: PERMITS TO WORK (PTW) TABLE -->
+  <div *ngIf="activeTab() === 'PERMITS'">
+    <div class="overflow-x-auto rounded-2xl border border-border">
+      <table class="w-full text-left text-xs text-muted-foreground">
+        <thead class="bg-secondary/40 text-foreground font-semibold uppercase tracking-wider text-[10px] border-b border-border">
+          <tr>
+            <th class="px-4 py-3">Permit Number</th>
+            <th class="px-4 py-3">Controlled Activity</th>
+            <th class="px-4 py-3">Project & Location</th>
+            <th class="px-4 py-3">Validity Window</th>
+            <th class="px-4 py-3">Supervisor</th>
+            <th class="px-4 py-3">Safety Verification & PM Approval</th>
+            <th class="px-4 py-3">Status</th>
+            <th class="px-4 py-3 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border">
+          <tr *ngFor="let ptw of permits()" class="hover:bg-secondary/20 transition-colors">
+            <td class="px-4 py-3.5 font-mono font-semibold text-foreground">
+              {{ ptw.permit_number }}
+            </td>
+            <td class="px-4 py-3.5">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/10 text-amber-600 border border-amber-500/20">
+                {{ ptw.permit_type }}
+              </span>
+              <div class="text-[11px] text-muted-foreground mt-0.5 line-clamp-1">{{ ptw.scope_of_controlled_activity }}</div>
+            </td>
+            <td class="px-4 py-3.5">
+              <div class="font-semibold text-foreground">{{ ptw.work_location }}</div>
+              <div class="text-[10px] text-primary/80">{{ ptw.project_name }}</div>
+            </td>
+            <td class="px-4 py-3.5">
+              <div class="text-foreground font-mono text-[11px]">{{ ptw.valid_from_time?.substring(0, 16) }}</div>
+              <div class="text-[10px] text-muted-foreground font-mono">To: {{ ptw.valid_to_time?.substring(0, 16) }}</div>
+            </td>
+            <td class="px-4 py-3.5">
+              <div class="font-medium text-foreground">{{ ptw.requested_by_supervisor_name }}</div>
+              <div class="text-[10px] text-muted-foreground">{{ ptw.contractor_name || 'Direct Labor' }}</div>
+            </td>
+            <td class="px-4 py-3.5">
+              <div class="flex items-center gap-1.5">
+                <i class="ri-checkbox-circle-fill" [ngClass]="ptw.safety_officer_verified ? 'text-emerald-500' : 'text-muted-foreground/40'"></i>
+                <span class="text-[11px]">HSE Verified</span>
+              </div>
+              <div class="flex items-center gap-1.5 mt-0.5">
+                <i class="ri-checkbox-circle-fill" [ngClass]="ptw.project_manager_approved ? 'text-emerald-500' : 'text-muted-foreground/40'"></i>
+                <span class="text-[11px]">PM Approved</span>
+              </div>
+            </td>
+            <td class="px-4 py-3.5">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold"
+                [ngClass]="{
+                  'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20': ptw.permit_status === 'APPROVED_ACTIVE',
+                  'bg-amber-500/10 text-amber-600 border border-amber-500/20': ptw.permit_status === 'REQUESTED',
+                  'bg-blue-500/10 text-blue-600 border border-blue-500/20': ptw.permit_status === 'CLOSED_SURRENDERED',
+                  'bg-red-500/10 text-red-600 border border-red-500/20': ptw.permit_status === 'SUSPENDED' || ptw.permit_status === 'EXPIRED'
+                }">
+                {{ ptw.permit_status }}
+              </span>
+            </td>
+            <td class="px-4 py-3.5 text-right whitespace-nowrap">
+              <div class="flex items-center justify-end gap-1.5">
+                <a
+                  [routerLink]="['/construction/safety-ncr/permits/edit', ptw.id]"
+                  class="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                >
+                  <i class="ri-edit-line"></i> Review & Sign
+                </a>
+                <button
+                  type="button"
+                  (click)="deletePermit(ptw)"
+                  class="p-1.5 rounded-lg hover:bg-destructive/10 text-destructive transition-colors"
+                  title="Delete Permit"
+                >
+                  <i class="ri-delete-bin-line text-sm"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="permits().length === 0">
+            <td colspan="8" class="px-4 py-8 text-center text-muted-foreground">
+              No permits to work found. Click "Issue PTW Request" for hot work, height, or deep excavation.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- PTW Pagination -->
+    <div *ngIf="permitsTotal() > 0" class="flex items-center justify-between mt-4 text-xs text-muted-foreground">
+      <span>Showing {{ permits().length }} of {{ permitsTotal() }} permits</span>
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          (click)="changePage(-1)"
+          [disabled]="permitsPage() <= 1"
+          class="px-3 py-1.5 rounded-xl border border-border bg-card text-foreground disabled:opacity-50 hover:bg-secondary transition-colors"
+        >
+          Previous
+        </button>
+        <span class="font-mono">{{ permitsPage() }} / {{ permitsTotalPages() }}</span>
+        <button
+          type="button"
+          (click)="changePage(1)"
+          [disabled]="permitsPage() >= permitsTotalPages()"
+          class="px-3 py-1.5 rounded-xl border border-border bg-card text-foreground disabled:opacity-50 hover:bg-secondary transition-colors"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: SAFETY TRAININGS & INDUCTIONS TABLE -->
+  <div *ngIf="activeTab() === 'TRAININGS'">
+    <div class="overflow-x-auto rounded-2xl border border-border">
+      <table class="w-full text-left text-xs text-muted-foreground">
+        <thead class="bg-secondary/40 text-foreground font-semibold uppercase tracking-wider text-[10px] border-b border-border">
+          <tr>
+            <th class="px-4 py-3">Code</th>
+            <th class="px-4 py-3">Session Title</th>
+            <th class="px-4 py-3">Type</th>
+            <th class="px-4 py-3">Project & Contractor</th>
+            <th class="px-4 py-3">Date & Duration</th>
+            <th class="px-4 py-3">Trainer</th>
+            <th class="px-4 py-3">Workers Attended</th>
+            <th class="px-4 py-3 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border">
+          <tr *ngFor="let trn of trainings()" class="hover:bg-secondary/20 transition-colors">
+            <td class="px-4 py-3.5 font-mono font-semibold text-foreground">
+              {{ trn.training_code }}
+            </td>
+            <td class="px-4 py-3.5">
+              <div class="font-semibold text-foreground">{{ trn.session_title }}</div>
+              <div class="text-[10px] text-muted-foreground line-clamp-1">{{ trn.topics_covered }}</div>
+            </td>
+            <td class="px-4 py-3.5">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20">
+                {{ trn.training_type }}
+              </span>
+            </td>
+            <td class="px-4 py-3.5">
+              <div class="font-medium text-foreground">{{ trn.project_name }}</div>
+              <div class="text-[10px] text-muted-foreground">{{ trn.contractor_name || 'All Site Trades' }}</div>
+            </td>
+            <td class="px-4 py-3.5">
+              <div class="text-foreground">{{ trn.training_date }}</div>
+              <div class="text-[10px] text-muted-foreground">{{ trn.duration_minutes }} minutes</div>
+            </td>
+            <td class="px-4 py-3.5">
+              <div class="font-medium text-foreground">{{ trn.trainer_name }}</div>
+              <div class="text-[10px] text-muted-foreground">{{ trn.trainer_designation || 'HSE Lead' }}</div>
+            </td>
+            <td class="px-4 py-3.5">
+              <span class="px-2 py-1 rounded-xl bg-secondary font-mono font-bold text-foreground">
+                <i class="ri-user-line mr-0.5"></i> {{ trn.attendees_count }}
+              </span>
+            </td>
+            <td class="px-4 py-3.5 text-right whitespace-nowrap">
+              <div class="flex items-center justify-end gap-1.5">
+                <a
+                  [routerLink]="['/construction/safety-ncr/trainings/edit', trn.id]"
+                  class="p-1.5 rounded-lg hover:bg-secondary text-foreground transition-colors"
+                  title="View / Edit Details"
+                >
+                  <i class="ri-edit-line text-sm"></i>
+                </a>
+                <button
+                  type="button"
+                  (click)="deleteTraining(trn)"
+                  class="p-1.5 rounded-lg hover:bg-destructive/10 text-destructive transition-colors"
+                  title="Delete Training Record"
+                >
+                  <i class="ri-delete-bin-line text-sm"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="trainings().length === 0">
+            <td colspan="8" class="px-4 py-8 text-center text-muted-foreground">
+              No training sessions recorded. Click "Log Induction / TBT" to register toolbox talks or PPE compliance.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Training Pagination -->
+    <div *ngIf="trainingsTotal() > 0" class="flex items-center justify-between mt-4 text-xs text-muted-foreground">
+      <span>Showing {{ trainings().length }} of {{ trainingsTotal() }} sessions</span>
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          (click)="changePage(-1)"
+          [disabled]="trainingsPage() <= 1"
+          class="px-3 py-1.5 rounded-xl border border-border bg-card text-foreground disabled:opacity-50 hover:bg-secondary transition-colors"
+        >
+          Previous
+        </button>
+        <span class="font-mono">{{ trainingsPage() }} / {{ trainingsTotalPages() }}</span>
+        <button
+          type="button"
+          (click)="changePage(1)"
+          [disabled]="trainingsPage() >= trainingsTotalPages()"
+          class="px-3 py-1.5 rounded-xl border border-border bg-card text-foreground disabled:opacity-50 hover:bg-secondary transition-colors"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 4: QUALITY STAGE INSPECTIONS TABLE (EXISTING) -->
+  <div *ngIf="activeTab() === 'INSPECTIONS'">
+    <div class="overflow-x-auto rounded-2xl border border-border">
+      <table class="w-full text-left text-xs text-muted-foreground">
+        <thead class="bg-secondary/40 text-foreground font-semibold uppercase tracking-wider text-[10px] border-b border-border">
+          <tr>
+            <th class="px-4 py-3">Inspection #</th>
+            <th class="px-4 py-3">Stage Category</th>
+            <th class="px-4 py-3">Location & Structural Element</th>
+            <th class="px-4 py-3">Date</th>
+            <th class="px-4 py-3">Inspector</th>
+            <th class="px-4 py-3">Checklist Score</th>
+            <th class="px-4 py-3">Verdict</th>
+            <th class="px-4 py-3 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border">
+          <tr *ngFor="let insp of inspections()" class="hover:bg-secondary/20 transition-colors">
+            <td class="px-4 py-3.5 font-mono font-semibold text-foreground">
+              {{ insp.inspection_code }}
+            </td>
+            <td class="px-4 py-3.5 font-medium text-foreground">
+              {{ insp.stage_category }}
+            </td>
+            <td class="px-4 py-3.5">
+              <div class="font-semibold text-foreground">{{ insp.location_details }}</div>
+              <div class="text-[11px] text-muted-foreground">{{ insp.itp_code || insp.stage_category }}</div>
+            </td>
+            <td class="px-4 py-3.5">{{ insp.inspection_date || insp.inspection_request_date }}</td>
+            <td class="px-4 py-3.5">{{ insp.inspector_name || 'Unassigned' }}</td>
+            <td class="px-4 py-3.5">
+              <span class="font-mono font-bold text-foreground">
+                {{ insp.checklist_items?.length || 0 }} items
+              </span>
+            </td>
+            <td class="px-4 py-3.5">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold"
+                [ngClass]="{
+                  'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20': insp.verdict === 'PASSED',
+                  'bg-red-500/10 text-red-600 border border-red-500/20': insp.verdict === 'FAILED_NCR_ISSUED',
+                  'bg-amber-500/10 text-amber-600 border border-amber-500/20': insp.verdict === 'RE_INSPECTION_REQUIRED',
+                  'bg-secondary text-muted-foreground border border-border': insp.verdict === 'PENDING'
+                }">
+                {{ insp.verdict }}
+              </span>
+            </td>
+            <td class="px-4 py-3.5 text-right whitespace-nowrap">
+              <div class="flex items-center justify-end gap-1.5">
+                <button
+                  type="button"
+                  (click)="openVerdictModal(insp)"
+                  class="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                >
+                  <i class="ri-check-line"></i> Verdict
+                </button>
+                <a
+                  [routerLink]="['/construction/safety-ncr/inspections/edit', insp.id]"
+                  class="p-1.5 rounded-lg hover:bg-secondary text-foreground transition-colors"
+                  title="Full-Screen Edit"
+                >
+                  <i class="ri-edit-line text-sm"></i>
+                </a>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="inspections().length === 0">
+            <td colspan="8" class="px-4 py-8 text-center text-muted-foreground">
+              No inspections found matching criteria.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Inspections Pagination -->
+    <div *ngIf="inspectionsTotal() > 0" class="flex items-center justify-between mt-4 text-xs text-muted-foreground">
+      <span>Showing {{ inspections().length }} of {{ inspectionsTotal() }} inspections</span>
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          (click)="changePage(-1)"
+          [disabled]="inspectionsPage() <= 1"
+          class="px-3 py-1.5 rounded-xl border border-border bg-card text-foreground disabled:opacity-50 hover:bg-secondary transition-colors"
+        >
+          Previous
+        </button>
+        <span class="font-mono">{{ inspectionsPage() }} / {{ inspectionsTotalPages() }}</span>
+        <button
+          type="button"
+          (click)="changePage(1)"
+          [disabled]="inspectionsPage() >= inspectionsTotalPages()"
+          class="px-3 py-1.5 rounded-xl border border-border bg-card text-foreground disabled:opacity-50 hover:bg-secondary transition-colors"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 5: DEFECT NCR REGISTER (EXISTING) -->
+  <div *ngIf="activeTab() === 'DEFECTS'">
+    <div class="overflow-x-auto rounded-2xl border border-border">
+      <table class="w-full text-left text-xs text-muted-foreground">
+        <thead class="bg-secondary/40 text-foreground font-semibold uppercase tracking-wider text-[10px] border-b border-border">
+          <tr>
+            <th class="px-4 py-3">NCR #</th>
+            <th class="px-4 py-3">Category</th>
+            <th class="px-4 py-3">Defect Observation</th>
+            <th class="px-4 py-3">Severity & Hazard</th>
+            <th class="px-4 py-3">Assigned Contractor</th>
+            <th class="px-4 py-3">Deadline</th>
+            <th class="px-4 py-3">Status</th>
+            <th class="px-4 py-3 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border">
+          <tr *ngFor="let ncr of ncrs()" class="hover:bg-secondary/20 transition-colors">
+            <td class="px-4 py-3.5 font-mono font-semibold text-foreground">
+              {{ ncr.ncr_number }}
+            </td>
+            <td class="px-4 py-3.5">{{ ncr.category }}</td>
+            <td class="px-4 py-3.5">
+              <div class="font-semibold text-foreground line-clamp-1">{{ ncr.defect_title || ncr.description }}</div>
+              <div class="text-[11px] text-muted-foreground truncate max-w-xs">{{ ncr.location_details }}</div>
+            </td>
+            <td class="px-4 py-3.5">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold"
+                [ngClass]="{
+                  'bg-red-500/10 text-red-600 border border-red-500/20': ncr.severity === 'Critical' || ncr.affects_safety_or_structural,
+                  'bg-amber-500/10 text-amber-600 border border-amber-500/20': ncr.severity === 'High',
+                  'bg-blue-500/10 text-blue-600 border border-blue-500/20': ncr.severity === 'Medium' || ncr.severity === 'Low'
+                }">
+                {{ ncr.severity }}
+              </span>
+            </td>
+            <td class="px-4 py-3.5 font-medium text-foreground">{{ ncr.contractor_name || 'Pending' }}</td>
+            <td class="px-4 py-3.5">
+              <div [ngClass]="ncr.is_overdue ? 'text-red-600 font-bold' : ''">{{ ncr.rectification_deadline }}</div>
+            </td>
+            <td class="px-4 py-3.5">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold"
+                [ngClass]="{
+                  'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20': ncr.status === 'Closed',
+                  'bg-amber-500/10 text-amber-600 border border-amber-500/20': ncr.status === 'In Review' || ncr.status === 'Under Rectification',
+                  'bg-red-500/10 text-red-600 border border-red-500/20': ncr.status === 'Open'
+                }">
+                {{ ncr.status }}
+              </span>
+            </td>
+            <td class="px-4 py-3.5 text-right whitespace-nowrap">
+              <a
+                [routerLink]="['/construction/safety-ncr/rectify', ncr.id]"
+                class="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors inline-flex items-center gap-1"
+              >
+                <i class="ri-tools-line"></i> Manage CAPA
+              </a>
+            </td>
+          </tr>
+          <tr *ngIf="ncrs().length === 0">
+            <td colspan="8" class="px-4 py-8 text-center text-muted-foreground">
+              No non-conformance reports found.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Defect NCR Pagination -->
+    <div *ngIf="ncrsTotal() > 0" class="flex items-center justify-between mt-4 text-xs text-muted-foreground">
+      <span>Showing {{ ncrs().length }} of {{ ncrsTotal() }} NCRs</span>
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          (click)="changePage(-1)"
+          [disabled]="ncrsPage() <= 1"
+          class="px-3 py-1.5 rounded-xl border border-border bg-card text-foreground disabled:opacity-50 hover:bg-secondary transition-colors"
+        >
+          Previous
+        </button>
+        <span class="font-mono">{{ ncrsPage() }} / {{ ncrsTotalPages() }}</span>
+        <button
+          type="button"
+          (click)="changePage(1)"
+          [disabled]="ncrsPage() >= ncrsTotalPages()"
+          class="px-3 py-1.5 rounded-xl border border-border bg-card text-foreground disabled:opacity-50 hover:bg-secondary transition-colors"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Quick Incident RCA & CAPA Investigation -->
+  <div *ngIf="isInvestigateModalOpen()" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
+    <div class="bg-card border border-border rounded-2xl w-full max-w-xl p-6 shadow-xl flex flex-col gap-4">
+      <div class="flex items-center justify-between pb-3 border-b border-border">
+        <div>
+          <h3 class="text-base font-bold text-foreground">Incident Investigation & CAPA Resolution</h3>
+          <p class="text-xs text-muted-foreground">Record Root Cause Analysis and corrective actions for Incident #{{ selectedIncidentForInvestigate()?.incident_code }}</p>
+        </div>
+        <button (click)="closeInvestigateModal()" class="p-1 rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground">
+          <i class="ri-close-line text-lg"></i>
+        </button>
+      </div>
+
+      <div class="flex flex-col gap-3 text-xs">
+        <div>
+          <label class="block font-semibold text-foreground mb-1">Root Cause Analysis (RCA) *</label>
+          <textarea
+            [(ngModel)]="modalRca"
+            rows="3"
+            placeholder="Specify direct and contributing causes (e.g. wet surface, lack of guardrails, worker rushing)..."
+            class="w-full p-2.5 bg-secondary/30 border border-border rounded-xl text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+          ></textarea>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-foreground mb-1">Corrective & Preventive Action (CAPA) *</label>
+          <textarea
+            [(ngModel)]="modalCapa"
+            rows="3"
+            placeholder="Define actions to rectify and prevent recurrence..."
+            class="w-full p-2.5 bg-secondary/30 border border-border rounded-xl text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+          ></textarea>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-foreground mb-1">Responsible Person *</label>
+            <input
+              type="text"
+              [(ngModel)]="modalResponsiblePerson"
+              class="w-full p-2 bg-secondary/30 border border-border rounded-xl text-foreground"
+            />
+          </div>
+          <div>
+            <label class="block font-semibold text-foreground mb-1">CAPA Due Date *</label>
+            <input
+              type="date"
+              [(ngModel)]="modalCapaDueDate"
+              class="w-full p-2 bg-secondary/30 border border-border rounded-xl text-foreground"
+            />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-foreground mb-1">Investigation Verdict</label>
+            <select
+              [(ngModel)]="modalInvestigationStatus"
+              class="w-full p-2 bg-secondary/30 border border-border rounded-xl text-foreground"
+            >
+              <option value="UNDER_INVESTIGATION">Under Investigation</option>
+              <option value="CAPA_ASSIGNED">CAPA Assigned</option>
+              <option value="RESOLVED">Resolved & Corrected</option>
+              <option value="CLOSED">Formally Closed</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-foreground mb-1">Confirmed Lost Days (LTI)</label>
+            <input
+              type="number"
+              [(ngModel)]="modalDaysLost"
+              class="w-full p-2 bg-secondary/30 border border-border rounded-xl text-foreground"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-3 border-t border-border">
+        <button
+          type="button"
+          (click)="closeInvestigateModal()"
+          class="px-4 py-2 text-xs font-semibold rounded-xl bg-secondary text-foreground hover:bg-secondary/80"
+        >
+          Cancel
+        </button>
+        <app-custom-button
+          variant="primary"
+          [disabled]="isSubmittingInvestigation() || !modalRca() || !modalCapa()"
+          (clicked)="submitInvestigation()"
+        >
+          <i class="ri-check-line mr-1"></i>
+          {{ isSubmittingInvestigation() ? 'Saving...' : 'Submit Resolution' }}
+        </app-custom-button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Quick Inspection Verdict (Existing) -->
+  <div *ngIf="isVerdictModalOpen()" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
+    <div class="bg-card border border-border rounded-2xl w-full max-w-lg p-6 shadow-xl flex flex-col gap-4">
+      <div class="flex items-center justify-between pb-3 border-b border-border">
+        <h3 class="text-base font-bold text-foreground">Submit Inspection Verdict</h3>
+        <button (click)="closeVerdictModal()" class="p-1 rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground">
+          <i class="ri-close-line text-lg"></i>
+        </button>
+      </div>
+
+      <div class="flex flex-col gap-3 text-xs">
+        <div>
+          <label class="block font-semibold text-foreground mb-1">Verdict *</label>
+          <select [(ngModel)]="modalVerdict" class="w-full p-2.5 bg-secondary/30 border border-border rounded-xl text-foreground">
+            <option value="PASSED">PASSED - Cleared for Next Pour</option>
+            <option value="FAILED_NCR_ISSUED">FAILED - Issue Non-Conformance NCR</option>
+            <option value="RE_INSPECTION_REQUIRED">RE-INSPECTION REQUIRED</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-foreground mb-1">QA/QC Inspector Name *</label>
+          <input type="text" [(ngModel)]="modalInspectorName" class="w-full p-2 bg-secondary/30 border border-border rounded-xl text-foreground" />
+        </div>
+
+        <div>
+          <label class="block font-semibold text-foreground mb-1">Inspector Remarks</label>
+          <textarea [(ngModel)]="modalRemarks" rows="2" class="w-full p-2 bg-secondary/30 border border-border rounded-xl text-foreground"></textarea>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-3 border-t border-border">
+        <button type="button" (click)="closeVerdictModal()" class="px-4 py-2 text-xs font-semibold rounded-xl bg-secondary text-foreground">
+          Cancel
+        </button>
+        <app-custom-button variant="primary" [disabled]="isSubmittingVerdict()" (clicked)="submitVerdict()">
+          {{ isSubmittingVerdict() ? 'Submitting...' : 'Confirm Verdict' }}
+        </app-custom-button>
+      </div>
+    </div>
+  </div>
+</app-card-container>

@@ -277,6 +277,16 @@ export const routes: Routes = [
     title: 'Basement Parking Bays Management - Bangladesh Real Estate ERP'
   },
   {
+    path: 'crm',
+    loadComponent: () => import('./features/crm/crm-dashboard/crm-dashboard.component').then(m => m.CrmDashboardComponent),
+    title: 'CRM Dashboard & Sales KPIs - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'crm/dashboard',
+    redirectTo: 'crm',
+    pathMatch: 'full'
+  },
+  {
     path: 'crm/leads',
     loadComponent: () => import('./features/crm/crm-leads/crm-leads.component').then(m => m.CrmLeadsComponent),
     title: 'Omnichannel CRM Leads & Kanban - Bangladesh Real Estate ERP'

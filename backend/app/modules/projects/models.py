@@ -273,15 +273,49 @@ class BOQItem(Base):
     unit_of_measure_id = Column(String(32), nullable=False, default="CFT")
     
     item_code = Column(String(64), nullable=True, index=True)
+    specification = Column(Text, nullable=True)
     wbs_node_id = Column(BigInteger, ForeignKey("con_wbs_nodes.id", ondelete="SET NULL"), nullable=True, index=True)
     estimated_quantity = Column(Numeric(14, 4), nullable=False, default=0.00)
     estimated_unit_rate = Column(Numeric(14, 2), nullable=False, default=0.00)
     total_estimated_cost = Column(Numeric(16, 2), nullable=False, default=0.00)
+
+    # Cost Breakdown Components
+    material_rate = Column(Numeric(14, 2), nullable=False, default=0.00)
+    labour_rate = Column(Numeric(14, 2), nullable=False, default=0.00)
+    equipment_rate = Column(Numeric(14, 2), nullable=False, default=0.00)
+    subcontract_rate = Column(Numeric(14, 2), nullable=False, default=0.00)
+
+    # Lifecycle Stage & Tender vs Contract Baselines
+    stage = Column(String(64), nullable=False, default="APPROVED_CONTRACT_BOQ", index=True)
+    tender_quantity = Column(Numeric(14, 4), nullable=False, default=0.00)
+    tender_unit_rate = Column(Numeric(14, 2), nullable=False, default=0.00)
+    tender_total_amount = Column(Numeric(16, 2), nullable=False, default=0.00)
+
+    contract_quantity = Column(Numeric(14, 4), nullable=False, default=0.00)
+    contract_unit_rate = Column(Numeric(14, 2), nullable=False, default=0.00)
+    contract_total_amount = Column(Numeric(16, 2), nullable=False, default=0.00)
+
+    revised_quantity = Column(Numeric(14, 4), nullable=False, default=0.00)
+    revised_unit_rate = Column(Numeric(14, 2), nullable=False, default=0.00)
+    revised_total_amount = Column(Numeric(16, 2), nullable=False, default=0.00)
+
+    # Actuals & Progress Tracking
     actual_consumed_quantity = Column(Numeric(14, 4), nullable=False, default=0.00)
+    completed_quantity = Column(Numeric(14, 4), nullable=False, default=0.00)
+    remaining_quantity = Column(Numeric(14, 4), nullable=False, default=0.00)
     requisitioned_quantity = Column(Numeric(14, 4), nullable=False, default=0.00)
     variation_order_quantity = Column(Numeric(14, 4), nullable=False, default=0.00)
+    actual_cost = Column(Numeric(16, 2), nullable=False, default=0.00)
+    cost_variance = Column(Numeric(16, 2), nullable=False, default=0.00)
+
+    # Controls, Approvals & Locks
     hard_lock_percentage = Column(Numeric(5, 2), nullable=False, default=105.00) # 105% ceiling
     is_locked = Column(Boolean, nullable=False, default=False)
+    version_no = Column(Integer, nullable=False, default=1)
+    approved_by = Column(String(128), nullable=True)
+    approval_date = Column(Date, nullable=True)
+    rate_analysis_notes = Column(Text, nullable=True)
+    supporting_document_url = Column(String(255), nullable=True)
 
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())

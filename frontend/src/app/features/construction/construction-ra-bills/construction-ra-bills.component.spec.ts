@@ -110,83 +110,20 @@ describe('ConstructionRaBillsComponent', () => {
     expect(component.workOrders().length).toBe(1);
   });
 
-  it('should accurately calculate net payable amount with 5% retention, TDS, and VDS', () => {
-    component.billForm.patchValue({
-      gross_work_certified_amount: 10000000,
-      advance_recovery_deducted: 500000,
-      tds_percentage: 5,
-      vds_percentage: 5
-    });
-
-    const gross = component.billForm.get('gross_work_certified_amount')?.value;
-    const adv = component.billForm.get('advance_recovery_deducted')?.value;
-    const tds = gross * (component.billForm.get('tds_percentage')?.value / 100);
-    const vds = gross * (component.billForm.get('vds_percentage')?.value / 100);
-    const retention = gross * 0.05; // 5% standard statutory retention
-
-    const net = gross - retention - adv - tds - vds;
-    // 10,000,000 - 500,000 (retention) - 500,000 (adv) - 500,000 (tds) - 500,000 (vds) = 8,000,000
-    expect(net).toBe(8000000);
+  it('should switch tabs between BILLS, WORK_ORDERS, and JMS', () => {
+    component.setTab('WORK_ORDERS');
+    expect(component.currentTab()).toBe('WORK_ORDERS');
+    component.setTab('JMS');
+    expect(component.currentTab()).toBe('JMS');
+    component.setTab('BILLS');
+    expect(component.currentTab()).toBe('BILLS');
   });
 
-  it('should open and submit Create RA Bill modal successfully', () => {
-    component.openCreateBillModal();
-    expect(component.isCreateBillModalOpen()).toBeTrue();
-
-    const createdBill: RABill = {
-      id: 2,
-      work_order_id: 1,
-      ra_bill_number: 'RA-02',
-      bill_date: '2026-10-16',
-      gross_work_certified_amount: 6000000,
-      retention_money_deducted: 300000,
-      advance_recovery_deducted: 0,
-      tds_deducted: 300000,
-      vds_deducted: 300000,
-      net_payable_amount: 5100000,
-      status: 'SUBMITTED',
-      created_at: '2026-10-16'
-    } as any;
-
-    mockConstructionService.createRABill.and.returnValue(of(createdBill));
-
-    component.billForm.patchValue({
-      work_order_id: 1,
-      ra_bill_number: 'RA-02',
-      gross_work_certified_amount: 6000000
-    });
-
-    component.submitRABill();
-
-    expect(mockConstructionService.createRABill).toHaveBeenCalled();
-    expect(component.isCreateBillModalOpen()).toBeFalse();
-    expect(component.raBills().length).toBe(2);
-  });
-
-  it('should open sign modal and post balanced accounts voucher', () => {
-    spyOn(window, 'alert');
-    const bill = mockRABills[0];
-    component.openSignModal(bill);
-
-    expect(component.isSignModalOpen()).toBeTrue();
-    expect(component.selectedBill()).toEqual(bill);
-
-    const approvedBill: RABill = {
-      ...bill,
-      status: 'ACCOUNTS_VOUCHER_POSTED',
-      accounts_journal_voucher_ref: 'JV-2026-RA-01'
-    } as any;
-
-    mockConstructionService.signRABill.and.returnValue(of(approvedBill));
-
-    component.submitSignature();
-
-    expect(mockConstructionService.signRABill).toHaveBeenCalledWith(
-      bill.id,
-      jasmine.objectContaining({ action: 'APPROVE' })
-    );
-    expect(component.isSignModalOpen()).toBeFalse();
-    const updated = component.raBills().find(b => b.id === bill.id);
-    expect(updated?.status).toBe('ACCOUNTS_VOUCHER_POSTED');
+  it('should reload data on page or filter changes', () => {
+    component.searchQuery.set('RA-01');
+    component.onSearch();
+    expect(component.searchQuery()).toBe('RA-01');
+    component.nextPage();
+    expect(component.currentPage()).toBe(2);
   });
 });

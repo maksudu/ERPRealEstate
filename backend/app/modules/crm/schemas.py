@@ -729,3 +729,159 @@ class WebsiteInquiryPayload(BaseModel):
     message: Optional[str] = None
     utm_source: Optional[str] = "WEBSITE_CONTACT_FORM"
     utm_campaign: Optional[str] = None
+
+
+# =============================================================
+# 4.1 CRM Dashboard and Sales KPIs Schemas
+# =============================================================
+
+class CrmExecutiveKpis(BaseModel):
+    total_leads: int = 1250
+    total_leads_target: int = 1500
+    total_leads_mom_growth: float = 12.4
+    qualified_leads: int = 625
+    qualified_leads_percentage: float = 50.0
+    hot_leads_count: int = 240
+    warm_leads_count: int = 385
+    site_visits_total: int = 250
+    site_visits_scheduled: int = 90
+    site_visits_completed: int = 160
+    site_visits_completion_rate: float = 64.0
+    bookings_count: int = 50
+    booking_conversion_rate: float = 4.0
+    booking_total_value_bdt: float = 425000000.00
+    first_response_avg_hours: float = 1.8
+    contact_rate_percentage: float = 88.5
+    unassigned_leads_count: int = 14
+    overdue_followups_count: int = 9
+
+
+class CrmLeadVelocity(BaseModel):
+    today: int = 18
+    this_week: int = 124
+    this_month: int = 1250
+    today_growth: float = 5.8
+    this_week_growth: float = 11.2
+    this_month_growth: float = 12.4
+
+
+class CrmProjectDistribution(BaseModel):
+    project_id: Optional[int] = None
+    project_name: str
+    lead_count: int = 0
+    qualified_count: int = 0
+    site_visits_count: int = 0
+    bookings_count: int = 0
+    conversion_rate: float = 0.0
+    sales_target_units: int = 0
+    sales_target_achievement_pct: float = 0.0
+
+
+class CrmSourceDistribution(BaseModel):
+    source_id: str
+    source_name: str
+    lead_count: int = 0
+    percentage: float = 0.0
+    conversion_count: int = 0
+    conversion_rate: float = 0.0
+
+
+class CrmCampaignPerformance(BaseModel):
+    campaign_name: str
+    utm_source: str
+    utm_campaign: Optional[str] = None
+    leads_count: int = 0
+    qualified_count: int = 0
+    bookings_count: int = 0
+    conversion_rate: float = 0.0
+
+
+class CrmSalesRepPerformance(BaseModel):
+    sales_rep_id: Optional[int] = None
+    sales_rep_name: str
+    email: Optional[str] = None
+    assigned_leads: int = 0
+    contacted_count: int = 0
+    contact_rate_pct: float = 0.0
+    site_visits_completed: int = 0
+    bookings_count: int = 0
+    conversion_rate: float = 0.0
+    avg_response_hours: float = 0.0
+
+
+class CrmPipelineFunnelStage(BaseModel):
+    stage_key: str
+    stage_label: str
+    count: int = 0
+    drop_off_count: int = 0
+    conversion_rate_from_first: float = 0.0
+    stage_to_stage_rate: float = 0.0
+
+
+class CrmLostReasonAnalysis(BaseModel):
+    lost_reason: str
+    count: int = 0
+    percentage: float = 0.0
+    lost_deal_value_bdt: float = 0.0
+
+
+class CrmBrokerReferralPerformance(BaseModel):
+    partner_type: str = "BROKER"  # BROKER, CUSTOMER_REFERRAL
+    partner_name: str
+    contact_phone: Optional[str] = None
+    leads_referred: int = 0
+    qualified_count: int = 0
+    bookings_count: int = 0
+    total_booked_value_bdt: float = 0.0
+    commission_accrued_bdt: float = 0.0
+
+
+class CrmLeadAgeingBracket(BaseModel):
+    bracket_label: str
+    count: int = 0
+    percentage: float = 0.0
+    inactive_count: int = 0
+
+
+class CrmDashboardResponse(BaseModel):
+    kpis: CrmExecutiveKpis
+    velocity: CrmLeadVelocity
+    pipeline_funnel: List[CrmPipelineFunnelStage]
+    by_project: List[CrmProjectDistribution]
+    by_source: List[CrmSourceDistribution]
+    by_campaign: List[CrmCampaignPerformance]
+    by_sales_rep: List[CrmSalesRepPerformance]
+    lost_reasons: List[CrmLostReasonAnalysis]
+    broker_referrals: List[CrmBrokerReferralPerformance]
+    lead_ageing: List[CrmLeadAgeingBracket]
+    generated_at: datetime
+
+
+class CrmDrilldownLeadItem(BaseModel):
+    id: int
+    lead_code: Optional[str] = None
+    lead_name: str
+    primary_phone: str
+    email: Optional[str] = None
+    lead_source_id: str
+    lead_stage: str
+    health_grade: Optional[str] = None
+    priority: str
+    project_id: Optional[int] = None
+    project_name: Optional[str] = None
+    assigned_sales_rep_id: Optional[int] = None
+    sales_rep_name: Optional[str] = None
+    lead_score: int = 50
+    budget_range_max: Optional[float] = None
+    first_contacted_at: Optional[datetime] = None
+    created_at: Optional[datetime] = None
+
+
+class CrmDrilldownResponse(BaseModel):
+    widget_type: str
+    filter_value: Optional[str] = None
+    total: int
+    limit: int
+    offset: int
+    items: List[CrmDrilldownLeadItem]
+

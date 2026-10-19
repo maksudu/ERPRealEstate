@@ -1,0 +1,826 @@
+<!-- Single Card Container for CRM Dashboard & Sales KPIs (Spec 4.1) -->
+<app-card-container
+  title="CRM Executive Intelligence & Sales KPIs (Spec 4.1)"
+  subtitle="Consolidated view of customer inquiries, sales activities, and lead conversion across all projects and sales representatives"
+>
+  <!-- Global Filters & Toolbar Ribbon -->
+  <div class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 p-4 mb-6 rounded-2xl bg-secondary/20 border border-border">
+    <div class="flex flex-wrap items-center gap-2">
+      <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 mr-2">
+        <i class="ri-filter-3-line text-primary"></i> Scope:
+      </span>
+      <div class="flex items-center bg-secondary/50 p-1 rounded-xl border border-border">
+        <button
+          *ngFor="let opt of dateRangeOptions"
+          (click)="onDateRangeChange(opt.value)"
+          [class.bg-card]="selectedDateRange() === opt.value"
+          [class.text-foreground]="selectedDateRange() === opt.value"
+          [class.shadow-sm]="selectedDateRange() === opt.value"
+          [class.text-muted-foreground]="selectedDateRange() !== opt.value"
+          class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all hover:text-foreground"
+        >
+          {{ opt.label }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Dropdown Filters (Searchable & Dynamic) -->
+    <div class="flex flex-wrap sm:flex-nowrap items-center gap-3">
+      <div class="w-full sm:w-64">
+        <app-searchable-select
+          label="Project"
+          [options]="projectOptions()"
+          [value]="selectedProjectId()"
+          placeholder="Filter by Project"
+          (selectionChange)="onProjectChange($event)"
+        ></app-searchable-select>
+      </div>
+
+      <div class="w-full sm:w-64">
+        <app-searchable-select
+          label="Sales Rep"
+          [options]="salesRepOptions()"
+          [value]="selectedSalesRepId()"
+          placeholder="Filter by Sales Rep"
+          (selectionChange)="onSalesRepChange($event)"
+        ></app-searchable-select>
+      </div>
+
+      <app-custom-button
+        variant="outline"
+        size="md"
+        [loading]="isRefreshing()"
+        (buttonClick)="refreshDashboard()"
+        title="Refresh live metrics"
+      >
+        <i class="ri-refresh-line mr-1 text-sm"></i> Refresh
+      </app-custom-button>
+    </div>
+  </div>
+
+  <!-- Loading Skeleton State -->
+  <div *ngIf="isLoading()" class="py-16 text-center">
+    <i class="ri-loader-4-line text-4xl text-primary animate-spin"></i>
+    <p class="text-sm text-muted-foreground mt-3 font-medium">Computing omnichannel CRM metrics and sales conversion data...</p>
+  </div>
+
+  <div *ngIf="!isLoading() && dashboardData() as data" class="space-y-6">
+    <!-- 4 Top Executive KPI Cards (Spec 4.1 Required Benchmarks) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <!-- 1. Total Leads -->
+      <div
+        (click)="openDrilldown('TOTAL_LEADS', null, 'Total Inquiries & Captured Leads', 'All inbound inquiries across omnichannel channels')"
+        class="group p-5 rounded-2xl bg-card border border-border hover:border-primary/50 hover:shadow-lg transition-all cursor-pointer relative overflow-hidden"
+      >
+        <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-primary/5 rounded-full pointer-events-none group-hover:scale-125 transition-transform"></div>
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Leads</span>
+          <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+            <i class="ri-arrow-up-line"></i> +{{ data.kpis.total_leads_mom_growth }}% MoM
+          </span>
+        </div>
+        <div class="mt-3 flex items-baseline justify-between">
+          <span class="text-3xl sm:text-4xl font-extrabold font-mono text-foreground tracking-tight">
+            {{ data.kpis.total_leads.toLocaleString() }}
+          </span>
+          <span class="text-xs text-muted-foreground flex items-center gap-1 group-hover:text-primary transition-colors">
+            Drilldown <i class="ri-arrow-right-s-line"></i>
+          </span>
+        </div>
+        <p class="text-xs text-muted-foreground mt-2">Illustrative monthly data • Target: {{ data.kpis.total_leads_target.toLocaleString() }}</p>
+      </div>
+
+      <!-- 2. Qualified Leads -->
+      <div
+        (click)="openDrilldown('QUALIFIED', null, 'Qualified Prospects (Hot & Warm)', 'Assessed for budget fit, timeline, and decision-maker availability')"
+        class="group p-5 rounded-2xl bg-card border border-border hover:border-amber-500/50 hover:shadow-lg transition-all cursor-pointer relative overflow-hidden"
+      >
+        <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-amber-500/5 rounded-full pointer-events-none group-hover:scale-125 transition-transform"></div>
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider">Qualified Leads</span>
+          <span class="inline-flex items-center text-[11px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full">
+            {{ data.kpis.qualified_leads_percentage }}% of total
+          </span>
+        </div>
+        <div class="mt-3 flex items-baseline justify-between">
+          <span class="text-3xl sm:text-4xl font-extrabold font-mono text-foreground tracking-tight">
+            {{ data.kpis.qualified_leads.toLocaleString() }}
+          </span>
+          <span class="text-xs text-muted-foreground flex items-center gap-1 group-hover:text-amber-500 transition-colors">
+            Drilldown <i class="ri-arrow-right-s-line"></i>
+          </span>
+        </div>
+        <div class="flex items-center gap-3 text-xs text-muted-foreground mt-2">
+          <span class="flex items-center gap-1 text-rose-600 dark:text-rose-400 font-medium">
+            <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Hot: {{ data.kpis.hot_leads_count }}
+          </span>
+          <span class="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-medium">
+            <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Warm: {{ data.kpis.warm_leads_count }}
+          </span>
+        </div>
+      </div>
+
+      <!-- 3. Site Visits -->
+      <div
+        (click)="openDrilldown('SITE_VISITS', null, 'Site Visits Pipeline', 'Tracked separately as scheduled and completed visits')"
+        class="group p-5 rounded-2xl bg-card border border-border hover:border-teal-500/50 hover:shadow-lg transition-all cursor-pointer relative overflow-hidden"
+      >
+        <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-teal-500/5 rounded-full pointer-events-none group-hover:scale-125 transition-transform"></div>
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-teal-600 dark:text-teal-400 uppercase tracking-wider">Site Visits</span>
+          <span class="inline-flex items-center text-[11px] font-semibold text-teal-600 dark:text-teal-400 bg-teal-500/10 px-2 py-0.5 rounded-full">
+            {{ data.kpis.site_visits_completion_rate }}% completed
+          </span>
+        </div>
+        <div class="mt-3 flex items-baseline justify-between">
+          <span class="text-3xl sm:text-4xl font-extrabold font-mono text-foreground tracking-tight">
+            {{ data.kpis.site_visits_total.toLocaleString() }}
+          </span>
+          <span class="text-xs text-muted-foreground flex items-center gap-1 group-hover:text-teal-500 transition-colors">
+            Drilldown <i class="ri-arrow-right-s-line"></i>
+          </span>
+        </div>
+        <div class="flex items-center gap-3 text-xs text-muted-foreground mt-2">
+          <span class="text-teal-600 dark:text-teal-400 font-medium">
+            Completed: {{ data.kpis.site_visits_completed }}
+          </span>
+          <span class="text-muted-foreground">
+            Scheduled: {{ data.kpis.site_visits_scheduled }}
+          </span>
+        </div>
+      </div>
+
+      <!-- 4. Bookings -->
+      <div
+        (click)="openDrilldown('BOOKINGS', null, 'Confirmed Sales Bookings', 'Earnest token booked and contract bookings generated')"
+        class="group p-5 rounded-2xl bg-card border border-border hover:border-emerald-500/50 hover:shadow-lg transition-all cursor-pointer relative overflow-hidden"
+      >
+        <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-emerald-500/5 rounded-full pointer-events-none group-hover:scale-125 transition-transform"></div>
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Bookings</span>
+          <span class="inline-flex items-center text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+            {{ data.kpis.booking_conversion_rate }}% conversion
+          </span>
+        </div>
+        <div class="mt-3 flex items-baseline justify-between">
+          <span class="text-3xl sm:text-4xl font-extrabold font-mono text-emerald-600 dark:text-emerald-400 tracking-tight">
+            {{ data.kpis.bookings_count.toLocaleString() }}
+          </span>
+          <span class="text-xs text-muted-foreground flex items-center gap-1 group-hover:text-emerald-500 transition-colors">
+            Drilldown <i class="ri-arrow-right-s-line"></i>
+          </span>
+        </div>
+        <p class="text-xs text-muted-foreground mt-2 font-mono">
+          Total Value: <span class="font-semibold text-foreground">{{ formatBdt(data.kpis.booking_total_value_bdt) }}</span>
+        </p>
+      </div>
+    </div>
+
+    <!-- Secondary Operations & Velocity Ribbon -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      <!-- Velocity: Today -->
+      <div class="p-3.5 rounded-xl bg-secondary/30 border border-border flex flex-col justify-between">
+        <span class="text-[11px] text-muted-foreground font-medium">New Today</span>
+        <div class="flex items-baseline justify-between mt-1">
+          <span class="text-xl font-bold font-mono text-foreground">{{ data.velocity.today }}</span>
+          <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">+{{ data.velocity.today_growth }}%</span>
+        </div>
+      </div>
+
+      <!-- Velocity: This Week -->
+      <div class="p-3.5 rounded-xl bg-secondary/30 border border-border flex flex-col justify-between">
+        <span class="text-[11px] text-muted-foreground font-medium">This Week</span>
+        <div class="flex items-baseline justify-between mt-1">
+          <span class="text-xl font-bold font-mono text-foreground">{{ data.velocity.this_week }}</span>
+          <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">+{{ data.velocity.this_week_growth }}%</span>
+        </div>
+      </div>
+
+      <!-- Unassigned Leads (Actionable Alert) -->
+      <div
+        (click)="openDrilldown('UNASSIGNED', null, 'Unassigned Leads Queue', 'Inquiries pending assignment to sales representatives')"
+        class="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 hover:border-amber-500/50 transition-all cursor-pointer flex flex-col justify-between group"
+      >
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] text-amber-600 dark:text-amber-400 font-semibold">Unassigned Leads</span>
+          <i class="ri-error-warning-line text-amber-500 group-hover:scale-110 transition-transform"></i>
+        </div>
+        <div class="flex items-baseline justify-between mt-1">
+          <span class="text-xl font-bold font-mono text-amber-600 dark:text-amber-400">{{ data.kpis.unassigned_leads_count }}</span>
+          <span class="text-[10px] text-muted-foreground group-hover:text-amber-600 transition-colors">Assign <i class="ri-arrow-right-line"></i></span>
+        </div>
+      </div>
+
+      <!-- Overdue Follow-ups (Actionable Alert) -->
+      <div
+        (click)="openDrilldown('OVERDUE', null, 'Overdue Follow-ups SLA Breaches', 'Leads uncontacted beyond 24-hour response deadline')"
+        class="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 hover:border-rose-500/50 transition-all cursor-pointer flex flex-col justify-between group"
+      >
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] text-rose-600 dark:text-rose-400 font-semibold">Overdue Follow-ups</span>
+          <i class="ri-alarm-warning-line text-rose-500 group-hover:scale-110 transition-transform"></i>
+        </div>
+        <div class="flex items-baseline justify-between mt-1">
+          <span class="text-xl font-bold font-mono text-rose-600 dark:text-rose-400">{{ data.kpis.overdue_followups_count }}</span>
+          <span class="text-[10px] text-muted-foreground group-hover:text-rose-600 transition-colors">Action <i class="ri-arrow-right-line"></i></span>
+        </div>
+      </div>
+
+      <!-- First Response Time -->
+      <div class="p-3.5 rounded-xl bg-secondary/30 border border-border flex flex-col justify-between">
+        <span class="text-[11px] text-muted-foreground font-medium">Avg First Response</span>
+        <div class="flex items-baseline justify-between mt-1">
+          <span class="text-xl font-bold font-mono text-foreground">{{ data.kpis.first_response_avg_hours }}h</span>
+          <span class="text-[10px] text-teal-600 dark:text-teal-400 font-semibold">SLA: 2.0h</span>
+        </div>
+      </div>
+
+      <!-- Contact Rate -->
+      <div class="p-3.5 rounded-xl bg-secondary/30 border border-border flex flex-col justify-between">
+        <span class="text-[11px] text-muted-foreground font-medium">Contact Rate</span>
+        <div class="flex items-baseline justify-between mt-1">
+          <span class="text-xl font-bold font-mono text-foreground">{{ data.kpis.contact_rate_percentage }}%</span>
+          <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">Target: 85%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Category Tabs Navigation for Dashboard Widgets -->
+    <div class="border-b border-border mt-8">
+      <nav class="flex space-x-2 sm:space-x-4 overflow-x-auto pb-1" aria-label="Dashboard Tabs">
+        <button
+          (click)="setActiveTab('FUNNEL')"
+          [class.border-primary]="activeTab() === 'FUNNEL'"
+          [class.text-primary]="activeTab() === 'FUNNEL'"
+          [class.border-transparent]="activeTab() !== 'FUNNEL'"
+          [class.text-muted-foreground]="activeTab() !== 'FUNNEL'"
+          class="whitespace-nowrap py-3 px-3.5 border-b-2 font-medium text-xs sm:text-sm transition-all flex items-center gap-2 hover:text-foreground"
+        >
+          <i class="ri-funnel-line text-base"></i>
+          Pipeline & Funnel
+        </button>
+
+        <button
+          (click)="setActiveTab('PROJECTS')"
+          [class.border-primary]="activeTab() === 'PROJECTS'"
+          [class.text-primary]="activeTab() === 'PROJECTS'"
+          [class.border-transparent]="activeTab() !== 'PROJECTS'"
+          [class.text-muted-foreground]="activeTab() !== 'PROJECTS'"
+          class="whitespace-nowrap py-3 px-3.5 border-b-2 font-medium text-xs sm:text-sm transition-all flex items-center gap-2 hover:text-foreground"
+        >
+          <i class="ri-building-2-line text-base"></i>
+          Projects Breakdown
+        </button>
+
+        <button
+          (click)="setActiveTab('SALES_REPS')"
+          [class.border-primary]="activeTab() === 'SALES_REPS'"
+          [class.text-primary]="activeTab() === 'SALES_REPS'"
+          [class.border-transparent]="activeTab() !== 'SALES_REPS'"
+          [class.text-muted-foreground]="activeTab() !== 'SALES_REPS'"
+          class="whitespace-nowrap py-3 px-3.5 border-b-2 font-medium text-xs sm:text-sm transition-all flex items-center gap-2 hover:text-foreground"
+        >
+          <i class="ri-user-star-line text-base"></i>
+          Sales Representatives
+        </button>
+
+        <button
+          (click)="setActiveTab('SOURCES_CAMPAIGNS')"
+          [class.border-primary]="activeTab() === 'SOURCES_CAMPAIGNS'"
+          [class.text-primary]="activeTab() === 'SOURCES_CAMPAIGNS'"
+          [class.border-transparent]="activeTab() !== 'SOURCES_CAMPAIGNS'"
+          [class.text-muted-foreground]="activeTab() !== 'SOURCES_CAMPAIGNS'"
+          class="whitespace-nowrap py-3 px-3.5 border-b-2 font-medium text-xs sm:text-sm transition-all flex items-center gap-2 hover:text-foreground"
+        >
+          <i class="ri-share-forward-line text-base"></i>
+          Sources & Campaigns
+        </button>
+
+        <button
+          (click)="setActiveTab('LOST_AGEING')"
+          [class.border-primary]="activeTab() === 'LOST_AGEING'"
+          [class.text-primary]="activeTab() === 'LOST_AGEING'"
+          [class.border-transparent]="activeTab() !== 'LOST_AGEING'"
+          [class.text-muted-foreground]="activeTab() !== 'LOST_AGEING'"
+          class="whitespace-nowrap py-3 px-3.5 border-b-2 font-medium text-xs sm:text-sm transition-all flex items-center gap-2 hover:text-foreground"
+        >
+          <i class="ri-pie-chart-2-line text-base"></i>
+          Lost Reasons & Ageing
+        </button>
+
+        <button
+          (click)="setActiveTab('TARGETS_BROKERS')"
+          [class.border-primary]="activeTab() === 'TARGETS_BROKERS'"
+          [class.text-primary]="activeTab() === 'TARGETS_BROKERS'"
+          [class.border-transparent]="activeTab() !== 'TARGETS_BROKERS'"
+          [class.text-muted-foreground]="activeTab() !== 'TARGETS_BROKERS'"
+          class="whitespace-nowrap py-3 px-3.5 border-b-2 font-medium text-xs sm:text-sm transition-all flex items-center gap-2 hover:text-foreground"
+        >
+          <i class="ri-trophy-line text-base"></i>
+          Brokers & Targets
+        </button>
+      </nav>
+    </div>
+
+    <!-- TAB 1: Pipeline & Conversion Funnel -->
+    <div *ngIf="activeTab() === 'FUNNEL'" class="space-y-6">
+      <div class="p-6 rounded-2xl bg-card border border-border">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h3 class="text-base font-semibold text-foreground">Omnichannel Conversion Funnel</h3>
+            <p class="text-xs text-muted-foreground">Progression and drop-offs across inquiry, qualification, site visits, and booking execution</p>
+          </div>
+          <span class="text-xs text-muted-foreground">Click any funnel stage to drill down into leads</span>
+        </div>
+
+        <div class="space-y-4">
+          <div
+            *ngFor="let stage of data.pipeline_funnel; let i = index"
+            (click)="openDrilldown('STAGE', stage.stage_key, stage.stage_label, 'Leads at ' + stage.stage_label + ' stage')"
+            class="group p-4 rounded-xl border border-border bg-secondary/10 hover:border-primary/50 hover:bg-secondary/20 transition-all cursor-pointer"
+          >
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-2.5">
+                <span class="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold font-mono">
+                  {{ i + 1 }}
+                </span>
+                <span class="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
+                  {{ stage.stage_label }}
+                </span>
+              </div>
+              <div class="flex items-center gap-4 text-xs">
+                <span class="text-muted-foreground">
+                  Step Conv: <span class="font-semibold text-foreground font-mono">{{ stage.stage_to_stage_rate }}%</span>
+                </span>
+                <span class="text-muted-foreground">
+                  Overall: <span class="font-semibold text-primary font-mono">{{ stage.conversion_rate_from_first }}%</span>
+                </span>
+                <span class="font-bold text-sm font-mono text-foreground">
+                  {{ stage.count.toLocaleString() }} leads
+                </span>
+              </div>
+            </div>
+
+            <!-- Visual Bar -->
+            <div class="w-full h-3 bg-secondary/60 rounded-full overflow-hidden flex">
+              <div
+                class="h-full bg-gradient-to-r from-primary to-indigo-500 rounded-full transition-all duration-700"
+                [style.width.%]="stage.conversion_rate_from_first"
+              ></div>
+            </div>
+
+            <div *ngIf="stage.drop_off_count > 0" class="flex items-center justify-between mt-2 text-[11px] text-muted-foreground">
+              <span>Drop-off / Filtered Out: <span class="text-rose-500 font-mono">{{ stage.drop_off_count.toLocaleString() }}</span></span>
+              <span class="group-hover:text-primary transition-colors">View leads <i class="ri-arrow-right-s-line"></i></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: Projects Breakdown -->
+    <div *ngIf="activeTab() === 'PROJECTS'" class="space-y-6">
+      <div class="rounded-2xl bg-card border border-border overflow-hidden">
+        <div class="p-5 border-b border-border flex items-center justify-between">
+          <div>
+            <h3 class="text-base font-semibold text-foreground">Project-Wise Lead & Booking Performance</h3>
+            <p class="text-xs text-muted-foreground">Inquiries, site visits, bookings, and sales target achievement by project</p>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="border-b border-border bg-secondary/20 text-muted-foreground font-medium uppercase tracking-wider">
+                <th class="p-3.5">Project Name</th>
+                <th class="p-3.5 text-right">Total Inquiries</th>
+                <th class="p-3.5 text-right">Qualified Leads</th>
+                <th class="p-3.5 text-right">Site Visits</th>
+                <th class="p-3.5 text-right">Bookings</th>
+                <th class="p-3.5 text-right">Conversion %</th>
+                <th class="p-3.5 text-right">Target Units</th>
+                <th class="p-3.5 text-center">Achievement</th>
+                <th class="p-3.5 text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border">
+              <tr *ngFor="let proj of data.by_project" class="hover:bg-secondary/15 transition-colors">
+                <td class="p-3.5 font-semibold text-foreground flex items-center gap-2">
+                  <i class="ri-building-line text-primary"></i>
+                  {{ proj.project_name }}
+                </td>
+                <td class="p-3.5 text-right font-mono font-medium">{{ proj.lead_count.toLocaleString() }}</td>
+                <td class="p-3.5 text-right font-mono text-amber-600 dark:text-amber-400 font-medium">{{ proj.qualified_count.toLocaleString() }}</td>
+                <td class="p-3.5 text-right font-mono text-teal-600 dark:text-teal-400 font-medium">{{ proj.site_visits_count.toLocaleString() }}</td>
+                <td class="p-3.5 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">{{ proj.bookings_count.toLocaleString() }}</td>
+                <td class="p-3.5 text-right font-mono font-semibold">{{ proj.conversion_rate }}%</td>
+                <td class="p-3.5 text-right font-mono text-muted-foreground">{{ proj.sales_target_units }}</td>
+                <td class="p-3.5 text-center">
+                  <div class="inline-flex items-center gap-1.5">
+                    <span class="w-16 h-2 bg-secondary rounded-full overflow-hidden inline-block align-middle">
+                      <span class="h-full bg-emerald-500 block rounded-full" [style.width.%]="proj.sales_target_achievement_pct"></span>
+                    </span>
+                    <span class="font-mono font-semibold text-[11px]">{{ proj.sales_target_achievement_pct }}%</span>
+                  </div>
+                </td>
+                <td class="p-3.5 text-center">
+                  <button
+                    (click)="openDrilldown('PROJECT', proj.project_name, proj.project_name + ' Leads', 'All prospects interested in ' + proj.project_name)"
+                    class="px-2.5 py-1 text-[11px] font-medium text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                  >
+                    Drilldown <i class="ri-arrow-right-s-line"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: Sales Representatives -->
+    <div *ngIf="activeTab() === 'SALES_REPS'" class="space-y-6">
+      <div class="rounded-2xl bg-card border border-border overflow-hidden">
+        <div class="p-5 border-b border-border flex items-center justify-between">
+          <div>
+            <h3 class="text-base font-semibold text-foreground">Sales Representatives Performance Matrix</h3>
+            <p class="text-xs text-muted-foreground">Assigned workload, contact rates, site visits hosted, and booking conversion velocity</p>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="border-b border-border bg-secondary/20 text-muted-foreground font-medium uppercase tracking-wider">
+                <th class="p-3.5">Sales Representative</th>
+                <th class="p-3.5 text-right">Assigned Leads</th>
+                <th class="p-3.5 text-right">Contacted</th>
+                <th class="p-3.5 text-right">Contact Rate %</th>
+                <th class="p-3.5 text-right">Visits Completed</th>
+                <th class="p-3.5 text-right">Bookings Closed</th>
+                <th class="p-3.5 text-right">Conversion %</th>
+                <th class="p-3.5 text-right">Avg SLA Speed</th>
+                <th class="p-3.5 text-center">Drilldown</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border">
+              <tr *ngFor="let rep of data.by_sales_rep" class="hover:bg-secondary/15 transition-colors">
+                <td class="p-3.5 font-semibold text-foreground">
+                  <div class="flex items-center gap-2.5">
+                    <div class="w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs">
+                      {{ rep.sales_rep_name.charAt(0) }}
+                    </div>
+                    <div>
+                      <p class="font-medium text-foreground leading-tight">{{ rep.sales_rep_name }}</p>
+                      <p class="text-[10px] text-muted-foreground">{{ rep.email || 'Advisor' }}</p>
+                    </div>
+                  </div>
+                </td>
+                <td class="p-3.5 text-right font-mono font-medium">{{ rep.assigned_leads }}</td>
+                <td class="p-3.5 text-right font-mono text-muted-foreground">{{ rep.contacted_count }}</td>
+                <td class="p-3.5 text-right font-mono font-semibold" [class.text-emerald-600]="rep.contact_rate_pct >= 90">
+                  {{ rep.contact_rate_pct }}%
+                </td>
+                <td class="p-3.5 text-right font-mono text-teal-600 dark:text-teal-400 font-medium">{{ rep.site_visits_completed }}</td>
+                <td class="p-3.5 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">{{ rep.bookings_count }}</td>
+                <td class="p-3.5 text-right font-mono font-bold">{{ rep.conversion_rate }}%</td>
+                <td class="p-3.5 text-right font-mono text-muted-foreground">{{ rep.avg_response_hours }}h</td>
+                <td class="p-3.5 text-center">
+                  <button
+                    (click)="openDrilldown('SALES_REP', rep.sales_rep_name, rep.sales_rep_name + ' Active Leads', 'Leads assigned to ' + rep.sales_rep_name)"
+                    class="px-2.5 py-1 text-[11px] font-medium text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                  >
+                    View Leads <i class="ri-arrow-right-s-line"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: Sources & Campaigns -->
+    <div *ngIf="activeTab() === 'SOURCES_CAMPAIGNS'" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Sources Breakdown -->
+      <div class="p-5 rounded-2xl bg-card border border-border">
+        <h3 class="text-base font-semibold text-foreground mb-1">Inquiry Source Distribution</h3>
+        <p class="text-xs text-muted-foreground mb-4">Volume and conversion performance by inbound channel</p>
+
+        <div class="space-y-3">
+          <div
+            *ngFor="let src of data.by_source"
+            (click)="openDrilldown('SOURCE', src.source_id, src.source_name + ' Leads', 'Leads captured via ' + src.source_name)"
+            class="group p-3 rounded-xl border border-border hover:border-primary/50 bg-secondary/10 hover:bg-secondary/20 transition-all cursor-pointer"
+          >
+            <div class="flex items-center justify-between text-xs mb-1.5">
+              <span class="font-medium text-foreground group-hover:text-primary transition-colors">{{ src.source_name }}</span>
+              <div class="flex items-center gap-3">
+                <span class="text-muted-foreground font-mono">{{ src.percentage }}%</span>
+                <span class="font-bold font-mono">{{ src.lead_count }} leads</span>
+              </div>
+            </div>
+            <div class="w-full h-2 bg-secondary rounded-full overflow-hidden">
+              <div class="h-full bg-primary rounded-full" [style.width.%]="src.percentage"></div>
+            </div>
+            <div class="flex items-center justify-between text-[11px] text-muted-foreground mt-1.5">
+              <span>Bookings: <span class="font-semibold text-foreground font-mono">{{ src.conversion_count }}</span></span>
+              <span>Conversion: <span class="font-semibold text-emerald-600 font-mono">{{ src.conversion_rate }}%</span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Campaign ROI Performance -->
+      <div class="p-5 rounded-2xl bg-card border border-border">
+        <h3 class="text-base font-semibold text-foreground mb-1">Active Digital Campaigns</h3>
+        <p class="text-xs text-muted-foreground mb-4">Performance tracking by marketing campaign and UTM source</p>
+
+        <div class="space-y-3">
+          <div
+            *ngFor="let camp of data.by_campaign"
+            (click)="openDrilldown('CAMPAIGN', camp.campaign_name, camp.campaign_name + ' Leads', 'Attributed via ' + camp.utm_source)"
+            class="group p-3 rounded-xl border border-border hover:border-primary/50 bg-secondary/10 hover:bg-secondary/20 transition-all cursor-pointer"
+          >
+            <div class="flex items-center justify-between text-xs mb-1">
+              <span class="font-semibold text-foreground group-hover:text-primary transition-colors">{{ camp.campaign_name }}</span>
+              <span class="text-[10px] font-mono uppercase bg-secondary px-2 py-0.5 rounded text-muted-foreground">{{ camp.utm_source }}</span>
+            </div>
+            <div class="grid grid-cols-3 gap-2 text-center text-[11px] mt-2 pt-2 border-t border-border/50">
+              <div>
+                <span class="text-muted-foreground block text-[10px]">Leads</span>
+                <span class="font-bold font-mono text-foreground">{{ camp.leads_count }}</span>
+              </div>
+              <div>
+                <span class="text-muted-foreground block text-[10px]">Qualified</span>
+                <span class="font-bold font-mono text-amber-600">{{ camp.qualified_count }}</span>
+              </div>
+              <div>
+                <span class="text-muted-foreground block text-[10px]">Bookings</span>
+                <span class="font-bold font-mono text-emerald-600">{{ camp.bookings_count }} ({{ camp.conversion_rate }}%)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 5: Lost Reasons & Lead Ageing -->
+    <div *ngIf="activeTab() === 'LOST_AGEING'" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Lost Reasons Analysis -->
+      <div class="p-5 rounded-2xl bg-card border border-border">
+        <h3 class="text-base font-semibold text-foreground mb-1">Lost Leads Analysis by Reason</h3>
+        <p class="text-xs text-muted-foreground mb-4">Root causes for dropped opportunities and estimated lost deal values</p>
+
+        <div class="space-y-3">
+          <div
+            *ngFor="let l of data.lost_reasons"
+            (click)="openDrilldown('LOST', l.lost_reason, 'Lost Leads: ' + l.lost_reason, 'Leads marked lost due to ' + l.lost_reason)"
+            class="group p-3 rounded-xl border border-border hover:border-rose-500/50 bg-secondary/10 hover:bg-secondary/20 transition-all cursor-pointer"
+          >
+            <div class="flex items-center justify-between text-xs mb-1.5">
+              <span class="font-medium text-foreground group-hover:text-rose-500 transition-colors">{{ l.lost_reason }}</span>
+              <span class="font-bold font-mono text-rose-600 dark:text-rose-400">{{ l.count }} leads ({{ l.percentage }}%)</span>
+            </div>
+            <div class="w-full h-2 bg-secondary rounded-full overflow-hidden">
+              <div class="h-full bg-rose-500 rounded-full" [style.width.%]="l.percentage"></div>
+            </div>
+            <p class="text-[11px] text-muted-foreground mt-1.5 flex items-center justify-between">
+              <span>Potential Value Lost:</span>
+              <span class="font-mono font-medium text-foreground">{{ formatBdt(l.lost_deal_value_bdt) }}</span>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Lead Ageing & Inactive Opportunities -->
+      <div class="p-5 rounded-2xl bg-card border border-border">
+        <h3 class="text-base font-semibold text-foreground mb-1">Lead Ageing & Pipeline Velocity</h3>
+        <p class="text-xs text-muted-foreground mb-4">Time since first capture and inactive opportunities without touchpoints</p>
+
+        <div class="space-y-3">
+          <div
+            *ngFor="let a of data.lead_ageing"
+            class="p-3 rounded-xl border border-border bg-secondary/10"
+          >
+            <div class="flex items-center justify-between text-xs mb-1.5">
+              <span class="font-medium text-foreground">{{ a.bracket_label }}</span>
+              <div class="flex items-center gap-3">
+                <span class="text-muted-foreground font-mono">{{ a.percentage }}%</span>
+                <span class="font-bold font-mono">{{ a.count }} leads</span>
+              </div>
+            </div>
+            <div class="w-full h-2 bg-secondary rounded-full overflow-hidden">
+              <div class="h-full bg-indigo-500 rounded-full" [style.width.%]="a.percentage"></div>
+            </div>
+            <div *ngIf="a.inactive_count > 0" class="flex items-center justify-between text-[11px] text-amber-600 dark:text-amber-400 mt-1.5 font-medium">
+              <span><i class="ri-alert-line"></i> Inactive > 14 days without activity:</span>
+              <span class="font-mono font-bold">{{ a.inactive_count }} leads</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 6: Brokers & Targets -->
+    <div *ngIf="activeTab() === 'TARGETS_BROKERS'" class="space-y-6">
+      <div class="rounded-2xl bg-card border border-border overflow-hidden">
+        <div class="p-5 border-b border-border flex items-center justify-between">
+          <div>
+            <h3 class="text-base font-semibold text-foreground">Broker & Referral Partner Leaderboard</h3>
+            <p class="text-xs text-muted-foreground">Channel partner performance, qualified referrals, and accrued commission liability</p>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="border-b border-border bg-secondary/20 text-muted-foreground font-medium uppercase tracking-wider">
+                <th class="p-3.5">Partner Name</th>
+                <th class="p-3.5">Type</th>
+                <th class="p-3.5">Contact</th>
+                <th class="p-3.5 text-right">Referred Leads</th>
+                <th class="p-3.5 text-right">Qualified</th>
+                <th class="p-3.5 text-right">Bookings Closed</th>
+                <th class="p-3.5 text-right">Booked Value (৳)</th>
+                <th class="p-3.5 text-right">Accrued Commission (৳)</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border">
+              <tr *ngFor="let b of data.broker_referrals" class="hover:bg-secondary/15 transition-colors">
+                <td class="p-3.5 font-semibold text-foreground flex items-center gap-2">
+                  <i class="ri-shake-hands-line text-primary"></i>
+                  {{ b.partner_name }}
+                </td>
+                <td class="p-3.5">
+                  <span class="px-2 py-0.5 text-[10px] font-semibold rounded bg-secondary font-mono">
+                    {{ b.partner_type }}
+                  </span>
+                </td>
+                <td class="p-3.5 text-muted-foreground font-mono">{{ b.contact_phone || '-' }}</td>
+                <td class="p-3.5 text-right font-mono font-medium">{{ b.leads_referred }}</td>
+                <td class="p-3.5 text-right font-mono text-amber-600 font-medium">{{ b.qualified_count }}</td>
+                <td class="p-3.5 text-right font-mono font-bold text-emerald-600">{{ b.bookings_count }}</td>
+                <td class="p-3.5 text-right font-mono font-semibold">{{ formatBdt(b.total_booked_value_bdt) }}</td>
+                <td class="p-3.5 text-right font-mono font-bold text-primary">{{ formatBdt(b.commission_accrued_bdt) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Full-Screen / Slide-Over Drilldown Drawer Modal -->
+  <div
+    *ngIf="isDrilldownOpen()"
+    class="fixed inset-0 z-50 overflow-hidden bg-black/60 backdrop-blur-sm flex justify-end transition-opacity"
+  >
+    <div class="w-full max-w-4xl bg-card border-l border-border h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-300">
+      <!-- Drawer Header -->
+      <div class="p-5 border-b border-border flex items-center justify-between bg-secondary/20">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-primary/10 text-primary uppercase">
+              {{ drilldownWidgetType() }}
+            </span>
+            <h3 class="text-base font-bold text-foreground">{{ drilldownTitle() }}</h3>
+          </div>
+          <p class="text-xs text-muted-foreground mt-0.5">{{ drilldownSubtitle() }}</p>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <app-custom-button
+            variant="outline"
+            size="sm"
+            (buttonClick)="exportDrilldownCsv()"
+            title="Export drilldown leads to CSV"
+          >
+            <i class="ri-download-2-line mr-1"></i> Export CSV
+          </app-custom-button>
+
+          <button
+            (click)="closeDrilldown()"
+            class="p-2 text-muted-foreground hover:text-foreground rounded-lg hover:bg-secondary transition-colors"
+          >
+            <i class="ri-close-line text-xl"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Drawer Search & Summary Toolbar -->
+      <div class="p-4 border-b border-border bg-card flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div class="w-full sm:w-80">
+          <app-custom-input
+            label=""
+            placeholder="Search leads by name, phone, email..."
+            [ngModel]="drilldownSearch()"
+            (ngModelChange)="onDrilldownSearch($event)"
+          ></app-custom-input>
+        </div>
+
+        <div class="text-xs text-muted-foreground font-mono">
+          Showing <span class="font-bold text-foreground">{{ drilldownOffset() + 1 }}</span> to
+          <span class="font-bold text-foreground">
+            {{ Math.min(drilldownOffset() + drilldownLimit(), drilldownData()?.total || 0) }}
+          </span>
+          of <span class="font-bold text-primary">{{ drilldownData()?.total || 0 }}</span> leads
+        </div>
+      </div>
+
+      <!-- Drawer Table Content -->
+      <div class="flex-1 overflow-y-auto p-4">
+        <div *ngIf="drilldownLoading()" class="py-16 text-center">
+          <i class="ri-loader-4-line text-3xl text-primary animate-spin"></i>
+          <p class="text-xs text-muted-foreground mt-2">Loading underlying lead records...</p>
+        </div>
+
+        <div *ngIf="!drilldownLoading() && drilldownData() as drill" class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="border-b border-border bg-secondary/30 text-muted-foreground font-semibold uppercase tracking-wider">
+                <th class="p-3">Lead Code</th>
+                <th class="p-3">Customer Name</th>
+                <th class="p-3">Phone & Email</th>
+                <th class="p-3">Interested Project</th>
+                <th class="p-3 text-center">Stage</th>
+                <th class="p-3 text-center">Grade</th>
+                <th class="p-3">Sales Rep</th>
+                <th class="p-3 text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border">
+              <tr *ngFor="let l of drill.items" class="hover:bg-secondary/15 transition-colors">
+                <td class="p-3 font-mono font-medium text-foreground">{{ l.lead_code || ('LEAD-' + l.id) }}</td>
+                <td class="p-3 font-semibold text-foreground">
+                  <div class="flex items-center gap-1.5">
+                    {{ l.lead_name }}
+                    <span [class]="getPriorityBadgeClass(l.priority)" class="text-[9px] font-bold px-1 py-0.2 rounded font-mono">
+                      {{ l.priority }}
+                    </span>
+                  </div>
+                </td>
+                <td class="p-3 text-muted-foreground font-mono">
+                  <div>{{ l.primary_phone }}</div>
+                  <div class="text-[10px] text-muted-foreground/80">{{ l.email || '-' }}</div>
+                </td>
+                <td class="p-3 font-medium text-foreground">{{ l.project_name || 'All Projects' }}</td>
+                <td class="p-3 text-center">
+                  <span [class]="getStageBadgeClass(l.lead_stage)" class="px-2 py-0.5 rounded-full text-[10px] font-semibold">
+                    {{ l.lead_stage }}
+                  </span>
+                </td>
+                <td class="p-3 text-center">
+                  <span [class]="getHealthBadgeClass(l.health_grade)" class="px-2 py-0.5 rounded text-[10px] font-bold font-mono">
+                    {{ l.health_grade || 'NORMAL' }}
+                  </span>
+                </td>
+                <td class="p-3 text-foreground font-medium">{{ l.sales_rep_name || 'Unassigned' }}</td>
+                <td class="p-3 text-center">
+                  <button
+                    (click)="viewLead(l)"
+                    class="px-2.5 py-1 text-[11px] font-medium bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground rounded-lg transition-colors"
+                  >
+                    View <i class="ri-external-link-line"></i>
+                  </button>
+                </td>
+              </tr>
+              <tr *ngIf="drill.items.length === 0">
+                <td colspan="8" class="p-8 text-center text-muted-foreground">
+                  No leads found matching the current drilldown filter criteria.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Drawer Pagination Footer -->
+      <div class="p-4 border-t border-border bg-card flex items-center justify-between">
+        <span class="text-xs text-muted-foreground">
+          Page {{ Math.floor(drilldownOffset() / drilldownLimit()) + 1 }} of {{ Math.ceil((drilldownData()?.total || 1) / drilldownLimit()) }}
+        </span>
+
+        <div class="flex items-center gap-2">
+          <app-custom-button
+            variant="outline"
+            size="sm"
+            [disabled]="drilldownOffset() === 0"
+            (buttonClick)="prevDrilldownPage()"
+          >
+            <i class="ri-arrow-left-s-line mr-1"></i> Prev
+          </app-custom-button>
+
+          <app-custom-button
+            variant="outline"
+            size="sm"
+            [disabled]="drilldownOffset() + drilldownLimit() >= (drilldownData()?.total || 0)"
+            (buttonClick)="nextDrilldownPage()"
+          >
+            Next <i class="ri-arrow-right-s-line ml-1"></i>
+          </app-custom-button>
+        </div>
+      </div>
+    </div>
+  </div>
+</app-card-container>
