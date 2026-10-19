@@ -45,6 +45,16 @@ export class LegalRecordsComponent implements OnInit {
   correspondenceAuthorityFilter = '';
   correspondenceOrganizationFilter = '';
   threadReferenceFilter = '';
+  agreementTypeFilter = '';
+  transferStatusFilter = '';
+  caseTypeFilter = '';
+  riskLevelFilter = '';
+  concernedCourtFilter = '';
+  documentTypeFilter = '';
+  confidentialityFilter = '';
+  reminderTypeFilter = '';
+  workflowTypeFilter = '';
+  approvalStageFilter = '';
   appliedSearch = '';
   appliedStatus = '';
   isLoading = false;
@@ -98,7 +108,16 @@ export class LegalRecordsComponent implements OnInit {
       correspondence_type: this.correspondenceTypeFilter,
       correspondence_authority: this.correspondenceAuthorityFilter,
       correspondence_external_organization: this.correspondenceOrganizationFilter,
-      thread_reference: this.threadReferenceFilter
+      thread_reference: this.threadReferenceFilter,
+      agreement_type: this.agreementTypeFilter,
+      transfer_status: this.transferStatusFilter,
+      case_type: this.caseTypeFilter,
+      risk_level: this.riskLevelFilter,
+      document_type: this.documentTypeFilter,
+      confidentiality: this.confidentialityFilter,
+      reminder_type: this.reminderTypeFilter,
+      workflow_type: this.workflowTypeFilter,
+      approval_stage: this.approvalStageFilter
     }).subscribe({
       next: result => {
         this.records = result.items;

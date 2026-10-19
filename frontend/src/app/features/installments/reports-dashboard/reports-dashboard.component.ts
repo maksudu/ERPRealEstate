@@ -4,7 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { InstallmentService } from '../../../core/services/installment.service';
 import { InstallmentReportsSummary } from '../../../core/models/installment.model';
-import { InstallmentsNavComponent } from '../installments-nav.component';
 import { CardContainerComponent } from '../../../shared/components/card-container/card-container.component';
 import { CustomButtonComponent } from '../../../shared/components/custom-button/custom-button.component';
 
@@ -15,14 +14,11 @@ import { CustomButtonComponent } from '../../../shared/components/custom-button/
     CommonModule,
     FormsModule,
     RouterLink,
-    InstallmentsNavComponent,
     CardContainerComponent,
     CustomButtonComponent
   ],
   template: `
     <div class="space-y-4">
-      <app-installments-nav />
-
       <app-card-container
         title="12. Installment & Collection Reports & Executive Cockpit"
         subtitle="Real-time macro analytics: collection summary, overdue recovery metrics, 6-month cashflow forecast, and downloadable statutory reports"

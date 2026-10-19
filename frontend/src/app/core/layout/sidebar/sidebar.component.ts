@@ -356,9 +356,30 @@ export class SidebarComponent implements OnInit {
       items: [
         { id: 'governance', label: 'Maker-Checker Approval Engine', route: '/governance/approvals' },
         { id: 'lookups', label: 'Dynamic Dropdowns', route: '/settings/lookups' },
-        { id: 'legal', label: 'Legal & Compliance Operations', route: '/legal/dashboard' },
         { id: 'equipment', label: 'Machinery & Equipment Fleet', route: '/settings/equipment' },
         { id: 'migration', label: 'Legacy Data Migration', route: '/settings/data-import' }
+      ]
+    },
+    {
+      id: 'legal-compliance',
+      title: 'Legal & Statutory Compliance',
+      iconSvg: 'M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3',
+      badge: '12',
+      items: [
+        { id: 'leg-dashboard', label: 'Legal Cockpit & Dashboard', route: '/legal/dashboard' },
+        { id: 'leg-deeds', label: 'Deed, Khatian, Mutation & Tax', route: '/legal/records/registered_record' },
+        { id: 'leg-developer-reg', label: 'Developer Licences & Renewals', route: '/legal/records/developer_registration' },
+        { id: 'leg-land-clearances', label: 'Land-Use & Building Approvals', route: '/legal/records/land_use_clearance' },
+        { id: 'leg-conditions', label: 'Approval Conditions Register', route: '/legal/records/approval_condition' },
+        { id: 'leg-noc', label: 'NOCs & Authority Correspondence', route: '/legal/records/noc_correspondence' },
+        { id: 'leg-agreements', label: 'Customer Agreements & Transfers', route: '/legal/records/sale_transfer' },
+        { id: 'leg-litigation', label: 'Litigation, Disputes & Notices', route: '/legal/records/litigation_notice' },
+        { id: 'leg-vault', label: 'Document Versioning & Archive', route: '/legal/records/document_archive' },
+        { id: 'leg-calendar', label: 'Compliance Calendar & Reminders', route: '/legal/records/calendar_reminder' },
+        { id: 'leg-workflows', label: 'Maker-Checker Approvals', route: '/legal/records/approval_workflow' },
+        { id: 'leg-reports', label: 'Compliance Reports', route: '/legal/records/compliance_report' },
+        { id: 'leg-audit', label: 'Compliance Audit Trail', route: '/legal/audit' },
+        { id: 'leg-statutory-vault', label: 'Statutory Permits & Court Hearings', route: '/legal/compliance-vault' }
       ]
     },
     {
@@ -475,9 +496,9 @@ export class SidebarComponent implements OnInit {
         { id: 'units-matrix', label: 'Unit Directory & Specs', route: '/inventory/units' },
         { id: 'inv-pricing', label: 'Unit Pricing & Price Lists', route: '/inventory/pricing' },
         { id: 'inv-availability', label: 'Unit Availability & State Machine', route: '/inventory/availability' },
-        { id: 'facilities-allocation', label: 'Parking & Facility Allocation (3.7)', route: '/inventory/facilities' },
-        { id: 'unit-combinations', label: 'Combination & Subdivision (3.8)', route: '/inventory/combinations' },
-        { id: 'property-documents', label: 'Floor Plans & Documents (3.6)', route: '/inventory/documents' }
+        { id: 'facilities-allocation', label: 'Parking & Facility Allocation', route: '/inventory/facilities' },
+        { id: 'unit-combinations', label: 'Combination & Subdivision', route: '/inventory/combinations' },
+        { id: 'property-documents', label: 'Floor Plans & Documents', route: '/inventory/documents' }
       ]
     },
     {
@@ -526,18 +547,31 @@ export class SidebarComponent implements OnInit {
       title: 'Installment & Collection',
       iconSvg: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z',
       items: [
-        { id: 'inst-setup', label: '01. Customer Payment Setup', route: '/installments/payment-setup' },
-        { id: 'inst-booking', label: '02. Booking Money Management', route: '/installments/booking-money' },
-        { id: 'inst-downpayment', label: '03. Down Payment Management', route: '/installments/down-payment' },
-        { id: 'inst-schedule', label: '04. Installment Schedule', route: '/installments/schedules' },
-        { id: 'inst-collections', label: '05. Collection Management', route: '/installments/collections' },
-        { id: 'inst-due-overdue', label: '06. Due & Overdue Management', route: '/installments/due-overdue' },
-        { id: 'inst-late-fee', label: '07. Late Fee & Rebate', route: '/installments/late-fee-rebate' },
-        { id: 'inst-reschedule', label: '08. Payment Rescheduling', route: '/installments/rescheduling' },
-        { id: 'inst-cheques', label: '09. Cheque Management & PDC', route: '/installments/cheques' },
-        { id: 'inst-ledger', label: '10. Customer Ledger', route: '/installments/customer-ledger' },
-        { id: 'inst-refund', label: '11. Refund & Adjustment', route: '/installments/refund-adjustment' },
-        { id: 'inst-reports', label: '12. Reports & Dashboard', route: '/installments/reports-dashboard' }
+        { id: 'inst-setup', label: 'Customer Payment Setup', route: '/installments/payment-setup' },
+        { id: 'inst-booking', label: 'Booking Money Management', route: '/installments/booking-money' },
+        { id: 'inst-downpayment', label: 'Down Payment Management', route: '/installments/down-payment' },
+        { id: 'inst-schedule', label: 'Installment Schedule', route: '/installments/schedules' },
+        { id: 'inst-collections', label: 'Collection Management', route: '/installments/collections' },
+        { id: 'inst-due-overdue', label: 'Due & Overdue Management', route: '/installments/due-overdue' },
+        { id: 'inst-late-fee', label: 'Late Fee & Rebate', route: '/installments/late-fee-rebate' },
+        { id: 'inst-reschedule', label: 'Payment Rescheduling', route: '/installments/rescheduling' },
+        { id: 'inst-cheques', label: 'Cheque Management & PDC', route: '/installments/cheques' },
+        { id: 'inst-ledger', label: 'Customer Ledger', route: '/installments/customer-ledger' },
+        { id: 'inst-refund', label: 'Refund & Adjustment', route: '/installments/refund-adjustment' },
+        {
+          id: 'inst-reports-suite',
+          label: 'Installment & Collection Reports',
+          badge: '7',
+          children: [
+            { id: 'rep-inst-cockpit', label: 'Executive Cockpit & Forecast (12)', route: '/installments/reports-dashboard' },
+            { id: 'rep-inst-collections', label: 'Collection Summary Report', route: '/installments/collections' },
+            { id: 'rep-inst-overdue', label: 'Overdue Recovery & Aging', route: '/installments/due-overdue' },
+            { id: 'rep-inst-ledger', label: 'Customer Outstanding Ledger', route: '/installments/customer-ledger' },
+            { id: 'rep-inst-plan-audit', label: 'Payment Plan Audit Report', route: '/installments/payment-setup' },
+            { id: 'rep-inst-pdc', label: 'PDC Safe & Bounced Cheques', route: '/installments/cheques' },
+            { id: 'rep-inst-downpayment', label: 'Down Payment Realization', route: '/installments/down-payment' }
+          ]
+        }
       ]
     },
     {
@@ -582,31 +616,31 @@ export class SidebarComponent implements OnInit {
           id: 'construction-cwip-menu',
           label: 'Construction Cost & CWIP',
           children: [
-            { id: 'cwip-allocations', label: 'Cost Allocations (12.1 & 12.2)', route: '/accounts/construction-cwip', exact: true },
-            { id: 'cwip-materials', label: 'Material Issues to CWIP (12.3)', route: '/accounts/construction-cwip/material-issues' },
-            { id: 'cwip-budget', label: 'Budget vs Actual & Forecasts (12.1)', route: '/accounts/construction-cwip/budget-tracking' }
+            { id: 'cwip-allocations', label: 'Cost Allocations', route: '/accounts/construction-cwip', exact: true },
+            { id: 'cwip-materials', label: 'Material Issues to CWIP', route: '/accounts/construction-cwip/material-issues' },
+            { id: 'cwip-budget', label: 'Budget vs Actual & Forecasts', route: '/accounts/construction-cwip/budget-tracking' }
           ]
         },
         {
           id: 'cust-advances-menu',
           label: 'Customer Advances',
           children: [
-            { id: 'adv-receipts', label: 'Advance Receipts (13.1)', route: '/accounts/customer-advances', exact: true },
-            { id: 'adv-liability', label: 'Liability Ledger (13.1.4)', route: '/accounts/customer-advances/liability-ledger' },
-            { id: 'adv-allocations', label: 'Installment Allocations (13.1.5)', route: '/accounts/customer-advances/allocations' },
-            { id: 'adv-adjustments', label: 'Late Charges & Waivers (13.1.6)', route: '/accounts/customer-advances/adjustments' },
-            { id: 'adv-refunds', label: 'Cancellations & Refunds (13.1.7)', route: '/accounts/customer-advances/refunds' },
-            { id: 'adv-aging', label: 'Aging Reconciliation (13.1.10)', route: '/accounts/customer-advances/aging' }
+            { id: 'adv-receipts', label: 'Advance Receipts', route: '/accounts/customer-advances', exact: true },
+            { id: 'adv-liability', label: 'Liability Ledger', route: '/accounts/customer-advances/liability-ledger' },
+            { id: 'adv-allocations', label: 'Installment Allocations', route: '/accounts/customer-advances/allocations' },
+            { id: 'adv-adjustments', label: 'Late Charges & Waivers', route: '/accounts/customer-advances/adjustments' },
+            { id: 'adv-refunds', label: 'Cancellations & Refunds', route: '/accounts/customer-advances/refunds' },
+            { id: 'adv-aging', label: 'Aging Reconciliation', route: '/accounts/customer-advances/aging' }
           ]
         },
         {
           id: 'loans-financing-menu',
           label: 'Loans & Financing',
           children: [
-            { id: 'loan-facilities', label: 'Facilities Portfolio (14.1)', route: '/accounts/loans-financing', exact: true },
-            { id: 'loan-disbursements', label: 'Disbursements & Vouchers (14.2)', route: '/accounts/loans-financing/disbursements' },
-            { id: 'loan-repayments', label: 'Repayments & Waterfall (14.3)', route: '/accounts/loans-financing/repayments' },
-            { id: 'loan-interest-cwip', label: 'Interest Accruals & IAS 23 CWIP (14.3)', route: '/accounts/loans-financing/interest-cwip' }
+            { id: 'loan-facilities', label: 'Facilities Portfolio', route: '/accounts/loans-financing', exact: true },
+            { id: 'loan-disbursements', label: 'Disbursements & Vouchers', route: '/accounts/loans-financing/disbursements' },
+            { id: 'loan-repayments', label: 'Repayments & Waterfall', route: '/accounts/loans-financing/repayments' },
+            { id: 'loan-interest-cwip', label: 'Interest Accruals & IAS 23 CWIP', route: '/accounts/loans-financing/interest-cwip' }
           ]
         },
         { id: 'pdc-kanban', label: 'PDC Vault', route: '/accounts/pdc-kanban' },

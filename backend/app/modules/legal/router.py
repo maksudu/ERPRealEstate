@@ -41,7 +41,7 @@ from app.modules.legal.schemas import (
     LegalRecordUpdate,
 )
 from app.modules.legal.models import LegalAuditEvent, LegalComplianceRecord
-from app.modules.lookups.models import LookupCategory
+from app.modules.lookups.models import LookupCategory, LookupItem
 from app.modules.auth.dependencies import get_current_user
 from app.modules.auth.models import User
 
@@ -833,26 +833,438 @@ def _record_snapshot(record: LegalComplianceRecord) -> dict:
     }
 
 
+LEGAL_DEFAULT_LOOKUP_ITEMS = {
+    "LEGAL_RECORD_STATUS": [
+        ("DRAFT", "Draft / খসড়া"),
+        ("IN_REVIEW", "In Legal Review / আইনি পর্যালোচনায়"),
+        ("VERIFIED", "Verified / যাচাইকৃত"),
+        ("DISCREPANCY_FLAGGED", "Discrepancy Flagged / অমিল শনাক্ত"),
+        ("RECTIFICATION_REQUIRED", "Rectification Required / সংশোধন প্রয়োজন"),
+        ("CLEARED", "Cleared / ছাড়পত্র প্রাপ্ত"),
+        ("CLOSED", "Closed / সমাপ্ত"),
+    ],
+    "LEGAL_REVIEW_OUTCOME": [
+        ("CLEARED", "Cleared without reservation"),
+        ("CONDITIONAL_CLEARANCE", "Conditional clearance with undertakings"),
+        ("OBJECTIONS_RAISED", "Objections raised / defective title chain"),
+        ("REJECTED", "Rejected by legal counsel"),
+        ("PENDING_DOCUMENTS", "Pending certified documents from Sub-Registry"),
+    ],
+    "LEGAL_RECORD_TYPE": [
+        ("DEED", "Saf Kabala / Title Deed (বিক্রয় দলিল)"),
+        ("KHATIAN", "Khatian / Record of Rights (খতিয়ান/পর্চা)"),
+        ("MUTATION", "Mutation / Namjari (নামজারি দাখিলা)"),
+        ("LAND_DEVELOPMENT_TAX", "Land Development Tax / Dakhila (ভূমি উন্নয়ন কর)"),
+    ],
+    "LEGAL_ENTITY": [
+        ("BLUEOCEANS_HOLDINGS", "BlueOceans Holdings Ltd"),
+        ("BLUEOCEANS_PROPERTIES", "BlueOceans Properties Ltd"),
+        ("BLUEOCEANS_DEVELOPERS", "BlueOceans Real Estate & Developers"),
+        ("PROJECT_SPV", "Special Purpose Vehicle (SPV) Entity"),
+    ],
+    "LEGAL_REGISTRATION_TYPE": [
+        ("RAJUK_DEVELOPER_ENLISTMENT", "RAJUK Developer Enlistment Certificate"),
+        ("REHAB_MEMBERSHIP", "REHAB Membership Certificate"),
+        ("TRADE_LICENCE", "City Corporation Trade Licence"),
+        ("FIRE_LICENCE", "Fire Service & Civil Defence Licence"),
+        ("ENVIRONMENTAL_CLEARANCE", "Department of Environment (DoE) Clearance"),
+        ("RJSC_INCORPORATION", "RJSC Certificate of Incorporation"),
+    ],
+    "LEGAL_APPLICABLE_TERRITORY": [
+        ("DHAKA_METRO_RAJUK", "Dhaka Metropolitan Area (RAJUK)"),
+        ("CHATTOGRAM_CDA", "Chattogram Development Area (CDA)"),
+        ("GAZIPUR_GDA", "Gazipur Development Authority (GDA)"),
+        ("NARAYANGANJ", "Narayanganj City Corporation"),
+        ("NATIONWIDE", "Nationwide (All Bangladesh)"),
+    ],
+    "LEGAL_RESPONSIBLE_DEPARTMENT": [
+        ("LEGAL_COMPLIANCE", "Legal & Statutory Compliance"),
+        ("LAND_ACQUISITION", "Land Acquisition & Survey"),
+        ("REGULATORY_LIAISON", "Regulatory & Authority Liaison"),
+        ("ENGINEERING_DESIGN", "Engineering & Architectural Design"),
+        ("CUSTOMER_RELATIONS", "Customer Relationship & Handover"),
+        ("FINANCE_TREASURY", "Finance & Accounts"),
+    ],
+    "LEGAL_RESPONSIBLE_OFFICER": [
+        ("CHIEF_LEGAL_COUNSEL", "Chief Legal Counsel"),
+        ("SENIOR_LEGAL_OFFICER", "Senior Legal Officer"),
+        ("LAND_ACQUISITION_MANAGER", "Land Acquisition Manager"),
+        ("STATUTORY_LIAISON_OFFICER", "Statutory Liaison Officer"),
+        ("COMPANY_SECRETARY", "Company Secretary"),
+    ],
+    "DEVELOPER_REGISTRATION_STATUS": [
+        ("NOT_STARTED", "Not Started"),
+        ("DOCS_PREPARATION", "Documents in Preparation"),
+        ("APP_SUBMITTED", "Application Submitted"),
+        ("UNDER_REVIEW", "Under Review"),
+        ("APPROVED_ISSUED", "Approved / Issued"),
+        ("RENEWAL_DUE", "Renewal Due"),
+        ("RENEWED", "Renewed"),
+        ("REJECTED", "Rejected"),
+        ("SUSPENDED", "Suspended"),
+        ("EXPIRED", "Expired"),
+        ("CANCELLED", "Cancelled"),
+    ],
+    "LEGAL_NOTIFICATION_CHANNEL": [
+        ("EMAIL", "Official Email"),
+        ("SMS", "SMS Notification"),
+        ("IN_APP", "In-App Dashboard Notification"),
+        ("WHATSAPP", "WhatsApp Business Alert"),
+        ("HEAD_ESCALATION", "Escalation to Department Head"),
+    ],
+    "LEGAL_DEED_TYPE": [
+        ("SAF_KABALA", "Saf Kabala (Absolute Sale Deed)"),
+        ("BAINA_PATRA", "Baina Patra (Agreement for Sale)"),
+        ("HEBA_BILA_EWAJ", "Heba Bil Ewaj (Gift for Consideration)"),
+        ("BORTONNAMA", "Partition Deed (আপোষ বন্টননামা)"),
+        ("AMMOCTARNAMA", "Irrevocable Power of Attorney (আমমোক্তারনামা)"),
+        ("LEASE_DEED", "Registered Long-term Lease Deed"),
+        ("MORTGAGE_DEED", "Registered Mortgage Deed"),
+    ],
+    "LEGAL_APPROVAL_CATEGORY": [
+        ("LAND_USE_CLEARANCE", "Land-use or Planning Clearance (LUC)"),
+        ("LAYOUT_SUBDIVISION", "Layout / Subdivision Approval"),
+        ("BUILDING_PLAN", "Building-plan Approval"),
+        ("REVISED_BUILDING_PLAN", "Revised Building-plan Approval"),
+        ("ENVIRONMENTAL_CLEARANCE", "Environmental Clearance (DoE)"),
+        ("FIRE_SAFETY_CLEARANCE", "Fire-safety Clearance / FSCD NOC"),
+        ("UTILITY_APPROVAL", "Utility & Service Provider Approval (WASA/DESCO)"),
+        ("ROAD_DRAINAGE_PERMISSION", "Access, Road or Drainage Permission"),
+        ("OCCUPANCY_CERTIFICATE", "Completion / Occupancy Certificate"),
+    ],
+    "LEGAL_APPROVAL_STATUS": [
+        ("DRAFT_PREPARATION", "Draft in Preparation"),
+        ("SUBMITTED", "Submitted to Authority"),
+        ("UNDER_SCRUTINY", "Under Departmental Scrutiny"),
+        ("QUERIES_RAISED", "Queries Raised by Authority"),
+        ("CONDITIONAL_APPROVAL", "Sanctioned with Conditions"),
+        ("FULLY_APPROVED", "Sanctioned / Approved"),
+        ("REJECTED", "Rejected by Authority"),
+        ("REVISED_FILED", "Revised Application Filed"),
+        ("EXPIRED", "Expired / Validity Lapsed"),
+    ],
+    "LEGAL_CONDITION_TRACKING_STATUS": [
+        ("OPEN", "Open / Action Required"),
+        ("IN_PROGRESS", "In Progress / Evidence Gathering"),
+        ("FULFILLED", "Fulfilled & Verified"),
+        ("DISPUTED", "Disputed with Authority"),
+        ("OVERDUE", "Overdue / Risk Escalated"),
+        ("WAIVED", "Waived by Competent Authority"),
+    ],
+    "LEGAL_LAND_OFFICE": [
+        ("SUB_REGISTRY_TEJGAON", "Sub-Registry Office Tejgaon, Dhaka"),
+        ("SUB_REGISTRY_GULSHAN", "Sub-Registry Office Gulshan, Dhaka"),
+        ("SUB_REGISTRY_SAVAR", "Sub-Registry Office Savar, Dhaka"),
+        ("SUB_REGISTRY_CHATTOGRAM", "Sub-Registry Office Sadar, Chattogram"),
+        ("AC_LAND_MIRPUR", "AC Land Office Mirpur Circle"),
+        ("AC_LAND_MOHAMMADPUR", "AC Land Office Mohammadpur Circle"),
+        ("AC_LAND_GULSHAN", "AC Land Office Gulshan Circle"),
+        ("UNION_LAND_OFFICE", "Concerned Union Land Office / Tahsil Office"),
+    ],
+    "LEGAL_REVIEW_STATUS": [
+        ("PENDING_REVIEW", "Pending Legal Review"),
+        ("TITLE_SEARCH_ONGOING", "Sub-Registry Search Ongoing"),
+        ("DISCREPANCY_NOTED", "Discrepancy Noted in Title Chain"),
+        ("LEGAL_OPINION_GIVEN", "Legal Opinion Given"),
+        ("CLEARED_BY_ADVOCATE", "Cleared by Advocate"),
+    ],
+    "LEGAL_REGISTRATION_VERIFICATION": [
+        ("VERIFIED_BALAM_BOOK", "Verified with Original Balam Book"),
+        ("SEARCH_SLIP_VERIFIED", "Search Slip Record Confirmed"),
+        ("VOLUME_PAGE_MISMATCH", "Volume / Page Mismatch Detected"),
+        ("GENUINE_CERTIFIED_COPY", "Genuine Certified Copy Confirmed"),
+    ],
+    "LEGAL_SURVEY_RECORD_TYPE": [
+        ("CS", "CS (Cadastral Survey / ১৮৮৮-১৯৪০)"),
+        ("SA", "SA (State Acquisition Survey / ১৯৫৬-১৯৬২)"),
+        ("RS", "RS (Revisional Survey / ১৯৬২-বর্তমান)"),
+        ("BS_CITY", "BS / City Survey (বাংলাদেশ/সিটি জরিপ)"),
+        ("DIARA", "Diara Survey (নদী সিকস্তি ও পয়স্তি জরিপ)"),
+    ],
+    "LEGAL_MUTATION_APPLICATION_STATUS": [
+        ("APPLICATION_DRAFTED", "Application Drafted"),
+        ("E_MUTATION_FILED", "e-Mutation Filed Online"),
+        ("NOTICE_SERVED", "General & Special Notice Served"),
+        ("HEARING_SCHEDULED", "Hearing Scheduled at AC Land Office"),
+        ("FIELD_REPORT_SUBMITTED", "Kanungo / Surveyor Report Submitted"),
+        ("DCR_FEE_PAID", "DCR Fee Paid"),
+        ("MUTATION_COMPLETED", "Mutation Completed"),
+        ("APPLICATION_REJECTED", "Application Rejected"),
+    ],
+    "LEGAL_MUTATION_OUTCOME": [
+        ("MUTATION_APPROVED", "Mutation Approved & New Khatian Created"),
+        ("REJECTED_LACK_OF_TITLE", "Rejected: Title Chain Incomplete"),
+        ("REJECTED_AREA_MISMATCH", "Rejected: Area / Share Mismatch"),
+        ("ORDERED_CORRECTION", "Remanded for Boundary Correction"),
+    ],
+    "LEGAL_TAX_RECONCILIATION_STATUS": [
+        ("PAID_AND_RECONCILED", "Paid & Verified (Khajna Dakhila Matched)"),
+        ("UNPAID_CONFIRMED_ARREARS", "Unpaid / Confirmed Arrears"),
+        ("HOLDING_MISMATCH", "Holding / Area Discrepancy Found"),
+        ("EXEMPTION_CLAIMED", "Exemption / Waiver Claimed"),
+    ],
+    "LEGAL_LAND_USE_TYPE": [
+        ("RESIDENTIAL", "Residential (Urban Housing)"),
+        ("COMMERCIAL", "Commercial / Business Tower"),
+        ("MIXED_USE", "Mixed-Use (Commercial + Residential)"),
+        ("INDUSTRIAL", "Industrial / Light Manufacturing"),
+        ("CIVIC_FACILITY", "Civic & Community Facility"),
+    ],
+    "LEGAL_CORRESPONDENCE_TYPE": [
+        ("OFFICIAL_LETTER", "Official Letter / সারক লিপি"),
+        ("SHOW_CAUSE_NOTICE", "Show Cause Notice / কারণ দর্শাও নোটিশ"),
+        ("LEGAL_NOTICE", "Legal Notice through Advocate"),
+        ("NOC_APPLICATION", "NOC / Permission Application"),
+        ("CLARIFICATION_RESPONSE", "Reply & Clarification"),
+        ("MEETING_MINUTES", "Official Meeting Minutes"),
+    ],
+    "LEGAL_CORRESPONDENCE_DIRECTION": [
+        ("INCOMING", "Incoming / গৃহীত"),
+        ("OUTGOING", "Outgoing / প্রেরিত"),
+    ],
+    "LEGAL_CORRESPONDENCE_STAGE": [
+        ("DRAFT", "Draft"),
+        ("INTERNAL_REVIEW", "Internal Review"),
+        ("AUTHORIZED_APPROVAL", "Authorized Approval"),
+        ("DISPATCHED", "Dispatched / Submitted"),
+        ("ACKNOWLEDGED", "Acknowledged by Recipient"),
+        ("RESPONSE_RECEIVED", "Response Received"),
+        ("ACTION_COMPLETED", "Action Completed"),
+        ("ARCHIVED", "Archived"),
+    ],
+    "LEGAL_SUBMISSION_METHOD": [
+        ("HAND_DELIVERY_PEON_BOOK", "Hand Delivery with Receiving / Peon Book"),
+        ("REGISTERED_POST_AD", "Registered Post with A/D"),
+        ("OFFICIAL_COURIER", "Express Courier Service"),
+        ("E_NOTHI_PORTAL", "Government e-Nothi / Online Portal"),
+        ("DIRECT_EMAIL", "Official Email"),
+    ],
+    "LEGAL_EXTERNAL_ORGANIZATION": [
+        ("RAJUK", "RAJUK (Rajdhani Unnayan Kartripakkha)"),
+        ("CDA", "CDA (Chattogram Development Authority)"),
+        ("KDA", "KDA (Khulna Development Authority)"),
+        ("RDA", "RDA (Rajshahi Development Authority)"),
+        ("DOE", "Department of Environment (DoE)"),
+        ("FSCD", "Fire Service & Civil Defence (FSCD)"),
+        ("DWASA", "Dhaka WASA"),
+        ("DESCO", "DESCO (Dhaka Electric Supply Company)"),
+        ("DPDC", "DPDC (Dhaka Power Distribution Company)"),
+        ("TITAS", "Titas Gas Transmission & Distribution"),
+        ("DNCC", "Dhaka North City Corporation (DNCC)"),
+        ("DSCC", "Dhaka South City Corporation (DSCC)"),
+        ("AC_LAND", "Office of Assistant Commissioner (Land)"),
+    ],
+    "LEGAL_NOC_CATEGORY": [
+        ("FIRE_LIFE_SAFETY", "Fire & Life Safety NOC"),
+        ("ENVIRONMENTAL_CLEARANCE", "Environmental Clearance (DoE)"),
+        ("CIVIL_AVIATION_HEIGHT", "Civil Aviation Height Clearance (CAAB)"),
+        ("TRAFFIC_IMPACT", "Traffic Impact Assessment (TIA)"),
+        ("WASA_DEEP_TUBEWELL", "WASA Water Supply & Sewerage NOC"),
+        ("POWER_SUBSTATION", "DESCO/DPDC Substation & Power Clearance"),
+        ("GAS_SAFETY", "Gas Pipeline & Safety Permission"),
+        ("ROAD_ACCESS_DRAINAGE", "City Corporation Road Cutting & Drainage Permission"),
+    ],
+    "LEGAL_AGREEMENT_TYPE": [
+        ("AGREEMENT_FOR_SALE", "Deed of Agreement for Sale (বায়না চুক্তি)"),
+        ("ALLOTMENT_AGREEMENT", "Allotment Letter & Agreement"),
+        ("CAR_PARKING_ALLOTMENT", "Car Parking Allotment Agreement"),
+        ("ADDENDUM_AGREEMENT", "Supplementary / Addendum Agreement"),
+        ("TRANSFER_ASSIGNMENT", "Ownership Transfer / Assignment Deed"),
+        ("CANCELLATION_SETTLEMENT", "Agreement Cancellation & Settlement Deed"),
+        ("POWER_OF_ATTORNEY", "Power of Attorney (POA) for Registration"),
+    ],
+    "LEGAL_TRANSFER_STATUS": [
+        ("REQUEST_SUBMITTED", "Transfer Request Submitted"),
+        ("LEGAL_VETTING", "Legal Vetting Ongoing"),
+        ("FINANCE_CLEARED", "Finance & Accounts Cleared"),
+        ("MANAGEMENT_APPROVED", "Authorized Management Approved"),
+        ("EXECUTION_PENDING", "Execution Pending"),
+        ("EXECUTED_TRANSFERRED", "Deed Executed & Transferred"),
+        ("REJECTED", "Transfer Rejected"),
+    ],
+    "LEGAL_CASE_TYPE": [
+        ("TITLE_SUIT", "Title Suit (স্বত্ব মামলা)"),
+        ("TEMPORARY_INJUNCTION", "Temporary Injunction / Stay Order (নিষেধাজ্ঞা)"),
+        ("WRIT_PETITION", "High Court Writ Petition"),
+        ("PRE_EMPTION_SUIT", "Pre-emption Suit (অগ্রক্রয় মামলা)"),
+        ("PARTITION_SUIT", "Partition Suit (বন্টন মামলা)"),
+        ("MONEY_SUIT", "Money Suit / Recovery Suit"),
+        ("NI_ACT_138", "Cheque Dishonour Suit (NI Act Section 138)"),
+        ("LAND_SURVEY_TRIBUNAL", "Land Survey Tribunal (LST) Case"),
+        ("LEGAL_NOTICE", "Advocate Legal Notice / Reply"),
+    ],
+    "LEGAL_RISK_LEVEL": [
+        ("LOW", "Low Risk (Routine / Procedural)"),
+        ("MEDIUM", "Medium Risk (Monitor Actively)"),
+        ("HIGH", "High Risk (Requires Injunction Defense)"),
+        ("CRITICAL", "Critical / Urgent (Hold on Land / Sales)"),
+    ],
+    "LEGAL_DOCUMENT_TYPE": [
+        ("ORIGINAL_TITLE_DEED", "Original Registered Title Deed"),
+        ("CERTIFIED_PORCHA", "Certified Porcha / Khatian"),
+        ("MUTATION_DAKHILA", "Mutation Order & Dakhila"),
+        ("APPROVED_DRAWING", "Sanctioned Building Plan / Architectural Drawing"),
+        ("SANCTIONED_PERMIT", "Government Permission / Sanction Memo"),
+        ("COURT_CERTIFIED_ORDER", "Court Certified Copy / Injunction Order"),
+        ("LEGAL_OPINION_REPORT", "External Senior Counsel Legal Opinion"),
+        ("CUSTOMER_AGREEMENT", "Executed Customer Agreement / Allotment"),
+        ("POWER_OF_ATTORNEY", "Registered Power of Attorney"),
+    ],
+    "LEGAL_CONFIDENTIALITY": [
+        ("STANDARD_INTERNAL", "Standard Confidential (Company Wide)"),
+        ("LEGAL_PRIVILEGED", "Legal Professional Privilege (Legal Team Only)"),
+        ("RESTRICTED_BOARD", "Strictly Restricted (Board & Executive Directors)"),
+        ("PUBLIC_RECORD", "Public Document / Gazette Copy"),
+    ],
+    "LEGAL_REMINDER_TYPE": [
+        ("REGISTRATION_RENEWAL", "Statutory Registration & Licence Renewal"),
+        ("APPROVAL_EXPIRY", "Approval Validity & Renewal Expiry"),
+        ("CONDITION_DEADLINE", "Approval Condition Deadline"),
+        ("LAND_TAX_PERIOD", "Land Development Tax Fiscal Period"),
+        ("COURT_HEARING", "Court Hearing / Proceeding Date"),
+        ("NOTICE_DEADLINE", "Legal Notice Response Deadline"),
+        ("CONTRACT_MILESTONE", "Agreement / Contractual Milestone"),
+    ],
+    "LEGAL_REPEAT_RULE": [
+        ("NONE", "None (One-time)"),
+        ("DAILY", "Daily"),
+        ("WEEKLY", "Weekly"),
+        ("MONTHLY", "Monthly"),
+        ("QUARTERLY", "Quarterly"),
+        ("HALF_YEARLY", "Half-Yearly"),
+        ("ANNUALLY", "Annually"),
+    ],
+    "LEGAL_WORKFLOW_TYPE": [
+        ("TITLE_CLEARANCE", "Land Title Due Diligence Clearance"),
+        ("APPROVAL_SUBMISSION", "Building Plan Approval Sanction"),
+        ("AGREEMENT_EXECUTION", "Customer Sale Agreement Execution"),
+        ("BUYER_SUBSTITUTION", "Buyer Substitution / Transfer Clearance"),
+        ("DISPUTE_LEGAL_HOLD", "Dispute Legal Hold & Release"),
+        ("COMPLIANCE_CLOSURE", "Statutory Compliance Closure Sign-off"),
+    ],
+    "LEGAL_APPROVAL_STAGE": [
+        ("MAKER_DRAFT", "Maker: Draft Registered"),
+        ("CHECKER_REVIEW", "Checker: Documents & Deadlines Verified"),
+        ("LEGAL_HEAD_RECOMMEND", "Approver: Legal Head Clearance"),
+        ("EXECUTIVE_DIRECTOR_SIGN", "Authorized: Managing Director / Board Sign-off"),
+        ("OFFICER_EXECUTED", "Responsible Officer: Executed & Proof Uploaded"),
+        ("AUDIT_CLOSED", "Audit: Confirmed & Closed"),
+    ],
+    "LEGAL_REPORT_TYPE": [
+        ("PORTFOLIO_COMPLIANCE", "Statutory & Regulatory Compliance Portfolio"),
+        ("LAND_TITLE_RISK_MATRIX", "Land Title & Title-Chain Risk Matrix"),
+        ("LITIGATION_DISPUTES", "Active Litigation & Dispute Register"),
+        ("EXPIRING_APPROVALS", "Expiring Licences & Approvals Forecast"),
+        ("UNMET_CONDITIONS_REPORT", "Unmet Approval Conditions & Penalties"),
+    ],
+    "STATUTORY_AUTHORITY": [
+        ("RAJUK", "RAJUK (Rajdhani Unnayan Kartripakkha)"),
+        ("CDA", "CDA (Chattogram Development Authority)"),
+        ("KDA", "KDA (Khulna Development Authority)"),
+        ("RDA", "RDA (Rajshahi Development Authority)"),
+        ("DOE", "Department of Environment (DoE)"),
+        ("FSCD", "Fire Service & Civil Defence (FSCD)"),
+        ("CAAB", "Civil Aviation Authority of Bangladesh (CAAB)"),
+        ("DWASA", "Dhaka WASA"),
+        ("CWASA", "Chattogram WASA"),
+        ("DESCO", "Dhaka Electric Supply Company (DESCO)"),
+        ("DPDC", "Dhaka Power Distribution Company (DPDC)"),
+        ("TITAS", "Titas Gas Transmission & Distribution"),
+        ("SUB_REGISTRY", "Sub-Registry Office"),
+        ("AC_LAND", "Office of Assistant Commissioner (Land)"),
+        ("REHAB", "Real Estate & Housing Association of Bangladesh (REHAB)"),
+    ],
+    "COURT_NAME": [
+        ("SUPREME_COURT_HCD", "High Court Division, Supreme Court of Bangladesh"),
+        ("DISTRICT_JUDGE_DHAKA", "Court of District & Sessions Judge, Dhaka"),
+        ("JOINT_DISTRICT_JUDGE_1", "1st Court of Joint District Judge, Dhaka"),
+        ("ASSISTANT_JUDGE_DHAKA", "Court of Assistant Judge, Dhaka"),
+        ("LAND_SURVEY_TRIBUNAL", "Land Survey Tribunal (LST), Dhaka"),
+        ("METROPOLITAN_SESSIONS", "Court of Metropolitan Sessions Judge, Dhaka"),
+        ("ARTHA_RIN_ADALAT", "Artha Rin Adalat, Dhaka"),
+    ],
+    "LEGAL_ACT_SECTION": [
+        ("TP_ACT_1882", "Transfer of Property Act, 1882"),
+        ("REGISTRATION_ACT_1908", "Registration Act, 1908"),
+        ("SAT_ACT_1950", "State Acquisition and Tenancy Act, 1950"),
+        ("REAL_ESTATE_ACT_2010", "Real Estate Development and Management Act, 2010"),
+        ("SPECIFIC_RELIEF_1877", "Specific Relief Act, 1877"),
+        ("NI_ACT_1881_SEC_138", "Negotiable Instruments Act, 1881 (Section 138)"),
+        ("BUILDING_CONSTRUCTION_1952", "Building Construction Act, 1952 (East Bengal Act II of 1952)"),
+    ],
+    "SAFE_DOCUMENT_CATEGORY": [
+        ("ORIGINAL_DEED", "Original Non-Judicial Stamped Title Deed"),
+        ("CERTIFIED_RECORD", "Government Certified Record of Rights (Porcha)"),
+        ("ALLOTMENT_INSTRUMENT", "Sale Allotment & Financial Contract"),
+        ("COURT_ORDER", "Court Certified Injunction / Decree Order"),
+        ("POWER_OF_ATTORNEY", "Registered Irrevocable Power of Attorney"),
+        ("NATIONAL_ID_PROOF", "National ID (NID) / Identity Verification"),
+        ("SCANNED_VAULT_BACKUP", "High-Resolution Cryptographically Hashed Scan"),
+    ]
+}
+
+
 async def _ensure_legal_lookup_categories(db: AsyncSession) -> None:
     result = await db.execute(
-        select(LookupCategory.category_code).where(LookupCategory.category_code.in_(LEGAL_LOOKUP_CATEGORIES))
+        select(LookupCategory).where(LookupCategory.category_code.in_(LEGAL_LOOKUP_CATEGORIES))
     )
-    existing = set(result.scalars().all())
-    if not existing.issuperset(LEGAL_LOOKUP_CATEGORIES):
-        for code, name in LEGAL_LOOKUP_CATEGORIES.items():
-            if code not in existing:
-                db.add(LookupCategory(
-                    category_code=code,
-                    category_name=name,
-                    description="Configurable legal-compliance choices; add only values applicable to the organization.",
-                    is_system_locked=False,
+    categories = result.scalars().all()
+    cat_map = {c.category_code: c for c in categories}
+    created_any = False
+    for code, name in LEGAL_LOOKUP_CATEGORIES.items():
+        if code not in cat_map:
+            new_cat = LookupCategory(
+                category_code=code,
+                category_name=name,
+                description="Configurable legal-compliance choices; add only values applicable to the organization.",
+                is_system_locked=False,
+                is_active=True,
+            )
+            db.add(new_cat)
+            created_any = True
+    if created_any:
+        await db.commit()
+        refreshed = await db.execute(
+            select(LookupCategory).where(LookupCategory.category_code.in_(LEGAL_LOOKUP_CATEGORIES))
+        )
+        cat_map = {c.category_code: c for c in refreshed.scalars().all()}
+
+    # Seed default items if empty
+    items_added = False
+    for cat_code, items in LEGAL_DEFAULT_LOOKUP_ITEMS.items():
+        cat = cat_map.get(cat_code)
+        if not cat:
+            continue
+        count = await db.scalar(select(func.count(LookupItem.id)).where(LookupItem.category_id == cat.id)) or 0
+        if count == 0:
+            for idx, (item_code, item_label) in enumerate(items, start=1):
+                db.add(LookupItem(
+                    category_id=cat.id,
+                    item_code=item_code,
+                    item_name_en=item_label,
+                    item_name_bn=item_label,
                     is_active=True,
+                    sort_order=idx,
                 ))
+            items_added = True
+    if items_added:
         await db.commit()
 
 
 def _legal_record_due_date(area: str, data: dict) -> Optional[date]:
-    date_keys = ("expiry_date", "renewal_due_date", "review_date") if area == "developer_registration" else ("expiry_date",) if area == "land_use_clearance" else ("response_due_date",) if area == "noc_correspondence" else ()
+    date_keys = (
+        ("expiry_date", "renewal_due_date", "review_date") if area == "developer_registration"
+        else ("expiry_date",) if area == "land_use_clearance"
+        else ("response_due_date", "response_deadline") if area == "noc_correspondence"
+        else ("deadline", "due_date") if area == "approval_condition"
+        else ("next_hearing_date", "response_deadline") if area == "litigation_notice"
+        else ("reminder_date", "due_date") if area == "calendar_reminder"
+        else ("expiry_date", "retention_review_date", "review_date") if area == "document_archive"
+        else ("decision_date",) if area == "approval_workflow"
+        else ("next_tax_reminder_date", "mutation_hearing_date", "deed_date") if area == "registered_record"
+        else ("agreement_date",) if area == "sale_transfer"
+        else ()
+    )
     for key in date_keys:
         value = data.get(key)
         if not value:
@@ -863,11 +1275,16 @@ def _legal_record_due_date(area: str, data: dict) -> Optional[date]:
             raise HTTPException(status_code=422, detail=f"{key} must be a valid date.")
     return None
 
+
 def _validate_registered_land_data(area: str, data: dict) -> None:
     if area == "registered_record":
         amount_keys = ("land_tax_amount", "confirmed_outstanding_amount")
     elif area == "developer_registration":
         amount_keys = ("registration_fee_bdt",)
+    elif area == "sale_transfer":
+        amount_keys = ("agreed_price_bdt", "transfer_fee_bdt")
+    elif area == "litigation_notice":
+        amount_keys = ("financial_claim_bdt", "approved_legal_budget_bdt")
     else:
         return
     for key in amount_keys:
@@ -1043,6 +1460,15 @@ async def list_legal_records(
     correspondence_authority: Optional[str] = Query(None, max_length=128),
     correspondence_external_organization: Optional[str] = Query(None, max_length=128),
     thread_reference: Optional[str] = Query(None, max_length=128),
+    agreement_type: Optional[str] = Query(None, max_length=64),
+    transfer_status: Optional[str] = Query(None, max_length=64),
+    case_type: Optional[str] = Query(None, max_length=64),
+    risk_level: Optional[str] = Query(None, max_length=64),
+    document_type: Optional[str] = Query(None, max_length=64),
+    confidentiality: Optional[str] = Query(None, max_length=64),
+    reminder_type: Optional[str] = Query(None, max_length=64),
+    workflow_type: Optional[str] = Query(None, max_length=64),
+    approval_stage: Optional[str] = Query(None, max_length=64),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -1083,6 +1509,50 @@ async def list_legal_records(
                     "parcel_reference", "dag_numbers", "tax_receipt_reference", "assessment_reference",
                 )
             )
+        if area == "sale_transfer":
+            searchable.extend(
+                LegalComplianceRecord.data[key].as_string().ilike(f"%{q}%")
+                for key in (
+                    "customer_name", "customer_reference", "sale_agreement_number", "booking_reference_no",
+                    "registration_deed_number", "unit_number", "agreement_type", "transfer_status"
+                )
+            )
+        if area == "litigation_notice":
+            searchable.extend(
+                LegalComplianceRecord.data[key].as_string().ilike(f"%{q}%")
+                for key in (
+                    "internal_case_number", "case_number", "court_or_authority", "concerned_court",
+                    "party_names", "appointed_advocate", "claimant_plaintiff", "respondent_defendant"
+                )
+            )
+        if area == "document_archive":
+            searchable.extend(
+                LegalComplianceRecord.data[key].as_string().ilike(f"%{q}%")
+                for key in (
+                    "document_title", "document_number", "document_type", "checksum", "unique_document_id"
+                )
+            )
+        if area == "calendar_reminder":
+            searchable.extend(
+                LegalComplianceRecord.data[key].as_string().ilike(f"%{q}%")
+                for key in (
+                    "task_id", "obligation_title", "reminder_type", "owner", "related_record_reference"
+                )
+            )
+        if area == "approval_workflow":
+            searchable.extend(
+                LegalComplianceRecord.data[key].as_string().ilike(f"%{q}%")
+                for key in (
+                    "workflow_id", "workflow_type", "reviewer_identity", "authorized_approver", "subject_title"
+                )
+            )
+        if area == "compliance_report":
+            searchable.extend(
+                LegalComplianceRecord.data[key].as_string().ilike(f"%{q}%")
+                for key in (
+                    "report_title", "report_type", "prepared_by"
+                )
+            )
         filters.append(or_(*searchable))
     if status_filter:
         filters.append(LegalComplianceRecord.status == status_filter)
@@ -1110,6 +1580,24 @@ async def list_legal_records(
         filters.append(LegalComplianceRecord.data["authority"].as_string() == approval_authority)
     if approval_reference:
         filters.append(LegalComplianceRecord.data["approval_reference"].as_string() == approval_reference)
+    if agreement_type:
+        filters.append(LegalComplianceRecord.data["agreement_type"].as_string() == agreement_type)
+    if transfer_status:
+        filters.append(LegalComplianceRecord.data["transfer_status"].as_string() == transfer_status)
+    if case_type:
+        filters.append(LegalComplianceRecord.data["case_type"].as_string() == case_type)
+    if risk_level:
+        filters.append(LegalComplianceRecord.data["risk_level"].as_string() == risk_level)
+    if document_type:
+        filters.append(LegalComplianceRecord.data["document_type"].as_string() == document_type)
+    if confidentiality:
+        filters.append(LegalComplianceRecord.data["confidentiality"].as_string() == confidentiality)
+    if reminder_type:
+        filters.append(LegalComplianceRecord.data["reminder_type"].as_string() == reminder_type)
+    if workflow_type:
+        filters.append(LegalComplianceRecord.data["workflow_type"].as_string() == workflow_type)
+    if approval_stage:
+        filters.append(LegalComplianceRecord.data["approval_stage"].as_string() == approval_stage)
     if area == "noc_correspondence":
         if correspondence_direction:
             filters.append(LegalComplianceRecord.data["correspondence_direction"].as_string() == correspondence_direction)

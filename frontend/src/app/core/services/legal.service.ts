@@ -145,6 +145,15 @@ export class LegalService {
     correspondence_authority?: string;
     correspondence_external_organization?: string;
     thread_reference?: string;
+    agreement_type?: string;
+    transfer_status?: string;
+    case_type?: string;
+    risk_level?: string;
+    document_type?: string;
+    confidentiality?: string;
+    reminder_type?: string;
+    workflow_type?: string;
+    approval_stage?: string;
   }): Observable<LegalRecordPage> {
     let httpParams = new HttpParams().set('area', params.area)
       .set('limit', params.limit ?? 25).set('offset', params.offset ?? 0);

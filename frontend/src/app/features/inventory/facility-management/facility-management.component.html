@@ -4,37 +4,32 @@
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div>
         <div class="flex items-center gap-2">
-          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+          <span
+            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
             Spec 3.7 & 3.8
           </span>
-          <span class="text-xs font-medium text-slate-500 dark:text-slate-400">Inventory Allocation & Structural Geometry</span>
+          <span class="text-xs font-medium text-slate-500 dark:text-slate-400">Inventory Allocation & Structural
+            Geometry</span>
         </div>
         <h1 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-1">
           Facility Allocation & Unit Structural Geometry
         </h1>
         <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-          Dedicated parking, ancillary asset allocation, double-contract safeguards, and formal unit combination/subdivision workflows.
+          Dedicated parking, ancillary asset allocation, double-contract safeguards, and formal unit
+          combination/subdivision workflows.
         </p>
       </div>
 
       <!-- Project Filter & New Asset Trigger -->
       <div class="flex flex-wrap items-center gap-3">
         <div class="w-64">
-          <app-searchable-select
-            label=""
-            placeholder="Select Project..."
-            [options]="projectOptions()"
-            [value]="selectedProjectId()"
-            (valueChange)="onProjectChange($event)"
-            createRoute="/projects/master"
-          ></app-searchable-select>
+          <app-searchable-select label="" placeholder="Select Project..." [options]="projectOptions()"
+            [value]="selectedProjectId()" (valueChange)="onProjectChange($event)"
+            createRoute="/projects/master"></app-searchable-select>
         </div>
-        <app-custom-button
-          variant="primary"
-          (btnClick)="openCreateFacilityModal()"
-        >
+        <app-custom-button variant="primary" (btnClick)="openCreateFacilityModal()">
           <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
           </svg>
           + New Facility Asset
         </app-custom-button>
@@ -43,127 +38,127 @@
 
     <!-- Summary KPI Counter Strip (Spec 3.7) -->
     @if (facilitySummary(); as summary) {
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mt-6">
-        <div class="p-3.5 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl">
-          <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Facilities</p>
-          <p class="text-lg font-bold text-slate-900 dark:text-white mt-0.5">{{ summary.total_facilities }}</p>
-          <span class="text-[10px] text-slate-500">{{ summary.separately_saleable_count }} Saleable · {{ summary.common_facilities_count }} Common</span>
-        </div>
-        <div class="p-3.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl">
-          <p class="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Available Assets</p>
-          <p class="text-lg font-bold text-emerald-800 dark:text-emerald-300 mt-0.5">{{ summary.available }}</p>
-          <span class="text-[10px] text-emerald-600 dark:text-emerald-400">Open for Allocation</span>
-        </div>
-        <div class="p-3.5 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-xl">
-          <p class="text-[11px] font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wider">Allocated Assets</p>
-          <p class="text-lg font-bold text-blue-800 dark:text-blue-300 mt-0.5">{{ summary.allocated }}</p>
-          <span class="text-[10px] text-blue-600 dark:text-blue-400">Under Active Contract</span>
-        </div>
-        <div class="p-3.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl">
-          <p class="text-[11px] font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wider">Parking Bays</p>
-          <p class="text-lg font-bold text-amber-800 dark:text-amber-300 mt-0.5">{{ summary.available_parking }} / {{ summary.total_parking }}</p>
-          <span class="text-[10px] text-amber-600 dark:text-amber-400">Available / Total Bays</span>
-        </div>
-        <div class="p-3.5 bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 rounded-xl">
-          <p class="text-[11px] font-semibold text-purple-700 dark:text-purple-400 uppercase tracking-wider">Storage Lockers</p>
-          <p class="text-lg font-bold text-purple-800 dark:text-purple-300 mt-0.5">{{ summary.available_storage }} / {{ summary.total_storage }}</p>
-          <span class="text-[10px] text-purple-600 dark:text-purple-400">Driver & Resident Rooms</span>
-        </div>
-        <div class="p-3.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-xl">
-          <p class="text-[11px] font-semibold text-rose-700 dark:text-rose-400 uppercase tracking-wider">Commercial / Signage</p>
-          <p class="text-lg font-bold text-rose-800 dark:text-rose-300 mt-0.5">{{ summary.total_commercial_signage }}</p>
-          <span class="text-[10px] text-rose-600 dark:text-rose-400">Designated Ancillary</span>
-        </div>
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mt-6">
+      <div class="p-3.5 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl">
+        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total
+          Facilities</p>
+        <p class="text-lg font-bold text-slate-900 dark:text-white mt-0.5">{{ summary.total_facilities }}</p>
+        <span class="text-[10px] text-slate-500">{{ summary.separately_saleable_count }} Saleable · {{
+          summary.common_facilities_count }} Common</span>
       </div>
+      <div
+        class="p-3.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl">
+        <p class="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Available
+          Assets</p>
+        <p class="text-lg font-bold text-emerald-800 dark:text-emerald-300 mt-0.5">{{ summary.available }}</p>
+        <span class="text-[10px] text-emerald-600 dark:text-emerald-400">Open for Allocation</span>
+      </div>
+      <div class="p-3.5 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-xl">
+        <p class="text-[11px] font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wider">Allocated Assets
+        </p>
+        <p class="text-lg font-bold text-blue-800 dark:text-blue-300 mt-0.5">{{ summary.allocated }}</p>
+        <span class="text-[10px] text-blue-600 dark:text-blue-400">Under Active Contract</span>
+      </div>
+      <div class="p-3.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl">
+        <p class="text-[11px] font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wider">Parking Bays
+        </p>
+        <p class="text-lg font-bold text-amber-800 dark:text-amber-300 mt-0.5">{{ summary.available_parking }} / {{
+          summary.total_parking }}</p>
+        <span class="text-[10px] text-amber-600 dark:text-amber-400">Available / Total Bays</span>
+      </div>
+      <div class="p-3.5 bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 rounded-xl">
+        <p class="text-[11px] font-semibold text-purple-700 dark:text-purple-400 uppercase tracking-wider">Storage
+          Lockers</p>
+        <p class="text-lg font-bold text-purple-800 dark:text-purple-300 mt-0.5">{{ summary.available_storage }} / {{
+          summary.total_storage }}</p>
+        <span class="text-[10px] text-purple-600 dark:text-purple-400">Driver & Resident Rooms</span>
+      </div>
+      <div class="p-3.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-xl">
+        <p class="text-[11px] font-semibold text-rose-700 dark:text-rose-400 uppercase tracking-wider">Commercial /
+          Signage</p>
+        <p class="text-lg font-bold text-rose-800 dark:text-rose-300 mt-0.5">{{ summary.total_commercial_signage }}</p>
+        <span class="text-[10px] text-rose-600 dark:text-rose-400">Designated Ancillary</span>
+      </div>
+    </div>
     }
 
     <!-- Toast Notification Banner -->
     @if (toastMessage()) {
-      <div 
-        class="mt-4 p-3 rounded-xl border flex items-center justify-between text-xs font-semibold animate-fadeIn"
-        [ngClass]="{
+    <div class="mt-4 p-3 rounded-xl border flex items-center justify-between text-xs font-semibold animate-fadeIn"
+      [ngClass]="{
           'bg-emerald-50 border-emerald-300 text-emerald-800 dark:bg-emerald-950 dark:border-emerald-800 dark:text-emerald-200': toastType() === 'success',
           'bg-rose-50 border-rose-300 text-rose-800 dark:bg-rose-950 dark:border-rose-800 dark:text-rose-200': toastType() === 'error',
           'bg-amber-50 border-amber-300 text-amber-800 dark:bg-amber-950 dark:border-amber-800 dark:text-amber-200': toastType() === 'warning',
           'bg-blue-50 border-blue-300 text-blue-800 dark:bg-blue-950 dark:border-blue-800 dark:text-blue-200': toastType() === 'info'
-        }"
-      >
-        <div class="flex items-center gap-2">
-          <span class="w-2 h-2 rounded-full" [ngClass]="{'bg-emerald-500': toastType() === 'success', 'bg-rose-500': toastType() === 'error', 'bg-amber-500': toastType() === 'warning', 'bg-blue-500': toastType() === 'info'}"></span>
-          <span>{{ toastMessage() }}</span>
-        </div>
-        <button (click)="toastMessage.set(null)" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm">✕</button>
+        }">
+      <div class="flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full"
+          [ngClass]="{'bg-emerald-500': toastType() === 'success', 'bg-rose-500': toastType() === 'error', 'bg-amber-500': toastType() === 'warning', 'bg-blue-500': toastType() === 'info'}"></span>
+        <span>{{ toastMessage() }}</span>
       </div>
+      <button (click)="toastMessage.set(null)"
+        class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm">✕</button>
+    </div>
     }
 
     <!-- Navigation Tabs -->
     <div class="flex items-center gap-2 mt-6 border-b border-slate-200 dark:border-slate-800 pb-0 overflow-x-auto">
-      <button
-        type="button"
-        (click)="switchTab('facilities')"
+      <button type="button" (click)="switchTab('facilities')"
         class="px-4 py-2.5 text-xs font-semibold rounded-t-xl transition-all border-b-2 flex items-center gap-2 shrink-0"
         [ngClass]="activeTab() === 'facilities' 
           ? 'border-emerald-600 text-emerald-700 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/20' 
-          : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'"
-      >
+          : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
         </svg>
-        3.7 Parking & Facility Inventory
+        Parking & Facility Inventory
       </button>
 
-      <button
-        type="button"
-        (click)="switchTab('transfers')"
+      <button type="button" (click)="switchTab('transfers')"
         class="px-4 py-2.5 text-xs font-semibold rounded-t-xl transition-all border-b-2 flex items-center gap-2 shrink-0"
         [ngClass]="activeTab() === 'transfers' 
           ? 'border-emerald-600 text-emerald-700 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/20' 
-          : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'"
-      >
+          : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
         </svg>
         3.7 Facility Transfers & Novation
       </button>
 
-      <button
-        type="button"
-        (click)="switchTab('combinations')"
+      <button type="button" (click)="switchTab('combinations')"
         class="px-4 py-2.5 text-xs font-semibold rounded-t-xl transition-all border-b-2 flex items-center gap-2 shrink-0"
         [ngClass]="activeTab() === 'combinations' 
           ? 'border-emerald-600 text-emerald-700 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/20' 
-          : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'"
-      >
+          : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
         </svg>
         3.8 Unit Combination Engine
       </button>
 
-      <button
-        type="button"
-        (click)="switchTab('subdivisions')"
+      <button type="button" (click)="switchTab('subdivisions')"
         class="px-4 py-2.5 text-xs font-semibold rounded-t-xl transition-all border-b-2 flex items-center gap-2 shrink-0"
         [ngClass]="activeTab() === 'subdivisions' 
           ? 'border-emerald-600 text-emerald-700 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/20' 
-          : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'"
-      >
+          : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5" />
         </svg>
         3.8 Unit Subdivision Engine
       </button>
 
-      <button
-        type="button"
-        (click)="switchTab('logs')"
+      <button type="button" (click)="switchTab('logs')"
         class="px-4 py-2.5 text-xs font-semibold rounded-t-xl transition-all border-b-2 flex items-center gap-2 shrink-0"
         [ngClass]="activeTab() === 'logs' 
           ? 'border-emerald-600 text-emerald-700 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/20' 
-          : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'"
-      >
+          : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
         Audit History & Regulatory Trail
       </button>
@@ -174,858 +169,691 @@
   <!-- TAB 1: PARKING & FACILITY DIRECTORY (Spec 3.7) -->
   <!-- ========================================================================= -->
   @if (activeTab() === 'facilities') {
-    <div class="p-6">
-      <!-- Table Filters Strip -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-        <div>
-          <app-searchable-select
-            label="Category"
-            [options]="[
+  <div class="p-6">
+    <!-- Table Filters Strip -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+      <div>
+        <app-searchable-select label="Category" [options]="[
               { value: 'ALL', label: 'All Categories' },
               { value: 'SEPARATELY_SALEABLE', label: 'Separately Saleable' },
               { value: 'COMMON_FACILITY', label: 'Common Facility' }
-            ]"
-            [value]="categoryFilter()"
-            (valueChange)="categoryFilter.set($event); facilitiesOffset.set(0); loadFacilities()"
-          ></app-searchable-select>
-        </div>
-        <div>
-          <app-searchable-select
-            label="Facility Type"
-            [options]="filterFacilityTypeOptions"
-            [value]="typeFilter()"
-            (valueChange)="typeFilter.set($event); facilitiesOffset.set(0); loadFacilities()"
-          ></app-searchable-select>
-        </div>
-        <div>
-          <app-searchable-select
-            label="Status"
-            [options]="[
+            ]" [value]="categoryFilter()"
+          (valueChange)="categoryFilter.set($event); facilitiesOffset.set(0); loadFacilities()"></app-searchable-select>
+      </div>
+      <div>
+        <app-searchable-select label="Facility Type" [options]="filterFacilityTypeOptions" [value]="typeFilter()"
+          (valueChange)="typeFilter.set($event); facilitiesOffset.set(0); loadFacilities()"></app-searchable-select>
+      </div>
+      <div>
+        <app-searchable-select label="Status" [options]="[
               { value: 'ALL', label: 'All Statuses' },
               { value: 'AVAILABLE', label: 'Available' },
               { value: 'ALLOCATED', label: 'Allocated' },
               { value: 'RESERVED', label: 'Reserved' },
               { value: 'BLOCKED', label: 'Blocked' },
               { value: 'SOLD', label: 'Sold' }
-            ]"
-            [value]="statusFilter()"
-            (valueChange)="statusFilter.set($event); facilitiesOffset.set(0); loadFacilities()"
-          ></app-searchable-select>
-        </div>
-        <div>
-          <app-custom-input
-            label="Search Facility"
-            placeholder="Search slot, contract or customer..."
-            [ngModel]="facilitySearch()"
-            (ngModelChange)="facilitySearch.set($event); facilitiesOffset.set(0); loadFacilities()"
-          ></app-custom-input>
-        </div>
+            ]" [value]="statusFilter()"
+          (valueChange)="statusFilter.set($event); facilitiesOffset.set(0); loadFacilities()"></app-searchable-select>
       </div>
+      <div>
+        <app-custom-input label="Search Facility" placeholder="Search slot, contract or customer..."
+          [ngModel]="facilitySearch()"
+          (ngModelChange)="facilitySearch.set($event); facilitiesOffset.set(0); loadFacilities()"></app-custom-input>
+      </div>
+    </div>
 
-      <!-- Paged Facilities Table -->
-      <div class="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-xl">
-        <table class="w-full text-left text-xs">
-          <thead class="bg-slate-50 dark:bg-slate-850 text-slate-700 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-800 uppercase tracking-wider text-[11px]">
-            <tr>
-              <th class="p-3">Slot / Asset ID</th>
-              <th class="p-3">Category & Type</th>
-              <th class="p-3">Level / Size</th>
-              <th class="p-3">Status</th>
-              <th class="p-3">Linked Unit & Customer</th>
-              <th class="p-3">Contract Ref & Type</th>
-              <th class="p-3 text-right">Price (BDT ৳)</th>
-              <th class="p-3 text-center">Actions</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-            @for (f of facilities(); track f.id) {
-              <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
-                <td class="p-3 font-semibold text-slate-900 dark:text-white">
-                  {{ f.slot_number }}
-                  @if (f.allows_shared_entitlement) {
-                    <span class="ml-1.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300">
-                      Shared Ok
-                    </span>
-                  }
-                </td>
-                <td class="p-3">
-                  <span class="inline-block px-2 py-0.5 rounded text-[10px] font-medium"
-                    [ngClass]="f.facility_category === 'SEPARATELY_SALEABLE' 
+    <!-- Paged Facilities Table -->
+    <div class="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-xl">
+      <table class="w-full text-left text-xs">
+        <thead
+          class="bg-slate-50 dark:bg-slate-850 text-slate-700 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-800 uppercase tracking-wider text-[11px]">
+          <tr>
+            <th class="p-3">Slot / Asset ID</th>
+            <th class="p-3">Category & Type</th>
+            <th class="p-3">Level / Size</th>
+            <th class="p-3">Status</th>
+            <th class="p-3">Linked Unit & Customer</th>
+            <th class="p-3">Contract Ref & Type</th>
+            <th class="p-3 text-right">Price (BDT ৳)</th>
+            <th class="p-3 text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+          @for (f of facilities(); track f.id) {
+          <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
+            <td class="p-3 font-semibold text-slate-900 dark:text-white">
+              {{ f.slot_number }}
+              @if (f.allows_shared_entitlement) {
+              <span
+                class="ml-1.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300">
+                Shared Ok
+              </span>
+              }
+            </td>
+            <td class="p-3">
+              <span class="inline-block px-2 py-0.5 rounded text-[10px] font-medium" [ngClass]="f.facility_category === 'SEPARATELY_SALEABLE' 
                       ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' 
                       : 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300'">
-                    {{ f.facility_category === 'SEPARATELY_SALEABLE' ? 'Saleable' : 'Common Facility' }}
-                  </span>
-                  <p class="text-[11px] text-slate-500 mt-0.5">{{ f.facility_type }}</p>
-                </td>
-                <td class="p-3">
-                  <span class="font-medium text-slate-700 dark:text-slate-300">{{ f.floor_level }}</span>
-                  <p class="text-[11px] text-slate-500">{{ f.size_sqft }} sq.ft</p>
-                </td>
-                <td class="p-3">
-                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold"
-                    [ngClass]="{
+                {{ f.facility_category === 'SEPARATELY_SALEABLE' ? 'Saleable' : 'Common Facility' }}
+              </span>
+              <p class="text-[11px] text-slate-500 mt-0.5">{{ f.facility_type }}</p>
+            </td>
+            <td class="p-3">
+              <span class="font-medium text-slate-700 dark:text-slate-300">{{ f.floor_level }}</span>
+              <p class="text-[11px] text-slate-500">{{ f.size_sqft }} sq.ft</p>
+            </td>
+            <td class="p-3">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold" [ngClass]="{
                       'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300': f.status === 'AVAILABLE',
                       'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300': f.status === 'ALLOCATED',
                       'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300': f.status === 'RESERVED',
                       'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300': f.status === 'BLOCKED',
                       'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300': f.status === 'SOLD'
                     }">
-                    {{ f.status }}
-                  </span>
-                </td>
-                <td class="p-3">
-                  @if (f.allocated_customer_name) {
-                    <p class="font-medium text-slate-800 dark:text-slate-200">{{ f.allocated_customer_name }}</p>
-                    <p class="text-[11px] text-slate-500">{{ f.unit_number ? 'Unit ' + f.unit_number : 'No Flat Linked' }}</p>
-                  } @else {
-                    <span class="text-slate-400 italic">Unallocated</span>
-                  }
-                </td>
-                <td class="p-3">
-                  @if (f.contract_reference) {
-                    <p class="font-mono text-slate-700 dark:text-slate-300">{{ f.contract_reference }}</p>
-                    <p class="text-[10px] text-slate-500 uppercase">{{ f.allocation_type || 'STANDARD' }}</p>
-                  } @else {
-                    <span class="text-slate-400">-</span>
-                  }
-                </td>
-                <td class="p-3 text-right font-medium text-slate-900 dark:text-white">
-                  ৳ {{ f.price | number:'1.0-0' }}
-                  @if (f.package_price && f.package_price !== f.price) {
-                    <p class="text-[10px] text-slate-500">Pkg: ৳ {{ f.package_price | number:'1.0-0' }}</p>
-                  }
-                </td>
-                <td class="p-3 text-center">
-                  <div class="flex items-center justify-center gap-1.5">
-                    @if (f.status === 'AVAILABLE' || f.allows_shared_entitlement) {
-                      <button
-                        (click)="openAssignModal(f)"
-                        title="Allocate to Unit / Contract"
-                        class="px-2 py-1 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950 dark:text-emerald-300 transition-colors"
-                      >
-                        Assign
-                      </button>
-                    }
-                    @if (f.status === 'ALLOCATED') {
-                      <button
-                        (click)="openTransferModal(f)"
-                        title="Transfer with Approval"
-                        class="px-2 py-1 rounded text-[11px] font-semibold bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-950 dark:text-blue-300 transition-colors"
-                      >
-                        Transfer
-                      </button>
-                      <button
-                        (click)="openReleaseModal(f)"
-                        title="Release back to Inventory"
-                        class="px-2 py-1 rounded text-[11px] font-semibold bg-rose-50 text-rose-700 hover:bg-rose-100 dark:bg-rose-950 dark:text-rose-300 transition-colors"
-                      >
-                        Release
-                      </button>
-                    }
-                  </div>
-                </td>
-              </tr>
-            } @empty {
-              <tr>
-                <td colspan="8" class="p-6 text-center text-slate-400 text-xs">
-                  No facility or parking assets found matching query.
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
+                {{ f.status }}
+              </span>
+            </td>
+            <td class="p-3">
+              @if (f.allocated_customer_name) {
+              <p class="font-medium text-slate-800 dark:text-slate-200">{{ f.allocated_customer_name }}</p>
+              <p class="text-[11px] text-slate-500">{{ f.unit_number ? 'Unit ' + f.unit_number : 'No Flat Linked' }}</p>
+              } @else {
+              <span class="text-slate-400 italic">Unallocated</span>
+              }
+            </td>
+            <td class="p-3">
+              @if (f.contract_reference) {
+              <p class="font-mono text-slate-700 dark:text-slate-300">{{ f.contract_reference }}</p>
+              <p class="text-[10px] text-slate-500 uppercase">{{ f.allocation_type || 'STANDARD' }}</p>
+              } @else {
+              <span class="text-slate-400">-</span>
+              }
+            </td>
+            <td class="p-3 text-right font-medium text-slate-900 dark:text-white">
+              ৳ {{ f.price | number:'1.0-0' }}
+              @if (f.package_price && f.package_price !== f.price) {
+              <p class="text-[10px] text-slate-500">Pkg: ৳ {{ f.package_price | number:'1.0-0' }}</p>
+              }
+            </td>
+            <td class="p-3 text-center">
+              <div class="flex items-center justify-center gap-1.5">
+                @if (f.status === 'AVAILABLE' || f.allows_shared_entitlement) {
+                <button (click)="openAssignModal(f)" title="Allocate to Unit / Contract"
+                  class="px-2 py-1 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950 dark:text-emerald-300 transition-colors">
+                  Assign
+                </button>
+                }
+                @if (f.status === 'ALLOCATED') {
+                <button (click)="openTransferModal(f)" title="Transfer with Approval"
+                  class="px-2 py-1 rounded text-[11px] font-semibold bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-950 dark:text-blue-300 transition-colors">
+                  Transfer
+                </button>
+                <button (click)="openReleaseModal(f)" title="Release back to Inventory"
+                  class="px-2 py-1 rounded text-[11px] font-semibold bg-rose-50 text-rose-700 hover:bg-rose-100 dark:bg-rose-950 dark:text-rose-300 transition-colors">
+                  Release
+                </button>
+                }
+              </div>
+            </td>
+          </tr>
+          } @empty {
+          <tr>
+            <td colspan="8" class="p-6 text-center text-slate-400 text-xs">
+              No facility or parking assets found matching query.
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
 
-      <!-- Pagination Toolbar -->
-      <div class="flex items-center justify-between mt-4 text-xs text-slate-500">
-        <div>
-          Showing {{ facilitiesOffset() + 1 }} to {{ facilitiesOffset() + facilities().length }} of {{ facilitiesTotal() }} facilities
-        </div>
-        <div class="flex items-center gap-2">
-          <button
-            type="button"
-            (click)="prevFacilityPage()"
-            [disabled]="facilitiesOffset() === 0"
-            class="px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-lg font-medium hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          >
-            Previous
-          </button>
-          <button
-            type="button"
-            (click)="nextFacilityPage()"
-            [disabled]="facilitiesOffset() + facilitiesLimit() >= facilitiesTotal()"
-            class="px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-lg font-medium hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          >
-            Next
-          </button>
-        </div>
+    <!-- Pagination Toolbar -->
+    <div class="flex items-center justify-between mt-4 text-xs text-slate-500">
+      <div>
+        Showing {{ facilitiesOffset() + 1 }} to {{ facilitiesOffset() + facilities().length }} of {{ facilitiesTotal()
+        }} facilities
+      </div>
+      <div class="flex items-center gap-2">
+        <button type="button" (click)="prevFacilityPage()" [disabled]="facilitiesOffset() === 0"
+          class="px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-lg font-medium hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+          Previous
+        </button>
+        <button type="button" (click)="nextFacilityPage()"
+          [disabled]="facilitiesOffset() + facilitiesLimit() >= facilitiesTotal()"
+          class="px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-lg font-medium hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+          Next
+        </button>
       </div>
     </div>
+  </div>
   }
 
   <!-- ========================================================================= -->
   <!-- TAB 2: FACILITY TRANSFERS & REASSIGNMENTS AUDIT (Spec 3.7) -->
   <!-- ========================================================================= -->
   @if (activeTab() === 'transfers') {
-    <div class="p-6">
-      <div class="flex items-center justify-between mb-4">
-        <div>
-          <h3 class="text-sm font-bold text-slate-900 dark:text-white">Facility Transfer & Ownership Novation Register</h3>
-          <p class="text-xs text-slate-500">Complete audit trail of all parking bays, storage lockers, and ancillary asset reassignments.</p>
-        </div>
-        <div class="w-72">
-          <app-custom-input
-            label=""
-            placeholder="Search transfers..."
-            [ngModel]="transferSearch()"
-            (ngModelChange)="transferSearch.set($event); transfersOffset.set(0); loadTransfers()"
-          ></app-custom-input>
-        </div>
+  <div class="p-6">
+    <div class="flex items-center justify-between mb-4">
+      <div>
+        <h3 class="text-sm font-bold text-slate-900 dark:text-white">Facility Transfer & Ownership Novation Register
+        </h3>
+        <p class="text-xs text-slate-500">Complete audit trail of all parking bays, storage lockers, and ancillary asset
+          reassignments.</p>
       </div>
+      <div class="w-72">
+        <app-custom-input label="" placeholder="Search transfers..." [ngModel]="transferSearch()"
+          (ngModelChange)="transferSearch.set($event); transfersOffset.set(0); loadTransfers()"></app-custom-input>
+      </div>
+    </div>
 
-      <div class="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-xl">
-        <table class="w-full text-left text-xs">
-          <thead class="bg-slate-50 dark:bg-slate-850 text-slate-700 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-800 uppercase tracking-wider text-[11px]">
-            <tr>
-              <th class="p-3">Transfer ID</th>
-              <th class="p-3">Facility Slot</th>
-              <th class="p-3">From Party & Contract</th>
-              <th class="p-3">To Party & Contract</th>
-              <th class="p-3 text-right">Transfer Fee (BDT ৳)</th>
-              <th class="p-3">Reason / Justification</th>
-              <th class="p-3">Approval Status</th>
-              <th class="p-3">Transferred At</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-            @for (t of transfers(); track t.id) {
-              <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
-                <td class="p-3 font-mono font-bold text-slate-800 dark:text-slate-200">#TRF-{{ t.id }}</td>
-                <td class="p-3 font-semibold text-emerald-700 dark:text-emerald-400">{{ t.slot_number }}</td>
-                <td class="p-3">
-                  <p class="font-medium text-slate-800 dark:text-slate-200">{{ t.from_customer_name || 'N/A' }}</p>
-                  <p class="text-[11px] font-mono text-slate-500">{{ t.from_contract_ref || '-' }}</p>
-                </td>
-                <td class="p-3">
-                  <p class="font-medium text-slate-900 dark:text-white">{{ t.to_customer_name }}</p>
-                  <p class="text-[11px] font-mono text-blue-600 dark:text-blue-400">{{ t.to_contract_ref }}</p>
-                </td>
-                <td class="p-3 text-right font-semibold text-slate-900 dark:text-white">
-                  ৳ {{ t.transfer_fee | number:'1.0-0' }}
-                </td>
-                <td class="p-3 max-w-xs truncate text-slate-600 dark:text-slate-400">
-                  {{ t.reason || '-' }}
-                </td>
-                <td class="p-3">
-                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold"
-                    [ngClass]="{
+    <div class="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-xl">
+      <table class="w-full text-left text-xs">
+        <thead
+          class="bg-slate-50 dark:bg-slate-850 text-slate-700 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-800 uppercase tracking-wider text-[11px]">
+          <tr>
+            <th class="p-3">Transfer ID</th>
+            <th class="p-3">Facility Slot</th>
+            <th class="p-3">From Party & Contract</th>
+            <th class="p-3">To Party & Contract</th>
+            <th class="p-3 text-right">Transfer Fee (BDT ৳)</th>
+            <th class="p-3">Reason / Justification</th>
+            <th class="p-3">Approval Status</th>
+            <th class="p-3">Transferred At</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+          @for (t of transfers(); track t.id) {
+          <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
+            <td class="p-3 font-mono font-bold text-slate-800 dark:text-slate-200">#TRF-{{ t.id }}</td>
+            <td class="p-3 font-semibold text-emerald-700 dark:text-emerald-400">{{ t.slot_number }}</td>
+            <td class="p-3">
+              <p class="font-medium text-slate-800 dark:text-slate-200">{{ t.from_customer_name || 'N/A' }}</p>
+              <p class="text-[11px] font-mono text-slate-500">{{ t.from_contract_ref || '-' }}</p>
+            </td>
+            <td class="p-3">
+              <p class="font-medium text-slate-900 dark:text-white">{{ t.to_customer_name }}</p>
+              <p class="text-[11px] font-mono text-blue-600 dark:text-blue-400">{{ t.to_contract_ref }}</p>
+            </td>
+            <td class="p-3 text-right font-semibold text-slate-900 dark:text-white">
+              ৳ {{ t.transfer_fee | number:'1.0-0' }}
+            </td>
+            <td class="p-3 max-w-xs truncate text-slate-600 dark:text-slate-400">
+              {{ t.reason || '-' }}
+            </td>
+            <td class="p-3">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold" [ngClass]="{
                       'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300': t.approval_status === 'APPROVED',
                       'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300': t.approval_status === 'PENDING',
                       'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300': t.approval_status === 'REJECTED'
                     }">
-                    {{ t.approval_status }}
-                  </span>
-                  @if (t.approved_by) {
-                    <p class="text-[10px] text-slate-400 mt-0.5">by {{ t.approved_by }}</p>
-                  }
-                </td>
-                <td class="p-3 text-slate-500 text-[11px]">
-                  {{ t.transferred_at | date:'medium' }}
-                </td>
-              </tr>
-            } @empty {
-              <tr>
-                <td colspan="8" class="p-6 text-center text-slate-400 text-xs">
-                  No transfer records logged yet.
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
+                {{ t.approval_status }}
+              </span>
+              @if (t.approved_by) {
+              <p class="text-[10px] text-slate-400 mt-0.5">by {{ t.approved_by }}</p>
+              }
+            </td>
+            <td class="p-3 text-slate-500 text-[11px]">
+              {{ t.transferred_at | date:'medium' }}
+            </td>
+          </tr>
+          } @empty {
+          <tr>
+            <td colspan="8" class="p-6 text-center text-slate-400 text-xs">
+              No transfer records logged yet.
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
 
-      <!-- Pagination Toolbar -->
-      <div class="flex items-center justify-between mt-4 text-xs text-slate-500">
-        <div>
-          Showing {{ transfersOffset() + 1 }} to {{ transfersOffset() + transfers().length }} of {{ transfersTotal() }} transfers
-        </div>
-        <div class="flex items-center gap-2">
-          <button
-            type="button"
-            (click)="prevTransferPage()"
-            [disabled]="transfersOffset() === 0"
-            class="px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-lg font-medium hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          >
-            Previous
-          </button>
-          <button
-            type="button"
-            (click)="nextTransferPage()"
-            [disabled]="transfersOffset() + transfersLimit() >= transfersTotal()"
-            class="px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-lg font-medium hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          >
-            Next
-          </button>
-        </div>
+    <!-- Pagination Toolbar -->
+    <div class="flex items-center justify-between mt-4 text-xs text-slate-500">
+      <div>
+        Showing {{ transfersOffset() + 1 }} to {{ transfersOffset() + transfers().length }} of {{ transfersTotal() }}
+        transfers
+      </div>
+      <div class="flex items-center gap-2">
+        <button type="button" (click)="prevTransferPage()" [disabled]="transfersOffset() === 0"
+          class="px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-lg font-medium hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+          Previous
+        </button>
+        <button type="button" (click)="nextTransferPage()"
+          [disabled]="transfersOffset() + transfersLimit() >= transfersTotal()"
+          class="px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-lg font-medium hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+          Next
+        </button>
       </div>
     </div>
+  </div>
   }
 
   <!-- ========================================================================= -->
   <!-- TAB 3: UNIT COMBINATION ENGINE (Spec 3.8) -->
   <!-- ========================================================================= -->
   @if (activeTab() === 'combinations') {
-    <div class="p-6">
-      <div class="max-w-4xl mx-auto space-y-6">
-        <!-- Explanatory Policy Card -->
-        <div class="p-4 bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl">
-          <h4 class="text-xs font-bold text-amber-900 dark:text-amber-200 uppercase tracking-wider flex items-center gap-1.5">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-            </svg>
-            Statutory & Commercial Safeguard Enforced (Spec 3.8)
-          </h4>
-          <p class="text-xs text-amber-800 dark:text-amber-300 mt-1">
-            Sold or contractually committed units must not be combined through a routine inventory edit. The original parent units will be archived with status <span class="font-bold">BLOCKED</span>, maintaining an immutable historical audit log. Formal Technical, Commercial, and Legal sign-offs are required.
-          </p>
-        </div>
-
-        <!-- Unit Selection Grid -->
-        <div class="p-4 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50/50 dark:bg-slate-850/50">
-          <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200 mb-3">
-            Step 1: Select Eligible Adjacent Units to Combine (Minimum 2)
-          </h4>
-          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 max-h-60 overflow-y-auto p-1">
-            @for (u of eligibleMergeUnits(); track u.id) {
-              <div 
-                (click)="toggleUnitForMerge(u.id)"
-                class="p-3 border rounded-xl cursor-pointer transition-all flex flex-col justify-between"
-                [ngClass]="selectedUnitsForMerge().includes(u.id)
-                  ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-950/50 dark:border-emerald-500 shadow-xs'
-                  : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-400'"
-              >
-                <div class="flex items-center justify-between">
-                  <span class="font-bold text-xs text-slate-900 dark:text-white">Unit {{ u.unit_number }}</span>
-                  <input 
-                    type="checkbox" 
-                    [checked]="selectedUnitsForMerge().includes(u.id)"
-                    class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
-                    (click)="$event.stopPropagation(); toggleUnitForMerge(u.id)"
-                  />
-                </div>
-                <div class="mt-2 text-[10px] text-slate-500 space-y-0.5">
-                  <p>Floor: {{ u.floor_number }} · {{ u.gross_saleable_area_sqft || 0 }} sft</p>
-                  <p class="font-semibold text-slate-700 dark:text-slate-300">৳ {{ (u.total_unit_price || 0) | number:'1.0-0' }}</p>
-                </div>
-              </div>
-            } @empty {
-              <div class="col-span-full text-center py-6 text-xs text-slate-400">
-                No eligible available units found in current project.
-              </div>
-            }
-          </div>
-          <div class="mt-3 flex items-center justify-between text-xs text-slate-600 dark:text-slate-400">
-            <span>Selected for combination: <strong class="text-emerald-700 dark:text-emerald-400">{{ selectedUnitsForMerge().length }} units</strong></span>
-            @if (selectedUnitsForMerge().length > 0) {
-              <button (click)="selectedUnitsForMerge.set([])" class="text-xs text-rose-600 hover:underline">Clear Selection</button>
-            }
-          </div>
-        </div>
-
-        <!-- Proposal Form & Approvals -->
-        <form [formGroup]="mergeForm" (ngSubmit)="submitUnitMergeProposal()" class="space-y-4">
-          <div class="p-4 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 space-y-4">
-            <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200">
-              Step 2: Combined Unit Code, Geometry & Revised Pricing
-            </h4>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <app-custom-input
-                label="Combined Unit Code"
-                formControlName="combined_unit_number"
-                placeholder="e.g. DUPLEX-14A+14B"
-              ></app-custom-input>
-              <app-custom-input
-                label="Floor Level"
-                type="number"
-                formControlName="combined_floor_number"
-              ></app-custom-input>
-              <app-custom-input
-                label="Combined Gross Area (sq.ft)"
-                type="number"
-                formControlName="combined_gross_sft"
-              ></app-custom-input>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <app-custom-input
-                label="Combined Net Carpet Area (sq.ft)"
-                type="number"
-                formControlName="combined_net_sft"
-              ></app-custom-input>
-              <app-custom-input
-                label="Revised Total Price (BDT ৳)"
-                type="number"
-                formControlName="revised_price"
-              ></app-custom-input>
-            </div>
-          </div>
-
-          <!-- Formal Multi-Department Authorizations (Technical, Commercial, Legal) -->
-          <div class="p-4 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 space-y-4">
-            <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200">
-              Step 3: Formal Authorizations & Architectural Drawings
-            </h4>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <app-custom-input
-                label="Technical / Engineering Approval By"
-                formControlName="technical_approval_by"
-                placeholder="Chief Structural Engineer"
-              ></app-custom-input>
-              <app-custom-input
-                label="Commercial / Sales Approval By"
-                formControlName="commercial_approval_by"
-                placeholder="Director of Sales & Marketing"
-              ></app-custom-input>
-              <app-custom-input
-                label="Legal & Compliance Sign-Off By"
-                formControlName="legal_approval_by"
-                placeholder="Senior Legal Counsel"
-              ></app-custom-input>
-            </div>
-            <app-custom-input
-              label="Revised Architectural Drawing URL / DMS Ref"
-              formControlName="drawing_attachment_url"
-              placeholder="e.g. https://dms.blueoceans.com/drawings/revised-duplex-14a-14b.pdf"
-            ></app-custom-input>
-            <app-custom-textarea
-              label="Combination Justification & Structural Notes"
-              formControlName="remarks"
-              placeholder="Detail reasons for combination, removal of non-load-bearing wall, and client novation terms..."
-              rows="3"
-            ></app-custom-textarea>
-          </div>
-
-          <div class="flex justify-end gap-3">
-            <app-custom-button
-              variant="primary"
-              type="submit"
-              [disabled]="isSubmitting() || selectedUnitsForMerge().length < 2 || mergeForm.invalid"
-            >
-              @if (isSubmitting()) { Processing Combination... } @else { Execute Unit Combination & Issue New Asset }
-            </app-custom-button>
-          </div>
-        </form>
+  <div class="p-6">
+    <div class="max-w-4xl mx-auto space-y-6">
+      <!-- Explanatory Policy Card -->
+      <div class="p-4 bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl">
+        <h4
+          class="text-xs font-bold text-amber-900 dark:text-amber-200 uppercase tracking-wider flex items-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          Statutory & Commercial Safeguard Enforced (Spec 3.8)
+        </h4>
+        <p class="text-xs text-amber-800 dark:text-amber-300 mt-1">
+          Sold or contractually committed units must not be combined through a routine inventory edit. The original
+          parent units will be archived with status <span class="font-bold">BLOCKED</span>, maintaining an immutable
+          historical audit log. Formal Technical, Commercial, and Legal sign-offs are required.
+        </p>
       </div>
+
+      <!-- Unit Selection Grid -->
+      <div class="p-4 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50/50 dark:bg-slate-850/50">
+        <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200 mb-3">
+          Step 1: Select Eligible Adjacent Units to Combine (Minimum 2)
+        </h4>
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 max-h-60 overflow-y-auto p-1">
+          @for (u of eligibleMergeUnits(); track u.id) {
+          <div (click)="toggleUnitForMerge(u.id)"
+            class="p-3 border rounded-xl cursor-pointer transition-all flex flex-col justify-between" [ngClass]="selectedUnitsForMerge().includes(u.id)
+                  ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-950/50 dark:border-emerald-500 shadow-xs'
+                  : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-400'">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-xs text-slate-900 dark:text-white">Unit {{ u.unit_number }}</span>
+              <input type="checkbox" [checked]="selectedUnitsForMerge().includes(u.id)"
+                class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                (click)="$event.stopPropagation(); toggleUnitForMerge(u.id)" />
+            </div>
+            <div class="mt-2 text-[10px] text-slate-500 space-y-0.5">
+              <p>Floor: {{ u.floor_number }} · {{ u.gross_saleable_area_sqft || 0 }} sft</p>
+              <p class="font-semibold text-slate-700 dark:text-slate-300">৳ {{ (u.total_unit_price || 0) |
+                number:'1.0-0' }}</p>
+            </div>
+          </div>
+          } @empty {
+          <div class="col-span-full text-center py-6 text-xs text-slate-400">
+            No eligible available units found in current project.
+          </div>
+          }
+        </div>
+        <div class="mt-3 flex items-center justify-between text-xs text-slate-600 dark:text-slate-400">
+          <span>Selected for combination: <strong class="text-emerald-700 dark:text-emerald-400">{{
+              selectedUnitsForMerge().length }} units</strong></span>
+          @if (selectedUnitsForMerge().length > 0) {
+          <button (click)="selectedUnitsForMerge.set([])" class="text-xs text-rose-600 hover:underline">Clear
+            Selection</button>
+          }
+        </div>
+      </div>
+
+      <!-- Proposal Form & Approvals -->
+      <form [formGroup]="mergeForm" (ngSubmit)="submitUnitMergeProposal()" class="space-y-4">
+        <div class="p-4 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 space-y-4">
+          <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200">
+            Step 2: Combined Unit Code, Geometry & Revised Pricing
+          </h4>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <app-custom-input label="Combined Unit Code" formControlName="combined_unit_number"
+              placeholder="e.g. DUPLEX-14A+14B"></app-custom-input>
+            <app-custom-input label="Floor Level" type="number"
+              formControlName="combined_floor_number"></app-custom-input>
+            <app-custom-input label="Combined Gross Area (sq.ft)" type="number"
+              formControlName="combined_gross_sft"></app-custom-input>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <app-custom-input label="Combined Net Carpet Area (sq.ft)" type="number"
+              formControlName="combined_net_sft"></app-custom-input>
+            <app-custom-input label="Revised Total Price (BDT ৳)" type="number"
+              formControlName="revised_price"></app-custom-input>
+          </div>
+        </div>
+
+        <!-- Formal Multi-Department Authorizations (Technical, Commercial, Legal) -->
+        <div class="p-4 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 space-y-4">
+          <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200">
+            Step 3: Formal Authorizations & Architectural Drawings
+          </h4>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <app-custom-input label="Technical / Engineering Approval By" formControlName="technical_approval_by"
+              placeholder="Chief Structural Engineer"></app-custom-input>
+            <app-custom-input label="Commercial / Sales Approval By" formControlName="commercial_approval_by"
+              placeholder="Director of Sales & Marketing"></app-custom-input>
+            <app-custom-input label="Legal & Compliance Sign-Off By" formControlName="legal_approval_by"
+              placeholder="Senior Legal Counsel"></app-custom-input>
+          </div>
+          <app-custom-input label="Revised Architectural Drawing URL / DMS Ref" formControlName="drawing_attachment_url"
+            placeholder="e.g. https://dms.blueoceans.com/drawings/revised-duplex-14a-14b.pdf"></app-custom-input>
+          <app-custom-textarea label="Combination Justification & Structural Notes" formControlName="remarks"
+            placeholder="Detail reasons for combination, removal of non-load-bearing wall, and client novation terms..."
+            rows="3"></app-custom-textarea>
+        </div>
+
+        <div class="flex justify-end gap-3">
+          <app-custom-button variant="primary" type="submit"
+            [disabled]="isSubmitting() || selectedUnitsForMerge().length < 2 || mergeForm.invalid">
+            @if (isSubmitting()) { Processing Combination... } @else { Execute Unit Combination & Issue New Asset }
+          </app-custom-button>
+        </div>
+      </form>
     </div>
+  </div>
   }
 
   <!-- ========================================================================= -->
   <!-- TAB 4: UNIT SUBDIVISION ENGINE (Spec 3.8) -->
   <!-- ========================================================================= -->
   @if (activeTab() === 'subdivisions') {
-    <div class="p-6">
-      <div class="max-w-4xl mx-auto space-y-6">
-        <!-- Policy Reminder -->
-        <div class="p-4 bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-xl">
-          <h4 class="text-xs font-bold text-blue-900 dark:text-blue-200 uppercase tracking-wider flex items-center gap-1.5">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-            Unit Subdivision & Child Area Reconciliation (Spec 3.8)
-          </h4>
-          <p class="text-xs text-blue-800 dark:text-blue-300 mt-1">
-            Subdivide an eligible parent apartment into proposed child units with new unique codes, specifications, and prices. The system verifies that the sum of child unit areas reconciles with the parent area, permitting documented measurement adjustments.
-          </p>
+  <div class="p-6">
+    <div class="max-w-4xl mx-auto space-y-6">
+      <!-- Policy Reminder -->
+      <div class="p-4 bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-xl">
+        <h4
+          class="text-xs font-bold text-blue-900 dark:text-blue-200 uppercase tracking-wider flex items-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Unit Subdivision & Child Area Reconciliation (Spec 3.8)
+        </h4>
+        <p class="text-xs text-blue-800 dark:text-blue-300 mt-1">
+          Subdivide an eligible parent apartment into proposed child units with new unique codes, specifications, and
+          prices. The system verifies that the sum of child unit areas reconciles with the parent area, permitting
+          documented measurement adjustments.
+        </p>
+      </div>
+
+      <!-- Step 1: Select Parent Unit -->
+      <div class="p-4 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 space-y-3">
+        <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200">
+          Step 1: Select Eligible Parent Unit
+        </h4>
+        <app-searchable-select label="Parent Unit" placeholder="Select Parent Flat to Subdivide..."
+          [options]="unitOptions()" [value]="selectedParentUnit()?.id || null"
+          (valueChange)="onParentUnitSelect($event)"></app-searchable-select>
+
+        @if (selectedParentUnit(); as parent) {
+        <div
+          class="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3 bg-slate-50 dark:bg-slate-850 rounded-xl border border-slate-200 dark:border-slate-800 text-xs">
+          <div>
+            <span class="text-slate-500">Gross Saleable Area:</span>
+            <p class="font-bold text-slate-900 dark:text-white">{{ parent.gross_saleable_area_sqft }} sft</p>
+          </div>
+          <div>
+            <span class="text-slate-500">Net Carpet Area:</span>
+            <p class="font-bold text-slate-900 dark:text-white">{{ parent.net_carpet_area_sqft }} sft</p>
+          </div>
+          <div>
+            <span class="text-slate-500">Base Rate / sft:</span>
+            <p class="font-bold text-slate-900 dark:text-white">৳ {{ parent.base_rate_per_sqft | number:'1.0-0' }}</p>
+          </div>
+          <div>
+            <span class="text-slate-500">Total Price:</span>
+            <p class="font-bold text-emerald-700 dark:text-emerald-400">৳ {{ (parent.total_unit_price || 0) |
+              number:'1.0-0' }}</p>
+          </div>
         </div>
-
-        <!-- Step 1: Select Parent Unit -->
-        <div class="p-4 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 space-y-3">
-          <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200">
-            Step 1: Select Eligible Parent Unit
-          </h4>
-          <app-searchable-select
-            label="Parent Unit"
-            placeholder="Select Parent Flat to Subdivide..."
-            [options]="unitOptions()"
-            [value]="selectedParentUnit()?.id || null"
-            (valueChange)="onParentUnitSelect($event)"
-          ></app-searchable-select>
-
-          @if (selectedParentUnit(); as parent) {
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3 bg-slate-50 dark:bg-slate-850 rounded-xl border border-slate-200 dark:border-slate-800 text-xs">
-              <div>
-                <span class="text-slate-500">Gross Saleable Area:</span>
-                <p class="font-bold text-slate-900 dark:text-white">{{ parent.gross_saleable_area_sqft }} sft</p>
-              </div>
-              <div>
-                <span class="text-slate-500">Net Carpet Area:</span>
-                <p class="font-bold text-slate-900 dark:text-white">{{ parent.net_carpet_area_sqft }} sft</p>
-              </div>
-              <div>
-                <span class="text-slate-500">Base Rate / sft:</span>
-                <p class="font-bold text-slate-900 dark:text-white">৳ {{ parent.base_rate_per_sqft | number:'1.0-0' }}</p>
-              </div>
-              <div>
-                <span class="text-slate-500">Total Price:</span>
-                <p class="font-bold text-emerald-700 dark:text-emerald-400">৳ {{ (parent.total_unit_price || 0) | number:'1.0-0' }}</p>
-              </div>
-            </div>
-          }
-        </div>
-
-        <!-- Step 2: Child Units Allocator & Area Reconciliation -->
-        @if (selectedParentUnit()) {
-          <form [formGroup]="splitForm" (ngSubmit)="submitUnitSplitProposal()" class="space-y-4">
-            <div class="p-4 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 space-y-4">
-              <div class="flex items-center justify-between">
-                <div>
-                  <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200">
-                    Step 2: Allocate Proposed Child Units
-                  </h4>
-                  <p class="text-[11px] text-slate-500">Specify dimensions, types, beds/baths, and pricing for each child parcel.</p>
-                </div>
-                <app-custom-button
-                  variant="outline"
-                  size="sm"
-                  (btnClick)="addChildUnitRow()"
-                >
-                  + Add Child Unit
-                </app-custom-button>
-              </div>
-
-              <!-- Child Rows -->
-              <div class="space-y-3">
-                @for (child of childUnitsFormArray.controls; track $index) {
-                  <div class="p-3 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50/50 dark:bg-slate-850/50 space-y-3" [formGroup]="$any(child)">
-                    <div class="flex items-center justify-between">
-                      <span class="text-xs font-bold text-slate-800 dark:text-slate-200">
-                        Child Unit #{{ $index + 1 }}
-                      </span>
-                      @if (childUnitsFormArray.length > 2) {
-                        <button (click)="removeChildUnitRow($index)" class="text-xs text-rose-600 hover:underline">Remove</button>
-                      }
-                    </div>
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                      <app-custom-input
-                        label="Child Code"
-                        formControlName="unit_number"
-                      ></app-custom-input>
-                      <app-custom-input
-                        label="Gross Area (sq.ft)"
-                        type="number"
-                        formControlName="gross_saleable_area_sqft"
-                      ></app-custom-input>
-                      <app-custom-input
-                        label="Net Carpet (sq.ft)"
-                        type="number"
-                        formControlName="net_carpet_area_sqft"
-                      ></app-custom-input>
-                      <app-searchable-select
-                        label="Unit Type"
-                        [options]="unitTypeOptions"
-                        formControlName="unit_type_id"
-                        createRoute="/settings/lookups"
-                      ></app-searchable-select>
-                    </div>
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                      <app-searchable-select
-                        label="Facing"
-                        [options]="facingOptions"
-                        formControlName="facing_id"
-                        createRoute="/settings/lookups"
-                      ></app-searchable-select>
-                      <app-custom-input
-                        label="Bedrooms"
-                        type="number"
-                        formControlName="bed_count"
-                      ></app-custom-input>
-                      <app-custom-input
-                        label="Bathrooms"
-                        type="number"
-                        formControlName="bath_count"
-                      ></app-custom-input>
-                      <app-custom-input
-                        label="Total Price (৳)"
-                        type="number"
-                        formControlName="total_unit_price"
-                      ></app-custom-input>
-                    </div>
-                  </div>
-                }
-              </div>
-
-              <!-- Area Reconciliation Indicator Card -->
-              <div 
-                class="p-3.5 rounded-xl border flex items-center justify-between text-xs"
-                [ngClass]="splitAreaVariance() === 0 
-                  ? 'bg-emerald-50 border-emerald-300 text-emerald-800 dark:bg-emerald-950 dark:border-emerald-800 dark:text-emerald-200' 
-                  : 'bg-amber-50 border-amber-300 text-amber-800 dark:bg-amber-950 dark:border-amber-800 dark:text-amber-200'"
-              >
-                <div>
-                  <span class="font-bold">Area Reconciliation Check:</span>
-                  <p class="text-[11px] mt-0.5">
-                    Parent Area: <strong>{{ selectedParentUnit()?.gross_saleable_area_sqft }} sft</strong> · 
-                    Sum of Children: <strong>{{ splitAreaSum() }} sft</strong> · 
-                    Variance: <strong>{{ splitAreaVariance() > 0 ? '+' : '' }}{{ splitAreaVariance() }} sft</strong>
-                  </p>
-                </div>
-                <span class="px-2.5 py-1 rounded-full text-[10px] font-bold"
-                  [ngClass]="splitAreaVariance() === 0 ? 'bg-emerald-200 text-emerald-900' : 'bg-amber-200 text-amber-900'">
-                  {{ splitAreaVariance() === 0 ? '100% Balanced' : 'Measurement Variance' }}
-                </span>
-              </div>
-            </div>
-
-            <!-- Step 3: Approvals & Regulatory References -->
-            <div class="p-4 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 space-y-4">
-              <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200">
-                Step 3: Regulatory Approvals & Multi-Department Sign-Off
-              </h4>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <app-custom-input
-                  label="Regulatory Approval Ref (e.g. RAJUK Approval Ref)"
-                  formControlName="regulatory_approval_ref"
-                  placeholder="e.g. RAJUK/DP/2026/SEC-4/SUB-098"
-                ></app-custom-input>
-                <app-custom-input
-                  label="Architectural Floor Plan URL / File"
-                  formControlName="drawing_attachment_url"
-                  placeholder="https://dms.blueoceans.com/drawings/subdivision-plan.pdf"
-                ></app-custom-input>
-              </div>
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <app-custom-input
-                  label="Technical Sign-Off"
-                  formControlName="technical_approval_by"
-                  placeholder="Architect / Planner"
-                ></app-custom-input>
-                <app-custom-input
-                  label="Commercial Sign-Off"
-                  formControlName="commercial_approval_by"
-                  placeholder="Sales Operations Head"
-                ></app-custom-input>
-                <app-custom-input
-                  label="Legal Sign-Off"
-                  formControlName="legal_approval_by"
-                  placeholder="Legal Officer"
-                ></app-custom-input>
-              </div>
-              <app-custom-textarea
-                label="Measurement Variance & Reconciliation Notes"
-                formControlName="measurement_tolerance_notes"
-                placeholder="Explain any measurement tolerance or corridor redistribution..."
-                rows="2"
-              ></app-custom-textarea>
-            </div>
-
-            <div class="flex justify-end gap-3">
-              <app-custom-button
-                variant="primary"
-                type="submit"
-                [disabled]="isSubmitting() || splitForm.invalid"
-              >
-                @if (isSubmitting()) { Processing Subdivision... } @else { Subdivide Unit & Issue Child Assets }
-              </app-custom-button>
-            </div>
-          </form>
         }
       </div>
+
+      <!-- Step 2: Child Units Allocator & Area Reconciliation -->
+      @if (selectedParentUnit()) {
+      <form [formGroup]="splitForm" (ngSubmit)="submitUnitSplitProposal()" class="space-y-4">
+        <div class="p-4 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200">
+                Step 2: Allocate Proposed Child Units
+              </h4>
+              <p class="text-[11px] text-slate-500">Specify dimensions, types, beds/baths, and pricing for each child
+                parcel.</p>
+            </div>
+            <app-custom-button variant="outline" size="sm" (btnClick)="addChildUnitRow()">
+              + Add Child Unit
+            </app-custom-button>
+          </div>
+
+          <!-- Child Rows -->
+          <div class="space-y-3">
+            @for (child of childUnitsFormArray.controls; track $index) {
+            <div
+              class="p-3 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50/50 dark:bg-slate-850/50 space-y-3"
+              [formGroup]="$any(child)">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-800 dark:text-slate-200">
+                  Child Unit #{{ $index + 1 }}
+                </span>
+                @if (childUnitsFormArray.length > 2) {
+                <button (click)="removeChildUnitRow($index)"
+                  class="text-xs text-rose-600 hover:underline">Remove</button>
+                }
+              </div>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                <app-custom-input label="Child Code" formControlName="unit_number"></app-custom-input>
+                <app-custom-input label="Gross Area (sq.ft)" type="number"
+                  formControlName="gross_saleable_area_sqft"></app-custom-input>
+                <app-custom-input label="Net Carpet (sq.ft)" type="number"
+                  formControlName="net_carpet_area_sqft"></app-custom-input>
+                <app-searchable-select label="Unit Type" [options]="unitTypeOptions" formControlName="unit_type_id"
+                  createRoute="/settings/lookups"></app-searchable-select>
+              </div>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                <app-searchable-select label="Facing" [options]="facingOptions" formControlName="facing_id"
+                  createRoute="/settings/lookups"></app-searchable-select>
+                <app-custom-input label="Bedrooms" type="number" formControlName="bed_count"></app-custom-input>
+                <app-custom-input label="Bathrooms" type="number" formControlName="bath_count"></app-custom-input>
+                <app-custom-input label="Total Price (৳)" type="number"
+                  formControlName="total_unit_price"></app-custom-input>
+              </div>
+            </div>
+            }
+          </div>
+
+          <!-- Area Reconciliation Indicator Card -->
+          <div class="p-3.5 rounded-xl border flex items-center justify-between text-xs"
+            [ngClass]="splitAreaVariance() === 0 
+                  ? 'bg-emerald-50 border-emerald-300 text-emerald-800 dark:bg-emerald-950 dark:border-emerald-800 dark:text-emerald-200' 
+                  : 'bg-amber-50 border-amber-300 text-amber-800 dark:bg-amber-950 dark:border-amber-800 dark:text-amber-200'">
+            <div>
+              <span class="font-bold">Area Reconciliation Check:</span>
+              <p class="text-[11px] mt-0.5">
+                Parent Area: <strong>{{ selectedParentUnit()?.gross_saleable_area_sqft }} sft</strong> ·
+                Sum of Children: <strong>{{ splitAreaSum() }} sft</strong> ·
+                Variance: <strong>{{ splitAreaVariance() > 0 ? '+' : '' }}{{ splitAreaVariance() }} sft</strong>
+              </p>
+            </div>
+            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold"
+              [ngClass]="splitAreaVariance() === 0 ? 'bg-emerald-200 text-emerald-900' : 'bg-amber-200 text-amber-900'">
+              {{ splitAreaVariance() === 0 ? '100% Balanced' : 'Measurement Variance' }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Step 3: Approvals & Regulatory References -->
+        <div class="p-4 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 space-y-4">
+          <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200">
+            Step 3: Regulatory Approvals & Multi-Department Sign-Off
+          </h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <app-custom-input label="Regulatory Approval Ref (e.g. RAJUK Approval Ref)"
+              formControlName="regulatory_approval_ref"
+              placeholder="e.g. RAJUK/DP/2026/SEC-4/SUB-098"></app-custom-input>
+            <app-custom-input label="Architectural Floor Plan URL / File" formControlName="drawing_attachment_url"
+              placeholder="https://dms.blueoceans.com/drawings/subdivision-plan.pdf"></app-custom-input>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <app-custom-input label="Technical Sign-Off" formControlName="technical_approval_by"
+              placeholder="Architect / Planner"></app-custom-input>
+            <app-custom-input label="Commercial Sign-Off" formControlName="commercial_approval_by"
+              placeholder="Sales Operations Head"></app-custom-input>
+            <app-custom-input label="Legal Sign-Off" formControlName="legal_approval_by"
+              placeholder="Legal Officer"></app-custom-input>
+          </div>
+          <app-custom-textarea label="Measurement Variance & Reconciliation Notes"
+            formControlName="measurement_tolerance_notes"
+            placeholder="Explain any measurement tolerance or corridor redistribution..."
+            rows="2"></app-custom-textarea>
+        </div>
+
+        <div class="flex justify-end gap-3">
+          <app-custom-button variant="primary" type="submit" [disabled]="isSubmitting() || splitForm.invalid">
+            @if (isSubmitting()) { Processing Subdivision... } @else { Subdivide Unit & Issue Child Assets }
+          </app-custom-button>
+        </div>
+      </form>
+      }
     </div>
+  </div>
   }
 
   <!-- ========================================================================= -->
   <!-- TAB 5: COMBINATION & SUBDIVISION AUDIT TRAIL (Spec 3.8) -->
   <!-- ========================================================================= -->
   @if (activeTab() === 'logs') {
-    <div class="p-6">
-      <div class="flex items-center justify-between mb-4">
-        <div>
-          <h3 class="text-sm font-bold text-slate-900 dark:text-white">Unit Structural Modification Audit Trail</h3>
-          <p class="text-xs text-slate-500">Immutable ledger of all historic Unit Combinations (Merges) and Subdivisions (Splits).</p>
-        </div>
-        <div class="w-56">
-          <app-searchable-select
-            label=""
-            [options]="[
+  <div class="p-6">
+    <div class="flex items-center justify-between mb-4">
+      <div>
+        <h3 class="text-sm font-bold text-slate-900 dark:text-white">Unit Structural Modification Audit Trail</h3>
+        <p class="text-xs text-slate-500">Immutable ledger of all historic Unit Combinations (Merges) and Subdivisions
+          (Splits).</p>
+      </div>
+      <div class="w-56">
+        <app-searchable-select label="" [options]="[
               { value: 'ALL', label: 'All Operations' },
               { value: 'MERGE', label: 'Combinations (Merges)' },
               { value: 'SPLIT', label: 'Subdivisions (Splits)' }
-            ]"
-            [value]="combinationTypeFilter()"
-            (valueChange)="combinationTypeFilter.set($event); combinationOffset.set(0); loadCombinationLogs()"
-          ></app-searchable-select>
-        </div>
-      </div>
-
-      <div class="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-xl">
-        <table class="w-full text-left text-xs">
-          <thead class="bg-slate-50 dark:bg-slate-850 text-slate-700 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-800 uppercase tracking-wider text-[11px]">
-            <tr>
-              <th class="p-3">Log ID</th>
-              <th class="p-3">Action Type</th>
-              <th class="p-3">Source Units</th>
-              <th class="p-3">Resulting Units</th>
-              <th class="p-3">Regulatory Reference</th>
-              <th class="p-3">Sign-Offs (Tech / Comm / Legal)</th>
-              <th class="p-3">Execution Status</th>
-              <th class="p-3">Executed At</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-            @for (log of combinationLogs(); track log.id) {
-              <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
-                <td class="p-3 font-mono font-bold text-slate-800 dark:text-slate-200">#MOD-{{ log.id }}</td>
-                <td class="p-3">
-                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold"
-                    [ngClass]="log.action_type === 'MERGE'
-                      ? 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300'
-                      : 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300'">
-                    {{ log.action_type === 'MERGE' ? 'Unit Combination' : 'Unit Subdivision' }}
-                  </span>
-                </td>
-                <td class="p-3 font-mono text-slate-700 dark:text-slate-300">{{ log.source_unit_ids || '-' }}</td>
-                <td class="p-3 font-mono font-bold text-emerald-700 dark:text-emerald-400">{{ log.resulting_unit_ids || '-' }}</td>
-                <td class="p-3 font-mono text-slate-600 dark:text-slate-400">{{ log.regulatory_approval_ref || '-' }}</td>
-                <td class="p-3 text-[11px] text-slate-600 dark:text-slate-400">
-                  <p>Tech: {{ log.technical_approval_by || '-' }}</p>
-                  <p>Comm: {{ log.commercial_approval_by || '-' }}</p>
-                  <p>Legal: {{ log.legal_approval_by || '-' }}</p>
-                </td>
-                <td class="p-3">
-                  <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-                    {{ log.status }}
-                  </span>
-                </td>
-                <td class="p-3 text-slate-500 text-[11px]">
-                  {{ log.created_at | date:'medium' }}
-                </td>
-              </tr>
-            } @empty {
-              <tr>
-                <td colspan="8" class="p-6 text-center text-slate-400 text-xs">
-                  No structural modification logs registered yet.
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Pagination Toolbar -->
-      <div class="flex items-center justify-between mt-4 text-xs text-slate-500">
-        <div>
-          Showing {{ combinationOffset() + 1 }} to {{ combinationOffset() + combinationLogs().length }} of {{ combinationTotal() }} logs
-        </div>
-        <div class="flex items-center gap-2">
-          <button
-            type="button"
-            (click)="prevCombinationPage()"
-            [disabled]="combinationOffset() === 0"
-            class="px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-lg font-medium hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          >
-            Previous
-          </button>
-          <button
-            type="button"
-            (click)="nextCombinationPage()"
-            [disabled]="combinationOffset() + combinationLimit() >= combinationTotal()"
-            class="px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-lg font-medium hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          >
-            Next
-          </button>
-        </div>
+            ]" [value]="combinationTypeFilter()"
+          (valueChange)="combinationTypeFilter.set($event); combinationOffset.set(0); loadCombinationLogs()"></app-searchable-select>
       </div>
     </div>
+
+    <div class="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-xl">
+      <table class="w-full text-left text-xs">
+        <thead
+          class="bg-slate-50 dark:bg-slate-850 text-slate-700 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-800 uppercase tracking-wider text-[11px]">
+          <tr>
+            <th class="p-3">Log ID</th>
+            <th class="p-3">Action Type</th>
+            <th class="p-3">Source Units</th>
+            <th class="p-3">Resulting Units</th>
+            <th class="p-3">Regulatory Reference</th>
+            <th class="p-3">Sign-Offs (Tech / Comm / Legal)</th>
+            <th class="p-3">Execution Status</th>
+            <th class="p-3">Executed At</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+          @for (log of combinationLogs(); track log.id) {
+          <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
+            <td class="p-3 font-mono font-bold text-slate-800 dark:text-slate-200">#MOD-{{ log.id }}</td>
+            <td class="p-3">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold" [ngClass]="log.action_type === 'MERGE'
+                      ? 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300'
+                      : 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300'">
+                {{ log.action_type === 'MERGE' ? 'Unit Combination' : 'Unit Subdivision' }}
+              </span>
+            </td>
+            <td class="p-3 font-mono text-slate-700 dark:text-slate-300">{{ log.source_unit_ids || '-' }}</td>
+            <td class="p-3 font-mono font-bold text-emerald-700 dark:text-emerald-400">{{ log.resulting_unit_ids || '-'
+              }}</td>
+            <td class="p-3 font-mono text-slate-600 dark:text-slate-400">{{ log.regulatory_approval_ref || '-' }}</td>
+            <td class="p-3 text-[11px] text-slate-600 dark:text-slate-400">
+              <p>Tech: {{ log.technical_approval_by || '-' }}</p>
+              <p>Comm: {{ log.commercial_approval_by || '-' }}</p>
+              <p>Legal: {{ log.legal_approval_by || '-' }}</p>
+            </td>
+            <td class="p-3">
+              <span
+                class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                {{ log.status }}
+              </span>
+            </td>
+            <td class="p-3 text-slate-500 text-[11px]">
+              {{ log.created_at | date:'medium' }}
+            </td>
+          </tr>
+          } @empty {
+          <tr>
+            <td colspan="8" class="p-6 text-center text-slate-400 text-xs">
+              No structural modification logs registered yet.
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Toolbar -->
+    <div class="flex items-center justify-between mt-4 text-xs text-slate-500">
+      <div>
+        Showing {{ combinationOffset() + 1 }} to {{ combinationOffset() + combinationLogs().length }} of {{
+        combinationTotal() }} logs
+      </div>
+      <div class="flex items-center gap-2">
+        <button type="button" (click)="prevCombinationPage()" [disabled]="combinationOffset() === 0"
+          class="px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-lg font-medium hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+          Previous
+        </button>
+        <button type="button" (click)="nextCombinationPage()"
+          [disabled]="combinationOffset() + combinationLimit() >= combinationTotal()"
+          class="px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-lg font-medium hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+          Next
+        </button>
+      </div>
+    </div>
+  </div>
   }
 
   <!-- ========================================================================= -->
   <!-- MODAL 1: CREATE NEW FACILITY ASSET (Spec 3.7) -->
   <!-- ========================================================================= -->
-  <app-modal
-    [isOpen]="isCreateModalOpen()"
-    title="Create Facility & Parking Asset"
-    subtitle="Add individual inventory record for basement bay, storage room, rooftop or commercial space."
-    size="lg"
-    (closeModal)="isCreateModalOpen.set(false)"
-  >
+  <app-modal [isOpen]="isCreateModalOpen()" title="Create Facility & Parking Asset"
+    subtitle="Add individual inventory record for basement bay, storage room, rooftop or commercial space." size="lg"
+    (closeModal)="isCreateModalOpen.set(false)">
     <form [formGroup]="createFacilityForm" (ngSubmit)="submitCreateFacility()" class="space-y-4">
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <app-searchable-select
-          label="Project *"
-          [options]="projectOptions()"
-          formControlName="project_id"
-          createRoute="/projects/master"
-        ></app-searchable-select>
-        <app-custom-input
-          label="Slot / Asset Code *"
-          formControlName="slot_number"
-          placeholder="e.g. B1-P12, STR-04, ROOF-CABANA-01"
-        ></app-custom-input>
+        <app-searchable-select label="Project *" [options]="projectOptions()" formControlName="project_id"
+          createRoute="/projects/master"></app-searchable-select>
+        <app-custom-input label="Slot / Asset Code *" formControlName="slot_number"
+          placeholder="e.g. B1-P12, STR-04, ROOF-CABANA-01"></app-custom-input>
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <app-searchable-select
-          label="Facility Category *"
-          [options]="facilityCategoryOptions"
-          formControlName="facility_category"
-          createRoute="/settings/lookups"
-        ></app-searchable-select>
-        <app-searchable-select
-          label="Facility Type *"
-          [options]="facilityTypeOptions"
-          formControlName="facility_type"
-          createRoute="/settings/lookups"
-        ></app-searchable-select>
+        <app-searchable-select label="Facility Category *" [options]="facilityCategoryOptions"
+          formControlName="facility_category" createRoute="/settings/lookups"></app-searchable-select>
+        <app-searchable-select label="Facility Type *" [options]="facilityTypeOptions" formControlName="facility_type"
+          createRoute="/settings/lookups"></app-searchable-select>
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <app-custom-input
-          label="Floor Level *"
-          formControlName="floor_level"
-          placeholder="e.g. Basement 1"
-        ></app-custom-input>
-        <app-custom-input
-          label="Size (sq.ft) *"
-          type="number"
-          formControlName="size_sqft"
-        ></app-custom-input>
-        <app-custom-input
-          label="Base Price (BDT ৳) *"
-          type="number"
-          formControlName="price"
-        ></app-custom-input>
+        <app-custom-input label="Floor Level *" formControlName="floor_level"
+          placeholder="e.g. Basement 1"></app-custom-input>
+        <app-custom-input label="Size (sq.ft) *" type="number" formControlName="size_sqft"></app-custom-input>
+        <app-custom-input label="Base Price (BDT ৳) *" type="number" formControlName="price"></app-custom-input>
       </div>
 
-      <div class="p-3 bg-slate-50 dark:bg-slate-850 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
+      <div
+        class="p-3 bg-slate-50 dark:bg-slate-850 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
         <div>
           <span class="text-xs font-bold text-slate-800 dark:text-slate-200">Shared Entitlement Allowed?</span>
-          <p class="text-[11px] text-slate-500">Enable if multiple contracts can share this facility (e.g. tandem bay or community access).</p>
+          <p class="text-[11px] text-slate-500">Enable if multiple contracts can share this facility (e.g. tandem bay or
+            community access).</p>
         </div>
-        <input
-          type="checkbox"
-          formControlName="allows_shared_entitlement"
-          class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 w-4 h-4"
-        />
+        <input type="checkbox" formControlName="allows_shared_entitlement"
+          class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 w-4 h-4" />
       </div>
 
-      <app-custom-textarea
-        label="Location Description & Remarks"
-        formControlName="location_description"
-        placeholder="e.g. Near Pillar B4, adjacent to West Lift Lobby..."
-        rows="2"
-      ></app-custom-textarea>
+      <app-custom-textarea label="Location Description & Remarks" formControlName="location_description"
+        placeholder="e.g. Near Pillar B4, adjacent to West Lift Lobby..." rows="2"></app-custom-textarea>
 
       <div class="flex justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
-        <app-custom-button
-          variant="outline"
-          (btnClick)="isCreateModalOpen.set(false)"
-        >
+        <app-custom-button variant="outline" (btnClick)="isCreateModalOpen.set(false)">
           Cancel
         </app-custom-button>
-        <app-custom-button
-          variant="primary"
-          type="submit"
-          [disabled]="isSubmitting() || createFacilityForm.invalid"
-        >
+        <app-custom-button variant="primary" type="submit" [disabled]="isSubmitting() || createFacilityForm.invalid">
           @if (isSubmitting()) { Saving... } @else { Save Facility Asset }
         </app-custom-button>
       </div>
@@ -1035,68 +863,35 @@
   <!-- ========================================================================= -->
   <!-- MODAL 2: ASSIGN FACILITY TO CONTRACT (Spec 3.7) -->
   <!-- ========================================================================= -->
-  <app-modal
-    [isOpen]="isAssignModalOpen()"
-    [title]="'Allocate Facility: ' + (selectedFacility()?.slot_number || '')"
-    subtitle="Bind facility asset to apartment contract with strict double-allocation validation."
-    size="md"
-    (closeModal)="isAssignModalOpen.set(false)"
-  >
+  <app-modal [isOpen]="isAssignModalOpen()" [title]="'Allocate Facility: ' + (selectedFacility()?.slot_number || '')"
+    subtitle="Bind facility asset to apartment contract with strict double-allocation validation." size="md"
+    (closeModal)="isAssignModalOpen.set(false)">
     <form [formGroup]="assignFacilityForm" (ngSubmit)="submitAssignFacility()" class="space-y-4">
-      <app-searchable-select
-        label="Linked Apartment / Unit"
-        [options]="unitOptions()"
-        formControlName="unit_id"
-        placeholder="Optionally link to an apartment..."
-      ></app-searchable-select>
+      <app-searchable-select label="Linked Apartment / Unit" [options]="unitOptions()" formControlName="unit_id"
+        placeholder="Optionally link to an apartment..."></app-searchable-select>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <app-custom-input
-          label="Customer / Allottee Name *"
-          formControlName="allocated_customer_name"
-          placeholder="e.g. Engr. Tanvir Ahmed"
-        ></app-custom-input>
-        <app-custom-input
-          label="Contract Reference *"
-          formControlName="contract_reference"
-          placeholder="e.g. AGR-2026-FLAT-12B"
-        ></app-custom-input>
+        <app-custom-input label="Customer / Allottee Name *" formControlName="allocated_customer_name"
+          placeholder="e.g. Engr. Tanvir Ahmed"></app-custom-input>
+        <app-custom-input label="Contract Reference *" formControlName="contract_reference"
+          placeholder="e.g. AGR-2026-FLAT-12B"></app-custom-input>
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <app-searchable-select
-          label="Allocation Type *"
-          [options]="allocationTypeOptions"
-          formControlName="allocation_type"
-          createRoute="/settings/lookups"
-        ></app-searchable-select>
-        <app-custom-input
-          label="Package Price (BDT ৳)"
-          type="number"
-          formControlName="package_price"
-          placeholder="If bundled with apartment"
-        ></app-custom-input>
+        <app-searchable-select label="Allocation Type *" [options]="allocationTypeOptions"
+          formControlName="allocation_type" createRoute="/settings/lookups"></app-searchable-select>
+        <app-custom-input label="Package Price (BDT ৳)" type="number" formControlName="package_price"
+          placeholder="If bundled with apartment"></app-custom-input>
       </div>
 
-      <app-custom-textarea
-        label="Allocation Notes"
-        formControlName="remarks"
-        placeholder="Special conditions or contractual references..."
-        rows="2"
-      ></app-custom-textarea>
+      <app-custom-textarea label="Allocation Notes" formControlName="remarks"
+        placeholder="Special conditions or contractual references..." rows="2"></app-custom-textarea>
 
       <div class="flex justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
-        <app-custom-button
-          variant="outline"
-          (btnClick)="isAssignModalOpen.set(false)"
-        >
+        <app-custom-button variant="outline" (btnClick)="isAssignModalOpen.set(false)">
           Cancel
         </app-custom-button>
-        <app-custom-button
-          variant="primary"
-          type="submit"
-          [disabled]="isSubmitting() || assignFacilityForm.invalid"
-        >
+        <app-custom-button variant="primary" type="submit" [disabled]="isSubmitting() || assignFacilityForm.invalid">
           @if (isSubmitting()) { Allocating... } @else { Confirm Allocation }
         </app-custom-button>
       </div>
@@ -1106,13 +901,10 @@
   <!-- ========================================================================= -->
   <!-- MODAL 3: TRANSFER FACILITY REASSIGNMENT (Spec 3.7) -->
   <!-- ========================================================================= -->
-  <app-modal
-    [isOpen]="isTransferModalOpen()"
+  <app-modal [isOpen]="isTransferModalOpen()"
     [title]="'Transfer Facility Ownership: ' + (selectedFacility()?.slot_number || '')"
-    subtitle="Reassign parking/facility ownership to another customer with formal approval logging."
-    size="md"
-    (closeModal)="isTransferModalOpen.set(false)"
-  >
+    subtitle="Reassign parking/facility ownership to another customer with formal approval logging." size="md"
+    (closeModal)="isTransferModalOpen.set(false)">
     <form [formGroup]="transferFacilityForm" (ngSubmit)="submitTransferFacility()" class="space-y-4">
       <div class="p-3 bg-slate-50 dark:bg-slate-850 rounded-xl border border-slate-200 dark:border-slate-800 text-xs">
         <span class="text-slate-500">Current Allottee:</span>
@@ -1122,43 +914,24 @@
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <app-custom-input
-          label="Transferee Customer Name *"
-          formControlName="to_customer_name"
-          placeholder="e.g. Barrister Saifullah"
-        ></app-custom-input>
-        <app-custom-input
-          label="New Contract Reference *"
-          formControlName="to_contract_ref"
-          placeholder="e.g. AGR-2026-FLAT-08A"
-        ></app-custom-input>
+        <app-custom-input label="Transferee Customer Name *" formControlName="to_customer_name"
+          placeholder="e.g. Barrister Saifullah"></app-custom-input>
+        <app-custom-input label="New Contract Reference *" formControlName="to_contract_ref"
+          placeholder="e.g. AGR-2026-FLAT-08A"></app-custom-input>
       </div>
 
-      <app-custom-input
-        label="Transfer Novation Fee (BDT ৳) *"
-        type="number"
-        formControlName="transfer_fee"
-      ></app-custom-input>
+      <app-custom-input label="Transfer Novation Fee (BDT ৳) *" type="number"
+        formControlName="transfer_fee"></app-custom-input>
 
-      <app-custom-textarea
-        label="Reason for Reassignment *"
-        formControlName="reason"
+      <app-custom-textarea label="Reason for Reassignment *" formControlName="reason"
         placeholder="e.g. Reassigned per Flat Resale Agreement & Authority Permission..."
-        rows="2"
-      ></app-custom-textarea>
+        rows="2"></app-custom-textarea>
 
       <div class="flex justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
-        <app-custom-button
-          variant="outline"
-          (btnClick)="isTransferModalOpen.set(false)"
-        >
+        <app-custom-button variant="outline" (btnClick)="isTransferModalOpen.set(false)">
           Cancel
         </app-custom-button>
-        <app-custom-button
-          variant="primary"
-          type="submit"
-          [disabled]="isSubmitting() || transferFacilityForm.invalid"
-        >
+        <app-custom-button variant="primary" type="submit" [disabled]="isSubmitting() || transferFacilityForm.invalid">
           @if (isSubmitting()) { Processing Transfer... } @else { Execute Transfer }
         </app-custom-button>
       </div>
@@ -1168,38 +941,25 @@
   <!-- ========================================================================= -->
   <!-- MODAL 4: RELEASE FACILITY BACK TO INVENTORY (Spec 3.7) -->
   <!-- ========================================================================= -->
-  <app-modal
-    [isOpen]="isReleaseModalOpen()"
-    [title]="'Release Facility: ' + (selectedFacility()?.slot_number || '')"
-    subtitle="De-allocate asset from contract and return to available company inventory."
-    size="sm"
-    (closeModal)="isReleaseModalOpen.set(false)"
-  >
+  <app-modal [isOpen]="isReleaseModalOpen()" [title]="'Release Facility: ' + (selectedFacility()?.slot_number || '')"
+    subtitle="De-allocate asset from contract and return to available company inventory." size="sm"
+    (closeModal)="isReleaseModalOpen.set(false)">
     <div class="space-y-4">
       <p class="text-xs text-slate-600 dark:text-slate-400">
-        Are you sure you want to release <strong>{{ selectedFacility()?.slot_number }}</strong>? This will remove contract reference <strong>{{ selectedFacility()?.contract_reference }}</strong> and restore its status to <strong>AVAILABLE</strong>.
+        Are you sure you want to release <strong>{{ selectedFacility()?.slot_number }}</strong>? This will remove
+        contract reference <strong>{{ selectedFacility()?.contract_reference }}</strong> and restore its status to
+        <strong>AVAILABLE</strong>.
       </p>
 
-      <app-custom-textarea
-        label="Release Reason / Notes"
-        [ngModel]="releaseReason()"
-        (ngModelChange)="releaseReason.set($event)"
-        placeholder="e.g. Contract cancelled, surrendered by customer, etc."
-        rows="2"
-      ></app-custom-textarea>
+      <app-custom-textarea label="Release Reason / Notes" [ngModel]="releaseReason()"
+        (ngModelChange)="releaseReason.set($event)" placeholder="e.g. Contract cancelled, surrendered by customer, etc."
+        rows="2"></app-custom-textarea>
 
       <div class="flex justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
-        <app-custom-button
-          variant="outline"
-          (btnClick)="isReleaseModalOpen.set(false)"
-        >
+        <app-custom-button variant="outline" (btnClick)="isReleaseModalOpen.set(false)">
           Cancel
         </app-custom-button>
-        <app-custom-button
-          variant="danger"
-          [disabled]="isSubmitting()"
-          (btnClick)="submitReleaseFacility()"
-        >
+        <app-custom-button variant="danger" [disabled]="isSubmitting()" (btnClick)="submitReleaseFacility()">
           @if (isSubmitting()) { Releasing... } @else { Confirm Release }
         </app-custom-button>
       </div>
