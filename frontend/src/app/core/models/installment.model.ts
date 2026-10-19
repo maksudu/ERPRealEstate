@@ -11,6 +11,7 @@ export interface CustomerInstallment {
   booking_id: number;
   schedule_id?: number | null;
   booking_reference_no?: string | null;
+  project_name?: string | null;
   customer_name?: string | null;
   customer_phone?: string | null;
   unit_number?: string | null;
@@ -306,4 +307,221 @@ export interface TripartiteLoan {
   tranches?: LoanTranche[];
   created_at?: string;
 }
+
+export interface PaymentPlanConfig {
+  id: number;
+  plan_code: string;
+  plan_name: string;
+  project_id?: number | null;
+  property_type: string;
+  description?: string | null;
+  booking_percent: number;
+  down_payment_percent: number;
+  installment_frequency: 'MONTHLY' | 'QUARTERLY' | 'MILESTONE' | 'CUSTOM' | string;
+  installment_count: number;
+  grace_period_days: number;
+  late_fee_type: 'PERCENTAGE' | 'FIXED' | string;
+  late_fee_rate: number;
+  rebate_type: 'PERCENTAGE' | 'FIXED' | string;
+  rebate_rate: number;
+  early_discount_rate: number;
+  milestones_json?: string | null;
+  terms_conditions?: string | null;
+  approval_status: 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED' | string;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface PaginatedPaymentPlanConfigs {
+  items: PaymentPlanConfig[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface DownPaymentItem {
+  booking_id: number;
+  booking_reference_no: string;
+  customer_name: string;
+  customer_phone?: string | null;
+  unit_number?: string | null;
+  project_name?: string | null;
+  contract_price: number;
+  booking_money_received: number;
+  down_payment_percentage: number;
+  required_down_payment: number;
+  paid_down_payment: number;
+  outstanding_down_payment: number;
+  status: 'PAID' | 'PARTIALLY_PAID' | 'PENDING' | string;
+  due_date?: string | null;
+}
+
+export interface PaginatedDownPayments {
+  items: DownPaymentItem[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface DueOverdueAgingSummary {
+  upcoming_due_count: number;
+  upcoming_due_amount: number;
+  due_today_count: number;
+  due_today_amount: number;
+  overdue_1_30_count: number;
+  overdue_1_30_amount: number;
+  overdue_31_60_count: number;
+  overdue_31_60_amount: number;
+  overdue_61_90_count: number;
+  overdue_61_90_amount: number;
+  overdue_90_plus_count: number;
+  overdue_90_plus_amount: number;
+  total_overdue_amount: number;
+  total_overdue_count: number;
+}
+
+export interface PaginatedDueInstallments {
+  items: CustomerInstallment[];
+  total: number;
+  limit: number;
+  offset: number;
+  summary?: DueOverdueAgingSummary;
+}
+
+export interface LateFeeWaiverItem {
+  id: number;
+  waiver_code: string;
+  installment_id: number;
+  installment_title?: string | null;
+  booking_id: number;
+  booking_reference_no?: string | null;
+  customer_id: number;
+  customer_name?: string | null;
+  customer_phone?: string | null;
+  unit_number?: string | null;
+  original_late_fee: number;
+  waived_amount: number;
+  adjusted_late_fee: number;
+  waiver_type: 'FULL' | 'PARTIAL' | 'EARLY_DISCOUNT' | string;
+  reason: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | string;
+  approved_by?: string | null;
+  approval_date?: string | null;
+  notes?: string | null;
+  created_at?: string;
+}
+
+export interface PaginatedLateFeeWaivers {
+  items: LateFeeWaiverItem[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface PaymentRescheduleItem {
+  id: number;
+  reschedule_code: string;
+  booking_id: number;
+  booking_reference_no?: string | null;
+  customer_id: number;
+  customer_name?: string | null;
+  customer_phone?: string | null;
+  unit_number?: string | null;
+  project_name?: string | null;
+  request_date: string;
+  reason: string;
+  existing_balance: number;
+  proposed_installment_count: number;
+  proposed_start_date: string;
+  deferment_months: number;
+  revised_plan_json?: string | null;
+  financial_impact_notes?: string | null;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | string;
+  approved_by?: string | null;
+  approval_date?: string | null;
+  approval_notes?: string | null;
+  created_at?: string;
+}
+
+export interface PaginatedReschedules {
+  items: PaymentRescheduleItem[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface CustomerLedgerTransaction {
+  transaction_date: string;
+  transaction_type: string;
+  reference_no: string;
+  description: string;
+  debit_amount: number;
+  credit_amount: number;
+  running_balance: number;
+}
+
+export interface CustomerLedgerSummary {
+  booking_id: number;
+  booking_reference_no: string;
+  customer_id: number;
+  customer_name: string;
+  customer_phone?: string | null;
+  customer_email?: string | null;
+  project_name?: string | null;
+  unit_number?: string | null;
+  agreed_sale_price: number;
+  total_billed: number;
+  total_paid: number;
+  total_outstanding: number;
+  total_advance_balance: number;
+  transactions: CustomerLedgerTransaction[];
+}
+
+export interface PaymentRefundAdjustmentItem {
+  id: number;
+  adjustment_code: string;
+  booking_id: number;
+  booking_reference_no?: string | null;
+  customer_id: number;
+  customer_name?: string | null;
+  customer_phone?: string | null;
+  unit_number?: string | null;
+  project_name?: string | null;
+  adjustment_type: 'EXCESS_PAYMENT_REFUND' | 'BOOKING_REFUND' | 'RECEIPT_ADJUSTMENT' | 'PAYMENT_REVERSAL' | 'CREDIT_ADJUSTMENT' | string;
+  original_receipt_id?: number | null;
+  amount: number;
+  payment_mode: string;
+  bank_name?: string | null;
+  cheque_reference?: string | null;
+  reason: string;
+  status: 'PENDING' | 'APPROVED' | 'PROCESSED' | 'REJECTED' | string;
+  approved_by?: string | null;
+  approval_date?: string | null;
+  processed_date?: string | null;
+  remarks?: string | null;
+  created_at?: string;
+}
+
+export interface PaginatedRefundAdjustments {
+  items: PaymentRefundAdjustmentItem[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface InstallmentReportsSummary {
+  total_collected: number;
+  cash_collected: number;
+  bank_collected: number;
+  cheque_collected: number;
+  digital_collected: number;
+  total_billed: number;
+  total_paid: number;
+  total_overdue: number;
+  due_this_month: number;
+  collection_efficiency_percent: number;
+  monthly_forecast: { month: string; expected_amount: number }[];
+}
+
 

@@ -741,9 +741,32 @@ LEGAL_LOOKUP_CATEGORIES = {
     "LEGAL_RECORD_STATUS": "Legal record status",
     "LEGAL_REVIEW_OUTCOME": "Legal review outcomes",
     "LEGAL_RECORD_TYPE": "Registered land record types",
+    "LEGAL_ENTITY": "Company and legal entities",
+    "LEGAL_REGISTRATION_TYPE": "Business registrations and licences",
+    "LEGAL_APPLICABLE_TERRITORY": "Registration territories",
+    "LEGAL_RESPONSIBLE_DEPARTMENT": "Responsible departments",
+    "LEGAL_RESPONSIBLE_OFFICER": "Responsible officers and task owners",
+    "DEVELOPER_REGISTRATION_STATUS": "Developer registration lifecycle statuses",
+    "LEGAL_NOTIFICATION_CHANNEL": "Reminder notification channels",
+    "LEGAL_DEED_TYPE": "Deed classifications",
+    "LEGAL_APPROVAL_CATEGORY": "Project approval categories",
+    "LEGAL_APPROVAL_STATUS": "Approval workflow statuses",
+    "LEGAL_CONDITION_TRACKING_STATUS": "Approval condition tracking statuses",
+    "LEGAL_LAND_OFFICE": "Registration and land offices",
+    "LEGAL_REVIEW_STATUS": "Legal review statuses",
+    "LEGAL_REGISTRATION_VERIFICATION": "Deed registration verification outcomes",
+    "LEGAL_SURVEY_RECORD_TYPE": "Survey and khatian record types",
+    "LEGAL_MUTATION_APPLICATION_STATUS": "Mutation application statuses",
+    "LEGAL_MUTATION_OUTCOME": "Final mutation outcomes",
+    "LEGAL_TAX_RECONCILIATION_STATUS": "Land development tax reconciliation statuses",
     "LEGAL_LAND_USE_TYPE": "Land-use classifications",
     "LEGAL_CONDITION_STATUS": "Approval condition statuses",
     "LEGAL_CORRESPONDENCE_TYPE": "Authority correspondence types",
+    "LEGAL_CORRESPONDENCE_DIRECTION": "Incoming and outgoing correspondence directions",
+    "LEGAL_CORRESPONDENCE_STAGE": "Correspondence workflow stages",
+    "LEGAL_SUBMISSION_METHOD": "Correspondence submission methods",
+    "LEGAL_EXTERNAL_ORGANIZATION": "External organizations and counterparties",
+    "LEGAL_NOC_CATEGORY": "Project-specific NOC categories",
     "LEGAL_AGREEMENT_TYPE": "Customer agreement types",
     "LEGAL_TRANSFER_STATUS": "Transfer statuses",
     "LEGAL_RISK_LEVEL": "Legal risk classifications",
@@ -755,8 +778,46 @@ LEGAL_LOOKUP_CATEGORIES = {
     "LEGAL_APPROVAL_STAGE": "Legal approval stages",
     "LEGAL_REPORT_TYPE": "Compliance report types",
     "STATUTORY_AUTHORITY": "Authorities and registering offices",
+    "CLEARANCE_CONDITION_CATEGORY": "Clearance condition classifications",
+    "CLEARANCE_MANDATORY_LEVEL": "Condition severity classifications",
+    "CLEARANCE_CONDITION_STATUS": "Condition compliance statuses",
+    "CLEARANCE_PERMIT_TYPE": "Clearance and permit types",
+    "CLEARANCE_STATUS": "Clearance workflow statuses",
+    "COURT_NAME": "Courts and dispute forums",
+    "LEGAL_ACT_SECTION": "Legal acts and sections",
+    "SAFE_DOCUMENT_CATEGORY": "Legal archive classifications",
 }
-TERMINAL_LEGAL_STATUSES = {"closed", "complete", "completed", "approved", "cleared", "rejected", "dismissed", "archived"}
+TERMINAL_LEGAL_STATUSES = {"closed", "complete", "completed", "approved", "cleared", "rejected", "dismissed", "archived", "fulfilled", "complied", "waived"}
+
+
+def _approval_open_condition_counts(approval: LegalComplianceRecord, records: list[LegalComplianceRecord], today: date) -> tuple[int, int]:
+    data = approval.data or {}
+    references = {str(approval.id)}
+    if approval.reference_no:
+        references.add(str(approval.reference_no).strip())
+    for key in ("approval_number", "approved_memo_no"):
+        if data.get(key):
+            references.add(str(data[key]).strip())
+    linked = [
+        item for item in records
+        if item.area == "approval_condition"
+        and str((item.data or {}).get("approval_reference", "")).strip() in references
+    ]
+    open_items = [item for item in linked if (item.status or "").strip().lower() not in TERMINAL_LEGAL_STATUSES]
+    obligations = data.get("conditions") if isinstance(data.get("conditions"), list) else []
+    untracked = max(0, len(obligations) - len(linked))
+    overdue = sum(1 for item in open_items if item.due_date and item.due_date < today)
+    if untracked:
+        linked_text = {str((item.data or {}).get("condition_text", "")).strip() for item in linked}
+        for obligation in obligations:
+            if not isinstance(obligation, dict) or str(obligation.get("description", "")).strip() in linked_text:
+                continue
+            try:
+                deadline = date.fromisoformat(str(obligation.get("deadline", "")))
+                overdue += int(deadline < today)
+            except ValueError:
+                pass
+    return len(open_items) + untracked, overdue
 
 
 def _record_snapshot(record: LegalComplianceRecord) -> dict:
@@ -790,11 +851,43 @@ async def _ensure_legal_lookup_categories(db: AsyncSession) -> None:
         await db.commit()
 
 
+def _legal_record_due_date(area: str, data: dict) -> Optional[date]:
+    date_keys = ("expiry_date", "renewal_due_date", "review_date") if area == "developer_registration" else ("expiry_date",) if area == "land_use_clearance" else ("response_due_date",) if area == "noc_correspondence" else ()
+    for key in date_keys:
+        value = data.get(key)
+        if not value:
+            continue
+        try:
+            return date.fromisoformat(str(value))
+        except ValueError:
+            raise HTTPException(status_code=422, detail=f"{key} must be a valid date.")
+    return None
+
+def _validate_registered_land_data(area: str, data: dict) -> None:
+    if area == "registered_record":
+        amount_keys = ("land_tax_amount", "confirmed_outstanding_amount")
+    elif area == "developer_registration":
+        amount_keys = ("registration_fee_bdt",)
+    else:
+        return
+    for key in amount_keys:
+        value = data.get(key)
+        if value in (None, ""):
+            continue
+        try:
+            amount = Decimal(str(value))
+        except Exception:
+            raise HTTPException(status_code=422, detail=f"{key} must be a valid BDT amount.")
+        if not amount.is_finite() or amount < 0:
+            raise HTTPException(status_code=422, detail=f"{key} must be a non-negative BDT amount.")
+
+
+
 def _validate_clearance_review(area: str, status_value: Optional[str], data: dict, current_user: User) -> None:
     if area not in {"land_title", "land_use_clearance"}:
         return
     status_text = (status_value or "").strip().lower().replace("-", "_").replace(" ", "_")
-    if status_text not in {"approved", "cleared", "conditionally_approved", "conditional"}:
+    if status_text not in {"approved", "approved_issued", "approved/issued", "issued", "cleared", "conditionally_approved", "conditional"}:
         return
     if not data.get("verification_outcome"):
         raise HTTPException(status_code=422, detail="A documented verification outcome is required before clearance.")
@@ -850,17 +943,61 @@ async def get_legal_dashboard(
     records_result = await db.execute(select(LegalComplianceRecord))
     records = records_result.scalars().all()
     areas = []
+    open_approval_conditions = sum(
+        1 for record in records
+        if record.area == "approval_condition" and (record.status or "").strip().lower() not in TERMINAL_LEGAL_STATUSES
+    )
+    overdue_approval_conditions = sum(
+        1 for record in records
+        if record.area == "approval_condition"
+        and (record.status or "").strip().lower() not in TERMINAL_LEGAL_STATUSES
+        and record.due_date and record.due_date < today
+    )
     for area in LEGAL_AREAS:
         area_records = [record for record in records if record.area == area]
         active = [record for record in area_records if (record.status or "").lower() not in TERMINAL_LEGAL_STATUSES]
         overdue = [record for record in active if record.due_date and record.due_date < today]
+        if area in {"land_use_clearance", "developer_registration"}:
+            for dated_record in area_records:
+                if dated_record.due_date and dated_record.due_date < today:
+                    if dated_record not in active:
+                        active.append(dated_record)
+                    if dated_record not in overdue:
+                        overdue.append(dated_record)
+        if area == "land_use_clearance":
+            for approval in area_records:
+                condition_count, condition_overdue = _approval_open_condition_counts(approval, records, today)
+                if condition_count and approval not in active:
+                    active.append(approval)
+                if condition_overdue and approval.due_date and approval.due_date < today and approval not in overdue:
+                    overdue.append(approval)
+                raw_conditions = (approval.data or {}).get("conditions")
+                if isinstance(raw_conditions, list):
+                    matched = [
+                        item for item in records
+                        if item.area == "approval_condition"
+                        and str((item.data or {}).get("approval_reference", "")).strip()
+                        and str((item.data or {}).get("approval_reference", "")).strip() in {
+                            str(approval.id), str(approval.reference_no or "").strip(),
+                            str((approval.data or {}).get("approval_number", "")).strip(),
+                        }
+                    ]
+                    linked_open = sum(1 for item in matched if (item.status or "").strip().lower() not in TERMINAL_LEGAL_STATUSES)
+                    linked_overdue = sum(1 for item in matched if item.due_date and item.due_date < today and (item.status or "").strip().lower() not in TERMINAL_LEGAL_STATUSES)
+                    untracked = max(0, len(raw_conditions) - len(matched))
+                    open_approval_conditions += untracked
+                    overdue_approval_conditions += max(0, condition_overdue - linked_overdue)
         areas.append({"area": area, "total": totals.get(area, 0), "open_items": len(active), "overdue_items": len(overdue)})
     due_soon_stmt = (
         select(LegalComplianceRecord)
         .where(
             LegalComplianceRecord.due_date >= today,
             LegalComplianceRecord.due_date <= today + timedelta(days=30),
-            LegalComplianceRecord.status.notin_(TERMINAL_LEGAL_STATUSES),
+            or_(
+                LegalComplianceRecord.status.is_(None),
+                func.lower(LegalComplianceRecord.status).notin_(TERMINAL_LEGAL_STATUSES),
+                LegalComplianceRecord.area.in_(("land_use_clearance", "developer_registration")),
+            ),
         )
         .order_by(LegalComplianceRecord.due_date)
         .limit(10)
@@ -892,6 +1029,20 @@ async def list_legal_records(
     project_id: Optional[int] = Query(None),
     due_from: Optional[date] = Query(None),
     due_to: Optional[date] = Query(None),
+    record_type: Optional[str] = Query(None, max_length=64),
+    mutation_application_status: Optional[str] = Query(None, max_length=64),
+    mutation_outcome: Optional[str] = Query(None, max_length=64),
+    tax_reconciliation_status: Optional[str] = Query(None, max_length=64),
+    registration_type: Optional[str] = Query(None, max_length=64),
+    registration_authority: Optional[str] = Query(None, max_length=64),
+    approval_category: Optional[str] = Query(None, max_length=64),
+    approval_authority: Optional[str] = Query(None, max_length=64),
+    approval_reference: Optional[str] = Query(None, max_length=128),
+    correspondence_direction: Optional[str] = Query(None, max_length=64),
+    correspondence_type: Optional[str] = Query(None, max_length=64),
+    correspondence_authority: Optional[str] = Query(None, max_length=128),
+    correspondence_external_organization: Optional[str] = Query(None, max_length=128),
+    thread_reference: Optional[str] = Query(None, max_length=128),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -900,10 +1051,39 @@ async def list_legal_records(
         raise HTTPException(status_code=422, detail="Unknown legal compliance area.")
     filters = [LegalComplianceRecord.area == area]
     if q:
-        filters.append(or_(
+        searchable = [
             LegalComplianceRecord.title.ilike(f"%{q}%"),
             LegalComplianceRecord.reference_no.ilike(f"%{q}%"),
-        ))
+        ]
+        if area == "developer_registration":
+            searchable.extend(
+                LegalComplianceRecord.data[key].as_string().ilike(f"%{q}%")
+                for key in ("registration_number", "application_reference", "certificate_reference", "legal_entity")
+            )
+        if area == "approval_condition":
+            searchable.extend(
+                LegalComplianceRecord.data[key].as_string().ilike(f"%{q}%")
+                for key in ("approval_reference", "source_reference", "condition_text", "owner")
+            )
+        if area == "land_use_clearance":
+            searchable.extend(
+                LegalComplianceRecord.data[key].as_string().ilike(f"%{q}%")
+                for key in ("approval_number", "application_number", "approval_category", "parcel_reference")
+            )
+        if area == "noc_correspondence":
+            searchable.extend(
+                LegalComplianceRecord.data[key].as_string().ilike(f"%{q}%")
+                for key in ("correspondence_direction", "correspondence_type", "authority", "external_organization", "subject", "tracking_reference", "thread_reference", "parcel_reference", "related_approval_reference", "related_case_reference", "application_reference", "noc_category")
+            )
+        if area == "registered_record":
+            searchable.extend(
+                LegalComplianceRecord.data[key].as_string().ilike(f"%{q}%")
+                for key in (
+                    "deed_number", "registration_reference", "khatian_number", "mutation_application_number",
+                    "parcel_reference", "dag_numbers", "tax_receipt_reference", "assessment_reference",
+                )
+            )
+        filters.append(or_(*searchable))
     if status_filter:
         filters.append(LegalComplianceRecord.status == status_filter)
     if project_id is not None:
@@ -912,6 +1092,38 @@ async def list_legal_records(
         filters.append(LegalComplianceRecord.due_date >= due_from)
     if due_to:
         filters.append(LegalComplianceRecord.due_date <= due_to)
+    if record_type:
+        filters.append(LegalComplianceRecord.data["record_type"].as_string() == record_type)
+    if mutation_application_status:
+        filters.append(LegalComplianceRecord.data["mutation_application_status"].as_string() == mutation_application_status)
+    if mutation_outcome:
+        filters.append(LegalComplianceRecord.data["mutation_outcome"].as_string() == mutation_outcome)
+    if tax_reconciliation_status:
+        filters.append(LegalComplianceRecord.data["tax_reconciliation_status"].as_string() == tax_reconciliation_status)
+    if registration_type:
+        filters.append(LegalComplianceRecord.data["registration_type"].as_string() == registration_type)
+    if registration_authority:
+        filters.append(LegalComplianceRecord.data["registration_authority"].as_string() == registration_authority)
+    if approval_category:
+        filters.append(LegalComplianceRecord.data["approval_category"].as_string() == approval_category)
+    if approval_authority:
+        filters.append(LegalComplianceRecord.data["authority"].as_string() == approval_authority)
+    if approval_reference:
+        filters.append(LegalComplianceRecord.data["approval_reference"].as_string() == approval_reference)
+    if area == "noc_correspondence":
+        if correspondence_direction:
+            filters.append(LegalComplianceRecord.data["correspondence_direction"].as_string() == correspondence_direction)
+        if correspondence_type:
+            filters.append(LegalComplianceRecord.data["correspondence_type"].as_string() == correspondence_type)
+        if correspondence_authority:
+            filters.append(or_(
+                LegalComplianceRecord.data["authority"].as_string() == correspondence_authority,
+                LegalComplianceRecord.data["external_organization"].as_string() == correspondence_authority,
+            ))
+        if correspondence_external_organization:
+            filters.append(LegalComplianceRecord.data["external_organization"].as_string() == correspondence_external_organization)
+        if thread_reference:
+            filters.append(LegalComplianceRecord.data["thread_reference"].as_string() == thread_reference)
     total = await db.scalar(select(func.count(LegalComplianceRecord.id)).where(and_(*filters))) or 0
     result = await db.execute(
         select(LegalComplianceRecord).where(and_(*filters))
@@ -940,10 +1152,13 @@ async def create_legal_record(
     current_user: User = Depends(get_current_user),
 ):
     data = payload.data or {}
+    _validate_registered_land_data(payload.area, data)
     _validate_clearance_review(payload.area, payload.status, data, current_user)
     record = LegalComplianceRecord(
         area=payload.area, title=payload.title.strip(), reference_no=payload.reference_no,
-        project_id=payload.project_id, status=payload.status, due_date=payload.due_date, data=data,
+        project_id=payload.project_id, status=payload.status,
+        due_date=_legal_record_due_date(payload.area, data) if payload.area in {"developer_registration", "land_use_clearance", "noc_correspondence"} else payload.due_date,
+        data=data,
     )
     db.add(record)
     await db.flush()
@@ -967,9 +1182,12 @@ async def update_legal_record(
     update_data = payload.model_dump(exclude_unset=True)
     data = update_data.get("data", record.data or {})
     status_value = update_data.get("status", record.status)
+    _validate_registered_land_data(record.area, data or {})
     _validate_clearance_review(record.area, status_value, data or {}, current_user)
     for field, value in update_data.items():
         setattr(record, field, value)
+    if record.area in {"developer_registration", "land_use_clearance", "noc_correspondence"}:
+        record.due_date = _legal_record_due_date(record.area, record.data or {})
     await _write_legal_audit(db, record.id, record.area, "UPDATE", current_user.username, before_data, _record_snapshot(record))
     await db.commit()
     await db.refresh(record)

@@ -331,6 +331,8 @@ class LegalDashboardResponse(BaseModel):
     due_soon: List[LegalRecordResponse]
     active_litigation: int
     pending_approvals: int
+    open_approval_conditions: int = 0
+    overdue_approval_conditions: int = 0
 
 
 class LegalAuditResponse(BaseModel):

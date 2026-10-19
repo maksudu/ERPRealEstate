@@ -522,15 +522,22 @@ export class SidebarComponent implements OnInit {
       ]
     },
     {
-      id: 'collection',
-      title: 'Collections & PDC Vault',
+      id: 'installment-collection',
+      title: 'Installment & Collection',
       iconSvg: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z',
       items: [
-        { id: 'money-receipts', label: 'Money Receipts & Waterfall', route: '/installments/money-receipts' },
-        { id: 'tripartite-loans', label: 'Bank Loan Tripartite Ledger', route: '/installments/tripartite-loans' },
-        { id: 'schedules', label: 'Installment Schedules & MR', route: '/installments/schedules' },
-        { id: 'pdc', label: 'PDC Cheque Vault & Safe', route: '/installments/pdc-vault' },
-        { id: 'ni138', label: 'NI Act Legal Recovery', route: '/installments/ni138-actions' }
+        { id: 'inst-setup', label: '01. Customer Payment Setup', route: '/installments/payment-setup' },
+        { id: 'inst-booking', label: '02. Booking Money Management', route: '/installments/booking-money' },
+        { id: 'inst-downpayment', label: '03. Down Payment Management', route: '/installments/down-payment' },
+        { id: 'inst-schedule', label: '04. Installment Schedule', route: '/installments/schedules' },
+        { id: 'inst-collections', label: '05. Collection Management', route: '/installments/collections' },
+        { id: 'inst-due-overdue', label: '06. Due & Overdue Management', route: '/installments/due-overdue' },
+        { id: 'inst-late-fee', label: '07. Late Fee & Rebate', route: '/installments/late-fee-rebate' },
+        { id: 'inst-reschedule', label: '08. Payment Rescheduling', route: '/installments/rescheduling' },
+        { id: 'inst-cheques', label: '09. Cheque Management & PDC', route: '/installments/cheques' },
+        { id: 'inst-ledger', label: '10. Customer Ledger', route: '/installments/customer-ledger' },
+        { id: 'inst-refund', label: '11. Refund & Adjustment', route: '/installments/refund-adjustment' },
+        { id: 'inst-reports', label: '12. Reports & Dashboard', route: '/installments/reports-dashboard' }
       ]
     },
     {

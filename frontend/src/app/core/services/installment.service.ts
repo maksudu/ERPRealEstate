@@ -16,7 +16,21 @@ import {
   MoneyReceipt,
   MoneyReceiptAllocation,
   TripartiteLoan,
-  LoanTranche
+  LoanTranche,
+  PaymentPlanConfig,
+  PaginatedPaymentPlanConfigs,
+  DownPaymentItem,
+  PaginatedDownPayments,
+  PaginatedDueInstallments,
+  DueOverdueAgingSummary,
+  LateFeeWaiverItem,
+  PaginatedLateFeeWaivers,
+  PaymentRescheduleItem,
+  PaginatedReschedules,
+  CustomerLedgerSummary,
+  PaymentRefundAdjustmentItem,
+  PaginatedRefundAdjustments,
+  InstallmentReportsSummary
 } from '../models/installment.model';
 
 @Injectable({
@@ -248,4 +262,178 @@ export class InstallmentService {
   disburseTranche(loanId: number, trancheId: number, payload: any): Observable<LoanTranche> {
     return this.http.post<LoanTranche>(`${this.baseUrl}/tripartite-loans/${loanId}/tranches/${trancheId}/disburse`, payload);
   }
+
+  // 9. Submodule 01: Customer Payment Setup / Plan Configuration
+  getPaymentPlans(filters?: {
+    search?: string;
+    property_type?: string;
+    frequency?: string;
+    status?: string;
+    limit?: number;
+    offset?: number;
+  }): Observable<PaginatedPaymentPlanConfigs> {
+    let params = new HttpParams();
+    if (filters?.search) params = params.set('search', filters.search);
+    if (filters?.property_type) params = params.set('property_type', filters.property_type);
+    if (filters?.frequency) params = params.set('frequency', filters.frequency);
+    if (filters?.status) params = params.set('status', filters.status);
+    if (filters?.limit) params = params.set('limit', filters.limit);
+    if (filters?.offset !== undefined) params = params.set('offset', filters.offset);
+    return this.http.get<PaginatedPaymentPlanConfigs>(`${this.baseUrl}/payment-plans`, { params });
+  }
+
+  getPaymentPlan(id: number): Observable<PaymentPlanConfig> {
+    return this.http.get<PaymentPlanConfig>(`${this.baseUrl}/payment-plans/${id}`);
+  }
+
+  createPaymentPlan(payload: Partial<PaymentPlanConfig>): Observable<PaymentPlanConfig> {
+    return this.http.post<PaymentPlanConfig>(`${this.baseUrl}/payment-plans`, payload);
+  }
+
+  updatePaymentPlan(id: number, payload: Partial<PaymentPlanConfig>): Observable<PaymentPlanConfig> {
+    return this.http.put<PaymentPlanConfig>(`${this.baseUrl}/payment-plans/${id}`, payload);
+  }
+
+  deletePaymentPlan(id: number): Observable<any> {
+    return this.http.delete<any>(`${this.baseUrl}/payment-plans/${id}`);
+  }
+
+  // 10. Submodule 03: Down Payment Management
+  getDownPayments(filters?: {
+    search?: string;
+    status?: string;
+    limit?: number;
+    offset?: number;
+  }): Observable<PaginatedDownPayments> {
+    let params = new HttpParams();
+    if (filters?.search) params = params.set('search', filters.search);
+    if (filters?.status) params = params.set('status', filters.status);
+    if (filters?.limit) params = params.set('limit', filters.limit);
+    if (filters?.offset !== undefined) params = params.set('offset', filters.offset);
+    return this.http.get<PaginatedDownPayments>(`${this.baseUrl}/down-payments`, { params });
+  }
+
+  // 11. Submodule 06: Due & Overdue Management
+  getDueOverdueInstallments(filters?: {
+    bucket?: string;
+    search?: string;
+    limit?: number;
+    offset?: number;
+  }): Observable<PaginatedDueInstallments> {
+    let params = new HttpParams();
+    if (filters?.bucket) params = params.set('bucket', filters.bucket);
+    if (filters?.search) params = params.set('search', filters.search);
+    if (filters?.limit) params = params.set('limit', filters.limit);
+    if (filters?.offset !== undefined) params = params.set('offset', filters.offset);
+    return this.http.get<PaginatedDueInstallments>(`${this.baseUrl}/due-overdue`, { params });
+  }
+
+  // 12. Submodule 07: Late Fee & Rebate Management / Waiver Approvals
+  getLateFeeWaivers(filters?: {
+    status?: string;
+    limit?: number;
+    offset?: number;
+  }): Observable<PaginatedLateFeeWaivers> {
+    let params = new HttpParams();
+    if (filters?.status) params = params.set('status', filters.status);
+    if (filters?.limit) params = params.set('limit', filters.limit);
+    if (filters?.offset !== undefined) params = params.set('offset', filters.offset);
+    return this.http.get<PaginatedLateFeeWaivers>(`${this.baseUrl}/late-fee-waivers`, { params });
+  }
+
+  createLateFeeWaiver(payload: {
+    installment_id: number;
+    waived_amount: number;
+    waiver_type: string;
+    reason: string;
+  }): Observable<LateFeeWaiverItem> {
+    return this.http.post<LateFeeWaiverItem>(`${this.baseUrl}/late-fee-waivers`, payload);
+  }
+
+  approveLateFeeWaiver(waiverId: number, payload: {
+    status: string;
+    approved_by?: string;
+    notes?: string;
+  }): Observable<LateFeeWaiverItem> {
+    return this.http.put<LateFeeWaiverItem>(`${this.baseUrl}/late-fee-waivers/${waiverId}/approve`, payload);
+  }
+
+  // 13. Submodule 08: Payment Rescheduling
+  getRescheduleRequests(filters?: {
+    status?: string;
+    limit?: number;
+    offset?: number;
+  }): Observable<PaginatedReschedules> {
+    let params = new HttpParams();
+    if (filters?.status) params = params.set('status', filters.status);
+    if (filters?.limit) params = params.set('limit', filters.limit);
+    if (filters?.offset !== undefined) params = params.set('offset', filters.offset);
+    return this.http.get<PaginatedReschedules>(`${this.baseUrl}/rescheduling`, { params });
+  }
+
+  createRescheduleRequest(payload: {
+    booking_id: number;
+    reason: string;
+    proposed_installment_count: number;
+    proposed_start_date: string;
+    deferment_months?: number;
+    financial_impact_notes?: string;
+  }): Observable<PaymentRescheduleItem> {
+    return this.http.post<PaymentRescheduleItem>(`${this.baseUrl}/rescheduling`, payload);
+  }
+
+  approveRescheduleRequest(rescheduleId: number, payload: {
+    status: string;
+    approved_by?: string;
+    approval_notes?: string;
+  }): Observable<PaymentRescheduleItem> {
+    return this.http.put<PaymentRescheduleItem>(`${this.baseUrl}/rescheduling/${rescheduleId}/approve`, payload);
+  }
+
+  // 14. Submodule 10: Customer Ledger Statements
+  getCustomerLedger(bookingId: number): Observable<CustomerLedgerSummary> {
+    return this.http.get<CustomerLedgerSummary>(`${this.baseUrl}/customer-ledger/${bookingId}`);
+  }
+
+  // 15. Submodule 11: Refund & Adjustment Management
+  getRefundsAdjustments(filters?: {
+    status?: string;
+    adjustment_type?: string;
+    limit?: number;
+    offset?: number;
+  }): Observable<PaginatedRefundAdjustments> {
+    let params = new HttpParams();
+    if (filters?.status) params = params.set('status', filters.status);
+    if (filters?.adjustment_type) params = params.set('adjustment_type', filters.adjustment_type);
+    if (filters?.limit) params = params.set('limit', filters.limit);
+    if (filters?.offset !== undefined) params = params.set('offset', filters.offset);
+    return this.http.get<PaginatedRefundAdjustments>(`${this.baseUrl}/refunds-adjustments`, { params });
+  }
+
+  createRefundAdjustment(payload: {
+    booking_id: number;
+    adjustment_type: string;
+    amount: number;
+    payment_mode?: string;
+    bank_name?: string;
+    cheque_reference?: string;
+    reason: string;
+    original_receipt_id?: number;
+  }): Observable<PaymentRefundAdjustmentItem> {
+    return this.http.post<PaymentRefundAdjustmentItem>(`${this.baseUrl}/refunds-adjustments`, payload);
+  }
+
+  processRefundAdjustment(adjustmentId: number, payload: {
+    status: string;
+    approved_by?: string;
+    remarks?: string;
+  }): Observable<PaymentRefundAdjustmentItem> {
+    return this.http.put<PaymentRefundAdjustmentItem>(`${this.baseUrl}/refunds-adjustments/${adjustmentId}/process`, payload);
+  }
+
+  // 16. Submodule 12: Reports & Executive Collection Dashboard
+  getReportsSummary(): Observable<InstallmentReportsSummary> {
+    return this.http.get<InstallmentReportsSummary>(`${this.baseUrl}/reports-summary`);
+  }
 }
+

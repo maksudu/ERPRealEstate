@@ -1066,11 +1066,7 @@
         <div class="grid grid-cols-2 gap-3">
           <app-searchable-select
             label="Mandatory Severity Level"
-            [options]="[
-              { value: 'CRITICAL', label: 'CRITICAL (Occupancy Block)' },
-              { value: 'MANDATORY', label: 'MANDATORY (Standard Compliance)' },
-              { value: 'ADVISORY', label: 'ADVISORY (Good Practice)' }
-            ]"
+            categoryCode="CLEARANCE_MANDATORY_LEVEL"
             [formGroup]="conditionForm"
             controlName="mandatory_level"
             [allowCreateNew]="false"
@@ -1079,12 +1075,7 @@
 
           <app-searchable-select
             label="Compliance Status"
-            [options]="[
-              { value: 'PENDING', label: 'PENDING' },
-              { value: 'IN_PROGRESS', label: 'IN_PROGRESS' },
-              { value: 'COMPLIED', label: 'COMPLIED' },
-              { value: 'WAIVED', label: 'WAIVED' }
-            ]"
+            categoryCode="CLEARANCE_CONDITION_STATUS"
             [formGroup]="conditionForm"
             controlName="compliance_status"
             [allowCreateNew]="false"
@@ -1461,12 +1452,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <app-searchable-select
             label="Estimated Risk Level"
-            [options]="[
-              { value: 'LOW', label: 'LOW' },
-              { value: 'MEDIUM', label: 'MEDIUM' },
-              { value: 'HIGH', label: 'HIGH' },
-              { value: 'CRITICAL', label: 'CRITICAL (Stay Order on Site)' }
-            ]"
+            categoryCode="LEGAL_RISK_LEVEL"
             [formGroup]="caseForm"
             controlName="estimated_risk_level"
             [allowCreateNew]="false"

@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { LegalArea, LegalRecord, LEGAL_AREA_LABELS } from '../../core/models/legal.model';
 import { LegalService } from '../../core/services/legal.service';
+import { ProjectService } from '../../core/services/project.service';
+import { Project } from '../../core/models/project.model';
 import { CardContainerComponent, CustomButtonComponent, CustomInputComponent, CustomTextareaComponent, SearchableSelectComponent } from '../../shared/components';
 import { LEGAL_RECORD_FIELDS, LegalField } from './legal-record-fields';
 
@@ -15,12 +17,14 @@ import { LEGAL_RECORD_FIELDS, LegalField } from './legal-record-fields';
 })
 export class LegalRecordFormComponent implements OnInit {
   private legalService = inject(LegalService);
+  private projectService = inject(ProjectService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
 
   area!: LegalArea;
   recordId: number | null = null;
   fields: LegalField[] = [];
+  projectOptions: { value: number; label: string }[] = [];
   data: Record<string, any> = {};
   base: { title: string; reference_no: string; project_id: string | number | null; status: string; due_date: string } = {
     title: '', reference_no: '', project_id: null, status: '', due_date: ''
@@ -42,10 +46,35 @@ export class LegalRecordFormComponent implements OnInit {
       return;
     }
     this.area = areaParam;
+    this.projectService.getProjects().subscribe({
+      next: (projects: Project[]) => this.projectOptions = projects.map(project => ({ value: project.id, label: project.project_name + " (" + project.project_code + ")" })),
+      error: () => this.projectOptions = []
+    });
     this.fields = LEGAL_RECORD_FIELDS[this.area];
+    if (this.area === 'land_use_clearance') {
+      const authorityKeys = new Set(['approval_category', 'authority', 'authority_office', 'land_use_type', 'parcel_reference', 'application_number', 'application_submission_date', 'approval_number', 'issue_date', 'validity_period', 'expiry_date', 'approved_drawings', 'approved_project_parameters', 'amendments', 'responsible_officer', 'application_documents', 'approval_letter_reference', 'drawing_document_references']);
+      this.fields.forEach(field => field.section = authorityKeys.has(field.key) ? 'Approval register' : field.key === 'conditions' ? 'Conditions and review' : 'Documented legal review');
+    }
+    if (this.area === 'approval_condition') {
+      const ownershipKeys = new Set(['approval_reference', 'condition_text', 'source_reference', 'responsible_department', 'owner']);
+      const evidenceKeys = new Set(['evidence_required', 'evidence_reference', 'verification_reviewer', 'verification_date']);
+      this.fields.forEach(field => field.section = ownershipKeys.has(field.key) ? 'Condition and responsibility' : evidenceKeys.has(field.key) ? 'Evidence and verification' : 'Escalation and exceptions');
+    }
+    if (this.area === 'developer_registration') {
+      const registrationKeys = new Set(['legal_entity', 'registration_type', 'registration_authority', 'registration_number', 'issue_date', 'effective_date', 'expiry_date', 'renewal_due_date', 'applicable_territory', 'responsible_department', 'responsible_officer', 'renewal_requirements', 'renewal_supporting_documents', 'application_submission_date', 'application_reference', 'registration_fee_bdt', 'fee_payment_evidence', 'certificate_reference', 'verification_record']);
+      const renewalKeys = new Set(['renewal_reminder_intervals', 'reminder_channel_primary', 'reminder_channel_secondary', 'reminder_channel_tertiary', 'escalation_officer', 'auto_assign_renewal_task', 'renewal_task_owner', 'missing_documents', 'renewal_submission_approval_history']);
+      this.fields.forEach(field => field.section = registrationKeys.has(field.key) ? 'Registration master' : renewalKeys.has(field.key) ? 'Renewal tracking' : 'Continuing obligations and review');
+    }
+    if (this.area === 'registered_record') {
+      const deedKeys = new Set(['deed_type', 'registration_reference', 'deed_number', 'deed_date', 'registration_office', 'deed_parties', 'parcel_reference', 'mouza', 'jl_number', 'dag_numbers', 'khatian_number', 'transferred_area', 'ownership_share', 'transaction_reference', 'previous_deed_references', 'supporting_document_references', 'legal_review_status', 'discrepancies', 'registration_verified', 'registration_verified_by', 'registration_verified_date', 'registration_verification_reference']);
+      const mutationKeys = new Set(['survey_record_type', 'recorded_owners', 'mutation_application_number', 'mutation_application_date', 'land_office', 'mutation_hearing_date', 'mutation_application_status', 'mutation_supporting_evidence', 'mutation_outcome', 'updated_record_reference', 'mutation_follow_up', 'mutation_discrepancies']);
+      const taxKeys = new Set(['land_tax_owner', 'tax_period', 'assessment_reference', 'land_tax_amount', 'land_tax_payment_date', 'tax_receipt_reference', 'tax_receipt_evidence', 'confirmed_outstanding_amount', 'tax_reconciliation_status', 'next_tax_reminder_date']);
+      this.fields.forEach(field => field.section = field.key === 'record_type' ? 'Record classification' : deedKeys.has(field.key) ? 'Deed and registration' : mutationKeys.has(field.key) ? 'Khatian and mutation' : taxKeys.has(field.key) ? 'Land development tax' : undefined);
+    }
     this.recordId = Number(this.route.snapshot.paramMap.get('id')) || null;
     this.isReadOnly = !!this.recordId && !this.route.snapshot.url.some(segment => segment.path === 'edit');
     this.data = Object.fromEntries(this.fields.map(field => [field.key, field.type === 'checkbox' ? false : '']));
+    if (this.area === 'developer_registration') this.data['renewal_reminder_intervals'] = '90, 60, 30, 15, 7';
     if (this.recordId) this.loadRecord();
   }
 
@@ -102,6 +131,13 @@ export class LegalRecordFormComponent implements OnInit {
     this.fields.forEach(field => {
       if (payloadData[field.key] === '') delete payloadData[field.key];
     });
+    if (this.area === 'developer_registration') {
+      this.base.due_date = payloadData['expiry_date'] || payloadData['renewal_due_date'] || payloadData['review_date'] || '';
+    } else if (this.area === 'land_use_clearance') {
+      this.base.due_date = payloadData['expiry_date'] || '';
+    } else if (this.area === 'noc_correspondence') {
+      this.base.due_date = payloadData['response_due_date'] || '';
+    }
     const payload: Partial<LegalRecord> = {
       area: this.area,
       title: this.base.title.trim(),

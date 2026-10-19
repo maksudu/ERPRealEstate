@@ -131,6 +131,20 @@ export class LegalService {
     project_id?: number;
     due_from?: string;
     due_to?: string;
+    record_type?: string;
+    mutation_application_status?: string;
+    mutation_outcome?: string;
+    tax_reconciliation_status?: string;
+    registration_type?: string;
+    registration_authority?: string;
+    approval_category?: string;
+    approval_authority?: string;
+    approval_reference?: string;
+    correspondence_direction?: string;
+    correspondence_type?: string;
+    correspondence_authority?: string;
+    correspondence_external_organization?: string;
+    thread_reference?: string;
   }): Observable<LegalRecordPage> {
     let httpParams = new HttpParams().set('area', params.area)
       .set('limit', params.limit ?? 25).set('offset', params.offset ?? 0);

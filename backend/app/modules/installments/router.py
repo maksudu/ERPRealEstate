@@ -15,7 +15,8 @@ from app.modules.sales.models import Booking
 from app.modules.crm.models import Customer
 from app.modules.installments.models import (
     CustomerInstallment, BookingInstallmentSchedule, PDCVault, NI138LegalAction, InstallmentAlertLog,
-    MoneyReceipt, MoneyReceiptAllocation, TripartiteLoan, LoanTranche
+    MoneyReceipt, MoneyReceiptAllocation, TripartiteLoan, LoanTranche,
+    PaymentPlanConfig, PaymentRescheduleRequest, PaymentRefundAdjustment, LateFeeWaiverRule
 )
 from app.modules.installments.schemas import (
     CustomerInstallmentCreate, CustomerInstallmentResponse,
@@ -31,7 +32,14 @@ from app.modules.installments.schemas import (
     InstallmentMetrics,
     MoneyReceiptCreate, MoneyReceiptResponse, MoneyReceiptAllocationResponse,
     TripartiteLoanCreate, TripartiteLoanResponse, TripartiteLoanNOCRequest,
-    LoanTrancheCreate, LoanTrancheResponse, LoanTrancheInspectionRequest, LoanTrancheDisburseRequest
+    LoanTrancheCreate, LoanTrancheResponse, LoanTrancheInspectionRequest, LoanTrancheDisburseRequest,
+    PaymentPlanConfigCreate, PaymentPlanConfigUpdate, PaymentPlanConfigResponse, PaginatedPaymentPlanConfigsResponse,
+    PaymentRescheduleCreate, PaymentRescheduleApprovalRequest, PaymentRescheduleResponse, PaginatedReschedulesResponse,
+    PaymentRefundAdjustmentCreate, PaymentRefundAdjustmentProcessRequest, PaymentRefundAdjustmentResponse, PaginatedRefundAdjustmentsResponse,
+    LateFeeWaiverCreate, LateFeeWaiverApprovalRequest, LateFeeWaiverResponse, PaginatedLateFeeWaiversResponse,
+    CustomerLedgerSummaryResponse, CustomerLedgerTransaction,
+    PaginatedDueInstallmentsResponse, DueOverdueAgingSummary,
+    DownPaymentItemResponse, PaginatedDownPaymentsResponse
 )
 from app.modules.installments.legal_notice_generator import generate_section138_legal_notice_pdf
 from app.modules.accounts.services import post_customer_collection_voucher
@@ -2267,5 +2275,845 @@ async def disburse_tranche(
     resp = LoanTrancheResponse.model_validate(tranche)
     resp.mr_number = mr_resp.mr_number
     return resp
+
+
+# --------------------------------------------------------------------------
+# Submodule 01: Customer Payment Setup / Plan Configuration
+# --------------------------------------------------------------------------
+@router.get("/payment-plans", response_model=PaginatedPaymentPlanConfigsResponse)
+async def list_payment_plans(
+    search: Optional[str] = None,
+    property_type: Optional[str] = None,
+    frequency: Optional[str] = None,
+    status: Optional[str] = None,
+    limit: int = Query(25, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_db)
+):
+    stmt = select(PaymentPlanConfig)
+    count_stmt = select(func.count(PaymentPlanConfig.id))
+
+    if search:
+        search_term = f"%{search}%"
+        stmt = stmt.where(or_(
+            PaymentPlanConfig.plan_name.ilike(search_term),
+            PaymentPlanConfig.plan_code.ilike(search_term)
+        ))
+        count_stmt = count_stmt.where(or_(
+            PaymentPlanConfig.plan_name.ilike(search_term),
+            PaymentPlanConfig.plan_code.ilike(search_term)
+        ))
+    if property_type:
+        stmt = stmt.where(PaymentPlanConfig.property_type == property_type)
+        count_stmt = count_stmt.where(PaymentPlanConfig.property_type == property_type)
+    if frequency:
+        stmt = stmt.where(PaymentPlanConfig.installment_frequency == frequency)
+        count_stmt = count_stmt.where(PaymentPlanConfig.installment_frequency == frequency)
+    if status:
+        stmt = stmt.where(PaymentPlanConfig.approval_status == status)
+        count_stmt = count_stmt.where(PaymentPlanConfig.approval_status == status)
+
+    total_res = await db.execute(count_stmt)
+    total = total_res.scalar() or 0
+
+    stmt = stmt.order_by(PaymentPlanConfig.id.desc()).limit(limit).offset(offset)
+    result = await db.execute(stmt)
+    items = result.scalars().all()
+
+    return PaginatedPaymentPlanConfigsResponse(
+        items=[PaymentPlanConfigResponse.model_validate(i) for i in items],
+        total=total,
+        limit=limit,
+        offset=offset
+    )
+
+
+@router.post("/payment-plans", response_model=PaymentPlanConfigResponse, status_code=status.HTTP_201_CREATED)
+async def create_payment_plan(
+    payload: PaymentPlanConfigCreate,
+    db: AsyncSession = Depends(get_db)
+):
+    plan_code = f"PLAN-{uuid.uuid4().hex[:6].upper()}"
+    plan = PaymentPlanConfig(
+        plan_code=plan_code,
+        plan_name=payload.plan_name,
+        project_id=payload.project_id,
+        property_type=payload.property_type,
+        description=payload.description,
+        booking_percent=payload.booking_percent,
+        down_payment_percent=payload.down_payment_percent,
+        installment_frequency=payload.installment_frequency,
+        installment_count=payload.installment_count,
+        grace_period_days=payload.grace_period_days,
+        late_fee_type=payload.late_fee_type,
+        late_fee_rate=payload.late_fee_rate,
+        rebate_type=payload.rebate_type,
+        rebate_rate=payload.rebate_rate,
+        early_discount_rate=payload.early_discount_rate,
+        milestones_json=payload.milestones_json,
+        terms_conditions=payload.terms_conditions,
+        approval_status=payload.approval_status or "APPROVED"
+    )
+    db.add(plan)
+    await db.commit()
+    await db.refresh(plan)
+    return PaymentPlanConfigResponse.model_validate(plan)
+
+
+@router.get("/payment-plans/{plan_id}", response_model=PaymentPlanConfigResponse)
+async def get_payment_plan(plan_id: int, db: AsyncSession = Depends(get_db)):
+    plan = await db.get(PaymentPlanConfig, plan_id)
+    if not plan:
+        raise HTTPException(status_code=404, detail="Payment Plan Configuration not found")
+    return PaymentPlanConfigResponse.model_validate(plan)
+
+
+@router.put("/payment-plans/{plan_id}", response_model=PaymentPlanConfigResponse)
+async def update_payment_plan(
+    plan_id: int,
+    payload: PaymentPlanConfigUpdate,
+    db: AsyncSession = Depends(get_db)
+):
+    plan = await db.get(PaymentPlanConfig, plan_id)
+    if not plan:
+        raise HTTPException(status_code=404, detail="Payment Plan Configuration not found")
+    
+    update_data = payload.model_dump(exclude_unset=True)
+    for field, val in update_data.items():
+        setattr(plan, field, val)
+
+    await db.commit()
+    await db.refresh(plan)
+    return PaymentPlanConfigResponse.model_validate(plan)
+
+
+@router.delete("/payment-plans/{plan_id}")
+async def delete_payment_plan(plan_id: int, db: AsyncSession = Depends(get_db)):
+    plan = await db.get(PaymentPlanConfig, plan_id)
+    if not plan:
+        raise HTTPException(status_code=404, detail="Payment Plan not found")
+    await db.delete(plan)
+    await db.commit()
+    return {"message": "Payment plan deleted successfully", "id": plan_id}
+
+
+# --------------------------------------------------------------------------
+# Submodule 03: Down Payment Management
+# --------------------------------------------------------------------------
+@router.get("/down-payments", response_model=PaginatedDownPaymentsResponse)
+async def list_down_payments(
+    search: Optional[str] = None,
+    status_filter: Optional[str] = Query(None, alias="status"),
+    limit: int = Query(25, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_db)
+):
+    stmt = (
+        select(Booking)
+        .options(
+            selectinload(Booking.customer),
+            selectinload(Booking.unit),
+            selectinload(Booking.project)
+        )
+        .order_by(Booking.id.desc())
+    )
+    count_stmt = select(func.count(Booking.id))
+
+    if search:
+        search_term = f"%{search}%"
+        stmt = stmt.where(or_(
+            Booking.booking_reference_no.ilike(search_term),
+            Booking.applicant_name.ilike(search_term)
+        ))
+        count_stmt = count_stmt.where(or_(
+            Booking.booking_reference_no.ilike(search_term),
+            Booking.applicant_name.ilike(search_term)
+        ))
+
+    total_res = await db.execute(count_stmt)
+    total = total_res.scalar() or 0
+
+    stmt = stmt.limit(limit).offset(offset)
+    result = await db.execute(stmt)
+    bookings = result.scalars().all()
+
+    items = []
+    for b in bookings:
+        contract = float(b.final_contract_value or 0.0)
+        earnest = float(b.earnest_money_received or 0.0)
+        dp_pct = 20.0 # Default BD real estate standard down payment 20%
+        req_dp = contract * (dp_pct / 100.0)
+        paid_dp = float(b.total_down_payment_received or earnest)
+        outstanding = max(0.0, req_dp - paid_dp)
+        
+        status_val = "PENDING"
+        if paid_dp >= req_dp and req_dp > 0:
+            status_val = "PAID"
+        elif paid_dp > 0:
+            status_val = "PARTIALLY_PAID"
+
+        if status_filter and status_val != status_filter.upper():
+            continue
+
+        cust_name = b.customer.full_name_en if b.customer else (b.applicant_name or "N/A")
+        cust_phone = b.customer.phone_primary if b.customer else b.applicant_mobile
+        unit_no = b.unit.unit_number if b.unit else "N/A"
+        proj_name = b.project.name_en if b.project else "N/A"
+
+        items.append(DownPaymentItemResponse(
+            booking_id=b.id,
+            booking_reference_no=b.booking_reference_no or f"BK-{b.id}",
+            customer_name=cust_name,
+            customer_phone=cust_phone,
+            unit_number=unit_no,
+            project_name=proj_name,
+            contract_price=contract,
+            booking_money_received=earnest,
+            down_payment_percentage=dp_pct,
+            required_down_payment=req_dp,
+            paid_down_payment=paid_dp,
+            outstanding_down_payment=outstanding,
+            status=status_val,
+            due_date=b.booking_date
+        ))
+
+    return PaginatedDownPaymentsResponse(
+        items=items,
+        total=total,
+        limit=limit,
+        offset=offset
+    )
+
+
+# --------------------------------------------------------------------------
+# Submodule 06: Due & Overdue Management
+# --------------------------------------------------------------------------
+@router.get("/due-overdue", response_model=PaginatedDueInstallmentsResponse)
+async def list_due_and_overdue(
+    bucket: Optional[str] = None, # 'UPCOMING', 'DUE_TODAY', 'OVERDUE_1_30', 'OVERDUE_31_60', 'OVERDUE_61_90', 'OVERDUE_90_PLUS'
+    search: Optional[str] = None,
+    limit: int = Query(25, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_db)
+):
+    today = date.today()
+
+    stmt = (
+        select(CustomerInstallment)
+        .options(
+            selectinload(CustomerInstallment.booking).selectinload(Booking.customer),
+            selectinload(CustomerInstallment.booking).selectinload(Booking.unit),
+            selectinload(CustomerInstallment.booking).selectinload(Booking.project)
+        )
+        .where(CustomerInstallment.status.in_(["UPCOMING", "DUE", "OVERDUE", "PARTIALLY_PAID"]))
+        .order_by(CustomerInstallment.due_date.asc())
+    )
+
+    result = await db.execute(stmt)
+    all_unpaid = result.scalars().all()
+
+    # Calculate summary metrics & bucket partitioning
+    summary = DueOverdueAgingSummary()
+    filtered_items = []
+
+    for item in all_unpaid:
+        balance = float(item.payable_amount or 0.0) - float(item.paid_amount or 0.0)
+        if balance <= 0:
+            continue
+
+        days_diff = (today - item.due_date).days if item.due_date else 0
+
+        # Categorize
+        curr_bucket = "UPCOMING"
+        if days_diff < 0:
+            curr_bucket = "UPCOMING"
+            summary.upcoming_due_count += 1
+            summary.upcoming_due_amount += balance
+        elif days_diff == 0:
+            curr_bucket = "DUE_TODAY"
+            summary.due_today_count += 1
+            summary.due_today_amount += balance
+        elif 1 <= days_diff <= 30:
+            curr_bucket = "OVERDUE_1_30"
+            summary.overdue_1_30_count += 1
+            summary.overdue_1_30_amount += balance
+            summary.total_overdue_count += 1
+            summary.total_overdue_amount += balance
+        elif 31 <= days_diff <= 60:
+            curr_bucket = "OVERDUE_31_60"
+            summary.overdue_31_60_count += 1
+            summary.overdue_31_60_amount += balance
+            summary.total_overdue_count += 1
+            summary.total_overdue_amount += balance
+        elif 61 <= days_diff <= 90:
+            curr_bucket = "OVERDUE_61_90"
+            summary.overdue_61_90_count += 1
+            summary.overdue_61_90_amount += balance
+            summary.total_overdue_count += 1
+            summary.total_overdue_amount += balance
+        else:
+            curr_bucket = "OVERDUE_90_PLUS"
+            summary.overdue_90_plus_count += 1
+            summary.overdue_90_plus_amount += balance
+            summary.total_overdue_count += 1
+            summary.total_overdue_amount += balance
+
+        # Apply bucket filter
+        if bucket and bucket.upper() != curr_bucket:
+            continue
+
+        # Apply search filter
+        if search:
+            s_term = search.lower()
+            cust_name = item.booking.customer.full_name_en.lower() if (item.booking and item.booking.customer) else ""
+            b_ref = item.booking.booking_reference_no.lower() if item.booking else ""
+            if s_term not in cust_name and s_term not in b_ref and s_term not in item.title.lower():
+                continue
+
+        resp_item = CustomerInstallmentResponse.model_validate(item)
+        if item.booking:
+            resp_item.booking_reference_no = item.booking.booking_reference_no
+            if item.booking.customer:
+                resp_item.customer_name = item.booking.customer.full_name_en
+                resp_item.customer_phone = item.booking.customer.phone_primary
+            if item.booking.unit:
+                resp_item.unit_number = item.booking.unit.unit_number
+            if item.booking.project:
+                resp_item.project_name = item.booking.project.name_en
+        filtered_items.append(resp_item)
+
+    total_count = len(filtered_items)
+    paged_items = filtered_items[offset : offset + limit]
+
+    return PaginatedDueInstallmentsResponse(
+        items=paged_items,
+        total=total_count,
+        limit=limit,
+        offset=offset,
+        summary=summary
+    )
+
+
+# --------------------------------------------------------------------------
+# Submodule 07: Late Fee & Rebate Management / Waiver Approvals
+# --------------------------------------------------------------------------
+@router.get("/late-fee-waivers", response_model=PaginatedLateFeeWaiversResponse)
+async def list_late_fee_waivers(
+    status: Optional[str] = None,
+    limit: int = Query(25, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_db)
+):
+    stmt = (
+        select(LateFeeWaiverRule)
+        .options(
+            selectinload(LateFeeWaiverRule.installment),
+            selectinload(LateFeeWaiverRule.booking).selectinload(Booking.customer),
+            selectinload(LateFeeWaiverRule.booking).selectinload(Booking.unit)
+        )
+        .order_by(LateFeeWaiverRule.id.desc())
+    )
+    count_stmt = select(func.count(LateFeeWaiverRule.id))
+
+    if status:
+        stmt = stmt.where(LateFeeWaiverRule.status == status.upper())
+        count_stmt = count_stmt.where(LateFeeWaiverRule.status == status.upper())
+
+    total_res = await db.execute(count_stmt)
+    total = total_res.scalar() or 0
+
+    stmt = stmt.limit(limit).offset(offset)
+    result = await db.execute(stmt)
+    items = result.scalars().all()
+
+    responses = []
+    for w in items:
+        resp = LateFeeWaiverResponse.model_validate(w)
+        if w.installment:
+            resp.installment_title = w.installment.title
+        if w.booking:
+            resp.booking_reference_no = w.booking.booking_reference_no
+            if w.booking.customer:
+                resp.customer_name = w.booking.customer.full_name_en
+                resp.customer_phone = w.booking.customer.phone_primary
+            if w.booking.unit:
+                resp.unit_number = w.booking.unit.unit_number
+        responses.append(resp)
+
+    return PaginatedLateFeeWaiversResponse(
+        items=responses,
+        total=total,
+        limit=limit,
+        offset=offset
+    )
+
+
+@router.post("/late-fee-waivers", response_model=LateFeeWaiverResponse, status_code=status.HTTP_201_CREATED)
+async def create_late_fee_waiver(
+    payload: LateFeeWaiverCreate,
+    db: AsyncSession = Depends(get_db)
+):
+    inst = await db.get(CustomerInstallment, payload.installment_id)
+    if not inst:
+        raise HTTPException(status_code=404, detail="Installment not found")
+
+    orig_fee = float(inst.late_fee_accrued or 0.0)
+    waived = min(orig_fee, float(payload.waived_amount))
+    adj_fee = max(0.0, orig_fee - waived)
+
+    waiver_code = f"WAIV-{uuid.uuid4().hex[:6].upper()}"
+    waiver = LateFeeWaiverRule(
+        waiver_code=waiver_code,
+        installment_id=inst.id,
+        booking_id=inst.booking_id,
+        customer_id=inst.booking.customer_id if inst.booking else 1,
+        original_late_fee=orig_fee,
+        waived_amount=waived,
+        adjusted_late_fee=adj_fee,
+        waiver_type=payload.waiver_type,
+        reason=payload.reason,
+        status="PENDING"
+    )
+    db.add(waiver)
+    await db.commit()
+    await db.refresh(waiver)
+
+    resp = LateFeeWaiverResponse.model_validate(waiver)
+    resp.installment_title = inst.title
+    return resp
+
+
+@router.put("/late-fee-waivers/{waiver_id}/approve", response_model=LateFeeWaiverResponse)
+async def approve_late_fee_waiver(
+    waiver_id: int,
+    payload: LateFeeWaiverApprovalRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    waiver = await db.get(LateFeeWaiverRule, waiver_id)
+    if not waiver:
+        raise HTTPException(status_code=404, detail="Waiver request not found")
+
+    waiver.status = payload.status.upper()
+    waiver.approved_by = payload.approved_by
+    waiver.approval_date = date.today()
+    waiver.notes = payload.notes
+
+    if waiver.status == "APPROVED":
+        inst = await db.get(CustomerInstallment, waiver.installment_id)
+        if inst:
+            inst.late_fee_accrued = waiver.adjusted_late_fee
+
+    await db.commit()
+    await db.refresh(waiver)
+    return LateFeeWaiverResponse.model_validate(waiver)
+
+
+# --------------------------------------------------------------------------
+# Submodule 08: Payment Rescheduling
+# --------------------------------------------------------------------------
+@router.get("/rescheduling", response_model=PaginatedReschedulesResponse)
+async def list_reschedule_requests(
+    status: Optional[str] = None,
+    limit: int = Query(25, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_db)
+):
+    stmt = (
+        select(PaymentRescheduleRequest)
+        .options(
+            selectinload(PaymentRescheduleRequest.booking).selectinload(Booking.customer),
+            selectinload(PaymentRescheduleRequest.booking).selectinload(Booking.unit),
+            selectinload(PaymentRescheduleRequest.booking).selectinload(Booking.project)
+        )
+        .order_by(PaymentRescheduleRequest.id.desc())
+    )
+    count_stmt = select(func.count(PaymentRescheduleRequest.id))
+
+    if status:
+        stmt = stmt.where(PaymentRescheduleRequest.status == status.upper())
+        count_stmt = count_stmt.where(PaymentRescheduleRequest.status == status.upper())
+
+    total_res = await db.execute(count_stmt)
+    total = total_res.scalar() or 0
+
+    stmt = stmt.limit(limit).offset(offset)
+    result = await db.execute(stmt)
+    items = result.scalars().all()
+
+    responses = []
+    for r in items:
+        resp = PaymentRescheduleResponse.model_validate(r)
+        if r.booking:
+            resp.booking_reference_no = r.booking.booking_reference_no
+            if r.booking.customer:
+                resp.customer_name = r.booking.customer.full_name_en
+                resp.customer_phone = r.booking.customer.phone_primary
+            if r.booking.unit:
+                resp.unit_number = r.booking.unit.unit_number
+            if r.booking.project:
+                resp.project_name = r.booking.project.name_en
+        responses.append(resp)
+
+    return PaginatedReschedulesResponse(
+        items=responses,
+        total=total,
+        limit=limit,
+        offset=offset
+    )
+
+
+@router.post("/rescheduling", response_model=PaymentRescheduleResponse, status_code=status.HTTP_201_CREATED)
+async def create_reschedule_request(
+    payload: PaymentRescheduleCreate,
+    db: AsyncSession = Depends(get_db)
+):
+    booking = await db.get(Booking, payload.booking_id)
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+
+    # Calculate existing balance
+    stmt = select(CustomerInstallment).where(
+        CustomerInstallment.booking_id == payload.booking_id,
+        CustomerInstallment.status.in_(["UPCOMING", "DUE", "OVERDUE", "PARTIALLY_PAID"])
+    )
+    unpaid_res = await db.execute(stmt)
+    unpaid = unpaid_res.scalars().all()
+    outstanding = sum(float(i.payable_amount) - float(i.paid_amount) for i in unpaid)
+
+    resch_code = f"RESCH-{uuid.uuid4().hex[:6].upper()}"
+    resch = PaymentRescheduleRequest(
+        reschedule_code=resch_code,
+        booking_id=payload.booking_id,
+        customer_id=booking.customer_id,
+        request_date=payload.request_date or date.today(),
+        reason=payload.reason,
+        existing_balance=outstanding,
+        proposed_installment_count=payload.proposed_installment_count,
+        proposed_start_date=payload.proposed_start_date,
+        deferment_months=payload.deferment_months,
+        financial_impact_notes=payload.financial_impact_notes,
+        status="PENDING"
+    )
+    db.add(resch)
+    await db.commit()
+    await db.refresh(resch)
+
+    resp = PaymentRescheduleResponse.model_validate(resch)
+    resp.booking_reference_no = booking.booking_reference_no
+    return resp
+
+
+@router.put("/rescheduling/{reschedule_id}/approve", response_model=PaymentRescheduleResponse)
+async def approve_reschedule_request(
+    reschedule_id: int,
+    payload: PaymentRescheduleApprovalRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    resch = await db.get(PaymentRescheduleRequest, reschedule_id)
+    if not resch:
+        raise HTTPException(status_code=404, detail="Reschedule request not found")
+
+    resch.status = payload.status.upper()
+    resch.approved_by = payload.approved_by
+    resch.approval_date = date.today()
+    resch.approval_notes = payload.approval_notes
+
+    if resch.status == "APPROVED":
+        # Automatically update future installments based on rescheduled timeline
+        stmt = (
+            select(CustomerInstallment)
+            .where(
+                CustomerInstallment.booking_id == resch.booking_id,
+                CustomerInstallment.status.in_(["UPCOMING", "DUE", "OVERDUE"])
+            )
+            .order_by(CustomerInstallment.installment_no.asc())
+        )
+        inst_res = await db.execute(stmt)
+        unpaid_insts = inst_res.scalars().all()
+
+        curr_due = resch.proposed_start_date
+        for inst in unpaid_insts:
+            inst.due_date = curr_due
+            inst.status = "UPCOMING"
+            inst.schedule_version = "v1.1-Rescheduled"
+            curr_due = curr_due + timedelta(days=30)
+
+    await db.commit()
+    await db.refresh(resch)
+    return PaymentRescheduleResponse.model_validate(resch)
+
+
+# --------------------------------------------------------------------------
+# Submodule 10: Customer Ledger Statements
+# --------------------------------------------------------------------------
+@router.get("/customer-ledger/{booking_id}", response_model=CustomerLedgerSummaryResponse)
+async def get_customer_ledger(booking_id: int, db: AsyncSession = Depends(get_db)):
+    stmt = (
+        select(Booking)
+        .options(
+            selectinload(Booking.customer),
+            selectinload(Booking.unit),
+            selectinload(Booking.project),
+            selectinload(Booking.installments),
+            selectinload(Booking.money_receipts)
+        )
+        .where(Booking.id == booking_id)
+    )
+    res = await db.execute(stmt)
+    booking = res.scalar_one_or_none()
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+
+    sale_price = float(booking.final_contract_value or 0.0)
+    customer_name = booking.customer.full_name_en if booking.customer else (booking.applicant_name or "N/A")
+
+    transactions = []
+    running_balance = 0.0
+
+    # 1. Booking Money Realization
+    if float(booking.earnest_money_received or 0.0) > 0:
+        bm_amt = float(booking.earnest_money_received)
+        # Debit: Booking milestone
+        running_balance += bm_amt
+        transactions.append(CustomerLedgerTransaction(
+            transaction_date=booking.booking_date or date.today(),
+            transaction_type="BOOKING_DUE",
+            reference_no=booking.booking_reference_no or f"BK-{booking.id}",
+            description="Initial Booking Realization Due",
+            debit_amount=bm_amt,
+            credit_amount=0.00,
+            running_balance=running_balance
+        ))
+        # Credit: Booking money received
+        running_balance -= bm_amt
+        transactions.append(CustomerLedgerTransaction(
+            transaction_date=booking.booking_date or date.today(),
+            transaction_type="BOOKING_RECEIPT",
+            reference_no=f"MR-BK-{booking.id}",
+            description="Booking Money Payment Credited",
+            debit_amount=0.00,
+            credit_amount=bm_amt,
+            running_balance=running_balance
+        ))
+
+    # 2. Installments Dues
+    for inst in sorted(booking.installments or [], key=lambda x: x.due_date or date.today()):
+        amt = float(inst.payable_amount or 0.0)
+        running_balance += amt
+        transactions.append(CustomerLedgerTransaction(
+            transaction_date=inst.due_date,
+            transaction_type="INSTALLMENT_DUE",
+            reference_no=f"INST-#{inst.installment_no}",
+            description=f"{inst.title} Due Obligation",
+            debit_amount=amt,
+            credit_amount=0.00,
+            running_balance=running_balance
+        ))
+
+    # 3. Money Receipts (Payments Received)
+    for mr in sorted(booking.money_receipts or [], key=lambda x: x.receipt_date or date.today()):
+        if mr.status == "CLEARED":
+            amt = float(mr.amount_received or 0.0)
+            running_balance -= amt
+            transactions.append(CustomerLedgerTransaction(
+                transaction_date=mr.receipt_date,
+                transaction_type="MONEY_RECEIPT",
+                reference_no=mr.mr_number,
+                description=f"Collection Received via {mr.payment_mode} (Ref: {mr.instrument_no or 'N/A'})",
+                debit_amount=0.00,
+                credit_amount=amt,
+                running_balance=running_balance
+            ))
+
+    total_billed = sum(t.debit_amount for t in transactions)
+    total_paid = sum(t.credit_amount for t in transactions)
+    outstanding = max(0.0, total_billed - total_paid)
+    advance = max(0.0, total_paid - total_billed)
+
+    return CustomerLedgerSummaryResponse(
+        booking_id=booking.id,
+        booking_reference_no=booking.booking_reference_no or f"BK-{booking.id}",
+        customer_id=booking.customer_id,
+        customer_name=customer_name,
+        customer_phone=booking.customer.phone_primary if booking.customer else booking.applicant_mobile,
+        customer_email=booking.customer.email if booking.customer else None,
+        project_name=booking.project.name_en if booking.project else None,
+        unit_number=booking.unit.unit_number if booking.unit else None,
+        agreed_sale_price=sale_price,
+        total_billed=total_billed,
+        total_paid=total_paid,
+        total_outstanding=outstanding,
+        total_advance_balance=advance,
+        transactions=sorted(transactions, key=lambda x: x.transaction_date)
+    )
+
+
+# --------------------------------------------------------------------------
+# Submodule 11: Refund & Adjustment Management
+# --------------------------------------------------------------------------
+@router.get("/refunds-adjustments", response_model=PaginatedRefundAdjustmentsResponse)
+async def list_refunds_and_adjustments(
+    status: Optional[str] = None,
+    adjustment_type: Optional[str] = None,
+    limit: int = Query(25, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_db)
+):
+    stmt = (
+        select(PaymentRefundAdjustment)
+        .options(
+            selectinload(PaymentRefundAdjustment.booking).selectinload(Booking.customer),
+            selectinload(PaymentRefundAdjustment.booking).selectinload(Booking.unit),
+            selectinload(PaymentRefundAdjustment.booking).selectinload(Booking.project)
+        )
+        .order_by(PaymentRefundAdjustment.id.desc())
+    )
+    count_stmt = select(func.count(PaymentRefundAdjustment.id))
+
+    if status:
+        stmt = stmt.where(PaymentRefundAdjustment.status == status.upper())
+        count_stmt = count_stmt.where(PaymentRefundAdjustment.status == status.upper())
+    if adjustment_type:
+        stmt = stmt.where(PaymentRefundAdjustment.adjustment_type == adjustment_type.upper())
+        count_stmt = count_stmt.where(PaymentRefundAdjustment.adjustment_type == adjustment_type.upper())
+
+    total_res = await db.execute(count_stmt)
+    total = total_res.scalar() or 0
+
+    stmt = stmt.limit(limit).offset(offset)
+    result = await db.execute(stmt)
+    items = result.scalars().all()
+
+    responses = []
+    for a in items:
+        resp = PaymentRefundAdjustmentResponse.model_validate(a)
+        if a.booking:
+            resp.booking_reference_no = a.booking.booking_reference_no
+            if a.booking.customer:
+                resp.customer_name = a.booking.customer.full_name_en
+                resp.customer_phone = a.booking.customer.phone_primary
+            if a.booking.unit:
+                resp.unit_number = a.booking.unit.unit_number
+            if a.booking.project:
+                resp.project_name = a.booking.project.name_en
+        responses.append(resp)
+
+    return PaginatedRefundAdjustmentsResponse(
+        items=responses,
+        total=total,
+        limit=limit,
+        offset=offset
+    )
+
+
+@router.post("/refunds-adjustments", response_model=PaymentRefundAdjustmentResponse, status_code=status.HTTP_201_CREATED)
+async def create_refund_adjustment(
+    payload: PaymentRefundAdjustmentCreate,
+    db: AsyncSession = Depends(get_db)
+):
+    booking = await db.get(Booking, payload.booking_id)
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+
+    adj_code = f"ADJ-{uuid.uuid4().hex[:6].upper()}"
+    adj = PaymentRefundAdjustment(
+        adjustment_code=adj_code,
+        booking_id=payload.booking_id,
+        customer_id=booking.customer_id,
+        adjustment_type=payload.adjustment_type.upper(),
+        original_receipt_id=payload.original_receipt_id,
+        amount=payload.amount,
+        payment_mode=payload.payment_mode,
+        bank_name=payload.bank_name,
+        cheque_reference=payload.cheque_reference,
+        reason=payload.reason,
+        status="PENDING"
+    )
+    db.add(adj)
+    await db.commit()
+    await db.refresh(adj)
+
+    resp = PaymentRefundAdjustmentResponse.model_validate(adj)
+    resp.booking_reference_no = booking.booking_reference_no
+    return resp
+
+
+@router.put("/refunds-adjustments/{adj_id}/process", response_model=PaymentRefundAdjustmentResponse)
+async def process_refund_adjustment(
+    adj_id: int,
+    payload: PaymentRefundAdjustmentProcessRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    adj = await db.get(PaymentRefundAdjustment, adj_id)
+    if not adj:
+        raise HTTPException(status_code=404, detail="Adjustment record not found")
+
+    adj.status = payload.status.upper()
+    adj.approved_by = payload.approved_by
+    adj.approval_date = date.today()
+    if adj.status == "PROCESSED":
+        adj.processed_date = date.today()
+    if payload.remarks:
+        adj.remarks = payload.remarks
+
+    await db.commit()
+    await db.refresh(adj)
+    return PaymentRefundAdjustmentResponse.model_validate(adj)
+
+
+# --------------------------------------------------------------------------
+# Submodule 12: Reports & Executive Collection Dashboard
+# --------------------------------------------------------------------------
+@router.get("/reports-summary")
+async def get_installment_reports_summary(db: AsyncSession = Depends(get_db)):
+    # 1. Total collections by instrument mode
+    receipts_res = await db.execute(select(MoneyReceipt).where(MoneyReceipt.status == "CLEARED"))
+    all_receipts = receipts_res.scalars().all()
+
+    total_collected = sum(float(r.amount_received or 0.0) for r in all_receipts)
+    cash_collected = sum(float(r.amount_received or 0.0) for r in all_receipts if r.payment_mode == "CASH")
+    bank_collected = sum(float(r.amount_received or 0.0) for r in all_receipts if r.payment_mode in ["BANK_TRANSFER", "BEFTN", "RTGS"])
+    cheque_collected = sum(float(r.amount_received or 0.0) for r in all_receipts if r.payment_mode == "CHEQUE")
+    digital_collected = sum(float(r.amount_received or 0.0) for r in all_receipts if r.payment_mode in ["BKASH", "NAGAD"])
+
+    # 2. Overdue & Due Totals
+    inst_res = await db.execute(select(CustomerInstallment))
+    all_insts = inst_res.scalars().all()
+    today = date.today()
+
+    total_billed = sum(float(i.payable_amount or 0.0) for i in all_insts)
+    total_inst_paid = sum(float(i.paid_amount or 0.0) for i in all_insts)
+    overdue_amount = sum(float(i.payable_amount or 0.0) - float(i.paid_amount or 0.0) for i in all_insts if i.due_date and i.due_date < today and i.status != "PAID")
+    due_this_month = sum(float(i.payable_amount or 0.0) - float(i.paid_amount or 0.0) for i in all_insts if i.due_date and i.due_date.month == today.month and i.due_date.year == today.year)
+
+    # 3. Monthly collection forecast (Next 6 months)
+    forecast = []
+    for month_offset in range(6):
+        target_month = (today.month + month_offset - 1) % 12 + 1
+        target_year = today.year + (today.month + month_offset - 1) // 12
+        expected_amt = sum(
+            float(i.payable_amount or 0.0)
+            for i in all_insts
+            if i.due_date and i.due_date.month == target_month and i.due_date.year == target_year
+        )
+        forecast.append({
+            "month": f"{target_year}-{target_month:02d}",
+            "expected_amount": expected_amt
+        })
+
+    return {
+        "total_collected": total_collected,
+        "cash_collected": cash_collected,
+        "bank_collected": bank_collected,
+        "cheque_collected": cheque_collected,
+        "digital_collected": digital_collected,
+        "total_billed": total_billed,
+        "total_paid": total_inst_paid,
+        "total_overdue": overdue_amount,
+        "due_this_month": due_this_month,
+        "collection_efficiency_percent": round((total_collected / total_billed * 100.0), 2) if total_billed > 0 else 100.0,
+        "monthly_forecast": forecast
+    }
+
 
 

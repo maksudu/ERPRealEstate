@@ -346,3 +346,136 @@ class LoanTranche(Base):
     receipt = relationship("MoneyReceipt")
 
 
+class PaymentPlanConfig(Base):
+    """
+    Submodule 01: Customer Payment Setup / Plan Configuration.
+    Stores project-wise or property-type payment plans, installment frequencies, milestones, late fee & rebate rules.
+    """
+    __tablename__ = "sls_payment_plan_configs"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    plan_code = Column(String(64), unique=True, nullable=False, index=True)
+    plan_name = Column(String(191), nullable=False)
+    project_id = Column(BigInteger, nullable=True, index=True)
+    property_type = Column(String(64), nullable=True, default="APARTMENT")
+    description = Column(Text, nullable=True)
+
+    booking_percent = Column(Numeric(5, 2), nullable=False, default=10.00)
+    down_payment_percent = Column(Numeric(5, 2), nullable=False, default=20.00)
+    installment_frequency = Column(String(32), nullable=False, default="MONTHLY")
+    installment_count = Column(Integer, nullable=False, default=36)
+    grace_period_days = Column(Integer, nullable=False, default=15)
+
+    late_fee_type = Column(String(32), nullable=False, default="PERCENTAGE")
+    late_fee_rate = Column(Numeric(5, 2), nullable=False, default=2.00)
+    rebate_type = Column(String(32), nullable=False, default="PERCENTAGE")
+    rebate_rate = Column(Numeric(5, 2), nullable=False, default=0.00)
+    early_discount_rate = Column(Numeric(5, 2), nullable=False, default=0.00)
+
+    milestones_json = Column(Text, nullable=True)
+    terms_conditions = Column(Text, nullable=True)
+    approval_status = Column(String(32), nullable=False, default="APPROVED", index=True)
+    is_active = Column(Boolean, nullable=False, default=True)
+
+    created_at = Column(TIMESTAMP, server_default=func.now())
+    updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
+
+
+class PaymentRescheduleRequest(Base):
+    """
+    Submodule 08: Payment Rescheduling & Schedule Revision.
+    Manages client requests for installment deferment, plan changes, and audit history.
+    """
+    __tablename__ = "sls_payment_reschedule_requests"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    reschedule_code = Column(String(64), unique=True, nullable=False, index=True)
+    booking_id = Column(BigInteger, ForeignKey("sls_bookings.id", ondelete="CASCADE"), nullable=False, index=True)
+    customer_id = Column(BigInteger, ForeignKey("crm_customers.id", ondelete="RESTRICT"), nullable=False, index=True)
+
+    request_date = Column(Date, nullable=False, default=func.current_date())
+    reason = Column(Text, nullable=False)
+    existing_balance = Column(Numeric(14, 2), nullable=False, default=0.00)
+    proposed_installment_count = Column(Integer, nullable=False, default=24)
+    proposed_start_date = Column(Date, nullable=False)
+    deferment_months = Column(Integer, nullable=False, default=0)
+
+    revised_plan_json = Column(Text, nullable=True)
+    financial_impact_notes = Column(Text, nullable=True)
+
+    status = Column(String(32), nullable=False, default="PENDING", index=True)
+    approved_by = Column(String(128), nullable=True)
+    approval_date = Column(Date, nullable=True)
+    approval_notes = Column(Text, nullable=True)
+
+    created_at = Column(TIMESTAMP, server_default=func.now())
+    updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
+
+    booking = relationship("Booking")
+    customer = relationship("Customer")
+
+
+class PaymentRefundAdjustment(Base):
+    """
+    Submodule 11: Refund & Adjustment Management.
+    Handles Excess Payment Refunds, Booking Refunds, Receipt Adjustments, Payment Reversals, Credit Adjustments.
+    """
+    __tablename__ = "sls_payment_refund_adjustments"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    adjustment_code = Column(String(64), unique=True, nullable=False, index=True)
+    booking_id = Column(BigInteger, ForeignKey("sls_bookings.id", ondelete="CASCADE"), nullable=False, index=True)
+    customer_id = Column(BigInteger, ForeignKey("crm_customers.id", ondelete="RESTRICT"), nullable=False, index=True)
+
+    adjustment_type = Column(String(64), nullable=False, index=True)
+    original_receipt_id = Column(BigInteger, nullable=True)
+    amount = Column(Numeric(14, 2), nullable=False)
+    payment_mode = Column(String(32), nullable=False, default="BANK_TRANSFER")
+    bank_name = Column(String(128), nullable=True)
+    cheque_reference = Column(String(64), nullable=True)
+    reason = Column(Text, nullable=False)
+
+    status = Column(String(32), nullable=False, default="PENDING", index=True)
+    approved_by = Column(String(128), nullable=True)
+    approval_date = Column(Date, nullable=True)
+    processed_date = Column(Date, nullable=True)
+    remarks = Column(Text, nullable=True)
+
+    created_at = Column(TIMESTAMP, server_default=func.now())
+    updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
+
+    booking = relationship("Booking")
+    customer = relationship("Customer")
+
+
+class LateFeeWaiverRule(Base):
+    """
+    Submodule 07: Late Fee & Rebate Management / Waiver Approvals.
+    """
+    __tablename__ = "sls_late_fee_waivers"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    waiver_code = Column(String(64), unique=True, nullable=False, index=True)
+    installment_id = Column(BigInteger, ForeignKey("sls_customer_installments.id", ondelete="CASCADE"), nullable=False, index=True)
+    booking_id = Column(BigInteger, ForeignKey("sls_bookings.id", ondelete="CASCADE"), nullable=False, index=True)
+    customer_id = Column(BigInteger, ForeignKey("crm_customers.id", ondelete="RESTRICT"), nullable=False, index=True)
+
+    original_late_fee = Column(Numeric(14, 2), nullable=False)
+    waived_amount = Column(Numeric(14, 2), nullable=False)
+    adjusted_late_fee = Column(Numeric(14, 2), nullable=False, default=0.00)
+    waiver_type = Column(String(32), nullable=False, default="PARTIAL")
+    reason = Column(Text, nullable=False)
+
+    status = Column(String(32), nullable=False, default="PENDING", index=True)
+    approved_by = Column(String(128), nullable=True)
+    approval_date = Column(Date, nullable=True)
+    notes = Column(Text, nullable=True)
+
+    created_at = Column(TIMESTAMP, server_default=func.now())
+
+    installment = relationship("CustomerInstallment")
+    booking = relationship("Booking")
+    customer = relationship("Customer")
+
+
+

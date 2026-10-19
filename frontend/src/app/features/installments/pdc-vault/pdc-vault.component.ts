@@ -15,6 +15,8 @@ import {
   SearchableSelectComponent
 } from '../../../shared/components';
 
+import { InstallmentsNavComponent } from '../installments-nav.component';
+
 @Component({
   selector: 'app-pdc-vault',
   standalone: true,
@@ -22,6 +24,7 @@ import {
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
+    InstallmentsNavComponent,
     CardContainerComponent,
     CustomInputComponent,
     CustomButtonComponent,

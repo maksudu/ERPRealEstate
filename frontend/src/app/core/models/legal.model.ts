@@ -190,6 +190,8 @@ export interface LegalDashboard {
   due_soon: LegalRecord[];
   active_litigation: number;
   pending_approvals: number;
+  open_approval_conditions: number;
+  overdue_approval_conditions: number;
 }
 
 export interface LegalAuditEvent {

@@ -13,6 +13,8 @@ import {
   SearchableSelectComponent
 } from '../../../shared/components';
 
+import { InstallmentsNavComponent } from '../installments-nav.component';
+
 @Component({
   selector: 'app-money-receipts',
   standalone: true,
@@ -20,6 +22,7 @@ import {
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
+    InstallmentsNavComponent,
     CardContainerComponent,
     CustomInputComponent,
     CustomTextareaComponent,

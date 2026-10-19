@@ -29,9 +29,9 @@
         <div class="grid gap-4 md:grid-cols-2">
           <app-custom-input label="Record title" placeholder="Enter a clear record title" [required]="true" [disabled]="isReadOnly" [(ngModel)]="base.title" name="title"></app-custom-input>
           <app-custom-input label="Reference number" placeholder="Optional internal or authority reference" [disabled]="isReadOnly" [(ngModel)]="base.reference_no" name="reference_no"></app-custom-input>
-          <app-custom-input label="Project ID" type="number" placeholder="Optional project identifier" hint="Leave blank when the record is not project-specific." [disabled]="isReadOnly" [(ngModel)]="base.project_id" name="project_id"></app-custom-input>
-          <app-searchable-select label="Status" categoryCode="LEGAL_RECORD_STATUS" placeholder="Choose or add a status" [disabled]="isReadOnly" [(ngModel)]="base.status" name="status"></app-searchable-select>
-          <app-custom-input label="Next due date" type="date" [disabled]="isReadOnly" [(ngModel)]="base.due_date" name="due_date"></app-custom-input>
+          <app-searchable-select label="Project" placeholder="Unassigned or choose a project" [options]="projectOptions" [allowCreateNew]="false" [disabled]="isReadOnly" [(ngModel)]="base.project_id" name="project_id"></app-searchable-select>
+          <app-searchable-select [label]="area === 'developer_registration' ? 'Registration lifecycle status' : area === 'land_use_clearance' ? 'Approval status' : area === 'approval_condition' ? 'Condition status' : 'Status'" [categoryCode]="area === 'developer_registration' ? 'DEVELOPER_REGISTRATION_STATUS' : area === 'land_use_clearance' ? 'LEGAL_APPROVAL_STATUS' : area === 'approval_condition' ? 'LEGAL_CONDITION_TRACKING_STATUS' : 'LEGAL_RECORD_STATUS'" placeholder="Choose or add a status" [disabled]="isReadOnly" [(ngModel)]="base.status" name="status"></app-searchable-select>
+          <app-custom-input [label]="area === 'developer_registration' ? 'Next expiry, renewal or review date' : area === 'land_use_clearance' ? 'Approval expiry date' : area === 'approval_condition' ? 'Condition due date' : 'Next due date'" type="date" [hint]="area === 'developer_registration' ? 'Dashboard reminders use the recorded expiry, renewal or review date. No expiry is generated when none is recorded.' : area === 'land_use_clearance' ? 'Dashboard reminders use the recorded expiry date; leave it blank if no expiry is stated.' : ''" [disabled]="isReadOnly" [(ngModel)]="base.due_date" name="due_date"></app-custom-input>
         </div>
       </app-card-container>
 
@@ -47,7 +47,12 @@
           </div>
         }
         <div class="grid gap-4 md:grid-cols-2">
-          @for (field of fields; track field.key) {
+          @for (field of fields; track field.key; let index = $index) {
+            @if (field.section && field.section !== fields[index - 1]?.section) {
+              <div class="md:col-span-2 border-b border-border pb-2 pt-3 first:pt-0">
+                <h3 class="text-sm font-semibold text-foreground">{{ field.section }}</h3>
+              </div>
+            }
             @if (field.type === 'select') {
               <app-searchable-select [label]="fieldLabel(field)" [categoryCode]="field.lookup || ''" placeholder="Choose or add a lookup item" [hint]="field.hint || ''" [disabled]="isReadOnly" [(ngModel)]="data[field.key]" [name]="field.key"></app-searchable-select>
             } @else if (field.type === 'textarea') {

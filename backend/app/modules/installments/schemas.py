@@ -60,6 +60,9 @@ class MilestoneItemConfig(BaseModel):
     milestone_trigger: Optional[str] = None
     due_date: Optional[date] = None
 
+CustomMilestoneItem = MilestoneItemConfig
+
+
 class InstallmentSchedulePreviewItem(BaseModel):
     installment_no: int
     installment_type: str
@@ -481,4 +484,308 @@ class TripartiteLoanResponse(BaseModel):
     remarks: Optional[str] = None
     tranches: List[LoanTrancheResponse] = []
     created_at: Optional[datetime] = None
+
+
+# -------------------------------------------------------------
+# Submodule 01: Customer Payment Setup Schemas
+# -------------------------------------------------------------
+class PaymentPlanConfigCreate(BaseModel):
+    plan_name: str
+    project_id: Optional[int] = None
+    property_type: Optional[str] = "APARTMENT"
+    description: Optional[str] = None
+    booking_percent: float = 10.00
+    down_payment_percent: float = 20.00
+    installment_frequency: str = "MONTHLY"
+    installment_count: int = 36
+    grace_period_days: int = 15
+    late_fee_type: str = "PERCENTAGE"
+    late_fee_rate: float = 2.00
+    rebate_type: str = "PERCENTAGE"
+    rebate_rate: float = 0.00
+    early_discount_rate: float = 0.00
+    milestones_json: Optional[str] = None
+    terms_conditions: Optional[str] = None
+    approval_status: Optional[str] = "APPROVED"
+
+class PaymentPlanConfigUpdate(BaseModel):
+    plan_name: Optional[str] = None
+    property_type: Optional[str] = None
+    description: Optional[str] = None
+    booking_percent: Optional[float] = None
+    down_payment_percent: Optional[float] = None
+    installment_frequency: Optional[str] = None
+    installment_count: Optional[int] = None
+    grace_period_days: Optional[int] = None
+    late_fee_type: Optional[str] = None
+    late_fee_rate: Optional[float] = None
+    rebate_type: Optional[str] = None
+    rebate_rate: Optional[float] = None
+    early_discount_rate: Optional[float] = None
+    milestones_json: Optional[str] = None
+    terms_conditions: Optional[str] = None
+    approval_status: Optional[str] = None
+    is_active: Optional[bool] = None
+
+class PaymentPlanConfigResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    plan_code: str
+    plan_name: str
+    project_id: Optional[int] = None
+    property_type: Optional[str] = None
+    description: Optional[str] = None
+    booking_percent: float
+    down_payment_percent: float
+    installment_frequency: str
+    installment_count: int
+    grace_period_days: int
+    late_fee_type: str
+    late_fee_rate: float
+    rebate_type: str
+    rebate_rate: float
+    early_discount_rate: float
+    milestones_json: Optional[str] = None
+    terms_conditions: Optional[str] = None
+    approval_status: str
+    is_active: bool
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+class PaginatedPaymentPlanConfigsResponse(BaseModel):
+    items: List[PaymentPlanConfigResponse]
+    total: int
+    limit: int
+    offset: int
+
+
+# -------------------------------------------------------------
+# Submodule 08: Payment Rescheduling Schemas
+# -------------------------------------------------------------
+class PaymentRescheduleCreate(BaseModel):
+    booking_id: int
+    request_date: Optional[date] = None
+    reason: str
+    proposed_installment_count: int = 24
+    proposed_start_date: date
+    deferment_months: int = 0
+    financial_impact_notes: Optional[str] = None
+    custom_milestones: Optional[List[CustomMilestoneItem]] = None
+
+class PaymentRescheduleApprovalRequest(BaseModel):
+    status: str # 'APPROVED', 'REJECTED'
+    approved_by: Optional[str] = "Admin / Finance Director"
+    approval_notes: Optional[str] = None
+
+class PaymentRescheduleResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    reschedule_code: str
+    booking_id: int
+    booking_reference_no: Optional[str] = None
+    customer_id: int
+    customer_name: Optional[str] = None
+    customer_phone: Optional[str] = None
+    unit_number: Optional[str] = None
+    project_name: Optional[str] = None
+    request_date: date
+    reason: str
+    existing_balance: float
+    proposed_installment_count: int
+    proposed_start_date: date
+    deferment_months: int
+    revised_plan_json: Optional[str] = None
+    financial_impact_notes: Optional[str] = None
+    status: str
+    approved_by: Optional[str] = None
+    approval_date: Optional[date] = None
+    approval_notes: Optional[str] = None
+    created_at: Optional[datetime] = None
+
+class PaginatedReschedulesResponse(BaseModel):
+    items: List[PaymentRescheduleResponse]
+    total: int
+    limit: int
+    offset: int
+
+
+# -------------------------------------------------------------
+# Submodule 11: Refund & Adjustment Schemas
+# -------------------------------------------------------------
+class PaymentRefundAdjustmentCreate(BaseModel):
+    booking_id: int
+    adjustment_type: str # EXCESS_PAYMENT_REFUND, BOOKING_REFUND, RECEIPT_ADJUSTMENT, PAYMENT_REVERSAL, CREDIT_ADJUSTMENT
+    original_receipt_id: Optional[int] = None
+    amount: float
+    payment_mode: str = "BANK_TRANSFER"
+    bank_name: Optional[str] = None
+    cheque_reference: Optional[str] = None
+    reason: str
+
+class PaymentRefundAdjustmentProcessRequest(BaseModel):
+    status: str # 'APPROVED', 'PROCESSED', 'REJECTED'
+    approved_by: Optional[str] = None
+    remarks: Optional[str] = None
+
+class PaymentRefundAdjustmentResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    adjustment_code: str
+    booking_id: int
+    booking_reference_no: Optional[str] = None
+    customer_id: int
+    customer_name: Optional[str] = None
+    customer_phone: Optional[str] = None
+    unit_number: Optional[str] = None
+    project_name: Optional[str] = None
+    adjustment_type: str
+    original_receipt_id: Optional[int] = None
+    amount: float
+    payment_mode: str
+    bank_name: Optional[str] = None
+    cheque_reference: Optional[str] = None
+    reason: str
+    status: str
+    approved_by: Optional[str] = None
+    approval_date: Optional[date] = None
+    processed_date: Optional[date] = None
+    remarks: Optional[str] = None
+    created_at: Optional[datetime] = None
+
+class PaginatedRefundAdjustmentsResponse(BaseModel):
+    items: List[PaymentRefundAdjustmentResponse]
+    total: int
+    limit: int
+    offset: int
+
+
+# -------------------------------------------------------------
+# Submodule 07: Late Fee Waiver & Rebate Schemas
+# -------------------------------------------------------------
+class LateFeeWaiverCreate(BaseModel):
+    installment_id: int
+    waived_amount: float
+    waiver_type: str = "PARTIAL" # FULL, PARTIAL, EARLY_DISCOUNT
+    reason: str
+
+class LateFeeWaiverApprovalRequest(BaseModel):
+    status: str # 'APPROVED', 'REJECTED'
+    approved_by: Optional[str] = "Finance Head"
+    notes: Optional[str] = None
+
+class LateFeeWaiverResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    waiver_code: str
+    installment_id: int
+    installment_title: Optional[str] = None
+    booking_id: int
+    booking_reference_no: Optional[str] = None
+    customer_id: int
+    customer_name: Optional[str] = None
+    customer_phone: Optional[str] = None
+    unit_number: Optional[str] = None
+    original_late_fee: float
+    waived_amount: float
+    adjusted_late_fee: float
+    waiver_type: str
+    reason: str
+    status: str
+    approved_by: Optional[str] = None
+    approval_date: Optional[date] = None
+    notes: Optional[str] = None
+    created_at: Optional[datetime] = None
+
+class PaginatedLateFeeWaiversResponse(BaseModel):
+    items: List[LateFeeWaiverResponse]
+    total: int
+    limit: int
+    offset: int
+
+
+# -------------------------------------------------------------
+# Submodule 10: Customer Ledger Statements
+# -------------------------------------------------------------
+class CustomerLedgerTransaction(BaseModel):
+    transaction_date: date
+    transaction_type: str # 'INSTALLMENT_DUE', 'MONEY_RECEIPT', 'LATE_FEE_ACCRUED', 'WAIVER', 'REFUND', 'ADJUSTMENT'
+    reference_no: str
+    description: str
+    debit_amount: float = 0.00
+    credit_amount: float = 0.00
+    running_balance: float = 0.00
+
+class CustomerLedgerSummaryResponse(BaseModel):
+    booking_id: int
+    booking_reference_no: str
+    customer_id: int
+    customer_name: str
+    customer_phone: Optional[str] = None
+    customer_email: Optional[str] = None
+    project_name: Optional[str] = None
+    unit_number: Optional[str] = None
+    agreed_sale_price: float
+    total_billed: float
+    total_paid: float
+    total_outstanding: float
+    total_advance_balance: float
+    transactions: List[CustomerLedgerTransaction] = []
+
+
+# -------------------------------------------------------------
+# Submodule 06: Due & Overdue Aging Schemas
+# -------------------------------------------------------------
+class DueOverdueAgingSummary(BaseModel):
+    upcoming_due_count: int = 0
+    upcoming_due_amount: float = 0.00
+    due_today_count: int = 0
+    due_today_amount: float = 0.00
+    overdue_1_30_count: int = 0
+    overdue_1_30_amount: float = 0.00
+    overdue_31_60_count: int = 0
+    overdue_31_60_amount: float = 0.00
+    overdue_61_90_count: int = 0
+    overdue_61_90_amount: float = 0.00
+    overdue_90_plus_count: int = 0
+    overdue_90_plus_amount: float = 0.00
+    total_overdue_amount: float = 0.00
+    total_overdue_count: int = 0
+
+class PaginatedDueInstallmentsResponse(BaseModel):
+    items: List[CustomerInstallmentResponse]
+    total: int
+    limit: int
+    offset: int
+    summary: Optional[DueOverdueAgingSummary] = None
+
+
+# -------------------------------------------------------------
+# Submodule 03: Down Payment Tracking Schemas
+# -------------------------------------------------------------
+class DownPaymentItemResponse(BaseModel):
+    booking_id: int
+    booking_reference_no: str
+    customer_name: str
+    customer_phone: Optional[str] = None
+    unit_number: Optional[str] = None
+    project_name: Optional[str] = None
+    contract_price: float
+    booking_money_received: float
+    down_payment_percentage: float
+    required_down_payment: float
+    paid_down_payment: float
+    outstanding_down_payment: float
+    status: str # 'PAID', 'PARTIALLY_PAID', 'PENDING'
+    due_date: Optional[date] = None
+
+class PaginatedDownPaymentsResponse(BaseModel):
+    items: List[DownPaymentItemResponse]
+    total: int
+    limit: int
+    offset: int
+
 

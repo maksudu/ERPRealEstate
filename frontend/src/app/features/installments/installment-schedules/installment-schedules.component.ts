@@ -12,6 +12,8 @@ import {
   SearchableSelectComponent
 } from '../../../shared/components';
 
+import { InstallmentsNavComponent } from '../installments-nav.component';
+
 @Component({
   selector: 'app-installment-schedules',
   standalone: true,
@@ -19,6 +21,7 @@ import {
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
+    InstallmentsNavComponent,
     CardContainerComponent,
     CustomInputComponent,
     CustomButtonComponent,

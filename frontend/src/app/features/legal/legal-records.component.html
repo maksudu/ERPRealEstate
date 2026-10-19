@@ -6,7 +6,7 @@
         <span aria-hidden="true">/</span><span>Register</span>
       </nav>
       <h1 class="text-2xl font-semibold tracking-tight text-foreground">{{ labels[area] }}</h1>
-      <p class="mt-1 text-sm text-muted-foreground">Filter and manage registered legal-compliance records. Checklist and authority applicability remain project-configurable.</p>
+      <p class="mt-1 text-sm text-muted-foreground">{{ area === 'noc_correspondence' ? 'Track incoming and outgoing correspondence, NOCs, response deadlines, workflow stages, and linked threads.' : 'Filter and manage registered legal-compliance records. Checklist and authority applicability remain project-configurable.' }}</p>
     </div>
     <a [routerLink]="['/legal/records', area, 'new']" class="inline-flex">
       <app-custom-button variant="primary" size="sm">+ Add record</app-custom-button>
@@ -14,9 +14,34 @@
   </header>
 
   <app-card-container>
-    <form class="grid gap-3 md:grid-cols-[minmax(16rem,1fr)_minmax(13rem,0.55fr)_auto]" (ngSubmit)="applyFilters()">
-      <app-custom-input label="Search" placeholder="Search title or reference" [(ngModel)]="searchText" name="search"></app-custom-input>
-      <app-searchable-select label="Status" categoryCode="LEGAL_RECORD_STATUS" placeholder="All statuses" [(ngModel)]="statusFilter" name="status"></app-searchable-select>
+    <form class="grid gap-3 md:grid-cols-2 xl:grid-cols-3" (ngSubmit)="applyFilters()">
+      <app-custom-input label="Search" placeholder="Search title, deed, khatian, parcel, or receipt" [(ngModel)]="searchText" name="search"></app-custom-input>
+      <app-searchable-select [label]="area === 'developer_registration' ? 'Registration status' : area === 'land_use_clearance' ? 'Approval status' : area === 'approval_condition' ? 'Condition status' : 'Status'" [categoryCode]="area === 'developer_registration' ? 'DEVELOPER_REGISTRATION_STATUS' : area === 'land_use_clearance' ? 'LEGAL_APPROVAL_STATUS' : area === 'approval_condition' ? 'LEGAL_CONDITION_TRACKING_STATUS' : 'LEGAL_RECORD_STATUS'" placeholder="All statuses" [(ngModel)]="statusFilter" name="status"></app-searchable-select>
+      @if (area === 'registered_record') {
+        <app-searchable-select label="Record type" categoryCode="LEGAL_RECORD_TYPE" placeholder="All record types" [(ngModel)]="recordTypeFilter" name="record_type"></app-searchable-select>
+        <app-searchable-select label="Mutation application status" categoryCode="LEGAL_MUTATION_APPLICATION_STATUS" placeholder="All application statuses" [(ngModel)]="mutationApplicationStatusFilter" name="mutation_application_status"></app-searchable-select>
+        <app-searchable-select label="Final mutation outcome" categoryCode="LEGAL_MUTATION_OUTCOME" placeholder="All outcomes" [(ngModel)]="mutationOutcomeFilter" name="mutation_outcome"></app-searchable-select>
+        <app-searchable-select label="Tax reconciliation" categoryCode="LEGAL_TAX_RECONCILIATION_STATUS" placeholder="All reconciliation statuses" [(ngModel)]="taxReconciliationStatusFilter" name="tax_reconciliation_status"></app-searchable-select>
+      } @else if (area === 'developer_registration') {
+        <app-searchable-select label="Registration / licence type" categoryCode="LEGAL_REGISTRATION_TYPE" placeholder="All registration types" [(ngModel)]="registrationTypeFilter" name="registration_type"></app-searchable-select>
+        <app-searchable-select label="Issuing authority" categoryCode="STATUTORY_AUTHORITY" placeholder="All authorities" [(ngModel)]="registrationAuthorityFilter" name="registration_authority"></app-searchable-select>
+        <app-custom-input label="Next action due from" type="date" [(ngModel)]="dueFromFilter" name="due_from"></app-custom-input>
+        <app-custom-input label="Next action due to" type="date" [(ngModel)]="dueToFilter" name="due_to"></app-custom-input>
+      } @else if (area === 'land_use_clearance') {
+        <app-searchable-select label="Project" placeholder="All projects" [options]="projectOptions" [allowCreateNew]="false" [(ngModel)]="projectFilter" name="project_id"></app-searchable-select>
+        <app-searchable-select label="Approval category" categoryCode="LEGAL_APPROVAL_CATEGORY" placeholder="All approval categories" [(ngModel)]="approvalCategoryFilter" name="approval_category"></app-searchable-select>
+        <app-searchable-select label="Authority" categoryCode="STATUTORY_AUTHORITY" placeholder="All authorities" [(ngModel)]="approvalAuthorityFilter" name="approval_authority"></app-searchable-select>
+      } @else if (area === 'approval_condition') {
+        <app-searchable-select label="Project" placeholder="All projects" [options]="projectOptions" [allowCreateNew]="false" [(ngModel)]="projectFilter" name="condition_project_id"></app-searchable-select>
+        <app-custom-input label="Approval reference" placeholder="Approval number or record ID" [(ngModel)]="approvalReferenceFilter" name="approval_reference"></app-custom-input>
+      } @else if (area === 'noc_correspondence') {
+        <app-searchable-select label="Direction" categoryCode="LEGAL_CORRESPONDENCE_DIRECTION" placeholder="Incoming and outgoing" [(ngModel)]="correspondenceDirectionFilter" name="correspondence_direction"></app-searchable-select>
+        <app-searchable-select label="Correspondence type" categoryCode="LEGAL_CORRESPONDENCE_TYPE" placeholder="All types" [(ngModel)]="correspondenceTypeFilter" name="correspondence_type"></app-searchable-select>
+        <app-searchable-select label="Authority / organization" categoryCode="STATUTORY_AUTHORITY" placeholder="All authorities" [(ngModel)]="correspondenceAuthorityFilter" name="correspondence_authority"></app-searchable-select>
+        <app-searchable-select label="External organization" categoryCode="LEGAL_EXTERNAL_ORGANIZATION" placeholder="All organizations" [(ngModel)]="correspondenceOrganizationFilter" name="correspondence_external_organization"></app-searchable-select>
+        <app-custom-input label="Thread reference" placeholder="Linked correspondence thread" [(ngModel)]="threadReferenceFilter" name="thread_reference"></app-custom-input>
+        <app-searchable-select label="Project" placeholder="All projects" [options]="projectOptions" [allowCreateNew]="false" [(ngModel)]="projectFilter" name="correspondence_project_id"></app-searchable-select>
+      }
       <div class="flex items-end">
         <app-custom-button type="submit" variant="outline" size="md">Apply filters</app-custom-button>
       </div>
@@ -40,60 +65,33 @@
       </div>
       <span class="text-xs text-muted-foreground">Page size {{ limit }}</span>
     </div>
-    @if (isLoading) {
-      <div class="space-y-3 p-5" role="status" aria-label="Loading records">
-        @for (item of [1, 2, 3, 4]; track item) { <div class="h-8 animate-pulse rounded bg-muted/50"></div> }
-        <span class="sr-only">Loading records…</span>
-      </div>
-    } @else if (records.length) {
-      <div class="overflow-x-auto">
-        <table class="w-full min-w-[800px] text-left text-sm">
-          <thead class="bg-muted/50 text-xs uppercase tracking-wide text-muted-foreground">
-            <tr>
-              <th scope="col" class="px-4 py-3 font-semibold">Record</th>
-              <th scope="col" class="px-4 py-3 font-semibold">Reference</th>
-              <th scope="col" class="px-4 py-3 font-semibold">Project</th>
-              <th scope="col" class="px-4 py-3 font-semibold">Status</th>
-              <th scope="col" class="px-4 py-3 font-semibold">Due date</th>
-              <th scope="col" class="px-4 py-3 text-right font-semibold">Actions</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-border">
-            @for (record of records; track record.id) {
-              <tr class="transition-colors hover:bg-muted/25">
-                <td class="px-4 py-3">
-                  <button type="button" class="text-left font-medium text-foreground hover:text-primary hover:underline" (click)="openRecord(record)">{{ record.title }}</button>
-                  @if (record.data?.parcel_reference || record.data?.case_number) {
-                    <div class="mt-0.5 text-xs text-muted-foreground">{{ record.data?.parcel_reference || record.data?.case_number }}</div>
-                  }
-                </td>
-                <td class="px-4 py-3 text-muted-foreground">{{ record.reference_no || '—' }}</td>
-                <td class="px-4 py-3 tabular-nums text-muted-foreground">{{ record.project_id || '—' }}</td>
-                <td class="px-4 py-3">
-                  <span class="inline-flex rounded-md border border-border bg-muted/40 px-2 py-1 text-xs text-foreground">{{ record.status || 'Unspecified' }}</span>
-                </td>
-                <td class="px-4 py-3 tabular-nums text-muted-foreground">{{ record.due_date ? (record.due_date | date:'mediumDate') : '—' }}</td>
-                <td class="px-4 py-3">
-                  <div class="flex justify-end gap-1">
-                    <app-custom-button variant="ghost" size="sm" (btnClick)="openRecord(record)">View</app-custom-button>
-                    <app-custom-button variant="outline" size="sm" (btnClick)="editRecord(record)">Edit</app-custom-button>
-                    <app-custom-button variant="danger" size="sm" (btnClick)="deleteRecord(record)">Delete</app-custom-button>
-                  </div>
-                </td>
-              </tr>
+    <app-custom-table [columns]="tableColumns" [totalRecords]="total" [loading]="isLoading" emptyMessage="No records found. Add a record or change the filters.">
+      @for (record of records; track record.id) {
+        <tr class="transition-colors hover:bg-muted/25">
+          <td class="px-4 py-3">
+            <button type="button" class="text-left font-medium text-foreground hover:text-primary hover:underline" (click)="openRecord(record)">{{ record.title }}</button>
+            @if (record.data?.['parcel_reference'] || record.data?.['case_number'] || record.data?.['approval_number']) {
+              <div class="mt-0.5 text-xs text-muted-foreground">{{ record.data?.['parcel_reference'] || record.data?.['case_number'] || record.data?.['approval_number'] }}</div>
             }
-          </tbody>
-        </table>
-      </div>
-    } @else if (!error) {
-      <div class="px-5 py-14 text-center">
-        <p class="text-sm font-medium text-foreground">No records found</p>
-        <p class="mx-auto mt-1 max-w-md text-xs text-muted-foreground">There are no matching entries in this register. Add a record or change the filters.</p>
-        <a [routerLink]="['/legal/records', area, 'new']" class="mt-4 inline-flex">
-          <app-custom-button variant="outline" size="sm">Create first record</app-custom-button>
-        </a>
-      </div>
-    }
+            @if (area === 'noc_correspondence') {
+              <div class="mt-0.5 text-xs text-muted-foreground">{{ record.data?.['correspondence_direction'] || 'Direction not set' }} · {{ record.data?.['authority'] || record.data?.['external_organization'] || 'No authority set' }}</div>
+              @if (record.data?.['thread_reference']) { <div class="text-xs text-muted-foreground">Thread: {{ record.data?.['thread_reference'] }}</div> }
+            }
+          </td>
+          <td class="px-4 py-3 text-muted-foreground">{{ record.reference_no || '—' }}</td>
+          <td class="px-4 py-3 tabular-nums text-muted-foreground">{{ record.project_id || '—' }}</td>
+          <td class="px-4 py-3"><span class="inline-flex rounded-md border border-border bg-muted/40 px-2 py-1 text-xs text-foreground">{{ record.status || 'Unspecified' }}</span></td>
+          <td class="px-4 py-3 tabular-nums text-muted-foreground">{{ record.due_date ? (record.due_date | date:'mediumDate') : '—' }}</td>
+          <td class="px-4 py-3">
+            <div class="flex justify-end gap-1">
+              <app-custom-button variant="ghost" size="sm" (btnClick)="openRecord(record)">View</app-custom-button>
+              <app-custom-button variant="outline" size="sm" (btnClick)="editRecord(record)">Edit</app-custom-button>
+              <app-custom-button variant="danger" size="sm" (btnClick)="deleteRecord(record)">Delete</app-custom-button>
+            </div>
+          </td>
+        </tr>
+      }
+    </app-custom-table>
     <footer class="flex items-center justify-between border-t border-border px-4 py-3">
       <span class="text-xs text-muted-foreground">Server-side pagination · {{ limit }} records per page</span>
       <div class="flex gap-2">

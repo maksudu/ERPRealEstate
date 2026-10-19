@@ -2375,6 +2375,116 @@ export const routes: Routes = [
     path: 'portal',
     redirectTo: 'portal/customer',
     pathMatch: 'full'
+  },
+  {
+    path: 'installments',
+    redirectTo: 'installments/reports-dashboard',
+    pathMatch: 'full'
+  },
+  {
+    path: 'installments/payment-setup',
+    loadComponent: () => import('./features/installments/payment-setup/payment-setup-list.component').then(m => m.PaymentSetupListComponent),
+    title: 'Customer Payment Plan Configuration - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'installments/payment-setup/create',
+    loadComponent: () => import('./features/installments/payment-setup/payment-setup-form.component').then(m => m.PaymentSetupFormComponent),
+    title: 'Create Payment Plan - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'installments/payment-setup/edit/:id',
+    loadComponent: () => import('./features/installments/payment-setup/payment-setup-form.component').then(m => m.PaymentSetupFormComponent),
+    title: 'Edit Payment Plan - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'installments/booking-money',
+    loadComponent: () => import('./features/installments/booking-money/booking-money-list.component').then(m => m.BookingMoneyListComponent),
+    title: 'Booking Money Management - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'installments/booking-money/create',
+    loadComponent: () => import('./features/installments/booking-money/booking-money-form.component').then(m => m.BookingMoneyFormComponent),
+    title: 'Record Booking Money Receipt - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'installments/down-payment',
+    loadComponent: () => import('./features/installments/down-payment/down-payment-list.component').then(m => m.DownPaymentListComponent),
+    title: 'Down Payment Management - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'installments/down-payment/create',
+    loadComponent: () => import('./features/installments/down-payment/down-payment-form.component').then(m => m.DownPaymentFormComponent),
+    title: 'Collect Down Payment - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'installments/schedules',
+    loadComponent: () => import('./features/installments/installment-schedules/installment-schedules.component').then(m => m.InstallmentSchedulesComponent),
+    title: 'Customer Installment Schedules & Milestones - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'installments/collections',
+    loadComponent: () => import('./features/installments/money-receipts/money-receipts.component').then(m => m.MoneyReceiptsComponent),
+    title: 'Customer Collection Receipts - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'installments/money-receipts',
+    loadComponent: () => import('./features/installments/money-receipts/money-receipts.component').then(m => m.MoneyReceiptsComponent),
+    title: 'Money Receipts - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'installments/due-overdue',
+    loadComponent: () => import('./features/installments/due-overdue/due-overdue-cockpit.component').then(m => m.DueOverdueCockpitComponent),
+    title: 'Due & Overdue Aging Management - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'installments/late-fee-rebate',
+    loadComponent: () => import('./features/installments/late-fee-rebate/late-fee-rebate-list.component').then(m => m.LateFeeRebateListComponent),
+    title: 'Late Fee, Rebate & Waiver Approvals - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'installments/late-fee-rebate/create',
+    loadComponent: () => import('./features/installments/late-fee-rebate/late-fee-waiver-form.component').then(m => m.LateFeeWaiverFormComponent),
+    title: 'Submit Late Fee Waiver - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'installments/rescheduling',
+    loadComponent: () => import('./features/installments/rescheduling/rescheduling-list.component').then(m => m.ReschedulingListComponent),
+    title: 'Payment Rescheduling & Plan Revision - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'installments/rescheduling/create',
+    loadComponent: () => import('./features/installments/rescheduling/reschedule-request-form.component').then(m => m.RescheduleRequestFormComponent),
+    title: 'Propose Payment Rescheduling - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'installments/cheques',
+    loadComponent: () => import('./features/installments/pdc-vault/pdc-vault.component').then(m => m.PDCVaultComponent),
+    title: 'Cheque Management & PDC Safe Vault - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'installments/pdc-vault',
+    loadComponent: () => import('./features/installments/pdc-vault/pdc-vault.component').then(m => m.PDCVaultComponent),
+    title: 'PDC Vault & NI Act 138 - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'installments/customer-ledger',
+    loadComponent: () => import('./features/installments/customer-ledger/customer-ledger-view.component').then(m => m.CustomerLedgerViewComponent),
+    title: 'Customer Financial Ledger & Statement - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'installments/refund-adjustment',
+    loadComponent: () => import('./features/installments/refund-adjustment/refund-adjustment-list.component').then(m => m.RefundAdjustmentListComponent),
+    title: 'Refund & Credit Adjustment Management - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'installments/refund-adjustment/create',
+    loadComponent: () => import('./features/installments/refund-adjustment/refund-adjustment-form.component').then(m => m.RefundAdjustmentFormComponent),
+    title: 'Record Refund or Credit Adjustment - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'installments/reports-dashboard',
+    loadComponent: () => import('./features/installments/reports-dashboard/reports-dashboard.component').then(m => m.InstallmentReportsDashboardComponent),
+    title: 'Installment & Collection Reports & Executive Dashboard - Bangladesh Real Estate ERP'
   }
     ]
   },
