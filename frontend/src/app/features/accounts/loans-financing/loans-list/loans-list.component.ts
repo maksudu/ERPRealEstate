@@ -12,7 +12,6 @@ import {
   LoanInterestAccrualCreatePayload,
   LoanIAS23CapitalizePayload
 } from '../../../../core/models/loan-financing.model';
-import { LoansFinancingNavComponent } from '../loans-financing-nav.component';
 import { CardContainerComponent } from '../../../../shared/components/card-container/card-container.component';
 import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
 import { SearchableSelectComponent, SelectOption } from '../../../../shared/components/searchable-select/searchable-select.component';
@@ -25,7 +24,6 @@ import { ModalComponent } from '../../../../shared/components/modal/modal.compon
     CommonModule,
     FormsModule,
     RouterLink,
-    LoansFinancingNavComponent,
     CardContainerComponent,
     StatusBadgeComponent,
     SearchableSelectComponent,

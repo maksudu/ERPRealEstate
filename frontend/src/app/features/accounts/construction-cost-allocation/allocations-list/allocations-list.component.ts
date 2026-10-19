@@ -9,7 +9,6 @@ import {
   CWIPPortfolioSummaryKPIs,
   CWIPUnitCOGSTransferPayload
 } from '../../../../core/models/cwip-allocation.model';
-import { CWIPAllocationNavComponent } from '../cwip-allocation-nav.component';
 import { CardContainerComponent } from '../../../../shared/components/card-container/card-container.component';
 import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
 import { SearchableSelectComponent, SelectOption } from '../../../../shared/components/searchable-select/searchable-select.component';
@@ -22,7 +21,6 @@ import { ModalComponent } from '../../../../shared/components/modal/modal.compon
     CommonModule,
     FormsModule,
     RouterLink,
-    CWIPAllocationNavComponent,
     CardContainerComponent,
     StatusBadgeComponent,
     SearchableSelectComponent,

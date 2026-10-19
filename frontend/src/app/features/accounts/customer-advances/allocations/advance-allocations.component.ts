@@ -9,7 +9,6 @@ import {
   SearchableSelectComponent,
   StatusBadgeComponent
 } from '../../../../shared/components';
-import { CustomerAdvancesNavComponent } from '../customer-advances-nav.component';
 
 @Component({
   selector: 'app-advance-allocations',
@@ -20,8 +19,7 @@ import { CustomerAdvancesNavComponent } from '../customer-advances-nav.component
     CardContainerComponent,
     CustomInputComponent,
     SearchableSelectComponent,
-    StatusBadgeComponent,
-    CustomerAdvancesNavComponent
+    StatusBadgeComponent
   ],
   templateUrl: './advance-allocations.component.html'
 })

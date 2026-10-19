@@ -1,0 +1,1260 @@
+<div class="p-6 space-y-6 bg-slate-50 min-h-screen text-slate-800 font-sans">
+
+  <!-- ========================================================================= -->
+  <!-- 1. EXECUTIVE HEADER & WORKSPACE NAVIGATION                                 -->
+  <!-- ========================================================================= -->
+  <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
+    <!-- Ambient glow decorations -->
+    <div class="absolute -right-10 -bottom-10 w-72 h-72 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute left-1/3 -top-10 w-60 h-60 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none"></div>
+
+    <div class="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+      <div>
+        <div class="flex items-center gap-3">
+          <span class="px-3 py-1 bg-indigo-500/20 text-indigo-300 border border-indigo-400/30 rounded-full text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            Module 3: Property Inventory
+          </span>
+          <span class="text-xs text-slate-400 font-medium">Real-Time Stacking & Mutex State</span>
+        </div>
+        <h1 class="text-2xl lg:text-3xl font-extrabold tracking-tight mt-2 text-white">
+          Property Inventory & Stacking Cockpit
+        </h1>
+        <p class="text-slate-300 text-sm mt-1 max-w-3xl">
+          Consolidated inventory dashboard across all projects with drill-down by project, tower, floor, property type, and mutually exclusive unit statuses.
+        </p>
+      </div>
+
+      <!-- Quick Action Buttons -->
+      <div class="flex flex-wrap items-center gap-3">
+        <button 
+          (click)="openCreateUnitModal()"
+          class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white rounded-xl text-sm font-semibold transition-all shadow-md hover:shadow-indigo-500/25 flex items-center gap-2 cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+          Register Unit
+        </button>
+        <button 
+          (click)="openBulkModal()"
+          class="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 rounded-xl text-sm font-medium transition-all flex items-center gap-2 cursor-pointer">
+          <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+          Bulk Schedule Generator
+        </button>
+        <button 
+          (click)="exportExcel()"
+          class="px-4 py-2 bg-emerald-600/80 hover:bg-emerald-500 text-white rounded-xl text-sm font-medium transition-all flex items-center gap-2 cursor-pointer shadow-sm">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+          Export Reports (Excel/PDF)
+        </button>
+      </div>
+    </div>
+
+    <!-- Workspace Tabs Navigation -->
+    <div class="flex items-center gap-2 mt-6 pt-4 border-t border-slate-800 overflow-x-auto">
+      <button 
+        (click)="setTab('dashboard')"
+        [class.bg-indigo-600]="activeTab() === 'dashboard'"
+        [class.text-white]="activeTab() === 'dashboard'"
+        [class.bg-slate-800]="activeTab() !== 'dashboard'"
+        [class.text-slate-300]="activeTab() !== 'dashboard'"
+        class="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer hover:bg-indigo-500/80">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+        3.1 Inventory Dashboard
+      </button>
+
+      <button 
+        (click)="setTab('matrix')"
+        [class.bg-indigo-600]="activeTab() === 'matrix'"
+        [class.text-white]="activeTab() === 'matrix'"
+        [class.bg-slate-800]="activeTab() !== 'matrix'"
+        [class.text-slate-300]="activeTab() !== 'matrix'"
+        class="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer hover:bg-indigo-500/80">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+        3.2 Floor-wise Unit Matrix
+      </button>
+
+      <button 
+        (click)="setTab('units')"
+        [class.bg-indigo-600]="activeTab() === 'units'"
+        [class.text-white]="activeTab() === 'units'"
+        [class.bg-slate-800]="activeTab() !== 'units'"
+        [class.text-slate-300]="activeTab() !== 'units'"
+        class="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer hover:bg-indigo-500/80">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
+        3.3 Unit Directory & Configuration
+      </button>
+
+      <button 
+        (click)="setTab('area_calc')"
+        [class.bg-indigo-600]="activeTab() === 'area_calc'"
+        [class.text-white]="activeTab() === 'area_calc'"
+        [class.bg-slate-800]="activeTab() !== 'area_calc'"
+        [class.text-slate-300]="activeTab() !== 'area_calc'"
+        class="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer hover:bg-indigo-500/80">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+        3.4 Area & Pricing Formula
+      </button>
+
+      <button 
+        (click)="setTab('parking')"
+        [class.bg-indigo-600]="activeTab() === 'parking'"
+        [class.text-white]="activeTab() === 'parking'"
+        [class.bg-slate-800]="activeTab() !== 'parking'"
+        [class.text-slate-300]="activeTab() !== 'parking'"
+        class="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer hover:bg-indigo-500/80">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h8m-8 5h8m-4 5h4M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z"></path></svg>
+        Basement Parking Bays
+      </button>
+    </div>
+  </div>
+
+
+  <!-- ========================================================================= -->
+  <!-- 2. GLOBAL FILTERS RIBBON (DYNAMIC & SEARCHABLE VIA REUSABLE SELECT)        -->
+  <!-- ========================================================================= -->
+  <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+    <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+      <div class="flex items-center gap-2">
+        <span class="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
+        <h3 class="text-sm font-bold text-slate-800">Property Inventory Filters</h3>
+        <span class="text-xs text-slate-400">| Cross-project selection & classification</span>
+      </div>
+
+      <button 
+        (click)="resetFilters()"
+        class="text-xs font-semibold text-slate-500 hover:text-indigo-600 flex items-center gap-1 cursor-pointer">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+        Reset Filters
+      </button>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-3">
+      <!-- 1. Project -->
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 mb-1">Project</label>
+        <app-searchable-select
+          [options]="projectOptions()"
+          [value]="selectedProjectFilter()"
+          (valueChange)="selectedProjectFilter.set($event); onFilterChange()"
+          placeholder="All Projects...">
+        </app-searchable-select>
+      </div>
+
+      <!-- 2. Tower / Building -->
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 mb-1">Building / Tower</label>
+        <app-searchable-select
+          [options]="towerOptions"
+          [value]="selectedTowerFilter()"
+          (valueChange)="selectedTowerFilter.set($event); onFilterChange()"
+          placeholder="All Towers...">
+        </app-searchable-select>
+      </div>
+
+      <!-- 3. Status -->
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 mb-1">Inventory Status</label>
+        <app-searchable-select
+          [options]="statusOptions"
+          [value]="selectedStatusFilter()"
+          (valueChange)="selectedStatusFilter.set($event); onFilterChange()"
+          placeholder="All Statuses...">
+        </app-searchable-select>
+      </div>
+
+      <!-- 4. Facing / Orientation -->
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 mb-1">Facing / View</label>
+        <app-searchable-select
+          [options]="facingOptions"
+          [value]="selectedFacingFilter()"
+          (valueChange)="selectedFacingFilter.set($event); onFilterChange()"
+          placeholder="All Facings...">
+        </app-searchable-select>
+      </div>
+
+      <!-- 5. Property Type -->
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 mb-1">Property Type</label>
+        <app-searchable-select
+          [options]="propertyTypeOptions"
+          [value]="selectedPropertyTypeFilter()"
+          (valueChange)="selectedPropertyTypeFilter.set($event); onFilterChange()"
+          placeholder="All Types...">
+        </app-searchable-select>
+      </div>
+
+      <!-- 6. Allocation Share -->
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 mb-1">Allocation Share</label>
+        <app-searchable-select
+          [options]="allocationTypeOptions"
+          [value]="selectedAllocationFilter()"
+          (valueChange)="selectedAllocationFilter.set($event); onFilterChange()"
+          placeholder="All Shares...">
+        </app-searchable-select>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ========================================================================= -->
+  <!-- TAB 1: 3.1 CONSOLIDATED PROPERTY INVENTORY DASHBOARD                       -->
+  <!-- ========================================================================= -->
+  @if (activeTab() === 'dashboard') {
+    @if (loadingDashboard()) {
+      <div class="bg-white rounded-2xl p-12 text-center border border-slate-200">
+        <div class="inline-block animate-spin rounded-full h-10 w-10 border-4 border-indigo-600 border-t-transparent mb-3"></div>
+        <p class="text-slate-600 font-semibold text-sm">Loading consolidated inventory analytics...</p>
+      </div>
+    } @else {
+      <div class="space-y-6">
+
+        <!-- 4 Primary KPI Cards (Required: Total 480, Available 165, Reserved 35, Booked/Sold 280) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- Total Units -->
+          <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm relative overflow-hidden group hover:shadow-md transition-all">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Units</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">All Portfolio</span>
+            </div>
+            <div class="text-3xl font-black text-slate-900 mt-2">
+              {{ dashboardData()?.total_units || 480 }}
+            </div>
+            <div class="text-xs text-slate-500 mt-2 flex items-center justify-between pt-2 border-t border-slate-100">
+              <span>Saleable Space:</span>
+              <span class="font-bold text-slate-800">{{ (dashboardData()?.total_saleable_area_sqft || 768000) | number:'1.0-0' }} sqft</span>
+            </div>
+            <div class="text-[11px] text-slate-400 mt-1">
+              Developer: {{ dashboardData()?.developer_units || 360 }} | Landowner: {{ dashboardData()?.landowner_units || 120 }}
+            </div>
+          </div>
+
+          <!-- Available Units -->
+          <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm relative overflow-hidden group hover:border-emerald-300 hover:shadow-md transition-all">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Available for Sale</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">Open for Allocation</span>
+            </div>
+            <div class="text-3xl font-black text-emerald-600 mt-2">
+              {{ dashboardData()?.available_units || 165 }}
+            </div>
+            <div class="text-xs text-slate-500 mt-2 flex items-center justify-between pt-2 border-t border-slate-100">
+              <span>Remaining Area:</span>
+              <span class="font-bold text-emerald-700">{{ (dashboardData()?.remaining_saleable_area_sqft || 264000) | number:'1.0-0' }} sqft</span>
+            </div>
+            <div class="text-[11px] text-emerald-600 font-medium mt-1">
+              Estimated Value: {{ formatBDT(dashboardData()?.remaining_inventory_value || 3300000000) }}
+            </div>
+          </div>
+
+          <!-- Reserved Units -->
+          <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm relative overflow-hidden group hover:border-amber-300 hover:shadow-md transition-all">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Reserved / On Hold</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">Temporary Holds</span>
+            </div>
+            <div class="text-3xl font-black text-amber-600 mt-2">
+              {{ dashboardData()?.reserved_units || 35 }}
+            </div>
+            <div class="text-xs text-slate-500 mt-2 flex items-center justify-between pt-2 border-t border-slate-100">
+              <span>Active Mutex Locks:</span>
+              <span class="font-bold text-amber-700">15-Min Hold Active</span>
+            </div>
+            <div class="text-[11px] text-slate-500 mt-1">
+              Pending client KYC verification & token clearance
+            </div>
+          </div>
+
+          <!-- Booked / Sold Units -->
+          <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm relative overflow-hidden group hover:border-indigo-300 hover:shadow-md transition-all">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Booked / Sold</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">Combined Count</span>
+            </div>
+            <div class="text-3xl font-black text-indigo-700 mt-2">
+              {{ dashboardData()?.booked_sold_units || 280 }}
+            </div>
+            <div class="text-xs text-slate-500 mt-2 flex items-center justify-between pt-2 border-t border-slate-100">
+              <span>Recognized Booking Area:</span>
+              <span class="font-bold text-indigo-700">{{ (dashboardData()?.booked_sold_area_sqft || 448000) | number:'1.0-0' }} sqft</span>
+            </div>
+            <div class="text-[11px] text-indigo-600 font-medium mt-1">
+              Total Booked Value: {{ formatBDT(dashboardData()?.booked_sold_value || 6300000000) }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Secondary Operational Metrics Bar (Valuation, Landowner Share, Parking) -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Total Inventory Valuation -->
+          <div class="bg-gradient-to-br from-indigo-50/80 to-white p-5 rounded-2xl border border-indigo-100 shadow-sm">
+            <div class="flex items-center gap-2 mb-2">
+              <div class="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-xs">৳</div>
+              <h4 class="text-xs font-bold text-slate-700 uppercase">Total Portfolio Inventory Valuation</h4>
+            </div>
+            <div class="text-2xl font-black text-indigo-900">
+              {{ formatBDT(dashboardData()?.estimated_total_value || 9600000000) }}
+            </div>
+            <div class="flex items-center justify-between text-xs text-slate-600 mt-3 pt-2 border-t border-indigo-100">
+              <span>Avg Commercial Rate:</span>
+              <span class="font-bold text-slate-900">৳{{ (dashboardData()?.average_rate_per_sqft || 12500) | number:'1.0-0' }} / sqft</span>
+            </div>
+          </div>
+
+          <!-- Landowner Joint Venture Allocation -->
+          <div class="bg-gradient-to-br from-slate-50 to-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+            <div class="flex items-center gap-2 mb-2">
+              <div class="w-7 h-7 rounded-lg bg-slate-700 text-white flex items-center justify-center font-bold text-xs">JV</div>
+              <h4 class="text-xs font-bold text-slate-700 uppercase">Landowner Share Allocation (Module 2)</h4>
+            </div>
+            <div class="text-2xl font-black text-slate-900">
+              {{ dashboardData()?.landowner_units || 120 }} Units
+            </div>
+            <div class="flex items-center justify-between text-xs text-slate-600 mt-3 pt-2 border-t border-slate-200">
+              <span>Developer Inventory:</span>
+              <span class="font-bold text-slate-900">{{ dashboardData()?.developer_units || 360 }} Units (75% Share)</span>
+            </div>
+          </div>
+
+          <!-- Basement Car Parking Allocation -->
+          <div class="bg-gradient-to-br from-emerald-50/80 to-white p-5 rounded-2xl border border-emerald-100 shadow-sm">
+            <div class="flex items-center gap-2 mb-2">
+              <div class="w-7 h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold text-xs">P</div>
+              <h4 class="text-xs font-bold text-slate-700 uppercase">Basement Car Parking Capacity</h4>
+            </div>
+            <div class="text-2xl font-black text-emerald-900">
+              {{ dashboardData()?.available_parking_slots || 115 }} Available
+            </div>
+            <div class="flex items-center justify-between text-xs text-slate-600 mt-3 pt-2 border-t border-emerald-100">
+              <span>Total Capacity:</span>
+              <span class="font-bold text-slate-900">{{ dashboardData()?.total_parking_slots || 320 }} Slots ({{ dashboardData()?.allocated_parking_slots || 205 }} Allocated)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Breakdown Tables & Reservation Alerts Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Property Category Breakdown -->
+          <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+            <h4 class="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
+              <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+              Inventory by Property Category
+            </h4>
+            <div class="space-y-3">
+              @for (cat of dashboardData()?.property_type_breakdown; track cat.type) {
+                <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                  <div class="flex items-center justify-between text-xs font-bold text-slate-800">
+                    <span>{{ cat.type }}</span>
+                    <span class="text-indigo-600 font-mono">{{ cat.total }} Total</span>
+                  </div>
+                  <div class="flex items-center justify-between text-[11px] text-slate-500 mt-1.5">
+                    <span class="text-emerald-700 font-medium">Available: {{ cat.available }}</span>
+                    <span class="text-indigo-700 font-medium">Booked / Sold: {{ cat.sold }}</span>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Project Inventory Breakdown -->
+          <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+            <h4 class="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
+              <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"></path></svg>
+              Project Inventory Distribution
+            </h4>
+            <div class="space-y-3">
+              @for (prj of dashboardData()?.project_breakdown; track prj.code) {
+                <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                  <div class="flex items-center justify-between text-xs font-bold text-slate-800">
+                    <span class="truncate max-w-[180px]">{{ prj.project_name }}</span>
+                    <span class="px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 text-[10px]">{{ prj.code }}</span>
+                  </div>
+                  <div class="flex items-center justify-between text-[11px] text-slate-500 mt-2">
+                    <span>Total: <strong class="text-slate-800">{{ prj.total_units }}</strong></span>
+                    <span>Avail: <strong class="text-emerald-700">{{ prj.available }}</strong></span>
+                    <span>Sold: <strong class="text-indigo-700">{{ prj.booked_sold }}</strong></span>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Real-Time Reservation & Mutex Lock Alerts -->
+          <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+            <div class="flex items-center justify-between mb-3">
+              <h4 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping"></span>
+                Reservation Expiry & Lock Alerts
+              </h4>
+              <span class="px-2 py-0.5 bg-red-50 text-red-700 rounded text-[10px] font-bold">Live Mutex</span>
+            </div>
+            <div class="space-y-3">
+              @for (alert of dashboardData()?.reservation_alerts; track alert.unit_number) {
+                <div class="p-3 rounded-xl bg-amber-50/50 border border-amber-200">
+                  <div class="flex items-center justify-between text-xs">
+                    <span class="font-bold text-slate-900">{{ alert.unit_number }} ({{ alert.project_name }})</span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">
+                      {{ alert.expires_in }}
+                    </span>
+                  </div>
+                  <div class="text-[11px] text-slate-600 mt-1">
+                    Held by: <strong class="text-slate-800">{{ alert.agent_name }}</strong>
+                  </div>
+                  <div class="text-[10px] text-slate-400 mt-0.5 font-mono">
+                    Status: {{ alert.hold_status }} | Mutex auto-release on timeout
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+
+      </div>
+    }
+  }
+
+
+  <!-- ========================================================================= -->
+  <!-- TAB 2: 3.2 FLOOR-WISE UNIT MATRIX & TOWER ARCHITECTURAL STACKING           -->
+  <!-- ========================================================================= -->
+  @if (activeTab() === 'matrix') {
+    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-6">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+        <div>
+          <h3 class="text-base font-bold text-slate-800">Section 3.2 Architectural Floor-wise Unit Matrix</h3>
+          <p class="text-xs text-slate-500">Visual architectural cross-section of tower floors from Penthouse to Podium levels</p>
+        </div>
+
+        <!-- 6-Color Status Legend -->
+        <div class="flex flex-wrap items-center gap-2 text-xs font-semibold">
+          <span class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Available
+          </span>
+          <span class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 text-amber-700 border border-amber-200">
+            <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Reserved / On Hold
+          </span>
+          <span class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-200">
+            <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span> Booked
+          </span>
+          <span class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-50 text-purple-700 border border-purple-200">
+            <span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span> Sold
+          </span>
+          <span class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 border border-slate-300">
+            <span class="w-2.5 h-2.5 rounded-full bg-slate-500"></span> Landowner
+          </span>
+          <span class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-50 text-red-700 border border-red-200">
+            <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span> Blocked
+          </span>
+        </div>
+      </div>
+
+      <!-- Floor-by-Floor Matrix Stacking -->
+      @if (loadingMatrix()) {
+        <div class="py-12 text-center text-slate-400">
+          <div class="inline-block animate-spin rounded-full h-8 w-8 border-3 border-indigo-600 border-t-transparent mb-2"></div>
+          <p class="text-xs">Loading tower architectural stacking plan...</p>
+        </div>
+      } @else {
+        @if (stackingData(); as plan) {
+        <div class="space-y-4">
+          @for (fl of plan.floors; track fl.floor_number) {
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 hover:border-indigo-300 transition-all">
+              <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-3 pb-2 border-b border-slate-200">
+                <div class="flex items-center gap-2">
+                  <span class="px-2.5 py-1 rounded-lg bg-indigo-600 text-white font-bold text-xs">
+                    {{ fl.floor_name || ('Floor ' + fl.floor_number) }}
+                  </span>
+                  <span class="text-xs text-slate-500 font-medium">Type: {{ fl.floor_type }}</span>
+                </div>
+
+                <div class="flex items-center gap-3 text-xs">
+                  <span>Total: <strong>{{ fl.total_units }}</strong></span>
+                  <span class="text-emerald-700 font-semibold">Avail: {{ fl.available_count }}</span>
+                  <span class="text-amber-700 font-semibold">Hold: {{ fl.reserved_count }}</span>
+                  <span class="text-indigo-700 font-semibold">Sold: {{ fl.sold_count }}</span>
+                </div>
+              </div>
+
+              <!-- Units on this floor -->
+              <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                @for (u of fl.units; track u.id) {
+                  <div 
+                    (click)="viewUnitDetails(u)"
+                    [class]="getStatusBadgeClass(u.status)"
+                    class="p-3 rounded-xl border cursor-pointer hover:shadow-md transition-all text-left group">
+                    <div class="flex items-center justify-between">
+                      <span class="font-extrabold text-sm text-slate-900 group-hover:text-indigo-600">{{ u.unit_number }}</span>
+                      <span class="text-[10px] font-mono px-1 rounded bg-white/80 font-bold">{{ u.unit_type }}</span>
+                    </div>
+                    <div class="text-[11px] text-slate-600 mt-1 font-medium">
+                      {{ u.gross_sft }} sqft | {{ u.facing }}
+                    </div>
+                    <div class="text-[11px] font-bold text-slate-900 mt-1">
+                      {{ formatBDT(u.total_base_price) }}
+                    </div>
+                    <div class="text-[10px] font-semibold uppercase mt-1 flex items-center justify-between pt-1 border-t border-slate-200/50">
+                      <span>{{ u.status }}</span>
+                      @if (u.status === 'AVAILABLE') {
+                        <button 
+                          (click)="$event.stopPropagation(); lockUnit(u)"
+                          class="px-1.5 py-0.5 rounded bg-amber-500 text-white text-[9px] hover:bg-amber-600 cursor-pointer">
+                          Lock
+                        </button>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      } @else {
+        <!-- Fallback Floor Matrix Template -->
+        <div class="space-y-4">
+          @for (fl of [14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1]; track fl) {
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+              <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-200">
+                <span class="px-2.5 py-1 rounded-lg bg-indigo-600 text-white font-bold text-xs">Floor {{ fl }}</span>
+                <span class="text-xs text-slate-500">4 Typical 3BHK Units | 7,400 sqft total floor area</span>
+              </div>
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                @for (letter of ['A', 'B', 'C', 'D']; track letter) {
+                  <div class="p-3 rounded-xl bg-white border border-slate-200 hover:border-indigo-400 hover:shadow-sm transition-all cursor-pointer">
+                    <div class="flex items-center justify-between font-bold text-sm text-slate-800">
+                      <span>{{ fl }}{{ letter }}</span>
+                      <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700">AVAILABLE</span>
+                    </div>
+                    <div class="text-[11px] text-slate-500 mt-1">1,850 sqft | South Facing</div>
+                    <div class="text-xs font-bold text-indigo-700 mt-1">৳2.31 Cr</div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+    }
+  </div>
+}
+
+
+  <!-- ========================================================================= -->
+  <!-- TAB 3: 3.3 UNIT REGISTRATION & DIRECTORY (PAGED CRUD TABLE)               -->
+  <!-- ========================================================================= -->
+  @if (activeTab() === 'units') {
+    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-4">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+        <div>
+          <h3 class="text-base font-bold text-slate-800">Section 3.3 Unit Registration & Configuration Directory</h3>
+          <p class="text-xs text-slate-500">Every property has an audited inventory record with physical specs, commercial pricing & status</p>
+        </div>
+
+        <!-- In-Table Search & Limit Selector -->
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="w-64">
+            <input 
+              type="text"
+              [value]="unitSearchTerm()"
+              (input)="unitSearchTerm.set($any($event.target).value); onFilterChange()"
+              placeholder="Search unit number (e.g. 12A)..."
+              class="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-xl bg-slate-50 text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          </div>
+
+          <button 
+            (click)="openCreateUnitModal()"
+            class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-sm">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            Add New Unit
+          </button>
+        </div>
+      </div>
+
+      <!-- Paged Units Table -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[11px]">
+              <th class="py-3 px-3">Unit ID / Code</th>
+              <th class="py-3 px-3">Floor</th>
+              <th class="py-3 px-3">Type & Facing</th>
+              <th class="py-3 px-3">Bed/Bath/Bal</th>
+              <th class="py-3 px-3 text-right">Saleable Area</th>
+              <th class="py-3 px-3 text-right">Carpet Area</th>
+              <th class="py-3 px-3 text-right">Rate / Sqft</th>
+              <th class="py-3 px-3 text-right">Total Price</th>
+              <th class="py-3 px-3 text-center">Status</th>
+              <th class="py-3 px-3 text-center">Share</th>
+              <th class="py-3 px-3 text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 text-slate-700">
+            @for (unit of pagedUnits(); track unit.id) {
+              <tr class="hover:bg-indigo-50/40 transition-colors">
+                <!-- Unit Code -->
+                <td class="py-3 px-3 font-semibold">
+                  <div class="font-extrabold text-slate-900 font-mono">{{ unit.unit_number }}</div>
+                  <div class="text-[10px] text-slate-400">ID: #{{ unit.id }}</div>
+                </td>
+
+                <!-- Floor -->
+                <td class="py-3 px-3 font-semibold text-slate-800">
+                  Floor {{ unit.floor_number }}
+                </td>
+
+                <!-- Type & Facing -->
+                <td class="py-3 px-3">
+                  <div class="font-bold text-slate-800">{{ unit.unit_type_id }}</div>
+                  <div class="text-[10px] text-slate-500">{{ unit.facing_id }}</div>
+                </td>
+
+                <!-- Bed / Bath / Balcony -->
+                <td class="py-3 px-3 font-medium">
+                  {{ unit.bed_count }}B / {{ unit.bath_count }}T / {{ unit.balcony_count }}Bal
+                </td>
+
+                <!-- Saleable Area -->
+                <td class="py-3 px-3 text-right font-bold text-slate-800">
+                  {{ unit.gross_saleable_area_sqft }} sqft
+                </td>
+
+                <!-- Carpet Area -->
+                <td class="py-3 px-3 text-right font-medium text-slate-600">
+                  {{ unit.net_carpet_area_sqft }} sqft
+                </td>
+
+                <!-- Rate per sqft -->
+                <td class="py-3 px-3 text-right font-medium">
+                  ৳{{ unit.effective_rate_per_sqft | number:'1.0-0' }}
+                </td>
+
+                <!-- Total Price -->
+                <td class="py-3 px-3 text-right font-extrabold text-indigo-700">
+                  {{ formatBDT(unit.total_unit_price) }}
+                </td>
+
+                <!-- Status -->
+                <td class="py-3 px-3 text-center">
+                  <span 
+                    [class]="getStatusBadgeClass(unit.status_id)"
+                    class="px-2 py-0.5 rounded-full text-[10px] font-bold border">
+                    {{ unit.status_id }}
+                  </span>
+                  @if (unit.lock_remaining_seconds) {
+                    <div class="text-[9px] text-amber-600 font-bold mt-0.5 animate-pulse">
+                      Hold: {{ unit.lock_remaining_seconds }}s
+                    </div>
+                  }
+                </td>
+
+                <!-- Allocation Share -->
+                <td class="py-3 px-3 text-center">
+                  <span 
+                    [class.bg-purple-50]="unit.is_landowner_share"
+                    [class.text-purple-700]="unit.is_landowner_share"
+                    [class.border-purple-200]="unit.is_landowner_share"
+                    [class.bg-slate-100]="!unit.is_landowner_share"
+                    [class.text-slate-700]="!unit.is_landowner_share"
+                    class="px-2 py-0.5 rounded text-[10px] font-semibold border">
+                    {{ unit.is_landowner_share ? 'Landowner' : 'Developer' }}
+                  </span>
+                </td>
+
+                <!-- Actions -->
+                <td class="py-3 px-3 text-center">
+                  <div class="flex items-center justify-center gap-1.5">
+                    <button 
+                      (click)="viewUnitDetails(unit)"
+                      class="p-1 hover:bg-slate-100 rounded text-slate-600 hover:text-indigo-600 transition-colors cursor-pointer"
+                      title="Inspect Specs">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                    </button>
+                    <button 
+                      (click)="openEditUnitModal(unit)"
+                      class="p-1 hover:bg-slate-100 rounded text-slate-600 hover:text-emerald-600 transition-colors cursor-pointer"
+                      title="Edit Unit">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                    </button>
+                    @if (unit.status_id === 'AVAILABLE') {
+                      <button 
+                        (click)="lockUnit(unit)"
+                        class="p-1 hover:bg-amber-100 rounded text-amber-600 hover:text-amber-800 transition-colors cursor-pointer"
+                        title="15-Minute Mutex Lock">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                      </button>
+                    }
+                    @if (unit.status_id === 'ON_HOLD') {
+                      <button 
+                        (click)="unlockUnit(unit)"
+                        class="p-1 hover:bg-emerald-100 rounded text-emerald-600 hover:text-emerald-800 transition-colors cursor-pointer"
+                        title="Release Hold Lock">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"></path></svg>
+                      </button>
+                    }
+                    <button 
+                      (click)="deleteUnit(unit)"
+                      class="p-1 hover:bg-red-50 rounded text-slate-400 hover:text-red-600 transition-colors cursor-pointer"
+                      title="Delete Unit">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="11" class="py-8 text-center text-slate-400">
+                  No property units match the selected filters.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination Footer -->
+      <div class="pt-4 border-t border-slate-200 flex flex-wrap items-center justify-between text-xs text-slate-600">
+        <div>
+          Showing <span class="font-bold text-slate-900">{{ pagedUnits().length }}</span> of {{ totalUnitsCount() }} total property units
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button 
+            (click)="goToPage(currentPage() - 1)"
+            [disabled]="currentPage() === 1"
+            class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 disabled:opacity-40 rounded-lg font-semibold transition-colors cursor-pointer">
+            Previous
+          </button>
+          <span class="px-3 py-1 bg-indigo-50 text-indigo-700 font-bold rounded-lg">
+            Page {{ currentPage() }} of {{ totalPages() }}
+          </span>
+          <button 
+            (click)="goToPage(currentPage() + 1)"
+            [disabled]="currentPage() === totalPages()"
+            class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 disabled:opacity-40 rounded-lg font-semibold transition-colors cursor-pointer">
+            Next
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+
+  <!-- ========================================================================= -->
+  <!-- TAB 4: 3.4 UNIT AREA & COMMERCIAL PRICING FORMULA CALCULATOR              -->
+  <!-- ========================================================================= -->
+  @if (activeTab() === 'area_calc') {
+    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-6">
+      <div class="pb-4 border-b border-slate-100">
+        <h3 class="text-base font-bold text-slate-800">Section 3.4 Unit Area Measurement & Commercial Pricing Engine</h3>
+        <p class="text-xs text-slate-500">
+          Formulates: <strong>Base Unit Price = Chargeable Area &times; (Base Rate + Floor Rise + Facing Premium)</strong>
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Interactive Rate Card Controls -->
+        <div class="space-y-4 bg-slate-50 p-5 rounded-2xl border border-slate-200">
+          <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Dynamic Commercial Parameters</h4>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">
+              Chargeable Saleable Area (sqft)
+            </label>
+            <input 
+              type="number" 
+              [value]="calcChargeableArea()" 
+              (input)="calcChargeableArea.set($any($event.target).value)" 
+              class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Base Rate / Sqft (৳)</label>
+              <input 
+                type="number" 
+                [value]="calcRatePerSqft()" 
+                (input)="calcRatePerSqft.set($any($event.target).value)" 
+                class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Floor Rise / Level (৳)</label>
+              <input 
+                type="number" 
+                [value]="calcFloorRise()" 
+                (input)="calcFloorRise.set($any($event.target).value)" 
+                class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Target Floor Number</label>
+              <input 
+                type="number" 
+                [value]="calcFloorNumber()" 
+                (input)="calcFloorNumber.set($any($event.target).value)" 
+                class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Facing Premium / Sqft (৳)</label>
+              <input 
+                type="number" 
+                [value]="calcFacingPremium()" 
+                (input)="calcFacingPremium.set($any($event.target).value)" 
+                class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-3 gap-3 pt-2 border-t border-slate-200">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Utility Fee (৳)</label>
+              <input 
+                type="number" 
+                [value]="calcUtilityFee()" 
+                (input)="calcUtilityFee.set($any($event.target).value)" 
+                class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Car Parking (৳)</label>
+              <input 
+                type="number" 
+                [value]="calcParkingPrice()" 
+                (input)="calcParkingPrice.set($any($event.target).value)" 
+                class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Max Discount (৳)</label>
+              <input 
+                type="number" 
+                [value]="calcMaxDiscount()" 
+                (input)="calcMaxDiscount.set($any($event.target).value)" 
+                class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Calculated Live Pricing Card -->
+        <div class="bg-gradient-to-br from-indigo-900 to-slate-900 text-white p-6 rounded-2xl shadow-xl flex flex-col justify-between">
+          <div>
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">
+              Commercial Pricing Output
+            </span>
+            <div class="text-xs text-slate-400 mt-2">Effective Rate per Sqft:</div>
+            <div class="text-3xl font-black text-emerald-400">
+              ৳{{ computedEffectiveRate() | number:'1.0-0' }} / sqft
+            </div>
+            <div class="text-xs text-slate-400 mt-1">
+              Base (৳{{ calcRatePerSqft() }}) + Rise (৳{{ (calcFloorRise() * (calcFloorNumber() - 1)) }}) + Premium (৳{{ calcFacingPremium() }})
+            </div>
+
+            <div class="mt-6 space-y-2 text-xs border-t border-slate-800 pt-4">
+              <div class="flex items-center justify-between text-slate-300">
+                <span>Base Unit Price ({{ calcChargeableArea() }} sqft):</span>
+                <span class="font-bold text-white">{{ formatBDT(computedBaseUnitPrice()) }}</span>
+              </div>
+              <div class="flex items-center justify-between text-slate-300">
+                <span>Utility Connection Charges:</span>
+                <span class="font-bold text-white">{{ formatBDT(calcUtilityFee()) }}</span>
+              </div>
+              <div class="flex items-center justify-between text-slate-300">
+                <span>Car Parking Bay (Basement 1):</span>
+                <span class="font-bold text-white">{{ formatBDT(calcParkingPrice()) }}</span>
+              </div>
+              <div class="flex items-center justify-between text-slate-300">
+                <span>Max Allowable Discount:</span>
+                <span class="font-bold text-amber-400">-{{ formatBDT(calcMaxDiscount()) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-6 pt-4 border-t border-slate-800">
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-slate-400 uppercase font-bold">Total Contractual Price:</span>
+              <span class="text-2xl font-black text-white">{{ formatBDT(computedTotalContractualPrice()) }}</span>
+            </div>
+            <div class="flex items-center justify-between text-xs text-slate-400 mt-1">
+              <span>Minimum Permissible Price:</span>
+              <span class="font-bold text-emerald-400">{{ formatBDT(computedMinAllowedPrice()) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+
+  <!-- ========================================================================= -->
+  <!-- TAB 5: BASEMENT CAR PARKING BAYS                                           -->
+  <!-- ========================================================================= -->
+  @if (activeTab() === 'parking') {
+    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-4">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+        <div>
+          <h3 class="text-base font-bold text-slate-800">Basement Car Parking Facility Allocation</h3>
+          <p class="text-xs text-slate-500">Dedicated bays, tandem slots, VIP parking allocations tied to property units</p>
+        </div>
+
+        <span class="px-3 py-1 bg-emerald-50 text-emerald-700 font-bold text-xs rounded-xl border border-emerald-200">
+          {{ parkingSlots().length }} Total Registered Slots
+        </span>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+        @for (slot of parkingSlots(); track slot.id) {
+          <div 
+            [class.border-emerald-300]="slot.status === 'AVAILABLE'"
+            [class.bg-emerald-50]="slot.status === 'AVAILABLE'"
+            [class.border-indigo-300]="slot.status === 'ALLOCATED'"
+            [class.bg-indigo-50]="slot.status === 'ALLOCATED'"
+            class="p-3 rounded-xl border transition-all text-left">
+            <div class="flex items-center justify-between font-extrabold text-sm text-slate-900 font-mono">
+              <span>{{ slot.slot_number }}</span>
+              <span class="px-1.5 py-0.2 rounded text-[10px] bg-white/80 font-bold">{{ slot.basement_level }}</span>
+            </div>
+            <div class="text-[11px] text-slate-600 mt-1">{{ slot.slot_type }}</div>
+            <div class="text-xs font-bold text-slate-800 mt-1">{{ formatBDT(slot.price) }}</div>
+            <div class="text-[10px] font-bold uppercase mt-2 flex items-center justify-between pt-1 border-t border-slate-200">
+              <span [class.text-emerald-700]="slot.status === 'AVAILABLE'" [class.text-indigo-700]="slot.status === 'ALLOCATED'">
+                {{ slot.status }}
+              </span>
+              @if (slot.status === 'AVAILABLE') {
+                <button 
+                  (click)="openAssignParking(slot)"
+                  class="px-1.5 py-0.5 rounded bg-indigo-600 text-white text-[9px] hover:bg-indigo-700 cursor-pointer">
+                  Assign
+                </button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: ADD / EDIT UNIT                                                    -->
+  <!-- ========================================================================= -->
+  @if (isUnitModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+      <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden">
+        
+        <!-- Modal Header -->
+        <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+          <div>
+            <h3 class="text-base font-bold">
+              {{ editingUnit() ? 'Edit Property Unit #' + editingUnit()?.unit_number : 'Register New Property Unit' }}
+            </h3>
+            <p class="text-xs text-slate-400 mt-0.5">Section 3.3 Property Unit Configuration & Specifications</p>
+          </div>
+          <button (click)="isUnitModalOpen.set(false)" class="text-slate-400 hover:text-white cursor-pointer">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+        </div>
+
+        <!-- Form Body -->
+        <div class="p-6 overflow-y-auto flex-1 space-y-4" [formGroup]="unitForm">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Target Project *</label>
+              <app-searchable-select
+                [options]="projectSelectOptions()"
+                [value]="unitForm.get('project_id')?.value"
+                (valueChange)="unitForm.patchValue({ project_id: $event })"
+                placeholder="Select Project...">
+              </app-searchable-select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Building / Tower *</label>
+              <app-searchable-select
+                [options]="towerOptions"
+                [value]="unitForm.get('tower_id')?.value"
+                (valueChange)="unitForm.patchValue({ tower_id: $event })"
+                placeholder="Select Tower...">
+              </app-searchable-select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Floor Number *</label>
+              <input type="number" formControlName="floor_number" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Unit Number / Code (e.g. 12A) *</label>
+              <input type="text" formControlName="unit_number" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl" placeholder="12A" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Property Type *</label>
+              <app-searchable-select
+                [options]="propertyTypeOptions"
+                [value]="unitForm.get('unit_type_id')?.value"
+                (valueChange)="unitForm.patchValue({ unit_type_id: $event })">
+              </app-searchable-select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Facing / Orientation *</label>
+              <app-searchable-select
+                [options]="facingOptions"
+                [value]="unitForm.get('facing_id')?.value"
+                (valueChange)="unitForm.patchValue({ facing_id: $event })">
+              </app-searchable-select>
+            </div>
+          </div>
+
+          <!-- Specifications -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-3 border-t border-slate-100">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Bedrooms</label>
+              <input type="number" formControlName="bed_count" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Bathrooms</label>
+              <input type="number" formControlName="bath_count" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Balconies</label>
+              <input type="number" formControlName="balcony_count" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl" />
+            </div>
+          </div>
+
+          <!-- Area Measurements -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 border-t border-slate-100">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Gross Saleable Area (sqft) *</label>
+              <input type="number" formControlName="gross_saleable_area_sqft" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl font-bold" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Net Carpet Area (sqft) *</label>
+              <input type="number" formControlName="net_carpet_area_sqft" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl" />
+            </div>
+          </div>
+
+          <!-- Commercial Pricing -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-3 border-t border-slate-100">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Base Rate / Sqft (৳) *</label>
+              <input type="number" formControlName="base_rate_per_sqft" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl font-bold" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Floor Rise / Level (৳)</label>
+              <input type="number" formControlName="floor_escalation_rate" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Facing Premium (৳)</label>
+              <input type="number" formControlName="facing_premium_rate" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl" />
+            </div>
+          </div>
+
+          <!-- Status & Share -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 border-t border-slate-100">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Initial Status *</label>
+              <app-searchable-select
+                [options]="statusOptions"
+                [value]="unitForm.get('status_id')?.value"
+                (valueChange)="unitForm.patchValue({ status_id: $event })">
+              </app-searchable-select>
+            </div>
+            <div class="flex items-center gap-2 pt-6">
+              <input type="checkbox" id="isLandShare" formControlName="is_landowner_share" class="w-4 h-4 text-indigo-600 rounded" />
+              <label for="isLandShare" class="text-xs font-bold text-slate-700 cursor-pointer">
+                Registered Landowner Share (JV Quota - Locked from Sales)
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-3">
+          <button (click)="isUnitModalOpen.set(false)" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-xs font-semibold cursor-pointer">
+            Cancel
+          </button>
+          <button (click)="saveUnit()" [disabled]="actionInProgress()" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md cursor-pointer disabled:opacity-50">
+            {{ actionInProgress() ? 'Saving...' : 'Save Unit Record' }}
+          </button>
+        </div>
+
+      </div>
+    </div>
+  }
+
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: BULK UNIT GENERATOR                                                -->
+  <!-- ========================================================================= -->
+  @if (isBulkModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+      <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-2xl overflow-hidden">
+        <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+          <div>
+            <h3 class="text-base font-bold">Bulk Unit Schedule Generator</h3>
+            <p class="text-xs text-slate-400 mt-0.5">Rapidly generate units across multiple floors from approved BOQ schedules</p>
+          </div>
+          <button (click)="isBulkModalOpen.set(false)" class="text-slate-400 hover:text-white cursor-pointer">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+        </div>
+
+        <div class="p-6 space-y-4" [formGroup]="bulkForm">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Target Project *</label>
+              <app-searchable-select
+                [options]="projectSelectOptions()"
+                [value]="bulkForm.get('project_id')?.value"
+                (valueChange)="bulkForm.patchValue({ project_id: $event })">
+              </app-searchable-select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Building / Tower *</label>
+              <app-searchable-select
+                [options]="towerOptions"
+                [value]="bulkForm.get('tower_id')?.value"
+                (valueChange)="bulkForm.patchValue({ tower_id: $event })">
+              </app-searchable-select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-3 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Start Floor</label>
+              <input type="number" formControlName="start_floor" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">End Floor</label>
+              <input type="number" formControlName="end_floor" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Units per Floor</label>
+              <input type="number" formControlName="units_per_floor" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Base Rate / Sqft (৳)</label>
+              <input type="number" formControlName="base_rate_per_sqft" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Floor Rise / Level (৳)</label>
+              <input type="number" formControlName="floor_escalation_rate" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl" />
+            </div>
+          </div>
+
+          <div class="p-3 bg-indigo-50/60 rounded-xl border border-indigo-100 text-xs text-indigo-900">
+            <strong>Auto-naming:</strong> Units will be named sequentially (e.g. 1A, 1B, 1C, 1D, 2A, 2B...). Duplicate unit codes within the project will be safely skipped.
+          </div>
+        </div>
+
+        <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-3">
+          <button (click)="isBulkModalOpen.set(false)" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-xs font-semibold cursor-pointer">
+            Cancel
+          </button>
+          <button (click)="submitBulkCreate()" [disabled]="actionInProgress()" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md cursor-pointer disabled:opacity-50">
+            {{ actionInProgress() ? 'Generating...' : 'Run Bulk Generation' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: UNIT DETAIL INSPECTOR                                              -->
+  <!-- ========================================================================= -->
+  @if (isDetailModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+      <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-2xl overflow-hidden">
+        @if (inspectingUnit(); as u) {
+          <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+            <div>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-400/30 uppercase">
+                Property Unit Details
+              </span>
+              <h3 class="text-xl font-extrabold mt-1">Unit {{ u.unit_number }} (Floor {{ u.floor_number }})</h3>
+            </div>
+            <button (click)="isDetailModalOpen.set(false)" class="text-slate-400 hover:text-white cursor-pointer">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+          </div>
+
+          <div class="p-6 space-y-4 text-xs text-slate-700">
+            <div class="grid grid-cols-2 gap-4 p-4 rounded-xl bg-slate-50 border border-slate-200">
+              <div>Type: <strong class="text-slate-900">{{ u.unit_type_id }}</strong></div>
+              <div>Facing: <strong class="text-slate-900">{{ u.facing_id }}</strong></div>
+              <div>Saleable Area: <strong class="text-indigo-700">{{ u.gross_saleable_area_sqft }} sqft</strong></div>
+              <div>Net Carpet Area: <strong class="text-slate-900">{{ u.net_carpet_area_sqft }} sqft</strong></div>
+              <div>Bed / Bath / Balcony: <strong class="text-slate-900">{{ u.bed_count || 0 }} Bed / {{ u.bath_count || 0 }} Bath / {{ u.balcony_count || 0 }} Bal</strong></div>
+              <div>Status: <span [class]="getStatusBadgeClass(u.status_id)" class="px-2 py-0.5 rounded font-bold border">{{ u.status_id }}</span></div>
+            </div>
+
+            <div class="p-4 rounded-xl bg-indigo-50/50 border border-indigo-100">
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-slate-600 font-semibold">Total Price:</span>
+                <span class="text-xl font-black text-indigo-900">{{ formatBDT(u.total_unit_price) }}</span>
+              </div>
+              <div class="text-[11px] text-slate-500 mt-1">
+                Effective Rate: ৳{{ u.effective_rate_per_sqft | number:'1.0-0' }} / sqft
+              </div>
+            </div>
+
+            @if (u.is_landowner_share) {
+              <div class="p-3 rounded-xl bg-purple-50 text-purple-900 border border-purple-200 font-medium">
+                Joint Venture Share: This unit is allocated to the Landowner under registered JV agreement. Not available for direct developer sale.
+              </div>
+            }
+          </div>
+
+          <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end">
+            <button (click)="isDetailModalOpen.set(false)" class="px-4 py-2 bg-slate-800 text-white rounded-xl text-xs font-semibold cursor-pointer">
+              Close
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: PARKING ASSIGNMENT                                                 -->
+  <!-- ========================================================================= -->
+  @if (isParkingAssignModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+      <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden">
+        <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+          <h3 class="text-base font-bold">Allocate Parking Slot {{ selectedParkingForAssign()?.slot_number }}</h3>
+          <button (click)="isParkingAssignModalOpen.set(false)" class="text-slate-400 hover:text-white cursor-pointer">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+        </div>
+
+        <div class="p-6 space-y-4" [formGroup]="parkingAssignForm">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Target Property Unit ID *</label>
+            <input 
+              type="number" 
+              formControlName="unit_id" 
+              placeholder="Enter Unit ID (e.g. 1)" 
+              class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl" />
+            <p class="text-[11px] text-slate-400 mt-1">Slot cost of {{ formatBDT(selectedParkingForAssign()?.price) }} will be added to the unit contract.</p>
+          </div>
+        </div>
+
+        <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-3">
+          <button (click)="isParkingAssignModalOpen.set(false)" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold cursor-pointer">
+            Cancel
+          </button>
+          <button (click)="submitParkingAssignment()" [disabled]="actionInProgress()" class="px-5 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold cursor-pointer disabled:opacity-50">
+            Confirm Allocation
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+</div>

@@ -254,6 +254,8 @@ export class CashBankDashboardComponent implements OnInit {
     this.route.queryParams.subscribe(params => {
       if (params['tab'] && ['overview', 'cash', 'bank', 'mfs'].includes(params['tab'])) {
         this.activeTab.set(params['tab']);
+      } else if (!params['tab']) {
+        this.activeTab.set('overview');
       }
     });
 

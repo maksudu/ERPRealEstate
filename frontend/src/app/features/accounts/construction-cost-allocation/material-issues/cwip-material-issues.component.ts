@@ -8,7 +8,6 @@ import {
   CWIPMaterialIssue,
   CWIPMaterialIssueCreatePayload
 } from '../../../../core/models/cwip-allocation.model';
-import { CWIPAllocationNavComponent } from '../cwip-allocation-nav.component';
 import { CardContainerComponent } from '../../../../shared/components/card-container/card-container.component';
 import { StatusBadgeComponent, StatusVariant } from '../../../../shared/components/status-badge/status-badge.component';
 import { SearchableSelectComponent, SelectOption } from '../../../../shared/components/searchable-select/searchable-select.component';
@@ -20,7 +19,6 @@ import { SearchableSelectComponent, SelectOption } from '../../../../shared/comp
     CommonModule,
     FormsModule,
     RouterLink,
-    CWIPAllocationNavComponent,
     CardContainerComponent,
     StatusBadgeComponent,
     SearchableSelectComponent

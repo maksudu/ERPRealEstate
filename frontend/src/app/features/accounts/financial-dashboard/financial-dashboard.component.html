@@ -1,0 +1,1102 @@
+<div class="p-6 space-y-6 bg-slate-50 min-h-screen text-slate-800 font-sans">
+
+  <!-- ========================================================================= -->
+  <!-- 1. EXECUTIVE HEADER & FINANCIAL BALANCE SHEET SUMMARY                     -->
+  <!-- ========================================================================= -->
+  <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
+    <!-- Decorative background glow -->
+    <div class="absolute -right-10 -bottom-10 w-72 h-72 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute left-1/3 -top-10 w-60 h-60 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none"></div>
+
+    <div class="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+      <div>
+        <div class="flex items-center gap-3">
+          <span class="px-3 py-1 bg-indigo-500/20 text-indigo-300 border border-indigo-400/30 rounded-full text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            Management Financial Intelligence
+          </span>
+          <span class="text-xs text-slate-400 font-medium">As of: {{ kpiData()?.as_of_date || 'Today' }}</span>
+        </div>
+        <h1 class="text-2xl lg:text-3xl font-extrabold tracking-tight mt-2 text-white">
+          Executive Financial Dashboard
+        </h1>
+        <p class="text-slate-300 text-sm mt-1 max-w-3xl">
+          Consolidated financial overview, liquidity positions, project WIP, revenue, and liability schedules across {{ kpiData()?.total_projects_count || 22 }}+ real estate development projects.
+        </p>
+      </div>
+
+      <!-- Quick Action Buttons -->
+      <div class="flex flex-wrap items-center gap-3">
+        <button 
+          (click)="refreshDashboard()" 
+          [disabled]="loading()"
+          class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white rounded-xl text-sm font-semibold transition-all shadow-md hover:shadow-indigo-500/25 flex items-center gap-2 cursor-pointer disabled:opacity-50">
+          <svg [class.animate-spin]="loading()" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+          Refresh Live Figures
+        </button>
+        <button 
+          (click)="navigateToVouchers()" 
+          class="px-4 py-2 bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 text-slate-200 rounded-xl text-sm font-medium transition-all flex items-center gap-2 cursor-pointer">
+          <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
+          Audit Vouchers
+        </button>
+      </div>
+    </div>
+
+    <!-- Executive Balance Sheet Quick Bar -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-5 border-t border-slate-800">
+      <div class="bg-slate-800/40 backdrop-blur-sm rounded-xl p-3 border border-slate-700/50">
+        <span class="text-xs text-slate-400 font-medium block">Total Enterprise Assets</span>
+        <div class="text-xl font-bold text-emerald-400 mt-0.5">
+          {{ formatBDT(kpiData()?.total_assets) }}
+        </div>
+        <span class="text-[11px] text-slate-400">Cash, Bank, AR, and CWIP</span>
+      </div>
+
+      <div class="bg-slate-800/40 backdrop-blur-sm rounded-xl p-3 border border-slate-700/50">
+        <span class="text-xs text-slate-400 font-medium block">Total Liabilities</span>
+        <div class="text-xl font-bold text-amber-400 mt-0.5">
+          {{ formatBDT(kpiData()?.total_liabilities) }}
+        </div>
+        <span class="text-[11px] text-slate-400">AP, Advances, Bank Loans</span>
+      </div>
+
+      <div class="bg-slate-800/40 backdrop-blur-sm rounded-xl p-3 border border-slate-700/50">
+        <span class="text-xs text-slate-400 font-medium block">Shareholders' Equity</span>
+        <div class="text-xl font-bold text-cyan-400 mt-0.5">
+          {{ formatBDT(kpiData()?.total_equity) }}
+        </div>
+        <span class="text-[11px] text-slate-400">Net Assets & Retained Earnings</span>
+      </div>
+
+      <div class="bg-slate-800/40 backdrop-blur-sm rounded-xl p-3 border border-slate-700/50">
+        <span class="text-xs text-slate-400 font-medium block">Quick Liquidity Ratio</span>
+        <div class="text-xl font-bold text-indigo-400 mt-0.5">
+          {{ kpiData()?.liquidity_ratio || '1.8' }}x
+        </div>
+        <span class="text-[11px] text-slate-400">(Cash + AR) / Short-term AP</span>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ========================================================================= -->
+  <!-- 2.2 DASHBOARD COMPREHENSIVE FILTER CONSOLE (ALL SEARCHABLE & DYNAMIC)    -->
+  <!-- ========================================================================= -->
+  <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+    <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+          </svg>
+        </div>
+        <div>
+          <h2 class="text-base font-bold text-slate-800">Section 2.2 Dashboard Filters</h2>
+          <p class="text-xs text-slate-500">Filter consolidated figures across entity, accounting period, cost centre, voucher and bank account</p>
+        </div>
+      </div>
+
+      <!-- Quick Date Presets -->
+      <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl text-xs font-medium">
+        <button 
+          (click)="setDatePreset('today')"
+          [class.bg-white]="activeDatePreset() === 'today'"
+          [class.text-indigo-600]="activeDatePreset() === 'today'"
+          [class.shadow-sm]="activeDatePreset() === 'today'"
+          class="px-3 py-1 rounded-lg text-slate-600 hover:text-indigo-600 transition-all cursor-pointer">
+          Today
+        </button>
+        <button 
+          (click)="setDatePreset('this_month')"
+          [class.bg-white]="activeDatePreset() === 'this_month'"
+          [class.text-indigo-600]="activeDatePreset() === 'this_month'"
+          [class.shadow-sm]="activeDatePreset() === 'this_month'"
+          class="px-3 py-1 rounded-lg text-slate-600 hover:text-indigo-600 transition-all cursor-pointer">
+          This Month
+        </button>
+        <button 
+          (click)="setDatePreset('this_fy')"
+          [class.bg-white]="activeDatePreset() === 'this_fy'"
+          [class.text-indigo-600]="activeDatePreset() === 'this_fy'"
+          [class.shadow-sm]="activeDatePreset() === 'this_fy'"
+          class="px-3 py-1 rounded-lg text-slate-600 hover:text-indigo-600 transition-all cursor-pointer">
+          This FY
+        </button>
+        <button 
+          (click)="setDatePreset('all_time')"
+          [class.bg-white]="activeDatePreset() === 'all_time'"
+          [class.text-indigo-600]="activeDatePreset() === 'all_time'"
+          [class.shadow-sm]="activeDatePreset() === 'all_time'"
+          class="px-3 py-1 rounded-lg text-slate-600 hover:text-indigo-600 transition-all cursor-pointer">
+          All Time
+        </button>
+      </div>
+    </div>
+
+    <!-- Filter Inputs Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <!-- 1. Company / Legal Entity -->
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 mb-1">Company & Legal Entity</label>
+        <app-searchable-select
+          [options]="companyOptions()"
+          [value]="selectedCompany()"
+          (valueChange)="selectedCompany.set($event)"
+          placeholder="Select Company / Legal Entity...">
+        </app-searchable-select>
+      </div>
+
+      <!-- 2. Financial Year -->
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 mb-1">Financial Year / Period</label>
+        <app-searchable-select
+          [options]="fiscalYearOptions()"
+          [value]="selectedFiscalYear()"
+          (valueChange)="selectedFiscalYear.set($event)"
+          placeholder="Select Financial Year...">
+        </app-searchable-select>
+      </div>
+
+      <!-- 3. Project / Building -->
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 mb-1">Project or Building</label>
+        <app-searchable-select
+          [options]="projectOptions()"
+          [value]="selectedProject()"
+          (valueChange)="selectedProject.set($event)"
+          placeholder="All Projects (20+ Portfolio)...">
+        </app-searchable-select>
+      </div>
+
+      <!-- 4. Cost Centre -->
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 mb-1">Cost Centre</label>
+        <app-searchable-select
+          [options]="costCenterOptions()"
+          [value]="selectedCostCenter()"
+          (valueChange)="selectedCostCenter.set($event)"
+          placeholder="Select Cost Centre...">
+        </app-searchable-select>
+      </div>
+
+      <!-- 5. Account Group -->
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 mb-1">Account Group</label>
+        <app-searchable-select
+          [options]="accountGroupOptions()"
+          [value]="selectedAccountGroup()"
+          (valueChange)="selectedAccountGroup.set($event)"
+          placeholder="All Account Groups...">
+        </app-searchable-select>
+      </div>
+
+      <!-- 6. Account / Ledger -->
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 mb-1">Specific Ledger Account</label>
+        <app-searchable-select
+          [options]="accountOptions()"
+          [value]="selectedAccount()"
+          (valueChange)="selectedAccount.set($event)"
+          placeholder="All Heads of Accounts...">
+        </app-searchable-select>
+      </div>
+
+      <!-- 7. Voucher Type & Status -->
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 mb-1">Voucher Type & Status</label>
+        <div class="grid grid-cols-2 gap-2">
+          <app-searchable-select
+            [options]="voucherTypeOptions()"
+            [value]="selectedVoucherType()"
+            (valueChange)="selectedVoucherType.set($event)"
+            placeholder="Type...">
+          </app-searchable-select>
+          <app-searchable-select
+            [options]="voucherStatusOptions()"
+            [value]="selectedVoucherStatus()"
+            (valueChange)="selectedVoucherStatus.set($event)"
+            placeholder="Status...">
+          </app-searchable-select>
+        </div>
+      </div>
+
+      <!-- 8. Bank Account & Payment Method -->
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 mb-1">Bank A/C & Payment Mode</label>
+        <div class="grid grid-cols-2 gap-2">
+          <app-searchable-select
+            [options]="bankAccountOptions()"
+            [value]="selectedBankAccount()"
+            (valueChange)="selectedBankAccount.set($event)"
+            placeholder="Bank A/C...">
+          </app-searchable-select>
+          <app-searchable-select
+            [options]="paymentMethodOptions()"
+            [value]="selectedPaymentMethod()"
+            (valueChange)="selectedPaymentMethod.set($event)"
+            placeholder="Mode...">
+          </app-searchable-select>
+        </div>
+      </div>
+
+      <!-- 9. Currency -->
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 mb-1">Currency</label>
+        <app-searchable-select
+          [options]="currencyOptions()"
+          [value]="selectedCurrency()"
+          (valueChange)="selectedCurrency.set($event)">
+        </app-searchable-select>
+      </div>
+
+      <!-- 10. Date From -->
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 mb-1">From Date</label>
+        <input 
+          type="date"
+          [value]="fromDate()"
+          (change)="fromDate.set($any($event.target).value)"
+          class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl bg-slate-50 text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+      </div>
+
+      <!-- 11. Date To -->
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 mb-1">To Date</label>
+        <input 
+          type="date"
+          [value]="toDate()"
+          (change)="toDate.set($any($event.target).value)"
+          class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl bg-slate-50 text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+      </div>
+
+      <!-- Filter Action Buttons -->
+      <div class="flex items-end gap-2">
+        <button 
+          (click)="applyFilters()"
+          class="flex-1 py-2 px-4 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-semibold rounded-xl text-sm transition-all shadow-md shadow-indigo-100 flex items-center justify-center gap-1.5 cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
+          Apply Filters
+        </button>
+        <button 
+          (click)="resetFilters()"
+          class="py-2 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl text-sm transition-all cursor-pointer"
+          title="Reset all filters">
+          Reset
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ========================================================================= -->
+  <!-- 2.1 DASHBOARD 16 CORE KPIS - GROUPED CARDS WITH DRILL-DOWN TRACEABILITY  -->
+  <!-- ========================================================================= -->
+  @if (loading()) {
+    <div class="bg-white rounded-2xl p-12 text-center border border-slate-200">
+      <div class="inline-block animate-spin rounded-full h-10 w-10 border-4 border-indigo-600 border-t-transparent mb-3"></div>
+      <p class="text-slate-600 font-semibold">Aggregating live double-entry ledgers across 20+ projects...</p>
+      <p class="text-xs text-slate-400 mt-1">Calculating recognized revenue, CWIP balances, and liquidity positions</p>
+    </div>
+  } @else {
+    @if (kpiData(); as kpis) {
+      <div class="space-y-6">
+
+      <!-- --------------------------------------------------------------------- -->
+      <!-- GROUP 1: REVENUE, EXPENDITURE & PROFITABILITY (KPIS 1, 8, 12, 13)       -->
+      <!-- --------------------------------------------------------------------- -->
+      <div>
+        <div class="flex items-center gap-2 mb-3">
+          <div class="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
+          <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wider">Group A: Revenue, Expenditure & Profitability</h2>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- KPI 1: Total Revenue and Recognized Income -->
+          <div 
+            (click)="openDrilldown(kpis.revenue_recognized.drilldown_type)"
+            class="bg-white rounded-2xl p-4 border border-slate-200 hover:border-indigo-400 hover:shadow-lg transition-all cursor-pointer group relative overflow-hidden">
+            <div class="flex items-start justify-between">
+              <span class="text-xs font-semibold text-slate-500">{{ kpis.revenue_recognized.title }}</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                +{{ kpis.revenue_recognized.trend_pct }}% YoY
+              </span>
+            </div>
+            <div class="text-2xl font-black text-slate-900 mt-2">
+              {{ formatBDT(kpis.revenue_recognized.primary_amount) }}
+            </div>
+            <div class="flex items-center justify-between text-xs text-slate-500 mt-2 pt-2 border-t border-slate-100">
+              <span>{{ kpis.revenue_recognized.secondary_label }}:</span>
+              <span class="font-bold text-slate-800">{{ formatBDT(kpis.revenue_recognized.secondary_amount) }}</span>
+            </div>
+            <div class="text-[11px] text-indigo-600 font-medium mt-2 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+              <span>Drill down to sales journals</span>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            </div>
+          </div>
+
+          <!-- KPI 8: Project-wise Expenditure & Construction Cost -->
+          <div 
+            (click)="openDrilldown(kpis.project_expenditure.drilldown_type)"
+            class="bg-white rounded-2xl p-4 border border-slate-200 hover:border-indigo-400 hover:shadow-lg transition-all cursor-pointer group">
+            <div class="flex items-start justify-between">
+              <span class="text-xs font-semibold text-slate-500">{{ kpis.project_expenditure.title }}</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                {{ kpis.project_expenditure.badge }}
+              </span>
+            </div>
+            <div class="text-2xl font-black text-slate-900 mt-2">
+              {{ formatBDT(kpis.project_expenditure.primary_amount) }}
+            </div>
+            <div class="flex items-center justify-between text-xs text-slate-500 mt-2 pt-2 border-t border-slate-100">
+              <span>{{ kpis.project_expenditure.secondary_label }}:</span>
+              <span class="font-bold text-slate-800">{{ formatBDT(kpis.project_expenditure.secondary_amount) }}</span>
+            </div>
+            <div class="text-[11px] text-indigo-600 font-medium mt-2 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+              <span>Drill down to construction cost vouchers</span>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            </div>
+          </div>
+
+          <!-- KPI 12: Operating Expenses (Admin & Selling) -->
+          <div 
+            (click)="openDrilldown(kpis.operating_expenses.drilldown_type)"
+            class="bg-white rounded-2xl p-4 border border-slate-200 hover:border-indigo-400 hover:shadow-lg transition-all cursor-pointer group">
+            <div class="flex items-start justify-between">
+              <span class="text-xs font-semibold text-slate-500">{{ kpis.operating_expenses.title }}</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">
+                {{ kpis.operating_expenses.badge }}
+              </span>
+            </div>
+            <div class="text-2xl font-black text-slate-900 mt-2">
+              {{ formatBDT(kpis.operating_expenses.primary_amount) }}
+            </div>
+            <div class="flex items-center justify-between text-xs text-slate-500 mt-2 pt-2 border-t border-slate-100">
+              <span>{{ kpis.operating_expenses.secondary_label }}:</span>
+              <span class="font-bold text-slate-800">{{ formatBDT(kpis.operating_expenses.secondary_amount) }}</span>
+            </div>
+            <div class="text-[11px] text-indigo-600 font-medium mt-2 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+              <span>Drill down to OPEX entries</span>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            </div>
+          </div>
+
+          <!-- KPI 13: Gross Profit & Net Profit -->
+          <div 
+            (click)="openDrilldown(kpis.profitability.drilldown_type)"
+            class="bg-white rounded-2xl p-4 border border-slate-200 hover:border-indigo-400 hover:shadow-lg transition-all cursor-pointer group">
+            <div class="flex items-start justify-between">
+              <span class="text-xs font-semibold text-slate-500">{{ kpis.profitability.title }}</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                {{ kpis.profitability.badge }}
+              </span>
+            </div>
+            <div class="text-2xl font-black text-emerald-600 mt-2">
+              {{ formatBDT(kpis.profitability.primary_amount) }}
+            </div>
+            <div class="flex items-center justify-between text-xs text-slate-500 mt-2 pt-2 border-t border-slate-100">
+              <span>{{ kpis.profitability.secondary_label }}:</span>
+              <span class="font-bold text-slate-800">{{ formatBDT(kpis.profitability.secondary_amount) }}</span>
+            </div>
+            <div class="text-[11px] text-indigo-600 font-medium mt-2 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+              <span>Drill down to P&L ledger accounts</span>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- --------------------------------------------------------------------- -->
+      <!-- GROUP 2: WORKING CAPITAL & PROJECT WORK-IN-PROGRESS (KPIS 2, 3, 4, 9) -->
+      <!-- --------------------------------------------------------------------- -->
+      <div>
+        <div class="flex items-center gap-2 mb-3">
+          <div class="w-2.5 h-2.5 rounded-full bg-cyan-500"></div>
+          <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wider">Group B: Working Capital, Trade Balances & WIP</h2>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- KPI 2: Customer Receivables & Overdue Installments -->
+          <div 
+            (click)="openDrilldown(kpis.customer_receivables.drilldown_type)"
+            class="bg-white rounded-2xl p-4 border border-slate-200 hover:border-indigo-400 hover:shadow-lg transition-all cursor-pointer group">
+            <div class="flex items-start justify-between">
+              <span class="text-xs font-semibold text-slate-500">{{ kpis.customer_receivables.title }}</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                {{ kpis.customer_receivables.badge }}
+              </span>
+            </div>
+            <div class="text-2xl font-black text-slate-900 mt-2">
+              {{ formatBDT(kpis.customer_receivables.primary_amount) }}
+            </div>
+            <div class="flex items-center justify-between text-xs text-slate-500 mt-2 pt-2 border-t border-slate-100">
+              <span class="text-red-500 font-semibold">{{ kpis.customer_receivables.secondary_label }}:</span>
+              <span class="font-bold text-red-600">{{ formatBDT(kpis.customer_receivables.secondary_amount) }}</span>
+            </div>
+            <div class="text-[11px] text-indigo-600 font-medium mt-2 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+              <span>Drill down to customer ledger & aging</span>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            </div>
+          </div>
+
+          <!-- KPI 3: Customer Advances & Unearned Balances -->
+          <div 
+            (click)="openDrilldown(kpis.customer_advances.drilldown_type)"
+            class="bg-white rounded-2xl p-4 border border-slate-200 hover:border-indigo-400 hover:shadow-lg transition-all cursor-pointer group">
+            <div class="flex items-start justify-between">
+              <span class="text-xs font-semibold text-slate-500">{{ kpis.customer_advances.title }}</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                {{ kpis.customer_advances.badge }}
+              </span>
+            </div>
+            <div class="text-2xl font-black text-slate-900 mt-2">
+              {{ formatBDT(kpis.customer_advances.primary_amount) }}
+            </div>
+            <div class="flex items-center justify-between text-xs text-slate-500 mt-2 pt-2 border-t border-slate-100">
+              <span>{{ kpis.customer_advances.secondary_label }}:</span>
+              <span class="font-bold text-slate-800">{{ formatBDT(kpis.customer_advances.secondary_amount) }}</span>
+            </div>
+            <div class="text-[11px] text-indigo-600 font-medium mt-2 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+              <span>Drill down to advance liability vouchers</span>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            </div>
+          </div>
+
+          <!-- KPI 4: Accounts Payable & Overdue Supplier Bills -->
+          <div 
+            (click)="openDrilldown(kpis.accounts_payable.drilldown_type)"
+            class="bg-white rounded-2xl p-4 border border-slate-200 hover:border-indigo-400 hover:shadow-lg transition-all cursor-pointer group">
+            <div class="flex items-start justify-between">
+              <span class="text-xs font-semibold text-slate-500">{{ kpis.accounts_payable.title }}</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">
+                {{ kpis.accounts_payable.badge }}
+              </span>
+            </div>
+            <div class="text-2xl font-black text-slate-900 mt-2">
+              {{ formatBDT(kpis.accounts_payable.primary_amount) }}
+            </div>
+            <div class="flex items-center justify-between text-xs text-slate-500 mt-2 pt-2 border-t border-slate-100">
+              <span class="text-amber-600 font-medium">{{ kpis.accounts_payable.secondary_label }}:</span>
+              <span class="font-bold text-amber-700">{{ formatBDT(kpis.accounts_payable.secondary_amount) }}</span>
+            </div>
+            <div class="text-[11px] text-indigo-600 font-medium mt-2 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+              <span>Drill down to supplier invoices & AP</span>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            </div>
+          </div>
+
+          <!-- KPI 9: Work-in-Progress (CWIP) Balance -->
+          <div 
+            (click)="openDrilldown(kpis.cwip_balance.drilldown_type)"
+            class="bg-white rounded-2xl p-4 border border-slate-200 hover:border-indigo-400 hover:shadow-lg transition-all cursor-pointer group">
+            <div class="flex items-start justify-between">
+              <span class="text-xs font-semibold text-slate-500">{{ kpis.cwip_balance.title }}</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-50 text-cyan-700 border border-cyan-200">
+                {{ kpis.cwip_balance.badge }}
+              </span>
+            </div>
+            <div class="text-2xl font-black text-cyan-700 mt-2">
+              {{ formatBDT(kpis.cwip_balance.primary_amount) }}
+            </div>
+            <div class="flex items-center justify-between text-xs text-slate-500 mt-2 pt-2 border-t border-slate-100">
+              <span>{{ kpis.cwip_balance.secondary_label }}:</span>
+              <span class="font-bold text-slate-800">{{ formatBDT(kpis.cwip_balance.secondary_amount) }}</span>
+            </div>
+            <div class="text-[11px] text-indigo-600 font-medium mt-2 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+              <span>Drill down to CWIP accumulation lines</span>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- --------------------------------------------------------------------- -->
+      <!-- GROUP 3: LIQUIDITY & TREASURY CASH FLOW (KPIS 5, 6, 7, 14)             -->
+      <!-- --------------------------------------------------------------------- -->
+      <div>
+        <div class="flex items-center gap-2 mb-3">
+          <div class="w-2.5 h-2.5 rounded-full bg-indigo-500"></div>
+          <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wider">Group C: Liquidity & Treasury Cash Management</h2>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- KPI 5: Cash-in-hand Balance -->
+          <div 
+            (click)="openDrilldown(kpis.cash_in_hand.drilldown_type)"
+            class="bg-white rounded-2xl p-4 border border-slate-200 hover:border-indigo-400 hover:shadow-lg transition-all cursor-pointer group">
+            <div class="flex items-start justify-between">
+              <span class="text-xs font-semibold text-slate-500">{{ kpis.cash_in_hand.title }}</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                {{ kpis.cash_in_hand.badge }}
+              </span>
+            </div>
+            <div class="text-2xl font-black text-slate-900 mt-2">
+              {{ formatBDT(kpis.cash_in_hand.primary_amount) }}
+            </div>
+            <div class="flex items-center justify-between text-xs text-slate-500 mt-2 pt-2 border-t border-slate-100">
+              <span>{{ kpis.cash_in_hand.secondary_label }}:</span>
+              <span class="font-bold text-slate-800">{{ formatBDT(kpis.cash_in_hand.secondary_amount) }}</span>
+            </div>
+            <div class="text-[11px] text-indigo-600 font-medium mt-2 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+              <span>Drill down to site cash registers</span>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            </div>
+          </div>
+
+          <!-- KPI 6: Bank Account Balances -->
+          <div 
+            (click)="openDrilldown(kpis.bank_balances.drilldown_type)"
+            class="bg-white rounded-2xl p-4 border border-slate-200 hover:border-indigo-400 hover:shadow-lg transition-all cursor-pointer group">
+            <div class="flex items-start justify-between">
+              <span class="text-xs font-semibold text-slate-500">{{ kpis.bank_balances.title }}</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                {{ kpis.bank_balances.badge }}
+              </span>
+            </div>
+            <div class="text-2xl font-black text-indigo-700 mt-2">
+              {{ formatBDT(kpis.bank_balances.primary_amount) }}
+            </div>
+            <div class="flex items-center justify-between text-xs text-slate-500 mt-2 pt-2 border-t border-slate-100">
+              <span>{{ kpis.bank_balances.secondary_label }}:</span>
+              <span class="font-bold text-slate-800">{{ formatBDT(kpis.bank_balances.secondary_amount) }}</span>
+            </div>
+            <div class="text-[11px] text-indigo-600 font-medium mt-2 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+              <span>Drill down to bank ledger statements</span>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            </div>
+          </div>
+
+          <!-- KPI 7: Mobile Financial Service Balances -->
+          <div 
+            (click)="openDrilldown(kpis.mfs_balances.drilldown_type)"
+            class="bg-white rounded-2xl p-4 border border-slate-200 hover:border-indigo-400 hover:shadow-lg transition-all cursor-pointer group">
+            <div class="flex items-start justify-between">
+              <span class="text-xs font-semibold text-slate-500">{{ kpis.mfs_balances.title }}</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-pink-50 text-pink-700 border border-pink-200">
+                {{ kpis.mfs_balances.badge }}
+              </span>
+            </div>
+            <div class="text-2xl font-black text-slate-900 mt-2">
+              {{ formatBDT(kpis.mfs_balances.primary_amount) }}
+            </div>
+            <div class="flex items-center justify-between text-xs text-slate-500 mt-2 pt-2 border-t border-slate-100">
+              <span>{{ kpis.mfs_balances.secondary_label }}:</span>
+              <span class="font-bold text-slate-800">{{ formatBDT(kpis.mfs_balances.secondary_amount) }}</span>
+            </div>
+            <div class="text-[11px] text-indigo-600 font-medium mt-2 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+              <span>Drill down to MFS gateway collections</span>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            </div>
+          </div>
+
+          <!-- KPI 14: Operating Cash Flow -->
+          <div 
+            (click)="openDrilldown(kpis.operating_cash_flow.drilldown_type)"
+            class="bg-white rounded-2xl p-4 border border-slate-200 hover:border-indigo-400 hover:shadow-lg transition-all cursor-pointer group">
+            <div class="flex items-start justify-between">
+              <span class="text-xs font-semibold text-slate-500">{{ kpis.operating_cash_flow.title }}</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                {{ kpis.operating_cash_flow.badge }}
+              </span>
+            </div>
+            <div class="text-2xl font-black text-emerald-600 mt-2">
+              {{ formatBDT(kpis.operating_cash_flow.primary_amount) }}
+            </div>
+            <div class="flex items-center justify-between text-xs text-slate-500 mt-2 pt-2 border-t border-slate-100">
+              <span>{{ kpis.operating_cash_flow.secondary_label }}:</span>
+              <span class="font-bold text-slate-800">{{ formatBDT(kpis.operating_cash_flow.secondary_amount) }}</span>
+            </div>
+            <div class="text-[11px] text-indigo-600 font-medium mt-2 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+              <span>Drill down to operating cash entries</span>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- --------------------------------------------------------------------- -->
+      <!-- GROUP 4: BUDGET, BORROWINGS & AUDIT SAFEGUARDS (KPIS 10, 11, 15, 16)   -->
+      <!-- --------------------------------------------------------------------- -->
+      <div>
+        <div class="flex items-center gap-2 mb-3">
+          <div class="w-2.5 h-2.5 rounded-full bg-violet-500"></div>
+          <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wider">Group D: Budget Variance, Debt Financing & Internal Audit</h2>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- KPI 10: Project Budget vs Actual Cost -->
+          <div 
+            (click)="openDrilldown(kpis.budget_vs_actual.drilldown_type)"
+            class="bg-white rounded-2xl p-4 border border-slate-200 hover:border-indigo-400 hover:shadow-lg transition-all cursor-pointer group">
+            <div class="flex items-start justify-between">
+              <span class="text-xs font-semibold text-slate-500">{{ kpis.budget_vs_actual.title }}</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">
+                {{ kpis.budget_vs_actual.badge }}
+              </span>
+            </div>
+            <div class="text-2xl font-black text-slate-900 mt-2">
+              {{ formatBDT(kpis.budget_vs_actual.primary_amount) }}
+            </div>
+            <div class="flex items-center justify-between text-xs text-slate-500 mt-2 pt-2 border-t border-slate-100">
+              <span>{{ kpis.budget_vs_actual.secondary_label }}:</span>
+              <span class="font-bold text-slate-800">{{ formatBDT(kpis.budget_vs_actual.secondary_amount) }}</span>
+            </div>
+            <div class="text-[11px] text-indigo-600 font-medium mt-2 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+              <span>Drill down to budget allocations</span>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            </div>
+          </div>
+
+          <!-- KPI 11: Loan Principal Outstanding & Accrued Interest -->
+          <div 
+            (click)="openDrilldown(kpis.loans_outstanding.drilldown_type)"
+            class="bg-white rounded-2xl p-4 border border-slate-200 hover:border-indigo-400 hover:shadow-lg transition-all cursor-pointer group">
+            <div class="flex items-start justify-between">
+              <span class="text-xs font-semibold text-slate-500">{{ kpis.loans_outstanding.title }}</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-violet-50 text-violet-700 border border-violet-200">
+                {{ kpis.loans_outstanding.badge }}
+              </span>
+            </div>
+            <div class="text-2xl font-black text-slate-900 mt-2">
+              {{ formatBDT(kpis.loans_outstanding.primary_amount) }}
+            </div>
+            <div class="flex items-center justify-between text-xs text-slate-500 mt-2 pt-2 border-t border-slate-100">
+              <span>{{ kpis.loans_outstanding.secondary_label }}:</span>
+              <span class="font-bold text-amber-700">{{ formatBDT(kpis.loans_outstanding.secondary_amount) }}</span>
+            </div>
+            <div class="text-[11px] text-indigo-600 font-medium mt-2 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+              <span>Drill down to loan repayments & IAS 23</span>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            </div>
+          </div>
+
+          <!-- KPI 15: Unreconciled Bank Transactions -->
+          <div 
+            (click)="openDrilldown(kpis.unreconciled_transactions.drilldown_type)"
+            class="bg-white rounded-2xl p-4 border border-slate-200 hover:border-indigo-400 hover:shadow-lg transition-all cursor-pointer group">
+            <div class="flex items-start justify-between">
+              <span class="text-xs font-semibold text-slate-500">{{ kpis.unreconciled_transactions.title }}</span>
+              <span 
+                [class.bg-red-50]="kpis.unreconciled_transactions.badge?.includes('Discrepancy')"
+                [class.text-red-700]="kpis.unreconciled_transactions.badge?.includes('Discrepancy')"
+                [class.border-red-200]="kpis.unreconciled_transactions.badge?.includes('Discrepancy')"
+                class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                {{ kpis.unreconciled_transactions.badge }}
+              </span>
+            </div>
+            <div class="text-2xl font-black text-slate-900 mt-2">
+              {{ formatBDT(kpis.unreconciled_transactions.primary_amount) }}
+            </div>
+            <div class="flex items-center justify-between text-xs text-slate-500 mt-2 pt-2 border-t border-slate-100">
+              <span>Discrepancy items:</span>
+              <span class="font-bold text-slate-800">{{ kpis.unreconciled_transactions.secondary_label }}</span>
+            </div>
+            <div class="text-[11px] text-indigo-600 font-medium mt-2 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+              <span>Drill down to bank reconciliation feed</span>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            </div>
+          </div>
+
+          <!-- KPI 16: Unposted or Rejected Vouchers -->
+          <div 
+            (click)="openDrilldown(kpis.unposted_vouchers.drilldown_type)"
+            class="bg-white rounded-2xl p-4 border border-slate-200 hover:border-indigo-400 hover:shadow-lg transition-all cursor-pointer group">
+            <div class="flex items-start justify-between">
+              <span class="text-xs font-semibold text-slate-500">{{ kpis.unposted_vouchers.title }}</span>
+              <span 
+                [class.bg-amber-50]="kpis.unposted_vouchers.badge?.includes('Action')"
+                [class.text-amber-700]="kpis.unposted_vouchers.badge?.includes('Action')"
+                [class.border-amber-200]="kpis.unposted_vouchers.badge?.includes('Action')"
+                class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                {{ kpis.unposted_vouchers.badge }}
+              </span>
+            </div>
+            <div class="text-2xl font-black text-amber-600 mt-2">
+              {{ formatBDT(kpis.unposted_vouchers.primary_amount) }}
+            </div>
+            <div class="flex items-center justify-between text-xs text-slate-500 mt-2 pt-2 border-t border-slate-100">
+              <span>Pending Audit Review:</span>
+              <span class="font-bold text-slate-800">{{ kpis.unposted_vouchers.secondary_label }}</span>
+            </div>
+            <div class="text-[11px] text-indigo-600 font-medium mt-2 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+              <span>Drill down to pending vouchers queue</span>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    }
+  }
+
+
+  <!-- ========================================================================= -->
+  <!-- 3. MULTI-PROJECT PERFORMANCE MATRIX (ACROSS 20+ PROJECTS)                 -->
+  <!-- ========================================================================= -->
+  <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="px-2.5 py-0.5 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-md text-xs font-bold">
+            20+ Projects Portfolio
+          </span>
+          <h2 class="text-base font-bold text-slate-800">Project-wise Consolidated Financial Matrix</h2>
+        </div>
+        <p class="text-xs text-slate-500 mt-0.5">
+          Comparative budget vs. actual construction cost, CWIP accumulation, revenue booking, customer advances & net operating cash flow.
+        </p>
+      </div>
+
+      <!-- Quick Search & District Filter inside Table -->
+      <div class="flex flex-wrap items-center gap-2.5">
+        <div class="w-64">
+          <input 
+            type="text"
+            [value]="projectSearch()"
+            (input)="projectSearch.set($any($event.target).value)"
+            placeholder="Search project name, code or district..."
+            class="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-xl bg-slate-50 text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+        </div>
+
+        <div class="w-44">
+          <app-searchable-select
+            [options]="districtOptions()"
+            [value]="projectDistrictFilter()"
+            (valueChange)="projectDistrictFilter.set($event)"
+            placeholder="All Districts">
+          </app-searchable-select>
+        </div>
+
+        <div class="w-44">
+          <app-searchable-select
+            [options]="healthOptions"
+            [value]="projectHealthFilter()"
+            (valueChange)="projectHealthFilter.set($event)"
+            placeholder="Financial Health">
+          </app-searchable-select>
+        </div>
+      </div>
+    </div>
+
+    <!-- 20+ Projects Table -->
+    <div class="overflow-x-auto mt-4">
+      <table class="w-full text-left text-xs border-collapse">
+        <thead>
+          <tr class="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[11px]">
+            <th class="py-3 px-3">Project / Location</th>
+            <th class="py-3 px-3 text-right">Approved Budget</th>
+            <th class="py-3 px-3 text-right">Actual Cost Spent</th>
+            <th class="py-3 px-3 text-center">Budget Spent %</th>
+            <th class="py-3 px-3 text-right">CWIP Balance</th>
+            <th class="py-3 px-3 text-right">Booked Revenue</th>
+            <th class="py-3 px-3 text-right">Customer Advances</th>
+            <th class="py-3 px-3 text-right">Receivables</th>
+            <th class="py-3 px-3 text-right">Operating Cash Flow</th>
+            <th class="py-3 px-3 text-center">Health</th>
+            <th class="py-3 px-3 text-center">Action</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 text-slate-700">
+          @for (p of filteredProjects(); track p.project_id) {
+            <tr class="hover:bg-indigo-50/40 transition-colors">
+              <!-- Project Name & Code -->
+              <td class="py-3 px-3 font-semibold text-slate-900">
+                <div class="font-bold text-slate-800">{{ p.project_name }}</div>
+                <div class="text-[10px] text-slate-400 font-mono flex items-center gap-1.5 mt-0.5">
+                  <span class="px-1.5 py-0.2 bg-slate-100 rounded text-slate-600 font-bold">{{ p.project_code }}</span>
+                  <span>{{ p.district }}</span>
+                </div>
+              </td>
+
+              <!-- Approved Budget -->
+              <td class="py-3 px-3 text-right font-medium">
+                {{ formatBDT(p.approved_budget) }}
+              </td>
+
+              <!-- Actual Spent -->
+              <td class="py-3 px-3 text-right font-medium text-slate-900">
+                {{ formatBDT(p.actual_expenditure) }}
+              </td>
+
+              <!-- Utilization % with Bar -->
+              <td class="py-3 px-3 text-center">
+                <div class="flex items-center justify-center gap-1.5">
+                  <span class="font-bold text-slate-800 text-[11px]">{{ p.budget_utilization_pct }}%</span>
+                  <div class="w-16 bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                    <div 
+                      [style.width.%]="p.budget_utilization_pct > 100 ? 100 : p.budget_utilization_pct"
+                      [class.bg-emerald-500]="p.budget_utilization_pct < 80"
+                      [class.bg-amber-500]="p.budget_utilization_pct >= 80 && p.budget_utilization_pct <= 95"
+                      [class.bg-red-500]="p.budget_utilization_pct > 95"
+                      class="h-1.5 rounded-full">
+                    </div>
+                  </div>
+                </div>
+              </td>
+
+              <!-- CWIP Balance -->
+              <td class="py-3 px-3 text-right font-semibold text-cyan-700">
+                {{ formatBDT(p.cwip_balance) }}
+              </td>
+
+              <!-- Booked Revenue -->
+              <td class="py-3 px-3 text-right font-medium text-emerald-700">
+                {{ formatBDT(p.recognized_revenue) }}
+              </td>
+
+              <!-- Advances Received -->
+              <td class="py-3 px-3 text-right font-medium text-indigo-700">
+                {{ formatBDT(p.customer_advances) }}
+              </td>
+
+              <!-- Receivables -->
+              <td class="py-3 px-3 text-right font-medium text-amber-700">
+                {{ formatBDT(p.customer_receivables) }}
+              </td>
+
+              <!-- Net Operating Cash Flow -->
+              <td class="py-3 px-3 text-right font-bold" [class.text-emerald-600]="p.operating_cash_flow >= 0" [class.text-red-500]="p.operating_cash_flow < 0">
+                {{ formatBDT(p.operating_cash_flow) }}
+              </td>
+
+              <!-- Health Status -->
+              <td class="py-3 px-3 text-center">
+                <span 
+                  [class.bg-emerald-50]="p.financial_health === 'EXCELLENT'"
+                  [class.text-emerald-700]="p.financial_health === 'EXCELLENT'"
+                  [class.border-emerald-200]="p.financial_health === 'EXCELLENT'"
+                  [class.bg-blue-50]="p.financial_health === 'HEALTHY'"
+                  [class.text-blue-700]="p.financial_health === 'HEALTHY'"
+                  [class.border-blue-200]="p.financial_health === 'HEALTHY'"
+                  [class.bg-amber-50]="p.financial_health === 'ATTENTION'"
+                  [class.text-amber-700]="p.financial_health === 'ATTENTION'"
+                  [class.border-amber-200]="p.financial_health === 'ATTENTION'"
+                  class="px-2 py-0.5 rounded-full text-[10px] font-bold border">
+                  {{ p.financial_health }}
+                </span>
+              </td>
+
+              <!-- Actions -->
+              <td class="py-3 px-3 text-center">
+                <button 
+                  (click)="filterToProject(p.project_id)"
+                  class="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer"
+                  title="Filter entire dashboard to this project">
+                  View Project
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="11" class="py-8 text-center text-slate-400">
+                No projects matched your search criteria.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Table Footer with Consolidated Totals -->
+    @if (projectsSummary(); as s) {
+      <div class="mt-4 pt-3 border-t border-slate-200 flex flex-wrap items-center justify-between text-xs text-slate-500 font-medium">
+        <div>
+          Showing <span class="font-bold text-slate-800">{{ filteredProjects().length }}</span> of {{ s.total_projects }} projects across portfolio
+        </div>
+        <div class="flex items-center gap-6">
+          <div>Total Portfolio Budget: <span class="font-bold text-slate-800">{{ formatBDT(s.total_approved_budget) }}</span></div>
+          <div>Total Actual Spent: <span class="font-bold text-slate-800">{{ formatBDT(s.total_actual_expenditure) }}</span></div>
+          <div>Total CWIP: <span class="font-bold text-cyan-700">{{ formatBDT(s.total_cwip_balance) }}</span></div>
+        </div>
+      </div>
+    }
+  </div>
+
+
+  <!-- ========================================================================= -->
+  <!-- 4. UNDERLYING LEDGER ENTRIES & SOURCE TRANSACTION DRILL-DOWN MODAL       -->
+  <!-- ========================================================================= -->
+  @if (drilldownModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+      <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden">
+        
+        <!-- Modal Header -->
+        <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 bg-indigo-500/30 text-indigo-300 border border-indigo-400/30 rounded text-[10px] font-bold uppercase tracking-wider">
+                Ledger Traceability
+              </span>
+              <span class="text-xs text-slate-400 font-mono">
+                KPI Key: {{ drilldownData()?.kpi_type || activeDrilldownKPI() }}
+              </span>
+            </div>
+            <h3 class="text-lg font-bold text-white mt-1">
+              {{ drilldownData()?.kpi_title || 'Underlying Ledger Entries & Source Transactions' }}
+            </h3>
+            <p class="text-xs text-slate-300 mt-0.5">
+              {{ drilldownData()?.filter_summary }}
+            </p>
+          </div>
+
+          <button 
+            (click)="closeDrilldown()"
+            class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+        </div>
+
+        <!-- Drilldown Control Ribbon -->
+        <div class="px-6 py-3 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-4">
+          <!-- Summary Counters -->
+          <div class="flex items-center gap-4 text-xs">
+            <div>Total Traced Entries: <span class="font-bold text-slate-900">{{ drilldownData()?.total_records || 0 }}</span></div>
+            <div>Total Net Amount: <span class="font-bold text-indigo-700">{{ formatBDT(drilldownData()?.total_amount) }}</span></div>
+            <div>Debit: <span class="font-bold text-slate-700">{{ formatBDT(drilldownData()?.total_debit) }}</span></div>
+            <div>Credit: <span class="font-bold text-slate-700">{{ formatBDT(drilldownData()?.total_credit) }}</span></div>
+          </div>
+
+          <!-- In-modal search -->
+          <div class="w-72">
+            <input 
+              type="text"
+              [value]="drilldownSearch()"
+              (input)="drilldownSearch.set($any($event.target).value)"
+              placeholder="Search voucher number, particulars, project..."
+              class="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-xl bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          </div>
+        </div>
+
+        <!-- Drilldown Line Items Table -->
+        <div class="overflow-y-auto flex-1 p-6">
+          @if (loadingDrilldown()) {
+            <div class="py-12 text-center text-slate-500">
+              <div class="inline-block animate-spin rounded-full h-8 w-8 border-3 border-indigo-600 border-t-transparent mb-2"></div>
+              <p class="font-semibold text-xs">Tracing journal vouchers and source ledgers...</p>
+            </div>
+          } @else {
+            <table class="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr class="bg-slate-100/80 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[11px]">
+                  <th class="py-2.5 px-3">Date & Voucher #</th>
+                  <th class="py-2.5 px-3">Account Head</th>
+                  <th class="py-2.5 px-3">Particulars / Narration</th>
+                  <th class="py-2.5 px-3">Project / Cost Centre</th>
+                  <th class="py-2.5 px-3">Source Module</th>
+                  <th class="py-2.5 px-3 text-right">Debit (৳)</th>
+                  <th class="py-2.5 px-3 text-right">Credit (৳)</th>
+                  <th class="py-2.5 px-3 text-center">Status</th>
+                  <th class="py-2.5 px-3 text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 text-slate-700">
+                @for (row of filteredDrilldownItems(); track row.id) {
+                  <tr class="hover:bg-indigo-50/30 transition-colors">
+                    <!-- Date & Voucher -->
+                    <td class="py-2.5 px-3">
+                      <div class="font-bold text-indigo-700 font-mono">{{ row.voucher_number }}</div>
+                      <div class="text-[10px] text-slate-400">{{ row.voucher_date }}</div>
+                    </td>
+
+                    <!-- Account Code & Name -->
+                    <td class="py-2.5 px-3">
+                      <div class="font-bold text-slate-800">{{ row.account_name || 'General Ledger' }}</div>
+                      <div class="text-[10px] font-mono text-slate-400">{{ row.account_code || 'GL-1000' }} ({{ row.account_type }})</div>
+                    </td>
+
+                    <!-- Particulars -->
+                    <td class="py-2.5 px-3 max-w-xs">
+                      <div class="truncate font-medium text-slate-700" title="{{ row.narration }}">{{ row.narration }}</div>
+                      @if (row.reference_no) {
+                        <div class="text-[10px] text-slate-400 font-mono">Ref: {{ row.reference_no }}</div>
+                      }
+                    </td>
+
+                    <!-- Project -->
+                    <td class="py-2.5 px-3">
+                      <div class="font-semibold text-slate-800">{{ row.project_name || 'Corporate / HQ' }}</div>
+                      @if (row.cost_center_name) {
+                        <div class="text-[10px] text-slate-400">{{ row.cost_center_name }}</div>
+                      }
+                    </td>
+
+                    <!-- Source Module -->
+                    <td class="py-2.5 px-3">
+                      <span class="px-2 py-0.5 bg-slate-100 text-slate-700 rounded text-[10px] font-medium border border-slate-200">
+                        {{ row.source_module }}
+                      </span>
+                    </td>
+
+                    <!-- Debit -->
+                    <td class="py-2.5 px-3 text-right font-medium">
+                      {{ row.debit_amount > 0 ? formatExactBDT(row.debit_amount) : '-' }}
+                    </td>
+
+                    <!-- Credit -->
+                    <td class="py-2.5 px-3 text-right font-medium">
+                      {{ row.credit_amount > 0 ? formatExactBDT(row.credit_amount) : '-' }}
+                    </td>
+
+                    <!-- Status -->
+                    <td class="py-2.5 px-3 text-center">
+                      <span 
+                        [class.bg-emerald-50]="row.voucher_status === 'Posted'"
+                        [class.text-emerald-700]="row.voucher_status === 'Posted'"
+                        [class.border-emerald-200]="row.voucher_status === 'Posted'"
+                        [class.bg-amber-50]="row.voucher_status !== 'Posted'"
+                        [class.text-amber-700]="row.voucher_status !== 'Posted'"
+                        [class.border-amber-200]="row.voucher_status !== 'Posted'"
+                        class="px-2 py-0.5 rounded-full text-[10px] font-bold border">
+                        {{ row.voucher_status }}
+                      </span>
+                    </td>
+
+                    <!-- Action -->
+                    <td class="py-2.5 px-3 text-center">
+                      <button 
+                        (click)="navigateToVouchers()"
+                        class="px-2 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded text-[10px] font-bold transition-colors cursor-pointer"
+                        title="View Full Double-Entry Voucher">
+                        View Voucher
+                      </button>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="9" class="py-8 text-center text-slate-400 text-xs">
+                      No underlying ledger entries found for this specific filter.
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="px-6 py-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+          <span class="text-xs text-slate-400">
+            Source entries audited against double-entry safeguard: Sum(Debit) == Sum(Credit).
+          </span>
+          <button 
+            (click)="closeDrilldown()"
+            class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-semibold transition-colors cursor-pointer">
+            Close Trace
+          </button>
+        </div>
+
+      </div>
+    </div>
+  }
+
+</div>

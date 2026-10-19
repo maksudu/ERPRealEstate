@@ -4,7 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { LoanFinancingService } from '../../../../core/services/loan-financing.service';
 import { Loan, LoanDisbursement } from '../../../../core/models/loan-financing.model';
-import { LoansFinancingNavComponent } from '../loans-financing-nav.component';
 import { CardContainerComponent } from '../../../../shared/components/card-container/card-container.component';
 
 @Component({
@@ -14,13 +13,10 @@ import { CardContainerComponent } from '../../../../shared/components/card-conta
     CommonModule,
     FormsModule,
     RouterLink,
-    LoansFinancingNavComponent,
     CardContainerComponent
   ],
   template: `
     <div class="w-full max-w-7xl mx-auto space-y-6">
-      <app-loans-financing-nav></app-loans-financing-nav>
-
       <!-- Section 14.2 Accounting Explainer Banner -->
       <div class="bg-card border border-border rounded-xl p-5 shadow-xs">
         <div class="flex items-start gap-4">

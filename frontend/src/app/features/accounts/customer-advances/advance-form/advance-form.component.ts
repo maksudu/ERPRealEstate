@@ -15,7 +15,6 @@ import {
   CustomTextareaComponent,
   SearchableSelectComponent
 } from '../../../../shared/components';
-import { CustomerAdvancesNavComponent } from '../customer-advances-nav.component';
 
 @Component({
   selector: 'app-advance-form',
@@ -28,8 +27,7 @@ import { CustomerAdvancesNavComponent } from '../customer-advances-nav.component
     CustomInputComponent,
     CustomButtonComponent,
     CustomTextareaComponent,
-    SearchableSelectComponent,
-    CustomerAdvancesNavComponent
+    SearchableSelectComponent
   ],
   templateUrl: './advance-form.component.html'
 })

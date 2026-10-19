@@ -13,7 +13,6 @@ import {
   SearchableSelectComponent,
   StatusBadgeComponent
 } from '../../../../shared/components';
-import { CustomerAdvancesNavComponent } from '../customer-advances-nav.component';
 
 @Component({
   selector: 'app-advances-list',
@@ -26,8 +25,7 @@ import { CustomerAdvancesNavComponent } from '../customer-advances-nav.component
     CustomInputComponent,
     CustomButtonComponent,
     SearchableSelectComponent,
-    StatusBadgeComponent,
-    CustomerAdvancesNavComponent
+    StatusBadgeComponent
   ],
   templateUrl: './advances-list.component.html'
 })

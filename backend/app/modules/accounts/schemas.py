@@ -1329,35 +1329,28 @@ class PaymentVoucherBase(BaseModel):
     branch_name: str = "Head Office Branch"
     project_id: Optional[int] = None
     voucher_date: date
-    payee_type: str = "Supplier" # Supplier, Subcontractor, Landowner, Employee, Utility, Other
-    payee_name: str
-    vendor_id: Optional[int] = None
-    contractor_id: Optional[int] = None
-    landowner_id: Optional[int] = None
-    employee_id: Optional[int] = None
-    payment_method: str = "Bank_Transfer" # Bank_Transfer, Bank_Cheque, Cash, MFS, Pay_Order
-    source_type: str = "Bank_Account" # Bank_Account, Cash_Box, MFS_Wallet
-    bank_account_id: Optional[int] = None
-    cash_box_id: Optional[int] = None
-    mfs_provider_id: Optional[int] = None
+    payee_type: str = "Supplier" # Supplier, Subcontractor, Landowner, Employee, Utility, Vendor, Direct, Other
+    payee_vendor_id: Optional[int] = None
+    payee_name_direct: Optional[str] = None
+    payment_method: str = "Bank_Transfer" # Bank_Transfer, Cheque, Cash, MFS, Card, Pay_Order
+    source_cashbox_id: Optional[int] = None
+    source_bank_account_id: Optional[int] = None
+    source_mfs_provider_id: Optional[int] = None
     amount: float
     currency: str = "BDT"
     debit_category: str = "Expense" # Expense, Payable, Asset_CWIP, Inventory, Advance
-    debit_account_id: int
-    credit_account_id: int
+    debit_account_id: Optional[int] = None
+    credit_account_id: Optional[int] = None
     cost_center_id: Optional[int] = None
     ap_invoice_id: Optional[int] = None
     supporting_invoice_ref: Optional[str] = None
-    purpose: str
+    purpose: Optional[str] = None
     narration: Optional[str] = None
-    attachments_url: Optional[str] = None
-    status: str = "Draft" # Draft, Submitted, Checked, Approved, Posted, Disbursed, Reconciled, Cancelled
+    attachment_url: Optional[str] = None
     cheque_number: Optional[str] = None
     cheque_date: Optional[date] = None
-    cheque_status: Optional[str] = None # Prepared, Issued, Cleared, Bounced, Void
-    settlement_status: str = "Pending_Settlement" # Pending_Settlement, Settled, Failed
-    settlement_date: Optional[date] = None
-    is_reconciled: bool = False
+    cheque_status: Optional[str] = None # Prepared, Issued, Presented, Cleared, Bounced, Void
+    settlement_reference: Optional[str] = None
     model_config = ConfigDict(from_attributes=True)
 
 class PaymentVoucherCreate(BaseModel):
@@ -1365,95 +1358,114 @@ class PaymentVoucherCreate(BaseModel):
     project_id: Optional[int] = None
     voucher_date: Optional[date] = None
     payee_type: str = "Supplier"
-    payee_name: str
-    vendor_id: Optional[int] = None
-    contractor_id: Optional[int] = None
-    landowner_id: Optional[int] = None
-    employee_id: Optional[int] = None
+    payee_vendor_id: Optional[int] = None
+    payee_name_direct: Optional[str] = None
     payment_method: str = "Bank_Transfer"
-    source_type: str = "Bank_Account"
-    bank_account_id: Optional[int] = None
-    cash_box_id: Optional[int] = None
-    mfs_provider_id: Optional[int] = None
+    source_cashbox_id: Optional[int] = None
+    source_bank_account_id: Optional[int] = None
+    source_mfs_provider_id: Optional[int] = None
     amount: float
     currency: Optional[str] = "BDT"
     debit_category: str = "Expense" # Expense, Payable, Asset_CWIP, Inventory, Advance
     debit_account_id: Optional[int] = None # Auto-selected if debit_category is Payable / Office Expense
-    credit_account_id: Optional[int] = None # Auto-selected from bank_account_id or cash_box_id
+    credit_account_id: Optional[int] = None # Auto-selected from source bank/cashbox/MFS account
     cost_center_id: Optional[int] = None
     ap_invoice_id: Optional[int] = None # When debiting a payable (avoids duplicate expense!)
     supporting_invoice_ref: Optional[str] = None
-    purpose: str
+    purpose: Optional[str] = None
     narration: Optional[str] = None
-    attachments_url: Optional[str] = None
+    attachment_url: Optional[str] = None
     cheque_number: Optional[str] = None
     cheque_date: Optional[date] = None
+    settlement_reference: Optional[str] = None
     auto_submit: bool = False
 
 class PaymentVoucherUpdate(BaseModel):
     branch_name: Optional[str] = None
     project_id: Optional[int] = None
-    payee_name: Optional[str] = None
+    voucher_date: Optional[date] = None
+    payee_type: Optional[str] = None
+    payee_vendor_id: Optional[int] = None
+    payee_name_direct: Optional[str] = None
     payment_method: Optional[str] = None
-    bank_account_id: Optional[int] = None
-    cash_box_id: Optional[int] = None
-    mfs_provider_id: Optional[int] = None
+    source_cashbox_id: Optional[int] = None
+    source_bank_account_id: Optional[int] = None
+    source_mfs_provider_id: Optional[int] = None
     amount: Optional[float] = None
+    currency: Optional[str] = None
     debit_category: Optional[str] = None
     debit_account_id: Optional[int] = None
     credit_account_id: Optional[int] = None
     cost_center_id: Optional[int] = None
+    ap_invoice_id: Optional[int] = None
     supporting_invoice_ref: Optional[str] = None
     purpose: Optional[str] = None
     narration: Optional[str] = None
-    attachments_url: Optional[str] = None
+    attachment_url: Optional[str] = None
     cheque_number: Optional[str] = None
     cheque_date: Optional[date] = None
+    settlement_reference: Optional[str] = None
 
 class PaymentVoucherWorkflowAction(BaseModel):
     action: str # submit, check, approve, post, disburse, reconcile, cancel
+    notes: Optional[str] = None
     remarks: Optional[str] = None
-    cheque_status: Optional[str] = None # Issued, Cleared, Bounced
+    cheque_status: Optional[str] = None # Issued, Presented, Cleared, Bounced
+    settlement_reference: Optional[str] = None
     settlement_date: Optional[date] = None
 
 class PaymentVoucherResponse(PaymentVoucherBase):
     id: int
+    organization_id: int
     voucher_number: str
+    status: str
     project_name: Optional[str] = None
+    payee_vendor_name: Optional[str] = None
+    effective_payee_name: Optional[str] = None
+    source_cashbox_name: Optional[str] = None
+    source_bank_account_name: Optional[str] = None
+    source_mfs_provider_name: Optional[str] = None
+    cheque_clearing_date: Optional[date] = None
+    bank_settlement_date: Optional[date] = None
+    settlement_status: Optional[str] = None
+    settlement_date: Optional[date] = None
     debit_account_code: Optional[str] = None
     debit_account_name: Optional[str] = None
     credit_account_code: Optional[str] = None
     credit_account_name: Optional[str] = None
-    bank_name: Optional[str] = None
-    bank_account_masked: Optional[str] = None
-    cash_box_name: Optional[str] = None
-    mfs_provider_name: Optional[str] = None
     ap_invoice_number: Optional[str] = None
     cost_center_name: Optional[str] = None
+    prepared_by_id: Optional[int] = None
     prepared_by_name: Optional[str] = None
     prepared_at: Optional[datetime] = None
+    checked_by_id: Optional[int] = None
     checked_by_name: Optional[str] = None
     checked_at: Optional[datetime] = None
     checked_remarks: Optional[str] = None
+    approved_by_id: Optional[int] = None
     approved_by_name: Optional[str] = None
     approved_at: Optional[datetime] = None
     approved_remarks: Optional[str] = None
+    disbursed_by_id: Optional[int] = None
     disbursed_by_name: Optional[str] = None
     disbursed_at: Optional[datetime] = None
     gl_voucher_id: Optional[int] = None
     gl_voucher_number: Optional[str] = None
+    is_reconciled: bool = False
+    reconciled_at: Optional[datetime] = None
     created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
 class PaymentVoucherKPIsResponse(BaseModel):
-    total_vouchers_count: int
-    total_disbursed_amount: float
-    total_pending_amount: float
-    draft_count: int
-    submitted_count: int
-    checked_count: int
-    approved_pending_disbursement_count: int
-    disbursed_paid_count: int
-    reconciled_count: int
+    total_vouchers: int = 0
+    draft_vouchers: int = 0
+    pending_approval_vouchers: int = 0
+    approved_vouchers: int = 0
+    disbursed_vouchers: int = 0
+    reconciled_vouchers: int = 0
+    total_amount_disbursed: float = 0.0
+    total_amount_pending: float = 0.0
+    cheques_in_clearing: int = 0
 
 
 # ==============================================================================

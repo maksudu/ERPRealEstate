@@ -10,6 +10,7 @@ export interface SubMenuItem {
   route?: string;
   queryParams?: { [key: string]: any };
   badge?: string;
+  exact?: boolean;
   children?: SubMenuItem[];
 }
 
@@ -469,9 +470,9 @@ export class SidebarComponent implements OnInit {
       title: 'Property Inventory',
       iconSvg: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10',
       items: [
-        { id: 'tower-stacking', label: 'Tower Stacking Elevation', route: '/inventory/stacking-plan' },
-        { id: 'units-matrix', label: 'Minute Lock Matrix', route: '/inventory/matrix' },
-        { id: 'subdivision', label: 'Unit Merge & Subdivision', route: '/inventory/subdivision' },
+        { id: 'inv-dashboard', label: 'Inventory Dashboard (3.1)', route: '/inventory' },
+        { id: 'tower-stacking', label: 'Floor Matrix & Stacking (3.2)', route: '/inventory/matrix' },
+        { id: 'units-matrix', label: 'Unit Directory & Specs (3.3)', route: '/inventory/units' },
         { id: 'parking-bays', label: 'Basement Parking Bays', route: '/inventory/parking' }
       ]
     },
@@ -533,6 +534,7 @@ export class SidebarComponent implements OnInit {
       title: 'Finance & Accounts',
       iconSvg: 'M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z',
       items: [
+        { id: 'fin-dashboard', label: 'Financial Executive Dashboard', route: '/accounts/financial-dashboard' },
         { id: 'coa', label: 'Chart of Accounts', route: '/accounts/coa' },
         { id: 'vouchers', label: 'General Ledger Vouchers', route: '/accounts/vouchers' },
         { id: 'ledger-inquiry', label: 'Ledger Inquiry & Statements', route: '/accounts/ledger' },
@@ -553,12 +555,49 @@ export class SidebarComponent implements OnInit {
             { id: 'ar-ledger', label: 'Customer Ledger & Aging', route: '/accounts/receivables/ledger' }
           ]
         },
-        { id: 'cash-bank-mgr', label: 'Cash & Bank Management', route: '/accounts/cash-bank' },
+        {
+          id: 'cash-bank-menu',
+          label: 'Cash & Bank Management',
+          children: [
+            { id: 'cb-overview', label: 'Overview Cockpit', route: '/accounts/cash-bank', queryParams: { tab: 'overview' } },
+            { id: 'cb-cash', label: 'Cash Management', route: '/accounts/cash-bank', queryParams: { tab: 'cash' } },
+            { id: 'cb-bank', label: 'Bank Accounts & Cheques', route: '/accounts/cash-bank', queryParams: { tab: 'bank' } },
+            { id: 'cb-mfs', label: 'Mobile Financial Services (MFS)', route: '/accounts/cash-bank', queryParams: { tab: 'mfs' } }
+          ]
+        },
         { id: 'payment-vouchers', label: 'Payment Vouchers Workflow', route: '/accounts/payment-vouchers' },
         { id: 'bank-recon-wizard', label: 'Bank Reconciliation & BRS', route: '/accounts/bank-reconciliation' },
-        { id: 'construction-cwip', label: 'Construction Cost & CWIP', route: '/accounts/construction-cwip' },
-        { id: 'cust-advances', label: 'Customer Advances & Installments', route: '/accounts/customer-advances' },
-        { id: 'loans-financing', label: 'Loans & Financing', route: '/accounts/loans-financing' },
+        {
+          id: 'construction-cwip-menu',
+          label: 'Construction Cost & CWIP',
+          children: [
+            { id: 'cwip-allocations', label: 'Cost Allocations (12.1 & 12.2)', route: '/accounts/construction-cwip', exact: true },
+            { id: 'cwip-materials', label: 'Material Issues to CWIP (12.3)', route: '/accounts/construction-cwip/material-issues' },
+            { id: 'cwip-budget', label: 'Budget vs Actual & Forecasts (12.1)', route: '/accounts/construction-cwip/budget-tracking' }
+          ]
+        },
+        {
+          id: 'cust-advances-menu',
+          label: 'Customer Advances',
+          children: [
+            { id: 'adv-receipts', label: 'Advance Receipts (13.1)', route: '/accounts/customer-advances', exact: true },
+            { id: 'adv-liability', label: 'Liability Ledger (13.1.4)', route: '/accounts/customer-advances/liability-ledger' },
+            { id: 'adv-allocations', label: 'Installment Allocations (13.1.5)', route: '/accounts/customer-advances/allocations' },
+            { id: 'adv-adjustments', label: 'Late Charges & Waivers (13.1.6)', route: '/accounts/customer-advances/adjustments' },
+            { id: 'adv-refunds', label: 'Cancellations & Refunds (13.1.7)', route: '/accounts/customer-advances/refunds' },
+            { id: 'adv-aging', label: 'Aging Reconciliation (13.1.10)', route: '/accounts/customer-advances/aging' }
+          ]
+        },
+        {
+          id: 'loans-financing-menu',
+          label: 'Loans & Financing',
+          children: [
+            { id: 'loan-facilities', label: 'Facilities Portfolio (14.1)', route: '/accounts/loans-financing', exact: true },
+            { id: 'loan-disbursements', label: 'Disbursements & Vouchers (14.2)', route: '/accounts/loans-financing/disbursements' },
+            { id: 'loan-repayments', label: 'Repayments & Waterfall (14.3)', route: '/accounts/loans-financing/repayments' },
+            { id: 'loan-interest-cwip', label: 'Interest Accruals & IAS 23 CWIP (14.3)', route: '/accounts/loans-financing/interest-cwip' }
+          ]
+        },
         { id: 'pdc-kanban', label: 'PDC Vault', route: '/accounts/pdc-kanban' },
         {
           id: 'financial-reports-suite',

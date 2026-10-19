@@ -12,7 +12,6 @@ import {
   CustomInputComponent,
   SearchableSelectComponent
 } from '../../../../shared/components';
-import { CustomerAdvancesNavComponent } from '../customer-advances-nav.component';
 
 @Component({
   selector: 'app-customer-liability-ledger',
@@ -22,8 +21,7 @@ import { CustomerAdvancesNavComponent } from '../customer-advances-nav.component
     FormsModule,
     CardContainerComponent,
     CustomInputComponent,
-    SearchableSelectComponent,
-    CustomerAdvancesNavComponent
+    SearchableSelectComponent
   ],
   templateUrl: './customer-liability-ledger.component.html'
 })

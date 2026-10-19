@@ -36,72 +36,6 @@
     </div>
   </div>
 
-  <!-- Unified Module Sub-Navigation Bar -->
-  <div class="flex items-center gap-1.5 p-1.5 bg-secondary/40 rounded-2xl border border-border overflow-x-auto">
-    <a
-      routerLink="/accounts/coa"
-      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
-    >
-      <i class="ri-node-tree"></i>
-      <span>Chart of Accounts</span>
-    </a>
-
-    <a
-      routerLink="/accounts/vouchers"
-      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
-    >
-      <i class="ri-file-list-3-line"></i>
-      <span>General Ledger Vouchers</span>
-    </a>
-
-    <a
-      routerLink="/accounts/ledger"
-      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
-    >
-      <i class="ri-booklet-line"></i>
-      <span>Ledger Inquiry & Statements</span>
-    </a>
-
-    <a
-      routerLink="/accounts/payables"
-      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
-    >
-      <i class="ri-money-dollar-circle-line"></i>
-      <span>Accounts Payable (AP)</span>
-    </a>
-
-    <a
-      routerLink="/accounts/receivables"
-      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
-    >
-      <i class="ri-hand-coin-line"></i>
-      <span>Accounts Receivable (AR)</span>
-    </a>
-
-    <a
-      routerLink="/accounts/receivables/receipts"
-      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
-    >
-      <i class="ri-refund-2-line"></i>
-      <span>Money Receipts</span>
-    </a>
-
-    <a
-      routerLink="/accounts/cash-bank"
-      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-card text-foreground shadow-xs border border-border inline-flex items-center gap-1.5 whitespace-nowrap"
-    >
-      <i class="ri-bank-card-line text-primary"></i>
-      <span>Cash, Bank & MFS</span>
-    </a>
-
-    <a
-      routerLink="/accounts/financial-reports"
-      class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
-    >
-      <i class="ri-pie-chart-2-line"></i>
-      <span>Financial Reports</span>
-    </a>
-  </div>
 
   <!-- Notification Banner -->
   @if (successMessage()) {
@@ -207,49 +141,6 @@
     </div>
   }
 
-  <!-- Tabbed Navigation Ribbon -->
-  <div class="flex items-center gap-2 border-b border-border pb-1 overflow-x-auto">
-    <button
-      (click)="setTab('overview')"
-      class="px-4 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 whitespace-nowrap"
-      [ngClass]="activeTab() === 'overview' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-secondary'">
-      <i class="ri-dashboard-3-line text-base"></i>
-      <span>Overview Cockpit</span>
-    </button>
-
-    <button
-      (click)="setTab('cash')"
-      class="px-4 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 whitespace-nowrap"
-      [ngClass]="activeTab() === 'cash' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-secondary'">
-      <i class="ri-safe-2-line text-base"></i>
-      <span>Cash Management</span>
-      <span class="px-2 py-0.5 rounded-full text-xs font-bold" [ngClass]="activeTab() === 'cash' ? 'bg-white/20 text-white' : 'bg-secondary text-foreground'">
-        {{ cashBoxes().length }}
-      </span>
-    </button>
-
-    <button
-      (click)="setTab('bank')"
-      class="px-4 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 whitespace-nowrap"
-      [ngClass]="activeTab() === 'bank' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-secondary'">
-      <i class="ri-bank-line text-base"></i>
-      <span>Bank Accounts & Cheques</span>
-      <span class="px-2 py-0.5 rounded-full text-xs font-bold" [ngClass]="activeTab() === 'bank' ? 'bg-white/20 text-white' : 'bg-secondary text-foreground'">
-        {{ bankAccounts().length }}
-      </span>
-    </button>
-
-    <button
-      (click)="setTab('mfs')"
-      class="px-4 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 whitespace-nowrap"
-      [ngClass]="activeTab() === 'mfs' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-secondary'">
-      <i class="ri-smartphone-line text-base"></i>
-      <span>Mobile Financial Services (MFS)</span>
-      <span class="px-2 py-0.5 rounded-full text-xs font-bold" [ngClass]="activeTab() === 'mfs' ? 'bg-white/20 text-white' : 'bg-secondary text-foreground'">
-        {{ mfsProviders().length }}
-      </span>
-    </button>
-  </div>
 
   <!-- ========================================================================= -->
   <!-- TAB 1: OVERVIEW COCKPIT                                                  -->

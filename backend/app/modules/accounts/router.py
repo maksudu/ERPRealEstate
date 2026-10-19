@@ -6073,32 +6073,41 @@ async def simulate_mfs_payment_callback(
 # --------------------------------------------------------------------------
 
 def _format_payment_voucher_response(pv: PaymentVoucher) -> PaymentVoucherResponse:
-    eff_payee = pv.payee_name_direct or (pv.payee_vendor.vendor_name if pv.payee_vendor else None)
+    vendor_name = pv.vendor.vendor_name if pv.vendor else None
+    cashbox = pv.cash_box
+    bank = pv.bank_account
+    mfs = pv.mfs_provider
+    is_cheque = (pv.payment_method or "").lower() in ("cheque", "bank_cheque")
+    cheque_clearing = pv.settlement_date if (is_cheque and pv.cheque_status == "Cleared" and pv.settlement_date) else None
+    bank_settle = pv.settlement_date if (not is_cheque and pv.settlement_date) else None
     return PaymentVoucherResponse(
         id=pv.id,
         organization_id=pv.organization_id,
+        branch_name=pv.branch_name,
         voucher_number=pv.voucher_number,
         voucher_date=pv.voucher_date,
         project_id=pv.project_id,
         project_name=pv.project.project_name if pv.project else None,
         payee_type=pv.payee_type,
-        payee_vendor_id=pv.payee_vendor_id,
-        payee_vendor_name=pv.payee_vendor.vendor_name if pv.payee_vendor else None,
-        payee_name_direct=pv.payee_name_direct,
-        effective_payee_name=eff_payee,
+        payee_vendor_id=pv.vendor_id,
+        payee_vendor_name=vendor_name,
+        payee_name_direct=pv.payee_name,
+        effective_payee_name=pv.payee_name or vendor_name,
         payment_method=pv.payment_method,
-        source_cashbox_id=pv.source_cashbox_id,
-        source_cashbox_name=pv.source_cashbox.cashbox_name if pv.source_cashbox else None,
-        source_bank_account_id=pv.source_bank_account_id,
-        source_bank_account_name=pv.source_bank_account.bank_name if pv.source_bank_account else None,
-        source_mfs_provider_id=pv.source_mfs_provider_id,
-        source_mfs_provider_name=pv.source_mfs_provider.provider_name if pv.source_mfs_provider else None,
+        source_cashbox_id=pv.cash_box_id,
+        source_cashbox_name=cashbox.box_name if cashbox else None,
+        source_bank_account_id=pv.bank_account_id,
+        source_bank_account_name=bank.bank_name if bank else None,
+        source_mfs_provider_id=pv.mfs_provider_id,
+        source_mfs_provider_name=mfs.provider_name if mfs else None,
         cheque_number=pv.cheque_number,
         cheque_date=pv.cheque_date,
-        cheque_clearing_date=pv.cheque_clearing_date,
+        cheque_clearing_date=cheque_clearing,
         cheque_status=pv.cheque_status,
         settlement_reference=pv.settlement_reference,
-        bank_settlement_date=pv.bank_settlement_date,
+        bank_settlement_date=bank_settle,
+        settlement_status=pv.settlement_status,
+        settlement_date=pv.settlement_date,
         amount=Decimal(str(pv.amount)),
         currency=pv.currency or "BDT",
         debit_category=pv.debit_category,
@@ -6108,23 +6117,27 @@ def _format_payment_voucher_response(pv: PaymentVoucher) -> PaymentVoucherRespon
         credit_account_id=pv.credit_account_id,
         credit_account_code=pv.credit_account.account_code if pv.credit_account else None,
         credit_account_name=pv.credit_account.account_name_en if pv.credit_account else None,
+        cost_center_id=pv.cost_center_id,
+        cost_center_name=pv.cost_center.name if pv.cost_center else None,
         ap_invoice_id=pv.ap_invoice_id,
         ap_invoice_number=pv.ap_invoice.invoice_number if pv.ap_invoice else None,
         supporting_invoice_ref=pv.supporting_invoice_ref,
         purpose=pv.purpose,
         narration=pv.narration,
-        attachment_url=pv.attachment_url,
-        prepared_by_id=pv.prepared_by_id,
-        prepared_by_name=pv.prepared_by_user.full_name if pv.prepared_by_user else None,
+        attachment_url=pv.attachments_url,
+        prepared_by_id=pv.prepared_by_user_id,
+        prepared_by_name=pv.prepared_by.full_name_en if pv.prepared_by else None,
         prepared_at=pv.prepared_at,
-        checked_by_id=pv.checked_by_id,
-        checked_by_name=pv.checked_by_user.full_name if pv.checked_by_user else None,
+        checked_by_id=pv.checked_by_user_id,
+        checked_by_name=pv.checked_by.full_name_en if pv.checked_by else None,
         checked_at=pv.checked_at,
-        approved_by_id=pv.approved_by_id,
-        approved_by_name=pv.approved_by_user.full_name if pv.approved_by_user else None,
+        checked_remarks=pv.checked_remarks,
+        approved_by_id=pv.approved_by_user_id,
+        approved_by_name=pv.approved_by.full_name_en if pv.approved_by else None,
         approved_at=pv.approved_at,
-        disbursed_by_id=pv.disbursed_by_id,
-        disbursed_by_name=pv.disbursed_by_user.full_name if pv.disbursed_by_user else None,
+        approved_remarks=pv.approved_remarks,
+        disbursed_by_id=pv.disbursed_by_user_id,
+        disbursed_by_name=pv.disbursed_by.full_name_en if pv.disbursed_by else None,
         disbursed_at=pv.disbursed_at,
         status=pv.status,
         gl_voucher_id=pv.gl_voucher_id,
@@ -6141,18 +6154,19 @@ def _pv_eager_query():
         select(PaymentVoucher)
         .options(
             selectinload(PaymentVoucher.project),
-            selectinload(PaymentVoucher.payee_vendor),
-            selectinload(PaymentVoucher.source_cashbox),
-            selectinload(PaymentVoucher.source_bank_account),
-            selectinload(PaymentVoucher.source_mfs_provider),
+            selectinload(PaymentVoucher.vendor),
+            selectinload(PaymentVoucher.cash_box),
+            selectinload(PaymentVoucher.bank_account),
+            selectinload(PaymentVoucher.mfs_provider),
             selectinload(PaymentVoucher.debit_account),
             selectinload(PaymentVoucher.credit_account),
+            selectinload(PaymentVoucher.cost_center),
             selectinload(PaymentVoucher.ap_invoice),
             selectinload(PaymentVoucher.gl_voucher),
-            selectinload(PaymentVoucher.prepared_by_user),
-            selectinload(PaymentVoucher.checked_by_user),
-            selectinload(PaymentVoucher.approved_by_user),
-            selectinload(PaymentVoucher.disbursed_by_user)
+            selectinload(PaymentVoucher.prepared_by),
+            selectinload(PaymentVoucher.checked_by),
+            selectinload(PaymentVoucher.approved_by),
+            selectinload(PaymentVoucher.disbursed_by)
         )
     )
 
@@ -6183,12 +6197,14 @@ async def get_payment_voucher_kpis(
     reconciled_cnt = sum(1 for v in all_vouchers if v.status == 'Reconciled')
 
     amt_disbursed = sum(
-        Decimal(str(v.amount)) for v in all_vouchers
-        if v.status in ('Disbursed', 'Reconciled')
+        (Decimal(str(v.amount)) for v in all_vouchers
+         if v.status in ('Disbursed', 'Reconciled')),
+        Decimal("0")
     )
     amt_pending = sum(
-        Decimal(str(v.amount)) for v in all_vouchers
-        if v.status in ('Draft', 'Submitted', 'Checked', 'Approved')
+        (Decimal(str(v.amount)) for v in all_vouchers
+         if v.status in ('Draft', 'Submitted', 'Checked', 'Approved')),
+        Decimal("0")
     )
     cheques_clearing = sum(
         1 for v in all_vouchers
@@ -6202,8 +6218,8 @@ async def get_payment_voucher_kpis(
         approved_vouchers=approved_cnt,
         disbursed_vouchers=disbursed_cnt,
         reconciled_vouchers=reconciled_cnt,
-        total_amount_disbursed=amt_disbursed.quantize(Decimal("0.01")),
-        total_amount_pending=amt_pending.quantize(Decimal("0.01")),
+        total_amount_disbursed=float(amt_disbursed.quantize(Decimal("0.01"))),
+        total_amount_pending=float(amt_pending.quantize(Decimal("0.01"))),
         cheques_in_clearing=cheques_clearing
     )
 
@@ -6237,7 +6253,7 @@ async def list_payment_vouchers(
         stmt = stmt.where(
             or_(
                 PaymentVoucher.voucher_number.ilike(search_filter),
-                PaymentVoucher.payee_name_direct.ilike(search_filter),
+                PaymentVoucher.payee_name.ilike(search_filter),
                 PaymentVoucher.purpose.ilike(search_filter),
                 PaymentVoucher.cheque_number.ilike(search_filter),
                 PaymentVoucher.settlement_reference.ilike(search_filter),
@@ -6260,7 +6276,7 @@ async def list_payment_vouchers(
         count_stmt = count_stmt.where(
             or_(
                 PaymentVoucher.voucher_number.ilike(search_filter),
-                PaymentVoucher.payee_name_direct.ilike(search_filter),
+                PaymentVoucher.payee_name.ilike(search_filter),
                 PaymentVoucher.purpose.ilike(search_filter),
                 PaymentVoucher.cheque_number.ilike(search_filter),
                 PaymentVoucher.settlement_reference.ilike(search_filter),
@@ -6308,7 +6324,7 @@ async def create_payment_voucher(
       to prevent duplicate expense recognition.
     - Verifies debit & credit accounts exist in COA.
     """
-    org_id = payload.organization_id or await get_default_organization_id(db)
+    org_id = await get_default_organization_id(db)
 
     # 1. Resolve Credit Account (Source Account)
     credit_account_id = payload.credit_account_id
@@ -6319,20 +6335,20 @@ async def create_payment_voucher(
             cbox = (await db.execute(select(CashBox).where(CashBox.id == payload.source_cashbox_id))).scalar_one_or_none()
             if not cbox:
                 raise HTTPException(status_code=404, detail="Selected cashbox not found.")
-            if cbox.chart_of_account_id:
-                credit_account_id = cbox.chart_of_account_id
+            if cbox.account_id:
+                credit_account_id = cbox.account_id
             else:
                 c_acc = await get_or_create_account(db, org_id, "1100", "Cash in Hand", "Asset")
                 credit_account_id = c_acc.id
 
-        elif payload.payment_method in ("Bank_Transfer", "Cheque", "Card"):
+        elif payload.payment_method in ("Bank_Transfer", "Cheque", "Bank_Cheque", "Card", "Pay_Order"):
             if not payload.source_bank_account_id:
                 raise HTTPException(status_code=400, detail="source_bank_account_id required for Bank/Cheque payments.")
             bank = (await db.execute(select(BankAccount).where(BankAccount.id == payload.source_bank_account_id))).scalar_one_or_none()
             if not bank:
                 raise HTTPException(status_code=404, detail="Selected bank account not found.")
-            if bank.gl_account_id:
-                credit_account_id = bank.gl_account_id
+            if bank.account_id:
+                credit_account_id = bank.account_id
             else:
                 b_acc = await get_or_create_account(db, org_id, "1110", "Bank Accounts", "Asset")
                 credit_account_id = b_acc.id
@@ -6343,8 +6359,8 @@ async def create_payment_voucher(
             mfs = (await db.execute(select(MFSProvider).where(MFSProvider.id == payload.source_mfs_provider_id))).scalar_one_or_none()
             if not mfs:
                 raise HTTPException(status_code=404, detail="Selected MFS provider not found.")
-            if mfs.gl_account_id:
-                credit_account_id = mfs.gl_account_id
+            if mfs.wallet_gl_account_id:
+                credit_account_id = mfs.wallet_gl_account_id
             else:
                 m_acc = await get_or_create_account(db, org_id, "1120", "MFS Wallets", "Asset")
                 credit_account_id = m_acc.id
@@ -6384,37 +6400,52 @@ async def create_payment_voucher(
     next_num = (count_res.scalar() or 0) + 1
     voucher_number = f"PV-{year}-{next_num:04d}"
 
+    payee_name = (payload.payee_name_direct or "").strip()
+    if not payee_name and payload.payee_vendor_id:
+        vend = (await db.execute(select(Vendor).where(Vendor.id == payload.payee_vendor_id))).scalar_one_or_none()
+        payee_name = vend.vendor_name if vend else ""
+    if not payee_name:
+        payee_name = "Payee"
+
+    if payload.payment_method == "Cash":
+        source_type = "Cash_Box"
+    elif payload.payment_method == "MFS":
+        source_type = "MFS_Wallet"
+    else:
+        source_type = "Bank_Account"
+
     pv = PaymentVoucher(
         organization_id=org_id,
+        branch_name=payload.branch_name or "Head Office Branch",
         voucher_number=voucher_number,
-        voucher_date=payload.voucher_date,
+        voucher_date=payload.voucher_date or date.today(),
         project_id=payload.project_id,
         payee_type=payload.payee_type,
-        payee_vendor_id=payload.payee_vendor_id,
-        payee_name_direct=payload.payee_name_direct,
+        vendor_id=payload.payee_vendor_id,
+        payee_name=payee_name,
         payment_method=payload.payment_method,
-        source_cashbox_id=payload.source_cashbox_id,
-        source_bank_account_id=payload.source_bank_account_id,
-        source_mfs_provider_id=payload.source_mfs_provider_id,
+        source_type=source_type,
+        cash_box_id=payload.source_cashbox_id,
+        bank_account_id=payload.source_bank_account_id,
+        mfs_provider_id=payload.source_mfs_provider_id,
         cheque_number=payload.cheque_number,
         cheque_date=payload.cheque_date,
-        cheque_clearing_date=payload.cheque_clearing_date,
         cheque_status="Prepared" if payload.payment_method == "Cheque" else None,
         settlement_reference=payload.settlement_reference,
-        bank_settlement_date=payload.bank_settlement_date,
         amount=payload.amount,
         currency=payload.currency or "BDT",
         debit_category=payload.debit_category,
         debit_account_id=debit_account_id,
         credit_account_id=credit_account_id,
+        cost_center_id=payload.cost_center_id,
         ap_invoice_id=payload.ap_invoice_id,
         supporting_invoice_ref=payload.supporting_invoice_ref,
-        purpose=payload.purpose,
+        purpose=payload.purpose or "Payment Voucher",
         narration=payload.narration,
-        attachment_url=payload.attachment_url,
-        prepared_by_id=1,  # Default system/admin user
+        attachments_url=payload.attachment_url,
+        prepared_by_user_id=1,  # Default system/admin user
         prepared_at=datetime.utcnow(),
-        status="Draft"
+        status="Submitted" if payload.auto_submit else "Draft"
     )
     db.add(pv)
     await db.commit()
@@ -6444,9 +6475,26 @@ async def update_payment_voucher(
             detail=f"Cannot edit voucher in '{pv.status}' status. Only Draft or Submitted vouchers can be edited."
         )
 
+    _pv_field_map = {
+        "payee_vendor_id": "vendor_id",
+        "payee_name_direct": "payee_name",
+        "source_cashbox_id": "cash_box_id",
+        "source_bank_account_id": "bank_account_id",
+        "source_mfs_provider_id": "mfs_provider_id",
+        "attachment_url": "attachments_url",
+    }
     update_data = payload.model_dump(exclude_unset=True)
+    if "payee_name_direct" in update_data and not (update_data["payee_name_direct"] or "").strip():
+        vid = update_data.get("payee_vendor_id", pv.vendor_id)
+        vend = None
+        if vid:
+            vend = (await db.execute(select(Vendor).where(Vendor.id == vid))).scalar_one_or_none()
+        if vend:
+            update_data["payee_name_direct"] = vend.vendor_name
+        else:
+            update_data.pop("payee_name_direct")
     for field, val in update_data.items():
-        setattr(pv, field, val)
+        setattr(pv, _pv_field_map.get(field, field), val)
 
     pv.updated_at = datetime.utcnow()
     await db.commit()
@@ -6481,6 +6529,7 @@ async def execute_payment_voucher_workflow(
 
     act = payload.action.strip().lower()
     now = datetime.utcnow()
+    remarks = payload.remarks or payload.notes
 
     if act == "submit":
         if pv.status != "Draft":
@@ -6491,15 +6540,19 @@ async def execute_payment_voucher_workflow(
         if pv.status != "Submitted":
             raise HTTPException(status_code=400, detail="Only Submitted vouchers can be verified/checked.")
         pv.status = "Checked"
-        pv.checked_by_id = 1
+        pv.checked_by_user_id = 1
         pv.checked_at = now
+        if remarks:
+            pv.checked_remarks = remarks
 
     elif act == "approve":
         if pv.status not in ("Submitted", "Checked"):
             raise HTTPException(status_code=400, detail="Only Submitted or Checked vouchers can be Approved.")
         pv.status = "Approved"
-        pv.approved_by_id = 1
+        pv.approved_by_user_id = 1
         pv.approved_at = now
+        if remarks:
+            pv.approved_remarks = remarks
 
     elif act in ("disburse", "post"):
         if pv.status not in ("Approved", "Checked", "Submitted"):
@@ -6507,15 +6560,32 @@ async def execute_payment_voucher_workflow(
 
         # Create balanced Double-Entry Voucher in GL
         v_type = "Cash_Payment" if pv.payment_method == "Cash" else "Bank_Payment"
-        payee_label = pv.payee_name_direct or (pv.payee_vendor.vendor_name if pv.payee_vendor else "Payee")
+        payee_label = pv.payee_name or (pv.vendor.vendor_name if pv.vendor else "Payee")
         narration_text = (
             pv.narration or
             f"Payment to {payee_label} for {pv.purpose or pv.debit_category} [Voucher: {pv.voucher_number}]"
         )
 
+        debit_acc = pv.debit_account
+        credit_acc = pv.credit_account
+        if not debit_acc or not credit_acc:
+            raise HTTPException(status_code=400, detail="Debit/Credit accounts are not configured on this voucher.")
+
         line_entries = [
-            {"account_id": pv.debit_account_id, "debit": pv.amount, "credit": Decimal("0.00")},
-            {"account_id": pv.credit_account_id, "debit": Decimal("0.00"), "credit": pv.amount}
+            {
+                "account_code": debit_acc.account_code,
+                "account_name_en": debit_acc.account_name_en,
+                "account_type": debit_acc.account_type,
+                "debit": pv.amount,
+                "credit": Decimal("0.00")
+            },
+            {
+                "account_code": credit_acc.account_code,
+                "account_name_en": credit_acc.account_name_en,
+                "account_type": credit_acc.account_type,
+                "debit": Decimal("0.00"),
+                "credit": pv.amount
+            }
         ]
 
         gl_voucher = await post_double_entry_voucher(
@@ -6530,12 +6600,14 @@ async def execute_payment_voucher_workflow(
 
         pv.gl_voucher_id = gl_voucher.id
         pv.status = "Disbursed"
-        pv.disbursed_by_id = 1
+        pv.disbursed_by_user_id = 1
         pv.disbursed_at = now
 
         if payload.settlement_reference:
             pv.settlement_reference = payload.settlement_reference
-            pv.bank_settlement_date = date.today()
+            if (pv.payment_method or "").lower() not in ("cheque", "bank_cheque"):
+                pv.settlement_date = payload.settlement_date or date.today()
+                pv.settlement_status = "Settled"
 
         if pv.payment_method == "Cheque":
             pv.cheque_status = payload.cheque_status or "Issued"
@@ -6547,7 +6619,7 @@ async def execute_payment_voucher_workflow(
                 current_paid = Decimal(str(ap_inv.paid_amount or "0.00"))
                 new_paid = current_paid + Decimal(str(pv.amount))
                 ap_inv.paid_amount = new_paid
-                total_due = Decimal(str(ap_inv.total_amount or "0.00"))
+                total_due = Decimal(str(ap_inv.net_payable_amount or "0.00"))
                 if new_paid >= total_due:
                     ap_inv.status = "Paid"
                 else:
@@ -6559,9 +6631,10 @@ async def execute_payment_voucher_workflow(
         pv.status = "Reconciled"
         pv.is_reconciled = True
         pv.reconciled_at = now
+        pv.settlement_date = payload.settlement_date or date.today()
+        pv.settlement_status = "Settled"
         if pv.payment_method == "Cheque":
             pv.cheque_status = "Cleared"
-            pv.cheque_clearing_date = date.today()
         if payload.settlement_reference:
             pv.settlement_reference = payload.settlement_reference
 
@@ -6605,4 +6678,8 @@ router.include_router(bank_reconciliation_router)
 # Mount Financial & Operational Reports Suite Router (15 Reports)
 from app.modules.accounts.financial_reports_router import router as financial_reports_router
 router.include_router(financial_reports_router)
+
+# Mount Executive Financial Dashboard across 20+ Projects
+from app.modules.accounts.financial_dashboard_router import router as financial_dashboard_router
+router.include_router(financial_dashboard_router)
 

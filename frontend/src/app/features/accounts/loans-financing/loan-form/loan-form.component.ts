@@ -5,7 +5,6 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { LoanFinancingService } from '../../../../core/services/loan-financing.service';
 import { ProjectService } from '../../../../core/services/project.service';
 import { LoanCreatePayload } from '../../../../core/models/loan-financing.model';
-import { LoansFinancingNavComponent } from '../loans-financing-nav.component';
 import { CardContainerComponent } from '../../../../shared/components/card-container/card-container.component';
 import { SearchableSelectComponent, SelectOption } from '../../../../shared/components/searchable-select/searchable-select.component';
 
@@ -16,7 +15,6 @@ import { SearchableSelectComponent, SelectOption } from '../../../../shared/comp
     CommonModule,
     FormsModule,
     RouterLink,
-    LoansFinancingNavComponent,
     CardContainerComponent,
     SearchableSelectComponent
   ],

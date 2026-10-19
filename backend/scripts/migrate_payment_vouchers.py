@@ -57,6 +57,7 @@ CREATE TABLE IF NOT EXISTS acc_payment_vouchers (
     cheque_status VARCHAR(32) NULL,
     settlement_status VARCHAR(32) NOT NULL DEFAULT 'Pending_Settlement',
     settlement_date DATE NULL,
+    settlement_reference VARCHAR(128) NULL,
     is_reconciled BOOLEAN NOT NULL DEFAULT FALSE,
     reconciled_at TIMESTAMP NULL,
     prepared_by_user_id BIGINT NULL,

@@ -8,7 +8,6 @@ import {
   CardContainerComponent,
   SearchableSelectComponent
 } from '../../../../shared/components';
-import { CustomerAdvancesNavComponent } from '../customer-advances-nav.component';
 
 @Component({
   selector: 'app-aging-reconciliation',
@@ -17,8 +16,7 @@ import { CustomerAdvancesNavComponent } from '../customer-advances-nav.component
     CommonModule,
     FormsModule,
     CardContainerComponent,
-    SearchableSelectComponent,
-    CustomerAdvancesNavComponent
+    SearchableSelectComponent
   ],
   templateUrl: './aging-reconciliation.component.html'
 })

@@ -297,3 +297,76 @@ class UnitConflictResponse(BaseModel):
     unit_id: int
     currently_locked_by: Optional[str] = None
     remaining_seconds: int
+
+
+class UnitUpdate(BaseModel):
+    floor_number: Optional[int] = None
+    unit_number: Optional[str] = None
+    unit_type_id: Optional[str] = None
+    facing_id: Optional[str] = None
+    net_carpet_area_sqft: Optional[float] = None
+    gross_saleable_area_sqft: Optional[float] = None
+    bed_count: Optional[int] = None
+    bath_count: Optional[int] = None
+    balcony_count: Optional[int] = None
+    floor_plan_image_url: Optional[str] = None
+    base_rate_per_sqft: Optional[float] = None
+    floor_escalation_rate: Optional[float] = None
+    facing_premium_rate: Optional[float] = None
+    utility_connection_fee: Optional[float] = None
+    parking_charge: Optional[float] = None
+    max_discount_amount: Optional[float] = None
+    status_id: Optional[str] = None
+    is_landowner_share: Optional[bool] = None
+
+
+class UnitPagedResponse(BaseModel):
+    total: int
+    page: int
+    limit: int
+    items: List[UnitResponse]
+
+
+class InventoryDashboardResponse(BaseModel):
+    total_units: int
+    available_units: int
+    reserved_units: int
+    booked_sold_units: int
+    blocked_units: int
+    landowner_units: int
+    developer_units: int
+    
+    total_saleable_area_sqft: float
+    remaining_saleable_area_sqft: float
+    booked_sold_area_sqft: float
+    
+    estimated_total_value: float
+    remaining_inventory_value: float
+    booked_sold_value: float
+    average_rate_per_sqft: float
+    
+    total_parking_slots: int
+    available_parking_slots: int
+    allocated_parking_slots: int
+    
+    property_type_breakdown: List[Dict[str, Any]]
+    project_breakdown: List[Dict[str, Any]]
+    floor_breakdown: List[Dict[str, Any]]
+    reservation_alerts: List[Dict[str, Any]]
+
+
+class BulkUnitCreateRequest(BaseModel):
+    project_id: int
+    tower_id: int
+    start_floor: int
+    end_floor: int
+    units_per_floor: int
+    unit_prefix: str = "FLAT" # e.g. 'A', 'B' -> 1A, 1B
+    unit_type_id: str = "TYPE_3BHK"
+    facing_id: str = "SOUTH_FACING"
+    net_carpet_area_sqft: float = 1450.00
+    gross_saleable_area_sqft: float = 1850.00
+    base_rate_per_sqft: float = 12500.00
+    floor_escalation_rate: float = 100.00
+    facing_premium_rate: float = 0.00
+    is_landowner_share_pattern: Optional[str] = None # e.g. "EVEN_FLOORS"

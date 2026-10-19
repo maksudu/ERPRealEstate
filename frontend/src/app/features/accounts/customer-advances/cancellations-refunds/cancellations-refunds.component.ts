@@ -10,7 +10,6 @@ import {
   SearchableSelectComponent,
   StatusBadgeComponent
 } from '../../../../shared/components';
-import { CustomerAdvancesNavComponent } from '../customer-advances-nav.component';
 
 @Component({
   selector: 'app-cancellations-refunds',
@@ -22,8 +21,7 @@ import { CustomerAdvancesNavComponent } from '../customer-advances-nav.component
     CustomInputComponent,
     CustomTextareaComponent,
     SearchableSelectComponent,
-    StatusBadgeComponent,
-    CustomerAdvancesNavComponent
+    StatusBadgeComponent
   ],
   templateUrl: './cancellations-refunds.component.html'
 })

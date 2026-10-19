@@ -5,7 +5,8 @@ import { environment } from '../../../environments/environment';
 import {
   Unit, UnitLockResponse, ParkingBay, ParkingSlot,
   TowerStackingResponse, PriceBreakdown, UnitMergePayload,
-  UnitSplitPayload, CombinationLog
+  UnitSplitPayload, CombinationLog,
+  InventoryDashboardResponse, UnitPagedResponse, UnitCreatePayload, UnitUpdatePayload, BulkUnitCreatePayload
 } from '../models/inventory.model';
 
 @Injectable({
@@ -109,6 +110,63 @@ export class InventoryService {
     let params = new HttpParams();
     if (projectId) params = params.set('project_id', projectId);
     return this.http.get<ParkingBay[]>(`${this.baseUrl}/parking-bays`, { params });
+  }
+
+  // 3.1 Consolidated Property Inventory Dashboard
+  getInventoryDashboard(params?: {
+    project_id?: number | null;
+    tower_id?: number | null;
+    property_type?: string | null;
+    status_id?: string | null;
+  }): Observable<InventoryDashboardResponse> {
+    let p = new HttpParams();
+    if (params?.project_id) p = p.set('project_id', params.project_id);
+    if (params?.tower_id) p = p.set('tower_id', params.tower_id);
+    if (params?.property_type) p = p.set('property_type', params.property_type);
+    if (params?.status_id) p = p.set('status_id', params.status_id);
+    return this.http.get<InventoryDashboardResponse>(`${this.baseUrl}/dashboard`, { params: p });
+  }
+
+  // 3.2 & 3.3 Paginated Unit Directory with Filters
+  getUnitsPaged(params: {
+    page: number;
+    limit: number;
+    search?: string;
+    project_id?: number | null;
+    tower_id?: number | null;
+    floor_number?: number | null;
+    status_id?: string | null;
+    facing_id?: string | null;
+    is_landowner_share?: boolean | null;
+  }): Observable<UnitPagedResponse> {
+    let p = new HttpParams()
+      .set('page', params.page)
+      .set('limit', params.limit);
+    if (params.search) p = p.set('search', params.search);
+    if (params.project_id) p = p.set('project_id', params.project_id);
+    if (params.tower_id) p = p.set('tower_id', params.tower_id);
+    if (params.floor_number !== undefined && params.floor_number !== null) p = p.set('floor_number', params.floor_number);
+    if (params.status_id) p = p.set('status_id', params.status_id);
+    if (params.facing_id) p = p.set('facing_id', params.facing_id);
+    if (params.is_landowner_share !== undefined && params.is_landowner_share !== null) p = p.set('is_landowner_share', params.is_landowner_share);
+
+    return this.http.get<UnitPagedResponse>(`${this.baseUrl}/units/paged`, { params: p });
+  }
+
+  getUnitById(unitId: number): Observable<Unit> {
+    return this.http.get<Unit>(`${this.baseUrl}/units/${unitId}`);
+  }
+
+  updateUnit(unitId: number, payload: UnitUpdatePayload): Observable<Unit> {
+    return this.http.put<Unit>(`${this.baseUrl}/units/${unitId}`, payload);
+  }
+
+  deleteUnit(unitId: number): Observable<{ success: boolean; message: string }> {
+    return this.http.delete<{ success: boolean; message: string }>(`${this.baseUrl}/units/${unitId}`);
+  }
+
+  bulkCreateUnits(payload: BulkUnitCreatePayload): Observable<{ success: boolean; created_units_count: number; message: string }> {
+    return this.http.post<{ success: boolean; created_units_count: number; message: string }>(`${this.baseUrl}/units/bulk`, payload);
   }
 
   // 8. Connect Real-Time WebSocket

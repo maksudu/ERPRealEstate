@@ -894,6 +894,7 @@ class PaymentVoucher(Base):
     cheque_status = Column(String(32), nullable=True) # Prepared, Issued, Cleared, Bounced, Void
     settlement_status = Column(String(32), nullable=False, default="Pending_Settlement") # Pending_Settlement, Settled, Failed
     settlement_date = Column(Date, nullable=True)
+    settlement_reference = Column(String(128), nullable=True)
     is_reconciled = Column(Boolean, nullable=False, default=False)
     reconciled_at = Column(TIMESTAMP, nullable=True)
     prepared_by_user_id = Column(BigInteger, ForeignKey("sys_users.id", ondelete="SET NULL"), nullable=True)

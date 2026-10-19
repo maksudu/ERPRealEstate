@@ -5,7 +5,6 @@ import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { CWIPAllocationService } from '../../../../core/services/cwip-allocation.service';
 import { ProjectService } from '../../../../core/services/project.service';
 import { CWIPAllocationCreatePayload } from '../../../../core/models/cwip-allocation.model';
-import { CWIPAllocationNavComponent } from '../cwip-allocation-nav.component';
 import { CardContainerComponent } from '../../../../shared/components/card-container/card-container.component';
 import { SearchableSelectComponent, SelectOption } from '../../../../shared/components/searchable-select/searchable-select.component';
 
@@ -16,7 +15,6 @@ import { SearchableSelectComponent, SelectOption } from '../../../../shared/comp
     CommonModule,
     FormsModule,
     RouterLink,
-    CWIPAllocationNavComponent,
     CardContainerComponent,
     SearchableSelectComponent
   ],

@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { LoanFinancingService } from '../../../../core/services/loan-financing.service';
-import { LoansFinancingNavComponent } from '../loans-financing-nav.component';
 import { CardContainerComponent } from '../../../../shared/components/card-container/card-container.component';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 
@@ -14,14 +13,11 @@ import { ModalComponent } from '../../../../shared/components/modal/modal.compon
     CommonModule,
     FormsModule,
     RouterLink,
-    LoansFinancingNavComponent,
     CardContainerComponent,
     ModalComponent
   ],
   template: `
     <div class="w-full max-w-7xl mx-auto space-y-6">
-      <app-loans-financing-nav></app-loans-financing-nav>
-
       <!-- IAS 23 Strict Accounting Compliance Banner -->
       <div class="bg-card border border-amber-500/30 rounded-xl p-5 shadow-xs">
         <div class="flex items-start gap-4">

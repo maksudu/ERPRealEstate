@@ -9,7 +9,6 @@ import {
   CustomTextareaComponent,
   SearchableSelectComponent
 } from '../../../../shared/components';
-import { CustomerAdvancesNavComponent } from '../customer-advances-nav.component';
 
 @Component({
   selector: 'app-advance-adjustments',
@@ -20,8 +19,7 @@ import { CustomerAdvancesNavComponent } from '../customer-advances-nav.component
     CardContainerComponent,
     CustomInputComponent,
     CustomTextareaComponent,
-    SearchableSelectComponent,
-    CustomerAdvancesNavComponent
+    SearchableSelectComponent
   ],
   templateUrl: './advance-adjustments.component.html'
 })

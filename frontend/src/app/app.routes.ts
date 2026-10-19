@@ -277,6 +277,36 @@ export const routes: Routes = [
     title: 'Basement Parking Bays Management - Bangladesh Real Estate ERP'
   },
   {
+    path: 'inventory',
+    loadComponent: () => import('./features/inventory/property-inventory/property-inventory.component').then(m => m.PropertyInventoryComponent),
+    title: 'Property Inventory Cockpit & Stacking - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'inventory/dashboard',
+    redirectTo: 'inventory',
+    pathMatch: 'full'
+  },
+  {
+    path: 'inventory/stacking-plan',
+    loadComponent: () => import('./features/inventory/property-inventory/property-inventory.component').then(m => m.PropertyInventoryComponent),
+    title: 'Tower Stacking Elevation - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'inventory/matrix',
+    loadComponent: () => import('./features/inventory/property-inventory/property-inventory.component').then(m => m.PropertyInventoryComponent),
+    title: 'Floor-wise Unit Matrix - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'inventory/units',
+    loadComponent: () => import('./features/inventory/property-inventory/property-inventory.component').then(m => m.PropertyInventoryComponent),
+    title: 'Property Units Directory - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'inventory/parking',
+    loadComponent: () => import('./features/inventory/property-inventory/property-inventory.component').then(m => m.PropertyInventoryComponent),
+    title: 'Basement Parking Bays - Bangladesh Real Estate ERP'
+  },
+  {
     path: 'crm',
     loadComponent: () => import('./features/crm/crm-dashboard/crm-dashboard.component').then(m => m.CrmDashboardComponent),
     title: 'CRM Dashboard & Sales KPIs - Bangladesh Real Estate ERP'
@@ -798,8 +828,13 @@ export const routes: Routes = [
   },
   {
     path: 'accounts',
-    redirectTo: 'accounts/coa',
+    redirectTo: 'accounts/financial-dashboard',
     pathMatch: 'full'
+  },
+  {
+    path: 'accounts/financial-dashboard',
+    loadComponent: () => import('./features/accounts/financial-dashboard/financial-dashboard.component').then(m => m.FinancialDashboardComponent),
+    title: 'Executive Financial Dashboard across 20+ Projects - Bangladesh Real Estate ERP'
   },
   {
     path: 'accounts/coa',
