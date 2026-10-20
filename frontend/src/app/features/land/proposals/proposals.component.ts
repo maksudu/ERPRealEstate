@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { LandService } from '../../../core/services/land.service';
 import { 
@@ -37,6 +38,7 @@ import {
 })
 export class ProposalsComponent implements OnInit {
   private landService = inject(LandService);
+  private router = inject(Router);
   private fb = inject(FormBuilder);
 
   Math = Math;
@@ -72,16 +74,7 @@ export class ProposalsComponent implements OnInit {
   chainVerification = signal<DeedChainVerification | null>(null);
   isLoadingChain = signal<boolean>(false);
 
-  // Create Modal State
-  isCreateModalOpen = signal<boolean>(false);
-  createError = signal<string | null>(null);
-  createActiveTab = signal<'basic' | 'potential' | 'landowner'>('basic');
 
-  // Conversion Preview Signal
-  calculatedSqft = signal<number>(0);
-  calculatedDecimal = signal<number>(0);
-  calculatedBigha = signal<number>(0);
-  calculatedBuiltupSqft = signal<number>(0);
 
   unitOptions = [
     { value: 'KATHA', label: 'Katha (কাঠা - 720 Sq Ft)', subLabel: 'Urban residential standard in Dhaka' },
@@ -100,34 +93,7 @@ export class ProposalsComponent implements OnInit {
     { value: 'REJECTED', label: 'Rejected', color: 'bg-rose-100 text-rose-800' }
   ];
 
-  proposalForm: FormGroup = this.fb.group({
-    project_code: ['', [Validators.required, Validators.pattern(/^[A-Za-z0-9_-]+$/)]],
-    proposal_title: ['', Validators.required],
-    mouza_name: ['', Validators.required],
-    jl_number: ['', Validators.required],
-    upazila_thana: ['Gulshan', Validators.required],
-    district: ['Dhaka', Validators.required],
-    sub_registry_office: ['Gulshan Sub-Registry Office', Validators.required],
-    input_unit: ['KATHA', Validators.required],
-    input_value: [15, [Validators.required, Validators.min(0.01)]],
-    deal_type: ['JOINT_VENTURE', Validators.required],
-    opportunity_source: ['BROKER', Validators.required],
-    source_contact_details: [''],
-    road_access_width_ft: [40.0, [Validators.required, Validators.min(0)]],
-    surrounding_development: [''],
-    proposed_development_type: ['RESIDENTIAL', Validators.required],
-    far_potential: [4.50, [Validators.required, Validators.min(0.1)]],
-    max_allowable_floors: [14, [Validators.required, Validators.min(1)]],
-    ground_coverage_percent: [50.00, [Validators.required, Validators.min(1), Validators.max(100)]],
-    indicative_cost_total: [0],
-    status: ['DRAFT_PROPOSAL'],
-    workflow_stage: ['IDENTIFIED'],
-    location_description: [''],
-    preliminary_valuation_notes: [''],
-    owner_name_en: ['', Validators.required],
-    owner_nid: [''],
-    owner_phone: ['']
-  });
+
 
   // Filtered computed
   filteredProposals = computed(() => {
@@ -219,135 +185,12 @@ export class ProposalsComponent implements OnInit {
     }
   }
 
-  onAreaInput(): void {
-    const unit = this.proposalForm.get('input_unit')?.value || 'KATHA';
-    const val = Number(this.proposalForm.get('input_value')?.value || 0);
-    const far = Number(this.proposalForm.get('far_potential')?.value || 4.5);
-
-    if (val <= 0) {
-      this.calculatedSqft.set(0);
-      this.calculatedDecimal.set(0);
-      this.calculatedBuiltupSqft.set(0);
-      return;
-    }
-
-    let sqft = 0;
-    if (unit === 'KATHA') {
-      sqft = val * 720;
-      this.calculatedSqft.set(sqft);
-      this.calculatedDecimal.set(Number((sqft / 435.6).toFixed(2)));
-      this.calculatedBigha.set(Number((val / 20).toFixed(2)));
-    } else if (unit === 'DECIMAL') {
-      sqft = val * 435.6;
-      this.calculatedSqft.set(sqft);
-      this.calculatedDecimal.set(val);
-      this.calculatedBigha.set(Number(((sqft / 720) / 20).toFixed(2)));
-    } else if (unit === 'BIGHA') {
-      sqft = val * 14400;
-      this.calculatedSqft.set(sqft);
-      this.calculatedDecimal.set(Number((sqft / 435.6).toFixed(2)));
-      this.calculatedBigha.set(val);
-    } else {
-      sqft = val;
-      this.calculatedSqft.set(val);
-      this.calculatedDecimal.set(Number((val / 435.6).toFixed(2)));
-      this.calculatedBigha.set(Number(((val / 720) / 20).toFixed(2)));
-    }
-
-    this.calculatedBuiltupSqft.set(Math.round(sqft * far));
+  navigateToCreate(): void {
+    this.router.navigate(['/land/proposals/create']);
   }
 
-  openCreateModal(): void {
-    this.createActiveTab.set('basic');
-    this.proposalForm.reset({
-      project_code: `PRJ-LND-${new Date().getFullYear()}-${Math.floor(10 + Math.random() * 90)}`,
-      proposal_title: '',
-      mouza_name: '',
-      jl_number: '',
-      upazila_thana: 'Gulshan',
-      district: 'Dhaka',
-      sub_registry_office: 'Gulshan Sub-Registry Office',
-      input_unit: 'KATHA',
-      input_value: 15,
-      deal_type: 'JOINT_VENTURE',
-      opportunity_source: 'BROKER',
-      source_contact_details: '',
-      road_access_width_ft: 40.0,
-      surrounding_development: '',
-      proposed_development_type: 'RESIDENTIAL',
-      far_potential: 4.50,
-      max_allowable_floors: 14,
-      ground_coverage_percent: 50.00,
-      indicative_cost_total: 0,
-      status: 'DRAFT_PROPOSAL',
-      workflow_stage: 'IDENTIFIED',
-      location_description: '',
-      preliminary_valuation_notes: '',
-      owner_name_en: '',
-      owner_nid: '',
-      owner_phone: ''
-    });
-    this.createError.set(null);
-    this.onAreaInput();
-    this.isCreateModalOpen.set(true);
-  }
-
-  submitProposal(): void {
-    if (this.proposalForm.invalid) {
-      this.proposalForm.markAllAsTouched();
-      return;
-    }
-
-    this.isSubmitting.set(true);
-    this.createError.set(null);
-
-    const f = this.proposalForm.value;
-    const payload = {
-      project_code: f.project_code,
-      proposal_title: f.proposal_title,
-      mouza_name: f.mouza_name,
-      jl_number: f.jl_number,
-      upazila_thana: f.upazila_thana,
-      district: f.district,
-      sub_registry_office: f.sub_registry_office,
-      input_unit: f.input_unit,
-      input_value: Number(f.input_value),
-      deal_type: f.deal_type,
-      opportunity_source: f.opportunity_source,
-      source_contact_details: f.source_contact_details || null,
-      road_access_width_ft: Number(f.road_access_width_ft || 40.0),
-      surrounding_development: f.surrounding_development || null,
-      proposed_development_type: f.proposed_development_type,
-      far_potential: Number(f.far_potential || 4.50),
-      max_allowable_floors: Number(f.max_allowable_floors || 14),
-      ground_coverage_percent: Number(f.ground_coverage_percent || 50.00),
-      indicative_cost_total: Number(f.indicative_cost_total || 0),
-      status: f.status || 'DRAFT_PROPOSAL',
-      workflow_stage: f.workflow_stage || 'IDENTIFIED',
-      location_description: f.location_description,
-      preliminary_valuation_notes: f.preliminary_valuation_notes,
-      landowners: f.owner_name_en ? [
-        {
-          owner_type: 'INDIVIDUAL',
-          full_name_en: f.owner_name_en,
-          nid_number: f.owner_nid || null,
-          phone_number: f.owner_phone || null,
-          ownership_share_ratio: 1.0
-        }
-      ] : []
-    };
-
-    this.landService.createProposal(payload).subscribe({
-      next: (created) => {
-        this.isSubmitting.set(false);
-        this.isCreateModalOpen.set(false);
-        this.proposals.update(list => [created, ...list]);
-      },
-      error: (err) => {
-        this.isSubmitting.set(false);
-        this.createError.set(err.error?.detail || 'Failed to create land proposal.');
-      }
-    });
+  navigateToEdit(proposal: LandBank): void {
+    this.router.navigate(['/land/proposals', proposal.id, 'edit']);
   }
 
   // Feasibility Report Modal

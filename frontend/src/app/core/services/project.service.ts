@@ -2,17 +2,17 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { 
-  Project, 
+import {
+  Project,
   Tower,
-  AuthorityClearance, 
-  BOQItem, 
+  AuthorityClearance,
+  BOQItem,
   Drawing,
   DrawingPaginationResponse,
   ProjectFinancialPerformance,
   ProjectFinancialPerformancePaginationResponse,
   ProjectPnLAnalyticsResponse,
-  FARCalculationResult 
+  FARCalculationResult
 } from '../models/project.model';
 
 @Injectable({
@@ -62,7 +62,7 @@ export class ProjectService {
     return this.http.get<any>(`${this.baseUrl}/meta/options`);
   }
 
-  // 2.2 Project Feasibility & Investment Analysis
+  // Project Feasibility & Investment Analysis
   getFeasibilities(filters?: { project_id?: number; status?: string; search?: string }): Observable<any[]> {
     let params = new HttpParams();
     if (filters?.project_id) params = params.set('project_id', filters.project_id);

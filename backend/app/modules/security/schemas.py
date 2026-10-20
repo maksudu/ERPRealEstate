@@ -119,6 +119,20 @@ class SecurityRolePermissionUpdate(BaseModel):
     data_scope: Optional[str] = None
 
 
+class SecurityRolePermissionSave(BaseModel):
+    module_code: str
+    module_name: str
+    can_view: bool
+    can_create: bool
+    can_edit: bool
+    can_delete: bool
+    can_approve: bool
+    can_export: bool
+    can_print: bool
+    data_scope: str
+    restricted_fields: List[str] = Field(default_factory=list)
+
+
 class SecurityUserProjectScopeCreate(BaseModel):
     user_id: int
     user_name: str
@@ -215,6 +229,28 @@ class SecurityMobileAppPolicyResponse(BaseModel):
     is_active: bool
 
 
+class SecurityAuditLogCreate(BaseModel):
+    user_name: str
+    event_type: str = "CREATE"  # LOGIN, LOGOUT, CREATE, UPDATE, DELETE, APPROVE, EXPORT
+    module_name: str = "User Management"
+    record_ref: Optional[str] = None
+    ip_address: Optional[str] = "103.145.112.5"
+    device_session: Optional[str] = "Admin Portal Web"
+    result_status: Optional[str] = "SUCCESS"  # SUCCESS, DENIED, FAILED
+    reason_notes: Optional[str] = None
+
+
+class SecurityAuditLogUpdate(BaseModel):
+    user_name: Optional[str] = None
+    event_type: Optional[str] = None
+    module_name: Optional[str] = None
+    record_ref: Optional[str] = None
+    ip_address: Optional[str] = None
+    device_session: Optional[str] = None
+    result_status: Optional[str] = None
+    reason_notes: Optional[str] = None
+
+
 class SecurityAuditLogResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -229,6 +265,24 @@ class SecurityAuditLogResponse(BaseModel):
     result_status: str
     reason_notes: Optional[str] = None
     created_at: Optional[datetime] = None
+
+
+class SecurityActiveSessionCreate(BaseModel):
+    username: str
+    device_name: str = "Windows 11 Workstation"
+    browser: str = "Chrome 124.0.0"
+    ip_address: str = "103.145.112.18"
+    location: Optional[str] = "Dhaka, Bangladesh"
+    status: Optional[str] = "ACTIVE"
+
+
+class SecurityActiveSessionUpdate(BaseModel):
+    username: Optional[str] = None
+    device_name: Optional[str] = None
+    browser: Optional[str] = None
+    ip_address: Optional[str] = None
+    location: Optional[str] = None
+    status: Optional[str] = None
 
 
 class SecurityActiveSessionResponse(BaseModel):
@@ -258,6 +312,24 @@ class SecurityIncidentResponse(BaseModel):
     description: str
     status: str
     created_at: Optional[datetime] = None
+
+
+class SecurityIncidentCreate(BaseModel):
+    severity: str = Field(default="MEDIUM", min_length=1, max_length=32)
+    incident_type: str = Field(min_length=1, max_length=64)
+    source_ip: Optional[str] = Field(default=None, max_length=45)
+    affected_user: Optional[str] = Field(default=None, max_length=64)
+    description: str = Field(min_length=1)
+    status: str = Field(default="OPEN", min_length=1, max_length=32)
+
+
+class SecurityIncidentUpdate(BaseModel):
+    severity: Optional[str] = Field(default=None, min_length=1, max_length=32)
+    incident_type: Optional[str] = Field(default=None, min_length=1, max_length=64)
+    source_ip: Optional[str] = Field(default=None, max_length=45)
+    affected_user: Optional[str] = Field(default=None, max_length=64)
+    description: Optional[str] = Field(default=None, min_length=1)
+    status: Optional[str] = Field(default=None, min_length=1, max_length=32)
 
 
 class SecurityAccessReviewResponse(BaseModel):

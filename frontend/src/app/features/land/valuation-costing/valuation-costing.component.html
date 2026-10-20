@@ -12,7 +12,7 @@
     <div class="flex items-center gap-2">
       <button
         *ngIf="activeTab === 'costings'"
-        (click)="openCreateCostingModal()"
+        (click)="openCreateCostingPage()"
         class="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold rounded-lg shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-primary-500/50"
       >
         <i class="fas fa-plus"></i>
@@ -20,13 +20,18 @@
       </button>
       <button
         *ngIf="activeTab === 'valuations'"
-        (click)="openCreateValuationModal()"
+        (click)="openCreateValuationPage()"
         class="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold rounded-lg shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-primary-500/50"
       >
         <i class="fas fa-calculator"></i>
         <span>Add Land Valuation</span>
       </button>
     </div>
+  </div>
+
+  <div *ngIf="successMessage" class="flex items-center justify-between rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300" role="status">
+    <span>{{ successMessage }}</span>
+    <button type="button" (click)="successMessage = ''" aria-label="Dismiss message" class="font-bold">×</button>
   </div>
 
   <!-- KPI Cards -->
@@ -36,7 +41,7 @@
         <i class="fas fa-coins"></i>
       </div>
       <div>
-        <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Acquisition Cost</p>
+        <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Page Acquisition Cost</p>
         <h3 class="text-lg font-bold text-slate-900 dark:text-white mt-0.5">
           ৳ {{ getTotalSpent() | number:'1.0-0' }}
         </h3>
@@ -48,7 +53,7 @@
         <i class="fas fa-chart-line"></i>
       </div>
       <div>
-        <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Avg Cost per Sq Ft</p>
+        <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Page Avg Cost per Sq Ft</p>
         <h3 class="text-lg font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
           ৳ {{ getAverageCostPerSqft() | number:'1.2-2' }} / sft
         </h3>
@@ -60,7 +65,7 @@
         <i class="fas fa-landmark"></i>
       </div>
       <div>
-        <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Capitalized Land Asset</p>
+        <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Page Capitalized Land Asset</p>
         <h3 class="text-lg font-bold text-purple-600 dark:text-purple-400 mt-0.5">
           ৳ {{ getTotalCapitalizedLand() | number:'1.0-0' }}
         </h3>
@@ -72,7 +77,7 @@
         <i class="fas fa-balance-scale-right"></i>
       </div>
       <div>
-        <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Budget Variance</p>
+        <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Page Budget Variance</p>
         <h3 class="text-lg font-bold mt-0.5" [ngClass]="getTotalBudgetVariance() <= 0 ? 'text-emerald-600' : 'text-rose-600'">
           ৳ {{ getTotalBudgetVariance() | number:'1.0-0' }}
         </h3>
@@ -96,7 +101,7 @@
         <i class="fas fa-file-invoice-dollar"></i>
         <span>Acquisition Costing & Expenses</span>
         <span class="px-2 py-0.5 text-[10px] rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
-          {{ costings.length }}
+          {{ totalCostings }}
         </span>
       </button>
 
@@ -112,7 +117,7 @@
         <i class="fas fa-chart-pie"></i>
         <span>Land Valuations & Benchmarks</span>
         <span class="px-2 py-0.5 text-[10px] rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
-          {{ valuations.length }}
+          {{ totalValuations }}
         </span>
       </button>
 
@@ -142,7 +147,7 @@
             <input
               type="text"
               [(ngModel)]="costingSearch"
-              (keyup.enter)="loadCostings()"
+              (keyup.enter)="onCostingFilterChange()"
               placeholder="Search code, remarks..."
               class="w-full pl-9 pr-3 py-1.5 text-xs bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-primary-500"
             />
@@ -155,7 +160,7 @@
               [options]="parcelOptions"
               placeholder="Filter by Parcel..."
               [(ngModel)]="selectedParcelFilter"
-              (ngModelChange)="loadCostings()"
+              (ngModelChange)="onCostingFilterChange()"
             ></app-searchable-select>
           </div>
 
@@ -165,13 +170,13 @@
               categoryCode="COSTING_STATUS"
               placeholder="Costing Status..."
               [(ngModel)]="selectedCostingStatusFilter"
-              (ngModelChange)="loadCostings()"
+              (ngModelChange)="onCostingFilterChange()"
               [allowCreateNew]="true"
             ></app-searchable-select>
           </div>
 
           <button
-            (click)="selectedParcelFilter = ''; selectedCostingStatusFilter = ''; costingSearch = ''; loadCostings()"
+            (click)="selectedParcelFilter = ''; selectedCostingStatusFilter = ''; costingSearch = ''; onCostingFilterChange()"
             class="px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg shadow-2xs"
           >
             <i class="fas fa-undo mr-1"></i> Reset
@@ -179,7 +184,7 @@
         </div>
 
         <div class="text-xs text-slate-500 dark:text-slate-400">
-          Total {{ costings.length }} costings recorded
+          Total {{ totalCostings }} costings recorded
         </div>
       </div>
 
@@ -205,12 +210,18 @@
                 <p>Loading acquisition costings...</p>
               </td>
             </tr>
-            <tr *ngIf="!isLoadingCostings && costings.length === 0">
+            <tr *ngIf="!isLoadingCostings && costingLoadError">
+              <td colspan="8" class="text-center py-12 text-rose-600 dark:text-rose-400">
+                <p>{{ costingLoadError }}</p>
+                <button type="button" (click)="loadCostings()" class="mt-2 underline">Retry</button>
+              </td>
+            </tr>
+            <tr *ngIf="!isLoadingCostings && !costingLoadError && costings.length === 0">
               <td colspan="8" class="text-center py-12 text-slate-400">
                 <i class="fas fa-folder-open text-3xl mb-2 text-slate-300 dark:text-slate-600"></i>
                 <p>No acquisition costings found.</p>
                 <button
-                  (click)="openCreateCostingModal()"
+                  (click)="openCreateCostingPage()"
                   class="mt-3 px-3 py-1.5 text-xs bg-primary-50 text-primary-600 dark:bg-primary-950/40 dark:text-primary-400 rounded-lg hover:underline inline-flex items-center gap-1.5"
                 >
                   <i class="fas fa-plus"></i> Create first costing
@@ -283,7 +294,7 @@
 
                   <!-- Edit -->
                   <button
-                    (click)="openEditCostingModal(c)"
+                    (click)="openEditCostingPage(c)"
                     class="p-1.5 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-colors"
                     title="Edit Costing"
                   >
@@ -304,6 +315,20 @@
           </tbody>
         </table>
       </div>
+      <div class="flex flex-col gap-3 border-t border-slate-200 px-4 py-3 text-xs dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between">
+        <div class="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+          <label for="costing-page-size">Rows per page</label>
+          <select id="costing-page-size" [value]="costingPageSize" (change)="onCostingPageSizeChange($any($event.target).value)" class="rounded border border-slate-300 bg-white px-2 py-1 dark:border-slate-700 dark:bg-slate-900">
+            <option *ngFor="let size of costingPageSizes" [value]="size">{{ size }}</option>
+          </select>
+          <span>Showing {{ totalCostings ? ((currentCostingPage - 1) * costingPageSize) + 1 : 0 }}–{{ Math.min(currentCostingPage * costingPageSize, totalCostings) }} of {{ totalCostings }}</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button type="button" (click)="goToCostingPage(currentCostingPage - 1)" [disabled]="currentCostingPage <= 1 || isLoadingCostings" class="rounded border border-slate-300 px-3 py-1 disabled:opacity-40 dark:border-slate-700">Previous</button>
+          <span>Page {{ currentCostingPage }} of {{ Math.max(1, Math.ceil(totalCostings / costingPageSize)) }}</span>
+          <button type="button" (click)="goToCostingPage(currentCostingPage + 1)" [disabled]="currentCostingPage >= Math.max(1, Math.ceil(totalCostings / costingPageSize)) || isLoadingCostings" class="rounded border border-slate-300 px-3 py-1 disabled:opacity-40 dark:border-slate-700">Next</button>
+        </div>
+      </div>
     </div>
 
     <!-- ============================================================== -->
@@ -318,7 +343,7 @@
             <input
               type="text"
               [(ngModel)]="valSearch"
-              (keyup.enter)="loadValuations()"
+              (keyup.enter)="onValuationFilterChange()"
               placeholder="Search assessor, valuer, code..."
               class="w-full pl-9 pr-3 py-1.5 text-xs bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-primary-500"
             />
@@ -331,7 +356,7 @@
               [options]="parcelOptions"
               placeholder="Filter by Parcel..."
               [(ngModel)]="selectedValParcelFilter"
-              (ngModelChange)="loadValuations()"
+              (ngModelChange)="onValuationFilterChange()"
             ></app-searchable-select>
           </div>
 
@@ -341,13 +366,23 @@
               categoryCode="VALUATION_SOURCE"
               placeholder="Valuation Source..."
               [(ngModel)]="selectedValSourceFilter"
-              (ngModelChange)="loadValuations()"
+              (ngModelChange)="onValuationFilterChange()"
+              [allowCreateNew]="true"
+            ></app-searchable-select>
+          </div>
+
+          <div class="w-full sm:w-48">
+            <app-searchable-select
+              categoryCode="VALUATION_APPROVAL_STATUS"
+              placeholder="Approval Status..."
+              [(ngModel)]="selectedValStatusFilter"
+              (ngModelChange)="onValuationFilterChange()"
               [allowCreateNew]="true"
             ></app-searchable-select>
           </div>
 
           <button
-            (click)="selectedValParcelFilter = ''; selectedValSourceFilter = ''; valSearch = ''; loadValuations()"
+            (click)="selectedValParcelFilter = ''; selectedValSourceFilter = ''; selectedValStatusFilter = ''; valSearch = ''; onValuationFilterChange()"
             class="px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg shadow-2xs"
           >
             <i class="fas fa-undo mr-1"></i> Reset
@@ -355,7 +390,7 @@
         </div>
 
         <div class="text-xs text-slate-500 dark:text-slate-400">
-          Total {{ valuations.length }} benchmark valuations
+          Total {{ totalValuations }} benchmark valuations
         </div>
       </div>
 
@@ -382,12 +417,18 @@
                 <p>Loading land valuations...</p>
               </td>
             </tr>
-            <tr *ngIf="!isLoadingValuations && valuations.length === 0">
+            <tr *ngIf="!isLoadingValuations && valuationLoadError">
+              <td colspan="9" class="text-center py-12 text-rose-600 dark:text-rose-400">
+                <p>{{ valuationLoadError }}</p>
+                <button type="button" (click)="loadValuations()" class="mt-2 underline">Retry</button>
+              </td>
+            </tr>
+            <tr *ngIf="!isLoadingValuations && !valuationLoadError && valuations.length === 0">
               <td colspan="9" class="text-center py-12 text-slate-400">
                 <i class="fas fa-calculator text-3xl mb-2 text-slate-300 dark:text-slate-600"></i>
                 <p>No valuation reports registered yet.</p>
                 <button
-                  (click)="openCreateValuationModal()"
+                  (click)="openCreateValuationPage()"
                   class="mt-3 px-3 py-1.5 text-xs bg-primary-50 text-primary-600 dark:bg-primary-950/40 dark:text-primary-400 rounded-lg hover:underline inline-flex items-center gap-1.5"
                 >
                   <i class="fas fa-plus"></i> Add first valuation
@@ -449,7 +490,7 @@
 
                   <!-- Edit -->
                   <button
-                    (click)="openEditValuationModal(val)"
+                    (click)="openEditValuationPage(val)"
                     class="p-1.5 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-colors"
                     title="Edit Valuation"
                   >
@@ -469,6 +510,20 @@
             </tr>
           </tbody>
         </table>
+      </div>
+      <div class="flex flex-col gap-3 border-t border-slate-200 px-4 py-3 text-xs dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between">
+        <div class="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+          <label for="valuation-page-size">Rows per page</label>
+          <select id="valuation-page-size" [value]="valPageSize" (change)="onValuationPageSizeChange($any($event.target).value)" class="rounded border border-slate-300 bg-white px-2 py-1 dark:border-slate-700 dark:bg-slate-900">
+            <option *ngFor="let size of valuationPageSizes" [value]="size">{{ size }}</option>
+          </select>
+          <span>Showing {{ totalValuations ? ((currentValPage - 1) * valPageSize) + 1 : 0 }}–{{ Math.min(currentValPage * valPageSize, totalValuations) }} of {{ totalValuations }}</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button type="button" (click)="goToValuationPage(currentValPage - 1)" [disabled]="currentValPage <= 1 || isLoadingValuations" class="rounded border border-slate-300 px-3 py-1 disabled:opacity-40 dark:border-slate-700">Previous</button>
+          <span>Page {{ currentValPage }} of {{ Math.max(1, Math.ceil(totalValuations / valPageSize)) }}</span>
+          <button type="button" (click)="goToValuationPage(currentValPage + 1)" [disabled]="currentValPage >= Math.max(1, Math.ceil(totalValuations / valPageSize)) || isLoadingValuations" class="rounded border border-slate-300 px-3 py-1 disabled:opacity-40 dark:border-slate-700">Next</button>
+        </div>
       </div>
     </div>
 
@@ -582,97 +637,7 @@
   </app-card-container>
 
   <!-- ============================================================== -->
-  <!-- MODAL 1: CREATE / EDIT MASTER ACQUISITION COSTING              -->
-  <!-- ============================================================== -->
-  <app-modal
-    [isOpen]="isCostingModalOpen"
-    [title]="editingCostingId ? 'Edit Acquisition Costing Record' : 'Create Land Acquisition Costing'"
-    size="lg"
-    (close)="closeCostingModal()"
-  >
-    <div class="space-y-4 text-xs">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <!-- Target Parcel -->
-        <div class="space-y-1">
-          <label class="font-semibold text-slate-700 dark:text-slate-300">
-            Target Land Parcel <span class="text-rose-500">*</span>
-          </label>
-          <app-searchable-select
-            [options]="parcelOptions"
-            placeholder="Select target parcel..."
-            [(ngModel)]="costingFormData.parcel_id"
-          ></app-searchable-select>
-        </div>
-
-        <!-- Costing Date -->
-        <app-custom-input
-          label="Costing & Budget Date"
-          type="date"
-          [(ngModel)]="costingFormData.costing_date"
-        ></app-custom-input>
-
-        <!-- Agreed Purchase Price -->
-        <app-custom-input
-          label="Agreed Land Purchase Price (BDT)"
-          type="number"
-          [(ngModel)]="costingFormData.agreed_purchase_price_bdt"
-          placeholder="e.g. 32000000"
-          helperText="Core landowner consideration"
-        ></app-custom-input>
-
-        <!-- Budget Allocated -->
-        <app-custom-input
-          label="Total Budget Allocated (BDT)"
-          type="number"
-          [(ngModel)]="costingFormData.budget_allocated_bdt"
-          placeholder="e.g. 38000000"
-          helperText="Total approved fund cap for this acquisition"
-        ></app-custom-input>
-
-        <!-- Costing Status -->
-        <div class="space-y-1">
-          <label class="font-semibold text-slate-700 dark:text-slate-300">Costing Status</label>
-          <app-searchable-select
-            categoryCode="COSTING_STATUS"
-            placeholder="Select status..."
-            [(ngModel)]="costingFormData.costing_status"
-            [allowCreateNew]="true"
-          ></app-searchable-select>
-        </div>
-      </div>
-
-      <!-- Remarks -->
-      <app-custom-textarea
-        label="Acquisition Budget Remarks & Board Directives"
-        [(ngModel)]="costingFormData.remarks"
-        [rows]="3"
-        placeholder="Enter notes on payment milestones, escrow arrangements, or banking source..."
-      ></app-custom-textarea>
-
-      <!-- Footer Buttons -->
-      <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-200 dark:border-slate-800">
-        <button
-          type="button"
-          (click)="closeCostingModal()"
-          class="px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
-        >
-          Cancel
-        </button>
-        <button
-          type="button"
-          (click)="saveCosting()"
-          [disabled]="isSubmitting"
-          class="px-4 py-2 text-xs font-semibold text-white bg-primary-600 hover:bg-primary-700 rounded-lg shadow-sm disabled:opacity-50 inline-flex items-center gap-1.5"
-        >
-          <i class="fas fa-save"></i>
-          <span>{{ editingCostingId ? 'Update Costing' : 'Save Costing & Budget' }}</span>
-        </button>
-      </div>
-    </div>
-  </app-modal>
-
-  <!-- ============================================================== -->
-  <!-- MODAL 2: 8-CATEGORY ITEMIZED EXPENSE LEDGER                    -->
+  <!-- MODAL: 8-CATEGORY ITEMIZED EXPENSE LEDGER                      -->
   <!-- ============================================================== -->
   <app-modal
     [isOpen]="isExpenseLedgerModalOpen"
@@ -959,135 +924,7 @@
   </app-modal>
 
   <!-- ============================================================== -->
-  <!-- MODAL 5: CREATE / EDIT LAND VALUATION REPORT                   -->
-  <!-- ============================================================== -->
-  <app-modal
-    [isOpen]="isValuationModalOpen"
-    [title]="editingValuationId ? 'Edit Land Valuation Report' : 'Register Benchmark Land Valuation'"
-    size="xl"
-    (close)="closeValuationModal()"
-  >
-    <div class="space-y-4 text-xs">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <!-- Target Parcel -->
-        <div class="space-y-1">
-          <label class="font-semibold text-slate-700 dark:text-slate-300">
-            Target Land Parcel <span class="text-rose-500">*</span>
-          </label>
-          <app-searchable-select
-            [options]="parcelOptions"
-            placeholder="Select target parcel..."
-            [(ngModel)]="valuationFormData.parcel_id"
-            (ngModelChange)="onGovtMouzaRateChange()"
-          ></app-searchable-select>
-        </div>
-
-        <!-- Valuation Date -->
-        <app-custom-input
-          label="Valuation Date"
-          type="date"
-          [(ngModel)]="valuationFormData.valuation_date"
-        ></app-custom-input>
-
-        <!-- Valuation Source -->
-        <div class="space-y-1">
-          <label class="font-semibold text-slate-700 dark:text-slate-300">Valuation Source</label>
-          <app-searchable-select
-            categoryCode="VALUATION_SOURCE"
-            placeholder="Select valuation source..."
-            [(ngModel)]="valuationFormData.valuation_source"
-            [allowCreateNew]="true"
-          ></app-searchable-select>
-        </div>
-
-        <!-- Assessor Name -->
-        <app-custom-input
-          label="Assessor / Valuer Name"
-          [(ngModel)]="valuationFormData.assessor_name"
-          placeholder="e.g. Engr. Tanvir Ahmed, FIEB"
-          [required]="true"
-        ></app-custom-input>
-
-        <!-- Company -->
-        <app-custom-input
-          label="Survey / Valuation Company"
-          [(ngModel)]="valuationFormData.assessor_company"
-          placeholder="e.g. Pioneer Surveyors & Valuers Ltd"
-        ></app-custom-input>
-
-        <!-- License No -->
-        <app-custom-input
-          label="Valuer Professional License No"
-          [(ngModel)]="valuationFormData.assessor_license_no"
-          placeholder="e.g. VAL-DHK-4421"
-        ></app-custom-input>
-
-        <!-- Asking Price -->
-        <app-custom-input
-          label="Landowner Asking Price (BDT)"
-          type="number"
-          [(ngModel)]="valuationFormData.asking_price_total_bdt"
-          placeholder="0"
-        ></app-custom-input>
-
-        <!-- Market Valuation -->
-        <app-custom-input
-          label="Assessed Market Valuation (BDT)"
-          type="number"
-          [(ngModel)]="valuationFormData.market_valuation_total_bdt"
-          placeholder="0"
-        ></app-custom-input>
-
-        <!-- Govt Mouza Rate per Decimal -->
-        <app-custom-input
-          label="Govt Mouza Rate / Decimal (BDT)"
-          type="number"
-          [(ngModel)]="valuationFormData.govt_mouza_rate_per_decimal_bdt"
-          placeholder="0"
-          (ngModelChange)="onGovtMouzaRateChange()"
-        ></app-custom-input>
-
-        <!-- Recommended Offer Price -->
-        <app-custom-input
-          label="Recommended Offer Price (BDT)"
-          type="number"
-          [(ngModel)]="valuationFormData.recommended_offer_price_bdt"
-          placeholder="0"
-        ></app-custom-input>
-      </div>
-
-      <!-- Notes and Methodology -->
-      <app-custom-textarea
-        label="Valuation Methodology & Comparable Sales Evidence"
-        [(ngModel)]="valuationFormData.notes_and_methodology"
-        [rows]="3"
-        placeholder="Detail recent deed transactions in mouza, 60ft frontage adjustment, or sub-registry circle rates..."
-      ></app-custom-textarea>
-
-      <!-- Footer Buttons -->
-      <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-200 dark:border-slate-800">
-        <button
-          type="button"
-          (click)="closeValuationModal()"
-          class="px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
-        >
-          Cancel
-        </button>
-        <button
-          type="button"
-          (click)="saveValuation()"
-          [disabled]="isSubmitting"
-          class="px-4 py-2 text-xs font-semibold text-white bg-primary-600 hover:bg-primary-700 rounded-lg shadow-sm disabled:opacity-50 inline-flex items-center gap-1.5"
-        >
-          <i class="fas fa-check"></i>
-          <span>Save Valuation</span>
-        </button>
-      </div>
-    </div>
-  </app-modal>
-
-  <!-- ============================================================== -->
-  <!-- MODAL 6: APPROVE VALUATION REPORT                              -->
+  <!-- MODAL 5: APPROVE VALUATION REPORT                              -->
   <!-- ============================================================== -->
   <app-modal
     [isOpen]="isValuationApproveModalOpen"

@@ -10,11 +10,9 @@ import { SearchableSelectComponent, SelectOption } from '../../../shared/compone
 @Component({
   selector: 'app-workflow-security',
   standalone: true,
-  imports: [CommonModule, FormsModule, SecurityNavComponent, CardContainerComponent, ModalComponent, SearchableSelectComponent],
+  imports: [CommonModule, FormsModule, CardContainerComponent, ModalComponent, SearchableSelectComponent],
   template: `
     <div class="p-4 sm:p-6 w-full space-y-6">
-      <app-security-nav />
-
       <!-- Top Separation of Duties Banner -->
       <div class="p-4 rounded-xl border border-rose-200 bg-rose-50/70 dark:bg-rose-950/40 dark:border-rose-900 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div class="flex items-center gap-3">
@@ -149,9 +147,7 @@ import { SearchableSelectComponent, SelectOption } from '../../../shared/compone
       <!-- Configure Rule Modal -->
       <app-modal
         [isOpen]="isModalOpen"
-        title="Configure Maker-Checker-Approver Workflow Rule"
-        subtitle="Mandate dual authorization and threshold limits in Bangladeshi Taka (BDT)"
-        badge="Governance Control"
+        title="Approver Workflow Rule"
         size="lg"
         (close)="closeModal()"
       >

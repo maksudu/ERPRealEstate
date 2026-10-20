@@ -11,6 +11,9 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { Router, ActivatedRoute, NavigationEnd } from '@angular/router';
+import { Subscription } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { Chart, registerables } from 'chart.js';
 
 import { BIService } from '../../../core/services/bi.service';
@@ -50,6 +53,9 @@ Chart.register(...registerables);
 export class ExecutiveCockpitComponent implements OnInit, AfterViewInit, OnDestroy {
   private biService = inject(BIService);
   private projectService = inject(ProjectService);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
+  private routeSub?: Subscription;
 
   @ViewChild('runwayCanvas') runwayCanvas?: ElementRef<HTMLCanvasElement>;
   @ViewChild('evmCanvas') evmCanvas?: ElementRef<HTMLCanvasElement>;
@@ -140,7 +146,32 @@ export class ExecutiveCockpitComponent implements OnInit, AfterViewInit, OnDestr
   });
 
   ngOnInit(): void {
+    this.syncTabWithRoute();
+    this.routeSub = this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe(() => {
+      this.syncTabWithRoute();
+    });
+    this.route.queryParams.subscribe(() => {
+      this.syncTabWithRoute();
+    });
     this.loadInitialData();
+  }
+
+  private syncTabWithRoute(): void {
+    const url = (this.router.url || '').toLowerCase();
+    const queryTab = (this.route.snapshot.queryParams['tab'] || '').toUpperCase();
+
+    if (url.includes('/bi/runway') || queryTab === 'RUNWAY') {
+      this.activeTab.set('RUNWAY');
+    } else if (url.includes('/bi/evm') || url.includes('/bi/profitability') || queryTab === 'PROFITABILITY' || queryTab === 'EVM') {
+      this.activeTab.set('PROFITABILITY');
+    } else if (url.includes('/bi/heatmap') || queryTab === 'HEATMAP') {
+      this.activeTab.set('HEATMAP');
+    } else {
+      this.activeTab.set('OVERVIEW');
+      setTimeout(() => this.renderCharts(), 150);
+    }
   }
 
   ngAfterViewInit(): void {
@@ -148,6 +179,9 @@ export class ExecutiveCockpitComponent implements OnInit, AfterViewInit, OnDestr
   }
 
   ngOnDestroy(): void {
+    if (this.routeSub) {
+      this.routeSub.unsubscribe();
+    }
     this.destroyCharts();
   }
 

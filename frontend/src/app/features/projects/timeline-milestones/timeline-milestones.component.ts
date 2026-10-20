@@ -80,10 +80,7 @@ import {
 
       <!-- Main Table & Gantt View Card -->
       <app-card-container
-        title="2.7 Project Timeline & Milestone Tracking"
-        subtitle="Maintain project schedule with dependencies, planned dates, actual dates, assigned personnel, and completion percentages"
-        badge="Critical Path Method (CPM)"
-      >
+        title="Project Timeline & Milestone Tracking">
         <!-- Top Action Bar -->
         <div card-actions class="flex flex-wrap items-center gap-2">
           <!-- View Toggle Button -->

@@ -8,11 +8,9 @@ import { CardContainerComponent } from '../../../shared/components/card-containe
 @Component({
   selector: 'app-auth-security',
   standalone: true,
-  imports: [CommonModule, FormsModule, SecurityNavComponent, CardContainerComponent],
+  imports: [CommonModule, FormsModule, CardContainerComponent],
   template: `
     <div class="p-4 sm:p-6 w-full space-y-6">
-      <app-security-nav />
-
       <!-- Global Policy Card -->
       <app-card title="Authentication, Password & Login Security Policy" subtitle="Configure corporate password complexity, account lockout thresholds, session timeouts and multi-factor authentication (MFA)">
         <div card-actions>

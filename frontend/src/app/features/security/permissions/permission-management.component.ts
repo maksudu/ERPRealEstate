@@ -9,17 +9,14 @@ import { SearchableSelectComponent, SelectOption } from '../../../shared/compone
 @Component({
   selector: 'app-permission-management',
   standalone: true,
-  imports: [CommonModule, FormsModule, SecurityNavComponent, CardContainerComponent, SearchableSelectComponent],
+  imports: [CommonModule, FormsModule, CardContainerComponent, SearchableSelectComponent],
   template: `
     <div class="p-4 sm:p-6 w-full space-y-6">
-      <app-security-nav />
-
       <!-- Top Permission Matrix Header -->
-      <app-card title="Module, Action & Field-Level Permission Matrix" subtitle="Fine-grained granular access control across 16 ERP modules with data scoping rules">
+      <app-card title="Permission">
         <div card-actions class="flex items-center gap-2">
           <div class="w-64">
             <app-searchable-select
-              categoryCode="ROLE_CODE"
               label=""
               placeholder="Select Target Role..."
               [(ngModel)]="selectedRoleCode"
@@ -31,11 +28,23 @@ import { SearchableSelectComponent, SelectOption } from '../../../shared/compone
           <button
             type="button"
             (click)="savePermissions()"
+            [disabled]="saving || loading || !selectedRoleCode || matrix.length === 0"
             class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-600 text-white hover:bg-rose-700 shadow-2xs transition"
           >
-            Save Matrix Changes
+            {{ saving ? 'Saving...' : 'Save Matrix Changes' }}
           </button>
         </div>
+
+        @if (successMessage) {
+          <div class="mb-4 p-3 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700 text-xs" role="status">
+            {{ successMessage }}
+          </div>
+        }
+        @if (errorMessage) {
+          <div class="mb-4 p-3 rounded-lg border border-rose-200 bg-rose-50 text-rose-700 text-xs" role="alert">
+            {{ errorMessage }}
+          </div>
+        }
 
         <!-- Scope Explanation Banner -->
         <div class="p-3 mb-4 rounded-xl border border-indigo-200 bg-indigo-50/60 dark:bg-indigo-950/30 dark:border-indigo-900/60 text-xs text-indigo-900 dark:text-indigo-200 flex items-center justify-between">
@@ -134,29 +143,40 @@ export class PermissionManagementComponent implements OnInit {
   private service = inject(SecurityService);
 
   matrix: RolePermissionItem[] = [];
-  selectedRoleCode = 'PROJECT_MGR';
+  selectedRoleCode = '';
   loading = false;
+  saving = false;
+  successMessage = '';
+  errorMessage = '';
 
-  roleOptions: SelectOption[] = [
-    { value: 'SUPER_ADMIN', label: 'Super Administrator' },
-    { value: 'SYS_ADMIN', label: 'System Administrator' },
-    { value: 'MD', label: 'Managing Director' },
-    { value: 'PROJECT_DIR', label: 'Project Director' },
-    { value: 'PROJECT_MGR', label: 'Project Manager' },
-    { value: 'FIN_MGR', label: 'Finance Manager' },
-    { value: 'ACCOUNTANT', label: 'Accountant' },
-    { value: 'SALES_MGR', label: 'Sales Manager' },
-    { value: 'SALES_EXEC', label: 'Sales Executive' },
-    { value: 'PROC_MGR', label: 'Procurement Manager' },
-    { value: 'SITE_ENG', label: 'Site Engineer' },
-    { value: 'AUDITOR', label: 'Auditor' }
-  ];
+  roleOptions: SelectOption[] = [];
 
   ngOnInit(): void {
-    this.loadPermissions();
+    this.service.getRoles({ limit: 100, offset: 0 }).subscribe({
+      next: (res) => {
+        this.roleOptions = (res.items || [])
+          .filter(role => role.is_active)
+          .map(role => ({ value: role.role_code, label: role.role_name }));
+        if (!this.roleOptions.length) {
+          this.errorMessage = 'No active roles are available.';
+          return;
+        }
+        this.selectedRoleCode = this.roleOptions.some(option => option.value === 'PROJECT_MGR')
+          ? 'PROJECT_MGR'
+          : this.roleOptions[0].value;
+        this.loadPermissions();
+      },
+      error: (err) => {
+        console.error('Failed to load roles', err);
+        this.errorMessage = err.error?.detail || 'Failed to load roles.';
+      }
+    });
   }
 
   loadPermissions(): void {
+    if (!this.selectedRoleCode) return;
+    this.successMessage = '';
+    this.errorMessage = '';
     this.loading = true;
     this.service.getRolePermissions(this.selectedRoleCode).subscribe({
       next: (data) => {
@@ -165,12 +185,55 @@ export class PermissionManagementComponent implements OnInit {
       },
       error: (err) => {
         console.error('Failed to load role permissions', err);
+        this.errorMessage = err.error?.detail || 'Failed to load role permissions.';
         this.loading = false;
       }
     });
   }
 
   savePermissions(): void {
-    alert(`Role ${this.selectedRoleCode} permissions updated successfully across all 16 modules.`);
+    if (!this.selectedRoleCode || !this.matrix.length || this.saving) return;
+
+    this.saving = true;
+    this.successMessage = '';
+    this.errorMessage = '';
+    const permissions = this.matrix.map(({
+      module_code,
+      module_name,
+      can_view,
+      can_create,
+      can_edit,
+      can_delete,
+      can_approve,
+      can_export,
+      can_print,
+      data_scope,
+      restricted_fields
+    }) => ({
+      module_code,
+      module_name,
+      can_view,
+      can_create,
+      can_edit,
+      can_delete,
+      can_approve,
+      can_export,
+      can_print,
+      data_scope,
+      restricted_fields: restricted_fields || []
+    }));
+
+    this.service.saveRolePermissions(this.selectedRoleCode, permissions).subscribe({
+      next: (saved) => {
+        this.matrix = saved;
+        this.successMessage = `Permissions saved successfully for ${this.selectedRoleCode}.`;
+        this.saving = false;
+      },
+      error: (err) => {
+        console.error('Failed to save role permissions', err);
+        this.errorMessage = err.error?.detail || 'Failed to save role permissions.';
+        this.saving = false;
+      }
+    });
   }
 }

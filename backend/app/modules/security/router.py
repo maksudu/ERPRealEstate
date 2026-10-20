@@ -16,14 +16,15 @@ from app.modules.security.schemas import (
     SecurityUserCreate, SecurityUserUpdate, SecurityUserResponse,
     SecurityRoleCreate, SecurityRoleUpdate, SecurityRoleResponse,
     SecurityRolePermissionResponse, SecurityRolePermissionUpdate,
+    SecurityRolePermissionSave,
     SecurityUserProjectScopeCreate, SecurityUserProjectScopeResponse,
     SecurityWorkflowRuleCreate, SecurityWorkflowRuleResponse,
     SecurityPolicyConfigResponse,
     SecurityApiKeyCreate, SecurityApiKeyResponse,
     SecurityMobileAppPolicyResponse,
-    SecurityAuditLogResponse,
-    SecurityActiveSessionResponse,
-    SecurityIncidentResponse,
+    SecurityAuditLogCreate, SecurityAuditLogUpdate, SecurityAuditLogResponse,
+    SecurityActiveSessionCreate, SecurityActiveSessionUpdate, SecurityActiveSessionResponse,
+    SecurityIncidentCreate, SecurityIncidentUpdate, SecurityIncidentResponse,
     SecurityAccessReviewResponse,
     SecurityDashboardSummary
 )
@@ -172,6 +173,14 @@ async def create_user(payload: SecurityUserCreate, db: AsyncSession = Depends(ge
     return user
 
 
+@router.get("/users/{user_id}", response_model=SecurityUserResponse)
+async def get_user_by_id(user_id: int, db: AsyncSession = Depends(get_db)):
+    user = await db.get(SecurityUserAccount, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User account not found")
+    return user
+
+
 @router.put("/users/{user_id}", response_model=SecurityUserResponse)
 async def update_user(user_id: int, payload: SecurityUserUpdate, db: AsyncSession = Depends(get_db)):
     user = await db.get(SecurityUserAccount, user_id)
@@ -295,6 +304,17 @@ async def list_role_permissions(
     db: AsyncSession = Depends(get_db)
 ):
     await seed_security_module(db)
+    saved_permissions = (await db.execute(
+        select(SecurityRolePermissionMatrix)
+        .where(SecurityRolePermissionMatrix.role_code == role_code)
+        .order_by(SecurityRolePermissionMatrix.module_code)
+    )).scalars().all()
+    if saved_permissions:
+        return [
+            SecurityRolePermissionResponse.model_validate(item).model_dump()
+            for item in saved_permissions
+        ]
+
     # Generate default module matrix
     modules = [
         ("LAND", "Land Acquisition & JV", True, True, True, False, False, True, "PROJECT"),
@@ -333,6 +353,56 @@ async def list_role_permissions(
             "restricted_fields": ["customer_nid", "base_cost_rate"] if code in ["CRM", "BUDGETING"] else []
         })
     return res
+
+
+@router.put("/permissions/{role_code}", response_model=List[SecurityRolePermissionResponse])
+async def save_role_permissions(
+    role_code: str,
+    permissions: List[SecurityRolePermissionSave],
+    db: AsyncSession = Depends(get_db)
+):
+    await seed_security_module(db)
+    role = (await db.execute(
+        select(SecurityRoleMaster).where(SecurityRoleMaster.role_code == role_code)
+    )).scalar_one_or_none()
+    if not role:
+        raise HTTPException(status_code=404, detail="Role not found")
+    if not permissions:
+        raise HTTPException(status_code=400, detail="Permission matrix cannot be empty")
+
+    module_codes = [item.module_code for item in permissions]
+    if len(module_codes) != len(set(module_codes)):
+        raise HTTPException(status_code=400, detail="Permission matrix contains duplicate modules")
+
+    allowed_scopes = {"ALL", "COMPANY", "BRANCH", "PROJECT", "DEPARTMENT", "ASSIGNED", "OWN", "NONE"}
+    if any(item.data_scope not in allowed_scopes for item in permissions):
+        raise HTTPException(status_code=400, detail="Permission matrix contains an invalid data scope")
+
+    existing = (await db.execute(
+        select(SecurityRolePermissionMatrix)
+        .where(SecurityRolePermissionMatrix.role_code == role_code)
+    )).scalars().all()
+    existing_by_module = {item.module_code: item for item in existing}
+
+    for permission in permissions:
+        values = permission.model_dump()
+        record = existing_by_module.get(permission.module_code)
+        if record is None:
+            db.add(SecurityRolePermissionMatrix(role_code=role_code, **values))
+        else:
+            for field, value in values.items():
+                setattr(record, field, value)
+
+    await db.commit()
+    saved = (await db.execute(
+        select(SecurityRolePermissionMatrix)
+        .where(SecurityRolePermissionMatrix.role_code == role_code)
+        .order_by(SecurityRolePermissionMatrix.module_code)
+    )).scalars().all()
+    return [
+        SecurityRolePermissionResponse.model_validate(item).model_dump()
+        for item in saved
+    ]
 
 
 # =========================================================================
@@ -560,21 +630,34 @@ async def list_mobile_policies(db: AsyncSession = Depends(get_db)):
 # =========================================================================
 @router.get("/audit-logs")
 async def list_audit_logs(
+    search: Optional[str] = None,
     user_name: Optional[str] = None,
     module_name: Optional[str] = None,
     event_type: Optional[str] = None,
+    result_status: Optional[str] = None,
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db)
 ):
     await seed_security_module(db)
     q = select(SecurityAuditLogEntry)
+    if search:
+        s = f"%{search}%"
+        q = q.where(or_(
+            SecurityAuditLogEntry.audit_ref.ilike(s),
+            SecurityAuditLogEntry.user_name.ilike(s),
+            SecurityAuditLogEntry.module_name.ilike(s),
+            SecurityAuditLogEntry.record_ref.ilike(s),
+            SecurityAuditLogEntry.reason_notes.ilike(s)
+        ))
     if user_name:
         q = q.where(SecurityAuditLogEntry.user_name.ilike(f"%{user_name}%"))
     if module_name:
         q = q.where(SecurityAuditLogEntry.module_name.ilike(f"%{module_name}%"))
     if event_type:
         q = q.where(SecurityAuditLogEntry.event_type == event_type)
+    if result_status:
+        q = q.where(SecurityAuditLogEntry.result_status == result_status)
 
     count_q = select(func.count()).select_from(q.subquery())
     total_count = (await db.execute(count_q)).scalar() or 0
@@ -585,12 +668,58 @@ async def list_audit_logs(
     return {"items": results, "total": total_count, "limit": limit, "offset": offset}
 
 
+@router.get("/audit-logs/{log_id}", response_model=SecurityAuditLogResponse)
+async def get_audit_log_by_id(log_id: int, db: AsyncSession = Depends(get_db)):
+    log = await db.get(SecurityAuditLogEntry, log_id)
+    if not log:
+        raise HTTPException(status_code=404, detail="Audit log entry not found")
+    return log
+
+
+@router.post("/audit-logs", response_model=SecurityAuditLogResponse, status_code=status.HTTP_201_CREATED)
+async def create_audit_log(payload: SecurityAuditLogCreate, db: AsyncSession = Depends(get_db)):
+    c_res = await db.execute(select(func.count(SecurityAuditLogEntry.id)))
+    next_n = (c_res.scalar() or 0) + 1
+    ref = f"AUD-{datetime.utcnow().strftime('%Y%m%d')}-{next_n:04d}"
+
+    data = payload.model_dump()
+    data["audit_ref"] = ref
+    entry = SecurityAuditLogEntry(**data)
+    db.add(entry)
+    await db.commit()
+    await db.refresh(entry)
+    return entry
+
+
+@router.put("/audit-logs/{log_id}", response_model=SecurityAuditLogResponse)
+async def update_audit_log(log_id: int, payload: SecurityAuditLogUpdate, db: AsyncSession = Depends(get_db)):
+    log = await db.get(SecurityAuditLogEntry, log_id)
+    if not log:
+        raise HTTPException(status_code=404, detail="Audit log entry not found")
+    for k, v in payload.model_dump(exclude_unset=True).items():
+        setattr(log, k, v)
+    await db.commit()
+    await db.refresh(log)
+    return log
+
+
+@router.delete("/audit-logs/{log_id}")
+async def delete_audit_log(log_id: int, db: AsyncSession = Depends(get_db)):
+    log = await db.get(SecurityAuditLogEntry, log_id)
+    if not log:
+        raise HTTPException(status_code=404, detail="Audit log entry not found")
+    await db.delete(log)
+    await db.commit()
+    return {"status": "SUCCESS", "message": f"Audit log record {log.audit_ref} removed."}
+
+
 # =========================================================================
-# 11. Active Sessions & Remote Device Revocation
+# 11. Active Sessions & Remote Device Revocation (Full CRUD & Paging)
 # =========================================================================
 @router.get("/active-sessions")
 async def list_active_sessions(
     search: Optional[str] = None,
+    status_filter: Optional[str] = None,
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db)
@@ -599,7 +728,15 @@ async def list_active_sessions(
     q = select(SecurityActiveSession)
     if search:
         s = f"%{search}%"
-        q = q.where(or_(SecurityActiveSession.username.ilike(s), SecurityActiveSession.ip_address.ilike(s), SecurityActiveSession.device_name.ilike(s)))
+        q = q.where(or_(
+            SecurityActiveSession.username.ilike(s),
+            SecurityActiveSession.ip_address.ilike(s),
+            SecurityActiveSession.device_name.ilike(s),
+            SecurityActiveSession.browser.ilike(s),
+            SecurityActiveSession.session_id.ilike(s)
+        ))
+    if status_filter:
+        q = q.where(SecurityActiveSession.status == status_filter)
 
     count_q = select(func.count()).select_from(q.subquery())
     total_count = (await db.execute(count_q)).scalar() or 0
@@ -608,6 +745,39 @@ async def list_active_sessions(
     items = res.scalars().all()
     results = [SecurityActiveSessionResponse.model_validate(s).model_dump() for s in items]
     return {"items": results, "total": total_count, "limit": limit, "offset": offset}
+
+
+@router.get("/active-sessions/{session_id}", response_model=SecurityActiveSessionResponse)
+async def get_active_session_by_id(session_id: str, db: AsyncSession = Depends(get_db)):
+    q = select(SecurityActiveSession).where(SecurityActiveSession.session_id == session_id)
+    ses = (await db.execute(q)).scalar_one_or_none()
+    if not ses:
+        raise HTTPException(status_code=404, detail="Active session not found")
+    return ses
+
+
+@router.post("/active-sessions", response_model=SecurityActiveSessionResponse, status_code=status.HTTP_201_CREATED)
+async def create_active_session(payload: SecurityActiveSessionCreate, db: AsyncSession = Depends(get_db)):
+    data = payload.model_dump()
+    data["session_id"] = f"SES-{int(datetime.utcnow().timestamp())}"
+    ses = SecurityActiveSession(**data)
+    db.add(ses)
+    await db.commit()
+    await db.refresh(ses)
+    return ses
+
+
+@router.put("/active-sessions/{session_id}", response_model=SecurityActiveSessionResponse)
+async def update_active_session(session_id: str, payload: SecurityActiveSessionUpdate, db: AsyncSession = Depends(get_db)):
+    q = select(SecurityActiveSession).where(SecurityActiveSession.session_id == session_id)
+    ses = (await db.execute(q)).scalar_one_or_none()
+    if not ses:
+        raise HTTPException(status_code=404, detail="Active session not found")
+    for k, v in payload.model_dump(exclude_unset=True).items():
+        setattr(ses, k, v)
+    await db.commit()
+    await db.refresh(ses)
+    return ses
 
 
 @router.post("/active-sessions/{session_id}/revoke")
@@ -621,6 +791,17 @@ async def revoke_session(session_id: str, db: AsyncSession = Depends(get_db)):
     return {"status": "SUCCESS", "message": f"Session {session_id} remotely revoked."}
 
 
+@router.delete("/active-sessions/{session_id}")
+async def delete_active_session(session_id: str, db: AsyncSession = Depends(get_db)):
+    q = select(SecurityActiveSession).where(SecurityActiveSession.session_id == session_id)
+    ses = (await db.execute(q)).scalar_one_or_none()
+    if not ses:
+        raise HTTPException(status_code=404, detail="Active session not found")
+    await db.delete(ses)
+    await db.commit()
+    return {"status": "SUCCESS", "message": f"Session {session_id} record deleted."}
+
+
 # =========================================================================
 # 12. Security Monitoring Incidents
 # =========================================================================
@@ -628,6 +809,7 @@ async def revoke_session(session_id: str, db: AsyncSession = Depends(get_db)):
 async def list_security_incidents(
     search: Optional[str] = None,
     severity: Optional[str] = None,
+    status_filter: Optional[str] = None,
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db)
@@ -639,6 +821,8 @@ async def list_security_incidents(
         q = q.where(or_(SecurityIncidentLog.description.ilike(s), SecurityIncidentLog.affected_user.ilike(s), SecurityIncidentLog.incident_code.ilike(s)))
     if severity:
         q = q.where(SecurityIncidentLog.severity == severity)
+    if status_filter:
+        q = q.where(SecurityIncidentLog.status == status_filter)
 
     count_q = select(func.count()).select_from(q.subquery())
     total_count = (await db.execute(count_q)).scalar() or 0
@@ -649,20 +833,20 @@ async def list_security_incidents(
     return {"items": results, "total": total_count, "limit": limit, "offset": offset}
 
 
+@router.get("/incidents/{incident_id}", response_model=SecurityIncidentResponse)
+async def get_security_incident(incident_id: int, db: AsyncSession = Depends(get_db)):
+    incident = await db.get(SecurityIncidentLog, incident_id)
+    if not incident:
+        raise HTTPException(status_code=404, detail="Incident not found")
+    return incident
+
+
 @router.post("/incidents", response_model=SecurityIncidentResponse, status_code=status.HTTP_201_CREATED)
-async def create_incident(payload: Dict[str, Any], db: AsyncSession = Depends(get_db)):
+async def create_incident(payload: SecurityIncidentCreate, db: AsyncSession = Depends(get_db)):
     c_res = await db.execute(select(func.count(SecurityIncidentLog.id)))
     next_n = (c_res.scalar() or 0) + 1
     code = f"INC-SEC-{next_n:03d}"
-    incident = SecurityIncidentLog(
-        incident_code=code,
-        severity=payload.get("severity", "MEDIUM"),
-        incident_type=payload.get("incident_type", "SECURITY_ANOMALY"),
-        source_ip=payload.get("source_ip", "103.145.112.5"),
-        affected_user=payload.get("affected_user", "unknown"),
-        description=payload.get("description", "Security incident"),
-        status=payload.get("status", "OPEN")
-    )
+    incident = SecurityIncidentLog(incident_code=code, **payload.model_dump())
     db.add(incident)
     await db.commit()
     await db.refresh(incident)
@@ -670,13 +854,12 @@ async def create_incident(payload: Dict[str, Any], db: AsyncSession = Depends(ge
 
 
 @router.put("/incidents/{incident_id}", response_model=SecurityIncidentResponse)
-async def update_incident(incident_id: int, payload: Dict[str, Any], db: AsyncSession = Depends(get_db)):
+async def update_incident(incident_id: int, payload: SecurityIncidentUpdate, db: AsyncSession = Depends(get_db)):
     inc = await db.get(SecurityIncidentLog, incident_id)
     if not inc:
         raise HTTPException(status_code=404, detail="Incident not found")
-    for k, v in payload.items():
-        if hasattr(inc, k):
-            setattr(inc, k, v)
+    for key, value in payload.model_dump(exclude_unset=True).items():
+        setattr(inc, key, value)
     await db.commit()
     await db.refresh(inc)
     return inc
@@ -698,6 +881,8 @@ async def delete_incident(incident_id: int, db: AsyncSession = Depends(get_db)):
 @router.get("/access-reviews")
 async def list_access_reviews(
     search: Optional[str] = None,
+    department: Optional[str] = None,
+    status_filter: Optional[str] = None,
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db)
@@ -707,6 +892,10 @@ async def list_access_reviews(
     if search:
         s = f"%{search}%"
         q = q.where(or_(SecurityAccessReviewCycle.cycle_name.ilike(s), SecurityAccessReviewCycle.department.ilike(s), SecurityAccessReviewCycle.reviewer_name.ilike(s)))
+    if department:
+        q = q.where(SecurityAccessReviewCycle.department == department)
+    if status_filter:
+        q = q.where(SecurityAccessReviewCycle.status == status_filter)
 
     count_q = select(func.count()).select_from(q.subquery())
     total_count = (await db.execute(count_q)).scalar() or 0
@@ -715,6 +904,14 @@ async def list_access_reviews(
     items = res.scalars().all()
     results = [SecurityAccessReviewResponse.model_validate(a).model_dump() for a in items]
     return {"items": results, "total": total_count, "limit": limit, "offset": offset}
+
+
+@router.get("/access-reviews/{review_id}", response_model=SecurityAccessReviewResponse)
+async def get_access_review(review_id: int, db: AsyncSession = Depends(get_db)):
+    rev = await db.get(SecurityAccessReviewCycle, review_id)
+    if not rev:
+        raise HTTPException(status_code=404, detail="Access review not found")
+    return rev
 
 
 @router.post("/access-reviews", response_model=SecurityAccessReviewResponse, status_code=status.HTTP_201_CREATED)
@@ -751,30 +948,76 @@ async def update_access_review(review_id: int, payload: Dict[str, Any], db: Asyn
     return rev
 
 
+@router.delete("/access-reviews/{review_id}")
+async def delete_access_review(review_id: int, db: AsyncSession = Depends(get_db)):
+    rev = await db.get(SecurityAccessReviewCycle, review_id)
+    if not rev:
+        raise HTTPException(status_code=404, detail="Access review not found")
+    await db.delete(rev)
+    await db.commit()
+    return {"status": "SUCCESS", "message": "Access review deleted."}
+
+
 # =========================================================================
 # 14. Security Reports Suite
 # =========================================================================
 @router.get("/reports")
 async def get_security_reports(
     report_type: str = Query("user_access_matrix"),
+    search: Optional[str] = None,
+    department: Optional[str] = None,
+    role: Optional[str] = None,
+    status_filter: Optional[str] = None,
+    severity: Optional[str] = None,
+    limit: int = Query(25, ge=1, le=100),
+    offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db)
 ):
     await seed_security_module(db)
 
     # 1. User Access Matrix
     if report_type == "user_access_matrix":
-        users = (await db.execute(select(SecurityUserAccount))).scalars().all()
+        q = select(SecurityUserAccount)
+        if search:
+            s = f"%{search}%"
+            q = q.where(or_(
+                SecurityUserAccount.username.ilike(s),
+                SecurityUserAccount.full_name_en.ilike(s),
+                SecurityUserAccount.email.ilike(s),
+                SecurityUserAccount.employee_id.ilike(s),
+                SecurityUserAccount.designation.ilike(s)
+            ))
+        if department:
+            q = q.where(SecurityUserAccount.department_name == department)
+        if role:
+            q = q.where(SecurityUserAccount.primary_role == role)
+        if status_filter:
+            q = q.where(SecurityUserAccount.account_status == status_filter)
+
+        count_q = select(func.count()).select_from(q.subquery())
+        total_count = (await db.execute(count_q)).scalar() or 0
+
+        q = q.order_by(desc(SecurityUserAccount.id)).limit(limit).offset(offset)
+        users = (await db.execute(q)).scalars().all()
         return {
             "report_name": "Enterprise User Access & Role Assignment Matrix",
+            "total": total_count,
+            "limit": limit,
+            "offset": offset,
             "items": [
                 {
+                    "id": u.id,
+                    "user_code": u.user_code,
                     "username": u.username,
+                    "email": u.email,
                     "full_name": u.full_name_en,
+                    "phone_number": u.phone_number,
                     "department": u.department_name,
                     "designation": u.designation,
                     "primary_role": u.primary_role,
                     "status": u.account_status,
                     "mfa": "Enabled" if u.is_mfa_enabled else "Disabled",
+                    "is_mfa_enabled": u.is_mfa_enabled,
                     "last_login": u.last_login_at.strftime("%Y-%m-%d %H:%M") if u.last_login_at else "Never"
                 }
                 for u in users
@@ -784,18 +1027,39 @@ async def get_security_reports(
     # 2. Privileged Account Audit
     elif report_type == "privileged_accounts":
         q = select(SecurityUserAccount).where(SecurityUserAccount.primary_role.in_(["SUPER_ADMIN", "SYS_ADMIN", "SEC_ADMIN", "MD", "FIN_MGR"]))
+        if search:
+            s = f"%{search}%"
+            q = q.where(or_(
+                SecurityUserAccount.username.ilike(s),
+                SecurityUserAccount.full_name_en.ilike(s),
+                SecurityUserAccount.email.ilike(s)
+            ))
+        if department:
+            q = q.where(SecurityUserAccount.department_name == department)
+        if role:
+            q = q.where(SecurityUserAccount.primary_role == role)
+        if status_filter:
+            q = q.where(SecurityUserAccount.account_status == status_filter)
+        count_q = select(func.count()).select_from(q.subquery())
+        total_count = (await db.execute(count_q)).scalar() or 0
+
+        q = q.order_by(desc(SecurityUserAccount.id)).limit(limit).offset(offset)
         users = (await db.execute(q)).scalars().all()
         return {
             "report_name": "Privileged & High-Risk Administrative Account Statement",
+            "total": total_count,
+            "limit": limit,
+            "offset": offset,
             "items": [
                 {
+                    "id": u.id,
                     "user_code": u.user_code,
                     "username": u.username,
                     "full_name": u.full_name_en,
                     "role": u.primary_role,
                     "department": u.department_name,
                     "mfa_status": "COMPLIANT" if u.is_mfa_enabled else "NON_COMPLIANT",
-                    "last_login_ip": u.last_login_ip or "103.145.112.5"
+                    "last_login_ip": u.last_login_ip or "N/A"
                 }
                 for u in users
             ]
@@ -803,11 +1067,30 @@ async def get_security_reports(
 
     # 3. Failed Logins & Threat Analytics
     elif report_type == "threat_analytics":
-        incidents = (await db.execute(select(SecurityIncidentLog))).scalars().all()
+        q = select(SecurityIncidentLog)
+        if search:
+            s = f"%{search}%"
+            q = q.where(or_(
+                SecurityIncidentLog.description.ilike(s),
+                SecurityIncidentLog.incident_code.ilike(s),
+                SecurityIncidentLog.source_ip.ilike(s)
+            ))
+        if severity:
+            q = q.where(SecurityIncidentLog.severity == severity)
+        if status_filter:
+            q = q.where(SecurityIncidentLog.status == status_filter)
+        count_q = select(func.count()).select_from(q.subquery())
+        total_count = (await db.execute(count_q)).scalar() or 0
+
+        q = q.order_by(desc(SecurityIncidentLog.id)).limit(limit).offset(offset)
+        incidents = (await db.execute(q)).scalars().all()
         return {
             "report_name": "Failed Logins & Threat Monitoring Analytics",
+            "total": total_count,
+            "limit": limit,
+            "offset": offset,
             "items": [SecurityIncidentResponse.model_validate(i).model_dump() for i in incidents]
         }
 
     # Default fallback
-    return await list_users(None, None, None, None, 50, 0, db)
+    return await list_users(None, None, None, None, limit, offset, db)

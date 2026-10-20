@@ -148,8 +148,8 @@ export interface SecurityIncidentItem {
   incident_code: string;
   severity: string;
   incident_type: string;
-  source_ip?: string;
-  affected_user?: string;
+  source_ip?: string | null;
+  affected_user?: string | null;
   description: string;
   status: string;
   created_at?: string;
@@ -221,6 +221,10 @@ export class SecurityService {
     return this.http.get<PaginatedResult<SecurityUser>>(`${this.apiUrl}/users`, { params });
   }
 
+  getUserById(id: number): Observable<SecurityUser> {
+    return this.http.get<SecurityUser>(`${this.apiUrl}/users/${id}`);
+  }
+
   createUser(data: Partial<SecurityUser>): Observable<SecurityUser> {
     return this.http.post<SecurityUser>(`${this.apiUrl}/users`, data);
   }
@@ -267,6 +271,16 @@ export class SecurityService {
   // 4. Permissions
   getRolePermissions(roleCode: string = 'PROJECT_MGR'): Observable<RolePermissionItem[]> {
     return this.http.get<RolePermissionItem[]>(`${this.apiUrl}/permissions?role_code=${roleCode}`);
+  }
+
+  saveRolePermissions(
+    roleCode: string,
+    permissions: Omit<RolePermissionItem, 'id' | 'role_code'>[]
+  ): Observable<RolePermissionItem[]> {
+    return this.http.put<RolePermissionItem[]>(
+      `${this.apiUrl}/permissions/${encodeURIComponent(roleCode)}`,
+      permissions
+    );
   }
 
   // 5. Project Scopes
@@ -362,51 +376,95 @@ export class SecurityService {
 
   // 10. Audit Logs
   getAuditLogs(filter?: {
+    search?: string;
     user_name?: string;
     module_name?: string;
     event_type?: string;
+    result_status?: string;
     limit?: number;
     offset?: number;
   }): Observable<PaginatedResult<AuditLogItem>> {
     let params = new HttpParams();
+    if (filter?.search) params = params.set('search', filter.search);
     if (filter?.user_name) params = params.set('user_name', filter.user_name);
     if (filter?.module_name) params = params.set('module_name', filter.module_name);
     if (filter?.event_type) params = params.set('event_type', filter.event_type);
+    if (filter?.result_status) params = params.set('result_status', filter.result_status);
     if (filter?.limit) params = params.set('limit', filter.limit);
     if (filter?.offset) params = params.set('offset', filter.offset);
     return this.http.get<PaginatedResult<AuditLogItem>>(`${this.apiUrl}/audit-logs`, { params });
   }
 
+  getAuditLogById(id: number): Observable<AuditLogItem> {
+    return this.http.get<AuditLogItem>(`${this.apiUrl}/audit-logs/${id}`);
+  }
+
+  createAuditLog(data: Partial<AuditLogItem>): Observable<AuditLogItem> {
+    return this.http.post<AuditLogItem>(`${this.apiUrl}/audit-logs`, data);
+  }
+
+  updateAuditLog(id: number, data: Partial<AuditLogItem>): Observable<AuditLogItem> {
+    return this.http.put<AuditLogItem>(`${this.apiUrl}/audit-logs/${id}`, data);
+  }
+
+  deleteAuditLog(id: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/audit-logs/${id}`);
+  }
+
   // 11. Active Sessions
   getActiveSessions(filter?: {
     search?: string;
+    status_filter?: string;
     limit?: number;
     offset?: number;
   }): Observable<PaginatedResult<ActiveSessionItem>> {
     let params = new HttpParams();
     if (filter?.search) params = params.set('search', filter.search);
+    if (filter?.status_filter) params = params.set('status_filter', filter.status_filter);
     if (filter?.limit) params = params.set('limit', filter.limit);
     if (filter?.offset) params = params.set('offset', filter.offset);
     return this.http.get<PaginatedResult<ActiveSessionItem>>(`${this.apiUrl}/active-sessions`, { params });
+  }
+
+  getActiveSessionById(sessionId: string): Observable<ActiveSessionItem> {
+    return this.http.get<ActiveSessionItem>(`${this.apiUrl}/active-sessions/${sessionId}`);
+  }
+
+  createActiveSession(data: Partial<ActiveSessionItem>): Observable<ActiveSessionItem> {
+    return this.http.post<ActiveSessionItem>(`${this.apiUrl}/active-sessions`, data);
+  }
+
+  updateActiveSession(sessionId: string, data: Partial<ActiveSessionItem>): Observable<ActiveSessionItem> {
+    return this.http.put<ActiveSessionItem>(`${this.apiUrl}/active-sessions/${sessionId}`, data);
   }
 
   revokeSession(sessionId: string): Observable<any> {
     return this.http.post(`${this.apiUrl}/active-sessions/${sessionId}/revoke`, {});
   }
 
+  deleteActiveSession(sessionId: string): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/active-sessions/${sessionId}`);
+  }
+
   // 12. Incidents & Monitoring
   getIncidents(filter?: {
     search?: string;
     severity?: string;
+    status_filter?: string;
     limit?: number;
     offset?: number;
   }): Observable<PaginatedResult<SecurityIncidentItem>> {
     let params = new HttpParams();
     if (filter?.search) params = params.set('search', filter.search);
     if (filter?.severity) params = params.set('severity', filter.severity);
+    if (filter?.status_filter) params = params.set('status_filter', filter.status_filter);
     if (filter?.limit) params = params.set('limit', filter.limit);
     if (filter?.offset) params = params.set('offset', filter.offset);
     return this.http.get<PaginatedResult<SecurityIncidentItem>>(`${this.apiUrl}/incidents`, { params });
+  }
+
+  getIncidentById(id: number): Observable<SecurityIncidentItem> {
+    return this.http.get<SecurityIncidentItem>(`${this.apiUrl}/incidents/${id}`);
   }
 
   createIncident(data: Partial<SecurityIncidentItem>): Observable<SecurityIncidentItem> {
@@ -424,14 +482,22 @@ export class SecurityService {
   // 13. Access Reviews
   getAccessReviews(filter?: {
     search?: string;
+    department?: string;
+    status_filter?: string;
     limit?: number;
     offset?: number;
   }): Observable<PaginatedResult<AccessReviewItem>> {
     let params = new HttpParams();
     if (filter?.search) params = params.set('search', filter.search);
+    if (filter?.department) params = params.set('department', filter.department);
+    if (filter?.status_filter) params = params.set('status_filter', filter.status_filter);
     if (filter?.limit) params = params.set('limit', filter.limit);
     if (filter?.offset) params = params.set('offset', filter.offset);
     return this.http.get<PaginatedResult<AccessReviewItem>>(`${this.apiUrl}/access-reviews`, { params });
+  }
+
+  getAccessReviewById(id: number): Observable<AccessReviewItem> {
+    return this.http.get<AccessReviewItem>(`${this.apiUrl}/access-reviews/${id}`);
   }
 
   createAccessReview(data: Partial<AccessReviewItem>): Observable<AccessReviewItem> {
@@ -442,8 +508,28 @@ export class SecurityService {
     return this.http.put<AccessReviewItem>(`${this.apiUrl}/access-reviews/${id}`, data);
   }
 
+  deleteAccessReview(id: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/access-reviews/${id}`);
+  }
+
   // 14. Reports
-  getReports(reportType: string): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/reports?report_type=${reportType}`);
+  getReports(reportType: string, filter?: {
+    search?: string;
+    department?: string;
+    role?: string;
+    status_filter?: string;
+    severity?: string;
+    limit?: number;
+    offset?: number;
+  }): Observable<any> {
+    let params = new HttpParams().set('report_type', reportType);
+    if (filter?.search) params = params.set('search', filter.search);
+    if (filter?.department) params = params.set('department', filter.department);
+    if (filter?.role) params = params.set('role', filter.role);
+    if (filter?.status_filter) params = params.set('status_filter', filter.status_filter);
+    if (filter?.severity) params = params.set('severity', filter.severity);
+    if (filter?.limit !== undefined) params = params.set('limit', filter.limit.toString());
+    if (filter?.offset !== undefined) params = params.set('offset', filter.offset.toString());
+    return this.http.get<any>(`${this.apiUrl}/reports`, { params });
   }
 }

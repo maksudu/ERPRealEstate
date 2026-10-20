@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { LandService } from '../../../core/services/land.service';
 import { 
   Landowner, 
@@ -24,7 +25,6 @@ import {
   imports: [
     CommonModule,
     FormsModule,
-    ReactiveFormsModule,
     CardContainerComponent,
     CustomInputComponent,
     CustomTextareaComponent,
@@ -37,7 +37,7 @@ import {
 })
 export class LandownersComponent implements OnInit {
   private landService = inject(LandService);
-  private fb = inject(FormBuilder);
+  private router = inject(Router);
 
   Math = Math;
 
@@ -55,11 +55,6 @@ export class LandownersComponent implements OnInit {
   pageSize = signal<number>(10);
   pageSizeOptions = [10, 25, 50, 100];
 
-  // Modals state
-  isCreateModalOpen = signal<boolean>(false);
-  isEditMode = signal<boolean>(false);
-  editingOwnerId = signal<number | null>(null);
-  activeTab = signal<'personal' | 'contact' | 'ownership' | 'nominee'>('personal');
 
   // Negotiation Modal
   isNegotiationModalOpen = signal<boolean>(false);
@@ -78,38 +73,6 @@ export class LandownersComponent implements OnInit {
   isCheckingDuplicate = signal<boolean>(false);
   duplicateResult = signal<LandownerDuplicateCheckResponse | null>(null);
 
-  // Form
-  ownerForm: FormGroup = this.fb.group({
-    landowner_code: [''],
-    owner_type: ['INDIVIDUAL', Validators.required],
-    full_name_en: ['', Validators.required],
-    full_name_bn: [''],
-    father_mother_spouse_name: [''],
-    present_address: [''],
-    permanent_address: [''],
-    nid_number: [''],
-    passport_number: [''],
-    company_reg_number: [''],
-    tin_number: [''],
-    phone_number: [''],
-    email: ['', [Validators.email]],
-    emergency_contact_name: [''],
-    emergency_contact_phone: [''],
-    ownership_share_ratio: [1.0000, [Validators.required, Validators.min(0.0001), Validators.max(1.0)]],
-    ownership_nature: ['INHERITED', Validators.required],
-    bank_name: [''],
-    bank_branch: [''],
-    bank_account_no: [''],
-    bank_routing_no: [''],
-    bank_account_holder: [''],
-    status: ['ACTIVE', Validators.required],
-    nominee_name: [''],
-    nominee_relation: [''],
-    nominee_nid: [''],
-    poa_holder_name: [''],
-    poa_deed_no: [''],
-    poa_date: ['']
-  });
 
   // Filtered computed
   filteredLandowners = computed(() => {
@@ -216,160 +179,12 @@ export class LandownersComponent implements OnInit {
     }
   }
 
-  openCreateModal(): void {
-    this.isEditMode.set(false);
-    this.editingOwnerId.set(null);
-    this.activeTab.set('personal');
-    this.ownerForm.reset({
-      landowner_code: '',
-      owner_type: 'INDIVIDUAL',
-      full_name_en: '',
-      full_name_bn: '',
-      father_mother_spouse_name: '',
-      present_address: '',
-      permanent_address: '',
-      nid_number: '',
-      passport_number: '',
-      company_reg_number: '',
-      tin_number: '',
-      phone_number: '',
-      email: '',
-      emergency_contact_name: '',
-      emergency_contact_phone: '',
-      ownership_share_ratio: 1.0000,
-      ownership_nature: 'INHERITED',
-      bank_name: '',
-      bank_branch: '',
-      bank_account_no: '',
-      bank_routing_no: '',
-      bank_account_holder: '',
-      status: 'ACTIVE',
-      nominee_name: '',
-      nominee_relation: '',
-      nominee_nid: '',
-      poa_holder_name: '',
-      poa_deed_no: '',
-      poa_date: ''
-    });
-    this.isCreateModalOpen.set(true);
+  navigateToCreate(): void {
+    this.router.navigate(['/land/landowners/create']);
   }
 
-  openEditModal(owner: Landowner): void {
-    this.isEditMode.set(true);
-    this.editingOwnerId.set(owner.id);
-    this.activeTab.set('personal');
-
-    const nominee = owner.nominee_details && owner.nominee_details[0] ? owner.nominee_details[0] : {};
-    const poa = owner.poa_details || {};
-
-    this.ownerForm.patchValue({
-      landowner_code: owner.landowner_code,
-      owner_type: owner.owner_type,
-      full_name_en: owner.full_name_en,
-      full_name_bn: owner.full_name_bn || '',
-      father_mother_spouse_name: owner.father_mother_spouse_name || '',
-      present_address: owner.present_address || '',
-      permanent_address: owner.permanent_address || '',
-      nid_number: owner.nid_number || '',
-      passport_number: owner.passport_number || '',
-      company_reg_number: owner.company_reg_number || '',
-      tin_number: owner.tin_number || '',
-      phone_number: owner.phone_number || '',
-      email: owner.email || '',
-      emergency_contact_name: owner.emergency_contact_name || '',
-      emergency_contact_phone: owner.emergency_contact_phone || '',
-      ownership_share_ratio: owner.ownership_share_ratio,
-      ownership_nature: owner.ownership_nature,
-      bank_name: owner.bank_name || '',
-      bank_branch: owner.bank_branch || '',
-      bank_account_no: owner.bank_account_no || '',
-      bank_routing_no: owner.bank_routing_no || '',
-      bank_account_holder: owner.bank_account_holder || '',
-      status: owner.status,
-      nominee_name: nominee['name'] || '',
-      nominee_relation: nominee['relation'] || '',
-      nominee_nid: nominee['nid'] || '',
-      poa_holder_name: poa['holder_name'] || '',
-      poa_deed_no: poa['deed_no'] || '',
-      poa_date: poa['date'] || ''
-    });
-
-    this.isCreateModalOpen.set(true);
-  }
-
-  saveLandowner(): void {
-    if (this.ownerForm.invalid) {
-      this.ownerForm.markAllAsTouched();
-      return;
-    }
-
-    this.isSaving.set(true);
-    const formVal = this.ownerForm.value;
-
-    const nominee_details = formVal.nominee_name ? [{
-      name: formVal.nominee_name,
-      relation: formVal.nominee_relation,
-      nid: formVal.nominee_nid
-    }] : [];
-
-    const poa_details = formVal.poa_holder_name ? {
-      holder_name: formVal.poa_holder_name,
-      deed_no: formVal.poa_deed_no,
-      date: formVal.poa_date
-    } : null;
-
-    const payload: Partial<Landowner> = {
-      owner_type: formVal.owner_type,
-      full_name_en: formVal.full_name_en.trim(),
-      full_name_bn: formVal.full_name_bn?.trim() || null,
-      father_mother_spouse_name: formVal.father_mother_spouse_name?.trim() || null,
-      present_address: formVal.present_address?.trim() || null,
-      permanent_address: formVal.permanent_address?.trim() || null,
-      nid_number: formVal.nid_number?.trim() || null,
-      passport_number: formVal.passport_number?.trim() || null,
-      company_reg_number: formVal.company_reg_number?.trim() || null,
-      tin_number: formVal.tin_number?.trim() || null,
-      phone_number: formVal.phone_number?.trim() || null,
-      email: formVal.email?.trim() || null,
-      emergency_contact_name: formVal.emergency_contact_name?.trim() || null,
-      emergency_contact_phone: formVal.emergency_contact_phone?.trim() || null,
-      ownership_share_ratio: Number(formVal.ownership_share_ratio),
-      ownership_nature: formVal.ownership_nature,
-      bank_name: formVal.bank_name?.trim() || null,
-      bank_branch: formVal.bank_branch?.trim() || null,
-      bank_account_no: formVal.bank_account_no?.trim() || null,
-      bank_routing_no: formVal.bank_routing_no?.trim() || null,
-      bank_account_holder: formVal.bank_account_holder?.trim() || null,
-      status: formVal.status,
-      nominee_details,
-      poa_details
-    };
-
-    if (this.isEditMode() && this.editingOwnerId()) {
-      this.landService.updateLandowner(this.editingOwnerId()!, payload).subscribe({
-        next: (updated) => {
-          this.landowners.update(list => list.map(o => o.id === updated.id ? updated : o));
-          this.isSaving.set(false);
-          this.isCreateModalOpen.set(false);
-        },
-        error: (err) => {
-          alert(err.error?.detail || 'Failed to update landowner profile');
-          this.isSaving.set(false);
-        }
-      });
-    } else {
-      this.landService.createLandowner(payload).subscribe({
-        next: (created) => {
-          this.landowners.update(list => [created, ...list]);
-          this.isSaving.set(false);
-          this.isCreateModalOpen.set(false);
-        },
-        error: (err) => {
-          alert(err.error?.detail || 'Failed to create landowner');
-          this.isSaving.set(false);
-        }
-      });
-    }
+  navigateToEdit(owner: Landowner): void {
+    this.router.navigate(['/land/landowners', owner.id, 'edit']);
   }
 
   archiveOwner(owner: Landowner): void {

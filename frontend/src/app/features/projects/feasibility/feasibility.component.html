@@ -2,39 +2,48 @@
   <!-- Shared Submodule Switcher Strip -->
   <app-project-nav activeCode="2.2"></app-project-nav>
 
+  @if (!isCreateModalOpen()) {
+
   <!-- Notification Alerts -->
   @if (successMessage()) {
-    <div class="p-3.5 bg-emerald-50 dark:bg-emerald-950/70 border border-emerald-200 dark:border-emerald-800 rounded-xl text-emerald-800 dark:text-emerald-300 text-xs font-semibold flex items-center justify-between shadow-2xs">
-      <div class="flex items-center gap-2">
-        <svg class="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-        </svg>
-        <span>{{ successMessage() }}</span>
-      </div>
-      <button (click)="successMessage.set(null)" class="text-emerald-600 hover:text-emerald-800 text-sm font-bold">&times;</button>
+  <div
+    class="p-3.5 bg-emerald-50 dark:bg-emerald-950/70 border border-emerald-200 dark:border-emerald-800 rounded-xl text-emerald-800 dark:text-emerald-300 text-xs font-semibold flex items-center justify-between shadow-2xs">
+    <div class="flex items-center gap-2">
+      <svg class="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+      </svg>
+      <span>{{ successMessage() }}</span>
     </div>
+    <button (click)="successMessage.set(null)"
+      class="text-emerald-600 hover:text-emerald-800 text-sm font-bold">&times;</button>
+  </div>
   }
 
   @if (errorMessage()) {
-    <div class="p-3.5 bg-rose-50 dark:bg-rose-950/70 border border-rose-200 dark:border-rose-800 rounded-xl text-rose-800 dark:text-rose-300 text-xs font-semibold flex items-center justify-between shadow-2xs">
-      <div class="flex items-center gap-2">
-        <svg class="w-4 h-4 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-        </svg>
-        <span>{{ errorMessage() }}</span>
-      </div>
-      <button (click)="errorMessage.set(null)" class="text-rose-600 hover:text-rose-800 text-sm font-bold">&times;</button>
+  <div
+    class="p-3.5 bg-rose-50 dark:bg-rose-950/70 border border-rose-200 dark:border-rose-800 rounded-xl text-rose-800 dark:text-rose-300 text-xs font-semibold flex items-center justify-between shadow-2xs">
+    <div class="flex items-center gap-2">
+      <svg class="w-4 h-4 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <span>{{ errorMessage() }}</span>
     </div>
+    <button (click)="errorMessage.set(null)"
+      class="text-rose-600 hover:text-rose-800 text-sm font-bold">&times;</button>
+  </div>
   }
 
   <!-- ========================================================================= -->
   <!-- USER SPECIFICATION: ILLUSTRATIVE FEASIBILITY CALCULATION HERO CARDS (BDT) -->
   <!-- ========================================================================= -->
-  <div class="bg-gradient-to-r from-slate-900 via-slate-850 to-slate-900 text-white rounded-2xl p-5 border border-slate-800 shadow-xl relative overflow-hidden">
+  <div
+    class="bg-gradient-to-r from-slate-900 via-slate-850 to-slate-900 text-white rounded-2xl p-5 border border-slate-800 shadow-xl relative overflow-hidden">
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
       <div>
         <div class="flex items-center gap-2">
-          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+          <span
+            class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
             2.2 Viability Benchmark Engine
           </span>
           <span class="text-xs text-slate-400">All amounts in BDT (৳)</span>
@@ -43,17 +52,16 @@
           Project Commercial, Technical & Financial Feasibility Analysis
         </h2>
         <p class="text-xs text-slate-400 mt-0.5">
-          Distinguishes Gross Project Profit, Operating Profit, and Profit after Financing & Tax. Segregated from actual accounting results.
+          Distinguishes Gross Project Profit, Operating Profit, and Profit after Financing & Tax. Segregated from actual
+          accounting results.
         </p>
       </div>
 
       <div class="flex items-center gap-2">
-        <button
-          (click)="openCreateModal()"
-          class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-emerald-500 text-slate-950 hover:bg-emerald-400 shadow-md transition-all cursor-pointer"
-        >
+        <button (click)="openCreateModal()"
+          class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-emerald-500 text-slate-950 hover:bg-emerald-400 shadow-md transition-all cursor-pointer">
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
           </svg>
           <span>Run New Feasibility Model</span>
         </button>
@@ -64,19 +72,22 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
       <div class="bg-slate-800/80 backdrop-blur-md rounded-xl p-3.5 border border-slate-700/60 shadow-inner">
         <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Estimated Revenue</p>
-        <p class="text-2xl font-bold font-display text-white mt-1">৳50 <span class="text-sm font-normal text-slate-300">crore</span></p>
+        <p class="text-2xl font-bold font-display text-white mt-1">৳50 <span
+            class="text-sm font-normal text-slate-300">crore</span></p>
         <p class="text-[10px] text-slate-400 mt-0.5 font-mono">৳50,00,00,000 BDT</p>
       </div>
 
       <div class="bg-slate-800/80 backdrop-blur-md rounded-xl p-3.5 border border-slate-700/60 shadow-inner">
         <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Estimated Total Cost</p>
-        <p class="text-2xl font-bold font-display text-amber-400 mt-1">৳38 <span class="text-sm font-normal text-slate-300">crore</span></p>
+        <p class="text-2xl font-bold font-display text-amber-400 mt-1">৳38 <span
+            class="text-sm font-normal text-slate-300">crore</span></p>
         <p class="text-[10px] text-slate-400 mt-0.5 font-mono">৳38,00,00,000 BDT</p>
       </div>
 
       <div class="bg-slate-800/80 backdrop-blur-md rounded-xl p-3.5 border border-slate-700/60 shadow-inner">
         <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Estimated Gross Profit</p>
-        <p class="text-2xl font-bold font-display text-emerald-400 mt-1">৳12 <span class="text-sm font-normal text-slate-300">crore</span></p>
+        <p class="text-2xl font-bold font-display text-emerald-400 mt-1">৳12 <span
+            class="text-sm font-normal text-slate-300">crore</span></p>
         <p class="text-[10px] text-slate-400 mt-0.5 font-mono">৳12,00,00,000 BDT</p>
       </div>
 
@@ -92,45 +103,33 @@
   </div>
 
   <!-- Feasibility Studies Register Container -->
-  <app-card-container
-    title="2.2 Project Feasibility & Viability Studies Register"
-    subtitle="Evaluated commercial and engineering studies prior to statutory board approval"
-    badge="Viability Engine"
-  >
+  <app-card-container title="Project Feasibility & Viability Studies Register">
     <!-- Filter Bar -->
-    <div class="mb-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-3 bg-slate-50/70 dark:bg-slate-800/50 rounded-xl border border-slate-200/80 dark:border-slate-800">
+    <div
+      class="mb-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-3 bg-slate-50/70 dark:bg-slate-800/50 rounded-xl border border-slate-200/80 dark:border-slate-800">
       <div class="relative flex-1">
         <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
         </span>
-        <input
-          type="text"
-          [ngModel]="searchQuery()"
-          (ngModelChange)="searchQuery.set($event)"
+        <input type="text" [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)"
           placeholder="Search by Feasibility Code, Title, or Project..."
-          class="w-full pl-9 pr-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-        />
+          class="w-full pl-9 pr-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20" />
       </div>
 
       <div class="flex items-center flex-wrap gap-2">
-        <select
-          [ngModel]="selectedProjectFilter()"
-          (ngModelChange)="selectedProjectFilter.set($event)"
-          class="text-xs px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-        >
+        <select [ngModel]="selectedProjectFilter()" (ngModelChange)="selectedProjectFilter.set($event)"
+          class="text-xs px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
           <option value="">All Projects</option>
           @for (p of projects(); track p.id) {
-            <option [value]="p.id">{{ p.project_name }} ({{ p.project_code }})</option>
+          <option [value]="p.id">{{ p.project_name }} ({{ p.project_code }})</option>
           }
         </select>
 
-        <select
-          [ngModel]="selectedStatusFilter()"
-          (ngModelChange)="selectedStatusFilter.set($event)"
-          class="text-xs px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-        >
+        <select [ngModel]="selectedStatusFilter()" (ngModelChange)="selectedStatusFilter.set($event)"
+          class="text-xs px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
           <option value="">All Approval Statuses</option>
           <option value="DRAFT">Draft</option>
           <option value="SUBMITTED">Submitted for Review</option>
@@ -140,12 +139,10 @@
         </select>
 
         @if (searchQuery() || selectedProjectFilter() || selectedStatusFilter()) {
-          <button
-            (click)="searchQuery.set(''); selectedProjectFilter.set(''); selectedStatusFilter.set('')"
-            class="px-2.5 py-2 text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded-lg transition-colors"
-          >
-            Clear
-          </button>
+        <button (click)="searchQuery.set(''); selectedProjectFilter.set(''); selectedStatusFilter.set('')"
+          class="px-2.5 py-2 text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded-lg transition-colors">
+          Clear
+        </button>
         }
       </div>
     </div>
@@ -153,7 +150,8 @@
     <!-- Feasibility Table -->
     <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
       <table class="w-full text-left text-xs">
-        <thead class="bg-slate-50 dark:bg-slate-800/70 border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-semibold uppercase tracking-wider">
+        <thead
+          class="bg-slate-50 dark:bg-slate-800/70 border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-semibold uppercase tracking-wider">
           <tr>
             <th class="px-4 py-3">Study Code & Title</th>
             <th class="px-4 py-3">Project Link</th>
@@ -166,830 +164,787 @@
         </thead>
         <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
           @if (isLoading()) {
-            <tr>
-              <td colspan="7" class="px-4 py-8 text-center text-slate-400">
-                <div class="flex items-center justify-center gap-2">
-                  <div class="w-4 h-4 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
-                  <span>Calculating feasibility models...</span>
-                </div>
-              </td>
-            </tr>
+          <tr>
+            <td colspan="7" class="px-4 py-8 text-center text-slate-400">
+              <div class="flex items-center justify-center gap-2">
+                <div class="w-4 h-4 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
+                <span>Calculating feasibility models...</span>
+              </div>
+            </td>
+          </tr>
           } @else if (paginatedStudies().length === 0) {
-            <tr>
-              <td colspan="7" class="px-4 py-10 text-center text-slate-400">
-                <p class="font-medium">No feasibility models found.</p>
-                <p class="text-[11px] text-slate-500 mt-1">Click "Run New Feasibility Model" above to evaluate project financial viability.</p>
-              </td>
-            </tr>
+          <tr>
+            <td colspan="7" class="px-4 py-10 text-center text-slate-400">
+              <p class="font-medium">No feasibility models found.</p>
+              <p class="text-[11px] text-slate-500 mt-1">Click "Run New Feasibility Model" above to evaluate project
+                financial viability.</p>
+            </td>
+          </tr>
           } @else {
-            @for (s of paginatedStudies(); track s.id) {
-              <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
-                <!-- Code & Title -->
-                <td class="px-4 py-3">
-                  <div class="font-bold text-slate-900 dark:text-slate-100">{{ s.title }}</div>
-                  <div class="flex items-center gap-2 mt-0.5">
-                    <span class="font-mono text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">{{ s.feasibility_code }}</span>
-                    <span class="px-1.5 py-0.2 rounded text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">{{ s.version_label }}</span>
-                  </div>
-                </td>
+          @for (s of paginatedStudies(); track s.id) {
+          <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+            <!-- Code & Title -->
+            <td class="px-4 py-3">
+              <div class="font-bold text-slate-900 dark:text-slate-100">{{ s.title }}</div>
+              <div class="flex items-center gap-2 mt-0.5">
+                <span class="font-mono text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">{{
+                  s.feasibility_code }}</span>
+                <span
+                  class="px-1.5 py-0.2 rounded text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">{{
+                  s.version_label }}</span>
+              </div>
+            </td>
 
-                <!-- Project Link -->
-                <td class="px-4 py-3">
-                  <div class="font-semibold text-slate-800 dark:text-slate-200">{{ s.project_name || 'Associated Project' }}</div>
-                  <div class="text-[11px] font-mono text-slate-400">{{ s.project_code }}</div>
-                </td>
+            <!-- Project Link -->
+            <td class="px-4 py-3">
+              <div class="font-semibold text-slate-800 dark:text-slate-200">{{ s.project_name || 'Associated Project' }}
+              </div>
+              <div class="text-[11px] font-mono text-slate-400">{{ s.project_code }}</div>
+            </td>
 
-                <!-- Revenue -->
-                <td class="px-4 py-3">
-                  <div class="font-bold text-slate-900 dark:text-slate-100">
-                    ৳{{ (s.estimated_gross_revenue / 10000000) | number:'1.2-2' }} Cr
-                  </div>
-                  <div class="text-[10px] text-slate-400 font-mono">
-                    ৳{{ s.estimated_gross_revenue | number:'1.0-0' }}
-                  </div>
-                </td>
+            <!-- Revenue -->
+            <td class="px-4 py-3">
+              <div class="font-bold text-slate-900 dark:text-slate-100">
+                ৳{{ (s.estimated_gross_revenue / 10000000) | number:'1.2-2' }} Cr
+              </div>
+              <div class="text-[10px] text-slate-400 font-mono">
+                ৳{{ s.estimated_gross_revenue | number:'1.0-0' }}
+              </div>
+            </td>
 
-                <!-- Cost -->
-                <td class="px-4 py-3">
-                  <div class="font-bold text-amber-600 dark:text-amber-400">
-                    ৳{{ (s.estimated_total_cost / 10000000) | number:'1.2-2' }} Cr
-                  </div>
-                  <div class="text-[10px] text-slate-400 font-mono">
-                    ৳{{ s.estimated_total_cost | number:'1.0-0' }}
-                  </div>
-                </td>
+            <!-- Cost -->
+            <td class="px-4 py-3">
+              <div class="font-bold text-amber-600 dark:text-amber-400">
+                ৳{{ (s.estimated_total_cost / 10000000) | number:'1.2-2' }} Cr
+              </div>
+              <div class="text-[10px] text-slate-400 font-mono">
+                ৳{{ s.estimated_total_cost | number:'1.0-0' }}
+              </div>
+            </td>
 
-                <!-- Gross Profit & Margin -->
-                <td class="px-4 py-3">
-                  <div class="flex items-center gap-1.5 font-bold text-emerald-600 dark:text-emerald-400">
-                    <span>৳{{ (s.gross_project_profit / 10000000) | number:'1.2-2' }} Cr</span>
-                    <span class="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-                      {{ s.profit_margin_percent | number:'1.1-1' }}%
-                    </span>
-                  </div>
-                  <div class="text-[10px] text-slate-400 mt-0.5">
-                    Net PAT: ৳{{ (s.net_profit_after_tax / 10000000) | number:'1.2-2' }} Cr
-                  </div>
-                </td>
+            <!-- Gross Profit & Margin -->
+            <td class="px-4 py-3">
+              <div class="flex items-center gap-1.5 font-bold text-emerald-600 dark:text-emerald-400">
+                <span>৳{{ (s.gross_project_profit / 10000000) | number:'1.2-2' }} Cr</span>
+                <span
+                  class="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                  {{ s.profit_margin_percent | number:'1.1-1' }}%
+                </span>
+              </div>
+              <div class="text-[10px] text-slate-400 mt-0.5">
+                Net PAT: ৳{{ (s.net_profit_after_tax / 10000000) | number:'1.2-2' }} Cr
+              </div>
+            </td>
 
-                <!-- Status -->
-                <td class="px-4 py-3">
-                  <span
-                    [ngClass]="{
+            <!-- Status -->
+            <td class="px-4 py-3">
+              <span [ngClass]="{
                       'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800': s.status === 'APPROVED',
                       'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800': s.status === 'SUBMITTED',
                       'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800': s.status === 'DRAFT' || s.status === 'RESUBMISSION_REQUIRED',
                       'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-800': s.status === 'REJECTED'
                     }"
-                    class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border shadow-2xs"
-                  >
-                    {{ s.status }}
-                  </span>
-                  @if (s.reviewed_by) {
-                    <div class="text-[10px] text-slate-400 mt-0.5">{{ s.reviewed_by }}</div>
-                  }
-                </td>
+                class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border shadow-2xs">
+                {{ s.status }}
+              </span>
+              @if (s.reviewed_by) {
+              <div class="text-[10px] text-slate-400 mt-0.5">{{ s.reviewed_by }}</div>
+              }
+            </td>
 
-                <!-- Actions -->
-                <td class="px-4 py-3 text-right">
-                  <div class="flex items-center justify-end gap-1.5">
-                    <button
-                      (click)="viewStudyDetails(s)"
-                      title="View Full Breakdown"
-                      class="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/50 rounded-lg transition-colors"
-                    >
-                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                      </svg>
-                    </button>
+            <!-- Actions -->
+            <td class="px-4 py-3 text-right">
+              <div class="flex items-center justify-end gap-1.5">
+                <button (click)="viewStudyDetails(s)" title="View Full Breakdown"
+                  class="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/50 rounded-lg transition-colors">
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                </button>
 
-                    <button
-                      (click)="openApprovalModal(s)"
-                      title="Executive Review & Decision"
-                      class="p-1.5 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 rounded-lg transition-colors"
-                    >
-                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                      </svg>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            }
+                <button (click)="openApprovalModal(s)" title="Executive Review & Decision"
+                  class="p-1.5 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 rounded-lg transition-colors">
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+          }
           }
         </tbody>
       </table>
     </div>
 
     <!-- Table Pagination Footer -->
-    <div card-footer class="px-4 py-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+    <div card-footer
+      class="px-4 py-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
       <div>
-        Showing {{ (currentPage() - 1) * pageSize() + 1 }} to {{ ((currentPage() * pageSize()) > filteredStudies().length ? filteredStudies().length : (currentPage() * pageSize())) }} of {{ filteredStudies().length }} studies
+        Showing {{ (currentPage() - 1) * pageSize() + 1 }} to {{ ((currentPage() * pageSize()) >
+        filteredStudies().length ? filteredStudies().length : (currentPage() * pageSize())) }} of {{
+        filteredStudies().length }} studies
       </div>
       <div class="flex items-center gap-1.5">
-        <button
-          [disabled]="currentPage() === 1"
-          (click)="goToPage(currentPage() - 1)"
-          class="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-        >
+        <button [disabled]="currentPage() === 1" (click)="goToPage(currentPage() - 1)"
+          class="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
           Previous
         </button>
         <span class="px-2 font-semibold text-slate-700 dark:text-slate-300">
           Page {{ currentPage() }} of {{ totalPages() }}
         </span>
-        <button
-          [disabled]="currentPage() >= totalPages()"
-          (click)="goToPage(currentPage() + 1)"
-          class="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-        >
+        <button [disabled]="currentPage() >= totalPages()" (click)="goToPage(currentPage() + 1)"
+          class="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
           Next
         </button>
       </div>
     </div>
   </app-card-container>
 
+  }
+
   <!-- ========================================================================= -->
   <!-- MODAL: NEW FEASIBILITY STUDY & REAL-TIME SIMULATOR (No In-Page Clutter)    -->
   <!-- ========================================================================= -->
   @if (isCreateModalOpen()) {
-    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs overflow-y-auto">
-      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-5xl max-h-[94vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-        
-        <!-- Modal Header with Live Computation Summary -->
-        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-900 text-white flex items-center justify-between">
-          <div>
-            <div class="flex items-center gap-2">
-              <span class="font-mono text-xs font-bold bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded border border-emerald-500/30">
-                2.2 Simulator
-              </span>
-              <h2 class="text-base font-bold font-display text-white">Interactive Feasibility & Investment Analysis</h2>
-            </div>
-            <p class="text-xs text-slate-400 mt-0.5">Real-time simulation engine calculating Gross Margin, Operating Profit, PAT & 3 Scenarios</p>
-          </div>
-          <button (click)="isCreateModalOpen.set(false)" class="text-slate-400 hover:text-white text-xl">&times;</button>
-        </div>
+  <div class="w-full py-4">
+    @if (successMessage()) { <div class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">{{ successMessage() }}</div> }
+    @if (errorMessage()) { <div class="mb-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-800">{{ errorMessage() }}</div> }
+    <div
+      class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full flex flex-col shadow-sm overflow-hidden">
 
-        <!-- Live Computed Financial Summary Banner -->
-        <div class="px-6 py-3 bg-slate-850 border-b border-slate-800 grid grid-cols-2 sm:grid-cols-4 gap-3 text-white">
-          <div class="p-2.5 bg-slate-800/80 rounded-xl border border-slate-700">
-            <span class="text-[10px] text-slate-400 uppercase font-semibold">Simulated Revenue</span>
-            <p class="text-base font-bold text-white mt-0.5 font-display">৳{{ (simulatedRevenue() / 10000000) | number:'1.2-2' }} Cr</p>
-            <p class="text-[9px] text-slate-400 font-mono">৳{{ simulatedRevenue() | number:'1.0-0' }}</p>
-          </div>
-          <div class="p-2.5 bg-slate-800/80 rounded-xl border border-slate-700">
-            <span class="text-[10px] text-slate-400 uppercase font-semibold">Simulated Cost</span>
-            <p class="text-base font-bold text-amber-400 mt-0.5 font-display">৳{{ (simulatedCost() / 10000000) | number:'1.2-2' }} Cr</p>
-            <p class="text-[9px] text-slate-400 font-mono">৳{{ simulatedCost() | number:'1.0-0' }}</p>
-          </div>
-          <div class="p-2.5 bg-slate-800/80 rounded-xl border border-slate-700">
-            <span class="text-[10px] text-slate-400 uppercase font-semibold">Estimated Gross Profit</span>
-            <p class="text-base font-bold text-emerald-400 mt-0.5 font-display">৳{{ (simulatedGrossProfit() / 10000000) | number:'1.2-2' }} Cr</p>
-            <p class="text-[9px] text-slate-400 font-mono">৳{{ simulatedGrossProfit() | number:'1.0-0' }}</p>
-          </div>
-          <div class="p-2.5 bg-slate-800/80 rounded-xl border border-slate-700">
-            <span class="text-[10px] text-slate-400 uppercase font-semibold">Profit Margin %</span>
-            <p class="text-base font-bold text-emerald-300 mt-0.5 font-display">{{ simulatedProfitMargin() | number:'1.1-1' }}%</p>
-            <p class="text-[9px] text-slate-400">ROI: {{ simulatedRoi() | number:'1.1-1' }}%</p>
-          </div>
-        </div>
-
-        <!-- Modal Tab Strip -->
-        <div class="px-6 border-b border-slate-200 dark:border-slate-800 flex items-center gap-4 bg-white dark:bg-slate-900 overflow-x-auto">
-          <button
-            type="button"
-            (click)="activeModalTab.set('costs')"
-            [ngClass]="activeModalTab() === 'costs' ? 'border-emerald-600 text-emerald-600 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'"
-            class="py-3 border-b-2 text-xs transition-colors shrink-0"
-          >
-            1. Cost Inputs (৳)
-          </button>
-          <button
-            type="button"
-            (click)="activeModalTab.set('revenue')"
-            [ngClass]="activeModalTab() === 'revenue' ? 'border-emerald-600 text-emerald-600 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'"
-            class="py-3 border-b-2 text-xs transition-colors shrink-0"
-          >
-            2. Revenue Projections (৳)
-          </button>
-          <button
-            type="button"
-            (click)="activeModalTab.set('jv')"
-            [ngClass]="activeModalTab() === 'jv' ? 'border-emerald-600 text-emerald-600 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'"
-            class="py-3 border-b-2 text-xs transition-colors shrink-0"
-          >
-            3. Architectural & JV Allocation
-          </button>
-          <button
-            type="button"
-            (click)="activeModalTab.set('scenarios')"
-            [ngClass]="activeModalTab() === 'scenarios' ? 'border-emerald-600 text-emerald-600 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'"
-            class="py-3 border-b-2 text-xs transition-colors shrink-0"
-          >
-            4. Scenario Analysis (3 Models)
-          </button>
-          <button
-            type="button"
-            (click)="activeModalTab.set('cashflow')"
-            [ngClass]="activeModalTab() === 'cashflow' ? 'border-emerald-600 text-emerald-600 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'"
-            class="py-3 border-b-2 text-xs transition-colors shrink-0"
-          >
-            5. Cash-Flow Forecast (8Q)
-          </button>
-        </div>
-
-        <!-- Form Body -->
-        <form [formGroup]="feasibilityForm" class="p-6 overflow-y-auto space-y-4 flex-1">
-          
-          <!-- General Study Identifiers -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pb-3 border-b border-slate-200 dark:border-slate-800">
-            <div>
-              <app-searchable-select
-                label="Target Project"
-                [required]="true"
-                [options]="projectSelectOptions()"
-                formControlName="project_id"
-                placeholder="Select project..."
-                [allowCreateNew]="false"
-              ></app-searchable-select>
-            </div>
-
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Feasibility Study Code <span class="text-rose-500">*</span></label>
-              <input
-                type="text"
-                formControlName="feasibility_code"
-                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-mono font-bold"
-              />
-            </div>
-
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Version Label</label>
-              <input
-                type="text"
-                formControlName="version_label"
-                placeholder="e.g. V1.0-Initial or V2.1-Revised"
-                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-semibold"
-              />
-            </div>
-          </div>
-
-          <!-- TAB 1: COST INPUTS -->
-          @if (activeModalTab() === 'costs') {
-            <div class="space-y-4">
-              <div class="p-3 bg-amber-50/60 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl text-xs text-amber-800 dark:text-amber-300 flex items-center justify-between">
-                <span>Land costs can be imported directly from Land Acquisition records or entered manually.</span>
-                <span class="font-bold">Total Estimated Cost: ৳{{ (simulatedCost() / 10000000) | number:'1.2-2' }} Cr</span>
-              </div>
-
-              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div>
-                  <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Land Acquisition Cost (BDT) <span class="text-rose-500">*</span></label>
-                  <input
-                    type="number"
-                    formControlName="land_acquisition_cost"
-                    (input)="onFormInputChange()"
-                    class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold"
-                  />
-                  <p class="text-[10px] text-slate-400 mt-0.5">Base purchase or JV premium</p>
-                </div>
-
-                <div>
-                  <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Legal & Vetting Expenses (BDT)</label>
-                  <input
-                    type="number"
-                    formControlName="legal_and_vetting_expenses"
-                    (input)="onFormInputChange()"
-                    class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold"
-                  />
-                  <p class="text-[10px] text-slate-400 mt-0.5">Deed search, mutation, vetting</p>
-                </div>
-
-                <div>
-                  <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Preliminary Architectural & Eng. (BDT)</label>
-                  <input
-                    type="number"
-                    formControlName="preliminary_arch_engineering_cost"
-                    (input)="onFormInputChange()"
-                    class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold"
-                  />
-                  <p class="text-[10px] text-slate-400 mt-0.5">Soil test, structural design & MEP</p>
-                </div>
-
-                <div>
-                  <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Estimated Civil Construction (BDT) <span class="text-rose-500">*</span></label>
-                  <input
-                    type="number"
-                    formControlName="estimated_construction_cost"
-                    (input)="onFormInputChange()"
-                    class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold text-amber-600 dark:text-amber-400"
-                  />
-                  <p class="text-[10px] text-slate-400 mt-0.5">Piling, structure, finishing & labor</p>
-                </div>
-
-                <div>
-                  <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Infrastructure & Site Development (BDT)</label>
-                  <input
-                    type="number"
-                    formControlName="infrastructure_and_site_dev"
-                    (input)="onFormInputChange()"
-                    class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold"
-                  />
-                  <p class="text-[10px] text-slate-400 mt-0.5">Internal roads, boundary, drainage</p>
-                </div>
-
-                <div>
-                  <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Utility Connections (BDT)</label>
-                  <input
-                    type="number"
-                    formControlName="utility_connection_expenses"
-                    (input)="onFormInputChange()"
-                    class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold"
-                  />
-                  <p class="text-[10px] text-slate-400 mt-0.5">DESCO/DPDC, WASA, Substation, Gas</p>
-                </div>
-
-                <div>
-                  <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Professional & Authority Fees (BDT)</label>
-                  <input
-                    type="number"
-                    formControlName="professional_authority_fees"
-                    (input)="onFormInputChange()"
-                    class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold"
-                  />
-                  <p class="text-[10px] text-slate-400 mt-0.5">RAJUK plan sanction, Fire NOC</p>
-                </div>
-
-                <div>
-                  <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Financing & Loan Interest (BDT)</label>
-                  <input
-                    type="number"
-                    formControlName="financing_and_interest_cost"
-                    (input)="onFormInputChange()"
-                    class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold"
-                  />
-                  <p class="text-[10px] text-slate-400 mt-0.5">Interest during construction</p>
-                </div>
-
-                <div>
-                  <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Contingency Reserve (BDT)</label>
-                  <input
-                    type="number"
-                    formControlName="contingency_reserve"
-                    (input)="onFormInputChange()"
-                    class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold"
-                  />
-                  <p class="text-[10px] text-slate-400 mt-0.5">Standard 5% buffer for price escalation</p>
-                </div>
-              </div>
-            </div>
-          }
-
-          <!-- TAB 2: REVENUE PROJECTIONS -->
-          @if (activeModalTab() === 'revenue') {
-            <div class="space-y-4">
-              <div class="p-3 bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl text-xs text-emerald-800 dark:text-emerald-300 flex items-center justify-between">
-                <span>Calculated developer revenue from apartment units, commercial spaces, and parking sales.</span>
-                <span class="font-bold">Total Estimated Revenue: ৳{{ (simulatedRevenue() / 10000000) | number:'1.2-2' }} Cr</span>
-              </div>
-
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Apartment Units Sales Revenue (BDT) <span class="text-rose-500">*</span></label>
-                  <input
-                    type="number"
-                    formControlName="estimated_apartment_sales_revenue"
-                    (input)="onFormInputChange()"
-                    class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold text-emerald-600 dark:text-emerald-400"
-                  />
-                  <p class="text-[10px] text-slate-400 mt-0.5">Total expected sales from residential units</p>
-                </div>
-
-                <div>
-                  <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Commercial & Shop Revenue (BDT)</label>
-                  <input
-                    type="number"
-                    formControlName="estimated_commercial_sales_revenue"
-                    (input)="onFormInputChange()"
-                    class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold"
-                  />
-                  <p class="text-[10px] text-slate-400 mt-0.5">Retail, offices, ground floor spaces</p>
-                </div>
-
-                <div>
-                  <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Parking Bays Sales Revenue (BDT)</label>
-                  <input
-                    type="number"
-                    formControlName="estimated_parking_sales_revenue"
-                    (input)="onFormInputChange()"
-                    class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold"
-                  />
-                  <p class="text-[10px] text-slate-400 mt-0.5">Basement and ground dedicated parking slots</p>
-                </div>
-
-                <div>
-                  <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Other Income / Club Amenities (BDT)</label>
-                  <input
-                    type="number"
-                    formControlName="estimated_other_sales_revenue"
-                    (input)="onFormInputChange()"
-                    class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold"
-                  />
-                  <p class="text-[10px] text-slate-400 mt-0.5">Community hall, transfer fees, solar export</p>
-                </div>
-              </div>
-            </div>
-          }
-
-          <!-- TAB 3: ARCHITECTURAL & JV SPLIT -->
-          @if (activeModalTab() === 'jv') {
-            <div class="space-y-4">
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div>
-                  <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Proposed Building Height (Meters)</label>
-                  <input
-                    type="number"
-                    formControlName="proposed_building_height_meters"
-                    class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold"
-                  />
-                </div>
-
-                <div>
-                  <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Proposed Floor Count</label>
-                  <input
-                    type="number"
-                    formControlName="proposed_floor_count"
-                    class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold"
-                  />
-                  <p class="text-[10px] text-slate-400 mt-0.5">e.g. 2 Basement + Ground + 13 Floors</p>
-                </div>
-
-                <div>
-                  <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Total Unit Count</label>
-                  <input
-                    type="number"
-                    formControlName="proposed_unit_count"
-                    class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold"
-                  />
-                </div>
-              </div>
-
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Total Saleable Area (SqFt) <span class="text-rose-500">*</span></label>
-                  <input
-                    type="number"
-                    formControlName="total_saleable_area_sqft"
-                    class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold"
-                  />
-                </div>
-
-                <div>
-                  <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Landowner JV Sharing Ratio (Landowner:Developer)</label>
-                  <select
-                    formControlName="landowner_jv_sharing_ratio"
-                    class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold"
-                  >
-                    <option value="50:50">50:50 (50% Landowner / 50% Developer)</option>
-                    <option value="40:60">40:60 (40% Landowner / 60% Developer)</option>
-                    <option value="45:55">45:55 (45% Landowner / 55% Developer)</option>
-                    <option value="35:65">35:65 (35% Landowner / 65% Developer)</option>
-                    <option value="0:100">0:100 (Outright Purchase — 100% Developer)</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-          }
-
-          <!-- TAB 4: SCENARIOS -->
-          @if (activeModalTab() === 'scenarios') {
-            <div class="space-y-4">
-              <p class="text-xs text-slate-500 dark:text-slate-400">
-                Automated multi-scenario stress-testing to analyze resilience against construction inflation and price declines:
-              </p>
-
-              @if (scenarios(); as sc) {
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-                  <!-- Base Case -->
-                  <div class="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
-                    <span class="inline-flex px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300">
-                      {{ sc.base_case.name }}
-                    </span>
-                    <div class="text-xs space-y-1 pt-1">
-                      <div class="flex justify-between text-slate-600 dark:text-slate-300">
-                        <span>Revenue:</span>
-                        <span class="font-bold">৳{{ (sc.base_case.revenue / 10000000) | number:'1.2-2' }} Cr</span>
-                      </div>
-                      <div class="flex justify-between text-slate-600 dark:text-slate-300">
-                        <span>Cost:</span>
-                        <span class="font-bold">৳{{ (sc.base_case.cost / 10000000) | number:'1.2-2' }} Cr</span>
-                      </div>
-                      <div class="flex justify-between text-emerald-600 font-bold border-t border-slate-200 dark:border-slate-700 pt-1">
-                        <span>Profit:</span>
-                        <span>৳{{ (sc.base_case.profit / 10000000) | number:'1.2-2' }} Cr</span>
-                      </div>
-                      <div class="flex justify-between text-slate-500">
-                        <span>Margin:</span>
-                        <span class="font-bold">{{ sc.base_case.margin_percent | number:'1.1-1' }}%</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Optimistic Case -->
-                  <div class="p-4 bg-emerald-50/50 dark:bg-emerald-950/30 rounded-xl border border-emerald-200 dark:border-emerald-800 space-y-2">
-                    <span class="inline-flex px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300">
-                      {{ sc.optimistic_case.name }}
-                    </span>
-                    <div class="text-xs space-y-1 pt-1">
-                      <div class="flex justify-between text-slate-600 dark:text-slate-300">
-                        <span>Revenue:</span>
-                        <span class="font-bold">৳{{ (sc.optimistic_case.revenue / 10000000) | number:'1.2-2' }} Cr</span>
-                      </div>
-                      <div class="flex justify-between text-slate-600 dark:text-slate-300">
-                        <span>Cost:</span>
-                        <span class="font-bold">৳{{ (sc.optimistic_case.cost / 10000000) | number:'1.2-2' }} Cr</span>
-                      </div>
-                      <div class="flex justify-between text-emerald-600 font-bold border-t border-emerald-200 dark:border-emerald-800 pt-1">
-                        <span>Profit:</span>
-                        <span>৳{{ (sc.optimistic_case.profit / 10000000) | number:'1.2-2' }} Cr</span>
-                      </div>
-                      <div class="flex justify-between text-slate-500">
-                        <span>Margin:</span>
-                        <span class="font-bold">{{ sc.optimistic_case.margin_percent | number:'1.1-1' }}%</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Stress Case -->
-                  <div class="p-4 bg-rose-50/50 dark:bg-rose-950/30 rounded-xl border border-rose-200 dark:border-rose-800 space-y-2">
-                    <span class="inline-flex px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-300">
-                      {{ sc.stress_case.name }}
-                    </span>
-                    <div class="text-xs space-y-1 pt-1">
-                      <div class="flex justify-between text-slate-600 dark:text-slate-300">
-                        <span>Revenue:</span>
-                        <span class="font-bold">৳{{ (sc.stress_case.revenue / 10000000) | number:'1.2-2' }} Cr</span>
-                      </div>
-                      <div class="flex justify-between text-slate-600 dark:text-slate-300">
-                        <span>Cost:</span>
-                        <span class="font-bold">৳{{ (sc.stress_case.cost / 10000000) | number:'1.2-2' }} Cr</span>
-                      </div>
-                      <div class="flex justify-between font-bold border-t border-rose-200 dark:border-rose-800 pt-1" [ngClass]="sc.stress_case.profit >= 0 ? 'text-amber-600' : 'text-rose-600'">
-                        <span>Profit:</span>
-                        <span>৳{{ (sc.stress_case.profit / 10000000) | number:'1.2-2' }} Cr</span>
-                      </div>
-                      <div class="flex justify-between text-slate-500">
-                        <span>Margin:</span>
-                        <span class="font-bold">{{ sc.stress_case.margin_percent | number:'1.1-1' }}%</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              }
-            </div>
-          }
-
-          <!-- TAB 5: CASH FLOW FORECAST -->
-          @if (activeModalTab() === 'cashflow') {
-            <div class="space-y-4">
-              <p class="text-xs text-slate-500 dark:text-slate-400">
-                Quarterly Cash Inflow (Customer Advances) vs Outflow (Civil Construction & Milestones) across 24-Month Project Lifecycle:
-              </p>
-
-              <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
-                <table class="w-full text-left text-xs">
-                  <thead class="bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold">
-                    <tr>
-                      <th class="px-3.5 py-2.5">Lifecycle Phase / Quarter</th>
-                      <th class="px-3.5 py-2.5">Cash Inflow (BDT)</th>
-                      <th class="px-3.5 py-2.5">Cash Outflow (BDT)</th>
-                      <th class="px-3.5 py-2.5 text-right">Net Cash Flow</th>
-                    </tr>
-                  </thead>
-                  <tbody class="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
-                    @for (cf of cashFlowForecast(); track cf.quarter) {
-                      <tr>
-                        <td class="px-3.5 py-2 text-slate-800 dark:text-slate-200 font-sans font-medium">{{ cf.quarter }}</td>
-                        <td class="px-3.5 py-2 text-emerald-600 dark:text-emerald-400 font-bold">৳{{ cf.inflow | number:'1.0-0' }}</td>
-                        <td class="px-3.5 py-2 text-amber-600 dark:text-amber-400 font-bold">৳{{ cf.outflow | number:'1.0-0' }}</td>
-                        <td class="px-3.5 py-2 text-right font-bold" [ngClass]="cf.net >= 0 ? 'text-emerald-600' : 'text-rose-600'">
-                          ৳{{ cf.net | number:'1.0-0' }}
-                        </td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          }
-
-        </form>
-
-        <!-- Modal Footer Actions -->
-        <div class="px-6 py-3.5 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-850/80">
-          <div class="text-[11px] text-slate-400">
-            * Feasibility figures remain separate from accounting ledgers until board sanction.
-          </div>
+      <!-- Modal Header with Live Computation Summary -->
+      <div
+        class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-900 text-white flex items-center justify-between">
+        <div>
           <div class="flex items-center gap-2">
-            <button
-              type="button"
-              (click)="isCreateModalOpen.set(false)"
-              class="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-xl transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              [disabled]="isSubmitting()"
-              (click)="saveFeasibility('DRAFT')"
-              class="px-4 py-2 text-xs font-semibold bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 hover:bg-slate-300 rounded-xl transition-colors"
-            >
-              Save as Draft
-            </button>
-            <button
-              type="button"
-              [disabled]="isSubmitting()"
-              (click)="saveFeasibility('SUBMITTED')"
-              class="px-5 py-2 text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 rounded-xl shadow-xs transition-colors disabled:opacity-50 flex items-center gap-1.5"
-            >
-              @if (isSubmitting()) {
-                <div class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              }
-              <span>Submit for Executive Approval</span>
-            </button>
+            <span
+              class="font-mono text-xs font-bold bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded border border-emerald-500/30">
+              2.2 Simulator
+            </span>
+            <h2 class="text-base font-bold font-display text-white">Interactive Feasibility & Investment Analysis</h2>
+          </div>
+          <p class="text-xs text-slate-400 mt-0.5">Real-time simulation engine calculating Gross Margin, Operating
+            Profit, PAT & 3 Scenarios</p>
+        </div>
+        <button (click)="isCreateModalOpen.set(false)" class="text-slate-400 hover:text-white text-xl">&times;</button>
+      </div>
+
+      <!-- Live Computed Financial Summary Banner -->
+      <div class="px-6 py-3 bg-slate-850 border-b border-slate-800 grid grid-cols-2 sm:grid-cols-4 gap-3 text-white">
+        <div class="p-2.5 bg-slate-800/80 rounded-xl border border-slate-700">
+          <span class="text-[10px] text-slate-400 uppercase font-semibold">Simulated Revenue</span>
+          <p class="text-base font-bold text-white mt-0.5 font-display">৳{{ (simulatedRevenue() / 10000000) |
+            number:'1.2-2' }} Cr</p>
+          <p class="text-[9px] text-slate-400 font-mono">৳{{ simulatedRevenue() | number:'1.0-0' }}</p>
+        </div>
+        <div class="p-2.5 bg-slate-800/80 rounded-xl border border-slate-700">
+          <span class="text-[10px] text-slate-400 uppercase font-semibold">Simulated Cost</span>
+          <p class="text-base font-bold text-amber-400 mt-0.5 font-display">৳{{ (simulatedCost() / 10000000) |
+            number:'1.2-2' }} Cr</p>
+          <p class="text-[9px] text-slate-400 font-mono">৳{{ simulatedCost() | number:'1.0-0' }}</p>
+        </div>
+        <div class="p-2.5 bg-slate-800/80 rounded-xl border border-slate-700">
+          <span class="text-[10px] text-slate-400 uppercase font-semibold">Estimated Gross Profit</span>
+          <p class="text-base font-bold text-emerald-400 mt-0.5 font-display">৳{{ (simulatedGrossProfit() / 10000000) |
+            number:'1.2-2' }} Cr</p>
+          <p class="text-[9px] text-slate-400 font-mono">৳{{ simulatedGrossProfit() | number:'1.0-0' }}</p>
+        </div>
+        <div class="p-2.5 bg-slate-800/80 rounded-xl border border-slate-700">
+          <span class="text-[10px] text-slate-400 uppercase font-semibold">Profit Margin %</span>
+          <p class="text-base font-bold text-emerald-300 mt-0.5 font-display">{{ simulatedProfitMargin() |
+            number:'1.1-1' }}%</p>
+          <p class="text-[9px] text-slate-400">ROI: {{ simulatedRoi() | number:'1.1-1' }}%</p>
+        </div>
+      </div>
+
+      <!-- Modal Tab Strip -->
+      <div
+        class="px-6 border-b border-slate-200 dark:border-slate-800 flex items-center gap-4 bg-white dark:bg-slate-900 overflow-x-auto">
+        <button type="button" (click)="activeModalTab.set('costs')"
+          [ngClass]="activeModalTab() === 'costs' ? 'border-emerald-600 text-emerald-600 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'"
+          class="py-3 border-b-2 text-xs transition-colors shrink-0">
+          1. Cost Inputs (৳)
+        </button>
+        <button type="button" (click)="activeModalTab.set('revenue')"
+          [ngClass]="activeModalTab() === 'revenue' ? 'border-emerald-600 text-emerald-600 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'"
+          class="py-3 border-b-2 text-xs transition-colors shrink-0">
+          2. Revenue Projections (৳)
+        </button>
+        <button type="button" (click)="activeModalTab.set('jv')"
+          [ngClass]="activeModalTab() === 'jv' ? 'border-emerald-600 text-emerald-600 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'"
+          class="py-3 border-b-2 text-xs transition-colors shrink-0">
+          3. Architectural & JV Allocation
+        </button>
+        <button type="button" (click)="activeModalTab.set('scenarios')"
+          [ngClass]="activeModalTab() === 'scenarios' ? 'border-emerald-600 text-emerald-600 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'"
+          class="py-3 border-b-2 text-xs transition-colors shrink-0">
+          4. Scenario Analysis (3 Models)
+        </button>
+        <button type="button" (click)="activeModalTab.set('cashflow')"
+          [ngClass]="activeModalTab() === 'cashflow' ? 'border-emerald-600 text-emerald-600 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'"
+          class="py-3 border-b-2 text-xs transition-colors shrink-0">
+          5. Cash-Flow Forecast (8Q)
+        </button>
+      </div>
+
+      <!-- Form Body -->
+      <form [formGroup]="feasibilityForm" class="p-6 overflow-y-auto space-y-4 flex-1">
+
+        <!-- General Study Identifiers -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pb-3 border-b border-slate-200 dark:border-slate-800">
+          <div>
+            <app-searchable-select label="Target Project" [required]="true" [options]="projectSelectOptions()"
+              formControlName="project_id" placeholder="Select project..."
+              [allowCreateNew]="false"></app-searchable-select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Feasibility Study Code
+              <span class="text-rose-500">*</span></label>
+            <input type="text" formControlName="feasibility_code"
+              class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-mono font-bold" />
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Version Label</label>
+            <input type="text" formControlName="version_label" placeholder="e.g. V1.0-Initial or V2.1-Revised"
+              class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-semibold" />
           </div>
         </div>
 
+        <!-- TAB 1: COST INPUTS -->
+        @if (activeModalTab() === 'costs') {
+        <div class="space-y-4">
+          <div
+            class="p-3 bg-amber-50/60 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl text-xs text-amber-800 dark:text-amber-300 flex items-center justify-between">
+            <span>Land costs can be imported directly from Land Acquisition records or entered manually.</span>
+            <span class="font-bold">Total Estimated Cost: ৳{{ (simulatedCost() / 10000000) | number:'1.2-2' }} Cr</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Land Acquisition Cost
+                (BDT) <span class="text-rose-500">*</span></label>
+              <input type="number" formControlName="land_acquisition_cost" (input)="onFormInputChange()"
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold" />
+              <p class="text-[10px] text-slate-400 mt-0.5">Base purchase or JV premium</p>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Legal & Vetting
+                Expenses (BDT)</label>
+              <input type="number" formControlName="legal_and_vetting_expenses" (input)="onFormInputChange()"
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold" />
+              <p class="text-[10px] text-slate-400 mt-0.5">Deed search, mutation, vetting</p>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Preliminary
+                Architectural & Eng. (BDT)</label>
+              <input type="number" formControlName="preliminary_arch_engineering_cost" (input)="onFormInputChange()"
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold" />
+              <p class="text-[10px] text-slate-400 mt-0.5">Soil test, structural design & MEP</p>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Estimated Civil
+                Construction (BDT) <span class="text-rose-500">*</span></label>
+              <input type="number" formControlName="estimated_construction_cost" (input)="onFormInputChange()"
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold text-amber-600 dark:text-amber-400" />
+              <p class="text-[10px] text-slate-400 mt-0.5">Piling, structure, finishing & labor</p>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Infrastructure & Site
+                Development (BDT)</label>
+              <input type="number" formControlName="infrastructure_and_site_dev" (input)="onFormInputChange()"
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold" />
+              <p class="text-[10px] text-slate-400 mt-0.5">Internal roads, boundary, drainage</p>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Utility Connections
+                (BDT)</label>
+              <input type="number" formControlName="utility_connection_expenses" (input)="onFormInputChange()"
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold" />
+              <p class="text-[10px] text-slate-400 mt-0.5">DESCO/DPDC, WASA, Substation, Gas</p>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Professional &
+                Authority Fees (BDT)</label>
+              <input type="number" formControlName="professional_authority_fees" (input)="onFormInputChange()"
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold" />
+              <p class="text-[10px] text-slate-400 mt-0.5">RAJUK plan sanction, Fire NOC</p>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Financing & Loan
+                Interest (BDT)</label>
+              <input type="number" formControlName="financing_and_interest_cost" (input)="onFormInputChange()"
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold" />
+              <p class="text-[10px] text-slate-400 mt-0.5">Interest during construction</p>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Contingency Reserve
+                (BDT)</label>
+              <input type="number" formControlName="contingency_reserve" (input)="onFormInputChange()"
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold" />
+              <p class="text-[10px] text-slate-400 mt-0.5">Standard 5% buffer for price escalation</p>
+            </div>
+          </div>
+        </div>
+        }
+
+        <!-- TAB 2: REVENUE PROJECTIONS -->
+        @if (activeModalTab() === 'revenue') {
+        <div class="space-y-4">
+          <div
+            class="p-3 bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl text-xs text-emerald-800 dark:text-emerald-300 flex items-center justify-between">
+            <span>Calculated developer revenue from apartment units, commercial spaces, and parking sales.</span>
+            <span class="font-bold">Total Estimated Revenue: ৳{{ (simulatedRevenue() / 10000000) | number:'1.2-2' }}
+              Cr</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Apartment Units Sales
+                Revenue (BDT) <span class="text-rose-500">*</span></label>
+              <input type="number" formControlName="estimated_apartment_sales_revenue" (input)="onFormInputChange()"
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold text-emerald-600 dark:text-emerald-400" />
+              <p class="text-[10px] text-slate-400 mt-0.5">Total expected sales from residential units</p>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Commercial & Shop
+                Revenue (BDT)</label>
+              <input type="number" formControlName="estimated_commercial_sales_revenue" (input)="onFormInputChange()"
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold" />
+              <p class="text-[10px] text-slate-400 mt-0.5">Retail, offices, ground floor spaces</p>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Parking Bays Sales
+                Revenue (BDT)</label>
+              <input type="number" formControlName="estimated_parking_sales_revenue" (input)="onFormInputChange()"
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold" />
+              <p class="text-[10px] text-slate-400 mt-0.5">Basement and ground dedicated parking slots</p>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Other Income / Club
+                Amenities (BDT)</label>
+              <input type="number" formControlName="estimated_other_sales_revenue" (input)="onFormInputChange()"
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold" />
+              <p class="text-[10px] text-slate-400 mt-0.5">Community hall, transfer fees, solar export</p>
+            </div>
+          </div>
+        </div>
+        }
+
+        <!-- TAB 3: ARCHITECTURAL & JV SPLIT -->
+        @if (activeModalTab() === 'jv') {
+        <div class="space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Proposed Building
+                Height (Meters)</label>
+              <input type="number" formControlName="proposed_building_height_meters"
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Proposed Floor
+                Count</label>
+              <input type="number" formControlName="proposed_floor_count"
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold" />
+              <p class="text-[10px] text-slate-400 mt-0.5">e.g. 2 Basement + Ground + 13 Floors</p>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Total Unit
+                Count</label>
+              <input type="number" formControlName="proposed_unit_count"
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Total Saleable Area
+                (SqFt) <span class="text-rose-500">*</span></label>
+              <input type="number" formControlName="total_saleable_area_sqft"
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Landowner JV Sharing
+                Ratio (Landowner:Developer)</label>
+              <select formControlName="landowner_jv_sharing_ratio"
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold">
+                <option value="50:50">50:50 (50% Landowner / 50% Developer)</option>
+                <option value="40:60">40:60 (40% Landowner / 60% Developer)</option>
+                <option value="45:55">45:55 (45% Landowner / 55% Developer)</option>
+                <option value="35:65">35:65 (35% Landowner / 65% Developer)</option>
+                <option value="0:100">0:100 (Outright Purchase — 100% Developer)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        }
+
+        <!-- TAB 4: SCENARIOS -->
+        @if (activeModalTab() === 'scenarios') {
+        <div class="space-y-4">
+          <p class="text-xs text-slate-500 dark:text-slate-400">
+            Automated multi-scenario stress-testing to analyze resilience against construction inflation and price
+            declines:
+          </p>
+
+          @if (scenarios(); as sc) {
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+            <!-- Base Case -->
+            <div
+              class="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
+              <span
+                class="inline-flex px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300">
+                {{ sc.base_case.name }}
+              </span>
+              <div class="text-xs space-y-1 pt-1">
+                <div class="flex justify-between text-slate-600 dark:text-slate-300">
+                  <span>Revenue:</span>
+                  <span class="font-bold">৳{{ (sc.base_case.revenue / 10000000) | number:'1.2-2' }} Cr</span>
+                </div>
+                <div class="flex justify-between text-slate-600 dark:text-slate-300">
+                  <span>Cost:</span>
+                  <span class="font-bold">৳{{ (sc.base_case.cost / 10000000) | number:'1.2-2' }} Cr</span>
+                </div>
+                <div
+                  class="flex justify-between text-emerald-600 font-bold border-t border-slate-200 dark:border-slate-700 pt-1">
+                  <span>Profit:</span>
+                  <span>৳{{ (sc.base_case.profit / 10000000) | number:'1.2-2' }} Cr</span>
+                </div>
+                <div class="flex justify-between text-slate-500">
+                  <span>Margin:</span>
+                  <span class="font-bold">{{ sc.base_case.margin_percent | number:'1.1-1' }}%</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Optimistic Case -->
+            <div
+              class="p-4 bg-emerald-50/50 dark:bg-emerald-950/30 rounded-xl border border-emerald-200 dark:border-emerald-800 space-y-2">
+              <span
+                class="inline-flex px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300">
+                {{ sc.optimistic_case.name }}
+              </span>
+              <div class="text-xs space-y-1 pt-1">
+                <div class="flex justify-between text-slate-600 dark:text-slate-300">
+                  <span>Revenue:</span>
+                  <span class="font-bold">৳{{ (sc.optimistic_case.revenue / 10000000) | number:'1.2-2' }} Cr</span>
+                </div>
+                <div class="flex justify-between text-slate-600 dark:text-slate-300">
+                  <span>Cost:</span>
+                  <span class="font-bold">৳{{ (sc.optimistic_case.cost / 10000000) | number:'1.2-2' }} Cr</span>
+                </div>
+                <div
+                  class="flex justify-between text-emerald-600 font-bold border-t border-emerald-200 dark:border-emerald-800 pt-1">
+                  <span>Profit:</span>
+                  <span>৳{{ (sc.optimistic_case.profit / 10000000) | number:'1.2-2' }} Cr</span>
+                </div>
+                <div class="flex justify-between text-slate-500">
+                  <span>Margin:</span>
+                  <span class="font-bold">{{ sc.optimistic_case.margin_percent | number:'1.1-1' }}%</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Stress Case -->
+            <div
+              class="p-4 bg-rose-50/50 dark:bg-rose-950/30 rounded-xl border border-rose-200 dark:border-rose-800 space-y-2">
+              <span
+                class="inline-flex px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-300">
+                {{ sc.stress_case.name }}
+              </span>
+              <div class="text-xs space-y-1 pt-1">
+                <div class="flex justify-between text-slate-600 dark:text-slate-300">
+                  <span>Revenue:</span>
+                  <span class="font-bold">৳{{ (sc.stress_case.revenue / 10000000) | number:'1.2-2' }} Cr</span>
+                </div>
+                <div class="flex justify-between text-slate-600 dark:text-slate-300">
+                  <span>Cost:</span>
+                  <span class="font-bold">৳{{ (sc.stress_case.cost / 10000000) | number:'1.2-2' }} Cr</span>
+                </div>
+                <div class="flex justify-between font-bold border-t border-rose-200 dark:border-rose-800 pt-1"
+                  [ngClass]="sc.stress_case.profit >= 0 ? 'text-amber-600' : 'text-rose-600'">
+                  <span>Profit:</span>
+                  <span>৳{{ (sc.stress_case.profit / 10000000) | number:'1.2-2' }} Cr</span>
+                </div>
+                <div class="flex justify-between text-slate-500">
+                  <span>Margin:</span>
+                  <span class="font-bold">{{ sc.stress_case.margin_percent | number:'1.1-1' }}%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          }
+        </div>
+        }
+
+        <!-- TAB 5: CASH FLOW FORECAST -->
+        @if (activeModalTab() === 'cashflow') {
+        <div class="space-y-4">
+          <p class="text-xs text-slate-500 dark:text-slate-400">
+            Quarterly Cash Inflow (Customer Advances) vs Outflow (Civil Construction & Milestones) across 24-Month
+            Project Lifecycle:
+          </p>
+
+          <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold">
+                <tr>
+                  <th class="px-3.5 py-2.5">Lifecycle Phase / Quarter</th>
+                  <th class="px-3.5 py-2.5">Cash Inflow (BDT)</th>
+                  <th class="px-3.5 py-2.5">Cash Outflow (BDT)</th>
+                  <th class="px-3.5 py-2.5 text-right">Net Cash Flow</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
+                @for (cf of cashFlowForecast(); track cf.quarter) {
+                <tr>
+                  <td class="px-3.5 py-2 text-slate-800 dark:text-slate-200 font-sans font-medium">{{ cf.quarter }}</td>
+                  <td class="px-3.5 py-2 text-emerald-600 dark:text-emerald-400 font-bold">৳{{ cf.inflow |
+                    number:'1.0-0' }}</td>
+                  <td class="px-3.5 py-2 text-amber-600 dark:text-amber-400 font-bold">৳{{ cf.outflow | number:'1.0-0'
+                    }}</td>
+                  <td class="px-3.5 py-2 text-right font-bold"
+                    [ngClass]="cf.net >= 0 ? 'text-emerald-600' : 'text-rose-600'">
+                    ৳{{ cf.net | number:'1.0-0' }}
+                  </td>
+                </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+        }
+
+      </form>
+
+      <!-- Modal Footer Actions -->
+      <div
+        class="px-6 py-3.5 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-850/80">
+        <div class="text-[11px] text-slate-400">
+          * Feasibility figures remain separate from accounting ledgers until board sanction.
+        </div>
+        <div class="flex items-center gap-2">
+          <button type="button" (click)="isCreateModalOpen.set(false)"
+            class="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-xl transition-colors">
+            Cancel
+          </button>
+          <button type="button" [disabled]="isSubmitting()" (click)="saveFeasibility('DRAFT')"
+            class="px-4 py-2 text-xs font-semibold bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 hover:bg-slate-300 rounded-xl transition-colors">
+            Save as Draft
+          </button>
+          <button type="button" [disabled]="isSubmitting()" (click)="saveFeasibility('SUBMITTED')"
+            class="px-5 py-2 text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 rounded-xl shadow-xs transition-colors disabled:opacity-50 flex items-center gap-1.5">
+            @if (isSubmitting()) {
+            <div class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            }
+            <span>Submit for Executive Approval</span>
+          </button>
+        </div>
       </div>
+
     </div>
+  </div>
   }
 
   <!-- ========================================================================= -->
   <!-- MODAL: EXECUTIVE REVIEW & APPROVAL / REJECTION WORKFLOW                    -->
   <!-- ========================================================================= -->
   @if (isApprovalModalOpen() && selectedStudy(); as st) {
-    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl p-6 space-y-4">
-        <div>
-          <h2 class="text-base font-bold font-display text-slate-900 dark:text-slate-100">
-            Executive Feasibility Decision Workflow
-          </h2>
-          <p class="text-xs text-slate-500 mt-0.5">Study: {{ st.feasibility_code }} — {{ st.title }}</p>
-        </div>
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
+    <div
+      class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl p-6 space-y-4">
+      <div>
+        <h2 class="text-base font-bold font-display text-slate-900 dark:text-slate-100">
+          Executive Feasibility Decision Workflow
+        </h2>
+        <p class="text-xs text-slate-500 mt-0.5">Study: {{ st.feasibility_code }} — {{ st.title }}</p>
+      </div>
 
-        <div class="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 text-xs space-y-1">
-          <div class="flex justify-between">
-            <span class="text-slate-500">Gross Margin:</span>
-            <span class="font-bold text-emerald-600">{{ st.profit_margin_percent | number:'1.1-1' }}% (৳{{ (st.gross_project_profit / 10000000) | number:'1.2-2' }} Cr)</span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-slate-500">Project ROI:</span>
-            <span class="font-bold text-blue-600">{{ st.roi_percent | number:'1.1-1' }}%</span>
-          </div>
+      <div
+        class="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 text-xs space-y-1">
+        <div class="flex justify-between">
+          <span class="text-slate-500">Gross Margin:</span>
+          <span class="font-bold text-emerald-600">{{ st.profit_margin_percent | number:'1.1-1' }}% (৳{{
+            (st.gross_project_profit / 10000000) | number:'1.2-2' }} Cr)</span>
         </div>
-
-        <div class="space-y-2">
-          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Decision</label>
-          <div class="grid grid-cols-3 gap-2">
-            <button
-              type="button"
-              (click)="approvalAction.set('APPROVE')"
-              [ngClass]="approvalAction() === 'APPROVE' ? 'bg-emerald-600 text-white font-bold' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'"
-              class="py-2 text-xs rounded-xl border border-transparent transition-all"
-            >
-              Approve Project
-            </button>
-            <button
-              type="button"
-              (click)="approvalAction.set('RESUBMIT')"
-              [ngClass]="approvalAction() === 'RESUBMIT' ? 'bg-amber-600 text-white font-bold' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'"
-              class="py-2 text-xs rounded-xl border border-transparent transition-all"
-            >
-              Request Revision
-            </button>
-            <button
-              type="button"
-              (click)="approvalAction.set('REJECT')"
-              [ngClass]="approvalAction() === 'REJECT' ? 'bg-rose-600 text-white font-bold' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'"
-              class="py-2 text-xs rounded-xl border border-transparent transition-all"
-            >
-              Reject Feasibility
-            </button>
-          </div>
+        <div class="flex justify-between">
+          <span class="text-slate-500">Project ROI:</span>
+          <span class="font-bold text-blue-600">{{ st.roi_percent | number:'1.1-1' }}%</span>
         </div>
+      </div>
 
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Board / Committee Remarks</label>
-          <textarea
-            [ngModel]="approvalRemarks()"
-            (ngModelChange)="approvalRemarks.set($event)"
-            rows="3"
-            placeholder="State rationale, cost adjustments, or approval stipulations..."
-            class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200"
-          ></textarea>
-        </div>
-
-        <div class="flex items-center justify-end gap-2 pt-2">
-          <button
-            (click)="isApprovalModalOpen.set(false)"
-            class="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-xl"
-          >
-            Cancel
+      <div class="space-y-2">
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Decision</label>
+        <div class="grid grid-cols-3 gap-2">
+          <button type="button" (click)="approvalAction.set('APPROVE')"
+            [ngClass]="approvalAction() === 'APPROVE' ? 'bg-emerald-600 text-white font-bold' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'"
+            class="py-2 text-xs rounded-xl border border-transparent transition-all">
+            Approve Project
           </button>
-          <button
-            [disabled]="isSubmitting()"
-            (click)="submitApproval()"
-            class="px-5 py-2 text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 rounded-xl shadow-xs disabled:opacity-50"
-          >
-            Confirm Decision
+          <button type="button" (click)="approvalAction.set('RESUBMIT')"
+            [ngClass]="approvalAction() === 'RESUBMIT' ? 'bg-amber-600 text-white font-bold' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'"
+            class="py-2 text-xs rounded-xl border border-transparent transition-all">
+            Request Revision
+          </button>
+          <button type="button" (click)="approvalAction.set('REJECT')"
+            [ngClass]="approvalAction() === 'REJECT' ? 'bg-rose-600 text-white font-bold' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'"
+            class="py-2 text-xs rounded-xl border border-transparent transition-all">
+            Reject Feasibility
           </button>
         </div>
       </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Board / Committee
+          Remarks</label>
+        <textarea [ngModel]="approvalRemarks()" (ngModelChange)="approvalRemarks.set($event)" rows="3"
+          placeholder="State rationale, cost adjustments, or approval stipulations..."
+          class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200"></textarea>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-2">
+        <button (click)="isApprovalModalOpen.set(false)"
+          class="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-xl">
+          Cancel
+        </button>
+        <button [disabled]="isSubmitting()" (click)="submitApproval()"
+          class="px-5 py-2 text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 rounded-xl shadow-xs disabled:opacity-50">
+          Confirm Decision
+        </button>
+      </div>
     </div>
+  </div>
   }
 
   <!-- ========================================================================= -->
   <!-- MODAL: VIEW FEASIBILITY 360° BREAKDOWN                                    -->
   <!-- ========================================================================= -->
   @if (isDetailsModalOpen() && selectedStudy(); as st) {
-    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs overflow-y-auto">
-      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-        
-        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/80 dark:bg-slate-850/80">
-          <div>
-            <div class="flex items-center gap-2">
-              <span class="font-mono text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">{{ st.feasibility_code }}</span>
-              <h2 class="text-base font-bold font-display text-slate-900 dark:text-slate-100">{{ st.title }}</h2>
-            </div>
-            <p class="text-xs text-slate-500 mt-0.5">{{ st.project_name }} ({{ st.project_code }}) — {{ st.version_label }}</p>
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs overflow-y-auto">
+    <div
+      class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+
+      <div
+        class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/80 dark:bg-slate-850/80">
+        <div>
+          <div class="flex items-center gap-2">
+            <span
+              class="font-mono text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">{{
+              st.feasibility_code }}</span>
+            <h2 class="text-base font-bold font-display text-slate-900 dark:text-slate-100">{{ st.title }}</h2>
           </div>
-          <button (click)="isDetailsModalOpen.set(false)" class="text-slate-400 hover:text-slate-600 text-lg">&times;</button>
+          <p class="text-xs text-slate-500 mt-0.5">{{ st.project_name }} ({{ st.project_code }}) — {{ st.version_label
+            }}</p>
         </div>
-
-        <div class="p-6 overflow-y-auto space-y-4 text-xs">
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 bg-slate-900 text-white rounded-xl">
-            <div>
-              <p class="text-[10px] text-slate-400 uppercase font-semibold">Gross Revenue</p>
-              <p class="text-base font-bold font-display text-white mt-0.5">৳{{ (st.estimated_gross_revenue / 10000000) | number:'1.2-2' }} Cr</p>
-            </div>
-            <div>
-              <p class="text-[10px] text-slate-400 uppercase font-semibold">Total Cost</p>
-              <p class="text-base font-bold font-display text-amber-400 mt-0.5">৳{{ (st.estimated_total_cost / 10000000) | number:'1.2-2' }} Cr</p>
-            </div>
-            <div>
-              <p class="text-[10px] text-slate-400 uppercase font-semibold">Gross Profit</p>
-              <p class="text-base font-bold font-display text-emerald-400 mt-0.5">৳{{ (st.gross_project_profit / 10000000) | number:'1.2-2' }} Cr</p>
-            </div>
-            <div>
-              <p class="text-[10px] text-slate-400 uppercase font-semibold">Margin %</p>
-              <p class="text-base font-bold font-display text-emerald-300 mt-0.5">{{ st.profit_margin_percent | number:'1.1-1' }}%</p>
-            </div>
-          </div>
-
-          <div class="space-y-2">
-            <h3 class="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">Cost Component Breakdown</h3>
-            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
-              <div><span class="text-slate-400">Land Acquisition:</span> <span class="font-bold ml-1 font-mono">৳{{ (st.land_acquisition_cost / 10000000) | number:'1.2-2' }} Cr</span></div>
-              <div><span class="text-slate-400">Civil Construction:</span> <span class="font-bold ml-1 font-mono">৳{{ (st.estimated_construction_cost / 10000000) | number:'1.2-2' }} Cr</span></div>
-              <div><span class="text-slate-400">Infrastructure:</span> <span class="font-bold ml-1 font-mono">৳{{ (st.infrastructure_and_site_dev / 10000000) | number:'1.2-2' }} Cr</span></div>
-              <div><span class="text-slate-400">Utility Connections:</span> <span class="font-bold ml-1 font-mono">৳{{ (st.utility_connection_expenses / 10000000) | number:'1.2-2' }} Cr</span></div>
-              <div><span class="text-slate-400">Arch & Engineering:</span> <span class="font-bold ml-1 font-mono">৳{{ (st.preliminary_arch_engineering_cost / 10000000) | number:'1.2-2' }} Cr</span></div>
-              <div><span class="text-slate-400">Financing Cost:</span> <span class="font-bold ml-1 font-mono">৳{{ (st.financing_and_interest_cost / 10000000) | number:'1.2-2' }} Cr</span></div>
-            </div>
-          </div>
-
-          <div class="space-y-2">
-            <h3 class="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">Joint Venture & Architectural Specs</h3>
-            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
-              <div><span class="text-slate-400">Proposed Height:</span> <span class="font-bold ml-1">{{ st.proposed_building_height_meters }}m ({{ st.proposed_floor_count }} Floors)</span></div>
-              <div><span class="text-slate-400">Total Units:</span> <span class="font-bold ml-1">{{ st.proposed_unit_count }} Units</span></div>
-              <div><span class="text-slate-400">JV Sharing Ratio:</span> <span class="font-bold ml-1">{{ st.landowner_jv_sharing_ratio }}</span></div>
-              <div><span class="text-slate-400">Developer Share:</span> <span class="font-bold ml-1 font-mono">{{ st.developer_share_sqft | number:'1.0-0' }} SqFt</span></div>
-              <div><span class="text-slate-400">Landowner Share:</span> <span class="font-bold ml-1 font-mono">{{ st.landowner_share_sqft | number:'1.0-0' }} SqFt</span></div>
-              <div><span class="text-slate-400">Approval Status:</span> <span class="font-bold ml-1 text-emerald-600">{{ st.status }}</span></div>
-            </div>
-          </div>
-
-          @if (st.review_remarks) {
-            <div class="space-y-1">
-              <h3 class="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">Executive Review Remarks</h3>
-              <p class="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300">
-                {{ st.review_remarks }}
-              </p>
-            </div>
-          }
-        </div>
-
-        <div class="px-6 py-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end bg-slate-50 dark:bg-slate-850">
-          <button
-            (click)="isDetailsModalOpen.set(false)"
-            class="px-4 py-2 text-xs font-semibold bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 text-slate-700 dark:text-slate-200 rounded-xl"
-          >
-            Close
-          </button>
-        </div>
-
+        <button (click)="isDetailsModalOpen.set(false)"
+          class="text-slate-400 hover:text-slate-600 text-lg">&times;</button>
       </div>
+
+      <div class="p-6 overflow-y-auto space-y-4 text-xs">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 bg-slate-900 text-white rounded-xl">
+          <div>
+            <p class="text-[10px] text-slate-400 uppercase font-semibold">Gross Revenue</p>
+            <p class="text-base font-bold font-display text-white mt-0.5">৳{{ (st.estimated_gross_revenue / 10000000) |
+              number:'1.2-2' }} Cr</p>
+          </div>
+          <div>
+            <p class="text-[10px] text-slate-400 uppercase font-semibold">Total Cost</p>
+            <p class="text-base font-bold font-display text-amber-400 mt-0.5">৳{{ (st.estimated_total_cost / 10000000) |
+              number:'1.2-2' }} Cr</p>
+          </div>
+          <div>
+            <p class="text-[10px] text-slate-400 uppercase font-semibold">Gross Profit</p>
+            <p class="text-base font-bold font-display text-emerald-400 mt-0.5">৳{{ (st.gross_project_profit / 10000000)
+              | number:'1.2-2' }} Cr</p>
+          </div>
+          <div>
+            <p class="text-[10px] text-slate-400 uppercase font-semibold">Margin %</p>
+            <p class="text-base font-bold font-display text-emerald-300 mt-0.5">{{ st.profit_margin_percent |
+              number:'1.1-1' }}%</p>
+          </div>
+        </div>
+
+        <div class="space-y-2">
+          <h3 class="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">Cost Component
+            Breakdown</h3>
+          <div
+            class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+            <div><span class="text-slate-400">Land Acquisition:</span> <span class="font-bold ml-1 font-mono">৳{{
+                (st.land_acquisition_cost / 10000000) | number:'1.2-2' }} Cr</span></div>
+            <div><span class="text-slate-400">Civil Construction:</span> <span class="font-bold ml-1 font-mono">৳{{
+                (st.estimated_construction_cost / 10000000) | number:'1.2-2' }} Cr</span></div>
+            <div><span class="text-slate-400">Infrastructure:</span> <span class="font-bold ml-1 font-mono">৳{{
+                (st.infrastructure_and_site_dev / 10000000) | number:'1.2-2' }} Cr</span></div>
+            <div><span class="text-slate-400">Utility Connections:</span> <span class="font-bold ml-1 font-mono">৳{{
+                (st.utility_connection_expenses / 10000000) | number:'1.2-2' }} Cr</span></div>
+            <div><span class="text-slate-400">Arch & Engineering:</span> <span class="font-bold ml-1 font-mono">৳{{
+                (st.preliminary_arch_engineering_cost / 10000000) | number:'1.2-2' }} Cr</span></div>
+            <div><span class="text-slate-400">Financing Cost:</span> <span class="font-bold ml-1 font-mono">৳{{
+                (st.financing_and_interest_cost / 10000000) | number:'1.2-2' }} Cr</span></div>
+          </div>
+        </div>
+
+        <div class="space-y-2">
+          <h3 class="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">Joint Venture &
+            Architectural Specs</h3>
+          <div
+            class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+            <div><span class="text-slate-400">Proposed Height:</span> <span class="font-bold ml-1">{{
+                st.proposed_building_height_meters }}m ({{ st.proposed_floor_count }} Floors)</span></div>
+            <div><span class="text-slate-400">Total Units:</span> <span class="font-bold ml-1">{{ st.proposed_unit_count
+                }} Units</span></div>
+            <div><span class="text-slate-400">JV Sharing Ratio:</span> <span class="font-bold ml-1">{{
+                st.landowner_jv_sharing_ratio }}</span></div>
+            <div><span class="text-slate-400">Developer Share:</span> <span class="font-bold ml-1 font-mono">{{
+                st.developer_share_sqft | number:'1.0-0' }} SqFt</span></div>
+            <div><span class="text-slate-400">Landowner Share:</span> <span class="font-bold ml-1 font-mono">{{
+                st.landowner_share_sqft | number:'1.0-0' }} SqFt</span></div>
+            <div><span class="text-slate-400">Approval Status:</span> <span class="font-bold ml-1 text-emerald-600">{{
+                st.status }}</span></div>
+          </div>
+        </div>
+
+        @if (st.review_remarks) {
+        <div class="space-y-1">
+          <h3 class="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">Executive Review
+            Remarks</h3>
+          <p
+            class="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300">
+            {{ st.review_remarks }}
+          </p>
+        </div>
+        }
+      </div>
+
+      <div
+        class="px-6 py-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end bg-slate-50 dark:bg-slate-850">
+        <button (click)="isDetailsModalOpen.set(false)"
+          class="px-4 py-2 text-xs font-semibold bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 text-slate-700 dark:text-slate-200 rounded-xl">
+          Close
+        </button>
+      </div>
+
     </div>
+  </div>
   }
 </div>

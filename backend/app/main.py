@@ -59,6 +59,7 @@ from app.modules.mobile.site_router import router as mobile_site_router
 from app.modules.mobile.collection_router import router as mobile_collection_router
 from app.modules.mobile.management_router import router as mobile_management_router
 from app.modules.mobile.hr_router import router as mobile_hr_router
+from app.modules.dashboard.router import router as dashboard_router
 
 
 
@@ -175,6 +176,7 @@ app.include_router(mobile_site_router, prefix=settings.API_V1_PREFIX)
 app.include_router(mobile_collection_router, prefix=settings.API_V1_PREFIX)
 app.include_router(mobile_management_router, prefix=settings.API_V1_PREFIX)
 app.include_router(mobile_hr_router, prefix=settings.API_V1_PREFIX)
+app.include_router(dashboard_router, prefix=settings.API_V1_PREFIX)
 
 if __name__ == "__main__":
 

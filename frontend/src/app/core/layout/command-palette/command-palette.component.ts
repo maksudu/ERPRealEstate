@@ -91,9 +91,9 @@ export class CommandPaletteComponent {
 
   commands: CommandItem[] = [
     { id: 'bi-cockpit', title: 'Executive Management BI Cockpit (Board & C-Suite)', category: 'Executive BI', route: '/bi/cockpit' },
-    { id: 'bi-runway', title: 'Cash Runway Sensitivity Simulator (90 / 180 / 365 Days)', category: 'Executive BI', route: '/bi/cockpit' },
-    { id: 'bi-evm', title: 'Project Profitability & EVM Performance (SPI & CPI)', category: 'Executive BI', route: '/bi/cockpit' },
-    { id: 'bi-heatmap', title: 'Real-time Overdue Collections Aging Matrix Heatmap', category: 'Executive BI', route: '/bi/cockpit' },
+    { id: 'bi-runway', title: 'Cash Runway Sensitivity Simulator (90 / 180 / 365 Days)', category: 'Executive BI', route: '/bi/runway' },
+    { id: 'bi-evm', title: 'Project Profitability & EVM Performance (SPI & CPI)', category: 'Executive BI', route: '/bi/evm' },
+    { id: 'bi-heatmap', title: 'Real-time Overdue Collections Aging Matrix Heatmap', category: 'Executive BI', route: '/bi/heatmap' },
     { id: 'land-proposals', title: 'Land Proposals', category: 'Land', route: '/land/proposals' },
     { id: 'land-surveys', title: 'Land Surveys & Khatian (CS, SA, RS)', category: 'Land', route: '/land/surveys' },
     { id: 'jv', title: 'Joint Venture Agreements', category: 'Land', route: '/land/jv-agreements' },

@@ -8,11 +8,9 @@ import { CardContainerComponent } from '../../../shared/components/card-containe
 @Component({
   selector: 'app-security-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, SecurityNavComponent, CardContainerComponent],
+  imports: [CommonModule, RouterLink, CardContainerComponent],
   template: `
     <div class="p-4 sm:p-6 w-full space-y-6">
-      <app-security-nav />
-
       <!-- Top Executive Metrics Cockpit -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <!-- Metric 1: Total Users -->

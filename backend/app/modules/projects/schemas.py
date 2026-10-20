@@ -672,7 +672,7 @@ class ProjectResponse(ProjectBase):
 
 
 # -------------------------------------------------------------
-# 2.2 Project Feasibility & Investment Analysis Schemas
+# Project Feasibility & Investment Analysis Schemas
 # -------------------------------------------------------------
 class ProjectFeasibilityBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)

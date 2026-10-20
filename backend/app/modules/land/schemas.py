@@ -1079,6 +1079,7 @@ class LandValuationCreate(BaseModel):
     approval_status: Optional[str] = "DRAFT"
 
 class LandValuationUpdate(BaseModel):
+    parcel_id: Optional[int] = None
     valuation_date: Optional[date] = None
     valuation_source: Optional[str] = None
     assessor_name: Optional[str] = None
@@ -1106,6 +1107,12 @@ class LandValuationResponse(LandValuationBase):
 
     class Config:
         from_attributes = True
+
+class LandValuationPage(BaseModel):
+    items: List[LandValuationResponse]
+    total: int
+    offset: int
+    limit: int
 
 class AcquisitionExpenseItemBase(BaseModel):
     expense_category: str
@@ -1166,6 +1173,7 @@ class AcquisitionCostingCreate(BaseModel):
     expense_items: Optional[List[AcquisitionExpenseItemCreate]] = []
 
 class AcquisitionCostingUpdate(BaseModel):
+    parcel_id: Optional[int] = None
     valuation_id: Optional[int] = None
     costing_date: Optional[date] = None
     costing_status: Optional[str] = None
@@ -1207,6 +1215,12 @@ class AcquisitionCostingResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class AcquisitionCostingPage(BaseModel):
+    items: List[AcquisitionCostingResponse]
+    total: int
+    offset: int
+    limit: int
 
 class CostingApprovalRequest(BaseModel):
     approved_by: str
@@ -1544,6 +1558,4 @@ class PaymentReconciliationSummary(BaseModel):
     schedules_count: int
     paid_count: int
     pending_count: int
-
-
 

@@ -10,11 +10,9 @@ import { SearchableSelectComponent, SelectOption } from '../../../shared/compone
 @Component({
   selector: 'app-project-access',
   standalone: true,
-  imports: [CommonModule, FormsModule, SecurityNavComponent, CardContainerComponent, ModalComponent, SearchableSelectComponent],
+  imports: [CommonModule, FormsModule, CardContainerComponent, ModalComponent, SearchableSelectComponent],
   template: `
     <div class="p-4 sm:p-6 w-full space-y-6">
-      <app-security-nav />
-
       <!-- Top Summary Cards -->
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-2xs">

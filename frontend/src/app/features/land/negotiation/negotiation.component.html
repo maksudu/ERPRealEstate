@@ -25,7 +25,7 @@
     <!-- Quick Action -->
     <div class="flex items-center gap-2.5 shrink-0">
       <button
-        (click)="openCreateModal()"
+        (click)="navigateToCreate()"
         class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs shadow-sm shadow-blue-500/20 transition-all duration-150 active:scale-95"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -194,30 +194,30 @@
           <app-searchable-select
             label="Filter by Parcel"
             [options]="parcelOptions"
-            [(ngModel)]="selectedParcelFilter"
-            (selectionChange)="applyFilters()"
+            [value]="selectedParcelFilter"
+            (selectionChange)="onParcelFilterChange($event)"
             placeholder="All Parcels"
           ></app-searchable-select>
         </div>
 
-        <!-- Stage Filter (Dynamic from Lookups) -->
+        <!-- Stage Filter -->
         <div>
           <app-searchable-select
-            categoryCode="NEGOTIATION_STAGE"
             label="Negotiation Stage"
-            [(ngModel)]="selectedStageFilter"
-            (selectionChange)="applyFilters()"
+            [options]="stageOptions"
+            [value]="selectedStageFilter"
+            (selectionChange)="onStageFilterChange($event)"
             placeholder="All Stages"
           ></app-searchable-select>
         </div>
 
-        <!-- Agreement Status Filter (Dynamic from Lookups) -->
+        <!-- Agreement Status Filter -->
         <div>
           <app-searchable-select
-            categoryCode="AGREEMENT_WORKFLOW_STATUS"
             label="Agreement Status"
-            [(ngModel)]="selectedStatusFilter"
-            (selectionChange)="applyFilters()"
+            [options]="statusOptions"
+            [value]="selectedStatusFilter"
+            (selectionChange)="onStatusFilterChange($event)"
             placeholder="All Statuses"
           ></app-searchable-select>
         </div>
@@ -284,7 +284,7 @@
                     <p class="font-medium text-slate-700 dark:text-slate-300">No commercial negotiations found</p>
                     <p class="text-[11px] text-slate-400 mt-1">Get started by creating a new deal register for a parcel.</p>
                     <button
-                      (click)="openCreateModal()"
+                      (click)="navigateToCreate()"
                       class="mt-3 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-medium hover:bg-blue-700"
                     >
                       + Create Negotiation
@@ -418,7 +418,7 @@
 
                       <!-- Edit -->
                       <button
-                        (click)="openEditModal(neg)"
+                        (click)="navigateToEdit(neg)"
                         class="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors"
                         title="Edit Details"
                       >
@@ -770,7 +770,7 @@
                       Revise Terms
                     </button>
                     <button
-                      (click)="openEditModal(del)"
+                      (click)="navigateToEdit(del)"
                       class="px-2.5 py-1.5 rounded-lg text-xs border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium"
                     >
                       Extend Deadline
@@ -823,7 +823,7 @@
                   </div>
                   <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
                     <button
-                      (click)="openEditModal(exp)"
+                      (click)="navigateToEdit(exp)"
                       class="px-2.5 py-1.5 rounded-lg text-xs bg-amber-600 text-white font-medium hover:bg-amber-700"
                     >
                       Renew / Extend Agreement
@@ -837,190 +837,6 @@
       </div>
     </div>
   }
-
-  <!-- MODAL 1: CREATE / EDIT MASTER NEGOTIATION -->
-  <app-modal
-    [isOpen]="isCreateEditModalOpen"
-    [title]="editingNegotiationId ? 'Edit Commercial Negotiation' : 'New Commercial Negotiation Deal'"
-    [subtitle]="'Record commercial terms, asking price, developer targets, and conditions precedent.'"
-    size="xl"
-    (closeModal)="isCreateEditModalOpen = false"
-  >
-    <div class="space-y-4">
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <!-- Parcel Selection -->
-        <app-searchable-select
-          label="Target Land Parcel"
-          [options]="parcelOptions"
-          [(ngModel)]="negotiationFormData.parcel_id"
-          [required]="true"
-          placeholder="Select Land Parcel..."
-        ></app-searchable-select>
-
-        <!-- Landowner Selection -->
-        <app-searchable-select
-          label="Primary Landowner / Representative"
-          [options]="landownerOptions"
-          [(ngModel)]="negotiationFormData.landowner_id"
-          placeholder="Select Landowner..."
-        ></app-searchable-select>
-      </div>
-
-      <!-- Negotiation Title -->
-      <app-custom-input
-        label="Negotiation Title / Acquisition Deal Reference"
-        [(ngModel)]="negotiationFormData.negotiation_title"
-        [required]="true"
-        placeholder="e.g. Uttara Sector 11 Commercial Plot Acquisition"
-      ></app-custom-input>
-
-      <!-- Stage & Consideration Type (Dynamic from Lookups) -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <app-searchable-select
-          categoryCode="NEGOTIATION_STAGE"
-          label="Negotiation Stage"
-          [(ngModel)]="negotiationFormData.negotiation_stage"
-          placeholder="Select Stage..."
-        ></app-searchable-select>
-
-        <app-searchable-select
-          categoryCode="CONSIDERATION_TYPE"
-          label="Commercial Consideration Type"
-          [(ngModel)]="negotiationFormData.consideration_type"
-          placeholder="Select Consideration..."
-        ></app-searchable-select>
-      </div>
-
-      <!-- Commercial Price Parameters -->
-      <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800">
-        <h4 class="text-xs font-bold text-slate-900 dark:text-slate-100 mb-3 flex items-center gap-1.5">
-          <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-          </svg>
-          Commercial Pricing & Advances (BDT)
-        </h4>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <app-custom-input
-            type="number"
-            label="Initial Asking Price (BDT)"
-            [(ngModel)]="negotiationFormData.initial_asking_price_bdt"
-            placeholder="0.00"
-          ></app-custom-input>
-
-          <app-custom-input
-            type="number"
-            label="Developer Target Price (BDT)"
-            [(ngModel)]="negotiationFormData.developer_target_price_bdt"
-            placeholder="0.00"
-          ></app-custom-input>
-
-          <app-custom-input
-            type="number"
-            label="Proposed Advance / Bayna (BDT)"
-            [(ngModel)]="negotiationFormData.proposed_advance_bdt"
-            placeholder="0.00"
-          ></app-custom-input>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
-          <app-custom-input
-            type="number"
-            label="Current Offer Amount (BDT)"
-            [(ngModel)]="negotiationFormData.current_offer_amount_bdt"
-            placeholder="0.00"
-          ></app-custom-input>
-
-          <app-custom-input
-            type="number"
-            label="Current Counteroffer (BDT)"
-            [(ngModel)]="negotiationFormData.current_counteroffer_amount_bdt"
-            placeholder="0.00"
-          ></app-custom-input>
-        </div>
-      </div>
-
-      <!-- Payment Terms & Non-Cash Consideration -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <app-custom-textarea
-          label="Installment & Settlement Payment Terms"
-          [(ngModel)]="negotiationFormData.installment_terms_summary"
-          placeholder="e.g. 20% on Bayna, 40% on Mutation, 40% on Final Registry"
-          [rows]="3"
-        ></app-custom-textarea>
-
-        <app-custom-textarea
-          label="Non-Cash Consideration (Flats / Shops / Parking Allocation)"
-          [(ngModel)]="negotiationFormData.non_cash_consideration_details"
-          placeholder="e.g. 2 units of 1,800 sft on 4th floor + 2 car parking bays"
-          [rows]="3"
-        ></app-custom-textarea>
-      </div>
-
-      <!-- Conditions Precedent -->
-      <app-custom-textarea
-        label="Conditions Precedent & Legal Completion Prerequisites"
-        [(ngModel)]="negotiationFormData.conditions_precedent"
-        placeholder="e.g. CS-SA-RS mutation porcha delivery, clear dakhila, eviction of tenants, warishan certificate"
-        [rows]="2"
-      ></app-custom-textarea>
-
-      <!-- Deadlines & Agreement Status -->
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <app-custom-input
-          type="date"
-          label="Negotiation Start Date"
-          [(ngModel)]="negotiationFormData.negotiation_start_date"
-          [required]="true"
-        ></app-custom-input>
-
-        <app-custom-input
-          type="date"
-          label="Target Closing Deadline"
-          [(ngModel)]="negotiationFormData.target_closing_deadline"
-          [required]="true"
-        ></app-custom-input>
-
-        <app-searchable-select
-          categoryCode="AGREEMENT_WORKFLOW_STATUS"
-          label="Agreement Workflow Status"
-          [(ngModel)]="negotiationFormData.agreement_status"
-          placeholder="Select Status..."
-        ></app-searchable-select>
-      </div>
-
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <app-custom-input
-          type="date"
-          label="Agreement Execution Date (If signed)"
-          [(ngModel)]="negotiationFormData.agreement_execution_date"
-        ></app-custom-input>
-
-        <app-custom-input
-          type="date"
-          label="Agreement Expiry Date (If term-bound)"
-          [(ngModel)]="negotiationFormData.agreement_expiry_date"
-        ></app-custom-input>
-      </div>
-    </div>
-
-    <div modal-footer class="flex items-center justify-end gap-2 w-full">
-      <button
-        type="button"
-        (click)="isCreateEditModalOpen = false"
-        class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-medium"
-      >
-        Cancel
-      </button>
-      <button
-        type="button"
-        (click)="saveNegotiation()"
-        [disabled]="isSubmitting"
-        class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium shadow-sm transition-all"
-      >
-        {{ isSubmitting ? 'Saving Deal...' : (editingNegotiationId ? 'Update Negotiation' : 'Create Negotiation') }}
-      </button>
-    </div>
-  </app-modal>
 
   <!-- MODAL 2: REVISE COMMERCIAL TERMS (NEW VERSION) -->
   <app-modal

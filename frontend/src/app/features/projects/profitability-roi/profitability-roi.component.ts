@@ -67,9 +67,8 @@ import {
 
       <!-- Main Container with Filters & Table -->
       <app-card-container
-        title="2.6 Estimated Profitability & ROI Performance Matrix"
-        subtitle="Evaluates projected returns during feasibility and updates forecasts as construction costs and sales performance change"
-        badge="Enterprise ROI Engine"
+        title="Estimated Profitability & ROI Performance Matrix"
+        
       >
         <!-- Top Action Bar -->
         <div card-actions class="flex items-center gap-2">

@@ -1,10 +1,10 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { SecurityService, SecurityUser } from '../../../core/services/security.service';
 import { SecurityNavComponent } from '../security-nav/security-nav.component';
 import { CardContainerComponent } from '../../../shared/components/card-container/card-container.component';
-import { ModalComponent } from '../../../shared/components/modal/modal.component';
 import { SearchableSelectComponent, SelectOption } from '../../../shared/components/searchable-select/searchable-select.component';
 
 @Component({
@@ -13,21 +13,17 @@ import { SearchableSelectComponent, SelectOption } from '../../../shared/compone
   imports: [
     CommonModule,
     FormsModule,
-    SecurityNavComponent,
     CardContainerComponent,
-    ModalComponent,
     SearchableSelectComponent
   ],
   template: `
     <div class="p-4 sm:p-6 w-full space-y-6">
-      <app-security-nav />
-
       <!-- Top Filter & Search Bar -->
-      <app-card title="User Accounts & Identity Directory" subtitle="Manage employee, contractor and partner access with multi-tenant company and project scoping">
+      <app-card title="User Accounts & Identity Directory">
         <div card-actions>
           <button
             type="button"
-            (click)="openAddModal()"
+            (click)="navigateToCreate()"
             class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-600 text-white hover:bg-rose-700 shadow-2xs transition"
           >
             <span>+</span> Register New User
@@ -49,19 +45,17 @@ import { SearchableSelectComponent, SelectOption } from '../../../shared/compone
 
           <div>
             <app-searchable-select
-              categoryCode="USER_DEPARTMENT"
               label="Department Filter"
               placeholder="All Departments"
               [(ngModel)]="selectedDepartment"
               (ngModelChange)="loadUsers()"
               [options]="departmentOptions"
-              [allowCreateNew]="true"
+              [allowCreateNew]="false"
             />
           </div>
 
           <div>
             <app-searchable-select
-              categoryCode="ROLE_CODE"
               label="Role Filter"
               placeholder="All Roles"
               [(ngModel)]="selectedRole"
@@ -73,7 +67,6 @@ import { SearchableSelectComponent, SelectOption } from '../../../shared/compone
 
           <div>
             <app-searchable-select
-              categoryCode="ACCOUNT_STATUS"
               label="Account Lifecycle Status"
               placeholder="All Statuses"
               [(ngModel)]="selectedStatus"
@@ -152,7 +145,7 @@ import { SearchableSelectComponent, SelectOption } from '../../../shared/compone
                       <div class="flex items-center justify-center gap-1.5">
                         <button
                           type="button"
-                          (click)="openEditModal(item)"
+                          (click)="navigateToEdit(item)"
                           class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-indigo-600"
                           title="Edit User"
                         >
@@ -207,165 +200,12 @@ import { SearchableSelectComponent, SelectOption } from '../../../shared/compone
           </div>
         </div>
       </app-card>
-
-      <!-- Reusable Modal for Add / Edit User -->
-      <app-modal
-        [isOpen]="isModalOpen"
-        [title]="isEditMode ? 'Edit User Profile & Roles' : 'Register New Enterprise User'"
-        [subtitle]="'Assign department, designated role, reporting manager, and project scope access'"
-        badge="Identity Management"
-        size="2xl"
-        (close)="closeModal()"
-      >
-        <div class="space-y-4 p-4 text-xs">
-          <!-- Row 1: Username & Email -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Username *</label>
-              <input
-                type="text"
-                [(ngModel)]="formData.username"
-                [disabled]="isEditMode"
-                placeholder="e.g. kamal_hossain"
-                class="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 disabled:opacity-50 focus:outline-none focus:ring-1 focus:ring-rose-500"
-              />
-            </div>
-            <div>
-              <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Email Address *</label>
-              <input
-                type="email"
-                [(ngModel)]="formData.email"
-                [disabled]="isEditMode"
-                placeholder="e.g. kamal@blueoceansbd.com"
-                class="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 disabled:opacity-50 focus:outline-none focus:ring-1 focus:ring-rose-500"
-              />
-            </div>
-          </div>
-
-          <!-- Row 2: Full Names (En & Bn) -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Full Name (English) *</label>
-              <input
-                type="text"
-                [(ngModel)]="formData.full_name_en"
-                placeholder="e.g. Engr. Kamal Hossain"
-                class="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-rose-500"
-              />
-            </div>
-            <div>
-              <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Full Name (বাংলা)</label>
-              <input
-                type="text"
-                [(ngModel)]="formData.full_name_bn"
-                placeholder="e.g. কামাল হোসেন"
-                class="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-rose-500"
-              />
-            </div>
-          </div>
-
-          <!-- Row 3: Department & Designation -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <app-searchable-select
-                categoryCode="USER_DEPARTMENT"
-                label="Department *"
-                placeholder="Select department..."
-                [(ngModel)]="formData.department_name"
-                [options]="departmentOptions"
-                [allowCreateNew]="true"
-              />
-            </div>
-            <div>
-              <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Designation</label>
-              <input
-                type="text"
-                [(ngModel)]="formData.designation"
-                placeholder="e.g. Senior Project Manager"
-                class="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-rose-500"
-              />
-            </div>
-          </div>
-
-          <!-- Row 4: Primary Role & Reporting Manager -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <app-searchable-select
-                categoryCode="ROLE_CODE"
-                label="Primary Role *"
-                placeholder="Select primary role..."
-                [(ngModel)]="formData.primary_role"
-                [options]="roleOptions"
-                [allowCreateNew]="false"
-              />
-            </div>
-            <div>
-              <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Reporting Manager</label>
-              <input
-                type="text"
-                [(ngModel)]="formData.reporting_manager"
-                placeholder="e.g. Project Director / MD"
-                class="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-rose-500"
-              />
-            </div>
-          </div>
-
-          <!-- Row 5: Phone & Employee ID -->
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div>
-              <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Employee ID</label>
-              <input
-                type="text"
-                [(ngModel)]="formData.employee_id"
-                placeholder="e.g. EMP-2025-081"
-                class="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-rose-500"
-              />
-            </div>
-            <div>
-              <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Phone Number</label>
-              <input
-                type="text"
-                [(ngModel)]="formData.phone_number"
-                placeholder="e.g. +8801711000000"
-                class="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-rose-500"
-              />
-            </div>
-            <div>
-              <app-searchable-select
-                categoryCode="ACCOUNT_STATUS"
-                label="Account Status"
-                placeholder="Status..."
-                [(ngModel)]="formData.account_status"
-                [options]="statusOptions"
-                [allowCreateNew]="false"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div modal-actions class="flex items-center justify-end gap-2 px-4 py-3 bg-slate-50 dark:bg-slate-850/80 border-t border-slate-200 dark:border-slate-800">
-          <button
-            type="button"
-            (click)="closeModal()"
-            class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            (click)="saveUser()"
-            [disabled]="!formData.username || !formData.email || !formData.full_name_en"
-            class="px-3 py-1.5 rounded-lg bg-rose-600 text-white font-medium hover:bg-rose-700 disabled:opacity-40 text-xs shadow-2xs"
-          >
-            {{ isEditMode ? 'Update User' : 'Save User' }}
-          </button>
-        </div>
-      </app-modal>
     </div>
   `
 })
 export class UserManagementComponent implements OnInit {
   private service = inject(SecurityService);
+  private router = inject(Router);
 
   Math = Math;
   users: SecurityUser[] = [];
@@ -379,12 +219,6 @@ export class UserManagementComponent implements OnInit {
   selectedDepartment = '';
   selectedRole = '';
   selectedStatus = '';
-
-  // Modal State
-  isModalOpen = false;
-  isEditMode = false;
-  editingId: number | null = null;
-  formData: any = this.initFormData();
 
   // Searchable Select Options
   departmentOptions: SelectOption[] = [
@@ -462,58 +296,12 @@ export class UserManagementComponent implements OnInit {
     }
   }
 
-  initFormData(): any {
-    return {
-      username: '',
-      email: '',
-      full_name_en: '',
-      full_name_bn: '',
-      department_name: 'Construction Operations',
-      designation: 'Project Manager',
-      primary_role: 'PROJECT_MGR',
-      reporting_manager: 'Project Director',
-      phone_number: '',
-      employee_id: '',
-      account_status: 'ACTIVE'
-    };
+  navigateToCreate(): void {
+    this.router.navigate(['/security/users/create']);
   }
 
-  openAddModal(): void {
-    this.isEditMode = false;
-    this.editingId = null;
-    this.formData = this.initFormData();
-    this.isModalOpen = true;
-  }
-
-  openEditModal(user: SecurityUser): void {
-    this.isEditMode = true;
-    this.editingId = user.id;
-    this.formData = { ...user };
-    this.isModalOpen = true;
-  }
-
-  closeModal(): void {
-    this.isModalOpen = false;
-  }
-
-  saveUser(): void {
-    if (this.isEditMode && this.editingId) {
-      this.service.updateUser(this.editingId, this.formData).subscribe({
-        next: () => {
-          this.closeModal();
-          this.loadUsers();
-        },
-        error: (err) => console.error('Failed to update user', err)
-      });
-    } else {
-      this.service.createUser(this.formData).subscribe({
-        next: () => {
-          this.closeModal();
-          this.loadUsers();
-        },
-        error: (err) => console.error('Failed to create user', err)
-      });
-    }
+  navigateToEdit(user: SecurityUser): void {
+    this.router.navigate(['/security/users', user.id, 'edit']);
   }
 
   toggleSuspendUser(user: SecurityUser): void {

@@ -1,6 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { LandService } from '../../../core/services/land.service';
 import {
   AcquisitionCosting,
@@ -35,6 +36,7 @@ import { StatusBadgeComponent, StatusVariant } from '../../../shared/components/
   styleUrls: []
 })
 export class ValuationCostingComponent implements OnInit {
+  Math = Math;
   activeTab: 'costings' | 'valuations' | 'comparison' = 'costings';
 
   // Data lists
@@ -52,10 +54,12 @@ export class ValuationCostingComponent implements OnInit {
   costingSearch = '';
   selectedParcelFilter: string = '';
   selectedCostingStatusFilter: string = '';
-  selectedApprovalFilter: string = '';
   currentCostingPage = 1;
   costingPageSize = 10;
+  totalCostings = 0;
+  costingPageSizes = [10, 25, 50];
   isLoadingCostings = false;
+  costingLoadError = '';
 
   // Filter & Pagination for Valuations
   valSearch = '';
@@ -64,32 +68,23 @@ export class ValuationCostingComponent implements OnInit {
   selectedValStatusFilter: string = '';
   currentValPage = 1;
   valPageSize = 10;
+  totalValuations = 0;
+  valuationPageSizes = [10, 25, 50];
   isLoadingValuations = false;
+  valuationLoadError = '';
 
   // Modals
-  isCostingModalOpen = false;
   isExpenseLedgerModalOpen = false;
   isExpenseItemModalOpen = false;
   isCostingApproveModalOpen = false;
-  isValuationModalOpen = false;
   isValuationApproveModalOpen = false;
   isSubmitting = false;
+  successMessage = '';
 
   // Selected Costing for Expense Items Ledger
   activeCosting: AcquisitionCosting | null = null;
 
   // Forms Data
-  costingFormData: any = {
-    parcel_id: '',
-    valuation_id: null,
-    costing_date: new Date().toISOString().substring(0, 10),
-    costing_status: 'ESTIMATED',
-    agreed_purchase_price_bdt: 0,
-    budget_allocated_bdt: 0,
-    remarks: ''
-  };
-  editingCostingId: number | null = null;
-
   expenseItemFormData: any = {
     expense_category: 'REGISTRATION_FEES',
     item_description: '',
@@ -111,23 +106,6 @@ export class ValuationCostingComponent implements OnInit {
   };
   approvingCostingId: number | null = null;
 
-  valuationFormData: any = {
-    parcel_id: '',
-    valuation_date: new Date().toISOString().substring(0, 10),
-    valuation_source: 'INTERNAL_ESTIMATE',
-    assessor_name: '',
-    assessor_company: '',
-    assessor_license_no: '',
-    asking_price_total_bdt: 0,
-    market_valuation_total_bdt: 0,
-    govt_mouza_rate_per_decimal_bdt: 0,
-    govt_mouza_valuation_total_bdt: 0,
-    recommended_offer_price_bdt: 0,
-    notes_and_methodology: '',
-    approval_status: 'DRAFT'
-  };
-  editingValuationId: number | null = null;
-
   valuationApprovalFormData: ValuationApprovalRequest = {
     approved_by: '',
     approval_status: 'APPROVED',
@@ -137,10 +115,18 @@ export class ValuationCostingComponent implements OnInit {
 
   constructor(
     private landService: LandService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
+    const state = this.router.getCurrentNavigation()?.extras.state;
+    if (typeof state?.['successMessage'] === 'string') {
+      this.successMessage = state['successMessage'];
+    }
+    if (state?.['activeTab'] === 'costings' || state?.['activeTab'] === 'valuations') {
+      this.activeTab = state['activeTab'];
+    }
     this.loadParcels();
     this.loadCostings();
     this.loadValuations();
@@ -169,22 +155,31 @@ export class ValuationCostingComponent implements OnInit {
     this.isLoadingCostings = true;
     const skip = (this.currentCostingPage - 1) * this.costingPageSize;
     const params: any = {
-      skip,
+      offset: skip,
       limit: this.costingPageSize
     };
     if (this.costingSearch) params.search = this.costingSearch;
     if (this.selectedParcelFilter) params.parcel_id = this.selectedParcelFilter;
     if (this.selectedCostingStatusFilter) params.costing_status = this.selectedCostingStatusFilter;
-    if (this.selectedApprovalFilter) params.approval_stage = this.selectedApprovalFilter;
 
+    this.costingLoadError = '';
     this.landService.getAcquisitionCostings(params).subscribe({
       next: (res) => {
-        this.costings = Array.isArray(res) ? res : [];
+        if (res.items.length === 0 && res.total > 0 && this.currentCostingPage > 1) {
+          this.currentCostingPage = Math.max(1, Math.ceil(res.total / this.costingPageSize));
+          this.loadCostings();
+          return;
+        }
+        this.costings = res.items;
+        this.totalCostings = res.total;
         this.isLoadingCostings = false;
         this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Error loading costings', err);
+        this.costings = [];
+        this.totalCostings = 0;
+        this.costingLoadError = err.error?.detail || err.message || 'Unable to load acquisition costings.';
         this.isLoadingCostings = false;
         this.cdr.detectChanges();
       }
@@ -196,7 +191,7 @@ export class ValuationCostingComponent implements OnInit {
     this.isLoadingValuations = true;
     const skip = (this.currentValPage - 1) * this.valPageSize;
     const params: any = {
-      skip,
+      offset: skip,
       limit: this.valPageSize
     };
     if (this.valSearch) params.search = this.valSearch;
@@ -204,14 +199,24 @@ export class ValuationCostingComponent implements OnInit {
     if (this.selectedValSourceFilter) params.valuation_source = this.selectedValSourceFilter;
     if (this.selectedValStatusFilter) params.approval_status = this.selectedValStatusFilter;
 
+    this.valuationLoadError = '';
     this.landService.getLandValuations(params).subscribe({
       next: (res) => {
-        this.valuations = Array.isArray(res) ? res : [];
+        if (res.items.length === 0 && res.total > 0 && this.currentValPage > 1) {
+          this.currentValPage = Math.max(1, Math.ceil(res.total / this.valPageSize));
+          this.loadValuations();
+          return;
+        }
+        this.valuations = res.items;
+        this.totalValuations = res.total;
         this.isLoadingValuations = false;
         this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Error loading valuations', err);
+        this.valuations = [];
+        this.totalValuations = 0;
+        this.valuationLoadError = err.error?.detail || err.message || 'Unable to load land valuations.';
         this.isLoadingValuations = false;
         this.cdr.detectChanges();
       }
@@ -240,78 +245,38 @@ export class ValuationCostingComponent implements OnInit {
     this.loadComparison();
   }
 
-  // Costing Modal Handlers
-  openCreateCostingModal(): void {
-    this.editingCostingId = null;
-    this.costingFormData = {
-      parcel_id: this.parcels.length > 0 ? this.parcels[0].id : '',
-      valuation_id: null,
-      costing_date: new Date().toISOString().substring(0, 10),
-      costing_status: 'ESTIMATED',
-      agreed_purchase_price_bdt: 0,
-      budget_allocated_bdt: 0,
-      remarks: ''
-    };
-    this.isCostingModalOpen = true;
+  openCreateCostingPage(): void {
+    this.router.navigateByUrl('/land/valuation-costing/costings/create');
   }
 
-  openEditCostingModal(costing: AcquisitionCosting): void {
-    this.editingCostingId = costing.id;
-    this.costingFormData = {
-      parcel_id: costing.parcel_id,
-      valuation_id: costing.valuation_id,
-      costing_date: costing.costing_date,
-      costing_status: costing.costing_status,
-      agreed_purchase_price_bdt: costing.agreed_purchase_price_bdt,
-      budget_allocated_bdt: costing.budget_allocated_bdt,
-      remarks: costing.remarks || ''
-    };
-    this.isCostingModalOpen = true;
+  openEditCostingPage(costing: AcquisitionCosting): void {
+    this.router.navigateByUrl(`/land/valuation-costing/costings/${costing.id}/edit`);
   }
 
-  closeCostingModal(): void {
-    this.isCostingModalOpen = false;
-  }
-
-  saveCosting(): void {
-    if (!this.costingFormData.parcel_id) {
-      alert('Please select a target land parcel.');
-      return;
+  goToCostingPage(page: number): void {
+    const totalPages = Math.max(1, Math.ceil(this.totalCostings / this.costingPageSize));
+    if (page >= 1 && page <= totalPages) {
+      this.currentCostingPage = page;
+      this.loadCostings();
     }
-    this.isSubmitting = true;
-    if (this.editingCostingId) {
-      this.landService.updateAcquisitionCosting(this.editingCostingId, this.costingFormData).subscribe({
-        next: () => {
-          this.isSubmitting = false;
-          this.isCostingModalOpen = false;
-          this.loadCostings();
-        },
-        error: (err) => {
-          alert('Failed to update costing: ' + (err.error?.detail || err.message));
-          this.isSubmitting = false;
-          this.cdr.detectChanges();
-        }
-      });
-    } else {
-      this.landService.createAcquisitionCosting(this.costingFormData).subscribe({
-        next: () => {
-          this.isSubmitting = false;
-          this.isCostingModalOpen = false;
-          this.loadCostings();
-        },
-        error: (err) => {
-          alert('Failed to create costing: ' + (err.error?.detail || err.message));
-          this.isSubmitting = false;
-          this.cdr.detectChanges();
-        }
-      });
-    }
+  }
+
+  onCostingPageSizeChange(size: string): void {
+    this.costingPageSize = Number(size);
+    this.currentCostingPage = 1;
+    this.loadCostings();
+  }
+
+  onCostingFilterChange(): void {
+    this.currentCostingPage = 1;
+    this.loadCostings();
   }
 
   deleteCosting(id: number): void {
     if (!confirm('Are you sure you want to delete this acquisition costing and all its expenses?')) return;
     this.landService.deleteAcquisitionCosting(id).subscribe({
       next: () => {
+        this.successMessage = 'Acquisition costing deleted successfully.';
         this.loadCostings();
       },
       error: (err) => alert('Failed to delete: ' + (err.error?.detail || err.message))
@@ -467,98 +432,38 @@ export class ValuationCostingComponent implements OnInit {
     });
   }
 
-  // --- Valuation Modal Handlers ---
-  openCreateValuationModal(): void {
-    this.editingValuationId = null;
-    this.valuationFormData = {
-      parcel_id: this.parcels.length > 0 ? this.parcels[0].id : '',
-      valuation_date: new Date().toISOString().substring(0, 10),
-      valuation_source: 'INTERNAL_ESTIMATE',
-      assessor_name: '',
-      assessor_company: '',
-      assessor_license_no: '',
-      asking_price_total_bdt: 0,
-      market_valuation_total_bdt: 0,
-      govt_mouza_rate_per_decimal_bdt: 0,
-      govt_mouza_valuation_total_bdt: 0,
-      recommended_offer_price_bdt: 0,
-      notes_and_methodology: '',
-      approval_status: 'DRAFT'
-    };
-    this.isValuationModalOpen = true;
+  openCreateValuationPage(): void {
+    this.router.navigateByUrl('/land/valuation-costing/valuations/create');
   }
 
-  openEditValuationModal(val: LandValuation): void {
-    this.editingValuationId = val.id;
-    this.valuationFormData = {
-      parcel_id: val.parcel_id,
-      valuation_date: val.valuation_date,
-      valuation_source: val.valuation_source,
-      assessor_name: val.assessor_name,
-      assessor_company: val.assessor_company || '',
-      assessor_license_no: val.assessor_license_no || '',
-      asking_price_total_bdt: val.asking_price_total_bdt,
-      market_valuation_total_bdt: val.market_valuation_total_bdt,
-      govt_mouza_rate_per_decimal_bdt: val.govt_mouza_rate_per_decimal_bdt,
-      govt_mouza_valuation_total_bdt: val.govt_mouza_valuation_total_bdt,
-      recommended_offer_price_bdt: val.recommended_offer_price_bdt,
-      notes_and_methodology: val.notes_and_methodology || '',
-      approval_status: val.approval_status
-    };
-    this.isValuationModalOpen = true;
+  openEditValuationPage(valuation: LandValuation): void {
+    this.router.navigateByUrl(`/land/valuation-costing/valuations/${valuation.id}/edit`);
   }
 
-  closeValuationModal(): void {
-    this.isValuationModalOpen = false;
-  }
-
-  onGovtMouzaRateChange(): void {
-    const selectedParcel = this.parcels.find(p => p.id === Number(this.valuationFormData.parcel_id));
-    if (selectedParcel && this.valuationFormData.govt_mouza_rate_per_decimal_bdt) {
-      this.valuationFormData.govt_mouza_valuation_total_bdt = 
-        Number(this.valuationFormData.govt_mouza_rate_per_decimal_bdt) * Number(selectedParcel.total_area_decimal || 0);
+  goToValuationPage(page: number): void {
+    const totalPages = Math.max(1, Math.ceil(this.totalValuations / this.valPageSize));
+    if (page >= 1 && page <= totalPages) {
+      this.currentValPage = page;
+      this.loadValuations();
     }
   }
 
-  saveValuation(): void {
-    if (!this.valuationFormData.parcel_id || !this.valuationFormData.assessor_name) {
-      alert('Please fill in target parcel and assessor name.');
-      return;
-    }
-    this.isSubmitting = true;
-    if (this.editingValuationId) {
-      this.landService.updateLandValuation(this.editingValuationId, this.valuationFormData).subscribe({
-        next: () => {
-          this.isSubmitting = false;
-          this.isValuationModalOpen = false;
-          this.loadValuations();
-        },
-        error: (err) => {
-          alert('Failed to update valuation: ' + (err.error?.detail || err.message));
-          this.isSubmitting = false;
-          this.cdr.detectChanges();
-        }
-      });
-    } else {
-      this.landService.createLandValuation(this.valuationFormData).subscribe({
-        next: () => {
-          this.isSubmitting = false;
-          this.isValuationModalOpen = false;
-          this.loadValuations();
-        },
-        error: (err) => {
-          alert('Failed to create valuation: ' + (err.error?.detail || err.message));
-          this.isSubmitting = false;
-          this.cdr.detectChanges();
-        }
-      });
-    }
+  onValuationPageSizeChange(size: string): void {
+    this.valPageSize = Number(size);
+    this.currentValPage = 1;
+    this.loadValuations();
+  }
+
+  onValuationFilterChange(): void {
+    this.currentValPage = 1;
+    this.loadValuations();
   }
 
   deleteValuation(id: number): void {
     if (!confirm('Are you sure you want to delete this land valuation report?')) return;
     this.landService.deleteLandValuation(id).subscribe({
       next: () => {
+        this.successMessage = 'Land valuation deleted successfully.';
         this.loadValuations();
       },
       error: (err) => alert('Failed to delete valuation: ' + (err.error?.detail || err.message))

@@ -6,9 +6,7 @@ from app.core.database import Base
 
 class Project(Base):
     """
-    Project Master table modeling real estate development projects mapped from acquired land parcels.
-    2.1 Project Registration & Master Setup
-    """
+    Project Master table modeling real estate development projects mapped from acquired land parcels.    """
     __tablename__ = "prj_projects"
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)

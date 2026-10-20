@@ -32,6 +32,7 @@ import {
   DueDiligenceItem,
   DueDiligenceExceptionApprovalRequest,
   LandValuation,
+  PaginatedResponse,
   AcquisitionExpenseItem,
   AcquisitionCosting,
   CostingApprovalRequest,
@@ -396,7 +397,7 @@ export class LandService {
   }
 
   // 10. Land Valuation & Acquisition Costing (Module 2.8)
-  getLandValuations(params?: any): Observable<LandValuation[]> {
+  getLandValuations(params?: any): Observable<PaginatedResponse<LandValuation>> {
     let httpParams = new HttpParams();
     if (params) {
       Object.keys(params).forEach(key => {
@@ -405,7 +406,7 @@ export class LandService {
         }
       });
     }
-    return this.http.get<LandValuation[]>(`${this.baseUrl}/valuations`, { params: httpParams });
+    return this.http.get<PaginatedResponse<LandValuation>>(`${this.baseUrl}/valuations`, { params: httpParams });
   }
 
   getLandValuationById(id: number): Observable<LandValuation> {
@@ -432,7 +433,7 @@ export class LandService {
     return this.http.get<ValuationComparisonSummary>(`${this.baseUrl}/parcels/${parcelId}/valuation-comparison`);
   }
 
-  getAcquisitionCostings(params?: any): Observable<AcquisitionCosting[]> {
+  getAcquisitionCostings(params?: any): Observable<PaginatedResponse<AcquisitionCosting>> {
     let httpParams = new HttpParams();
     if (params) {
       Object.keys(params).forEach(key => {
@@ -441,7 +442,7 @@ export class LandService {
         }
       });
     }
-    return this.http.get<AcquisitionCosting[]>(`${this.baseUrl}/acquisition-costings`, { params: httpParams });
+    return this.http.get<PaginatedResponse<AcquisitionCosting>>(`${this.baseUrl}/acquisition-costings`, { params: httpParams });
   }
 
   getAcquisitionCostingById(id: number): Observable<AcquisitionCosting> {
@@ -607,6 +608,5 @@ export class LandService {
     return this.http.get<any>(`${this.baseUrl}/dashboard/analytics`, { params });
   }
 }
-
 
 

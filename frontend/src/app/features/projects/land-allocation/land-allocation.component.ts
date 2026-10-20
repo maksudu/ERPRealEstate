@@ -66,9 +66,7 @@ export interface LandAllocationRecord {
 
       <!-- Main Container -->
       <app-card-container
-        title="2.3 Project-wise Land Allocation Register"
-        subtitle="Demarcation and mathematical allocation of acquired raw land parcels to designated real estate projects"
-        badge="Spatial Allocation"
+        title="Project-wise Land Allocation Register"
       >
         <div card-actions class="flex items-center gap-2">
           <button
@@ -258,7 +256,7 @@ export class ProjectLandAllocationComponent implements OnInit {
   filteredAllocations = computed(() => {
     const q = this.searchQuery().trim().toLowerCase();
     if (!q) return this.allocations();
-    return this.allocations().filter(a => 
+    return this.allocations().filter(a =>
       a.project_name.toLowerCase().includes(q) ||
       a.mouza_name.toLowerCase().includes(q) ||
       a.khatian_no.toLowerCase().includes(q) ||

@@ -13,54 +13,8 @@ export interface SecurityNavTab {
 @Component({
   selector: 'app-security-nav',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive],
-  template: `
-    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 mb-5 shadow-2xs">
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-2.5 px-1">
-        <div class="flex items-center gap-2.5">
-          <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-600 text-white font-bold text-xs shadow-xs">
-            🛡️
-          </span>
-          <div>
-            <h1 class="text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider font-display">
-              User, Role & Security Management
-            </h1>
-            <p class="text-[11px] text-slate-500 dark:text-slate-400">
-              Bangladesh Real Estate ERP — Multi-Tenant RBAC, Project Scopes, Maker-Checker Workflows, MFA & Audit Trails
-            </p>
-          </div>
-        </div>
-        <div class="flex items-center gap-1.5 shrink-0">
-          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-            NCSA / ISO 27001 Compliant
-          </span>
-          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-50 text-indigo-700 dark:bg-indigo-950/70 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
-            Zero Trust Enforced
-          </span>
-        </div>
-      </div>
-
-      <!-- Scrollable Tabs Strip -->
-      <div class="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800">
-        @for (tab of tabs; track tab.id) {
-          <a
-            [routerLink]="tab.route"
-            routerLinkActive="bg-rose-600 text-white font-medium shadow-xs dark:bg-rose-600"
-            [routerLinkActiveOptions]="{ exact: false }"
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-normal whitespace-nowrap transition-colors duration-150 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/80 border border-transparent"
-          >
-            <span class="text-[10px] font-bold opacity-80 font-mono">{{ tab.code }}</span>
-            <span>{{ tab.label }}</span>
-            @if (tab.badge) {
-              <span class="ml-0.5 px-1.5 py-0.2 rounded text-[9px] font-semibold bg-white/20 text-inherit">
-                {{ tab.badge }}
-              </span>
-            }
-          </a>
-        }
-      </div>
-    </div>
-  `
+  imports: [CommonModule],
+  template: ''
 })
 export class SecurityNavComponent {
   tabs: SecurityNavTab[] = [

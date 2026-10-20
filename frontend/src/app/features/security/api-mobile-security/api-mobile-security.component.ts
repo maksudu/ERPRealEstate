@@ -9,11 +9,9 @@ import { ModalComponent } from '../../../shared/components/modal/modal.component
 @Component({
   selector: 'app-api-mobile-security',
   standalone: true,
-  imports: [CommonModule, FormsModule, SecurityNavComponent, CardContainerComponent, ModalComponent],
+  imports: [CommonModule, FormsModule, CardContainerComponent, ModalComponent],
   template: `
     <div class="p-4 sm:p-6 w-full space-y-6">
-      <app-security-nav />
-
       <!-- Top API Keys Section -->
       <app-card title="API Keys & Service Accounts Integration" subtitle="Authorized programmatic integration credentials with rate limiting and scoped tokens">
         <div card-actions>

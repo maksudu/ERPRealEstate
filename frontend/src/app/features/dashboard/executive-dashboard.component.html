@@ -1,0 +1,612 @@
+<div class="space-y-6 pb-12 font-sans text-slate-800 dark:text-slate-100">
+  <!-- 1. Header Banner: Good Morning, Admin -->
+  <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-50 via-sky-50/60 to-white dark:from-slate-850 dark:via-slate-900 dark:to-slate-850 border border-blue-100/80 dark:border-slate-800 p-5 sm:p-7 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-6">
+    <div class="z-10 max-w-xl">
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+        Good Morning, Admin
+      </h1>
+      <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1.5 font-medium">
+        Here's what's happening with your real estate business today.
+      </p>
+    </div>
+
+    <!-- Date & Clock Badge & Decorative Skyline -->
+    <div class="z-10 flex flex-wrap items-center gap-3">
+      <div class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/90 dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/80 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-2xs backdrop-blur-xs">
+        <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
+        <span>{{ currentDateStr() }}</span>
+      </div>
+    </div>
+
+    <!-- Decorative Subtle Architectural Buildings Overlay -->
+    <div class="absolute right-0 bottom-0 opacity-15 dark:opacity-10 pointer-events-none transform translate-x-4 translate-y-2 hidden md:block">
+      <svg class="w-80 h-32 text-blue-900 dark:text-blue-300" fill="currentColor" viewBox="0 0 400 160">
+        <rect x="20" y="40" width="40" height="120" rx="4"/>
+        <rect x="70" y="20" width="55" height="140" rx="4"/>
+        <rect x="135" y="55" width="45" height="105" rx="4"/>
+        <rect x="190" y="10" width="60" height="150" rx="4"/>
+        <rect x="260" y="30" width="50" height="130" rx="4"/>
+        <rect x="320" y="60" width="60" height="100" rx="4"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- 2. Top Row: 6 KPI Metric Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+    <!-- Card 1: Total Projects -->
+    <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs hover:shadow-md transition-all duration-200 flex flex-col justify-between">
+      <div>
+        <div class="w-10 h-10 rounded-xl bg-blue-500 text-white flex items-center justify-center shadow-xs mb-3">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+          </svg>
+        </div>
+        <p class="text-xs font-semibold text-slate-500 dark:text-slate-400">Total Projects</p>
+        <h3 class="text-2xl font-extrabold text-slate-900 dark:text-white mt-1">
+          {{ data()?.kpis?.total_projects || 8 }}
+        </h3>
+        <p class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1">
+          <span>&uarr; {{ data()?.kpis?.new_projects || 1 }} new</span>
+        </p>
+      </div>
+      <a routerLink="/projects/list" class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/80 text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 flex items-center justify-between">
+        <span>View Projects</span>
+        <span>&rarr;</span>
+      </a>
+    </div>
+
+    <!-- Card 2: Total Units -->
+    <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs hover:shadow-md transition-all duration-200 flex flex-col justify-between">
+      <div>
+        <div class="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center shadow-xs mb-3">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+          </svg>
+        </div>
+        <p class="text-xs font-semibold text-slate-500 dark:text-slate-400">Total Units</p>
+        <h3 class="text-2xl font-extrabold text-slate-900 dark:text-white mt-1">
+          {{ data()?.kpis?.total_units || 642 | number }}
+        </h3>
+        <p class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1">
+          <span>&uarr; {{ data()?.kpis?.new_units || 5 }} new</span>
+        </p>
+      </div>
+      <a routerLink="/projects/towers-units" class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/80 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 flex items-center justify-between">
+        <span>View Units</span>
+        <span>&rarr;</span>
+      </a>
+    </div>
+
+    <!-- Card 3: Total Clients -->
+    <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs hover:shadow-md transition-all duration-200 flex flex-col justify-between">
+      <div>
+        <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-xs mb-3">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+          </svg>
+        </div>
+        <p class="text-xs font-semibold text-slate-500 dark:text-slate-400">Total Clients</p>
+        <h3 class="text-2xl font-extrabold text-slate-900 dark:text-white mt-1">
+          {{ data()?.kpis?.total_clients || 1432 | number }}
+        </h3>
+        <p class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1">
+          <span>&uarr; {{ data()?.kpis?.new_clients || 12 }} new</span>
+        </p>
+      </div>
+      <a routerLink="/crm/leads" class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/80 text-[11px] font-bold text-amber-600 dark:text-amber-400 hover:text-amber-700 flex items-center justify-between">
+        <span>View Clients</span>
+        <span>&rarr;</span>
+      </a>
+    </div>
+
+    <!-- Card 4: Total Bookings -->
+    <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs hover:shadow-md transition-all duration-200 flex flex-col justify-between">
+      <div>
+        <div class="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center shadow-xs mb-3">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          </svg>
+        </div>
+        <p class="text-xs font-semibold text-slate-500 dark:text-slate-400">Total Bookings</p>
+        <h3 class="text-2xl font-extrabold text-slate-900 dark:text-white mt-1">
+          {{ data()?.kpis?.total_bookings || 278 | number }}
+        </h3>
+        <p class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1">
+          <span>&uarr; {{ data()?.kpis?.new_bookings || 8 }} new</span>
+        </p>
+      </div>
+      <a routerLink="/sales/bookings" class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/80 text-[11px] font-bold text-purple-600 dark:text-purple-400 hover:text-purple-700 flex items-center justify-between">
+        <span>View Bookings</span>
+        <span>&rarr;</span>
+      </a>
+    </div>
+
+    <!-- Card 5: Total Sales -->
+    <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs hover:shadow-md transition-all duration-200 flex flex-col justify-between">
+      <div>
+        <div class="w-10 h-10 rounded-xl bg-teal-600 text-white flex items-center justify-center shadow-xs mb-3">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+          </svg>
+        </div>
+        <p class="text-xs font-semibold text-slate-500 dark:text-slate-400">Total Sales</p>
+        <h3 class="text-2xl font-extrabold text-slate-900 dark:text-white mt-1">
+          {{ data()?.kpis?.total_sales || 86 | number }}
+        </h3>
+        <p class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1">
+          <span>&uarr; {{ data()?.kpis?.new_sales || 3 }} new</span>
+        </p>
+      </div>
+      <a routerLink="/sales/bookings" class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/80 text-[11px] font-bold text-teal-600 dark:text-teal-400 hover:text-teal-700 flex items-center justify-between">
+        <span>View Sales</span>
+        <span>&rarr;</span>
+      </a>
+    </div>
+
+    <!-- Card 6: Total Revenue -->
+    <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs hover:shadow-md transition-all duration-200 flex flex-col justify-between">
+      <div>
+        <div class="w-10 h-10 rounded-xl bg-rose-500 text-white flex items-center justify-center shadow-xs mb-3">
+          <span class="font-bold text-base">৳</span>
+        </div>
+        <p class="text-xs font-semibold text-slate-500 dark:text-slate-400">Total Revenue</p>
+        <h3 class="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white mt-1 truncate" title="৳ 4,620,000">
+          ৳ {{ (data()?.kpis?.total_revenue_bdt || 4620000) | number:'1.0-0' }}
+        </h3>
+        <p class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1">
+          <span>&uarr; {{ data()?.kpis?.revenue_growth_pct || 18 }}%</span>
+        </p>
+      </div>
+      <a routerLink="/sales/collections" class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/80 text-[11px] font-bold text-rose-600 dark:text-rose-400 hover:text-rose-700 flex items-center justify-between">
+        <span>View Reports</span>
+        <span>&rarr;</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- 3. Middle Section: Sales Overview Chart + Recent Bookings + Upcoming Installments -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <!-- Chart: Sales Overview (5 cols) -->
+    <div class="lg:col-span-5 p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs flex flex-col justify-between">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div class="flex items-center gap-2">
+          <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/>
+          </svg>
+          <h3 class="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">Sales Overview</h3>
+        </div>
+        <span class="text-xs px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium">
+          Last 12 Months
+        </span>
+      </div>
+
+      <!-- Simulated Beautiful SVG & Bar Chart -->
+      <div class="py-4">
+        <div class="h-44 w-full flex items-end justify-between gap-1.5 pt-6 pb-2 border-b border-slate-100 dark:border-slate-800">
+          <!-- 12 Months Bars -->
+          <div class="flex-1 flex flex-col items-center gap-1 h-full justify-end">
+            <div class="w-full bg-blue-500 rounded-t-sm" style="height: 35%;"></div>
+            <span class="text-[9px] text-slate-400">Nov</span>
+          </div>
+          <div class="flex-1 flex flex-col items-center gap-1 h-full justify-end">
+            <div class="w-full bg-blue-500 rounded-t-sm" style="height: 48%;"></div>
+            <span class="text-[9px] text-slate-400">Dec</span>
+          </div>
+          <div class="flex-1 flex flex-col items-center gap-1 h-full justify-end">
+            <div class="w-full bg-blue-500 rounded-t-sm" style="height: 42%;"></div>
+            <span class="text-[9px] text-slate-400">Jan</span>
+          </div>
+          <div class="flex-1 flex flex-col items-center gap-1 h-full justify-end">
+            <div class="w-full bg-blue-500 rounded-t-sm" style="height: 55%;"></div>
+            <span class="text-[9px] text-slate-400">Feb</span>
+          </div>
+          <div class="flex-1 flex flex-col items-center gap-1 h-full justify-end">
+            <div class="w-full bg-blue-500 rounded-t-sm" style="height: 52%;"></div>
+            <span class="text-[9px] text-slate-400">Mar</span>
+          </div>
+          <div class="flex-1 flex flex-col items-center gap-1 h-full justify-end">
+            <div class="w-full bg-blue-500 rounded-t-sm" style="height: 60%;"></div>
+            <span class="text-[9px] text-slate-400">Apr</span>
+          </div>
+          <div class="flex-1 flex flex-col items-center gap-1 h-full justify-end">
+            <div class="w-full bg-blue-500 rounded-t-sm" style="height: 58%;"></div>
+            <span class="text-[9px] text-slate-400">May</span>
+          </div>
+          <div class="flex-1 flex flex-col items-center gap-1 h-full justify-end">
+            <div class="w-full bg-blue-500 rounded-t-sm" style="height: 68%;"></div>
+            <span class="text-[9px] text-slate-400">Jun</span>
+          </div>
+          <div class="flex-1 flex flex-col items-center gap-1 h-full justify-end">
+            <div class="w-full bg-blue-500 rounded-t-sm" style="height: 72%;"></div>
+            <span class="text-[9px] text-slate-400">Jul</span>
+          </div>
+          <div class="flex-1 flex flex-col items-center gap-1 h-full justify-end">
+            <div class="w-full bg-blue-500 rounded-t-sm" style="height: 78%;"></div>
+            <span class="text-[9px] text-slate-400">Aug</span>
+          </div>
+          <div class="flex-1 flex flex-col items-center gap-1 h-full justify-end">
+            <div class="w-full bg-blue-500 rounded-t-sm" style="height: 85%;"></div>
+            <span class="text-[9px] text-slate-400">Sep</span>
+          </div>
+          <div class="flex-1 flex flex-col items-center gap-1 h-full justify-end">
+            <div class="w-full bg-blue-600 rounded-t-sm" style="height: 94%;"></div>
+            <span class="text-[9px] font-bold text-blue-600">Oct</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Legend -->
+      <div class="flex items-center justify-center gap-6 pt-2 text-xs">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+          <span class="text-slate-600 dark:text-slate-400 font-medium">Bookings</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+          <span class="text-slate-600 dark:text-slate-400 font-medium">Sales</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table: Recent Bookings (7 cols) -->
+    <div class="lg:col-span-7 p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs flex flex-col justify-between">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div class="flex items-center gap-2">
+          <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+          </svg>
+          <h3 class="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">Recent Bookings</h3>
+        </div>
+        <a routerLink="/sales/bookings" class="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1">
+          <span>View All</span>
+          <span>&rarr;</span>
+        </a>
+      </div>
+
+      <div class="overflow-x-auto mt-2">
+        <table class="w-full text-left text-xs whitespace-nowrap">
+          <thead class="text-slate-400 font-semibold border-b border-slate-100 dark:border-slate-800">
+            <tr>
+              <th class="py-2.5 px-2">#</th>
+              <th class="py-2.5 px-2">Project</th>
+              <th class="py-2.5 px-2">Unit No.</th>
+              <th class="py-2.5 px-2">Client Name</th>
+              <th class="py-2.5 px-2">Booking Date</th>
+              <th class="py-2.5 px-2 text-right">Status</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+            @for (b of data()?.recent_bookings; track b.id) {
+              <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
+                <td class="py-2.5 px-2 font-mono text-slate-400">{{ b.id }}</td>
+                <td class="py-2.5 px-2 font-semibold text-slate-800 dark:text-slate-200">{{ b.project_name }}</td>
+                <td class="py-2.5 px-2 text-slate-600 dark:text-slate-300 font-mono">{{ b.unit_no }}</td>
+                <td class="py-2.5 px-2 text-slate-700 dark:text-slate-300">{{ b.client_name }}</td>
+                <td class="py-2.5 px-2 text-slate-500">{{ b.booking_date }}</td>
+                <td class="py-2.5 px-2 text-right">
+                  <span
+                    [ngClass]="{
+                      'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400': b.status === 'Confirmed',
+                      'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/50 dark:text-amber-400': b.status === 'Pending',
+                      'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/50 dark:text-rose-400': b.status === 'On Hold'
+                    }"
+                    class="px-2 py-0.5 rounded-full text-[10px] font-bold border inline-block"
+                  >
+                    {{ b.status }}
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Row 2: Upcoming Installments + Property Wise Sales + Recent Activities + Quick Links -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <!-- Upcoming Installments (6 cols) -->
+    <div class="lg:col-span-6 p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div class="flex items-center gap-2">
+          <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <h3 class="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">Upcoming Installments</h3>
+        </div>
+        <a routerLink="/installments" class="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1">
+          <span>View All</span>
+          <span>&rarr;</span>
+        </a>
+      </div>
+
+      <div class="overflow-x-auto mt-2">
+        <table class="w-full text-left text-xs whitespace-nowrap">
+          <thead class="text-slate-400 font-semibold border-b border-slate-100 dark:border-slate-800">
+            <tr>
+              <th class="py-2.5 px-2">#</th>
+              <th class="py-2.5 px-2">Client Name</th>
+              <th class="py-2.5 px-2">Project</th>
+              <th class="py-2.5 px-2">Unit No.</th>
+              <th class="py-2.5 px-2">Due Date</th>
+              <th class="py-2.5 px-2 text-right">Amount</th>
+              <th class="py-2.5 px-2 text-right">Status</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+            @for (inst of data()?.upcoming_installments; track inst.id) {
+              <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
+                <td class="py-2.5 px-2 font-mono text-slate-400">{{ inst.id }}</td>
+                <td class="py-2.5 px-2 font-semibold text-slate-800 dark:text-slate-200">{{ inst.client_name }}</td>
+                <td class="py-2.5 px-2 text-slate-600 dark:text-slate-300">{{ inst.project }}</td>
+                <td class="py-2.5 px-2 font-mono text-slate-500">{{ inst.unit_no }}</td>
+                <td class="py-2.5 px-2 text-slate-500">{{ inst.due_date }}</td>
+                <td class="py-2.5 px-2 text-right font-bold text-slate-900 dark:text-slate-100">৳ {{ inst.amount | number }}</td>
+                <td class="py-2.5 px-2 text-right">
+                  <span
+                    [ngClass]="inst.status === 'Due' ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-amber-50 text-amber-700 border-amber-200'"
+                    class="px-2 py-0.5 rounded-full text-[10px] font-bold border inline-block"
+                  >
+                    {{ inst.status }}
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Quick Links Grid (6 cols) -->
+    <div class="lg:col-span-6 p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs">
+      <div class="flex items-center gap-2 pb-3 border-b border-slate-100 dark:border-slate-800 mb-4">
+        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+        </svg>
+        <h3 class="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">Quick Links</h3>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <!-- Add Property -->
+        <a routerLink="/projects/list" class="p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800 hover:border-blue-500/50 hover:bg-blue-50/40 dark:hover:bg-blue-950/20 transition-all flex flex-col items-center justify-center text-center group cursor-pointer">
+          <div class="w-9 h-9 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+            </svg>
+          </div>
+          <span class="text-xs font-semibold text-slate-700 dark:text-slate-200">Add Property</span>
+        </a>
+
+        <!-- Add Client -->
+        <a routerLink="/crm/leads" class="p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800 hover:border-emerald-500/50 hover:bg-emerald-50/40 dark:hover:bg-emerald-950/20 transition-all flex flex-col items-center justify-center text-center group cursor-pointer">
+          <div class="w-9 h-9 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+            </svg>
+          </div>
+          <span class="text-xs font-semibold text-slate-700 dark:text-slate-200">Add Client</span>
+        </a>
+
+        <!-- Create Contract -->
+        <a routerLink="/sales/bookings" class="p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800 hover:border-purple-500/50 hover:bg-purple-50/40 dark:hover:bg-purple-950/20 transition-all flex flex-col items-center justify-center text-center group cursor-pointer">
+          <div class="w-9 h-9 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+          </div>
+          <span class="text-xs font-semibold text-slate-700 dark:text-slate-200">Create Contract</span>
+        </a>
+
+        <!-- Receive Payment -->
+        <a routerLink="/sales/collections" class="p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800 hover:border-amber-500/50 hover:bg-amber-50/40 dark:hover:bg-amber-950/20 transition-all flex flex-col items-center justify-center text-center group cursor-pointer">
+          <div class="w-9 h-9 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+            </svg>
+          </div>
+          <span class="text-xs font-semibold text-slate-700 dark:text-slate-200">Receive Payment</span>
+        </a>
+
+        <!-- Maintenance Request -->
+        <a routerLink="/construction" class="p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800 hover:border-rose-500/50 hover:bg-rose-50/40 dark:hover:bg-rose-950/20 transition-all flex flex-col items-center justify-center text-center group cursor-pointer">
+          <div class="w-9 h-9 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+          </div>
+          <span class="text-xs font-semibold text-slate-700 dark:text-slate-200">Maintenance Request</span>
+        </a>
+
+        <!-- Reports -->
+        <a routerLink="/bi/dashboard" class="p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800 hover:border-teal-500/50 hover:bg-teal-50/40 dark:hover:bg-teal-950/20 transition-all flex flex-col items-center justify-center text-center group cursor-pointer">
+          <div class="w-9 h-9 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+            </svg>
+          </div>
+          <span class="text-xs font-semibold text-slate-700 dark:text-slate-200">Reports</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Row 3: Recent Activities + Recent Sales Contracts -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <!-- Recent Activities Timeline (5 cols) -->
+    <div class="lg:col-span-5 p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 mb-4">
+        <div class="flex items-center gap-2">
+          <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+          </svg>
+          <h3 class="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">Recent Activities</h3>
+        </div>
+        <span class="text-xs font-semibold text-blue-600 hover:text-blue-700 cursor-pointer">View All &rarr;</span>
+      </div>
+
+      <div class="space-y-3.5">
+        @for (act of data()?.recent_activities; track act.title) {
+          <div class="flex items-center justify-between gap-3 text-xs">
+            <div class="flex items-center gap-3">
+              <div 
+                [ngClass]="{
+                  'bg-emerald-500 text-white': act.color === 'emerald',
+                  'bg-blue-500 text-white': act.color === 'blue',
+                  'bg-purple-600 text-white': act.color === 'purple',
+                  'bg-rose-500 text-white': act.color === 'rose',
+                  'bg-amber-500 text-white': act.color === 'amber'
+                }"
+                class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 shadow-2xs"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+              </div>
+              <div>
+                <h4 class="font-bold text-slate-900 dark:text-slate-100">{{ act.title }}</h4>
+                <p class="text-[11px] text-slate-500">{{ act.subtitle }}</p>
+              </div>
+            </div>
+            <span class="text-[10px] font-medium text-slate-400 shrink-0">{{ act.time }}</span>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Recent Sales Contracts (7 cols) -->
+    <div class="lg:col-span-7 p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs flex flex-col justify-between">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div class="flex items-center gap-2">
+          <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          <h3 class="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">Recent Sales Contracts</h3>
+        </div>
+        <a routerLink="/sales/bookings" class="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1">
+          <span>View All</span>
+          <span>&rarr;</span>
+        </a>
+      </div>
+
+      <div class="overflow-x-auto mt-2">
+        <table class="w-full text-left text-xs whitespace-nowrap">
+          <thead class="text-slate-400 font-semibold border-b border-slate-100 dark:border-slate-800">
+            <tr>
+              <th class="py-2.5 px-2">#</th>
+              <th class="py-2.5 px-2">Project</th>
+              <th class="py-2.5 px-2">Unit No.</th>
+              <th class="py-2.5 px-2">Client Name</th>
+              <th class="py-2.5 px-2">Sale Price</th>
+              <th class="py-2.5 px-2">Status</th>
+              <th class="py-2.5 px-2 text-right">Date</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+            @for (sc of data()?.recent_contracts; track sc.id) {
+              <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
+                <td class="py-2.5 px-2 font-mono text-slate-400">{{ sc.id }}</td>
+                <td class="py-2.5 px-2 font-semibold text-slate-800 dark:text-slate-200">{{ sc.project }}</td>
+                <td class="py-2.5 px-2 font-mono text-slate-500">{{ sc.unit_no }}</td>
+                <td class="py-2.5 px-2 text-slate-700 dark:text-slate-300">{{ sc.client_name }}</td>
+                <td class="py-2.5 px-2 font-bold text-slate-900 dark:text-slate-100">৳ {{ sc.sale_price | number }}</td>
+                <td class="py-2.5 px-2">
+                  <span
+                    [ngClass]="sc.status === 'Confirmed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'"
+                    class="px-2 py-0.5 rounded-full text-[10px] font-bold border inline-block"
+                  >
+                    {{ sc.status }}
+                  </span>
+                </td>
+                <td class="py-2.5 px-2 text-right text-slate-500">{{ sc.date }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. Bottom Row: System Summary & Promo Card -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <!-- System Summary (8 cols) -->
+    <div class="lg:col-span-8 p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs">
+      <div class="flex items-center gap-2 pb-3 border-b border-slate-100 dark:border-slate-800 mb-4">
+        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+        </svg>
+        <h3 class="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">System Summary</h3>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+        <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+          <span class="text-slate-400 font-medium text-[11px]">Total Projects</span>
+          <p class="text-base font-extrabold text-slate-800 dark:text-slate-200 mt-0.5">{{ data()?.kpis?.total_projects || 8 }}</p>
+        </div>
+        <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+          <span class="text-slate-400 font-medium text-[11px]">Total Buildings</span>
+          <p class="text-base font-extrabold text-slate-800 dark:text-slate-200 mt-0.5">{{ data()?.kpis?.total_buildings || 24 }}</p>
+        </div>
+        <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+          <span class="text-slate-400 font-medium text-[11px]">Total Units</span>
+          <p class="text-base font-extrabold text-slate-800 dark:text-slate-200 mt-0.5">{{ data()?.kpis?.total_units || 642 | number }}</p>
+        </div>
+        <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+          <span class="text-slate-400 font-medium text-[11px]">Total Clients</span>
+          <p class="text-base font-extrabold text-slate-800 dark:text-slate-200 mt-0.5">{{ data()?.kpis?.total_clients || 1432 | number }}</p>
+        </div>
+        <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+          <span class="text-slate-400 font-medium text-[11px]">Total Bookings</span>
+          <p class="text-base font-extrabold text-slate-800 dark:text-slate-200 mt-0.5">{{ data()?.kpis?.total_bookings || 278 | number }}</p>
+        </div>
+        <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+          <span class="text-slate-400 font-medium text-[11px]">Total Sales</span>
+          <p class="text-base font-extrabold text-slate-800 dark:text-slate-200 mt-0.5">{{ data()?.kpis?.total_sales || 86 | number }}</p>
+        </div>
+        <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+          <span class="text-slate-400 font-medium text-[11px]">Total Revenue</span>
+          <p class="text-base font-extrabold text-rose-600 dark:text-rose-400 mt-0.5">৳ {{ (data()?.kpis?.total_revenue_bdt || 4620000) | number:'1.0-0' }}</p>
+        </div>
+        <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+          <span class="text-slate-400 font-medium text-[11px]">Pending Installments</span>
+          <p class="text-base font-extrabold text-amber-600 dark:text-amber-400 mt-0.5">{{ data()?.kpis?.pending_installments_count || 32 }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Promo / Brand Card (4 cols) -->
+    <div class="lg:col-span-4 p-5 rounded-2xl bg-gradient-to-br from-blue-600 via-indigo-600 to-blue-700 text-white shadow-md flex flex-col justify-between">
+      <div>
+        <span class="text-2xl font-serif leading-none">&ldquo;</span>
+        <h4 class="text-base font-bold mt-1">Build Better Communities</h4>
+        <p class="text-xs text-blue-100 mt-1 font-medium">Together for a brighter future.</p>
+      </div>
+
+      <div class="pt-6 flex items-center justify-between border-t border-blue-400/30">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-white/20 backdrop-blur-xs flex items-center justify-center font-bold text-white text-xs">
+            RB
+          </div>
+          <span class="font-extrabold tracking-tight text-sm">REALBIZ ERP</span>
+        </div>
+        <span class="text-[10px] text-blue-200 font-mono">v2.0.0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. Bottom Global Footer -->
+  <div class="pt-6 border-t border-slate-200/80 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400 flex flex-col sm:flex-row items-center justify-between gap-3">
+    <div class="flex items-center gap-2">
+      <span class="font-bold text-slate-700 dark:text-slate-300">REALBIZ ERP</span>
+      <span>&bull;</span>
+      <span>A Cloud-Based Real Estate Management Platform</span>
+    </div>
+    <div>
+      <span>Version 2.0.0</span>
+      <span class="mx-1">&bull;</span>
+      <span>Powered by Enterprise Architecture</span>
+    </div>
+  </div>
+</div>

@@ -575,6 +575,13 @@ export interface LandValuation {
   updated_at?: string;
 }
 
+export interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  offset: number;
+  limit: number;
+}
+
 export interface AcquisitionExpenseItem {
   id: number;
   costing_id: number;
@@ -840,6 +847,5 @@ export interface PaymentReconciliationSummary {
   paid_count: number;
   pending_count: number;
 }
-
 
 

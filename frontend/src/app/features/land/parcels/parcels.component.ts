@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { LandService } from '../../../core/services/land.service';
 import { LandParcel, Landowner, LandownerParcelLink } from '../../../core/models/land.model';
@@ -10,7 +11,8 @@ import {
   CustomButtonComponent,
   SearchableSelectComponent,
   ModalComponent,
-  StatusBadgeComponent
+  StatusBadgeComponent,
+  SelectOption
 } from '../../../shared/components';
 
 @Component({
@@ -32,6 +34,7 @@ import {
 })
 export class ParcelsComponent implements OnInit {
   private landService = inject(LandService);
+  private router = inject(Router);
   private fb = inject(FormBuilder);
 
   Math = Math;
@@ -41,28 +44,23 @@ export class ParcelsComponent implements OnInit {
   parcels = signal<LandParcel[]>([]);
   landowners = signal<Landowner[]>([]);
   isLoading = signal<boolean>(false);
-  isSaving = signal<boolean>(false);
   searchTerm = signal<string>('');
   selectedStatus = signal<string>('');
   selectedMouza = signal<string>('');
+
+  statusFilterOptions: SelectOption[] = [
+    { value: 'PROPOSED', label: 'Proposed Parcel (প্রস্তাবিত পার্সেল)' },
+    { value: 'UNDER_REVIEW', label: 'Under Review & Legal Vetting (যাচাই-বাছাই চলছে)' },
+    { value: 'APPROVED', label: 'Management Approved (অনুমোদিত)' },
+    { value: 'ACQUIRED', label: 'Acquired & Fully Registered (অধিগ্রহণকৃত)' }
+  ];
 
   // Pagination
   currentPage = signal<number>(1);
   pageSize = signal<number>(10);
   pageSizeOptions = [10, 25, 50, 100];
 
-  // Modal 1: Create / Edit Parcel Modal
-  isCreateModalOpen = signal<boolean>(false);
-  isEditMode = signal<boolean>(false);
-  editingParcelId = signal<number | null>(null);
 
-  // Live Unit Conversion
-  areaInputUnit = signal<string>('DECIMAL');
-  areaInputValue = signal<number>(20.0);
-  convertedDecimal = signal<number>(20.0);
-  convertedKatha = signal<number>(12.1);
-  convertedSqft = signal<number>(8712.0);
-  convertedBigha = signal<number>(0.605);
 
   // Modal 2: Cardinal Boundary Compass & GPS Viewer
   isBoundaryModalOpen = signal<boolean>(false);
@@ -78,34 +76,8 @@ export class ParcelsComponent implements OnInit {
   newLinkSharePercent = signal<number>(50.0);
   newLinkDeedNo = signal<string>('');
 
-  // Form
-  parcelForm: FormGroup = this.fb.group({
-    parcel_id: [''],
-    project_name: ['', Validators.required],
-    division: ['Dhaka Division', Validators.required],
-    district: ['Dhaka', Validators.required],
-    upazila_thana: ['Gulshan', Validators.required],
-    mouza_name: ['', Validators.required],
-    jl_number: ['', Validators.required],
-    khatian_number: ['', Validators.required],
-    dag_number: ['', Validators.required],
-    land_classification: ['RESIDENTIAL', Validators.required],
-    acquisition_status: ['PROPOSED', Validators.required],
-    input_unit: ['DECIMAL'],
-    input_value: [20.0, [Validators.required, Validators.min(0.01)]],
-    gps_latitude: [23.7925],
-    gps_longitude: [90.4078],
-    boundary_north: [''],
-    boundary_south: [''],
-    boundary_east: [''],
-    boundary_west: [''],
-    road_access_width_ft: [40.0, [Validators.required, Validators.min(0)]],
-    deed_number: [''],
-    deed_date: [''],
-    remarks: ['']
-  });
 
-  // Filtered computed
+
   filteredParcels = computed(() => {
     let list = this.parcels();
     const term = this.searchTerm().trim().toLowerCase();
@@ -120,12 +92,12 @@ export class ParcelsComponent implements OnInit {
     }
     if (term) {
       list = list.filter(p =>
-        p.parcel_id.toLowerCase().includes(term) ||
-        p.project_name.toLowerCase().includes(term) ||
-        p.mouza_name.toLowerCase().includes(term) ||
-        p.khatian_number.toLowerCase().includes(term) ||
-        p.dag_number.toLowerCase().includes(term) ||
-        (p.deed_number && p.deed_number.toLowerCase().includes(term))
+        ((p.parcel_id || '').toLowerCase().includes(term)) ||
+        ((p.project_name || '').toLowerCase().includes(term)) ||
+        ((p.mouza_name || '').toLowerCase().includes(term)) ||
+        ((p.khatian_number || '').toLowerCase().includes(term)) ||
+        ((p.dag_number || '').toLowerCase().includes(term)) ||
+        ((p.deed_number || '').toLowerCase().includes(term))
       );
     }
     return list;
@@ -156,7 +128,6 @@ export class ParcelsComponent implements OnInit {
   ngOnInit(): void {
     this.loadParcels();
     this.loadLandowners();
-    this.recalculateArea(20.0, 'DECIMAL');
   }
 
   loadParcels(): void {
@@ -187,7 +158,8 @@ export class ParcelsComponent implements OnInit {
   }
 
   onStatusFilter(val: any): void {
-    this.selectedStatus.set(val || '');
+    const code = typeof val === 'object' && val !== null ? (val.item_code || val.value || '') : (val || '');
+    this.selectedStatus.set(code);
     this.currentPage.set(1);
   }
 
@@ -212,161 +184,12 @@ export class ParcelsComponent implements OnInit {
       this.currentPage.update(p => p + 1);
     }
   }
-
-  recalculateArea(value: number, unit: string): void {
-    if (!value || value <= 0) return;
-    this.landService.convertArea({
-      decimal: unit === 'DECIMAL' ? value : undefined,
-      katha: unit === 'KATHA' ? value : undefined,
-      sqft: unit === 'SQFT' ? value : undefined,
-      bigha: unit === 'BIGHA' ? value : undefined
-    }).subscribe({
-      next: (res) => {
-        this.convertedDecimal.set(res.decimal);
-        this.convertedKatha.set(res.katha);
-        this.convertedSqft.set(res.sqft);
-        this.convertedBigha.set(res.bigha);
-      }
-    });
+  navigateToCreate(): void {
+    this.router.navigate(['/land/parcels/create']);
   }
 
-  onAreaInputChange(): void {
-    const unit = this.parcelForm.get('input_unit')?.value || 'DECIMAL';
-    const val = Number(this.parcelForm.get('input_value')?.value || 0);
-    this.areaInputUnit.set(unit);
-    this.areaInputValue.set(val);
-    this.recalculateArea(val, unit);
-  }
-
-  openCreateModal(): void {
-    this.isEditMode.set(false);
-    this.editingParcelId.set(null);
-    this.parcelForm.reset({
-      parcel_id: '',
-      project_name: '',
-      division: 'Dhaka Division',
-      district: 'Dhaka',
-      upazila_thana: 'Gulshan',
-      mouza_name: '',
-      jl_number: '',
-      khatian_number: '',
-      dag_number: '',
-      land_classification: 'RESIDENTIAL',
-      acquisition_status: 'PROPOSED',
-      input_unit: 'DECIMAL',
-      input_value: 20.0,
-      gps_latitude: 23.7925,
-      gps_longitude: 90.4078,
-      boundary_north: '',
-      boundary_south: '',
-      boundary_east: '',
-      boundary_west: '',
-      road_access_width_ft: 40.0,
-      deed_number: '',
-      deed_date: '',
-      remarks: ''
-    });
-    this.recalculateArea(20.0, 'DECIMAL');
-    this.isCreateModalOpen.set(true);
-  }
-
-  openEditModal(parcel: LandParcel): void {
-    this.isEditMode.set(true);
-    this.editingParcelId.set(parcel.id);
-
-    this.parcelForm.patchValue({
-      parcel_id: parcel.parcel_id,
-      project_name: parcel.project_name,
-      division: parcel.division,
-      district: parcel.district,
-      upazila_thana: parcel.upazila_thana,
-      mouza_name: parcel.mouza_name,
-      jl_number: parcel.jl_number,
-      khatian_number: parcel.khatian_number,
-      dag_number: parcel.dag_number,
-      land_classification: parcel.land_classification,
-      acquisition_status: parcel.acquisition_status,
-      input_unit: 'DECIMAL',
-      input_value: parcel.total_area_decimal,
-      gps_latitude: parcel.gps_latitude,
-      gps_longitude: parcel.gps_longitude,
-      boundary_north: parcel.boundary_north || '',
-      boundary_south: parcel.boundary_south || '',
-      boundary_east: parcel.boundary_east || '',
-      boundary_west: parcel.boundary_west || '',
-      road_access_width_ft: parcel.road_access_width_ft,
-      deed_number: parcel.deed_number || '',
-      deed_date: parcel.deed_date || '',
-      remarks: parcel.remarks || ''
-    });
-
-    this.recalculateArea(parcel.total_area_decimal, 'DECIMAL');
-    this.isCreateModalOpen.set(true);
-  }
-
-  saveParcel(): void {
-    if (this.parcelForm.invalid) {
-      this.parcelForm.markAllAsTouched();
-      return;
-    }
-
-    this.isSaving.set(true);
-    const formVal = this.parcelForm.value;
-
-    const payload = {
-      project_name: formVal.project_name.trim(),
-      division: formVal.division,
-      district: formVal.district,
-      upazila_thana: formVal.upazila_thana,
-      mouza_name: formVal.mouza_name.trim(),
-      jl_number: formVal.jl_number.trim(),
-      khatian_number: formVal.khatian_number.trim(),
-      dag_number: formVal.dag_number.trim(),
-      land_classification: formVal.land_classification,
-      acquisition_status: formVal.acquisition_status,
-      input_unit: formVal.input_unit,
-      input_value: Number(formVal.input_value),
-      total_area_decimal: this.convertedDecimal(),
-      total_area_katha: this.convertedKatha(),
-      total_area_bigha: this.convertedBigha(),
-      total_area_sqft: this.convertedSqft(),
-      gps_latitude: formVal.gps_latitude ? Number(formVal.gps_latitude) : null,
-      gps_longitude: formVal.gps_longitude ? Number(formVal.gps_longitude) : null,
-      boundary_north: formVal.boundary_north?.trim() || null,
-      boundary_south: formVal.boundary_south?.trim() || null,
-      boundary_east: formVal.boundary_east?.trim() || null,
-      boundary_west: formVal.boundary_west?.trim() || null,
-      road_access_width_ft: Number(formVal.road_access_width_ft || 40.0),
-      deed_number: formVal.deed_number?.trim() || null,
-      deed_date: formVal.deed_date || null,
-      remarks: formVal.remarks?.trim() || null
-    };
-
-    if (this.isEditMode() && this.editingParcelId()) {
-      this.landService.updateParcel(this.editingParcelId()!, payload).subscribe({
-        next: (updated) => {
-          this.parcels.update(list => list.map(p => p.id === updated.id ? updated : p));
-          this.isSaving.set(false);
-          this.isCreateModalOpen.set(false);
-        },
-        error: (err) => {
-          alert(err.error?.detail || 'Failed to update land parcel');
-          this.isSaving.set(false);
-        }
-      });
-    } else {
-      this.landService.createParcel(payload).subscribe({
-        next: (created) => {
-          this.parcels.update(list => [created, ...list]);
-          this.isSaving.set(false);
-          this.isCreateModalOpen.set(false);
-        },
-        error: (err) => {
-          alert(err.error?.detail || 'Failed to register land parcel');
-          this.isSaving.set(false);
-        }
-      });
-    }
+  navigateToEdit(parcel: LandParcel): void {
+    this.router.navigate(['/land/parcels', parcel.id, 'edit']);
   }
 
   deleteParcel(parcel: LandParcel): void {

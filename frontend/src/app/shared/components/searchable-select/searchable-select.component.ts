@@ -120,16 +120,19 @@ export class SearchableSelectComponent implements OnInit, ControlValueAccessor {
   private onTouched: () => void = () => {};
 
   ngOnInit(): void {
+    if (this.options && this.options.length > 0) {
+      this.syncOptionsToItems();
+    }
     if (this.categoryCode) {
       this.loadItems();
-    } else if (this.options && this.options.length > 0) {
-      this.syncOptionsToItems();
     }
   }
 
   ngOnChanges(): void {
-    if (!this.categoryCode && this.options) {
-      this.syncOptionsToItems();
+    if (this.options && this.options.length > 0) {
+      if (!this.categoryCode || this.items().length === 0) {
+        this.syncOptionsToItems();
+      }
     }
   }
 
@@ -151,11 +154,20 @@ export class SearchableSelectComponent implements OnInit, ControlValueAccessor {
     this.isLoading.set(true);
     this.lookupService.getItems(this.categoryCode).subscribe({
       next: (data) => {
-        this.items.set(data);
+        if (data && data.length > 0) {
+          this.items.set(data);
+        } else if (this.options && this.options.length > 0) {
+          this.syncOptionsToItems();
+        } else {
+          this.items.set([]);
+        }
         this.isLoading.set(false);
       },
       error: (err) => {
         console.error(`Failed to load lookup items for category: ${this.categoryCode}`, err);
+        if (this.options && this.options.length > 0) {
+          this.syncOptionsToItems();
+        }
         this.isLoading.set(false);
       }
     });

@@ -37,9 +37,9 @@ from app.modules.land.schemas import (
     LegalDueDiligenceCreate, LegalDueDiligenceUpdate, LegalDueDiligenceResponse,
     DueDiligenceItemCreate, DueDiligenceItemUpdate, DueDiligenceItemResponse,
     DueDiligenceExceptionApprovalRequest,
-    LandValuationCreate, LandValuationUpdate, LandValuationResponse,
+    LandValuationCreate, LandValuationUpdate, LandValuationResponse, LandValuationPage,
     AcquisitionExpenseItemCreate, AcquisitionExpenseItemUpdate, AcquisitionExpenseItemResponse,
-    AcquisitionCostingCreate, AcquisitionCostingUpdate, AcquisitionCostingResponse,
+    AcquisitionCostingCreate, AcquisitionCostingUpdate, AcquisitionCostingResponse, AcquisitionCostingPage,
     CostingApprovalRequest, ValuationApprovalRequest, ValuationComparisonSummary,
     NegotiationMeetingCreate, NegotiationMeetingResponse,
     NegotiationTermVersionCreate, NegotiationTermVersionResponse,
@@ -953,7 +953,8 @@ async def list_proposals(
             selectinload(LandBank.survey_records),
             selectinload(LandBank.khatians),
             selectinload(LandBank.dags),
-            selectinload(LandBank.documents),
+            selectinload(LandBank.documents).selectinload(LandDeedDocument.parcel),
+            selectinload(LandBank.documents).selectinload(LandDeedDocument.landowner),
             selectinload(LandBank.jv_agreements).selectinload(JVAgreement.unit_allocations),
             selectinload(LandBank.jv_agreements).selectinload(JVAgreement.milestones)
         )
@@ -1073,7 +1074,8 @@ async def create_proposal(
             selectinload(LandBank.survey_records),
             selectinload(LandBank.khatians),
             selectinload(LandBank.dags),
-            selectinload(LandBank.documents),
+            selectinload(LandBank.documents).selectinload(LandDeedDocument.parcel),
+            selectinload(LandBank.documents).selectinload(LandDeedDocument.landowner),
             selectinload(LandBank.jv_agreements).selectinload(JVAgreement.unit_allocations),
             selectinload(LandBank.jv_agreements).selectinload(JVAgreement.milestones)
         )
@@ -1093,7 +1095,8 @@ async def get_proposal(proposal_id: int, db: AsyncSession = Depends(get_db)):
             selectinload(LandBank.survey_records),
             selectinload(LandBank.khatians),
             selectinload(LandBank.dags),
-            selectinload(LandBank.documents),
+            selectinload(LandBank.documents).selectinload(LandDeedDocument.parcel),
+            selectinload(LandBank.documents).selectinload(LandDeedDocument.landowner),
             selectinload(LandBank.jv_agreements).selectinload(JVAgreement.unit_allocations),
             selectinload(LandBank.jv_agreements).selectinload(JVAgreement.milestones)
         )
@@ -1120,7 +1123,8 @@ async def update_proposal(
             selectinload(LandBank.survey_records),
             selectinload(LandBank.khatians),
             selectinload(LandBank.dags),
-            selectinload(LandBank.documents),
+            selectinload(LandBank.documents).selectinload(LandDeedDocument.parcel),
+            selectinload(LandBank.documents).selectinload(LandDeedDocument.landowner),
             selectinload(LandBank.jv_agreements).selectinload(JVAgreement.unit_allocations),
             selectinload(LandBank.jv_agreements).selectinload(JVAgreement.milestones)
         )
@@ -2471,26 +2475,27 @@ def recalculate_costing(costing: AcquisitionCosting, parcel: Optional[LandParcel
 
 # --- 13.1 Land Valuations CRUD & Comparison ---
 
-@router.get("/valuations", response_model=List[LandValuationResponse])
+@router.get("/valuations", response_model=LandValuationPage)
 async def list_land_valuations(
     parcel_id: Optional[int] = Query(None),
     valuation_source: Optional[str] = Query(None),
     approval_status: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
-    skip: int = Query(0, ge=0),
+    offset: int = Query(0, ge=0),
+    skip: Optional[int] = Query(None, ge=0),
     limit: int = Query(50, ge=1, le=100),
     db: AsyncSession = Depends(get_db)
 ):
-    stmt = select(LandValuation)
+    filters = []
     if parcel_id:
-        stmt = stmt.where(LandValuation.parcel_id == parcel_id)
+        filters.append(LandValuation.parcel_id == parcel_id)
     if valuation_source:
-        stmt = stmt.where(LandValuation.valuation_source == valuation_source)
+        filters.append(LandValuation.valuation_source == valuation_source)
     if approval_status:
-        stmt = stmt.where(LandValuation.approval_status == approval_status)
+        filters.append(LandValuation.approval_status == approval_status)
     if search:
         s = f"%{search.strip()}%"
-        stmt = stmt.where(
+        filters.append(
             or_(
                 LandValuation.valuation_code.ilike(s),
                 LandValuation.assessor_name.ilike(s),
@@ -2498,10 +2503,17 @@ async def list_land_valuations(
                 LandValuation.notes_and_methodology.ilike(s)
             )
         )
-    stmt = stmt.order_by(desc(LandValuation.id)).offset(skip).limit(limit)
+    effective_offset = skip if skip is not None else offset
+    total = await db.scalar(select(func.count(LandValuation.id)).where(*filters))
+    stmt = select(LandValuation).where(*filters).order_by(desc(LandValuation.id)).offset(effective_offset).limit(limit)
     res = await db.execute(stmt)
     records = res.scalars().all()
-    return [LandValuationResponse.model_validate(r) for r in records]
+    return {
+        "items": [LandValuationResponse.model_validate(r) for r in records],
+        "total": total or 0,
+        "offset": effective_offset,
+        "limit": limit
+    }
 
 
 @router.post("/valuations", response_model=LandValuationResponse, status_code=status.HTTP_201_CREATED)
@@ -2573,6 +2585,14 @@ async def update_land_valuation(
         raise HTTPException(status_code=404, detail="Land valuation record not found")
 
     update_dict = payload.model_dump(exclude_unset=True)
+    if "parcel_id" in update_dict:
+        parcel_id = update_dict["parcel_id"]
+        if parcel_id is None:
+            update_dict.pop("parcel_id")
+        else:
+            parcel_res = await db.execute(select(LandParcel).where(LandParcel.id == parcel_id))
+            if parcel_res.scalar_one_or_none() is None:
+                raise HTTPException(status_code=404, detail="Target parcel not found")
     for field, val in update_dict.items():
         setattr(record, field, val)
 
@@ -2669,39 +2689,46 @@ async def get_parcel_valuation_comparison(
 
 # --- 13.2 Land Acquisition Costing & Expenses ---
 
-@router.get("/acquisition-costings", response_model=List[AcquisitionCostingResponse])
+@router.get("/acquisition-costings", response_model=AcquisitionCostingPage)
 async def list_acquisition_costings(
     parcel_id: Optional[int] = Query(None),
     costing_status: Optional[str] = Query(None),
     approval_stage: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
-    skip: int = Query(0, ge=0),
+    offset: int = Query(0, ge=0),
+    skip: Optional[int] = Query(None, ge=0),
     limit: int = Query(50, ge=1, le=100),
     db: AsyncSession = Depends(get_db)
 ):
-    stmt = (
-        select(AcquisitionCosting)
-        .options(
-            selectinload(AcquisitionCosting.expense_items),
-            selectinload(AcquisitionCosting.parcel)
-        )
-    )
+    filters = []
     if parcel_id:
-        stmt = stmt.where(AcquisitionCosting.parcel_id == parcel_id)
+        filters.append(AcquisitionCosting.parcel_id == parcel_id)
     if costing_status:
-        stmt = stmt.where(AcquisitionCosting.costing_status == costing_status)
+        filters.append(AcquisitionCosting.costing_status == costing_status)
     if approval_stage:
-        stmt = stmt.where(AcquisitionCosting.approval_stage == approval_stage)
+        filters.append(AcquisitionCosting.approval_stage == approval_stage)
     if search:
         s = f"%{search.strip()}%"
-        stmt = stmt.where(
+        filters.append(
             or_(
                 AcquisitionCosting.costing_code.ilike(s),
                 AcquisitionCosting.remarks.ilike(s),
                 AcquisitionCosting.approved_by.ilike(s)
             )
         )
-    stmt = stmt.order_by(desc(AcquisitionCosting.id)).offset(skip).limit(limit)
+    effective_offset = skip if skip is not None else offset
+    total = await db.scalar(select(func.count(AcquisitionCosting.id)).where(*filters))
+    stmt = (
+        select(AcquisitionCosting)
+        .options(
+            selectinload(AcquisitionCosting.expense_items),
+            selectinload(AcquisitionCosting.parcel)
+        )
+        .where(*filters)
+        .order_by(desc(AcquisitionCosting.id))
+        .offset(effective_offset)
+        .limit(limit)
+    )
     res = await db.execute(stmt)
     records = res.scalars().all()
 
@@ -2710,7 +2737,12 @@ async def list_acquisition_costings(
     for r in records:
         recalculate_costing(r, r.parcel)
         results.append(AcquisitionCostingResponse.model_validate(r))
-    return results
+    return {
+        "items": results,
+        "total": total or 0,
+        "offset": effective_offset,
+        "limit": limit
+    }
 
 
 @router.post("/acquisition-costings", response_model=AcquisitionCostingResponse, status_code=status.HTTP_201_CREATED)
@@ -2823,6 +2855,16 @@ async def update_acquisition_costing(
         raise HTTPException(status_code=404, detail="Acquisition costing record not found")
 
     update_dict = payload.model_dump(exclude_unset=True)
+    if "parcel_id" in update_dict:
+        parcel_id = update_dict["parcel_id"]
+        if parcel_id is None:
+            update_dict.pop("parcel_id")
+        else:
+            parcel_res = await db.execute(select(LandParcel).where(LandParcel.id == parcel_id))
+            parcel = parcel_res.scalar_one_or_none()
+            if parcel is None:
+                raise HTTPException(status_code=404, detail="Land parcel not found")
+            costing.parcel = parcel
     for field, val in update_dict.items():
         setattr(costing, field, val)
 
@@ -3994,6 +4036,3 @@ async def reverse_payment_transaction(
     fresh_res = await db.execute(stmt)
     updated = fresh_res.scalar_one()
     return LandPaymentScheduleResponse.model_validate(updated)
-
-
-

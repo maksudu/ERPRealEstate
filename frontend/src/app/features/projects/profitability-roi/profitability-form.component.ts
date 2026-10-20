@@ -43,9 +43,6 @@ import {
           </a>
           <div>
             <div class="flex items-center gap-2">
-              <span class="text-xs font-semibold px-2 py-0.5 rounded-md bg-primary/10 text-primary border border-primary/20">
-                Submodule 2.6
-              </span>
               <span class="text-xs text-muted-foreground font-mono">
                 {{ isEditMode() ? 'Edit Forecast #' + forecastId() : 'New ROI Model' }}
               </span>
@@ -80,8 +77,7 @@ import {
       <form [formGroup]="form" class="space-y-6">
         <!-- Section 1: Identification & Project Setup -->
         <app-card-container
-          title="1. Project Setup & Version Identification"
-          subtitle="Map forecast to approved real estate project and define financial model baseline"
+          title="Project Setup & Version Identification"
         >
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <app-searchable-select

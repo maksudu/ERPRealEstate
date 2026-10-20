@@ -1,6 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { LandService } from '../../../core/services/land.service';
 import {
   LandNegotiation,
@@ -13,7 +14,7 @@ import {
   Landowner
 } from '../../../core/models/land.model';
 import { CardContainerComponent } from '../../../shared/components/card-container/card-container.component';
-import { SearchableSelectComponent } from '../../../shared/components/searchable-select/searchable-select.component';
+import { SearchableSelectComponent, SelectOption } from '../../../shared/components/searchable-select/searchable-select.component';
 import { CustomInputComponent } from '../../../shared/components/custom-input/custom-input.component';
 import { CustomTextareaComponent } from '../../../shared/components/custom-textarea/custom-textarea.component';
 import { ModalComponent } from '../../../shared/components/modal/modal.component';
@@ -38,6 +39,7 @@ import { StatusBadgeComponent, StatusVariant } from '../../../shared/components/
 export class NegotiationComponent implements OnInit {
   private landService = inject(LandService);
   private cdr = inject(ChangeDetectorRef);
+  private router = inject(Router);
 
   activeTab: 'deals' | 'versions' | 'meetings' | 'alerts' = 'deals';
 
@@ -47,6 +49,23 @@ export class NegotiationComponent implements OnInit {
   landowners: Landowner[] = [];
   parcelOptions: { value: any; label: string; subLabel?: string }[] = [];
   landownerOptions: { value: any; label: string; subLabel?: string }[] = [];
+
+  stageOptions: SelectOption[] = [
+    { value: 'INITIAL_OFFER', label: '1. Initial Offer (প্রাথমিক প্রস্তাব)' },
+    { value: 'LANDOWNER_COUNTER', label: '2. Landowner Counteroffer (মালিকের পাল্টা প্রস্তাব)' },
+    { value: 'MANAGEMENT_REVIEW', label: '3. Management Review (ব্যবস্থাপনা পর্যালোচনা)' },
+    { value: 'REVISED_OFFER', label: '4. Revised Offer (সংশোধিত প্রস্তাব)' },
+    { value: 'FINAL_TERMS_AGREED', label: '5. Final Terms Agreed (চূড়ান্ত শর্তাবলী সম্পন্ন)' }
+  ];
+
+  statusOptions: SelectOption[] = [
+    { value: 'DRAFTING', label: 'Drafting (খসড়া চুক্তি)' },
+    { value: 'LEGAL_VETTING', label: 'Legal Vetting (আইনি যাচাইকরণ)' },
+    { value: 'MANAGEMENT_APPROVED', label: 'Management Approved (ব্যবস্থাপনা অনুমোদিত)' },
+    { value: 'EXECUTED_REGISTERED', label: 'Executed & Registered (চুক্তি সম্পাদিত ও নিবন্ধিত)' },
+    { value: 'TERMINATED', label: 'Terminated / Cancelled (বাতিলকৃত)' },
+    { value: 'EXPIRED', label: 'Expired (মেয়াদোত্তীর্ণ)' }
+  ];
 
   // Selected Negotiation for Deep Dive
   activeNegotiation: LandNegotiation | null = null;
@@ -67,36 +86,11 @@ export class NegotiationComponent implements OnInit {
   pageSize = 10;
   isLoading = false;
 
-  // Modals
-  isCreateEditModalOpen = false;
+  // Modals for deep-dive actions (Revisions, Meetings, Approvals)
   isReviseTermsModalOpen = false;
   isMeetingModalOpen = false;
   isApproveModalOpen = false;
   isSubmitting = false;
-
-  // Form Data
-  editingNegotiationId: number | null = null;
-  negotiationFormData: any = {
-    parcel_id: '',
-    landowner_id: null,
-    negotiation_title: '',
-    negotiation_stage: 'INITIAL_OFFER',
-    initial_asking_price_bdt: 0,
-    developer_target_price_bdt: 0,
-    current_offer_amount_bdt: 0,
-    current_counteroffer_amount_bdt: 0,
-    final_agreed_amount_bdt: 0,
-    consideration_type: 'CASH_PURCHASE',
-    proposed_advance_bdt: 0,
-    installment_terms_summary: '',
-    non_cash_consideration_details: '',
-    conditions_precedent: '',
-    negotiation_start_date: new Date().toISOString().substring(0, 10),
-    target_closing_deadline: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString().substring(0, 10),
-    agreement_execution_date: null,
-    agreement_expiry_date: null,
-    agreement_status: 'DRAFTING'
-  };
 
   revisionFormData: NegotiationOfferRevisionRequest = {
     offered_by_party: 'DEVELOPER',
@@ -264,95 +258,31 @@ export class NegotiationComponent implements OnInit {
     }
   }
 
-  // --- Modal Triggers ---
-  openCreateModal(): void {
-    this.editingNegotiationId = null;
-    this.negotiationFormData = {
-      parcel_id: this.parcels.length > 0 ? this.parcels[0].id : '',
-      landowner_id: this.landowners.length > 0 ? this.landowners[0].id : null,
-      negotiation_title: '',
-      negotiation_stage: 'INITIAL_OFFER',
-      initial_asking_price_bdt: 0,
-      developer_target_price_bdt: 0,
-      current_offer_amount_bdt: 0,
-      current_counteroffer_amount_bdt: 0,
-      final_agreed_amount_bdt: 0,
-      consideration_type: 'CASH_PURCHASE',
-      proposed_advance_bdt: 0,
-      installment_terms_summary: '20% upon Bayna deed, 50% upon mutation & porcha delivery, 30% upon final registry deed',
-      non_cash_consideration_details: '',
-      conditions_precedent: 'Clean CS/SA/RS chain, mutation porcha in seller name, physical eviction of squatters, warishan sanad verified',
-      negotiation_start_date: new Date().toISOString().substring(0, 10),
-      target_closing_deadline: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString().substring(0, 10),
-      agreement_execution_date: null,
-      agreement_expiry_date: null,
-      agreement_status: 'DRAFTING'
-    };
-    this.isCreateEditModalOpen = true;
+  // --- Navigation & Filters ---
+  navigateToCreate(): void {
+    this.router.navigate(['/land/negotiation/create']);
   }
 
-  openEditModal(neg: LandNegotiation): void {
-    this.editingNegotiationId = neg.id;
-    this.negotiationFormData = {
-      parcel_id: neg.parcel_id,
-      landowner_id: neg.landowner_id,
-      negotiation_title: neg.negotiation_title,
-      negotiation_stage: neg.negotiation_stage,
-      initial_asking_price_bdt: neg.initial_asking_price_bdt,
-      developer_target_price_bdt: neg.developer_target_price_bdt,
-      current_offer_amount_bdt: neg.current_offer_amount_bdt,
-      current_counteroffer_amount_bdt: neg.current_counteroffer_amount_bdt,
-      final_agreed_amount_bdt: neg.final_agreed_amount_bdt,
-      consideration_type: neg.consideration_type,
-      proposed_advance_bdt: neg.proposed_advance_bdt,
-      installment_terms_summary: neg.installment_terms_summary || '',
-      non_cash_consideration_details: neg.non_cash_consideration_details || '',
-      conditions_precedent: neg.conditions_precedent || '',
-      negotiation_start_date: neg.negotiation_start_date,
-      target_closing_deadline: neg.target_closing_deadline,
-      agreement_execution_date: neg.agreement_execution_date,
-      agreement_expiry_date: neg.agreement_expiry_date,
-      agreement_status: neg.agreement_status
-    };
-    this.isCreateEditModalOpen = true;
+  navigateToEdit(neg: LandNegotiation): void {
+    this.router.navigate(['/land/negotiation', neg.id, 'edit']);
   }
 
-  saveNegotiation(): void {
-    if (!this.negotiationFormData.parcel_id || !this.negotiationFormData.negotiation_title) {
-      alert('Please select a Parcel and provide a Negotiation Title.');
-      return;
-    }
+  onParcelFilterChange(event: any): void {
+    const val = event?.value ?? event?.id ?? (typeof event === 'string' ? event : '');
+    this.selectedParcelFilter = val !== null && val !== undefined ? String(val) : '';
+    this.applyFilters();
+  }
 
-    this.isSubmitting = true;
-    if (this.editingNegotiationId) {
-      this.landService.updateNegotiation(this.editingNegotiationId, this.negotiationFormData).subscribe({
-        next: (res) => {
-          this.isSubmitting = false;
-          this.isCreateEditModalOpen = false;
-          this.loadNegotiations();
-          this.loadAlerts();
-        },
-        error: (err) => {
-          console.error('Error updating negotiation', err);
-          alert('Failed to update negotiation record');
-          this.isSubmitting = false;
-        }
-      });
-    } else {
-      this.landService.createNegotiation(this.negotiationFormData).subscribe({
-        next: (res) => {
-          this.isSubmitting = false;
-          this.isCreateEditModalOpen = false;
-          this.loadNegotiations();
-          this.loadAlerts();
-        },
-        error: (err) => {
-          console.error('Error creating negotiation', err);
-          alert('Failed to create negotiation record');
-          this.isSubmitting = false;
-        }
-      });
-    }
+  onStageFilterChange(event: any): void {
+    const val = event?.value || event?.item_code || (typeof event === 'string' ? event : '');
+    this.selectedStageFilter = val || '';
+    this.applyFilters();
+  }
+
+  onStatusFilterChange(event: any): void {
+    const val = event?.value || event?.item_code || (typeof event === 'string' ? event : '');
+    this.selectedStatusFilter = val || '';
+    this.applyFilters();
   }
 
   deleteNegotiation(id: number): void {

@@ -13,24 +13,21 @@ import { SearchableSelectComponent, SelectOption } from '../../../shared/compone
   imports: [
     CommonModule,
     FormsModule,
-    SecurityNavComponent,
     CardContainerComponent,
     ModalComponent,
     SearchableSelectComponent
   ],
   template: `
     <div class="p-4 sm:p-6 w-full space-y-6">
-      <app-security-nav />
-
       <!-- Top Filter & Search Bar -->
-      <app-card title="Enterprise Roles & Job Responsibility Templates" subtitle="25 predefined Real Estate ERP roles with customized permission inheritance and scoping">
+      <app-card title="Roles List">
         <div card-actions>
           <button
             type="button"
             (click)="openAddModal()"
             class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-600 text-white hover:bg-rose-700 shadow-2xs transition"
           >
-            <span>+</span> Create Custom Role
+            <span>+</span> Add New Role
           </button>
         </div>
 
@@ -49,13 +46,12 @@ import { SearchableSelectComponent, SelectOption } from '../../../shared/compone
 
           <div>
             <app-searchable-select
-              categoryCode="ROLE_DEPARTMENT"
               label="Department Filter"
               placeholder="All Departments"
               [(ngModel)]="selectedDepartment"
               (ngModelChange)="loadRoles()"
               [options]="departmentOptions"
-              [allowCreateNew]="true"
+              [allowCreateNew]="false"
             />
           </div>
 
@@ -299,22 +295,27 @@ export class RoleManagementComponent implements OnInit {
     is_active: true
   };
 
-  departmentOptions: SelectOption[] = [
-    { value: 'Executive', label: 'Executive Management' },
-    { value: 'IT & Infrastructure', label: 'IT & Infrastructure' },
-    { value: 'Governance', label: 'Governance & Compliance' },
-    { value: 'Projects', label: 'Projects & Engineering' },
-    { value: 'Land Acquisition', label: 'Land Acquisition' },
-    { value: 'Legal & Statutory', label: 'Legal & Statutory' },
-    { value: 'Sales & Marketing', label: 'Sales & Marketing' },
-    { value: 'Finance & Accounts', label: 'Finance & Accounts' },
-    { value: 'Credit & Collection', label: 'Credit & Collection' },
-    { value: 'Supply Chain', label: 'Supply Chain & Procurement' },
-    { value: 'Internal Audit', label: 'Internal Audit' }
-  ];
+  departmentOptions: SelectOption[] = [];
 
   ngOnInit(): void {
+    this.loadDepartmentOptions();
     this.loadRoles();
+  }
+
+  loadDepartmentOptions(): void {
+    this.service.getRoles({ limit: 100, offset: 0 }).subscribe({
+      next: (res) => {
+        const departments = new Set(
+          (res.items || [])
+            .map(role => role.department?.trim())
+            .filter((department): department is string => !!department)
+        );
+        this.departmentOptions = Array.from(departments)
+          .sort((a, b) => a.localeCompare(b))
+          .map(department => ({ value: department, label: department }));
+      },
+      error: (err) => console.error('Failed to load role departments', err)
+    });
   }
 
   loadRoles(): void {
