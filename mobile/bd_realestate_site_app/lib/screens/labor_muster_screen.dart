@@ -144,7 +144,7 @@ class _LaborMusterScreenState extends State<LaborMusterScreen> {
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [SiteAppTheme.darkNavy, Color(0xFF1E293B)],
+                  colors: [SiteAppTheme.primarySafetyOrange, Color(0xFFEA580C)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),

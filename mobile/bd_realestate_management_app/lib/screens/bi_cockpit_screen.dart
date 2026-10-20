@@ -132,8 +132,9 @@ class BiCockpitScreen extends StatelessWidget {
                 color: ManagementTheme.brightGold,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.fingerprint, color: ManagementTheme.obsidianBlack, size: 24),
+              child: const Icon(Icons.fingerprint, color: Colors.white, size: 24),
             ),
+
             const SizedBox(width: 14),
             const Expanded(
               child: Column(

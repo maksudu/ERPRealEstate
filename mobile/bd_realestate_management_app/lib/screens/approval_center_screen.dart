@@ -5,7 +5,9 @@ import '../core/security/biometric_service.dart';
 import '../models/approval_item.dart';
 
 class ApprovalCenterScreen extends StatefulWidget {
-  const ApprovalCenterScreen({super.key});
+  final VoidCallback? onOpenDrawer;
+
+  const ApprovalCenterScreen({super.key, this.onOpenDrawer});
 
   @override
   State<ApprovalCenterScreen> createState() => _ApprovalCenterScreenState();
@@ -102,6 +104,19 @@ class _ApprovalCenterScreenState extends State<ApprovalCenterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: Builder(
+          builder: (ctx) => IconButton(
+            icon: const Icon(Icons.menu_rounded, color: ManagementTheme.royalNavy),
+            tooltip: 'Open Menu',
+            onPressed: () {
+              if (widget.onOpenDrawer != null) {
+                widget.onOpenDrawer!();
+              } else {
+                Scaffold.of(ctx).openDrawer();
+              }
+            },
+          ),
+        ),
         title: const Text('Executive Approval Center'),
       ),
       body: Column(
@@ -207,7 +222,7 @@ class _ApprovalCenterScreenState extends State<ApprovalCenterScreen> {
             const SizedBox(height: 10),
             Text(
               item.title,
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: ManagementTheme.royalNavy),
             ),
             const SizedBox(height: 4),
             Text(
@@ -218,12 +233,13 @@ class _ApprovalCenterScreenState extends State<ApprovalCenterScreen> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: ManagementTheme.royalNavy,
+                color: const Color(0xFFF8FAFC),
                 borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: ManagementTheme.borderSubtle),
               ),
               child: Text(
                 item.details,
-                style: const TextStyle(fontSize: 11, color: Color(0xFFCBD5E1), height: 1.4),
+                style: const TextStyle(fontSize: 11, color: ManagementTheme.slateText, height: 1.4),
               ),
             ),
             if (item.discountPercent != null) ...[
@@ -231,9 +247,9 @@ class _ApprovalCenterScreenState extends State<ApprovalCenterScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: ManagementTheme.alertCrimson.withOpacity(0.12),
+                  color: ManagementTheme.alertCrimson.withOpacity(0.08),
                   borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: ManagementTheme.alertCrimson.withOpacity(0.3)),
+                  border: Border.all(color: ManagementTheme.alertCrimson.withOpacity(0.2)),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -261,7 +277,7 @@ class _ApprovalCenterScreenState extends State<ApprovalCenterScreen> {
                 ],
               ),
             ],
-            const Divider(color: Color(0xFF334155), height: 24),
+            const Divider(color: Color(0xFFF1F5F9), height: 24),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -271,7 +287,7 @@ class _ApprovalCenterScreenState extends State<ApprovalCenterScreen> {
                     const Text('FINANCIAL IMPACT', style: TextStyle(fontSize: 10, color: ManagementTheme.textMuted)),
                     Text(
                       '৳ ${(item.amountBdt).toStringAsFixed(0)}',
-                      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.white),
+                      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: ManagementTheme.royalNavy),
                     ),
                   ],
                 ),
@@ -297,8 +313,8 @@ class _ApprovalCenterScreenState extends State<ApprovalCenterScreen> {
                 else
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: ManagementTheme.luxuryGold,
-                      foregroundColor: ManagementTheme.obsidianBlack,
+                      backgroundColor: ManagementTheme.royalNavy,
+                      foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     ),
                     onPressed: () => _handleBiometricApprove(item),
@@ -307,6 +323,7 @@ class _ApprovalCenterScreenState extends State<ApprovalCenterScreen> {
                   ),
               ],
             ),
+
           ],
         ),
       ),

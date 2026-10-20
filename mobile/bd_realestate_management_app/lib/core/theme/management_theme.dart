@@ -2,50 +2,60 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class ManagementTheme {
-  static const Color obsidianBlack = Color(0xFF090D16);
+  // Executive Color Palette - 100% Light Mode
   static const Color royalNavy = Color(0xFF0F172A);
-  static const Color cardDark = Color(0xFF1E293B);
-  static const Color luxuryGold = Color(0xFFD4AF37);
-  static const Color brightGold = Color(0xFFF59E0B);
-  static const Color successEmerald = Color(0xFF10B981);
-  static const Color alertCrimson = Color(0xFFEF4444);
-  static const Color textMuted = Color(0xFF94A3B8);
+  static const Color slateText = Color(0xFF1E293B);
+  static const Color luxuryGold = Color(0xFFB45309); // Deep Amber Gold for high-contrast light mode
+  static const Color brightGold = Color(0xFFD97706);
+  static const Color softGoldBg = Color(0xFFFEF3C7);
+  static const Color cardLight = Colors.white;
+  static const Color scaffoldLight = Color(0xFFF8FAFC);
+  static const Color borderSubtle = Color(0xFFE2E8F0);
+  static const Color successEmerald = Color(0xFF059669);
+  static const Color alertCrimson = Color(0xFFDC2626);
+  static const Color textMuted = Color(0xFF64748B);
+  static const Color obsidianBlack = Color(0xFF0F172A);
+  static const Color cardDark = Colors.white;
+
 
   static ThemeData theme = ThemeData(
     useMaterial3: true,
-    brightness: Brightness.dark,
-    primaryColor: luxuryGold,
-    scaffoldBackgroundColor: obsidianBlack,
-    colorScheme: const ColorScheme.dark(
-      primary: luxuryGold,
+    brightness: Brightness.light,
+    primaryColor: royalNavy,
+    scaffoldBackgroundColor: scaffoldLight,
+    colorScheme: const ColorScheme.light(
+      primary: royalNavy,
       secondary: brightGold,
-      surface: cardDark,
+      surface: cardLight,
       error: alertCrimson,
+      onPrimary: Colors.white,
+      onSurface: slateText,
     ),
-    textTheme: GoogleFonts.outfitTextTheme(ThemeData.dark().textTheme),
+    textTheme: GoogleFonts.outfitTextTheme(ThemeData.light().textTheme),
     appBarTheme: const AppBarTheme(
-      backgroundColor: obsidianBlack,
-      elevation: 0,
+      backgroundColor: Colors.white,
+      foregroundColor: royalNavy,
+      elevation: 0.8,
       centerTitle: false,
       titleTextStyle: TextStyle(
-        color: Colors.white,
+        color: royalNavy,
         fontSize: 18,
         fontWeight: FontWeight.bold,
       ),
-      iconTheme: IconThemeData(color: luxuryGold),
+      iconTheme: IconThemeData(color: royalNavy),
     ),
     cardTheme: CardThemeData(
-      color: cardDark,
+      color: cardLight,
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: Color(0xFF334155)),
+        side: const BorderSide(color: borderSubtle),
       ),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        backgroundColor: luxuryGold,
-        foregroundColor: obsidianBlack,
+        backgroundColor: royalNavy,
+        foregroundColor: Colors.white,
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),

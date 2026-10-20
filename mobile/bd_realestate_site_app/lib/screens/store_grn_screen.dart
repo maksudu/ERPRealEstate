@@ -4,7 +4,9 @@ import '../core/theme/app_theme.dart';
 import '../core/offline/offline_sync_queue.dart';
 
 class StoreGrnScreen extends StatefulWidget {
-  const StoreGrnScreen({super.key});
+  final VoidCallback? onOpenDrawer;
+
+  const StoreGrnScreen({super.key, this.onOpenDrawer});
 
   @override
   State<StoreGrnScreen> createState() => _StoreGrnScreenState();
@@ -160,6 +162,19 @@ class _StoreGrnScreenState extends State<StoreGrnScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: Builder(
+          builder: (ctx) => IconButton(
+            icon: const Icon(Icons.menu_rounded, color: SiteAppTheme.darkNavy),
+            tooltip: 'Open Menu',
+            onPressed: () {
+              if (widget.onOpenDrawer != null) {
+                widget.onOpenDrawer!();
+              } else {
+                Scaffold.of(ctx).openDrawer();
+              }
+            },
+          ),
+        ),
         title: const Text('Site Store Delivery Challan (GRN)'),
       ),
       body: SingleChildScrollView(

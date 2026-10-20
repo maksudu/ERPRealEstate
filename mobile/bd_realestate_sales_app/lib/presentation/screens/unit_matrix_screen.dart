@@ -103,26 +103,26 @@ class UnitMatrixScreen extends StatelessWidget {
               // Mutex Live Status Bar
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                color: const Color(0xFF0F172A),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                color: const Color(0xFFF0FDFA),
                 child: Row(
                   children: [
-                    const Icon(Icons.shield_outlined, color: AppTheme.accentAmber, size: 14),
+                    const Icon(Icons.shield_outlined, color: AppTheme.primaryTeal, size: 14),
                     const SizedBox(width: 6),
                     const Text(
                       'Distributed Mutex Locking (Redis nx=True, ex=900) Active',
-                      style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600),
+                      style: TextStyle(color: Color(0xFF0F766E), fontSize: 11, fontWeight: FontWeight.w600),
                     ),
                     const Spacer(),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: AppTheme.accentAmber.withOpacity(0.2),
+                        color: AppTheme.primaryTeal.withOpacity(0.12),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
                         '${state.activeLockedCount} Locked',
-                        style: const TextStyle(color: AppTheme.accentAmber, fontSize: 10, fontWeight: FontWeight.bold),
+                        style: const TextStyle(color: AppTheme.primaryTeal, fontSize: 10, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ],

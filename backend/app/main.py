@@ -54,6 +54,13 @@ from app.modules.portal.router import router as portal_router
 from app.modules.budgeting.router import router as budgeting_router
 from app.modules.fixed_assets.router import router as fixed_assets_router
 from app.modules.security.router import router as security_router
+from app.modules.mobile.router import router as mobile_router
+from app.modules.mobile.site_router import router as mobile_site_router
+from app.modules.mobile.collection_router import router as mobile_collection_router
+from app.modules.mobile.management_router import router as mobile_management_router
+from app.modules.mobile.hr_router import router as mobile_hr_router
+
+
 
 
 
@@ -163,7 +170,14 @@ app.include_router(portal_router, prefix=settings.API_V1_PREFIX)
 app.include_router(budgeting_router, prefix=settings.API_V1_PREFIX)
 app.include_router(fixed_assets_router, prefix=settings.API_V1_PREFIX)
 app.include_router(security_router, prefix=settings.API_V1_PREFIX)
+app.include_router(mobile_router, prefix=settings.API_V1_PREFIX)
+app.include_router(mobile_site_router, prefix=settings.API_V1_PREFIX)
+app.include_router(mobile_collection_router, prefix=settings.API_V1_PREFIX)
+app.include_router(mobile_management_router, prefix=settings.API_V1_PREFIX)
+app.include_router(mobile_hr_router, prefix=settings.API_V1_PREFIX)
 
 if __name__ == "__main__":
+
+
     import uvicorn
     uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)

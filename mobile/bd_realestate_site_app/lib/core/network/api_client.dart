@@ -25,8 +25,18 @@ class ConstructionApiClient {
       'username': username,
       'password': password,
     }));
-    return jsonDecode(res.body) as Map<String, dynamic>;
+    final body = jsonDecode(res.body) as Map<String, dynamic>;
+    if (res.statusCode >= 200 && res.statusCode < 300) {
+      if (body['token'] != null) {
+        authToken = body['token'].toString();
+      }
+      return body;
+    } else {
+      final msg = body['detail'] ?? body['message'] ?? 'Authentication failed (Status ${res.statusCode})';
+      throw Exception(msg.toString());
+    }
   }
+
 
   // Dashboard
   Future<Map<String, dynamic>> getDashboardMetrics({int? projectId}) async {

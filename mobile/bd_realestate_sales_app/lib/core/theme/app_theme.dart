@@ -11,6 +11,10 @@ class AppTheme {
   static const Color dangerRed = Color(0xFFEF4444);
   static const Color landownerPurple = Color(0xFF8B5CF6);
   static const Color surfaceLight = Color(0xFFF8FAFC);
+  static const Color cardLight = Colors.white;
+  static const Color cardBorder = Color(0xFFE2E8F0);
+  static const Color textDark = Color(0xFF0F172A);
+  static const Color textMuted = Color(0xFF64748B);
   static const Color surfaceDark = Color(0xFF1E293B);
 
   static ThemeData lightTheme = ThemeData(
@@ -23,6 +27,7 @@ class AppTheme {
       secondary: accentAmber,
       surface: Colors.white,
       error: dangerRed,
+      onSurface: textDark,
     ),
     textTheme: GoogleFonts.interTextTheme(
       ThemeData.light().textTheme,
@@ -45,6 +50,16 @@ class AppTheme {
         borderRadius: BorderRadius.circular(16),
         side: const BorderSide(color: Color(0xFFE2E8F0)),
       ),
+    ),
+    bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+      backgroundColor: Colors.white,
+      selectedItemColor: primaryTeal,
+      unselectedItemColor: Color(0xFF64748B),
+      elevation: 8,
+    ),
+    dialogTheme: const DialogThemeData(
+      backgroundColor: Colors.white,
+      surfaceTintColor: Colors.transparent,
     ),
   );
 

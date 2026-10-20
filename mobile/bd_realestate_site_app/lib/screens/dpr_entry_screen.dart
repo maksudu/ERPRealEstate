@@ -4,7 +4,9 @@ import '../core/offline/offline_sync_queue.dart';
 import 'anti_tamper_camera_screen.dart';
 
 class DprEntryScreen extends StatefulWidget {
-  const DprEntryScreen({super.key});
+  final VoidCallback? onOpenDrawer;
+
+  const DprEntryScreen({super.key, this.onOpenDrawer});
 
   @override
   State<DprEntryScreen> createState() => _DprEntryScreenState();
@@ -148,6 +150,19 @@ class _DprEntryScreenState extends State<DprEntryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: Builder(
+          builder: (ctx) => IconButton(
+            icon: const Icon(Icons.menu_rounded, color: SiteAppTheme.darkNavy),
+            tooltip: 'Open Menu',
+            onPressed: () {
+              if (widget.onOpenDrawer != null) {
+                widget.onOpenDrawer!();
+              } else {
+                Scaffold.of(ctx).openDrawer();
+              }
+            },
+          ),
+        ),
         title: const Text('Daily Progress Report (DPR)'),
         actions: [
           IconButton(

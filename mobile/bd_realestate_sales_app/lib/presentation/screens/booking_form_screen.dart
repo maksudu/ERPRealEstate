@@ -142,7 +142,7 @@ class _BookingFormViewState extends State<_BookingFormView> {
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [AppTheme.primaryDark, Color(0xFF1E293B)],
+                        colors: [AppTheme.primaryTeal, Color(0xFF0F766E)],
                       ),
                       borderRadius: BorderRadius.circular(16),
                     ),

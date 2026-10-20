@@ -110,7 +110,10 @@ class _AntiTamperCameraScreenState extends State<AntiTamperCameraScreen> {
           // Security Banner
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            color: const Color(0xFF1E293B),
+            decoration: const BoxDecoration(
+              color: Color(0xFFF1F5F9),
+              border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
+            ),
             child: Row(
               children: [
                 const Icon(Icons.gps_fixed, color: SiteAppTheme.primarySafetyOrange, size: 16),
@@ -118,13 +121,13 @@ class _AntiTamperCameraScreenState extends State<AntiTamperCameraScreen> {
                 Expanded(
                   child: Text(
                     'Live GPS Fix: $_latitude, $_longitude · Accuracy: ±1.8m',
-                    style: const TextStyle(fontSize: 11, color: Colors.white70, fontFamily: 'monospace'),
+                    style: const TextStyle(fontSize: 11, color: SiteAppTheme.darkNavy, fontFamily: 'monospace', fontWeight: FontWeight.w500),
                   ),
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: SiteAppTheme.successGreen.withOpacity(0.2),
+                    color: SiteAppTheme.successGreen.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: const Text('LOCKED', style: TextStyle(color: SiteAppTheme.successGreen, fontSize: 9, fontWeight: FontWeight.bold)),
@@ -136,16 +139,19 @@ class _AntiTamperCameraScreenState extends State<AntiTamperCameraScreen> {
           // Floor Selector Dropdown in Viewport Header
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            color: const Color(0xFF0F172A),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
+            ),
             child: Row(
               children: [
-                const Text('Target Structural Floor:', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                const Text('Target Structural Floor:', style: TextStyle(color: Color(0xFF64748B), fontSize: 12, fontWeight: FontWeight.w500)),
                 const SizedBox(width: 10),
                 Expanded(
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
                       value: _currentFloor,
-                      dropdownColor: const Color(0xFF1E293B),
+                      dropdownColor: Colors.white,
                       style: const TextStyle(color: SiteAppTheme.primarySafetyOrange, fontWeight: FontWeight.bold, fontSize: 13),
                       items: [
                         'Basement-2 Foundation Mat',

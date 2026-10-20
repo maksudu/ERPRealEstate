@@ -21,16 +21,16 @@ class SimulatedPushNotificationBanner extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F172A),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.25),
+            color: const Color(0xFF0F172A).withOpacity(0.08),
             blurRadius: 18,
-            offset: const Offset(0, 8),
+            offset: const Offset(0, 6),
           ),
         ],
-        border: Border.all(color: AppTheme.accentAmber.withOpacity(0.5), width: 1.5),
+        border: Border.all(color: AppTheme.accentAmber, width: 1.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -40,10 +40,10 @@ class SimulatedPushNotificationBanner extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1877F2).withOpacity(0.2),
+                  color: AppTheme.accentAmber.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.notifications_active, color: AppTheme.accentAmber, size: 18),
+                child: const Icon(Icons.notifications_active, color: Color(0xFFD97706), size: 18),
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -55,7 +55,7 @@ class SimulatedPushNotificationBanner extends StatelessWidget {
                         const Text(
                           'HOT INBOUND LEAD',
                           style: TextStyle(
-                            color: AppTheme.accentAmber,
+                            color: Color(0xFFD97706),
                             fontWeight: FontWeight.bold,
                             fontSize: 10,
                             letterSpacing: 0.8,
@@ -65,12 +65,12 @@ class SimulatedPushNotificationBanner extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                           decoration: BoxDecoration(
-                            color: Colors.white12,
+                            color: const Color(0xFFF1F5F9),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
                             notification.source,
-                            style: const TextStyle(color: Colors.white70, fontSize: 9),
+                            style: const TextStyle(color: Color(0xFF64748B), fontSize: 9, fontWeight: FontWeight.w600),
                           ),
                         ),
                       ],
@@ -78,7 +78,7 @@ class SimulatedPushNotificationBanner extends StatelessWidget {
                     Text(
                       notification.fullName,
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: Color(0xFF0F172A),
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
                       ),
@@ -87,7 +87,7 @@ class SimulatedPushNotificationBanner extends StatelessWidget {
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.close, color: Colors.white54, size: 18),
+                icon: const Icon(Icons.close, color: Color(0xFF94A3B8), size: 18),
                 onPressed: onDismiss,
                 visualDensity: VisualDensity.compact,
                 padding: EdgeInsets.zero,
@@ -97,7 +97,7 @@ class SimulatedPushNotificationBanner extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             'Requires: ${notification.bedroomRequirement} · Budget: ${BdtCurrencyFormatter.format(notification.budgetBdt)}',
-            style: const TextStyle(color: Colors.white70, fontSize: 11),
+            style: const TextStyle(color: Color(0xFF475569), fontSize: 11, fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 10),
           Row(
@@ -118,8 +118,8 @@ class SimulatedPushNotificationBanner extends StatelessWidget {
               OutlinedButton(
                 onPressed: onDismiss,
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.white70,
-                  side: const BorderSide(color: Colors.white24),
+                  foregroundColor: const Color(0xFF64748B),
+                  side: const BorderSide(color: Color(0xFFCBD5E1)),
                   padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                 ),
                 child: const Text('Later', style: TextStyle(fontSize: 12)),

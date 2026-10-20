@@ -14,10 +14,8 @@ import 'presentation/bloc/unit_matrix/unit_matrix_bloc.dart';
 import 'presentation/bloc/unit_matrix/unit_matrix_event.dart';
 import 'presentation/bloc/lead/lead_bloc.dart';
 import 'presentation/bloc/lead/lead_event.dart';
-import 'presentation/screens/home_dashboard_screen.dart';
-import 'presentation/screens/unit_matrix_screen.dart';
-import 'presentation/screens/lead_manager_screen.dart';
-import 'presentation/screens/emi_calculator_screen.dart';
+import 'presentation/screens/login_screen.dart';
+import 'presentation/screens/main_navigation_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -36,7 +34,6 @@ class BdRealEstateSalesApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Default Clean Architecture wiring if not injected
     final apiClient = ApiClient();
     final webSocketClient = InventoryWebSocketClient();
 
@@ -81,80 +78,41 @@ class BdRealEstateSalesApp extends StatelessWidget {
         ),
       ],
       child: MaterialApp(
-        title: 'Real Estate Sales & CRM',
+        title: 'BlueOceans Real Estate Sales & CRM',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
-        themeMode: ThemeMode.light,
-        home: const MainNavigationShell(),
+        home: const AuthGate(),
       ),
     );
   }
 }
 
-class MainNavigationShell extends StatefulWidget {
-  const MainNavigationShell({super.key});
+class AuthGate extends StatefulWidget {
+  const AuthGate({super.key});
 
   @override
-  State<MainNavigationShell> createState() => _MainNavigationShellState();
+  State<AuthGate> createState() => _AuthGateState();
 }
 
-class _MainNavigationShellState extends State<MainNavigationShell> {
-  int _currentIndex = 0;
+class _AuthGateState extends State<AuthGate> {
+  final _api = ApiClient();
+  bool _isLoggedIn = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _isLoggedIn = _api.isAuthenticated;
+  }
 
   @override
   Widget build(BuildContext context) {
-    final screens = [
-      HomeDashboardScreen(
-        onNavigateToMatrix: () => setState(() => _currentIndex = 1),
-        onNavigateToLeads: () => setState(() => _currentIndex = 2),
-        onNavigateToCalculator: () => setState(() => _currentIndex = 3),
-      ),
-      const UnitMatrixScreen(),
-      const LeadManagerScreen(),
-      const EmiCalculatorScreen(),
-    ];
-
-    return Scaffold(
-      body: screens[_currentIndex],
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (index) => setState(() => _currentIndex = index),
-          type: BottomNavigationBarType.fixed,
-          selectedItemColor: AppTheme.primaryTeal,
-          unselectedItemColor: Colors.grey.shade500,
-          selectedFontSize: 12,
-          unselectedFontSize: 12,
-          backgroundColor: Colors.white,
-          elevation: 0,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.dashboard_outlined),
-              activeIcon: Icon(Icons.dashboard),
-              label: 'Dashboard',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.grid_view_outlined),
-              activeIcon: Icon(Icons.grid_view_rounded),
-              label: 'Flat Matrix',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.people_outline),
-              activeIcon: Icon(Icons.people),
-              label: 'Leads CRM',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.calculate_outlined),
-              activeIcon: Icon(Icons.calculate),
-              label: 'Calculator',
-            ),
-          ],
-        ),
-      ),
+    if (_isLoggedIn) {
+      return const MainNavigationScreen();
+    }
+    return LoginScreen(
+      onLoginSuccess: () {
+        setState(() => _isLoggedIn = true);
+      },
     );
   }
 }

@@ -5,7 +5,9 @@ import '../core/theme/app_theme.dart';
 import '../core/offline/offline_sync_queue.dart';
 
 class CubeTestScreen extends StatefulWidget {
-  const CubeTestScreen({super.key});
+  final VoidCallback? onOpenDrawer;
+
+  const CubeTestScreen({super.key, this.onOpenDrawer});
 
   @override
   State<CubeTestScreen> createState() => _CubeTestScreenState();
@@ -268,6 +270,19 @@ class _CubeTestScreenState extends State<CubeTestScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: Builder(
+          builder: (ctx) => IconButton(
+            icon: const Icon(Icons.menu_rounded, color: SiteAppTheme.darkNavy),
+            tooltip: 'Open Menu',
+            onPressed: () {
+              if (widget.onOpenDrawer != null) {
+                widget.onOpenDrawer!();
+              } else {
+                Scaffold.of(ctx).openDrawer();
+              }
+            },
+          ),
+        ),
         title: const Text('Concrete Cube Crushing Test Tracker'),
         actions: [
           IconButton(

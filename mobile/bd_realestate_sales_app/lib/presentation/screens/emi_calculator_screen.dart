@@ -70,7 +70,7 @@ class _EmiCalculatorView extends StatelessWidget {
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [AppTheme.primaryDark, Color(0xFF1E293B)],
+                      colors: [AppTheme.primaryTeal, Color(0xFF0F766E)],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),

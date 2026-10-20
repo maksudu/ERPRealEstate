@@ -5,11 +5,14 @@ import '../bloc/lead/lead_bloc.dart';
 import '../bloc/lead/lead_event.dart';
 import '../bloc/lead/lead_state.dart';
 import '../widgets/simulated_push_notification_banner.dart';
+import '../../core/network/api_client.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../core/theme/app_theme.dart';
 
 class LeadManagerScreen extends StatelessWidget {
-  const LeadManagerScreen({super.key});
+  final VoidCallback? onOpenDrawer;
+
+  const LeadManagerScreen({super.key, this.onOpenDrawer});
 
   @override
   Widget build(BuildContext context) {
@@ -29,8 +32,26 @@ class LeadManagerScreen extends StatelessWidget {
       builder: (context, state) {
         return Scaffold(
           appBar: AppBar(
+            leading: Builder(
+              builder: (ctx) => IconButton(
+                icon: const Icon(Icons.menu_rounded, color: Color(0xFF0F172A)),
+                tooltip: 'Open Menu',
+                onPressed: () {
+                  if (onOpenDrawer != null) {
+                    onOpenDrawer!();
+                  } else {
+                    Scaffold.of(ctx).openDrawer();
+                  }
+                },
+              ),
+            ),
             title: const Text('Omnichannel CRM & Leads'),
             actions: [
+              IconButton(
+                icon: const Icon(Icons.person_add, color: AppTheme.primaryTeal),
+                tooltip: 'Create New Lead',
+                onPressed: () => _showCreateLeadSheet(context),
+              ),
               IconButton(
                 icon: const Icon(Icons.flash_on, color: AppTheme.accentAmber),
                 tooltip: 'Simulate Facebook Lead Alert',
@@ -344,7 +365,306 @@ class LeadManagerScreen extends StatelessWidget {
                 ),
               ],
             ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.edit_note, size: 14),
+                  label: const Text('Status', style: TextStyle(fontSize: 11)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppTheme.primaryTeal,
+                    side: const BorderSide(color: AppTheme.primaryTeal),
+                    visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                  ),
+                  onPressed: () => _showUpdateStatusDialog(context, lead),
+                ),
+                const SizedBox(width: 8),
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.person_outline, size: 14),
+                  label: const Text('Assign Exec', style: TextStyle(fontSize: 11)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.grey.shade700,
+                    side: BorderSide(color: Colors.grey.shade400),
+                    visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                  ),
+                  onPressed: () => _showAssignExecutiveDialog(context, lead),
+                ),
+                const Spacer(),
+                TextButton.icon(
+                  icon: const Icon(Icons.person_add_alt, size: 14),
+                  label: const Text('Convert', style: TextStyle(fontSize: 11)),
+                  onPressed: () => _convertLead(context, lead),
+                ),
+              ],
+            ),
           ],
+        ),
+      ),
+    );
+  }
+
+  void _convertLead(BuildContext context, LeadEntity lead) async {
+    final api = ApiClient();
+    try {
+      final res = await api.convertLeadToCustomer(lead.id);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Lead converted! Customer code: ${res['customer_code'] ?? 'Created'}')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+    }
+  }
+
+  void _showAssignExecutiveDialog(BuildContext context, LeadEntity lead) {
+    int selectedRepId = 1;
+    final reason = TextEditingController(text: 'Reassigned for high-priority client follow-up');
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDlg) => AlertDialog(
+          backgroundColor: Colors.white,
+          title: const Text('Assign Sales Executive', style: TextStyle(color: Color(0xFF0F172A), fontSize: 16, fontWeight: FontWeight.bold)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DropdownButtonFormField<int>(
+                value: selectedRepId,
+                dropdownColor: Colors.white,
+                style: const TextStyle(color: Color(0xFF0F172A)),
+                decoration: const InputDecoration(labelText: 'Sales Executive', labelStyle: TextStyle(color: Color(0xFF64748B))),
+                items: const [
+                  DropdownMenuItem(value: 1, child: Text('Ashraful Alam (Senior Exec)')),
+                  DropdownMenuItem(value: 2, child: Text('Mahmud Hasan (Sales Specialist)')),
+                ],
+                onChanged: (val) => setDlg(() => selectedRepId = val ?? 1),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: reason,
+                style: const TextStyle(color: Color(0xFF0F172A)),
+                decoration: const InputDecoration(labelText: 'Assignment Reason', labelStyle: TextStyle(color: Color(0xFF64748B))),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryTeal),
+              onPressed: () async {
+                final api = ApiClient();
+                await api.assignLead(lead.id, selectedRepId, reason: reason.text.trim());
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Lead assigned successfully! Notification sent to executive.')),
+                );
+              },
+              child: const Text('Assign'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showUpdateStatusDialog(BuildContext context, LeadEntity lead) {
+    String currentStage = 'CONTACTED';
+    final lostReason = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDlg) => AlertDialog(
+          backgroundColor: Colors.white,
+          title: const Text('Update Lead Status', style: TextStyle(color: Color(0xFF0F172A), fontSize: 16, fontWeight: FontWeight.bold)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DropdownButtonFormField<String>(
+                value: currentStage,
+                dropdownColor: Colors.white,
+                style: const TextStyle(color: Color(0xFF0F172A)),
+                decoration: const InputDecoration(labelText: 'Pipeline Stage', labelStyle: TextStyle(color: Color(0xFF64748B))),
+                items: const [
+                  DropdownMenuItem(value: 'NEW', child: Text('New Lead')),
+                  DropdownMenuItem(value: 'CONTACTED', child: Text('Contacted')),
+                  DropdownMenuItem(value: 'SITE_VISIT_SCHEDULED', child: Text('Site Visit Scheduled')),
+                  DropdownMenuItem(value: 'SITE_VISIT_COMPLETED', child: Text('Site Visit Completed')),
+                  DropdownMenuItem(value: 'NEGOTIATION', child: Text('Negotiation / Draft')),
+                  DropdownMenuItem(value: 'TOKEN_BOOKED', child: Text('Token Booked (Converted)')),
+                  DropdownMenuItem(value: 'LOST', child: Text('Lost / Disqualified')),
+                ],
+                onChanged: (val) => setDlg(() => currentStage = val ?? 'CONTACTED'),
+              ),
+              if (currentStage == 'LOST') ...[
+                const SizedBox(height: 8),
+                TextField(
+                  controller: lostReason,
+                  style: const TextStyle(color: Color(0xFF0F172A)),
+                  decoration: const InputDecoration(labelText: 'Lost Reason *', labelStyle: TextStyle(color: Color(0xFF64748B))),
+                ),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryTeal),
+              onPressed: () async {
+                final api = ApiClient();
+                await api.updateLeadStatus(lead.id, currentStage, lostReason: lostReason.text.trim());
+                Navigator.pop(ctx);
+                context.read<LeadBloc>().add(LoadLeadsEvent());
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Lead status updated to $currentStage')),
+                );
+              },
+              child: const Text('Update'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showCreateLeadSheet(BuildContext context) {
+    final name = TextEditingController();
+    final phone = TextEditingController();
+    final email = TextEditingController();
+    final location = TextEditingController(text: 'Gulshan / Banani');
+    final budgetMin = TextEditingController(text: '15000000');
+    final budgetMax = TextEditingController(text: '25000000');
+    String source = 'MANUAL_ENTRY';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) => Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 20,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Create New Lead', style: TextStyle(color: Color(0xFF0F172A), fontSize: 17, fontWeight: FontWeight.bold)),
+                    IconButton(icon: const Icon(Icons.close, color: Colors.grey), onPressed: () => Navigator.pop(ctx)),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: name,
+                  style: const TextStyle(color: Color(0xFF0F172A)),
+                  decoration: const InputDecoration(labelText: 'Lead Full Name *', labelStyle: TextStyle(color: Color(0xFF64748B))),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: phone,
+                  keyboardType: TextInputType.phone,
+                  style: const TextStyle(color: Color(0xFF0F172A)),
+                  decoration: const InputDecoration(labelText: 'Primary Phone * (+880...)', labelStyle: TextStyle(color: Color(0xFF64748B))),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: email,
+                  keyboardType: TextInputType.emailAddress,
+                  style: const TextStyle(color: Color(0xFF0F172A)),
+                  decoration: const InputDecoration(labelText: 'Email Address', labelStyle: TextStyle(color: Color(0xFF64748B))),
+                ),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<String>(
+                  value: source,
+                  dropdownColor: Colors.white,
+                  style: const TextStyle(color: Color(0xFF0F172A)),
+                  decoration: const InputDecoration(labelText: 'Lead Source Channel', labelStyle: TextStyle(color: Color(0xFF64748B))),
+                  items: const [
+                    DropdownMenuItem(value: 'MANUAL_ENTRY', child: Text('Manual Entry / Direct')),
+                    DropdownMenuItem(value: 'FACEBOOK_ADS', child: Text('Facebook Ads')),
+                    DropdownMenuItem(value: 'WEB_FORM', child: Text('Website Inquiry Form')),
+                    DropdownMenuItem(value: 'WALK_IN', child: Text('Walk-in Corporate Visitor')),
+                    DropdownMenuItem(value: 'WHATSAPP', child: Text('WhatsApp Inbound Chat')),
+                    DropdownMenuItem(value: 'BROKER', child: Text('Real Estate Broker')),
+                    DropdownMenuItem(value: 'REFERRAL', child: Text('Customer Referral')),
+                  ],
+                  onChanged: (v) => setSheetState(() => source = v ?? 'MANUAL_ENTRY'),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: location,
+                  style: const TextStyle(color: Color(0xFF0F172A)),
+                  decoration: const InputDecoration(labelText: 'Preferred Location', labelStyle: TextStyle(color: Color(0xFF64748B))),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: budgetMin,
+                        keyboardType: TextInputType.number,
+                        style: const TextStyle(color: Color(0xFF0F172A)),
+                        decoration: const InputDecoration(labelText: 'Min Budget (BDT)', labelStyle: TextStyle(color: Color(0xFF64748B))),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: TextField(
+                        controller: budgetMax,
+                        keyboardType: TextInputType.number,
+                        style: const TextStyle(color: Color(0xFF0F172A)),
+                        decoration: const InputDecoration(labelText: 'Max Budget (BDT)', labelStyle: TextStyle(color: Color(0xFF64748B))),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryTeal,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  onPressed: () async {
+                    if (name.text.trim().isEmpty || phone.text.trim().isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Name and Phone are required.')));
+                      return;
+                    }
+                    try {
+                      final api = ApiClient();
+                      await api.createLead({
+                        'lead_name': name.text.trim(),
+                        'primary_phone': phone.text.trim(),
+                        'email': email.text.trim().isEmpty ? null : email.text.trim(),
+                        'lead_source_id': source,
+                        'preferred_location': location.text.trim(),
+                        'budget_range_min': double.tryParse(budgetMin.text.trim()),
+                        'budget_range_max': double.tryParse(budgetMax.text.trim()),
+                        'property_type': 'APARTMENT',
+                        'priority': 'MEDIUM',
+                      });
+                      Navigator.pop(ctx);
+                      context.read<LeadBloc>().add(LoadLeadsEvent());
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Lead created successfully!')));
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+                    }
+                  },
+                  child: const Text('Save & Ingest Lead', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

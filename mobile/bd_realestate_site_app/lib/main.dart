@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'core/theme/app_theme.dart';
 import 'screens/site_dashboard_screen.dart';
 import 'screens/dpr_entry_screen.dart';
-import 'screens/labor_muster_screen.dart';
 import 'screens/cube_test_screen.dart';
 import 'screens/store_grn_screen.dart';
+import 'screens/task_milestone_screen.dart';
+import 'screens/material_requisition_screen.dart';
+import 'screens/login_screen.dart';
+import 'widgets/site_side_menu.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,19 +23,46 @@ class BdRealestateSiteApp extends StatelessWidget {
       title: 'RealEstate Site Ops',
       debugShowCheckedModeBanner: false,
       theme: SiteAppTheme.theme,
-      home: const MainSiteNavigation(),
+      home: const SiteAuthGate(),
+    );
+  }
+}
+
+class SiteAuthGate extends StatefulWidget {
+  const SiteAuthGate({super.key});
+
+  @override
+  State<SiteAuthGate> createState() => _SiteAuthGateState();
+}
+
+class _SiteAuthGateState extends State<SiteAuthGate> {
+  bool _isLoggedIn = false;
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoggedIn) {
+      return MainSiteNavigation(
+        onLogout: () => setState(() => _isLoggedIn = false),
+      );
+    }
+    return SiteLoginScreen(
+      onLoginSuccess: () {
+        setState(() => _isLoggedIn = true);
+      },
     );
   }
 }
 
 class MainSiteNavigation extends StatefulWidget {
-  const MainSiteNavigation({super.key});
+  final VoidCallback? onLogout;
+  const MainSiteNavigation({super.key, this.onLogout});
 
   @override
   State<MainSiteNavigation> createState() => _MainSiteNavigationState();
 }
 
 class _MainSiteNavigationState extends State<MainSiteNavigation> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   int _currentIndex = 0;
 
   @override
@@ -43,14 +73,34 @@ class _MainSiteNavigationState extends State<MainSiteNavigation> {
         onNavigateToLabor: () => setState(() => _currentIndex = 2),
         onNavigateToCubes: () => setState(() => _currentIndex = 3),
         onNavigateToStores: () => setState(() => _currentIndex = 4),
+        onLogout: widget.onLogout,
+        onOpenDrawer: () => _scaffoldKey.currentState?.openDrawer(),
       ),
-      const DprEntryScreen(),
-      const LaborMusterScreen(),
-      const CubeTestScreen(),
-      const StoreGrnScreen(),
+
+      DprEntryScreen(
+        onOpenDrawer: () => _scaffoldKey.currentState?.openDrawer(),
+      ),
+      TaskMilestoneScreen(
+        onOpenDrawer: () => _scaffoldKey.currentState?.openDrawer(),
+      ),
+      MaterialRequisitionScreen(
+        onOpenDrawer: () => _scaffoldKey.currentState?.openDrawer(),
+      ),
+      CubeTestScreen(
+        onOpenDrawer: () => _scaffoldKey.currentState?.openDrawer(),
+      ),
+      StoreGrnScreen(
+        onOpenDrawer: () => _scaffoldKey.currentState?.openDrawer(),
+      ),
     ];
 
     return Scaffold(
+      key: _scaffoldKey,
+      drawer: SiteSideMenu(
+        currentTabIndex: _currentIndex,
+        onSelectTab: (idx) => setState(() => _currentIndex = idx),
+        onLogout: widget.onLogout,
+      ),
       body: IndexedStack(
         index: _currentIndex,
         children: pages,
@@ -63,6 +113,8 @@ class _MainSiteNavigationState extends State<MainSiteNavigation> {
           });
         },
         backgroundColor: Colors.white,
+        elevation: 6,
+        surfaceTintColor: Colors.transparent,
         indicatorColor: SiteAppTheme.primarySafetyOrange.withOpacity(0.15),
         destinations: const [
           NavigationDestination(
@@ -76,14 +128,19 @@ class _MainSiteNavigationState extends State<MainSiteNavigation> {
             label: 'DPR',
           ),
           NavigationDestination(
-            icon: Icon(Icons.groups_outlined),
-            selectedIcon: Icon(Icons.groups, color: SiteAppTheme.primarySafetyOrange),
-            label: 'Labor',
+            icon: Icon(Icons.alt_route),
+            selectedIcon: Icon(Icons.alt_route, color: SiteAppTheme.primarySafetyOrange),
+            label: 'Tasks',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.shopping_cart_checkout),
+            selectedIcon: Icon(Icons.shopping_cart_checkout, color: SiteAppTheme.primarySafetyOrange),
+            label: 'Materials',
           ),
           NavigationDestination(
             icon: Icon(Icons.science_outlined),
             selectedIcon: Icon(Icons.science, color: SiteAppTheme.primarySafetyOrange),
-            label: 'Cubes',
+            label: 'Quality',
           ),
           NavigationDestination(
             icon: Icon(Icons.inventory_2_outlined),

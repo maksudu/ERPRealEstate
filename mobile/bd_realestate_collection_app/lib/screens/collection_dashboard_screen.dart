@@ -6,13 +6,27 @@ import 'on_the_spot_collection_screen.dart';
 import 'bluetooth_printer_screen.dart';
 import 'pdc_vault_intake_screen.dart';
 import 'ni_act_logger_screen.dart';
+import 'customer_search_screen.dart';
+import 'installment_schedule_screen.dart';
+import 'customer_ledger_screen.dart';
+import 'bank_loan_tracking_screen.dart';
+import 'collection_workflow_screen.dart';
+import 'collection_reports_screen.dart';
 
 class CollectionDashboardScreen extends StatefulWidget {
-  const CollectionDashboardScreen({super.key});
+  final VoidCallback? onLogout;
+  final VoidCallback? onOpenDrawer;
+
+  const CollectionDashboardScreen({
+    super.key,
+    this.onLogout,
+    this.onOpenDrawer,
+  });
 
   @override
   State<CollectionDashboardScreen> createState() => _CollectionDashboardScreenState();
 }
+
 
 class _CollectionDashboardScreenState extends State<CollectionDashboardScreen> {
   final _printerService = BluetoothPrinterService();
@@ -37,6 +51,19 @@ class _CollectionDashboardScreenState extends State<CollectionDashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: Builder(
+          builder: (ctx) => IconButton(
+            icon: const Icon(Icons.menu_rounded, color: CollectionTheme.darkSlate),
+            tooltip: 'Open Menu',
+            onPressed: () {
+              if (widget.onOpenDrawer != null) {
+                widget.onOpenDrawer!();
+              } else {
+                Scaffold.of(ctx).openDrawer();
+              }
+            },
+          ),
+        ),
         title: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -99,8 +126,16 @@ class _CollectionDashboardScreenState extends State<CollectionDashboardScreen> {
               ),
             ),
           ),
+          if (widget.onLogout != null)
+            IconButton(
+              icon: const Icon(Icons.logout, color: Colors.black54, size: 20),
+              tooltip: 'Logout',
+              onPressed: widget.onLogout,
+            ),
+          const SizedBox(width: 4),
         ],
       ),
+
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -187,6 +222,84 @@ class _CollectionDashboardScreenState extends State<CollectionDashboardScreen> {
               onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const NiActLoggerScreen()),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            _buildActionCard(
+              title: 'Customer Search & Portfolio Lookup',
+              subtitle: 'Find buyers by name, phone, project, unit or booking reference',
+              icon: Icons.person_search_rounded,
+              color: const Color(0xFF0D9488),
+              badge: 'Portfolio CRM',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const CustomerSearchScreen()),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            _buildActionCard(
+              title: 'Installment Schedule & Aging Reports',
+              subtitle: 'Milestones, due & overdue aging brackets and 1-tap reminders',
+              icon: Icons.calendar_month_rounded,
+              color: const Color(0xFF2563EB),
+              badge: 'Schedule & Due',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const InstallmentScheduleScreen()),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            _buildActionCard(
+              title: 'Customer Statement of Account (Ledger)',
+              subtitle: 'Chronological demand invoices, payments received & net balance',
+              icon: Icons.receipt_long_rounded,
+              color: const Color(0xFF7C3AED),
+              badge: 'Audit Trail',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const CustomerLedgerScreen()),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            _buildActionCard(
+              title: 'Tripartite Bank Loan Tracking',
+              subtitle: 'Monitor buyer loan sanctions, developer NOC & tranche releases',
+              icon: Icons.account_balance_rounded,
+              color: const Color(0xFFB45309),
+              badge: 'Bank Desk',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const BankLoanTrackingScreen()),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            _buildActionCard(
+              title: 'Payment Verification & Approval Workflows',
+              subtitle: 'Maker-checker clearing, late fee waivers & refund governance',
+              icon: Icons.verified_user_rounded,
+              color: CollectionTheme.primaryEmerald,
+              badge: 'Governance',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const CollectionWorkflowScreen()),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            _buildActionCard(
+              title: 'Daily Collection Reports & Analytics',
+              subtitle: 'Collector targets, recovery rate % and project summaries',
+              icon: Icons.analytics_rounded,
+              color: const Color(0xFF0F172A),
+              badge: 'MIS Reports',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const CollectionReportsScreen()),
               ),
             ),
             const SizedBox(height: 24),

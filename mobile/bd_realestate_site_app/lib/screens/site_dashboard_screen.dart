@@ -6,6 +6,10 @@ import 'dpr_entry_screen.dart';
 import 'labor_muster_screen.dart';
 import 'cube_test_screen.dart';
 import 'store_grn_screen.dart';
+import 'task_milestone_screen.dart';
+import 'material_requisition_screen.dart';
+import 'contractor_management_screen.dart';
+import 'safety_management_screen.dart';
 
 class SiteDashboardScreen extends StatefulWidget {
   final VoidCallback? onNavigateToDpr;
@@ -13,13 +17,19 @@ class SiteDashboardScreen extends StatefulWidget {
   final VoidCallback? onNavigateToCubes;
   final VoidCallback? onNavigateToStores;
 
+  final VoidCallback? onLogout;
+  final VoidCallback? onOpenDrawer;
+
   const SiteDashboardScreen({
     super.key,
     this.onNavigateToDpr,
     this.onNavigateToLabor,
     this.onNavigateToCubes,
     this.onNavigateToStores,
+    this.onLogout,
+    this.onOpenDrawer,
   });
+
 
   @override
   State<SiteDashboardScreen> createState() => _SiteDashboardScreenState();
@@ -50,6 +60,19 @@ class _SiteDashboardScreenState extends State<SiteDashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: Builder(
+          builder: (ctx) => IconButton(
+            icon: const Icon(Icons.menu_rounded, color: SiteAppTheme.darkNavy),
+            tooltip: 'Open Menu',
+            onPressed: () {
+              if (widget.onOpenDrawer != null) {
+                widget.onOpenDrawer!();
+              } else {
+                Scaffold.of(ctx).openDrawer();
+              }
+            },
+          ),
+        ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -146,9 +169,16 @@ class _SiteDashboardScreenState extends State<SiteDashboardScreen> {
               );
             },
           ),
+          if (widget.onLogout != null)
+            IconButton(
+              icon: const Icon(Icons.logout, color: Color(0xFF64748B), size: 20),
+              tooltip: 'Logout',
+              onPressed: widget.onLogout,
+            ),
           const SizedBox(width: 8),
         ],
       ),
+
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -159,7 +189,7 @@ class _SiteDashboardScreenState extends State<SiteDashboardScreen> {
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [SiteAppTheme.darkNavy, Color(0xFF1E293B)],
+                  colors: [SiteAppTheme.primarySafetyOrange, Color(0xFFEA580C)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -329,6 +359,46 @@ class _SiteDashboardScreenState extends State<SiteDashboardScreen> {
               color: const Color(0xFF0F172A),
               onTap: widget.onNavigateToStores ??
                   () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StoreGrnScreen())),
+            ),
+            const SizedBox(height: 10),
+
+            _buildNavCard(
+              title: 'Task & Milestone Schedule',
+              subtitle: 'Assign tasks, set planned deadlines and update progress',
+              icon: Icons.alt_route,
+              badge: 'WBS Engine',
+              color: Colors.blue.shade700,
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TaskMilestoneScreen())),
+            ),
+            const SizedBox(height: 10),
+
+            _buildNavCard(
+              title: 'Site Material Requisition (SMR)',
+              subtitle: 'Request cement, steel, bricks, sand & formwork plywood',
+              icon: Icons.shopping_cart_checkout,
+              badge: 'Store Requisition',
+              color: Colors.teal.shade700,
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MaterialRequisitionScreen())),
+            ),
+            const SizedBox(height: 10),
+
+            _buildNavCard(
+              title: 'Contractor Management & JMS',
+              subtitle: 'Work progress, joint measurement sheets & RA bills',
+              icon: Icons.engineering_outlined,
+              badge: 'JMS Verification',
+              color: Colors.brown.shade700,
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ContractorManagementScreen())),
+            ),
+            const SizedBox(height: 10),
+
+            _buildNavCard(
+              title: 'Safety, EHS Incidents & NCR',
+              subtitle: 'Site inspections, defect logging and CAPA rectification',
+              icon: Icons.warning_amber_rounded,
+              badge: 'Safety First',
+              color: SiteAppTheme.alertRed,
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SafetyManagementScreen())),
             ),
           ],
         ),

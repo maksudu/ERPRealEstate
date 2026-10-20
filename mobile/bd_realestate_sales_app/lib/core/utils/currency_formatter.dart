@@ -22,3 +22,8 @@ class BdtCurrencyFormatter {
     return format(amount);
   }
 }
+
+class CurrencyFormatter {
+  static String formatBDT(num amount) => BdtCurrencyFormatter.format(amount);
+  static String format(num amount) => BdtCurrencyFormatter.format(amount);
+}
