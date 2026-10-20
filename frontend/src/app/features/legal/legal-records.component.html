@@ -15,7 +15,7 @@
 
   <app-card-container>
     <form class="grid gap-3 md:grid-cols-2 xl:grid-cols-3" (ngSubmit)="applyFilters()">
-      <app-custom-input label="Search" placeholder="Search title, deed, khatian, parcel, or receipt" [(ngModel)]="searchText" name="search"></app-custom-input>
+      <app-custom-input label="Search" [placeholder]="area === 'sale_transfer' ? 'Search customer, booking, agreement, unit, or transfer reference' : area === 'noc_correspondence' ? 'Search subject, authority, thread, or tracking reference' : 'Search title, deed, khatian, parcel, or reference'" [(ngModel)]="searchText" name="search"></app-custom-input>
       <app-searchable-select [label]="area === 'developer_registration' ? 'Registration status' : area === 'land_use_clearance' ? 'Approval status' : area === 'approval_condition' ? 'Condition status' : 'Status'" [categoryCode]="area === 'developer_registration' ? 'DEVELOPER_REGISTRATION_STATUS' : area === 'land_use_clearance' ? 'LEGAL_APPROVAL_STATUS' : area === 'approval_condition' ? 'LEGAL_CONDITION_TRACKING_STATUS' : 'LEGAL_RECORD_STATUS'" placeholder="All statuses" [(ngModel)]="statusFilter" name="status"></app-searchable-select>
       @if (area === 'registered_record') {
         <app-searchable-select label="Record type" categoryCode="LEGAL_RECORD_TYPE" placeholder="All record types" [(ngModel)]="recordTypeFilter" name="record_type"></app-searchable-select>
@@ -42,12 +42,20 @@
         <app-custom-input label="Thread reference" placeholder="Linked correspondence thread" [(ngModel)]="threadReferenceFilter" name="thread_reference"></app-custom-input>
         <app-searchable-select label="Project" placeholder="All projects" [options]="projectOptions" [allowCreateNew]="false" [(ngModel)]="projectFilter" name="correspondence_project_id"></app-searchable-select>
       } @else if (area === 'sale_transfer') {
+        <app-searchable-select label="Agreement / request kind" categoryCode="LEGAL_SALE_RECORD_KIND" placeholder="All document kinds" [(ngModel)]="saleRecordKindFilter" name="sale_record_kind"></app-searchable-select>
         <app-searchable-select label="Agreement type" categoryCode="LEGAL_AGREEMENT_TYPE" placeholder="All agreement types" [(ngModel)]="agreementTypeFilter" name="agreement_type"></app-searchable-select>
+        <app-searchable-select label="Execution status" categoryCode="LEGAL_SALE_EXECUTION_STATUS" placeholder="All execution statuses" [(ngModel)]="executionStatusFilter" name="execution_status"></app-searchable-select>
+        <app-searchable-select label="Agreement workflow stage" categoryCode="LEGAL_SALE_AGREEMENT_STAGE" placeholder="All agreement stages" [(ngModel)]="agreementWorkflowStageFilter" name="agreement_workflow_stage"></app-searchable-select>
         <app-searchable-select label="Transfer status" categoryCode="LEGAL_TRANSFER_STATUS" placeholder="All transfer statuses" [(ngModel)]="transferStatusFilter" name="transfer_status"></app-searchable-select>
+        <app-searchable-select label="Transfer workflow stage" categoryCode="LEGAL_SALE_TRANSFER_STAGE" placeholder="All transfer stages" [(ngModel)]="transferWorkflowStageFilter" name="transfer_workflow_stage"></app-searchable-select>
         <app-searchable-select label="Project" placeholder="All projects" [options]="projectOptions" [allowCreateNew]="false" [(ngModel)]="projectFilter" name="sale_project_id"></app-searchable-select>
       } @else if (area === 'litigation_notice') {
         <app-searchable-select label="Dispute / notice type" categoryCode="LEGAL_CASE_TYPE" placeholder="All dispute types" [(ngModel)]="caseTypeFilter" name="case_type"></app-searchable-select>
         <app-searchable-select label="Legal risk level" categoryCode="LEGAL_RISK_LEVEL" placeholder="All risk levels" [(ngModel)]="riskLevelFilter" name="risk_level"></app-searchable-select>
+        <app-searchable-select label="Case status" categoryCode="LEGAL_CASE_STATUS" placeholder="All case statuses" [(ngModel)]="caseStatusFilter" name="case_status"></app-searchable-select>
+        <app-searchable-select label="Litigation workflow" categoryCode="LEGAL_CASE_WORKFLOW_STAGE" placeholder="All stages" [(ngModel)]="caseWorkflowStageFilter" name="case_workflow_stage"></app-searchable-select>
+        <app-searchable-select label="Notice type" categoryCode="LEGAL_NOTICE_TYPE" placeholder="All notice types" [(ngModel)]="noticeTypeFilter" name="notice_type"></app-searchable-select>
+        <app-searchable-select label="Notice response status" categoryCode="LEGAL_NOTICE_RESPONSE_STATUS" placeholder="All response statuses" [(ngModel)]="noticeResponseStatusFilter" name="notice_response_status"></app-searchable-select>
         <app-searchable-select label="Court / tribunal" categoryCode="COURT_NAME" placeholder="All courts" [(ngModel)]="concernedCourtFilter" name="concerned_court"></app-searchable-select>
         <app-searchable-select label="Project" placeholder="All projects" [options]="projectOptions" [allowCreateNew]="false" [(ngModel)]="projectFilter" name="lit_project_id"></app-searchable-select>
       } @else if (area === 'document_archive') {
@@ -100,12 +108,19 @@
               <div class="mt-0.5 text-xs text-muted-foreground">{{ record.data?.['customer_name'] || 'Customer unassigned' }} · Unit: {{ record.data?.['unit_number'] || 'N/A' }} · {{ record.data?.['agreement_type'] || 'Agreement' }}</div>
             } @else if (area === 'litigation_notice') {
               <div class="mt-0.5 text-xs text-muted-foreground">{{ record.data?.['concerned_court'] || 'Forum not set' }} · {{ record.data?.['claimant_plaintiff'] ? (record.data?.['claimant_plaintiff'] + ' vs ' + (record.data?.['respondent_defendant'] || '')) : 'Parties not set' }}</div>
+              <div class="text-xs text-muted-foreground">{{ record.data?.['case_status'] || record.status || 'Open' }} · {{ record.data?.['case_workflow_stage'] || 'Case Registered' }} · {{ record.data?.['risk_level'] || 'Risk not assessed' }}</div>
+              @if (record.data?.['legal_hold_applied']) { <div class="text-xs font-medium text-destructive">Scoped legal hold: {{ record.data?.['legal_hold_scope'] || 'Review case details' }}</div> }
+              @if (record.data?.['notice_reference']) { <div class="text-xs text-muted-foreground">Notice {{ record.data?.['notice_reference'] }} · Response due {{ record.data?.['response_deadline'] || 'not stated' }} · {{ record.data?.['notice_response_status'] || 'Response not tracked' }}</div> }
             } @else if (area === 'document_archive') {
               <div class="mt-0.5 text-xs text-muted-foreground">{{ record.data?.['document_type'] || 'Document' }} · {{ record.data?.['confidentiality'] || 'Confidential' }} · Ver: {{ record.data?.['version_number'] || '1.0' }}</div>
             } @else if (area === 'calendar_reminder') {
               <div class="mt-0.5 text-xs text-muted-foreground">{{ record.data?.['reminder_type'] || 'Reminder' }} · Owner: {{ record.data?.['responsible_owner'] || 'Unassigned' }}</div>
             } @else if (area === 'approval_workflow') {
               <div class="mt-0.5 text-xs text-muted-foreground">{{ record.data?.['workflow_type'] || 'Workflow' }} · Stage: {{ record.data?.['approval_stage'] || 'Draft' }}</div>
+            }
+            @if (area === 'sale_transfer') {
+              <div class="mt-0.5 text-xs text-muted-foreground">{{ record.data?.['document_control_type'] || 'Agreement' }} · {{ record.data?.['booking_reference_no'] || 'No booking linked' }} · Unit {{ record.data?.['unit_number'] || '—' }}</div>
+              <div class="text-xs text-muted-foreground">Execution: {{ record.data?.['execution_status'] || 'Unspecified' }} · Transfer: {{ record.data?.['transfer_workflow_stage'] || '—' }}</div>
             }
           </td>
           <td class="px-4 py-3 text-muted-foreground">{{ record.reference_no || '—' }}</td>

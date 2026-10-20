@@ -191,6 +191,23 @@ export class AuthService {
     this.router.navigate(['/login']);
   }
 
+  idleLogout(): void {
+    if (this.accessToken()) {
+      this.http.post(`${this.baseUrl}/idle-logout`, {}).subscribe({ error: () => {} });
+    }
+    this.accessToken.set(null);
+    this.refreshToken.set(null);
+    this.currentUser.set(null);
+    localStorage.removeItem('erp_access_token');
+    localStorage.removeItem('erp_refresh_token');
+    localStorage.removeItem('erp_user_profile');
+    localStorage.removeItem('erp_active_project_id');
+    try {
+      localStorage.setItem('erp_idle_logout_event', Date.now().toString());
+    } catch {}
+    this.router.navigate(['/login'], { queryParams: { reason: 'idle_timeout' } });
+  }
+
   testProjectScope(): Observable<any> {
     return this.http.get(`${this.baseUrl}/test-project-scope`);
   }

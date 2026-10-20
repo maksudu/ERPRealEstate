@@ -26,6 +26,9 @@ import app.modules.tax.models
 import app.modules.governance.models
 import app.modules.legal.models
 import app.modules.bi.models
+import app.modules.budgeting.models
+import app.modules.fixed_assets.models
+import app.modules.security.models
 
 from app.modules.lookups.router import router as lookups_router
 from app.modules.auth.router import router as auth_router
@@ -46,6 +49,9 @@ from app.modules.tax.router import router as tax_router
 from app.modules.governance.router import router as governance_router
 from app.modules.bi.router import router as bi_router
 from app.modules.portal.router import router as portal_router
+from app.modules.budgeting.router import router as budgeting_router
+from app.modules.fixed_assets.router import router as fixed_assets_router
+from app.modules.security.router import router as security_router
 
 
 
@@ -152,6 +158,9 @@ app.include_router(tax_router, prefix=settings.API_V1_PREFIX)
 app.include_router(governance_router, prefix=settings.API_V1_PREFIX)
 app.include_router(bi_router, prefix=settings.API_V1_PREFIX)
 app.include_router(portal_router, prefix=settings.API_V1_PREFIX)
+app.include_router(budgeting_router, prefix=settings.API_V1_PREFIX)
+app.include_router(fixed_assets_router, prefix=settings.API_V1_PREFIX)
+app.include_router(security_router, prefix=settings.API_V1_PREFIX)
 
 if __name__ == "__main__":
 

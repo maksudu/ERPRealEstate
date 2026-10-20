@@ -159,11 +159,64 @@ async def get_current_user_profile(
 
 @router.post("/logout", status_code=status.HTTP_200_OK)
 async def logout(
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ):
-    """Revokes active refresh tokens from Redis store"""
+    """Revokes active refresh tokens from Redis store and marks active sessions as REVOKED"""
     await revoke_refresh_token(current_user.id)
+    try:
+        from app.modules.security.models import SecurityActiveSession
+        from sqlalchemy import update
+        await db.execute(
+            update(SecurityActiveSession)
+            .where(SecurityActiveSession.username == current_user.username, SecurityActiveSession.status == "ACTIVE")
+            .values(status="REVOKED")
+        )
+        await db.commit()
+    except Exception:
+        pass
     return {"message": "Successfully logged out and session revoked."}
+
+
+@router.post("/idle-logout", status_code=status.HTTP_200_OK)
+async def idle_logout(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Invalidates session on browser inactivity/idle timeout:
+    1. Revokes refresh token in Redis.
+    2. Marks active sessions for this user as EXPIRED in sec_active_sessions.
+    3. Records an Audit Log for idle session termination.
+    """
+    await revoke_refresh_token(current_user.id)
+    try:
+        from app.modules.security.models import SecurityActiveSession
+        from app.modules.auth.models import AuditTrail, AuditActionType
+        from sqlalchemy import update
+
+        await db.execute(
+            update(SecurityActiveSession)
+            .where(SecurityActiveSession.username == current_user.username, SecurityActiveSession.status == "ACTIVE")
+            .values(status="EXPIRED")
+        )
+
+        audit = AuditTrail(
+            user_id=current_user.id,
+            ip_address="0.0.0.0",
+            microservice_name="auth-service",
+            entity_name="UserSession",
+            entity_id=str(current_user.id),
+            action_type=AuditActionType.CUSTOM,
+            payload_before={"username": current_user.username, "status": "ACTIVE"},
+            payload_after={"reason": "IDLE_TIMEOUT_AUTO_LOGOUT", "status": "EXPIRED"}
+        )
+        db.add(audit)
+        await db.commit()
+    except Exception:
+        pass
+
+    return {"message": "Session invalidated due to idle timeout.", "status": "EXPIRED"}
 
 
 @router.get("/test-project-scope", response_model=ProjectScopeContext)

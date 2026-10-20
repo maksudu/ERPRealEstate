@@ -1,4 +1,27 @@
 <div class="space-y-6">
+  <!-- Navigation link to Complete User, Role & Security Module -->
+  <div class="p-4 rounded-xl border border-rose-200 bg-rose-50/70 dark:bg-rose-950/40 dark:border-rose-900 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-2xs">
+    <div class="flex items-center gap-3">
+      <div class="h-9 w-9 rounded-lg bg-rose-600 text-white flex items-center justify-center font-bold text-sm shadow-xs">
+        🛡️
+      </div>
+      <div>
+        <div class="text-xs font-bold text-rose-900 dark:text-rose-100 uppercase tracking-wider">
+          Enterprise User, Role & Security Management Module Active
+        </div>
+        <div class="text-[11px] text-rose-700 dark:text-rose-300">
+          Manage 25 predefined roles, user lifecycle, maker-checker matrices, active sessions, and audit trails.
+        </div>
+      </div>
+    </div>
+    <a
+      routerLink="/security/dashboard"
+      class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-600 text-white hover:bg-rose-700 shadow-2xs transition shrink-0"
+    >
+      Open Security Suite →
+    </a>
+  </div>
+
   <!-- Page Header -->
   <app-card-container 
     title="Users, Roles & Project Access" 

@@ -1,7 +1,7 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
@@ -10,10 +10,11 @@ import { AuthService } from '../../../core/services/auth.service';
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './login.component.html'
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   loginForm: FormGroup = this.fb.group({
     username: ['admin', [Validators.required]],
@@ -23,7 +24,15 @@ export class LoginComponent {
 
   isLoading = signal<boolean>(false);
   errorMessage = signal<string | null>(null);
+  idleNotice = signal<string | null>(null);
   showPassword = signal<boolean>(false);
+
+  ngOnInit(): void {
+    const reason = this.route.snapshot.queryParams['reason'];
+    if (reason === 'idle_timeout') {
+      this.idleNotice.set('Your session expired due to inactivity. For security reasons, please log in again.');
+    }
+  }
 
   toggleShowPassword(): void {
     this.showPassword.update(show => !show);

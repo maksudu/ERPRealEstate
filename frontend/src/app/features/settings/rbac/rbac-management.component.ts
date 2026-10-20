@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { AuthService, UserProfile, ProjectOption } from '../../../core/services/auth.service';
+import { RouterLink } from '@angular/router';
 import { 
   CardContainerComponent, 
   CustomButtonComponent,
@@ -17,6 +18,7 @@ import { environment } from '../../../../environments/environment';
   imports: [
     CommonModule,
     FormsModule,
+    RouterLink,
     CardContainerComponent,
     CustomButtonComponent
   ],

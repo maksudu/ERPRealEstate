@@ -10,7 +10,14 @@
       <p class="mt-1 text-sm text-muted-foreground">{{ labels[area] }} · Records and checklists should reflect project-specific applicability.</p>
     </div>
     @if (isReadOnly && recordId) {
-      <app-custom-button variant="outline" size="sm" (btnClick)="edit()">Edit record</app-custom-button>
+      <div class="flex flex-wrap gap-2">
+        @if (area === 'sale_transfer' && data['sales_legal_document_id']) {
+          <app-custom-button variant="outline" size="sm" (btnClick)="openGeneratedDocument()">View generated document</app-custom-button>
+        } @else if (area === 'sale_transfer' && data['execution_status'] !== 'EXECUTED' && data['execution_status'] !== 'ARCHIVED') {
+          <app-custom-button variant="outline" size="sm" [loading]="isGeneratingDocument" (btnClick)="generateLinkedDocument()">Generate draft from active template</app-custom-button>
+        }
+        <app-custom-button variant="outline" size="sm" (btnClick)="edit()">Edit record</app-custom-button>
+      </div>
     }
   </header>
 
@@ -29,11 +36,37 @@
         <div class="grid gap-4 md:grid-cols-2">
           <app-custom-input label="Record title" placeholder="Enter a clear record title" [required]="true" [disabled]="isReadOnly" [(ngModel)]="base.title" name="title"></app-custom-input>
           <app-custom-input label="Reference number" placeholder="Optional internal or authority reference" [disabled]="isReadOnly" [(ngModel)]="base.reference_no" name="reference_no"></app-custom-input>
-          <app-searchable-select label="Project" placeholder="Unassigned or choose a project" [options]="projectOptions" [allowCreateNew]="false" [disabled]="isReadOnly" [(ngModel)]="base.project_id" name="project_id"></app-searchable-select>
+          <app-searchable-select label="Project" placeholder="Unassigned or choose a project" [options]="projectOptions" [allowCreateNew]="false" [disabled]="isReadOnly || (area === 'sale_transfer' && !!data['booking_id'])" [(ngModel)]="base.project_id" name="project_id"></app-searchable-select>
           <app-searchable-select [label]="area === 'developer_registration' ? 'Registration lifecycle status' : area === 'land_use_clearance' ? 'Approval status' : area === 'approval_condition' ? 'Condition status' : 'Status'" [categoryCode]="area === 'developer_registration' ? 'DEVELOPER_REGISTRATION_STATUS' : area === 'land_use_clearance' ? 'LEGAL_APPROVAL_STATUS' : area === 'approval_condition' ? 'LEGAL_CONDITION_TRACKING_STATUS' : 'LEGAL_RECORD_STATUS'" placeholder="Choose or add a status" [disabled]="isReadOnly" [(ngModel)]="base.status" name="status"></app-searchable-select>
           <app-custom-input [label]="area === 'developer_registration' ? 'Next expiry, renewal or review date' : area === 'land_use_clearance' ? 'Approval expiry date' : area === 'approval_condition' ? 'Condition due date' : 'Next due date'" type="date" [hint]="area === 'developer_registration' ? 'Dashboard reminders use the recorded expiry, renewal or review date. No expiry is generated when none is recorded.' : area === 'land_use_clearance' ? 'Dashboard reminders use the recorded expiry date; leave it blank if no expiry is stated.' : ''" [disabled]="isReadOnly" [(ngModel)]="base.due_date" name="due_date"></app-custom-input>
         </div>
       </app-card-container>
+
+      @if (area === 'sale_transfer') {
+        <app-card-container>
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h2 class="text-sm font-semibold text-foreground">Agreement version history</h2>
+              <p class="mt-1 text-xs text-muted-foreground">Current version {{ data['agreement_version_number'] || 1 }} · Updates are retained as snapshots and audit events.</p>
+            </div>
+            @if (data['booking_id']) {
+              <app-custom-button variant="outline" size="sm" (btnClick)="openCustomerLedger()">Open customer payment ledger</app-custom-button>
+            }
+          </div>
+          @if (agreementVersionHistory.length) {
+            <div class="mt-4 space-y-2">
+              @for (version of agreementVersionHistory; track version.version_number) {
+                <div class="rounded-lg border border-border bg-muted/20 px-3 py-2 text-xs">
+                  <div class="font-medium text-foreground">Version {{ version.version_number }} · {{ version.saved_at | date:'medium' }}</div>
+                  <div class="mt-1 text-muted-foreground">Changed by {{ version.changed_by || '—' }} · {{ version.reference || 'Agreement terms snapshot' }}</div>
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="mt-3 text-xs text-muted-foreground">No previous agreement version is recorded.</p>
+          }
+        </app-card-container>
+      }
 
       <app-card-container>
         <div class="mb-4 border-b border-border pb-3">
@@ -46,6 +79,18 @@
             <p class="mt-1 text-xs leading-5 text-muted-foreground">A file upload alone cannot clear a title or land-use record. Approved or conditional status requires a recorded verification outcome, reviewer, authenticated authorized approver and explicit authorization. Conditional outcomes also require owner-assigned deadlines.</p>
           </div>
         }
+        @if (area === 'sale_transfer') {
+          <div class="mb-4 rounded-lg border border-primary/20 bg-primary/5 p-3">
+            <p class="text-xs font-medium text-foreground">Controlled agreement processing</p>
+            <p class="mt-1 text-xs leading-5 text-muted-foreground">Generated drafts remain unsigned until both parties execute them. Ownership, price, and contractual changes to an executed agreement must be recorded as a separate reviewed and authorized request; this legal register never changes the booking or customer ledger.</p>
+          </div>
+        }
+        @if (area === 'litigation_notice') {
+          <div class="mb-4 rounded-lg border border-primary/20 bg-primary/5 p-3">
+            <p class="text-xs font-medium text-foreground">Restricted case controls</p>
+            <p class="mt-1 text-xs leading-5 text-muted-foreground">Case closure requires an authorized decision and a documented outcome. Legal holds apply only to the stated assets and activities; they do not automatically block all linked transactions. Record an authorized release to end an active hold.</p>
+          </div>
+        }
         <div class="grid gap-4 md:grid-cols-2">
           @for (field of fields; track field.key; let index = $index) {
             @if (field.section && field.section !== fields[index - 1]?.section) {
@@ -54,18 +99,18 @@
               </div>
             }
             @if (field.type === 'select') {
-              <app-searchable-select [label]="fieldLabel(field)" [categoryCode]="field.lookup || ''" placeholder="Choose or add a lookup item" [hint]="field.hint || ''" [disabled]="isReadOnly" [(ngModel)]="data[field.key]" [name]="field.key"></app-searchable-select>
+              <app-searchable-select [label]="fieldLabel(field)" [categoryCode]="field.lookup || ''" [options]="field.source ? optionsForSource(field.source) : []" [allowCreateNew]="!field.source" placeholder="Choose or add a lookup item" [hint]="field.hint || ''" [disabled]="isReadOnly || !!field.readOnly" [(ngModel)]="data[field.key]" (ngModelChange)="onLinkedFieldChange(field.key, $event)" [name]="field.key"></app-searchable-select>
             } @else if (field.type === 'textarea') {
               <div class="md:col-span-2">
-                <app-custom-textarea [label]="fieldLabel(field)" [hint]="field.hint || ''" [disabled]="isReadOnly" [rows]="field.key === 'conditions' ? 4 : 3" [(ngModel)]="data[field.key]" [name]="field.key"></app-custom-textarea>
+                <app-custom-textarea [label]="fieldLabel(field)" [hint]="field.hint || ''" [disabled]="isReadOnly || !!field.readOnly" [rows]="field.key === 'conditions' || field.key === 'previous_versions_summary' ? 4 : 3" [(ngModel)]="data[field.key]" [name]="field.key"></app-custom-textarea>
               </div>
             } @else if (field.type === 'checkbox') {
               <label class="flex min-h-10 items-center gap-2 rounded-lg border border-border px-3 text-sm text-foreground">
-                <input type="checkbox" class="h-4 w-4 accent-primary" [disabled]="isReadOnly" [(ngModel)]="data[field.key]" [name]="field.key">
+                <input type="checkbox" class="h-4 w-4 accent-primary" [disabled]="isReadOnly || !!field.readOnly" [(ngModel)]="data[field.key]" [name]="field.key">
                 <span>{{ fieldLabel(field) }}</span>
               </label>
             } @else {
-              <app-custom-input [label]="fieldLabel(field)" [type]="field.type || 'text'" [hint]="field.hint || ''" [disabled]="isReadOnly" [(ngModel)]="data[field.key]" [name]="field.key"></app-custom-input>
+              <app-custom-input [label]="fieldLabel(field)" [type]="field.type || 'text'" [hint]="field.hint || ''" [disabled]="isReadOnly || !!field.readOnly" [(ngModel)]="data[field.key]" [name]="field.key"></app-custom-input>
             }
           }
         </div>

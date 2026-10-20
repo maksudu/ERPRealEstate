@@ -1,8 +1,9 @@
-import { Component, signal, inject, OnInit } from '@angular/core';
+import { Component, signal, inject, OnInit, OnDestroy, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs';
 import { AuthService } from './core/services/auth.service';
+import { IdleTrackerService } from './core/services/idle-tracker.service';
 import { TopbarComponent } from './core/layout/topbar/topbar.component';
 import { SidebarComponent } from './core/layout/sidebar/sidebar.component';
 
@@ -13,12 +14,25 @@ import { SidebarComponent } from './core/layout/sidebar/sidebar.component';
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements OnInit, OnDestroy {
   authService = inject(AuthService);
+  idleTracker = inject(IdleTrackerService);
   router = inject(Router);
   
   isSidebarOpen = signal<boolean>(typeof window !== 'undefined' ? window.innerWidth >= 1024 : true);
   isAuthPage = signal<boolean>(false);
+
+  constructor() {
+    effect(() => {
+      const isAuth = this.authService.isAuthenticated();
+      const onAuthPage = this.isAuthPage();
+      if (isAuth && !onAuthPage) {
+        this.idleTracker.start();
+      } else {
+        this.idleTracker.stop();
+      }
+    });
+  }
 
   ngOnInit(): void {
     this.updateAuthPageState(this.router.url);
@@ -49,5 +63,9 @@ export class AppComponent implements OnInit {
 
   toggleSidebar(): void {
     this.isSidebarOpen.update(open => !open);
+  }
+
+  ngOnDestroy(): void {
+    this.idleTracker.stop();
   }
 }

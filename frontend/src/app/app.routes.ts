@@ -21,6 +21,18 @@ export const routes: Routes = [
         path: 'construction',
         loadChildren: () => import('./features/construction/construction.routes').then(m => m.CONSTRUCTION_ROUTES)
       },
+      {
+        path: 'budgeting',
+        loadChildren: () => import('./features/budgeting/budgeting.routes').then(m => m.BUDGETING_ROUTES)
+      },
+      {
+        path: 'fixed-assets',
+        loadChildren: () => import('./features/fixed-assets/fixed-assets.routes').then(m => m.FIXED_ASSETS_ROUTES)
+      },
+      {
+        path: 'security',
+        loadChildren: () => import('./features/security/security.routes').then(m => m.SECURITY_ROUTES)
+      },
   {
     path: 'settings/lookups',
     loadComponent: () => import('./features/settings/lookups/lookup-management.component').then(m => m.LookupManagementComponent),

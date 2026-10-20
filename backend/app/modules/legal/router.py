@@ -768,6 +768,18 @@ LEGAL_LOOKUP_CATEGORIES = {
     "LEGAL_EXTERNAL_ORGANIZATION": "External organizations and counterparties",
     "LEGAL_NOC_CATEGORY": "Project-specific NOC categories",
     "LEGAL_AGREEMENT_TYPE": "Customer agreement types",
+    "LEGAL_SALE_RECORD_KIND": "Agreement and controlled change record types",
+    "LEGAL_SALE_AGREEMENT_STAGE": "Customer agreement workflow stages",
+    "LEGAL_SALE_EXECUTION_STATUS": "Agreement execution statuses",
+    "LEGAL_SALE_TRANSFER_STAGE": "Transfer and cancellation workflow stages",
+    "LEGAL_SALE_FINANCE_STATUS": "Contract financial clearance statuses",
+    "LEGAL_SALE_CHANGE_TYPE": "Contract amendment and transfer action types",
+    "LEGAL_AUTHORIZED_DECISION": "Authorized legal and management decisions",
+    "LEGAL_CASE_WORKFLOW_STAGE": "Litigation workflow stages",
+    "LEGAL_CASE_STATUS": "Litigation case statuses",
+    "LEGAL_NOTICE_TYPE": "Legal notice classifications",
+    "LEGAL_NOTICE_SERVICE_METHOD": "Notice service and dispatch methods",
+    "LEGAL_NOTICE_RESPONSE_STATUS": "Legal notice response statuses",
     "LEGAL_TRANSFER_STATUS": "Transfer statuses",
     "LEGAL_RISK_LEVEL": "Legal risk classifications",
     "LEGAL_DOCUMENT_TYPE": "Legal archive document types",
@@ -1082,6 +1094,67 @@ LEGAL_DEFAULT_LOOKUP_ITEMS = {
         ("EXECUTED_TRANSFERRED", "Deed Executed & Transferred"),
         ("REJECTED", "Transfer Rejected"),
     ],
+    "LEGAL_SALE_RECORD_KIND": [
+        ("AGREEMENT", "Sale Agreement"),
+        ("OWNERSHIP_AMENDMENT", "Joint Buyer / Ownership Amendment"),
+        ("NOMINEE_UPDATE", "Nominee Update"),
+        ("TRANSFER_REQUEST", "Transfer / Assignment Request"),
+        ("RESALE_SUBSTITUTION", "Resale / Customer Substitution"),
+        ("AGREEMENT_ADDENDUM", "Agreement Addendum"),
+        ("CANCELLATION_SETTLEMENT", "Cancellation / Settlement"),
+        ("POWER_OF_ATTORNEY", "Power of Attorney / Authorization"),
+        ("DEED_PREPARATION", "Deed Preparation / Execution"),
+    ],
+    "LEGAL_SALE_AGREEMENT_STAGE": [
+        ("DRAFT", "Draft"),
+        ("LEGAL_REVIEW", "Legal Review"),
+        ("FINANCE_VERIFICATION", "Finance Verification (if required)"),
+        ("AUTHORIZED_APPROVAL", "Authorized Approval"),
+        ("EXECUTION_PENDING", "Execution Pending"),
+        ("EXECUTED", "Executed"),
+        ("ARCHIVED", "Archived"),
+    ],
+    "LEGAL_SALE_EXECUTION_STATUS": [
+        ("DRAFT", "Unsigned Draft"),
+        ("LEGAL_REVIEW", "Legal Review"),
+        ("FINANCE_VERIFICATION", "Finance Verification"),
+        ("APPROVED", "Authorized Approval Complete"),
+        ("EXECUTION_PENDING", "Execution Pending"),
+        ("EXECUTED", "Executed and Signed"),
+        ("ARCHIVED", "Archived"),
+    ],
+    "LEGAL_SALE_TRANSFER_STAGE": [
+        ("REQUESTED", "Request Submitted"),
+        ("LEGAL_REVIEW", "Legal Review"),
+        ("FINANCE_VERIFICATION", "Finance Verification (if required)"),
+        ("AUTHORIZED_DECISION", "Authorized Decision"),
+        ("DOCUMENT_PREPARATION", "Resulting Document Preparation"),
+        ("EXECUTION_PENDING", "Execution Pending"),
+        ("COMPLETED", "Completed and Filed"),
+        ("REJECTED", "Rejected"),
+    ],
+    "LEGAL_SALE_FINANCE_STATUS": [
+        ("NOT_REQUIRED", "Not Required"),
+        ("PENDING", "Pending Verification"),
+        ("CLEARED", "Cleared"),
+        ("OUTSTANDING", "Outstanding Balance"),
+        ("ON_HOLD", "On Hold"),
+    ],
+    "LEGAL_SALE_CHANGE_TYPE": [
+        ("JOINT_BUYER_AMENDMENT", "Joint Buyer / Ownership Amendment"),
+        ("NOMINEE_UPDATE", "Nominee Update"),
+        ("TRANSFER_ASSIGNMENT", "Transfer / Assignment"),
+        ("RESALE_SUBSTITUTION", "Resale / Customer Substitution"),
+        ("AGREEMENT_ADDENDUM", "Agreement Addendum"),
+        ("CANCELLATION_SETTLEMENT", "Cancellation / Settlement"),
+        ("POWER_OF_ATTORNEY", "Power of Attorney / Authorization"),
+        ("DEED_PREPARATION", "Deed Preparation / Execution"),
+    ],
+    "LEGAL_AUTHORIZED_DECISION": [
+        ("APPROVED", "Approved"),
+        ("REJECTED", "Rejected"),
+        ("RETURNED_FOR_REVISION", "Returned for Revision"),
+    ],
     "LEGAL_CASE_TYPE": [
         ("TITLE_SUIT", "Title Suit (স্বত্ব মামলা)"),
         ("TEMPORARY_INJUNCTION", "Temporary Injunction / Stay Order (নিষেধাজ্ঞা)"),
@@ -1092,6 +1165,50 @@ LEGAL_DEFAULT_LOOKUP_ITEMS = {
         ("NI_ACT_138", "Cheque Dishonour Suit (NI Act Section 138)"),
         ("LAND_SURVEY_TRIBUNAL", "Land Survey Tribunal (LST) Case"),
         ("LEGAL_NOTICE", "Advocate Legal Notice / Reply"),
+    ],
+    "LEGAL_CASE_WORKFLOW_STAGE": [
+        ("CASE_REGISTERED", "Case Registered"),
+        ("INITIAL_REVIEW", "Initial Review"),
+        ("LAWYER_ASSIGNED", "Lawyer Assigned"),
+        ("DOCUMENTS_COLLECTED", "Documents Collected"),
+        ("STRATEGY_APPROVED", "Strategy Approved"),
+        ("PROCEEDINGS", "Hearings / Proceedings"),
+        ("OUTCOME_RECORDED", "Order or Outcome Recorded"),
+        ("FOLLOW_UP", "Follow-up"),
+        ("CLOSED", "Closed"),
+    ],
+    "LEGAL_CASE_STATUS": [
+        ("OPEN", "Open"),
+        ("IN_REVIEW", "Initial Review"),
+        ("ACTIVE_PROCEEDINGS", "Active Proceedings"),
+        ("FOLLOW_UP", "Follow-up Required"),
+        ("CLOSED", "Closed"),
+    ],
+    "LEGAL_NOTICE_TYPE": [
+        ("DEMAND", "Demand Notice"),
+        ("SHOW_CAUSE", "Show-cause Notice"),
+        ("BREACH", "Breach / Default Notice"),
+        ("COURT_PROCESS", "Court Process / Summons"),
+        ("RESPONSE", "Legal Response / Reply"),
+        ("OTHER", "Other Configured Notice"),
+    ],
+    "LEGAL_NOTICE_SERVICE_METHOD": [
+        ("REGISTERED_POST", "Registered Post"),
+        ("COURIER", "Courier"),
+        ("HAND_DELIVERY", "Hand Delivery"),
+        ("EMAIL", "Email"),
+        ("COURT_PROCESS_SERVER", "Court Process Server"),
+        ("OTHER", "Other Recorded Method"),
+    ],
+    "LEGAL_NOTICE_RESPONSE_STATUS": [
+        ("NOT_STARTED", "Not Started"),
+        ("DRAFTING", "Drafting Response"),
+        ("INTERNAL_REVIEW", "Internal Review"),
+        ("AWAITING_APPROVAL", "Awaiting Authorized Approval"),
+        ("APPROVED_FOR_DISPATCH", "Approved for Dispatch"),
+        ("DISPATCHED", "Dispatched"),
+        ("ACKNOWLEDGED", "Acknowledged"),
+        ("COMPLETED", "Completed"),
     ],
     "LEGAL_RISK_LEVEL": [
         ("LOW", "Low Risk (Routine / Procedural)"),
@@ -1252,6 +1369,16 @@ async def _ensure_legal_lookup_categories(db: AsyncSession) -> None:
 
 
 def _legal_record_due_date(area: str, data: dict) -> Optional[date]:
+    if area == "litigation_notice":
+        deadlines = []
+        for key in ("next_hearing_date", "response_deadline", "stay_order_valid_until"):
+            value = data.get(key)
+            if value:
+                try:
+                    deadlines.append(date.fromisoformat(str(value)))
+                except ValueError:
+                    raise HTTPException(status_code=422, detail=f"{key} must be a valid date.")
+        return min(deadlines) if deadlines else None
     date_keys = (
         ("expiry_date", "renewal_due_date", "review_date") if area == "developer_registration"
         else ("expiry_date",) if area == "land_use_clearance"
@@ -1262,7 +1389,7 @@ def _legal_record_due_date(area: str, data: dict) -> Optional[date]:
         else ("expiry_date", "retention_review_date", "review_date") if area == "document_archive"
         else ("decision_date",) if area == "approval_workflow"
         else ("next_tax_reminder_date", "mutation_hearing_date", "deed_date") if area == "registered_record"
-        else ("agreement_date",) if area == "sale_transfer"
+        else ("request_due_date",) if area == "sale_transfer" and _sale_record_kind(data) != "AGREEMENT"
         else ()
     )
     for key in date_keys:
@@ -1297,6 +1424,326 @@ def _validate_registered_land_data(area: str, data: dict) -> None:
             raise HTTPException(status_code=422, detail=f"{key} must be a valid BDT amount.")
         if not amount.is_finite() or amount < 0:
             raise HTTPException(status_code=422, detail=f"{key} must be a non-negative BDT amount.")
+
+
+SALE_AGREEMENT_VERSIONED_FIELDS = {
+    "booking_id", "customer_id", "customer_name", "customer_reference", "customer_phone", "customer_nid",
+    "co_owner_details", "project_reference", "unit_id", "unit_number", "parking_bay_reference",
+    "booking_reference_no", "sale_agreement_number", "agreement_type", "template_id", "template_version",
+    "agreement_date", "agreed_price_bdt", "payment_schedule_id", "payment_schedule_reference",
+    "handover_terms_reference", "nominee_updates", "power_of_attorney_reference", "customer_signature_date",
+    "customer_signatory_name", "developer_signature_date", "developer_signatory_name", "witness_details",
+    "document_reference", "checksum",
+}
+SALE_AGREEMENT_IDENTITY_FIELDS = {"booking_id", "customer_id", "customer_name", "customer_reference", "customer_phone", "customer_nid", "co_owner_details", "project_reference", "unit_id", "unit_number", "parking_bay_reference"}
+SALE_AGREEMENT_EXECUTED_VALUES = {"EXECUTED", "EXECUTED_SIGNED", "ARCHIVED"}
+SALE_APPROVED_REVIEW_VALUES = {"APPROVED", "LEGAL_APPROVED", "VETTED", "CLEARED", "ACCEPTED"}
+CASE_CLOSED_VALUES = {"CLOSED"}
+
+
+def _legal_user_roles(user: User) -> set[str]:
+    return {
+        str(getattr(assignment, "role_code", "")).strip().upper()
+        for assignment in (getattr(user, "project_assignments", None) or [])
+    }
+
+
+def _is_legal_management_user(user: User) -> bool:
+    roles = _legal_user_roles(user)
+    return bool(getattr(user, "is_group_admin", False) or getattr(user, "is_superuser", False)) or any(
+        any(token in role for token in ("ADMIN", "MANAGER", "MANAGEMENT", "DIRECTOR")) for role in roles
+    )
+
+
+def _is_legal_staff_user(user: User) -> bool:
+    return any("LEGAL" in role or "LAW" in role or "APPROVER" in role for role in _legal_user_roles(user)) or _is_legal_management_user(user)
+
+
+def _is_legal_approver_user(user: User) -> bool:
+    roles = _legal_user_roles(user)
+    return _is_legal_management_user(user) or any(
+        "LEGAL" in role and any(token in role for token in ("APPROVER", "MANAGER", "HEAD", "ADMIN"))
+        for role in roles
+    ) or any("APPROVER" in role for role in roles)
+
+
+def _require_litigation_access(user: User, data: Optional[dict] = None, *, creating: bool = False) -> None:
+    if not _is_legal_staff_user(user):
+        raise HTTPException(status_code=403, detail="Litigation records are restricted to assigned legal staff and authorized management.")
+    if creating or data is None or _is_legal_management_user(user):
+        return
+    identities = {
+        str(getattr(user, "username", "")).strip().casefold(),
+        str(getattr(user, "full_name_en", "")).strip().casefold(),
+    }
+    assigned = str(data.get("assigned_inhouse_counsel", "")).strip().casefold()
+    if assigned and assigned not in identities:
+        raise HTTPException(status_code=403, detail="This sensitive litigation record is available only to its assigned legal officer or authorized management.")
+
+
+def _require_authorized_case_actor(user: User, actor_name: str, action: str) -> None:
+    if not _is_legal_approver_user(user) or str(actor_name or "").strip().casefold() not in {
+        str(getattr(user, "username", "")).strip().casefold(),
+        str(getattr(user, "full_name_en", "")).strip().casefold(),
+    }:
+        raise HTTPException(status_code=403, detail=f"Only an authenticated legal approver or authorized management user may record the {action} decision.")
+
+
+def _case_is_closed(status_value: Optional[str], data: dict) -> bool:
+    return (
+        str(status_value or "").strip().upper() in CASE_CLOSED_VALUES
+        or str(data.get("case_status", "")).strip().upper() in CASE_CLOSED_VALUES
+        or str(data.get("case_workflow_stage", "")).strip().upper() in CASE_CLOSED_VALUES
+    )
+
+
+def _validate_litigation_controls(data: dict, status_value: Optional[str], current_user: User, existing: Optional[LegalComplianceRecord] = None) -> None:
+    data = dict(data or {})
+    closing = _case_is_closed(status_value, data)
+    was_closed = bool(existing and _case_is_closed(existing.status, existing.data or {}))
+    if was_closed and not closing:
+        raise HTTPException(status_code=409, detail="Closed case records are retained for audit and cannot be reopened; create a linked follow-up record if authorized.")
+    if was_closed:
+        locked_closure_fields = ("case_closure_outcome", "case_closure_approver", "case_closure_authorized", "case_closed_at")
+        if any((existing.data or {}).get(key) != data.get(key) for key in locked_closure_fields):
+            raise HTTPException(status_code=409, detail="A closed case outcome and authorization are immutable; create a linked follow-up record for subsequent work.")
+    if closing:
+        required = {
+            "case_closure_outcome": "documented outcome and follow-up",
+            "case_closure_approver": "closure approver identity",
+            "case_closed_at": "closure date",
+        }
+        missing = [label for key, label in required.items() if not str(data.get(key, "")).strip()]
+        if data.get("case_closure_authorized") is not True:
+            missing.append("explicit authorized closure decision")
+        if missing:
+            raise HTTPException(status_code=422, detail="Case closure requires " + ", ".join(missing) + ".")
+        if not was_closed or (existing and not _case_is_closed(existing.status, existing.data or {})):
+            _require_authorized_case_actor(current_user, data.get("case_closure_approver", ""), "case closure")
+
+    old_data = existing.data or {} if existing else {}
+    old_hold = old_data.get("legal_hold_applied") is True
+    new_hold = data.get("legal_hold_applied") is True
+    if old_hold and new_hold:
+        protected = ("legal_hold_scope", "legal_hold_authorized_by", "legal_hold_authorized", "legal_hold_authorized_at")
+        if any(old_data.get(key) != data.get(key) for key in protected):
+            raise HTTPException(status_code=409, detail="An active legal hold cannot be modified in place; record an authorized release before creating a revised hold.")
+    elif not old_hold and new_hold:
+        if not str(data.get("legal_hold_scope", "")).strip() or not data.get("legal_hold_authorized_at") or data.get("legal_hold_authorized") is not True:
+            raise HTTPException(status_code=422, detail="Applying a legal hold requires its scope, authorization decision, and authorization date.")
+        _require_authorized_case_actor(current_user, data.get("legal_hold_authorized_by", ""), "legal hold")
+    elif old_hold and not new_hold:
+        if not str(data.get("legal_hold_release_reason", "")).strip() or not str(data.get("legal_hold_release_authorized_by", "")).strip() or not data.get("legal_hold_released_at") or data.get("legal_hold_release_authorized") is not True:
+            raise HTTPException(status_code=422, detail="Releasing a legal hold requires its rationale, authorized decision, and release date.")
+        _require_authorized_case_actor(current_user, data.get("legal_hold_release_authorized_by", ""), "legal hold release")
+
+    stage = str(data.get("case_workflow_stage", "")).strip().upper()
+    if stage in {"STRATEGY_APPROVED", "PROCEEDINGS", "OUTCOME_RECORDED", "FOLLOW_UP", "CLOSED"}:
+        if str(data.get("case_strategy_review_status", "")).strip().upper() not in SALE_APPROVED_REVIEW_VALUES:
+            raise HTTPException(status_code=422, detail="A documented approved case strategy is required before proceedings or later workflow stages.")
+        if data.get("case_strategy_approval_authorized") is not True or not data.get("case_strategy_approved_at"):
+            raise HTTPException(status_code=422, detail="Case strategy progression requires an authorized decision and approval date.")
+        _require_authorized_case_actor(current_user, data.get("case_strategy_approver", ""), "case strategy approval")
+
+    notice_status = str(data.get("notice_response_status", "")).strip().upper()
+    if notice_status in {"DISPATCHED", "ACKNOWLEDGED", "COMPLETED"}:
+        if str(data.get("notice_internal_review_status", "")).strip().upper() not in SALE_APPROVED_REVIEW_VALUES or not str(data.get("notice_reviewed_by", "")).strip():
+            raise HTTPException(status_code=422, detail="An internally reviewed response and reviewer identity are required before notice dispatch.")
+        if data.get("notice_approval_authorized") is not True or not data.get("notice_dispatch_date") or not str(data.get("notice_dispatch_reference", "")).strip():
+            raise HTTPException(status_code=422, detail="Notice dispatch requires an authorized decision, dispatch date, and service reference.")
+        _require_authorized_case_actor(current_user, data.get("notice_authorized_approver", ""), "notice dispatch")
+
+
+def _append_litigation_history(existing: Optional[LegalComplianceRecord], data: dict, status_value: Optional[str], actor: str) -> dict:
+    result = dict(data or {})
+    old_data = dict(existing.data or {}) if existing else {}
+    history = list(old_data.get("case_status_history") or [])
+    old_record_status = existing.status if existing else None
+    new_record_status = status_value
+    old_status = old_data.get("case_status")
+    new_status = result.get("case_status")
+    old_stage = old_data.get("case_workflow_stage")
+    new_stage = result.get("case_workflow_stage")
+    if (not existing and (new_status or new_record_status or new_stage)) or (
+        existing and (old_record_status != new_record_status or old_status != new_status or old_stage != new_stage)
+    ):
+        history.append({
+            "from_record_status": old_record_status,
+            "to_record_status": new_record_status,
+            "from_case_status": old_status,
+            "to_case_status": new_status,
+            "from_stage": old_stage,
+            "to_stage": new_stage,
+            "changed_at": datetime.utcnow().isoformat(),
+            "changed_by": actor,
+            "outcome": result.get("case_closure_outcome") if _case_is_closed(status_value, result) else None,
+        })
+    result["case_status_history"] = history
+
+    hold_history = list(old_data.get("legal_hold_history") or [])
+    old_hold = old_data.get("legal_hold_applied") is True
+    new_hold = result.get("legal_hold_applied") is True
+    if old_hold != new_hold:
+        hold_history.append({
+            "action": "APPLIED" if new_hold else "RELEASED",
+            "scope": result.get("legal_hold_scope") or old_data.get("legal_hold_scope"),
+            "reason": result.get("legal_hold_release_reason") if old_hold else result.get("legal_hold_scope"),
+            "authorized_by": result.get("legal_hold_authorized_by") if new_hold else result.get("legal_hold_release_authorized_by"),
+            "recorded_by": actor,
+            "recorded_at": datetime.utcnow().isoformat(),
+        })
+    result["legal_hold_history"] = hold_history
+    return result
+
+
+def _sale_record_kind(data: dict) -> str:
+    return str(data.get("document_control_type") or "AGREEMENT").strip().upper()
+
+
+def _sale_is_authorized_approver(user: User, data: dict) -> bool:
+    role_codes = {
+        str(getattr(assignment, "role_code", "")).upper()
+        for assignment in (getattr(user, "project_assignments", None) or [])
+    }
+    can_approve = bool(getattr(user, "is_group_admin", False)) or any(
+        "LEGAL" in role or "APPROVER" in role or role == "ADMIN" for role in role_codes
+    )
+    approver_names = {
+        str(getattr(user, "username", "")).strip().casefold(),
+        str(getattr(user, "full_name_en", "")).strip().casefold(),
+    }
+    return can_approve and str(data.get("authorized_approver", "")).strip().casefold() in approver_names
+
+
+def _require_sale_authorized_decision(data: dict, user: User) -> None:
+    if str(data.get("authorized_decision", "")).strip().upper() not in {"APPROVED", "REJECTED"}:
+        raise HTTPException(status_code=422, detail="An authorized approval or rejection decision is required at this workflow stage.")
+    if data.get("approval_authorized") is not True or not str(data.get("authorized_approver", "")).strip():
+        raise HTTPException(status_code=422, detail="Record the authorized approver and explicit approval authorization.")
+    if not _sale_is_authorized_approver(user, data):
+        raise HTTPException(status_code=403, detail="Only the authenticated legal approver or group administrator may authorize this contract action.")
+
+
+def _validate_sale_transfer_data(data: dict, current_user: User, existing: Optional[LegalComplianceRecord] = None, project_id: Optional[int] = None) -> None:
+    data = data or {}
+    kind = _sale_record_kind(data)
+    if existing is None and not str(data.get("document_control_type", "")).strip():
+        raise HTTPException(status_code=422, detail="Choose an agreement or controlled request type.")
+
+    if kind == "AGREEMENT":
+        execution_status = str(data.get("execution_status", "")).strip().upper()
+        if execution_status in SALE_AGREEMENT_EXECUTED_VALUES:
+            required_fields = {
+                "customer_signature_date": "Customer signature date",
+                "customer_signatory_name": "Customer signatory name",
+                "developer_signature_date": "Developer signature date",
+                "developer_signatory_name": "Developer signatory name",
+                "document_reference": "Signed agreement document reference",
+                "checksum": "Signed document checksum",
+                "legal_reviewer_identity": "Legal reviewer identity",
+            }
+            missing = [label for key, label in required_fields.items() if not str(data.get(key, "")).strip()]
+            if missing:
+                raise HTTPException(status_code=422, detail="An agreement cannot be marked executed until these are recorded: " + ", ".join(missing) + ".")
+            if str(data.get("legal_review_status", "")).strip().upper() not in SALE_APPROVED_REVIEW_VALUES:
+                raise HTTPException(status_code=422, detail="An executed agreement must have a completed legal review.")
+            _require_sale_authorized_decision(data, current_user)
+        if existing and _sale_record_kind(existing.data or {}) == "AGREEMENT":
+            old_data = existing.data or {}
+            changed_fields = {key for key in SALE_AGREEMENT_VERSIONED_FIELDS if old_data.get(key) != data.get(key)}
+            old_executed = str(old_data.get("execution_status", "")).strip().upper() in SALE_AGREEMENT_EXECUTED_VALUES
+            if old_executed and changed_fields:
+                raise HTTPException(status_code=409, detail="Executed agreement terms are immutable. Create a separately reviewed transfer, amendment, or cancellation request.")
+            new_execution_status = str(data.get("execution_status", "")).strip().upper()
+            if old_executed and new_execution_status not in SALE_AGREEMENT_EXECUTED_VALUES:
+                raise HTTPException(status_code=409, detail="Executed agreement status cannot be rolled back to draft or review.")
+            locked_review_fields = ("legal_review_status", "legal_reviewer_identity", "legal_review_date", "authorized_approver", "authorized_decision", "approval_authorized", "sales_legal_document_id", "sales_legal_document_number")
+            if old_executed and any(old_data.get(key) != data.get(key) for key in locked_review_fields):
+                raise HTTPException(status_code=409, detail="Executed agreement approval and document history cannot be overwritten.")
+            if old_executed and old_data.get("agreement_workflow_stage") != data.get("agreement_workflow_stage") and new_execution_status != "ARCHIVED":
+                raise HTTPException(status_code=409, detail="An executed agreement can only advance to its archived stage.")
+            if changed_fields:
+                if str(data.get("legal_review_status", "")).strip().upper() not in SALE_APPROVED_REVIEW_VALUES:
+                    raise HTTPException(status_code=422, detail="Changes to ownership, price, or contractual terms require completed legal review.")
+                _require_sale_authorized_decision(data, current_user)
+            if existing.project_id != project_id:
+                if old_executed:
+                    raise HTTPException(status_code=409, detail="The project on an executed agreement cannot be changed; create a controlled amendment request.")
+                if str(data.get("legal_review_status", "")).strip().upper() not in SALE_APPROVED_REVIEW_VALUES:
+                    raise HTTPException(status_code=422, detail="A project or unit change requires completed legal review.")
+                _require_sale_authorized_decision(data, current_user)
+        return
+
+    if not data.get("source_agreement_record_id"):
+        raise HTTPException(status_code=422, detail="A transfer, amendment, nominee, deed, or cancellation record must reference its source executed agreement.")
+    if not str(data.get("request_owner", "")).strip() or not str(data.get("request_summary", "")).strip():
+        raise HTTPException(status_code=422, detail="A controlled agreement action requires a request owner and documented request summary.")
+    stage = str(data.get("transfer_workflow_stage", "REQUESTED")).strip().upper()
+    if stage not in {"REQUESTED", "DRAFT"}:
+        if not str(data.get("legal_reviewer_identity", "")).strip() or not str(data.get("legal_review_status", "")).strip():
+            raise HTTPException(status_code=422, detail="Record the legal reviewer and review outcome before advancing a controlled agreement action.")
+    if stage in {"AUTHORIZED_DECISION", "DOCUMENT_PREPARATION", "EXECUTION_PENDING", "COMPLETED", "REJECTED"}:
+        review_status = str(data.get("legal_review_status", "")).strip().upper()
+        if stage == "REJECTED":
+            if review_status not in {"REJECTED", "DECLINED", "NOT_RECOMMENDED"}:
+                raise HTTPException(status_code=422, detail="A documented negative legal review outcome is required before rejecting this controlled action.")
+        elif review_status not in SALE_APPROVED_REVIEW_VALUES:
+            raise HTTPException(status_code=422, detail="Legal review must be approved before the authorized decision stage.")
+        _require_sale_authorized_decision(data, current_user)
+        if stage != "REJECTED" and data.get("financial_clearance_required") is True:
+            if str(data.get("financial_clearance_status", "")).strip().upper() != "CLEARED" or not str(data.get("financial_clearance_reviewer", "")).strip() or not data.get("financial_clearance_date"):
+                raise HTTPException(status_code=422, detail="Required financial clearance must be verified by Finance before approval.")
+    if stage in {"EXECUTION_PENDING", "COMPLETED"} and not str(data.get("resulting_document_reference", "")).strip():
+        raise HTTPException(status_code=422, detail="Record the resulting approved document before execution or completion.")
+    if stage == "COMPLETED" and not str(data.get("checksum", "")).strip():
+        raise HTTPException(status_code=422, detail="A checksum is required for the resulting executed transfer or cancellation document.")
+
+
+def _append_sale_agreement_version(existing: LegalComplianceRecord, incoming_data: dict, actor: str, project_id: Optional[int]) -> dict:
+    data = dict(incoming_data or {})
+    old_data = dict(existing.data or {})
+    for key in ("agreement_version_history", "agreement_version_number", "previous_versions_summary", "current_version_number"):
+        data.pop(key, None)
+    changed = existing.project_id != project_id or any(old_data.get(key) != data.get(key) for key in SALE_AGREEMENT_VERSIONED_FIELDS)
+    history = list(old_data.get("agreement_version_history") or [])
+    version_number = int(old_data.get("agreement_version_number") or 1)
+    if changed:
+        snapshot = {key: value for key, value in old_data.items() if key not in {"agreement_version_history", "previous_versions_summary", "current_version_number"}}
+        snapshot["_record_project_id"] = existing.project_id
+        history.append({
+            "version_number": version_number,
+            "saved_at": datetime.utcnow().isoformat(),
+            "changed_by": actor,
+            "reference": old_data.get("sale_agreement_number") or old_data.get("booking_reference_no") or existing.reference_no,
+            "snapshot": snapshot,
+        })
+        version_number += 1
+    data["agreement_version_history"] = history
+    data["agreement_version_number"] = version_number
+    return data
+
+
+async def _validate_sale_transfer_source(db: AsyncSession, data: dict, record_id: Optional[int], project_id: Optional[int]) -> None:
+    if _sale_record_kind(data) == "AGREEMENT":
+        return
+    try:
+        source_id = int(data.get("source_agreement_record_id"))
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=422, detail="Select a valid source agreement record.")
+    if record_id == source_id:
+        raise HTTPException(status_code=422, detail="A controlled action cannot reference itself as the source agreement.")
+    source = await db.get(LegalComplianceRecord, source_id)
+    if not source or source.area != "sale_transfer":
+        raise HTTPException(status_code=404, detail="The source agreement record was not found.")
+    source_data = source.data or {}
+    if _sale_record_kind(source_data) != "AGREEMENT" or str(source_data.get("execution_status", "")).strip().upper() not in SALE_AGREEMENT_EXECUTED_VALUES:
+        raise HTTPException(status_code=409, detail="Controlled changes can only reference an executed agreement.")
+    if source.project_id and project_id and source.project_id != project_id:
+        raise HTTPException(status_code=422, detail="The controlled action project must match its source agreement.")
+    source_booking = source_data.get("booking_id")
+    action_booking = data.get("booking_id")
+    if source_booking and str(source_booking) != str(action_booking):
+        raise HTTPException(status_code=422, detail="The financial ledger booking remains linked to the source agreement; do not substitute its customer.")
 
 
 
@@ -1462,8 +1909,18 @@ async def list_legal_records(
     thread_reference: Optional[str] = Query(None, max_length=128),
     agreement_type: Optional[str] = Query(None, max_length=64),
     transfer_status: Optional[str] = Query(None, max_length=64),
+    sale_record_kind: Optional[str] = Query(None, max_length=64),
+    execution_status: Optional[str] = Query(None, max_length=64),
+    sale_workflow_stage: Optional[str] = Query(None, max_length=64),
+    agreement_workflow_stage: Optional[str] = Query(None, max_length=64),
+    transfer_workflow_stage: Optional[str] = Query(None, max_length=64),
+    booking_id: Optional[int] = Query(None, ge=1),
     case_type: Optional[str] = Query(None, max_length=64),
     risk_level: Optional[str] = Query(None, max_length=64),
+    case_status: Optional[str] = Query(None, max_length=64),
+    case_workflow_stage: Optional[str] = Query(None, max_length=64),
+    notice_type: Optional[str] = Query(None, max_length=64),
+    notice_response_status: Optional[str] = Query(None, max_length=64),
     document_type: Optional[str] = Query(None, max_length=64),
     confidentiality: Optional[str] = Query(None, max_length=64),
     reminder_type: Optional[str] = Query(None, max_length=64),
@@ -1475,7 +1932,18 @@ async def list_legal_records(
     await _ensure_legal_lookup_categories(db)
     if area not in LEGAL_AREAS:
         raise HTTPException(status_code=422, detail="Unknown legal compliance area.")
+    if area == "litigation_notice":
+        if not _is_legal_staff_user(current_user):
+            raise HTTPException(status_code=403, detail="Litigation records are restricted to assigned legal staff and authorized management.")
     filters = [LegalComplianceRecord.area == area]
+    if area == "litigation_notice" and not _is_legal_management_user(current_user):
+        identities = [name for name in {
+            str(getattr(current_user, "username", "")).strip(),
+            str(getattr(current_user, "full_name_en", "")).strip(),
+        } if name]
+        assigned_filters = [LegalComplianceRecord.data["assigned_inhouse_counsel"].as_string().in_(identities)]
+        assigned_filters.append(LegalComplianceRecord.data["notice_responsible_officer"].as_string().in_(identities))
+        filters.append(or_(*assigned_filters))
     if q:
         searchable = [
             LegalComplianceRecord.title.ilike(f"%{q}%"),
@@ -1514,7 +1982,9 @@ async def list_legal_records(
                 LegalComplianceRecord.data[key].as_string().ilike(f"%{q}%")
                 for key in (
                     "customer_name", "customer_reference", "sale_agreement_number", "booking_reference_no",
-                    "registration_deed_number", "unit_number", "agreement_type", "transfer_status"
+                    "customer_id", "booking_id", "source_agreement_record_id", "document_control_type",
+                    "registration_deed_number", "unit_number", "agreement_type", "transfer_status",
+                    "execution_status", "agreement_workflow_stage", "transfer_workflow_stage"
                 )
             )
         if area == "litigation_notice":
@@ -1584,10 +2054,33 @@ async def list_legal_records(
         filters.append(LegalComplianceRecord.data["agreement_type"].as_string() == agreement_type)
     if transfer_status:
         filters.append(LegalComplianceRecord.data["transfer_status"].as_string() == transfer_status)
+    if sale_record_kind:
+        filters.append(LegalComplianceRecord.data["document_control_type"].as_string() == sale_record_kind)
+    if execution_status:
+        filters.append(LegalComplianceRecord.data["execution_status"].as_string() == execution_status)
+    if sale_workflow_stage:
+        filters.append(or_(
+            LegalComplianceRecord.data["agreement_workflow_stage"].as_string() == sale_workflow_stage,
+            LegalComplianceRecord.data["transfer_workflow_stage"].as_string() == sale_workflow_stage,
+        ))
+    if agreement_workflow_stage:
+        filters.append(LegalComplianceRecord.data["agreement_workflow_stage"].as_string() == agreement_workflow_stage)
+    if transfer_workflow_stage:
+        filters.append(LegalComplianceRecord.data["transfer_workflow_stage"].as_string() == transfer_workflow_stage)
+    if booking_id is not None:
+        filters.append(LegalComplianceRecord.data["booking_id"].as_string() == str(booking_id))
     if case_type:
         filters.append(LegalComplianceRecord.data["case_type"].as_string() == case_type)
     if risk_level:
         filters.append(LegalComplianceRecord.data["risk_level"].as_string() == risk_level)
+    if case_status:
+        filters.append(LegalComplianceRecord.data["case_status"].as_string() == case_status)
+    if case_workflow_stage:
+        filters.append(LegalComplianceRecord.data["case_workflow_stage"].as_string() == case_workflow_stage)
+    if notice_type:
+        filters.append(LegalComplianceRecord.data["notice_type"].as_string() == notice_type)
+    if notice_response_status:
+        filters.append(LegalComplianceRecord.data["notice_response_status"].as_string() == notice_response_status)
     if document_type:
         filters.append(LegalComplianceRecord.data["document_type"].as_string() == document_type)
     if confidentiality:
@@ -1630,6 +2123,8 @@ async def get_legal_record(
     record = await db.get(LegalComplianceRecord, record_id)
     if not record:
         raise HTTPException(status_code=404, detail="Legal compliance record not found.")
+    if record.area == "litigation_notice":
+        _require_litigation_access(current_user, record.data or {})
     return record
 
 
@@ -1640,12 +2135,27 @@ async def create_legal_record(
     current_user: User = Depends(get_current_user),
 ):
     data = payload.data or {}
+    if payload.area == "litigation_notice":
+        _require_litigation_access(current_user, data, creating=True)
+        _validate_litigation_controls(data, payload.status, current_user)
+        data = dict(data)
+        if _case_is_closed(payload.status, data):
+            data["case_status"] = "CLOSED"
+            data["case_workflow_stage"] = "CLOSED"
+        data = _append_litigation_history(None, data, payload.status, current_user.username)
     _validate_registered_land_data(payload.area, data)
     _validate_clearance_review(payload.area, payload.status, data, current_user)
+    if payload.area == "sale_transfer":
+        _validate_sale_transfer_data(data, current_user, project_id=payload.project_id)
+        await _validate_sale_transfer_source(db, data, None, payload.project_id)
+        if _sale_record_kind(data) == "AGREEMENT":
+            data = dict(data)
+            data["agreement_version_history"] = []
+            data["agreement_version_number"] = 1
     record = LegalComplianceRecord(
         area=payload.area, title=payload.title.strip(), reference_no=payload.reference_no,
-        project_id=payload.project_id, status=payload.status,
-        due_date=_legal_record_due_date(payload.area, data) if payload.area in {"developer_registration", "land_use_clearance", "noc_correspondence"} else payload.due_date,
+        project_id=payload.project_id, status="CLOSED" if payload.area == "litigation_notice" and _case_is_closed(payload.status, data) else payload.status,
+        due_date=_legal_record_due_date(payload.area, data) if payload.area in {"developer_registration", "land_use_clearance", "noc_correspondence", "sale_transfer", "litigation_notice"} else payload.due_date,
         data=data,
     )
     db.add(record)
@@ -1670,11 +2180,30 @@ async def update_legal_record(
     update_data = payload.model_dump(exclude_unset=True)
     data = update_data.get("data", record.data or {})
     status_value = update_data.get("status", record.status)
+    project_id = update_data.get("project_id", record.project_id)
+    if record.area == "litigation_notice":
+        _require_litigation_access(current_user, record.data or {})
+        _validate_litigation_controls(data or {}, status_value, current_user, existing=record)
+        data = dict(data or {})
+        if _case_is_closed(status_value, data):
+            data["case_status"] = "CLOSED"
+            data["case_workflow_stage"] = "CLOSED"
+            status_value = "CLOSED"
+            update_data["status"] = "CLOSED"
+        data = _append_litigation_history(record, data, status_value, current_user.username)
+        update_data["data"] = data
     _validate_registered_land_data(record.area, data or {})
     _validate_clearance_review(record.area, status_value, data or {}, current_user)
+    if record.area == "sale_transfer":
+        data = dict(data or {})
+        _validate_sale_transfer_data(data, current_user, existing=record, project_id=project_id)
+        await _validate_sale_transfer_source(db, data, record.id, project_id)
+        if _sale_record_kind(data) == "AGREEMENT":
+            data = _append_sale_agreement_version(record, data, current_user.username, project_id)
+        update_data["data"] = data
     for field, value in update_data.items():
         setattr(record, field, value)
-    if record.area in {"developer_registration", "land_use_clearance", "noc_correspondence"}:
+    if record.area in {"developer_registration", "land_use_clearance", "noc_correspondence", "sale_transfer", "litigation_notice"}:
         record.due_date = _legal_record_due_date(record.area, record.data or {})
     await _write_legal_audit(db, record.id, record.area, "UPDATE", current_user.username, before_data, _record_snapshot(record))
     await db.commit()
@@ -1691,6 +2220,12 @@ async def delete_legal_record(
     record = await db.get(LegalComplianceRecord, record_id)
     if not record:
         raise HTTPException(status_code=404, detail="Legal compliance record not found.")
+    if record.area == "litigation_notice":
+        _require_litigation_access(current_user, record.data or {})
+        if _case_is_closed(record.status, record.data or {}):
+            raise HTTPException(status_code=409, detail="Closed litigation records are retained for audit and cannot be deleted.")
+    if record.area == "sale_transfer" and _sale_record_kind(record.data or {}) == "AGREEMENT" and str((record.data or {}).get("execution_status", "")).strip().upper() in SALE_AGREEMENT_EXECUTED_VALUES:
+        raise HTTPException(status_code=409, detail="Executed agreements are retained as legal evidence and cannot be deleted.")
     before_data = _record_snapshot(record)
     await _write_legal_audit(db, record.id, record.area, "DELETE", current_user.username, before_data, None)
     await db.delete(record)

@@ -147,8 +147,17 @@ export class LegalService {
     thread_reference?: string;
     agreement_type?: string;
     transfer_status?: string;
+    sale_record_kind?: string;
+    execution_status?: string;
+    agreement_workflow_stage?: string;
+    transfer_workflow_stage?: string;
+    booking_id?: number;
     case_type?: string;
     risk_level?: string;
+    case_status?: string;
+    case_workflow_stage?: string;
+    notice_type?: string;
+    notice_response_status?: string;
     document_type?: string;
     confidentiality?: string;
     reminder_type?: string;

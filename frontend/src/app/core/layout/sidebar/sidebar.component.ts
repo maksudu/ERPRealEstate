@@ -361,6 +361,34 @@ export class SidebarComponent implements OnInit {
       ]
     },
     {
+      id: 'security-management',
+      title: 'User, Role & Security',
+      iconSvg: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z',
+      badge: '18',
+      items: [
+        { id: 'sec-cockpit', label: 'Security Cockpit & KPIs', route: '/security/dashboard' },
+        { id: 'sec-users', label: 'User Accounts & Lifecycle', route: '/security/users' },
+        { id: 'sec-roles', label: 'Role Management (25 Roles)', route: '/security/roles' },
+        { id: 'sec-permissions', label: 'Permission Matrix (16 Modules)', route: '/security/permissions' },
+        { id: 'sec-scopes', label: 'Project & Scope Access', route: '/security/project-access' },
+        { id: 'sec-workflow', label: 'Maker-Checker Separation', route: '/security/workflow-security' },
+        { id: 'sec-auth-policies', label: 'Auth & Password Policies', route: '/security/auth-security' },
+        { id: 'sec-api-mobile', label: 'API Keys & Mobile Policies', route: '/security/api-mobile-security' },
+        { id: 'sec-audit-trails', label: 'Audit Trail & Sessions', route: '/security/audit-logs' },
+        { id: 'sec-monitoring', label: 'Threat Monitoring & Reviews', route: '/security/monitoring-reviews' },
+        {
+          id: 'sec-reports-suite',
+          label: 'Security & Access Reports',
+          badge: '3',
+          children: [
+            { id: 'rep-sec-matrix', label: 'User Access Matrix', route: '/security/reports', queryParams: { tab: 'user_access_matrix' } },
+            { id: 'rep-sec-priv', label: 'Privileged Accounts Audit', route: '/security/reports', queryParams: { tab: 'privileged_accounts' } },
+            { id: 'rep-sec-threats', label: 'Failed Logins & Threat Statement', route: '/security/reports', queryParams: { tab: 'threat_analytics' } }
+          ]
+        }
+      ]
+    },
+    {
       id: 'legal-compliance',
       title: 'Legal & Statutory Compliance',
       iconSvg: 'M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3',
@@ -461,6 +489,75 @@ export class SidebarComponent implements OnInit {
         { id: 'mat-requisitions', label: 'Material Requisition & Consumption', route: '/construction/material-requisitions' },
         { id: 'project-completion', label: 'Project Completion & Handover', route: '/construction/project-completion' },
         { id: 'construction-reports', label: 'Construction Management Reports', route: '/construction/reports' }
+      ]
+    },
+    {
+      id: 'budgeting-cost-control',
+      title: 'Budgeting & Cost Control',
+      iconSvg: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
+      badge: '12',
+      items: [
+        { id: 'bcc-dashboard', label: 'Dashboard', route: '/budgeting/dashboard' },
+        { id: 'bcc-planning', label: 'Budget Planning', route: '/budgeting/planning' },
+        { id: 'bcc-project-budget', label: 'Project Budget', route: '/budgeting/project-budget' },
+        { id: 'bcc-boq', label: 'BOQ Budget', route: '/budgeting/boq-budget' },
+        { id: 'bcc-allocation', label: 'Cost Allocation', route: '/budgeting/cost-allocation' },
+        { id: 'bcc-approval', label: 'Budget Approval', route: '/budgeting/budget-approval' },
+        { id: 'bcc-purchase-control', label: 'Purchase Budget Control', route: '/budgeting/purchase-control' },
+        { id: 'bcc-expense-control', label: 'Expense Control', route: '/budgeting/expense-control' },
+        { id: 'bcc-variation', label: 'Budget Variation', route: '/budgeting/budget-variation' },
+        { id: 'bcc-vs-actual', label: 'Budget vs Actual', route: '/budgeting/budget-vs-actual' },
+        { id: 'bcc-forecasting', label: 'Forecasting', route: '/budgeting/forecasting' },
+        {
+          id: 'bcc-reports-suite',
+          label: 'Key Budget Reports',
+          badge: '10',
+          children: [
+            { id: 'rep-bcc-1', label: 'Project Approved & Spent', route: '/budgeting/reports', queryParams: { type: 'project_expenditure' } },
+            { id: 'rep-bcc-2', label: 'BOQ Budget vs Actual Cost', route: '/budgeting/reports', queryParams: { type: 'boq_vs_actual' } },
+            { id: 'rep-bcc-3', label: 'Tower & Floor Cost Analysis', route: '/budgeting/reports', queryParams: { type: 'tower_floor_cost' } },
+            { id: 'rep-bcc-4', label: 'Material & Rebar Wastage', route: '/budgeting/reports', queryParams: { type: 'material_consumption' } },
+            { id: 'rep-bcc-5', label: 'Purchase Commitments & Headroom', route: '/budgeting/reports', queryParams: { type: 'purchase_commitments' } },
+            { id: 'rep-bcc-6', label: 'Contractor Bill & Retention', route: '/budgeting/reports', queryParams: { type: 'contractor_retention' } },
+            { id: 'rep-bcc-7', label: 'Budget Variation & Revisions', route: '/budgeting/reports', queryParams: { type: 'variation_history' } },
+            { id: 'rep-bcc-8', label: 'Cost Overrun Alerts', route: '/budgeting/reports', queryParams: { type: 'overrun_alerts' } },
+            { id: 'rep-bcc-9', label: 'Estimated Cost to Complete', route: '/budgeting/reports', queryParams: { type: 'cost_to_complete' } },
+            { id: 'rep-bcc-10', label: 'Profitability & Cost Per SqFt', route: '/budgeting/reports', queryParams: { type: 'profitability_sqft' } }
+          ]
+        }
+      ]
+    },
+    {
+      id: 'fixed-assets',
+      title: 'Fixed Asset Management',
+      iconSvg: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4',
+      badge: '10',
+      items: [
+        { id: 'fa-dash', label: 'Executive Dashboard', route: '/fixed-assets/dashboard' },
+        { id: 'fa-register', label: 'Asset Register', route: '/fixed-assets/asset-register' },
+        { id: 'fa-depreciation', label: 'Depreciation Schedule', route: '/fixed-assets/depreciation' },
+        { id: 'fa-transfers', label: 'Inter-Site Transfers', route: '/fixed-assets/transfers' },
+        { id: 'fa-maintenance', label: 'Maintenance & Downtime', route: '/fixed-assets/maintenance' },
+        { id: 'fa-disposals', label: 'Disposals & Gain/Loss', route: '/fixed-assets/disposals' },
+        { id: 'fa-verification', label: 'Physical Verification', route: '/fixed-assets/verification' },
+        { id: 'fa-reconciliation', label: 'GL Reconciliation', route: '/fixed-assets/gl-reconciliation' },
+        {
+          id: 'fa-reports-suite',
+          label: 'Fixed Asset Reports',
+          badge: '10',
+          children: [
+            { id: 'rep-fa-1', label: 'Asset Register & Acquisition', route: '/fixed-assets/reports', queryParams: { tab: 'asset_register' } },
+            { id: 'rep-fa-2', label: 'Accumulated Depreciation & NBV', route: '/fixed-assets/reports', queryParams: { tab: 'accumulated_depreciation' } },
+            { id: 'rep-fa-3', label: 'Additions & Disposals Audit', route: '/fixed-assets/reports', queryParams: { tab: 'additions_disposals' } },
+            { id: 'rep-fa-4', label: 'Monthly Depreciation Schedule', route: '/fixed-assets/reports', queryParams: { tab: 'depreciation_schedule' } },
+            { id: 'rep-fa-5', label: 'Maintenance & Equipment Downtime', route: '/fixed-assets/reports', queryParams: { tab: 'maintenance_downtime' } },
+            { id: 'rep-fa-6', label: 'Warranty & Insurance Expiry', route: '/fixed-assets/reports', queryParams: { tab: 'warranty_insurance' } },
+            { id: 'rep-fa-7', label: 'Physical Count Discrepancies', route: '/fixed-assets/reports', queryParams: { tab: 'physical_verification' } },
+            { id: 'rep-fa-8', label: 'Asset Transfer History', route: '/fixed-assets/reports', queryParams: { tab: 'transfer_history' } },
+            { id: 'rep-fa-9', label: 'Gain / Loss on Disposal', route: '/fixed-assets/reports', queryParams: { tab: 'gain_loss_disposal' } },
+            { id: 'rep-fa-10', label: 'GL Reconciliation Statement', route: '/fixed-assets/reports', queryParams: { tab: 'gl_reconciliation' } }
+          ]
+        }
       ]
     },
     {

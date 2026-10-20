@@ -8,6 +8,7 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy import func, or_
 
 from app.core.database import get_db
+from app.modules.auth.dependencies import get_current_user
 from app.modules.projects.models import Project
 from app.modules.inventory.models import Unit
 from app.modules.crm.models import Customer
@@ -2593,12 +2594,13 @@ async def get_sales_legal_document(doc_id: int, db: AsyncSession = Depends(get_d
 @router.post("/documents/generate", response_model=SalesLegalDocumentResponse, status_code=status.HTTP_201_CREATED)
 async def generate_sales_legal_document(
     payload: SalesLegalDocumentGenerateRequest,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """
-    Generates consistent legal and commercial documents from approved templates and booking data (Spec 5.6).
+    Generates a draft from an active configured template and linked booking data (Spec 5.6).
     Resolves merge fields (customer, project, unit, price, installment terms), enforces version control,
-    and initializes statutory deed checklist.
+    and leaves the configurable compliance checklist unasserted until reviewed.
     """
     # 1. Fetch Booking with full context
     stmt = (
@@ -2671,32 +2673,26 @@ async def generate_sales_legal_document(
     }
 
     # 4. Content Rendering
-    rendered_text = ""
-    template = None
-    if payload.template_id:
-        t_res = await db.execute(select(LegalDocumentTemplate).where(LegalDocumentTemplate.id == payload.template_id))
-        template = t_res.scalars().first()
-        if template and template.content_template:
-            rendered_text = _render_merge_fields(template.content_template, merge_data)
-
-    if not rendered_text:
-        rendered_text = _generate_default_statutory_text(doc_type, merge_data)
+    if not payload.template_id:
+        raise HTTPException(status_code=422, detail="Select an active legal document template before generating a contract draft.")
+    t_res = await db.execute(select(LegalDocumentTemplate).where(LegalDocumentTemplate.id == payload.template_id))
+    template = t_res.scalars().first()
+    if not template:
+        raise HTTPException(status_code=404, detail="Selected legal document template was not found.")
+    if not template.is_active:
+        raise HTTPException(status_code=409, detail="Only active legal document templates can be used for generation.")
+    if template.document_type.upper() != doc_type:
+        raise HTTPException(status_code=422, detail="The selected legal document template does not match the requested document type.")
+    if not template.content_template.strip():
+        raise HTTPException(status_code=422, detail="The selected legal document template has no content to generate.")
+    rendered_text = _render_merge_fields(template.content_template, merge_data)
 
     if payload.additional_clauses:
         rendered_text += f"\n<div style='margin-top: 16px; padding: 12px; background: #f8fafc; border-left: 3px solid #059669;'><strong>Special Clauses & Addendum:</strong><br/>{payload.additional_clauses}</div>"
 
-    # 5. Initialize Deed Preparation & Supporting Document Checklist (Spec 5.6)
-    initial_checklist = {
-        "buyer_nid_verified": True,
-        "buyer_tin_certificate": True,
-        "passport_photos_attached": True,
-        "booking_money_cleared": bool(booking.earnest_money_received and booking.earnest_money_received > 0),
-        "down_payment_cleared": (booking.down_payment_status == "COMPLETED"),
-        "title_deed_searched": True,
-        "rajuk_approval_verified": True,
-        "stamp_duty_paid": False,
-        "sub_registry_token_issued": False
-    }
+    # Checklist applicability is project- and template-specific; generation must not
+    # pre-assert legal evidence or treat a universal checklist as legal advice.
+    initial_checklist = {}
 
     audit_entry = {
         "action": "GENERATED",

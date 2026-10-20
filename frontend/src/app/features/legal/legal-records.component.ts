@@ -47,8 +47,16 @@ export class LegalRecordsComponent implements OnInit {
   threadReferenceFilter = '';
   agreementTypeFilter = '';
   transferStatusFilter = '';
+  saleRecordKindFilter = '';
+  executionStatusFilter = '';
+  agreementWorkflowStageFilter = '';
+  transferWorkflowStageFilter = '';
   caseTypeFilter = '';
   riskLevelFilter = '';
+  caseStatusFilter = '';
+  caseWorkflowStageFilter = '';
+  noticeTypeFilter = '';
+  noticeResponseStatusFilter = '';
   concernedCourtFilter = '';
   documentTypeFilter = '';
   confidentialityFilter = '';
@@ -111,8 +119,16 @@ export class LegalRecordsComponent implements OnInit {
       thread_reference: this.threadReferenceFilter,
       agreement_type: this.agreementTypeFilter,
       transfer_status: this.transferStatusFilter,
+      sale_record_kind: this.saleRecordKindFilter,
+      execution_status: this.executionStatusFilter,
+      agreement_workflow_stage: this.agreementWorkflowStageFilter,
+      transfer_workflow_stage: this.transferWorkflowStageFilter,
       case_type: this.caseTypeFilter,
       risk_level: this.riskLevelFilter,
+      case_status: this.caseStatusFilter,
+      case_workflow_stage: this.caseWorkflowStageFilter,
+      notice_type: this.noticeTypeFilter,
+      notice_response_status: this.noticeResponseStatusFilter,
       document_type: this.documentTypeFilter,
       confidentiality: this.confidentialityFilter,
       reminder_type: this.reminderTypeFilter,
