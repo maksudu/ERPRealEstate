@@ -11,7 +11,7 @@ import { ModalComponent } from '../../../shared/components/modal/modal.component
   standalone: true,
   imports: [CommonModule, FormsModule, SecurityNavComponent, CardContainerComponent, ModalComponent],
   template: `
-    <div class="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
+    <div class="p-4 sm:p-6 w-full space-y-6">
       <app-security-nav />
 
       <!-- Top API Keys Section -->
@@ -26,7 +26,18 @@ import { ModalComponent } from '../../../shared/components/modal/modal.component
           </button>
         </div>
 
-        <div class="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-xl mb-6">
+        <!-- Search Bar -->
+        <div class="mb-4 max-w-sm">
+          <input
+            type="text"
+            [(ngModel)]="searchQuery"
+            (keyup.enter)="loadApiKeys()"
+            placeholder="Search application or client ID..."
+            class="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-rose-500"
+          />
+        </div>
+
+        <div class="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-xl mb-4">
           <table class="w-full text-left border-collapse text-xs">
             <thead>
               <tr class="bg-slate-50 dark:bg-slate-850/80 border-b border-slate-200 dark:border-slate-800 text-slate-500 font-medium">
@@ -60,20 +71,54 @@ import { ModalComponent } from '../../../shared/components/modal/modal.component
                     </span>
                   </td>
                   <td class="p-3 text-center">
-                    <button
-                      type="button"
-                      (click)="revokeKey(item.id)"
-                      [disabled]="!item.is_active"
-                      class="p-1 rounded hover:bg-rose-50 text-slate-400 hover:text-rose-600 disabled:opacity-30"
-                      title="Revoke Key"
-                    >
-                      🚫
-                    </button>
+                    <div class="flex items-center justify-center gap-1.5">
+                      <button
+                        type="button"
+                        (click)="openEditModal(item)"
+                        class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-indigo-600"
+                        title="Edit API Key Limits"
+                      >
+                        ✏️
+                      </button>
+                      <button
+                        type="button"
+                        (click)="revokeKey(item.id)"
+                        [disabled]="!item.is_active"
+                        class="p-1 rounded hover:bg-rose-50 text-slate-400 hover:text-rose-600 disabled:opacity-30"
+                        title="Revoke Key"
+                      >
+                        🚫
+                      </button>
+                    </div>
                   </td>
                 </tr>
               }
             </tbody>
           </table>
+        </div>
+
+        <!-- Pagination Bar -->
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+          <div>Showing {{ offset + 1 }} to {{ Math.min(offset + limit, totalRecords) }} of {{ totalRecords }} integration keys</div>
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              [disabled]="offset === 0"
+              (click)="prevPage()"
+              class="px-2.5 py-1 rounded border border-slate-200 dark:border-slate-800 disabled:opacity-40 hover:bg-slate-50 dark:hover:bg-slate-800"
+            >
+              Previous
+            </button>
+            <span>Page {{ currentPage }} of {{ totalPages || 1 }}</span>
+            <button
+              type="button"
+              [disabled]="offset + limit >= totalRecords"
+              (click)="nextPage()"
+              class="px-2.5 py-1 rounded border border-slate-200 dark:border-slate-800 disabled:opacity-40 hover:bg-slate-50 dark:hover:bg-slate-800"
+            >
+              Next
+            </button>
+          </div>
         </div>
       </app-card>
 
@@ -170,6 +215,22 @@ export class ApiMobileSecurityComponent implements OnInit {
   apiKeys: ApiKeyItem[] = [];
   mobilePolicies: MobilePolicyItem[] = [];
   isModalOpen = false;
+  isEditMode = false;
+  editingId: number | null = null;
+  Math = Math;
+
+  searchQuery = '';
+  limit = 20;
+  offset = 0;
+  totalRecords = 0;
+
+  get totalPages(): number {
+    return Math.ceil(this.totalRecords / this.limit);
+  }
+
+  get currentPage(): number {
+    return Math.floor(this.offset / this.limit) + 1;
+  }
 
   formData = {
     app_name: '',
@@ -181,15 +242,56 @@ export class ApiMobileSecurityComponent implements OnInit {
   }
 
   loadData(): void {
-    this.service.getApiKeys().subscribe({
-      next: (data) => this.apiKeys = data
-    });
+    this.loadApiKeys();
     this.service.getMobilePolicies().subscribe({
       next: (data) => this.mobilePolicies = data
     });
   }
 
+  loadApiKeys(): void {
+    this.service.getApiKeys({
+      search: this.searchQuery,
+      limit: this.limit,
+      offset: this.offset
+    }).subscribe({
+      next: (res) => {
+        this.apiKeys = res.items || [];
+        this.totalRecords = res.total || 0;
+      }
+    });
+  }
+
+  nextPage(): void {
+    if (this.offset + this.limit < this.totalRecords) {
+      this.offset += this.limit;
+      this.loadApiKeys();
+    }
+  }
+
+  prevPage(): void {
+    if (this.offset >= this.limit) {
+      this.offset -= this.limit;
+      this.loadApiKeys();
+    }
+  }
+
   openModal(): void {
+    this.isEditMode = false;
+    this.editingId = null;
+    this.formData = {
+      app_name: '',
+      rate_limit_per_minute: 120
+    };
+    this.isModalOpen = true;
+  }
+
+  openEditModal(key: ApiKeyItem): void {
+    this.isEditMode = true;
+    this.editingId = key.id;
+    this.formData = {
+      app_name: key.app_name,
+      rate_limit_per_minute: key.rate_limit_per_minute
+    };
     this.isModalOpen = true;
   }
 
@@ -198,23 +300,36 @@ export class ApiMobileSecurityComponent implements OnInit {
   }
 
   saveApiKey(): void {
-    this.service.generateApiKey({
-      app_name: this.formData.app_name,
-      allowed_scopes: ['read:reports', 'write:transactions'],
-      rate_limit_per_minute: this.formData.rate_limit_per_minute
-    }).subscribe({
-      next: () => {
-        this.closeModal();
-        this.loadData();
-      },
-      error: (err) => console.error('Failed to generate key', err)
-    });
+    if (this.isEditMode && this.editingId) {
+      this.service.updateApiKey(this.editingId, {
+        app_name: this.formData.app_name,
+        rate_limit_per_minute: this.formData.rate_limit_per_minute
+      }).subscribe({
+        next: () => {
+          this.closeModal();
+          this.loadApiKeys();
+        },
+        error: (err) => console.error('Failed to update API key', err)
+      });
+    } else {
+      this.service.generateApiKey({
+        app_name: this.formData.app_name,
+        allowed_scopes: ['read:reports', 'write:transactions'],
+        rate_limit_per_minute: this.formData.rate_limit_per_minute
+      }).subscribe({
+        next: () => {
+          this.closeModal();
+          this.loadApiKeys();
+        },
+        error: (err) => console.error('Failed to generate key', err)
+      });
+    }
   }
 
   revokeKey(id: number): void {
     if (confirm('Are you sure you want to revoke this API integration key?')) {
       this.service.revokeApiKey(id).subscribe({
-        next: () => this.loadData(),
+        next: () => this.loadApiKeys(),
         error: (err) => console.error('Failed to revoke API key', err)
       });
     }

@@ -640,6 +640,59 @@ export class SidebarComponent implements OnInit {
       ]
     },
     {
+      id: 'mobile-sales',
+      title: 'Mobile Sales App Suite',
+      iconSvg: 'M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z',
+      badge: '9',
+      items: [
+        { id: 'mob-dash', label: 'Sales Dashboard', route: '/mobile-sales/dashboard' },
+        { id: 'mob-leads', label: 'Lead Management', route: '/mobile-sales/leads' },
+        { id: 'mob-customers', label: 'Customer Management', route: '/mobile-sales/customers' },
+        { id: 'mob-props', label: 'Project & Property', route: '/mobile-sales/properties' },
+        { id: 'mob-quotes', label: 'Quotation Management', route: '/mobile-sales/quotations' },
+        { id: 'mob-visits', label: 'Site Visit Management', route: '/mobile-sales/site-visits' },
+        { id: 'mob-bookings', label: 'Booking Management', route: '/mobile-sales/bookings' },
+        { id: 'mob-approvals', label: 'Approval Workflow', route: '/mobile-sales/approvals' },
+        { id: 'mob-notifs', label: 'Notifications', route: '/mobile-sales/notifications' }
+      ]
+    },
+    {
+      id: 'mobile-site',
+      title: 'Mobile Site App Suite',
+      iconSvg: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4',
+      badge: '10',
+      items: [
+        { id: 'site-dash', label: 'Site Dashboard', route: '/mobile-site/dashboard' },
+        { id: 'site-dpr', label: 'Daily Progress Report', route: '/mobile-site/dpr' },
+        { id: 'site-tasks', label: 'Task & Milestones', route: '/mobile-site/tasks' },
+        { id: 'site-reqs', label: 'Material Requisition', route: '/mobile-site/requisitions' },
+        { id: 'site-tx', label: 'Receiving & Issue', route: '/mobile-site/transactions' },
+        { id: 'site-photos', label: 'Photo Documentation', route: '/mobile-site/photos' },
+        { id: 'site-qc', label: 'Quality Control', route: '/mobile-site/quality' },
+        { id: 'site-contractors', label: 'Contractor Management', route: '/mobile-site/contractors' },
+        { id: 'site-safety', label: 'Safety Management', route: '/mobile-site/safety' },
+        { id: 'site-sync', label: 'Offline & Sync', route: '/mobile-site/offline-sync' }
+      ]
+    },
+    {
+      id: 'mobile-collection',
+      title: 'Mobile Collection App Suite',
+      iconSvg: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z',
+      badge: '10',
+      items: [
+        { id: 'col-dash', label: 'Collection Dashboard', route: '/mobile-collection/dashboard' },
+        { id: 'col-cust', label: 'Customer Search', route: '/mobile-collection/customers' },
+        { id: 'col-sch', label: 'Installment Schedule', route: '/mobile-collection/schedules' },
+        { id: 'col-due', label: 'Due & Overdue Aging', route: '/mobile-collection/due-overdue' },
+        { id: 'col-pay', label: 'Payment Entry', route: '/mobile-collection/payments' },
+        { id: 'col-rec', label: 'Receipt Generator', route: '/mobile-collection/receipts' },
+        { id: 'col-led', label: 'Customer Ledger', route: '/mobile-collection/ledger' },
+        { id: 'col-loan', label: 'Bank Loan Tracking', route: '/mobile-collection/loans' },
+        { id: 'col-app', label: 'Approval Workflow', route: '/mobile-collection/approvals' },
+        { id: 'col-rep', label: 'Collection Reports', route: '/mobile-collection/reports' }
+      ]
+    },
+    {
       id: 'installment-collection',
       title: 'Installment & Collection',
       iconSvg: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z',

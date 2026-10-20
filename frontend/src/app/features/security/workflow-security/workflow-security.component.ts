@@ -12,7 +12,7 @@ import { SearchableSelectComponent, SelectOption } from '../../../shared/compone
   standalone: true,
   imports: [CommonModule, FormsModule, SecurityNavComponent, CardContainerComponent, ModalComponent, SearchableSelectComponent],
   template: `
-    <div class="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
+    <div class="p-4 sm:p-6 w-full space-y-6">
       <app-security-nav />
 
       <!-- Top Separation of Duties Banner -->
@@ -42,6 +42,17 @@ import { SearchableSelectComponent, SelectOption } from '../../../shared/compone
 
       <!-- Main Workflow Table -->
       <app-card title="Maker-Checker-Approver Workflow Authorization Matrix" subtitle="Separation of duties rules for procurement, sales discounts, payroll and asset disposals">
+        <!-- Search Bar -->
+        <div class="mb-4 max-w-sm">
+          <input
+            type="text"
+            [(ngModel)]="searchQuery"
+            (keyup.enter)="loadRules()"
+            placeholder="Search by module or role..."
+            class="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-rose-500"
+          />
+        </div>
+
         <div class="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-xl">
           <table class="w-full text-left border-collapse text-xs">
             <thead>
@@ -53,12 +64,13 @@ import { SearchableSelectComponent, SelectOption } from '../../../shared/compone
                 <th class="p-3 text-right">Approval Limit (BDT)</th>
                 <th class="p-3 text-center">Self-Approval Block</th>
                 <th class="p-3 text-center">Status</th>
+                <th class="p-3 text-center">Actions</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-200">
               @if (loading) {
                 <tr>
-                  <td colspan="7" class="p-6 text-center text-slate-400">Loading workflow rules...</td>
+                  <td colspan="8" class="p-6 text-center text-slate-400">Loading workflow rules...</td>
                 </tr>
               } @else {
                 @for (item of rules; track item.id) {
@@ -82,11 +94,55 @@ import { SearchableSelectComponent, SelectOption } from '../../../shared/compone
                         ACTIVE
                       </span>
                     </td>
+                    <td class="p-3 text-center">
+                      <div class="flex items-center justify-center gap-1.5">
+                        <button
+                          type="button"
+                          (click)="openEditModal(item)"
+                          class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-indigo-600"
+                          title="Edit Rule"
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          type="button"
+                          (click)="deleteRule(item)"
+                          class="p-1 rounded hover:bg-rose-50 text-slate-400 hover:text-rose-600"
+                          title="Delete Rule"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 }
               }
             </tbody>
           </table>
+        </div>
+
+        <!-- Pagination Bar -->
+        <div class="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+          <div>Showing {{ offset + 1 }} to {{ Math.min(offset + limit, totalRecords) }} of {{ totalRecords }} rules</div>
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              [disabled]="offset === 0"
+              (click)="prevPage()"
+              class="px-2.5 py-1 rounded border border-slate-200 dark:border-slate-800 disabled:opacity-40 hover:bg-slate-50 dark:hover:bg-slate-800"
+            >
+              Previous
+            </button>
+            <span>Page {{ currentPage }} of {{ totalPages || 1 }}</span>
+            <button
+              type="button"
+              [disabled]="offset + limit >= totalRecords"
+              (click)="nextPage()"
+              class="px-2.5 py-1 rounded border border-slate-200 dark:border-slate-800 disabled:opacity-40 hover:bg-slate-50 dark:hover:bg-slate-800"
+            >
+              Next
+            </button>
+          </div>
         </div>
       </app-card>
 
@@ -179,6 +235,22 @@ export class WorkflowSecurityComponent implements OnInit {
   rules: WorkflowRule[] = [];
   loading = false;
   isModalOpen = false;
+  isEditMode = false;
+  editingId: number | null = null;
+  Math = Math;
+
+  searchQuery = '';
+  limit = 20;
+  offset = 0;
+  totalRecords = 0;
+
+  get totalPages(): number {
+    return Math.ceil(this.totalRecords / this.limit);
+  }
+
+  get currentPage(): number {
+    return Math.floor(this.offset / this.limit) + 1;
+  }
 
   moduleOptions: SelectOption[] = [
     { value: 'Land Acquisition', label: 'Land Acquisition' },
@@ -205,9 +277,14 @@ export class WorkflowSecurityComponent implements OnInit {
 
   loadRules(): void {
     this.loading = true;
-    this.service.getWorkflowRules().subscribe({
-      next: (data) => {
-        this.rules = data;
+    this.service.getWorkflowRules({
+      search: this.searchQuery,
+      limit: this.limit,
+      offset: this.offset
+    }).subscribe({
+      next: (res) => {
+        this.rules = res.items || [];
+        this.totalRecords = res.total || 0;
         this.loading = false;
       },
       error: (err) => {
@@ -217,7 +294,43 @@ export class WorkflowSecurityComponent implements OnInit {
     });
   }
 
+  nextPage(): void {
+    if (this.offset + this.limit < this.totalRecords) {
+      this.offset += this.limit;
+      this.loadRules();
+    }
+  }
+
+  prevPage(): void {
+    if (this.offset >= this.limit) {
+      this.offset -= this.limit;
+      this.loadRules();
+    }
+  }
+
   openModal(): void {
+    this.isEditMode = false;
+    this.editingId = null;
+    this.formData = {
+      module_name: 'Purchase Order',
+      maker_role: 'Purchase Officer',
+      checker_role: 'Procurement Manager',
+      approver_role: 'Managing Director',
+      threshold_limit_bdt: 2000000
+    };
+    this.isModalOpen = true;
+  }
+
+  openEditModal(rule: WorkflowRule): void {
+    this.isEditMode = true;
+    this.editingId = rule.id;
+    this.formData = {
+      module_name: rule.module_name,
+      maker_role: rule.maker_role,
+      checker_role: rule.checker_role,
+      approver_role: rule.approver_role,
+      threshold_limit_bdt: rule.threshold_limit_bdt
+    };
     this.isModalOpen = true;
   }
 
@@ -226,12 +339,31 @@ export class WorkflowSecurityComponent implements OnInit {
   }
 
   saveRule(): void {
-    this.service.createWorkflowRule(this.formData).subscribe({
-      next: () => {
-        this.closeModal();
-        this.loadRules();
-      },
-      error: (err) => console.error('Failed to create workflow rule', err)
-    });
+    if (this.isEditMode && this.editingId) {
+      this.service.updateWorkflowRule(this.editingId, this.formData).subscribe({
+        next: () => {
+          this.closeModal();
+          this.loadRules();
+        },
+        error: (err) => console.error('Failed to update workflow rule', err)
+      });
+    } else {
+      this.service.createWorkflowRule(this.formData).subscribe({
+        next: () => {
+          this.closeModal();
+          this.loadRules();
+        },
+        error: (err) => console.error('Failed to create workflow rule', err)
+      });
+    }
+  }
+
+  deleteRule(rule: WorkflowRule): void {
+    if (confirm(`Remove workflow rule for ${rule.module_name}?`)) {
+      this.service.deleteWorkflowRule(rule.id).subscribe({
+        next: () => this.loadRules(),
+        error: (err) => console.error('Failed to delete workflow rule', err)
+      });
+    }
   }
 }

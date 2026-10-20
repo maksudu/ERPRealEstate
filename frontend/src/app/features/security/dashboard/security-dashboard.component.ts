@@ -10,7 +10,7 @@ import { CardContainerComponent } from '../../../shared/components/card-containe
   standalone: true,
   imports: [CommonModule, RouterLink, SecurityNavComponent, CardContainerComponent],
   template: `
-    <div class="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
+    <div class="p-4 sm:p-6 w-full space-y-6">
       <app-security-nav />
 
       <!-- Top Executive Metrics Cockpit -->

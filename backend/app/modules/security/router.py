@@ -213,6 +213,16 @@ async def update_user_status(user_id: int, new_status: str = Query(..., descript
     return {"status": "SUCCESS", "message": f"User status updated to {new_status}"}
 
 
+@router.delete("/users/{user_id}")
+async def delete_user(user_id: int, db: AsyncSession = Depends(get_db)):
+    user = await db.get(SecurityUserAccount, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User account not found")
+    await db.delete(user)
+    await db.commit()
+    return {"status": "SUCCESS", "message": f"User {user.username} deleted successfully."}
+
+
 # =========================================================================
 # 3. Role Management (25 Default Roles, Custom Roles, Clones)
 # =========================================================================
@@ -220,6 +230,8 @@ async def update_user_status(user_id: int, new_status: str = Query(..., descript
 async def list_roles(
     search: Optional[str] = None,
     department: Optional[str] = None,
+    limit: int = Query(50, ge=1, le=100),
+    offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db)
 ):
     await seed_security_module(db)
@@ -230,9 +242,13 @@ async def list_roles(
     if department:
         q = q.where(SecurityRoleMaster.department == department)
 
-    q = q.order_by(SecurityRoleMaster.id)
+    count_q = select(func.count()).select_from(q.subquery())
+    total_count = (await db.execute(count_q)).scalar() or 0
+
+    q = q.order_by(SecurityRoleMaster.id).limit(limit).offset(offset)
     items = (await db.execute(q)).scalars().all()
-    return [SecurityRoleResponse.model_validate(r).model_dump() for r in items]
+    results = [SecurityRoleResponse.model_validate(r).model_dump() for r in items]
+    return {"items": results, "total": total_count, "limit": limit, "offset": offset}
 
 
 @router.post("/roles", response_model=SecurityRoleResponse, status_code=status.HTTP_201_CREATED)
@@ -256,6 +272,18 @@ async def update_role(role_id: int, payload: SecurityRoleUpdate, db: AsyncSessio
     await db.commit()
     await db.refresh(role)
     return role
+
+
+@router.delete("/roles/{role_id}")
+async def delete_role(role_id: int, db: AsyncSession = Depends(get_db)):
+    role = await db.get(SecurityRoleMaster, role_id)
+    if not role:
+        raise HTTPException(status_code=404, detail="Role not found")
+    if role.is_system_role:
+        raise HTTPException(status_code=400, detail="Cannot delete a predefined system role.")
+    await db.delete(role)
+    await db.commit()
+    return {"status": "SUCCESS", "message": f"Role {role.role_code} deleted successfully."}
 
 
 # =========================================================================
@@ -311,45 +339,46 @@ async def list_role_permissions(
 # 5. Project & Property Level Access Controls
 # =========================================================================
 @router.get("/project-scopes")
-async def list_user_project_scopes(user_id: Optional[int] = None, db: AsyncSession = Depends(get_db)):
+async def list_user_project_scopes(
+    user_id: Optional[int] = None,
+    search: Optional[str] = None,
+    limit: int = Query(50, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_db)
+):
     await seed_security_module(db)
     q = select(SecurityUserProjectScope)
     if user_id:
         q = q.where(SecurityUserProjectScope.user_id == user_id)
-    items = (await db.execute(q.order_by(desc(SecurityUserProjectScope.id)))).scalars().all()
-    if not items:
-        # Default mock scope
-        items = [
-            SecurityUserProjectScope(
-                id=1,
-                user_id=3,
-                user_name="Kamal Hossain (Project Manager)",
-                project_id=1,
-                project_name="Ocean Heights Luxury Tower",
-                tower_names=["Tower A", "Tower B"],
-                can_view_financials=True,
-                can_view_customers=True,
-                is_active=True
-            ),
-            SecurityUserProjectScope(
-                id=2,
-                user_id=3,
-                user_name="Kamal Hossain (Project Manager)",
-                project_id=2,
-                project_name="BlueOceans Commercial Plaza",
-                tower_names=["North Wing"],
-                can_view_financials=False,
-                can_view_customers=False,
-                is_active=True
-            )
-        ]
-    return [SecurityUserProjectScopeResponse.model_validate(s).model_dump() for s in items]
+    if search:
+        s = f"%{search}%"
+        q = q.where(or_(SecurityUserProjectScope.user_name.ilike(s), SecurityUserProjectScope.project_name.ilike(s)))
+
+    count_q = select(func.count()).select_from(q.subquery())
+    total_count = (await db.execute(count_q)).scalar() or 0
+
+    items = (await db.execute(q.order_by(desc(SecurityUserProjectScope.id)).limit(limit).offset(offset))).scalars().all()
+    results = [SecurityUserProjectScopeResponse.model_validate(s).model_dump() for s in items]
+    return {"items": results, "total": total_count, "limit": limit, "offset": offset}
 
 
 @router.post("/project-scopes", response_model=SecurityUserProjectScopeResponse, status_code=status.HTTP_201_CREATED)
 async def assign_project_scope(payload: SecurityUserProjectScopeCreate, db: AsyncSession = Depends(get_db)):
     scope = SecurityUserProjectScope(**payload.model_dump())
     db.add(scope)
+    await db.commit()
+    await db.refresh(scope)
+    return scope
+
+
+@router.put("/project-scopes/{scope_id}", response_model=SecurityUserProjectScopeResponse)
+async def update_project_scope(scope_id: int, payload: Dict[str, Any], db: AsyncSession = Depends(get_db)):
+    scope = await db.get(SecurityUserProjectScope, scope_id)
+    if not scope:
+        raise HTTPException(status_code=404, detail="Scope assignment not found")
+    for key, val in payload.items():
+        if hasattr(scope, key):
+            setattr(scope, key, val)
     await db.commit()
     await db.refresh(scope)
     return scope
@@ -369,11 +398,25 @@ async def revoke_project_scope(scope_id: int, db: AsyncSession = Depends(get_db)
 # 6. Maker-Checker-Approver Workflow Rules
 # =========================================================================
 @router.get("/workflow-rules")
-async def list_workflow_rules(db: AsyncSession = Depends(get_db)):
+async def list_workflow_rules(
+    search: Optional[str] = None,
+    limit: int = Query(50, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_db)
+):
     await seed_security_module(db)
-    res = await db.execute(select(SecurityWorkflowRule).order_by(SecurityWorkflowRule.id))
+    q = select(SecurityWorkflowRule)
+    if search:
+        s = f"%{search}%"
+        q = q.where(or_(SecurityWorkflowRule.module_name.ilike(s), SecurityWorkflowRule.approver_role.ilike(s), SecurityWorkflowRule.maker_role.ilike(s)))
+
+    count_q = select(func.count()).select_from(q.subquery())
+    total_count = (await db.execute(count_q)).scalar() or 0
+
+    res = await db.execute(q.order_by(SecurityWorkflowRule.id).limit(limit).offset(offset))
     items = res.scalars().all()
-    return [SecurityWorkflowRuleResponse.model_validate(w).model_dump() for w in items]
+    results = [SecurityWorkflowRuleResponse.model_validate(w).model_dump() for w in items]
+    return {"items": results, "total": total_count, "limit": limit, "offset": offset}
 
 
 @router.post("/workflow-rules", response_model=SecurityWorkflowRuleResponse, status_code=status.HTTP_201_CREATED)
@@ -383,6 +426,29 @@ async def create_workflow_rule(payload: SecurityWorkflowRuleCreate, db: AsyncSes
     await db.commit()
     await db.refresh(rule)
     return rule
+
+
+@router.put("/workflow-rules/{rule_id}", response_model=SecurityWorkflowRuleResponse)
+async def update_workflow_rule(rule_id: int, payload: Dict[str, Any], db: AsyncSession = Depends(get_db)):
+    rule = await db.get(SecurityWorkflowRule, rule_id)
+    if not rule:
+        raise HTTPException(status_code=404, detail="Workflow rule not found")
+    for key, val in payload.items():
+        if hasattr(rule, key):
+            setattr(rule, key, val)
+    await db.commit()
+    await db.refresh(rule)
+    return rule
+
+
+@router.delete("/workflow-rules/{rule_id}")
+async def delete_workflow_rule(rule_id: int, db: AsyncSession = Depends(get_db)):
+    rule = await db.get(SecurityWorkflowRule, rule_id)
+    if not rule:
+        raise HTTPException(status_code=404, detail="Workflow rule not found")
+    await db.delete(rule)
+    await db.commit()
+    return {"status": "SUCCESS", "message": "Workflow rule deleted."}
 
 
 # =========================================================================
@@ -414,11 +480,25 @@ async def update_security_policy(payload: Dict[str, Any], db: AsyncSession = Dep
 # 8. API Keys & Integration Security
 # =========================================================================
 @router.get("/api-keys")
-async def list_api_keys(db: AsyncSession = Depends(get_db)):
+async def list_api_keys(
+    search: Optional[str] = None,
+    limit: int = Query(50, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_db)
+):
     await seed_security_module(db)
-    res = await db.execute(select(SecurityApiKeyMaster).order_by(desc(SecurityApiKeyMaster.id)))
+    q = select(SecurityApiKeyMaster)
+    if search:
+        s = f"%{search}%"
+        q = q.where(or_(SecurityApiKeyMaster.app_name.ilike(s), SecurityApiKeyMaster.client_id.ilike(s)))
+
+    count_q = select(func.count()).select_from(q.subquery())
+    total_count = (await db.execute(count_q)).scalar() or 0
+
+    res = await db.execute(q.order_by(desc(SecurityApiKeyMaster.id)).limit(limit).offset(offset))
     items = res.scalars().all()
-    return [SecurityApiKeyResponse.model_validate(k).model_dump() for k in items]
+    results = [SecurityApiKeyResponse.model_validate(k).model_dump() for k in items]
+    return {"items": results, "total": total_count, "limit": limit, "offset": offset}
 
 
 @router.post("/api-keys", response_model=SecurityApiKeyResponse, status_code=status.HTTP_201_CREATED)
@@ -436,6 +516,19 @@ async def generate_api_key(payload: SecurityApiKeyCreate, db: AsyncSession = Dep
         rate_limit_per_minute=payload.rate_limit_per_minute or 120
     )
     db.add(key)
+    await db.commit()
+    await db.refresh(key)
+    return key
+
+
+@router.put("/api-keys/{key_id}", response_model=SecurityApiKeyResponse)
+async def update_api_key(key_id: int, payload: Dict[str, Any], db: AsyncSession = Depends(get_db)):
+    key = await db.get(SecurityApiKeyMaster, key_id)
+    if not key:
+        raise HTTPException(status_code=404, detail="API key not found")
+    for k, v in payload.items():
+        if hasattr(key, k):
+            setattr(key, k, v)
     await db.commit()
     await db.refresh(key)
     return key
@@ -496,11 +589,25 @@ async def list_audit_logs(
 # 11. Active Sessions & Remote Device Revocation
 # =========================================================================
 @router.get("/active-sessions")
-async def list_active_sessions(db: AsyncSession = Depends(get_db)):
+async def list_active_sessions(
+    search: Optional[str] = None,
+    limit: int = Query(50, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_db)
+):
     await seed_security_module(db)
-    res = await db.execute(select(SecurityActiveSession).order_by(desc(SecurityActiveSession.id)))
+    q = select(SecurityActiveSession)
+    if search:
+        s = f"%{search}%"
+        q = q.where(or_(SecurityActiveSession.username.ilike(s), SecurityActiveSession.ip_address.ilike(s), SecurityActiveSession.device_name.ilike(s)))
+
+    count_q = select(func.count()).select_from(q.subquery())
+    total_count = (await db.execute(count_q)).scalar() or 0
+
+    res = await db.execute(q.order_by(desc(SecurityActiveSession.id)).limit(limit).offset(offset))
     items = res.scalars().all()
-    return [SecurityActiveSessionResponse.model_validate(s).model_dump() for s in items]
+    results = [SecurityActiveSessionResponse.model_validate(s).model_dump() for s in items]
+    return {"items": results, "total": total_count, "limit": limit, "offset": offset}
 
 
 @router.post("/active-sessions/{session_id}/revoke")
@@ -518,22 +625,130 @@ async def revoke_session(session_id: str, db: AsyncSession = Depends(get_db)):
 # 12. Security Monitoring Incidents
 # =========================================================================
 @router.get("/incidents")
-async def list_security_incidents(db: AsyncSession = Depends(get_db)):
+async def list_security_incidents(
+    search: Optional[str] = None,
+    severity: Optional[str] = None,
+    limit: int = Query(50, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_db)
+):
     await seed_security_module(db)
-    res = await db.execute(select(SecurityIncidentLog).order_by(desc(SecurityIncidentLog.id)))
+    q = select(SecurityIncidentLog)
+    if search:
+        s = f"%{search}%"
+        q = q.where(or_(SecurityIncidentLog.description.ilike(s), SecurityIncidentLog.affected_user.ilike(s), SecurityIncidentLog.incident_code.ilike(s)))
+    if severity:
+        q = q.where(SecurityIncidentLog.severity == severity)
+
+    count_q = select(func.count()).select_from(q.subquery())
+    total_count = (await db.execute(count_q)).scalar() or 0
+
+    res = await db.execute(q.order_by(desc(SecurityIncidentLog.id)).limit(limit).offset(offset))
     items = res.scalars().all()
-    return [SecurityIncidentResponse.model_validate(i).model_dump() for i in items]
+    results = [SecurityIncidentResponse.model_validate(i).model_dump() for i in items]
+    return {"items": results, "total": total_count, "limit": limit, "offset": offset}
+
+
+@router.post("/incidents", response_model=SecurityIncidentResponse, status_code=status.HTTP_201_CREATED)
+async def create_incident(payload: Dict[str, Any], db: AsyncSession = Depends(get_db)):
+    c_res = await db.execute(select(func.count(SecurityIncidentLog.id)))
+    next_n = (c_res.scalar() or 0) + 1
+    code = f"INC-SEC-{next_n:03d}"
+    incident = SecurityIncidentLog(
+        incident_code=code,
+        severity=payload.get("severity", "MEDIUM"),
+        incident_type=payload.get("incident_type", "SECURITY_ANOMALY"),
+        source_ip=payload.get("source_ip", "103.145.112.5"),
+        affected_user=payload.get("affected_user", "unknown"),
+        description=payload.get("description", "Security incident"),
+        status=payload.get("status", "OPEN")
+    )
+    db.add(incident)
+    await db.commit()
+    await db.refresh(incident)
+    return incident
+
+
+@router.put("/incidents/{incident_id}", response_model=SecurityIncidentResponse)
+async def update_incident(incident_id: int, payload: Dict[str, Any], db: AsyncSession = Depends(get_db)):
+    inc = await db.get(SecurityIncidentLog, incident_id)
+    if not inc:
+        raise HTTPException(status_code=404, detail="Incident not found")
+    for k, v in payload.items():
+        if hasattr(inc, k):
+            setattr(inc, k, v)
+    await db.commit()
+    await db.refresh(inc)
+    return inc
+
+
+@router.delete("/incidents/{incident_id}")
+async def delete_incident(incident_id: int, db: AsyncSession = Depends(get_db)):
+    inc = await db.get(SecurityIncidentLog, incident_id)
+    if not inc:
+        raise HTTPException(status_code=404, detail="Incident not found")
+    await db.delete(inc)
+    await db.commit()
+    return {"status": "SUCCESS", "message": "Incident deleted."}
 
 
 # =========================================================================
 # 13. User Access Reviews & Certification
 # =========================================================================
 @router.get("/access-reviews")
-async def list_access_reviews(db: AsyncSession = Depends(get_db)):
+async def list_access_reviews(
+    search: Optional[str] = None,
+    limit: int = Query(50, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_db)
+):
     await seed_security_module(db)
-    res = await db.execute(select(SecurityAccessReviewCycle).order_by(desc(SecurityAccessReviewCycle.id)))
+    q = select(SecurityAccessReviewCycle)
+    if search:
+        s = f"%{search}%"
+        q = q.where(or_(SecurityAccessReviewCycle.cycle_name.ilike(s), SecurityAccessReviewCycle.department.ilike(s), SecurityAccessReviewCycle.reviewer_name.ilike(s)))
+
+    count_q = select(func.count()).select_from(q.subquery())
+    total_count = (await db.execute(count_q)).scalar() or 0
+
+    res = await db.execute(q.order_by(desc(SecurityAccessReviewCycle.id)).limit(limit).offset(offset))
     items = res.scalars().all()
-    return [SecurityAccessReviewResponse.model_validate(a).model_dump() for a in items]
+    results = [SecurityAccessReviewResponse.model_validate(a).model_dump() for a in items]
+    return {"items": results, "total": total_count, "limit": limit, "offset": offset}
+
+
+@router.post("/access-reviews", response_model=SecurityAccessReviewResponse, status_code=status.HTTP_201_CREATED)
+async def create_access_review(payload: Dict[str, Any], db: AsyncSession = Depends(get_db)):
+    c_res = await db.execute(select(func.count(SecurityAccessReviewCycle.id)))
+    next_n = (c_res.scalar() or 0) + 1
+    code = f"REV-CYC-{next_n:03d}"
+    rev = SecurityAccessReviewCycle(
+        review_code=code,
+        cycle_name=payload.get("cycle_name", "Quarterly User Access Review"),
+        department=payload.get("department", "All Departments"),
+        reviewer_name=payload.get("reviewer_name", "Security Officer"),
+        total_users_reviewed=payload.get("total_users_reviewed", 0),
+        certified_count=payload.get("certified_count", 0),
+        revoked_count=payload.get("revoked_count", 0),
+        status=payload.get("status", "IN_PROGRESS")
+    )
+    db.add(rev)
+    await db.commit()
+    await db.refresh(rev)
+    return rev
+
+
+@router.put("/access-reviews/{review_id}", response_model=SecurityAccessReviewResponse)
+async def update_access_review(review_id: int, payload: Dict[str, Any], db: AsyncSession = Depends(get_db)):
+    rev = await db.get(SecurityAccessReviewCycle, review_id)
+    if not rev:
+        raise HTTPException(status_code=404, detail="Access review not found")
+    for k, v in payload.items():
+        if hasattr(rev, k):
+            setattr(rev, k, v)
+    await db.commit()
+    await db.refresh(rev)
+    return rev
 
 
 # =========================================================================

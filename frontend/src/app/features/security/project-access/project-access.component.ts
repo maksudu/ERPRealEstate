@@ -12,7 +12,7 @@ import { SearchableSelectComponent, SelectOption } from '../../../shared/compone
   standalone: true,
   imports: [CommonModule, FormsModule, SecurityNavComponent, CardContainerComponent, ModalComponent, SearchableSelectComponent],
   template: `
-    <div class="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
+    <div class="p-4 sm:p-6 w-full space-y-6">
       <app-security-nav />
 
       <!-- Top Summary Cards -->
@@ -36,7 +36,7 @@ import { SearchableSelectComponent, SelectOption } from '../../../shared/compone
         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-2xs">
           <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Active Scope Grants</div>
           <div class="mt-2 text-xl font-bold font-display text-rose-600 dark:text-rose-400">
-            {{ scopes.length }}
+            {{ totalRecords || scopes.length }}
           </div>
           <div class="mt-1 text-xs text-slate-500">Explicit project & tower assignments</div>
         </div>
@@ -52,6 +52,17 @@ import { SearchableSelectComponent, SelectOption } from '../../../shared/compone
           >
             <span>+</span> Assign Project Scope
           </button>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="mb-4 max-w-sm">
+          <input
+            type="text"
+            [(ngModel)]="searchQuery"
+            (keyup.enter)="loadScopes()"
+            placeholder="Search by user or project..."
+            class="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-rose-500"
+          />
         </div>
 
         <!-- Table Listing -->
@@ -117,20 +128,54 @@ import { SearchableSelectComponent, SelectOption } from '../../../shared/compone
                       </span>
                     </td>
                     <td class="p-3 text-center">
-                      <button
-                        type="button"
-                        (click)="revokeScope(item.id)"
-                        class="p-1 rounded hover:bg-rose-50 text-slate-400 hover:text-rose-600"
-                        title="Revoke Scope"
-                      >
-                        🗑️
-                      </button>
+                      <div class="flex items-center justify-center gap-1.5">
+                        <button
+                          type="button"
+                          (click)="openEditModal(item)"
+                          class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-indigo-600"
+                          title="Edit Scope"
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          type="button"
+                          (click)="revokeScope(item.id)"
+                          class="p-1 rounded hover:bg-rose-50 text-slate-400 hover:text-rose-600"
+                          title="Revoke Scope"
+                        >
+                          🗑️
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 }
               }
             </tbody>
           </table>
+        </div>
+
+        <!-- Pagination Bar -->
+        <div class="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+          <div>Showing {{ offset + 1 }} to {{ Math.min(offset + limit, totalRecords) }} of {{ totalRecords }} assigned scopes</div>
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              [disabled]="offset === 0"
+              (click)="prevPage()"
+              class="px-2.5 py-1 rounded border border-slate-200 dark:border-slate-800 disabled:opacity-40 hover:bg-slate-50 dark:hover:bg-slate-800"
+            >
+              Previous
+            </button>
+            <span>Page {{ currentPage }} of {{ totalPages || 1 }}</span>
+            <button
+              type="button"
+              [disabled]="offset + limit >= totalRecords"
+              (click)="nextPage()"
+              class="px-2.5 py-1 rounded border border-slate-200 dark:border-slate-800 disabled:opacity-40 hover:bg-slate-50 dark:hover:bg-slate-800"
+            >
+              Next
+            </button>
+          </div>
         </div>
       </app-card>
 
@@ -215,6 +260,22 @@ export class ProjectAccessComponent implements OnInit {
   scopes: UserProjectScope[] = [];
   loading = false;
   isModalOpen = false;
+  isEditMode = false;
+  editingId: number | null = null;
+  Math = Math;
+
+  searchQuery = '';
+  limit = 20;
+  offset = 0;
+  totalRecords = 0;
+
+  get totalPages(): number {
+    return Math.ceil(this.totalRecords / this.limit);
+  }
+
+  get currentPage(): number {
+    return Math.floor(this.offset / this.limit) + 1;
+  }
 
   userOptions: SelectOption[] = [];
   projectOptions: SelectOption[] = [
@@ -241,9 +302,14 @@ export class ProjectAccessComponent implements OnInit {
 
   loadScopes(): void {
     this.loading = true;
-    this.service.getProjectScopes().subscribe({
-      next: (data) => {
-        this.scopes = data;
+    this.service.getProjectScopes({
+      search: this.searchQuery,
+      limit: this.limit,
+      offset: this.offset
+    }).subscribe({
+      next: (res) => {
+        this.scopes = res.items || [];
+        this.totalRecords = res.total || 0;
         this.loading = false;
       },
       error: (err) => {
@@ -251,6 +317,20 @@ export class ProjectAccessComponent implements OnInit {
         this.loading = false;
       }
     });
+  }
+
+  nextPage(): void {
+    if (this.offset + this.limit < this.totalRecords) {
+      this.offset += this.limit;
+      this.loadScopes();
+    }
+  }
+
+  prevPage(): void {
+    if (this.offset >= this.limit) {
+      this.offset -= this.limit;
+      this.loadScopes();
+    }
   }
 
   loadUsers(): void {
@@ -266,6 +346,32 @@ export class ProjectAccessComponent implements OnInit {
   }
 
   openModal(): void {
+    this.isEditMode = false;
+    this.editingId = null;
+    this.formData = {
+      user_id: null as any,
+      user_name: '',
+      project_id: 1,
+      project_name: 'Ocean Heights Luxury Tower',
+      can_view_financials: false,
+      can_view_customers: true
+    };
+    this.towerInput = 'Tower A, Tower B';
+    this.isModalOpen = true;
+  }
+
+  openEditModal(scope: UserProjectScope): void {
+    this.isEditMode = true;
+    this.editingId = scope.id;
+    this.formData = {
+      user_id: scope.user_id,
+      user_name: scope.user_name,
+      project_id: scope.project_id || 1,
+      project_name: scope.project_name,
+      can_view_financials: scope.can_view_financials,
+      can_view_customers: scope.can_view_customers
+    };
+    this.towerInput = (scope.tower_names || []).join(', ');
     this.isModalOpen = true;
   }
 
@@ -277,21 +383,36 @@ export class ProjectAccessComponent implements OnInit {
     const selectedUser = this.userOptions.find(o => o.value === this.formData.user_id);
     const towers = this.towerInput.split(',').map(t => t.trim()).filter(Boolean);
 
-    this.service.assignProjectScope({
-      user_id: Number(this.formData.user_id),
-      user_name: selectedUser ? selectedUser.label : 'Authorized User',
-      project_id: 1,
-      project_name: this.formData.project_name,
-      tower_names: towers,
-      can_view_financials: this.formData.can_view_financials,
-      can_view_customers: this.formData.can_view_customers
-    }).subscribe({
-      next: () => {
-        this.closeModal();
-        this.loadScopes();
-      },
-      error: (err) => console.error('Failed to assign scope', err)
-    });
+    if (this.isEditMode && this.editingId) {
+      this.service.updateProjectScope(this.editingId, {
+        project_name: this.formData.project_name,
+        tower_names: towers,
+        can_view_financials: this.formData.can_view_financials,
+        can_view_customers: this.formData.can_view_customers
+      }).subscribe({
+        next: () => {
+          this.closeModal();
+          this.loadScopes();
+        },
+        error: (err) => console.error('Failed to update scope', err)
+      });
+    } else {
+      this.service.assignProjectScope({
+        user_id: Number(this.formData.user_id),
+        user_name: selectedUser ? selectedUser.label : 'Authorized User',
+        project_id: 1,
+        project_name: this.formData.project_name,
+        tower_names: towers,
+        can_view_financials: this.formData.can_view_financials,
+        can_view_customers: this.formData.can_view_customers
+      }).subscribe({
+        next: () => {
+          this.closeModal();
+          this.loadScopes();
+        },
+        error: (err) => console.error('Failed to assign scope', err)
+      });
+    }
   }
 
   revokeScope(id: number): void {

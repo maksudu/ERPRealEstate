@@ -19,7 +19,7 @@ import { SearchableSelectComponent, SelectOption } from '../../../shared/compone
     SearchableSelectComponent
   ],
   template: `
-    <div class="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
+    <div class="p-4 sm:p-6 w-full space-y-6">
       <app-security-nav />
 
       <!-- Top Filter & Search Bar -->
@@ -162,9 +162,17 @@ import { SearchableSelectComponent, SelectOption } from '../../../shared/compone
                           type="button"
                           (click)="toggleSuspendUser(item)"
                           [title]="item.account_status === 'ACTIVE' ? 'Suspend User' : 'Activate User'"
-                          class="p-1 rounded hover:bg-rose-50 dark:hover:bg-rose-950/50 text-slate-400 hover:text-rose-600"
+                          class="p-1 rounded hover:bg-amber-50 dark:hover:bg-amber-950/50 text-slate-400 hover:text-amber-600"
                         >
                           {{ item.account_status === 'ACTIVE' ? '⏸️' : '▶️' }}
+                        </button>
+                        <button
+                          type="button"
+                          (click)="deleteUser(item)"
+                          title="Delete User"
+                          class="p-1 rounded hover:bg-rose-50 dark:hover:bg-rose-950/50 text-slate-400 hover:text-rose-600"
+                        >
+                          🗑️
                         </button>
                       </div>
                     </td>
@@ -514,6 +522,15 @@ export class UserManagementComponent implements OnInit {
       this.service.updateUserStatus(user.id, newStatus).subscribe({
         next: () => this.loadUsers(),
         error: (err) => console.error('Failed to change user status', err)
+      });
+    }
+  }
+
+  deleteUser(user: SecurityUser): void {
+    if (confirm(`Permanently remove user @${user.username} (${user.full_name_en}) from the system?`)) {
+      this.service.deleteUser(user.id).subscribe({
+        next: () => this.loadUsers(),
+        error: (err) => console.error('Failed to delete user', err)
       });
     }
   }

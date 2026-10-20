@@ -183,6 +183,13 @@ export interface SecurityDashboardSummary {
   logins_by_role: { role: string; count: number }[];
 }
 
+export interface PaginatedResult<T> {
+  items: T[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -203,7 +210,7 @@ export class SecurityService {
     role?: string;
     limit?: number;
     offset?: number;
-  }): Observable<{ items: SecurityUser[]; total: number; limit: number; offset: number }> {
+  }): Observable<PaginatedResult<SecurityUser>> {
     let params = new HttpParams();
     if (filter?.search) params = params.set('search', filter.search);
     if (filter?.department) params = params.set('department', filter.department);
@@ -211,7 +218,7 @@ export class SecurityService {
     if (filter?.role) params = params.set('role', filter.role);
     if (filter?.limit) params = params.set('limit', filter.limit);
     if (filter?.offset) params = params.set('offset', filter.offset);
-    return this.http.get<{ items: SecurityUser[]; total: number; limit: number; offset: number }>(`${this.apiUrl}/users`, { params });
+    return this.http.get<PaginatedResult<SecurityUser>>(`${this.apiUrl}/users`, { params });
   }
 
   createUser(data: Partial<SecurityUser>): Observable<SecurityUser> {
@@ -222,16 +229,27 @@ export class SecurityService {
     return this.http.put<SecurityUser>(`${this.apiUrl}/users/${id}`, data);
   }
 
+  deleteUser(id: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/users/${id}`);
+  }
+
   updateUserStatus(id: number, status: string): Observable<any> {
     return this.http.post(`${this.apiUrl}/users/${id}/status?new_status=${status}`, {});
   }
 
   // 3. Roles
-  getRoles(filter?: { search?: string; department?: string }): Observable<SecurityRole[]> {
+  getRoles(filter?: {
+    search?: string;
+    department?: string;
+    limit?: number;
+    offset?: number;
+  }): Observable<PaginatedResult<SecurityRole>> {
     let params = new HttpParams();
     if (filter?.search) params = params.set('search', filter.search);
     if (filter?.department) params = params.set('department', filter.department);
-    return this.http.get<SecurityRole[]>(`${this.apiUrl}/roles`, { params });
+    if (filter?.limit) params = params.set('limit', filter.limit);
+    if (filter?.offset) params = params.set('offset', filter.offset);
+    return this.http.get<PaginatedResult<SecurityRole>>(`${this.apiUrl}/roles`, { params });
   }
 
   createRole(data: Partial<SecurityRole>): Observable<SecurityRole> {
@@ -242,20 +260,36 @@ export class SecurityService {
     return this.http.put<SecurityRole>(`${this.apiUrl}/roles/${id}`, data);
   }
 
+  deleteRole(id: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/roles/${id}`);
+  }
+
   // 4. Permissions
   getRolePermissions(roleCode: string = 'PROJECT_MGR'): Observable<RolePermissionItem[]> {
     return this.http.get<RolePermissionItem[]>(`${this.apiUrl}/permissions?role_code=${roleCode}`);
   }
 
   // 5. Project Scopes
-  getProjectScopes(userId?: number): Observable<UserProjectScope[]> {
+  getProjectScopes(filter?: {
+    user_id?: number;
+    search?: string;
+    limit?: number;
+    offset?: number;
+  }): Observable<PaginatedResult<UserProjectScope>> {
     let params = new HttpParams();
-    if (userId) params = params.set('user_id', userId);
-    return this.http.get<UserProjectScope[]>(`${this.apiUrl}/project-scopes`, { params });
+    if (filter?.user_id) params = params.set('user_id', filter.user_id);
+    if (filter?.search) params = params.set('search', filter.search);
+    if (filter?.limit) params = params.set('limit', filter.limit);
+    if (filter?.offset) params = params.set('offset', filter.offset);
+    return this.http.get<PaginatedResult<UserProjectScope>>(`${this.apiUrl}/project-scopes`, { params });
   }
 
   assignProjectScope(data: Partial<UserProjectScope>): Observable<UserProjectScope> {
     return this.http.post<UserProjectScope>(`${this.apiUrl}/project-scopes`, data);
+  }
+
+  updateProjectScope(id: number, data: Partial<UserProjectScope>): Observable<UserProjectScope> {
+    return this.http.put<UserProjectScope>(`${this.apiUrl}/project-scopes/${id}`, data);
   }
 
   revokeProjectScope(id: number): Observable<any> {
@@ -263,12 +297,28 @@ export class SecurityService {
   }
 
   // 6. Workflow Rules
-  getWorkflowRules(): Observable<WorkflowRule[]> {
-    return this.http.get<WorkflowRule[]>(`${this.apiUrl}/workflow-rules`);
+  getWorkflowRules(filter?: {
+    search?: string;
+    limit?: number;
+    offset?: number;
+  }): Observable<PaginatedResult<WorkflowRule>> {
+    let params = new HttpParams();
+    if (filter?.search) params = params.set('search', filter.search);
+    if (filter?.limit) params = params.set('limit', filter.limit);
+    if (filter?.offset) params = params.set('offset', filter.offset);
+    return this.http.get<PaginatedResult<WorkflowRule>>(`${this.apiUrl}/workflow-rules`, { params });
   }
 
   createWorkflowRule(data: Partial<WorkflowRule>): Observable<WorkflowRule> {
     return this.http.post<WorkflowRule>(`${this.apiUrl}/workflow-rules`, data);
+  }
+
+  updateWorkflowRule(id: number, data: Partial<WorkflowRule>): Observable<WorkflowRule> {
+    return this.http.put<WorkflowRule>(`${this.apiUrl}/workflow-rules/${id}`, data);
+  }
+
+  deleteWorkflowRule(id: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/workflow-rules/${id}`);
   }
 
   // 7. Policies
@@ -281,12 +331,24 @@ export class SecurityService {
   }
 
   // 8. API Keys
-  getApiKeys(): Observable<ApiKeyItem[]> {
-    return this.http.get<ApiKeyItem[]>(`${this.apiUrl}/api-keys`);
+  getApiKeys(filter?: {
+    search?: string;
+    limit?: number;
+    offset?: number;
+  }): Observable<PaginatedResult<ApiKeyItem>> {
+    let params = new HttpParams();
+    if (filter?.search) params = params.set('search', filter.search);
+    if (filter?.limit) params = params.set('limit', filter.limit);
+    if (filter?.offset) params = params.set('offset', filter.offset);
+    return this.http.get<PaginatedResult<ApiKeyItem>>(`${this.apiUrl}/api-keys`, { params });
   }
 
   generateApiKey(data: { app_name: string; allowed_scopes?: string[]; rate_limit_per_minute?: number }): Observable<ApiKeyItem> {
     return this.http.post<ApiKeyItem>(`${this.apiUrl}/api-keys`, data);
+  }
+
+  updateApiKey(id: number, data: Partial<ApiKeyItem>): Observable<ApiKeyItem> {
+    return this.http.put<ApiKeyItem>(`${this.apiUrl}/api-keys/${id}`, data);
   }
 
   revokeApiKey(id: number): Observable<any> {
@@ -305,19 +367,27 @@ export class SecurityService {
     event_type?: string;
     limit?: number;
     offset?: number;
-  }): Observable<{ items: AuditLogItem[]; total: number; limit: number; offset: number }> {
+  }): Observable<PaginatedResult<AuditLogItem>> {
     let params = new HttpParams();
     if (filter?.user_name) params = params.set('user_name', filter.user_name);
     if (filter?.module_name) params = params.set('module_name', filter.module_name);
     if (filter?.event_type) params = params.set('event_type', filter.event_type);
     if (filter?.limit) params = params.set('limit', filter.limit);
     if (filter?.offset) params = params.set('offset', filter.offset);
-    return this.http.get<{ items: AuditLogItem[]; total: number; limit: number; offset: number }>(`${this.apiUrl}/audit-logs`, { params });
+    return this.http.get<PaginatedResult<AuditLogItem>>(`${this.apiUrl}/audit-logs`, { params });
   }
 
   // 11. Active Sessions
-  getActiveSessions(): Observable<ActiveSessionItem[]> {
-    return this.http.get<ActiveSessionItem[]>(`${this.apiUrl}/active-sessions`);
+  getActiveSessions(filter?: {
+    search?: string;
+    limit?: number;
+    offset?: number;
+  }): Observable<PaginatedResult<ActiveSessionItem>> {
+    let params = new HttpParams();
+    if (filter?.search) params = params.set('search', filter.search);
+    if (filter?.limit) params = params.set('limit', filter.limit);
+    if (filter?.offset) params = params.set('offset', filter.offset);
+    return this.http.get<PaginatedResult<ActiveSessionItem>>(`${this.apiUrl}/active-sessions`, { params });
   }
 
   revokeSession(sessionId: string): Observable<any> {
@@ -325,13 +395,51 @@ export class SecurityService {
   }
 
   // 12. Incidents & Monitoring
-  getIncidents(): Observable<SecurityIncidentItem[]> {
-    return this.http.get<SecurityIncidentItem[]>(`${this.apiUrl}/incidents`);
+  getIncidents(filter?: {
+    search?: string;
+    severity?: string;
+    limit?: number;
+    offset?: number;
+  }): Observable<PaginatedResult<SecurityIncidentItem>> {
+    let params = new HttpParams();
+    if (filter?.search) params = params.set('search', filter.search);
+    if (filter?.severity) params = params.set('severity', filter.severity);
+    if (filter?.limit) params = params.set('limit', filter.limit);
+    if (filter?.offset) params = params.set('offset', filter.offset);
+    return this.http.get<PaginatedResult<SecurityIncidentItem>>(`${this.apiUrl}/incidents`, { params });
+  }
+
+  createIncident(data: Partial<SecurityIncidentItem>): Observable<SecurityIncidentItem> {
+    return this.http.post<SecurityIncidentItem>(`${this.apiUrl}/incidents`, data);
+  }
+
+  updateIncident(id: number, data: Partial<SecurityIncidentItem>): Observable<SecurityIncidentItem> {
+    return this.http.put<SecurityIncidentItem>(`${this.apiUrl}/incidents/${id}`, data);
+  }
+
+  deleteIncident(id: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/incidents/${id}`);
   }
 
   // 13. Access Reviews
-  getAccessReviews(): Observable<AccessReviewItem[]> {
-    return this.http.get<AccessReviewItem[]>(`${this.apiUrl}/access-reviews`);
+  getAccessReviews(filter?: {
+    search?: string;
+    limit?: number;
+    offset?: number;
+  }): Observable<PaginatedResult<AccessReviewItem>> {
+    let params = new HttpParams();
+    if (filter?.search) params = params.set('search', filter.search);
+    if (filter?.limit) params = params.set('limit', filter.limit);
+    if (filter?.offset) params = params.set('offset', filter.offset);
+    return this.http.get<PaginatedResult<AccessReviewItem>>(`${this.apiUrl}/access-reviews`, { params });
+  }
+
+  createAccessReview(data: Partial<AccessReviewItem>): Observable<AccessReviewItem> {
+    return this.http.post<AccessReviewItem>(`${this.apiUrl}/access-reviews`, data);
+  }
+
+  updateAccessReview(id: number, data: Partial<AccessReviewItem>): Observable<AccessReviewItem> {
+    return this.http.put<AccessReviewItem>(`${this.apiUrl}/access-reviews/${id}`, data);
   }
 
   // 14. Reports

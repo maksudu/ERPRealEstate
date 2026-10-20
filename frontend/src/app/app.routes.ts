@@ -33,6 +33,39 @@ export const routes: Routes = [
         path: 'security',
         loadChildren: () => import('./features/security/security.routes').then(m => m.SECURITY_ROUTES)
       },
+      {
+        path: 'mobile-sales',
+        loadChildren: () => import('./features/mobile-sales/mobile-sales.routes').then(m => m.MOBILE_SALES_ROUTES)
+      },
+      {
+        path: 'mobile/sales',
+        loadChildren: () => import('./features/mobile-sales/mobile-sales.routes').then(m => m.MOBILE_SALES_ROUTES)
+      },
+      {
+        path: 'mobile-site',
+        loadChildren: () => import('./features/mobile-site/mobile-site.routes').then(m => m.MOBILE_SITE_ROUTES)
+      },
+      {
+        path: 'mobile/site',
+        loadChildren: () => import('./features/mobile-site/mobile-site.routes').then(m => m.MOBILE_SITE_ROUTES)
+      },
+      {
+        path: 'mobile-collection',
+        loadChildren: () => import('./features/mobile-collection/mobile-collection.routes').then(m => m.MOBILE_COLLECTION_ROUTES)
+      },
+      {
+        path: 'mobile/collection',
+        loadChildren: () => import('./features/mobile-collection/mobile-collection.routes').then(m => m.MOBILE_COLLECTION_ROUTES)
+      },
+      {
+        path: 'mobile-mgmt',
+        loadChildren: () => import('./features/mobile-mgmt/mobile-mgmt.routes').then(m => m.MOBILE_MGMT_ROUTES)
+      },
+      {
+        path: 'mobile/mgmt',
+        loadChildren: () => import('./features/mobile-mgmt/mobile-mgmt.routes').then(m => m.MOBILE_MGMT_ROUTES)
+      },
+
   {
     path: 'settings/lookups',
     loadComponent: () => import('./features/settings/lookups/lookup-management.component').then(m => m.LookupManagementComponent),

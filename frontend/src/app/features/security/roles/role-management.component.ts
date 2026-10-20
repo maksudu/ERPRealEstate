@@ -19,7 +19,7 @@ import { SearchableSelectComponent, SelectOption } from '../../../shared/compone
     SearchableSelectComponent
   ],
   template: `
-    <div class="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
+    <div class="p-4 sm:p-6 w-full space-y-6">
       <app-security-nav />
 
       <!-- Top Filter & Search Bar -->
@@ -146,6 +146,16 @@ import { SearchableSelectComponent, SelectOption } from '../../../shared/compone
                         >
                           📋
                         </button>
+                        @if (!item.is_system_role) {
+                          <button
+                            type="button"
+                            (click)="deleteRole(item)"
+                            title="Delete Custom Role"
+                            class="p-1 rounded hover:bg-rose-50 dark:hover:bg-rose-950/50 text-slate-400 hover:text-rose-600"
+                          >
+                            🗑️
+                          </button>
+                        }
                       </div>
                     </td>
                   </tr>
@@ -153,6 +163,30 @@ import { SearchableSelectComponent, SelectOption } from '../../../shared/compone
               }
             </tbody>
           </table>
+        </div>
+
+        <!-- Pagination Bar -->
+        <div class="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+          <div>Showing {{ offset + 1 }} to {{ Math.min(offset + limit, totalRecords) }} of {{ totalRecords }} roles</div>
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              [disabled]="offset === 0"
+              (click)="prevPage()"
+              class="px-2.5 py-1 rounded border border-slate-200 dark:border-slate-800 disabled:opacity-40 hover:bg-slate-50 dark:hover:bg-slate-800"
+            >
+              Previous
+            </button>
+            <span>Page {{ currentPage }} of {{ totalPages || 1 }}</span>
+            <button
+              type="button"
+              [disabled]="offset + limit >= totalRecords"
+              (click)="nextPage()"
+              class="px-2.5 py-1 rounded border border-slate-200 dark:border-slate-800 disabled:opacity-40 hover:bg-slate-50 dark:hover:bg-slate-800"
+            >
+              Next
+            </button>
+          </div>
         </div>
       </app-card>
 
@@ -236,9 +270,23 @@ export class RoleManagementComponent implements OnInit {
 
   roles: SecurityRole[] = [];
   loading = false;
+  Math = Math;
 
   searchQuery = '';
   selectedDepartment = '';
+
+  // Pagination state
+  limit = 20;
+  offset = 0;
+  totalRecords = 0;
+
+  get totalPages(): number {
+    return Math.ceil(this.totalRecords / this.limit);
+  }
+
+  get currentPage(): number {
+    return Math.floor(this.offset / this.limit) + 1;
+  }
 
   isModalOpen = false;
   isEditMode = false;
@@ -273,10 +321,13 @@ export class RoleManagementComponent implements OnInit {
     this.loading = true;
     this.service.getRoles({
       search: this.searchQuery,
-      department: this.selectedDepartment
+      department: this.selectedDepartment,
+      limit: this.limit,
+      offset: this.offset
     }).subscribe({
-      next: (data) => {
-        this.roles = data;
+      next: (res) => {
+        this.roles = res.items || [];
+        this.totalRecords = res.total || 0;
         this.loading = false;
       },
       error: (err) => {
@@ -284,6 +335,29 @@ export class RoleManagementComponent implements OnInit {
         this.loading = false;
       }
     });
+  }
+
+  nextPage(): void {
+    if (this.offset + this.limit < this.totalRecords) {
+      this.offset += this.limit;
+      this.loadRoles();
+    }
+  }
+
+  prevPage(): void {
+    if (this.offset >= this.limit) {
+      this.offset -= this.limit;
+      this.loadRoles();
+    }
+  }
+
+  deleteRole(role: SecurityRole): void {
+    if (confirm(`Are you sure you want to delete custom role ${role.role_code} (${role.role_name})?`)) {
+      this.service.deleteRole(role.id).subscribe({
+        next: () => this.loadRoles(),
+        error: (err) => console.error('Failed to delete role', err)
+      });
+    }
   }
 
   openAddModal(): void {

@@ -10,7 +10,7 @@ import { CardContainerComponent } from '../../../shared/components/card-containe
   standalone: true,
   imports: [CommonModule, FormsModule, SecurityNavComponent, CardContainerComponent],
   template: `
-    <div class="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
+    <div class="p-4 sm:p-6 w-full space-y-6">
       <app-security-nav />
 
       <!-- Active Sessions & Remote Revocation Section -->
@@ -227,7 +227,7 @@ export class AuditLogsComponent implements OnInit {
 
   loadSessions(): void {
     this.service.getActiveSessions().subscribe({
-      next: (data) => this.sessions = data
+      next: (res) => this.sessions = res.items || []
     });
   }
 
