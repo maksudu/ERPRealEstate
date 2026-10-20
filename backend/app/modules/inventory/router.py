@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, WebSocket, WebSocketDisconnect, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, desc, update
+from sqlalchemy import select, func, desc, update, or_
+from sqlalchemy.orm import selectinload
+from app.modules.projects.models import Project, Tower
 from typing import List, Optional
 from datetime import datetime, timezone, timedelta
 import json
@@ -662,6 +664,13 @@ async def list_units_paged(
     floor_number: Optional[int] = Query(None),
     status_id: Optional[str] = Query(None),
     facing_id: Optional[str] = Query(None),
+    unit_type_id: Optional[str] = Query(None),
+    min_beds: Optional[int] = Query(None),
+    min_price: Optional[float] = Query(None),
+    max_price: Optional[float] = Query(None),
+    min_area: Optional[float] = Query(None),
+    max_area: Optional[float] = Query(None),
+    has_parking: Optional[bool] = Query(None),
     is_landowner_share: Optional[bool] = Query(None),
     db: AsyncSession = Depends(get_db)
 ):
@@ -674,24 +683,47 @@ async def list_units_paged(
         stmt = stmt.where(Unit.tower_id == tower_id)
     if floor_number is not None:
         stmt = stmt.where(Unit.floor_number == floor_number)
-    if status_id:
-        stmt = stmt.where(Unit.status_id == status_id)
-    if facing_id:
-        stmt = stmt.where(Unit.facing_id == facing_id)
+    if status_id and status_id.lower() != 'all':
+        stmt = stmt.where(Unit.status_id.ilike(status_id.strip()))
+    if facing_id and facing_id.lower() != 'all':
+        stmt = stmt.where(Unit.facing_id.ilike(f"%{facing_id.strip()}%"))
+    if unit_type_id and unit_type_id.lower() != 'all':
+        stmt = stmt.where(Unit.unit_type_id.ilike(f"%{unit_type_id.strip()}%"))
+    if min_beds is not None:
+        stmt = stmt.where(Unit.bed_count >= min_beds)
+    if min_price is not None:
+        stmt = stmt.where(Unit.total_unit_price >= min_price)
+    if max_price is not None:
+        stmt = stmt.where(Unit.total_unit_price <= max_price)
+    if min_area is not None:
+        stmt = stmt.where(Unit.gross_saleable_area_sqft >= min_area)
+    if max_area is not None:
+        stmt = stmt.where(Unit.gross_saleable_area_sqft <= max_area)
+    if has_parking is True:
+        stmt = stmt.where(Unit.parking_charge > 0)
+    elif has_parking is False:
+        stmt = stmt.where(Unit.parking_charge == 0)
     if is_landowner_share is not None:
         stmt = stmt.where(Unit.is_landowner_share == is_landowner_share)
     if search:
         s_pat = f"%{search.strip()}%"
-        stmt = stmt.where(
-            Unit.unit_number.ilike(s_pat)
+        stmt = stmt.outerjoin(Project, Unit.project_id == Project.id).where(
+            or_(
+                Unit.unit_number.ilike(s_pat),
+                Project.project_name.ilike(s_pat),
+                Project.project_code.ilike(s_pat)
+            )
         )
 
     # Count total
     count_stmt = select(func.count()).select_from(stmt.subquery())
     total_count = (await db.execute(count_stmt)).scalar() or 0
 
-    # Fetch page
-    page_stmt = stmt.order_by(Unit.floor_number.desc(), Unit.unit_number.asc()).offset(offset).limit(limit)
+    # Fetch page with eager loaded project and tower
+    page_stmt = stmt.options(
+        selectinload(Unit.project),
+        selectinload(Unit.tower)
+    ).order_by(Unit.id.asc()).offset(offset).limit(limit)
     res = await db.execute(page_stmt)
     units = res.scalars().all()
 
@@ -704,6 +736,11 @@ async def list_units_paged(
             rem_sec = max(0, int((exp - now).total_seconds()))
         u_dict = UnitResponse.model_validate(u)
         u_dict.lock_remaining_seconds = rem_sec
+        if u.project:
+            u_dict.project_name = u.project.project_name
+            u_dict.project_code = u.project.project_code
+        if u.tower:
+            u_dict.tower_name = u.tower.tower_name
         results.append(u_dict)
 
     return UnitPagedResponse(
@@ -716,12 +753,21 @@ async def list_units_paged(
 
 @router.get("/units/{unit_id}", response_model=UnitResponse)
 async def get_unit_by_id(unit_id: int, db: AsyncSession = Depends(get_db)):
-    stmt = select(Unit).where(Unit.id == unit_id)
+    stmt = select(Unit).options(
+        selectinload(Unit.project),
+        selectinload(Unit.tower)
+    ).where(Unit.id == unit_id)
     res = await db.execute(stmt)
     u = res.scalar_one_or_none()
     if not u:
         raise HTTPException(status_code=404, detail=f"Unit #{unit_id} not found.")
-    return u
+    u_dict = UnitResponse.model_validate(u)
+    if u.project:
+        u_dict.project_name = u.project.project_name
+        u_dict.project_code = u.project.project_code
+    if u.tower:
+        u_dict.tower_name = u.tower.tower_name
+    return u_dict
 
 
 @router.put("/units/{unit_id}", response_model=UnitResponse)

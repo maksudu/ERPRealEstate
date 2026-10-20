@@ -228,6 +228,16 @@ export class ProjectService {
     return this.http.delete<void>(`${this.baseUrl}/land-allocations/${id}`);
   }
 
+  getProjectRiskIssues(filters?: { project_id?: number; status_filter?: string; search?: string; limit?: number; offset?: number }): Observable<any> {
+    let params = new HttpParams();
+    Object.entries(filters || {}).forEach(([key, value]) => { if (value !== undefined && value !== null && value !== '') params = params.set(key, value); });
+    return this.http.get<any>(`${this.baseUrl}/risk-issues`, { params });
+  }
+  getProjectRiskIssue(id: number): Observable<any> { return this.http.get<any>(`${this.baseUrl}/risk-issues/${id}`); }
+  createProjectRiskIssue(payload: any): Observable<any> { return this.http.post<any>(`${this.baseUrl}/risk-issues`, payload); }
+  updateProjectRiskIssue(id: number, payload: any): Observable<any> { return this.http.put<any>(`${this.baseUrl}/risk-issues/${id}`, payload); }
+  deleteProjectRiskIssue(id: number): Observable<void> { return this.http.delete<void>(`${this.baseUrl}/risk-issues/${id}`); }
+
   getTowers(projectId?: number): Observable<Tower[]> {
     let params = new HttpParams();
     if (projectId) params = params.set('project_id', projectId);

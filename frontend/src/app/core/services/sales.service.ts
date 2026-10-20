@@ -588,6 +588,14 @@ export class SalesService {
     return this.http.post<PropertyHandover>(`${this.baseUrl}/handovers`, payload);
   }
 
+  updateHandover(id: number, payload: Partial<PropertyHandoverCreate> & { status?: string }): Observable<PropertyHandover> {
+    return this.http.put<PropertyHandover>(`${this.baseUrl}/handovers/${id}`, payload);
+  }
+
+  deleteHandover(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/handovers/${id}`);
+  }
+
   updateHandoverPrerequisites(id: number, payload: PropertyHandoverUpdatePrerequisites): Observable<PropertyHandover> {
     return this.http.put<PropertyHandover>(`${this.baseUrl}/handovers/${id}/prerequisites`, payload);
   }

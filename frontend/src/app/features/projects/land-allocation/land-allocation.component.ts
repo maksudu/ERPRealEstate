@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { ProjectService } from '../../../core/services/project.service';
 import { Project } from '../../../core/models/project.model';
 import { CardContainerComponent, SearchableSelectComponent, SelectOption } from '../../../shared/components';
@@ -49,7 +49,6 @@ interface Allocation {
 })
 export class ProjectLandAllocationComponent implements OnInit {
   private service = inject(ProjectService);
-  private route = inject(ActivatedRoute);
   allocations = signal<Allocation[]>([]); projects = signal<Project[]>([]);
   total = signal(0); loading = signal(false); error = signal(''); success = signal('');
   search = ''; method = ''; status = ''; projectId: number | null = null;

@@ -1015,6 +1015,15 @@ class PropertyHandoverCreate(BaseModel):
     remarks: Optional[str] = None
 
 
+class PropertyHandoverPatch(BaseModel):
+    responsible_staff_name: Optional[str] = None
+    responsible_engineer_name: Optional[str] = None
+    status: Optional[str] = None
+    appointment_date: Optional[date] = None
+    appointment_time: Optional[str] = None
+    remarks: Optional[str] = None
+
+
 class PropertyHandoverUpdatePrerequisites(BaseModel):
     prerequisites_checklist: List[dict]
     contractual_completion_status: Optional[str] = None

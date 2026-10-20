@@ -53,7 +53,7 @@ from app.modules.sales.schemas import (
     DeedRegistrationLegalValidation, DeedRegistrationLogIssue,
     DeedRegistrationResolveIssue, DeedRegistrationResponse,
     PaginatedDeedRegistrationsResponse,
-    PropertyHandoverCreate, PropertyHandoverUpdatePrerequisites,
+    PropertyHandoverCreate, PropertyHandoverPatch, PropertyHandoverUpdatePrerequisites,
     PropertyHandoverUpdateInspection, PropertyHandoverUpdateUtilities,
     PropertyHandoverIssueKeys, PropertyHandoverUpdateWarranties,
     PropertyHandoverLogSnag, PropertyHandoverResolveSnag,
@@ -4775,6 +4775,30 @@ async def execute_property_possession(
     await db.commit()
     await db.refresh(h)
     return _format_handover_response(h)
+
+
+# Property Handover general CRUD for the project closure register.
+@router.put("/handovers/{handover_id}", response_model=PropertyHandoverResponse)
+async def update_property_handover(handover_id: int, payload: PropertyHandoverPatch, db: AsyncSession = Depends(get_db)):
+    stmt = select(PropertyHandover).options(*_handover_eager_options).where(PropertyHandover.id == handover_id)
+    handover = (await db.execute(stmt)).scalars().first()
+    if handover is None:
+        raise HTTPException(status_code=404, detail="Property Handover record not found")
+    for key, value in payload.model_dump(exclude_unset=True).items():
+        setattr(handover, key, value)
+    await db.commit()
+    await db.refresh(handover)
+    return _format_handover_response(handover)
+
+
+@router.delete("/handovers/{handover_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_property_handover(handover_id: int, db: AsyncSession = Depends(get_db)):
+    handover = await db.get(PropertyHandover, handover_id)
+    if handover is None:
+        raise HTTPException(status_code=404, detail="Property Handover record not found")
+    await db.delete(handover)
+    await db.commit()
+    return None
 
 
 # =========================================================================

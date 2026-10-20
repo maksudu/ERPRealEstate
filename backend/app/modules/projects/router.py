@@ -10,7 +10,7 @@ from app.modules.land.models import LandBank, LandParcel
 from app.modules.projects.models import (
     Project, Tower, AuthorityClearance, BOQItem, Drawing, DrawingRevision, ProjectFeasibility,
     ProjectLandAllocation, ProjectFloor, ProjectUnit, ProjectProfitability, ProjectMilestone,
-    ProjectFinancialPerformance
+    ProjectFinancialPerformance, ProjectRiskIssue
 )
 from app.modules.projects.schemas import (
     ProjectCreate, ProjectUpdate, ProjectResponse,
@@ -32,7 +32,8 @@ from app.modules.projects.schemas import (
     ProjectMilestoneCreate, ProjectMilestoneUpdate, ProjectMilestoneResponse,
     ProjectMilestonePaginationResponse,
     ProjectFinancialPerformanceCreate, ProjectFinancialPerformanceUpdate,
-    ProjectFinancialPerformanceResponse, ProjectFinancialPerformancePaginationResponse
+    ProjectFinancialPerformanceResponse, ProjectFinancialPerformancePaginationResponse,
+    ProjectRiskIssueCreate, ProjectRiskIssueUpdate, ProjectRiskIssueResponse, ProjectRiskIssuePage
 )
 
 router = APIRouter(prefix="/projects", tags=["Project Spatial Planning, Permits & BOQ Master"])
@@ -3293,4 +3294,77 @@ async def get_project_pnl_analytics(
         "jv_sharing_summary": jv_sharing_summary,
         "actual_vs_feasibility": actual_vs_feasibility
     }
+
+
+@router.get("/risk-issues", response_model=ProjectRiskIssuePage)
+async def list_project_risk_issues(
+    project_id: Optional[int] = Query(None),
+    status_filter: Optional[str] = Query(None),
+    search: Optional[str] = Query(None),
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_db),
+):
+    stmt = select(ProjectRiskIssue).options(selectinload(ProjectRiskIssue.project))
+    if project_id is not None:
+        stmt = stmt.where(ProjectRiskIssue.project_id == project_id)
+    if status_filter:
+        stmt = stmt.where(ProjectRiskIssue.status == status_filter)
+    if search:
+        pattern = f"%{search.strip()}%"
+        stmt = stmt.where(
+            ProjectRiskIssue.risk_title.ilike(pattern)
+            | ProjectRiskIssue.risk_category.ilike(pattern)
+            | ProjectRiskIssue.assigned_owner.ilike(pattern)
+        )
+    total = (await db.execute(select(func.count()).select_from(stmt.order_by(None).subquery()))).scalar_one()
+    records = (await db.execute(stmt.order_by(desc(ProjectRiskIssue.id)).offset(offset).limit(limit))).scalars().all()
+    items = []
+    for record in records:
+        item = ProjectRiskIssueResponse.model_validate(record)
+        item.project_name = record.project.project_name if record.project else None
+        item.project_code = record.project.project_code if record.project else None
+        items.append(item)
+    return ProjectRiskIssuePage(items=items, total=total, limit=limit, offset=offset)
+
+
+@router.get("/risk-issues/{risk_id}", response_model=ProjectRiskIssueResponse)
+async def get_project_risk_issue(risk_id: int, db: AsyncSession = Depends(get_db)):
+    record = (await db.execute(select(ProjectRiskIssue).options(selectinload(ProjectRiskIssue.project)).where(ProjectRiskIssue.id == risk_id))).scalar_one_or_none()
+    if record is None:
+        raise HTTPException(status_code=404, detail="Project risk/issue not found")
+    item = ProjectRiskIssueResponse.model_validate(record)
+    item.project_name = record.project.project_name if record.project else None
+    item.project_code = record.project.project_code if record.project else None
+    return item
+
+
+@router.post("/risk-issues", response_model=ProjectRiskIssueResponse, status_code=status.HTTP_201_CREATED)
+async def create_project_risk_issue(payload: ProjectRiskIssueCreate, db: AsyncSession = Depends(get_db)):
+    record = ProjectRiskIssue(**payload.model_dump())
+    db.add(record)
+    await db.commit()
+    await db.refresh(record)
+    return await get_project_risk_issue(record.id, db)
+
+
+@router.put("/risk-issues/{risk_id}", response_model=ProjectRiskIssueResponse)
+async def update_project_risk_issue(risk_id: int, payload: ProjectRiskIssueUpdate, db: AsyncSession = Depends(get_db)):
+    record = await db.get(ProjectRiskIssue, risk_id)
+    if record is None:
+        raise HTTPException(status_code=404, detail="Project risk/issue not found")
+    for key, value in payload.model_dump(exclude_unset=True).items():
+        setattr(record, key, value)
+    await db.commit()
+    return await get_project_risk_issue(risk_id, db)
+
+
+@router.delete("/risk-issues/{risk_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_project_risk_issue(risk_id: int, db: AsyncSession = Depends(get_db)):
+    record = await db.get(ProjectRiskIssue, risk_id)
+    if record is None:
+        raise HTTPException(status_code=404, detail="Project risk/issue not found")
+    await db.delete(record)
+    await db.commit()
+    return None
 

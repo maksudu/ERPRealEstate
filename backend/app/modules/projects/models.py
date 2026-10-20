@@ -609,6 +609,24 @@ class ProjectProfitability(Base):
     project = relationship("Project")
 
 
+class ProjectRiskIssue(Base):
+    __tablename__ = "prj_risk_issues"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    project_id = Column(BigInteger, ForeignKey("prj_projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    risk_category = Column(String(64), nullable=False, default="GENERAL")
+    risk_title = Column(String(191), nullable=False)
+    probability = Column(String(16), nullable=False, default="MEDIUM")
+    impact = Column(String(16), nullable=False, default="MODERATE")
+    mitigation_strategy = Column(Text, nullable=True)
+    assigned_owner = Column(String(128), nullable=True)
+    status = Column(String(16), nullable=False, default="OPEN", index=True)
+    created_at = Column(TIMESTAMP, server_default=func.now())
+    updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
+
+    project = relationship("Project")
+
+
 class ProjectMilestone(Base):
     """
     Submodule 2.7: Project Timeline and Milestone Tracking.

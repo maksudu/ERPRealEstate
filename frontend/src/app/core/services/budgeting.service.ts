@@ -141,6 +141,7 @@ export interface BudgetVariation {
   id: number;
   variation_code: string;
   project_id: number;
+  project_name?: string;
   tower_name?: string;
   title: string;
   reason_category: string;
@@ -317,10 +318,11 @@ export class BudgetingService {
   }
 
   // 9. Budget Variation
-  getVariations(filter?: { project_id?: number; stage?: string; limit?: number; offset?: number }): Observable<{ items: BudgetVariation[]; total: number }> {
+  getVariations(filter?: { project_id?: number; stage?: string; search?: string; limit?: number; offset?: number }): Observable<{ items: BudgetVariation[]; total: number }> {
     let params = new HttpParams();
     if (filter?.project_id) params = params.set('project_id', filter.project_id);
     if (filter?.stage) params = params.set('stage', filter.stage);
+    if (filter?.search) params = params.set('search', filter.search);
     if (filter?.limit) params = params.set('limit', filter.limit);
     if (filter?.offset) params = params.set('offset', filter.offset);
     return this.http.get<{ items: BudgetVariation[]; total: number }>(`${this.apiUrl}/variations`, { params });
@@ -330,8 +332,16 @@ export class BudgetingService {
     return this.http.post<BudgetVariation>(`${this.apiUrl}/variations`, data);
   }
 
+  getVariation(id: number): Observable<BudgetVariation> {
+    return this.http.get<BudgetVariation>(`${this.apiUrl}/variations/${id}`);
+  }
+
   updateVariation(id: number, data: Partial<BudgetVariation>): Observable<BudgetVariation> {
     return this.http.put<BudgetVariation>(`${this.apiUrl}/variations/${id}`, data);
+  }
+
+  deleteVariation(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/variations/${id}`);
   }
 
   // 10. Budget vs Actual

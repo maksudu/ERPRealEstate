@@ -1517,3 +1517,45 @@ class ProjectFinancialPerformancePaginationResponse(BaseModel):
     total_pbt: float = 0.0
     avg_gross_margin_pct: float = 0.0
     avg_pbt_margin_pct: float = 0.0
+
+
+class ProjectRiskIssueBase(BaseModel):
+    project_id: int
+    risk_category: str = "GENERAL"
+    risk_title: str
+    probability: str = "MEDIUM"
+    impact: str = "MODERATE"
+    mitigation_strategy: Optional[str] = None
+    assigned_owner: Optional[str] = None
+    status: str = "OPEN"
+
+
+class ProjectRiskIssueCreate(ProjectRiskIssueBase):
+    pass
+
+
+class ProjectRiskIssueUpdate(BaseModel):
+    project_id: Optional[int] = None
+    risk_category: Optional[str] = None
+    risk_title: Optional[str] = None
+    probability: Optional[str] = None
+    impact: Optional[str] = None
+    mitigation_strategy: Optional[str] = None
+    assigned_owner: Optional[str] = None
+    status: Optional[str] = None
+
+
+class ProjectRiskIssueResponse(ProjectRiskIssueBase):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    project_name: Optional[str] = None
+    project_code: Optional[str] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+
+class ProjectRiskIssuePage(BaseModel):
+    items: List[ProjectRiskIssueResponse]
+    total: int
+    limit: int
+    offset: int

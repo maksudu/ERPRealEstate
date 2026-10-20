@@ -609,12 +609,12 @@ export class SidebarComponent implements OnInit {
       title: 'Property Inventory',
       iconSvg: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10',
       items: [
-        { id: 'inv-dashboard', label: 'Inventory', route: '/inventory' },
-        { id: 'tower-stacking', label: 'Floor Matrix', route: '/inventory/matrix' },
-        { id: 'units-matrix', label: 'Unit Directory', route: '/inventory/units' },
-        { id: 'inv-pricing', label: 'Pricing', route: '/inventory/pricing' },
-        { id: 'inv-availability', label: 'Availability', route: '/inventory/availability' },
-        { id: 'facilities-allocation', label: 'Parking', route: '/inventory/facilities' },
+        { id: 'inv-search', label: 'Property Search', route: '/inventory', queryParams: { tab: 'search' } },
+        { id: 'inv-dashboard', label: 'Inventory Dashboard', route: '/inventory', queryParams: { tab: 'dashboard' } },
+        { id: 'inv-matrix', label: 'Floor-wise Unit Matrix', route: '/inventory', queryParams: { tab: 'matrix' } },
+        { id: 'inv-units', label: 'Unit Directory & Configuration', route: '/inventory', queryParams: { tab: 'units' } },
+        { id: 'inv-pricing', label: 'Area & Pricing Formula', route: '/inventory', queryParams: { tab: 'area_calc' } },
+        { id: 'inv-parking', label: 'Basement Parking Bays', route: '/inventory', queryParams: { tab: 'parking' } },
         { id: 'unit-combinations', label: 'Combination', route: '/inventory/combinations' },
         { id: 'property-documents', label: 'Documents', route: '/inventory/documents' }
       ]

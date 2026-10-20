@@ -71,7 +71,7 @@ export class ProjectTowersUnitsComponent implements OnInit {
   display(row: Row, key: string) { const val = row[key]; return val === null || val === undefined || val === '' ? 'N/A' : val; }
   move(dir: number) { this.offset.update(x => Math.max(0, x + dir * this.limit())); this.load(); }
   load() {
-    this.loading.set(true); this.error.set(''); this.success.set('');
+    this.loading.set(true); this.error.set('');
     const filters: any = { search: this.search.trim() || undefined, project_id: this.projectId ? Number(this.projectId) : undefined, limit: this.limit(), offset: this.offset() };
     const req = this.entity() === 'towers' ? this.api.getTowersPaged(filters) : this.entity() === 'floors' ? this.api.getFloors(filters) : this.api.getUnits(filters);
     req.subscribe({ next: (page: Page | Row[]) => { const result = Array.isArray(page) ? { items: page, total: page.length, limit: this.limit(), offset: this.offset() } : page; this.rows.set(result.items || []); this.total.set(result.total || 0); this.limit.set(result.limit || 20); this.offset.set(result.offset || 0); this.loading.set(false); }, error: e => { this.error.set(e?.error?.detail || `Could not load ${this.label().toLowerCase()}.`); this.loading.set(false); } });

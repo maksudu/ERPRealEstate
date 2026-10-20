@@ -81,6 +81,9 @@ class UnitResponse(UnitBase):
     id: int
     project_id: int
     tower_id: int
+    project_name: Optional[str] = None
+    project_code: Optional[str] = None
+    tower_name: Optional[str] = None
     lock_remaining_seconds: Optional[int] = None
     created_at: Optional[datetime] = None
 

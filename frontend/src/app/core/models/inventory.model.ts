@@ -22,8 +22,11 @@ export interface Unit {
   utility_connection_fee?: number;
   parking_charge?: number;
   max_discount_amount?: number;
-  status_id: 'AVAILABLE' | 'ON_HOLD' | 'RESERVED' | 'BOOKED' | 'SOLD' | 'LANDOWNER_SHARE' | 'RETAINED' | 'BLOCKED';
+  status_id: string;
   is_landowner_share: boolean;
+  project_name?: string;
+  project_code?: string;
+  tower_name?: string;
   is_merged?: boolean;
   merged_into_unit_id?: number;
   parent_unit_id?: number;
@@ -32,6 +35,8 @@ export interface Unit {
   current_locked_by_user_name?: string;
   lock_expires_at?: string;
   lock_remaining_seconds?: number;
+  parking_allocation_id?: number | null;
+  created_at?: string;
 }
 
 export interface UnitLockResponse {

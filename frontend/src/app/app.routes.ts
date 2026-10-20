@@ -295,17 +295,17 @@ export const routes: Routes = [
       },
       {
         path: 'projects/construction-monitoring',
-        loadComponent: () => import('./features/projects/construction-monitoring/construction-monitoring.component').then(m => m.ProjectConstructionMonitoringComponent),
+        loadChildren: () => import('./features/projects/construction-monitoring/construction-monitoring.routes').then(m => m.CONSTRUCTION_MONITORING_ROUTES),
         title: '2.10 Construction Progress Monitoring '
       },
       {
         path: 'projects/risk-issues',
-        loadComponent: () => import('./features/projects/risk-issues/risk-issues.component').then(m => m.ProjectRiskIssuesComponent),
+        loadChildren: () => import('./features/projects/risk-issues/risk-issues.routes').then(m => m.RISK_ISSUES_ROUTES),
         title: '2.11 Project Risk & Issue Management '
       },
       {
         path: 'projects/change-orders',
-        loadComponent: () => import('./features/projects/change-orders/change-orders.component').then(m => m.ProjectChangeOrdersComponent),
+        loadChildren: () => import('./features/projects/change-orders/change-orders.routes').then(m => m.CHANGE_ORDERS_ROUTES),
         title: '2.12 Project Change Orders & Variations '
       },
       {
@@ -330,7 +330,7 @@ export const routes: Routes = [
       },
       {
         path: 'projects/handover-closure',
-        loadComponent: () => import('./features/projects/handover-closure/handover-closure.component').then(m => m.ProjectHandoverClosureComponent),
+        loadChildren: () => import('./features/projects/handover-closure/handover-closure.routes').then(m => m.HANDOVER_CLOSURE_ROUTES),
         title: '2.15 Project Handover & Closure '
       },
       {
@@ -404,9 +404,24 @@ export const routes: Routes = [
         title: 'Floor-wise Unit Matrix '
       },
       {
+        path: 'inventory/units/new',
+        loadComponent: () => import('./features/inventory/property-inventory/property-unit-form.component').then(m => m.PropertyUnitFormComponent),
+        title: 'Register Property Unit'
+      },
+      {
+        path: 'inventory/units/:id',
+        loadComponent: () => import('./features/inventory/property-inventory/property-unit-detail.component').then(m => m.PropertyUnitDetailComponent),
+        title: 'Complete Property Record'
+      },
+      {
+        path: 'inventory/units/:id/edit',
+        loadComponent: () => import('./features/inventory/property-inventory/property-unit-form.component').then(m => m.PropertyUnitFormComponent),
+        title: 'Edit Property Unit'
+      },
+      {
         path: 'inventory/units',
         loadComponent: () => import('./features/inventory/property-inventory/property-inventory.component').then(m => m.PropertyInventoryComponent),
-        title: 'Property Units Directory '
+        title: 'Property Units Directory'
       },
       {
         path: 'inventory/parking',

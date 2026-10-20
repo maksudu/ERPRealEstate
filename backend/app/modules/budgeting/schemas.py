@@ -278,9 +278,15 @@ class BudgetVariationCreate(BudgetVariationBase):
     pass
 
 class BudgetVariationUpdate(BaseModel):
+    project_id: Optional[int] = None
+    tower_name: Optional[str] = None
+    title: Optional[str] = None
+    reason_category: Optional[str] = None
     stage: Optional[str] = None
     approved_by: Optional[str] = None
+    original_qty: Optional[Decimal] = None
     revised_qty: Optional[Decimal] = None
+    original_cost_bdt: Optional[Decimal] = None
     revised_cost_bdt: Optional[Decimal] = None
     variation_amount_bdt: Optional[Decimal] = None
     justification: Optional[str] = None

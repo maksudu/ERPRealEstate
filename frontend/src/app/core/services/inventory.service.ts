@@ -146,6 +146,13 @@ export class InventoryService {
     floor_number?: number | null;
     status_id?: string | null;
     facing_id?: string | null;
+    unit_type_id?: string | null;
+    min_beds?: number | null;
+    min_price?: number | null;
+    max_price?: number | null;
+    min_area?: number | null;
+    max_area?: number | null;
+    has_parking?: boolean | null;
     is_landowner_share?: boolean | null;
   }): Observable<UnitPagedResponse> {
     let p = new HttpParams()
@@ -157,6 +164,13 @@ export class InventoryService {
     if (params.floor_number !== undefined && params.floor_number !== null) p = p.set('floor_number', params.floor_number);
     if (params.status_id) p = p.set('status_id', params.status_id);
     if (params.facing_id) p = p.set('facing_id', params.facing_id);
+    if (params.unit_type_id) p = p.set('unit_type_id', params.unit_type_id);
+    if (params.min_beds !== undefined && params.min_beds !== null) p = p.set('min_beds', params.min_beds);
+    if (params.min_price !== undefined && params.min_price !== null) p = p.set('min_price', params.min_price);
+    if (params.max_price !== undefined && params.max_price !== null) p = p.set('max_price', params.max_price);
+    if (params.min_area !== undefined && params.min_area !== null) p = p.set('min_area', params.min_area);
+    if (params.max_area !== undefined && params.max_area !== null) p = p.set('max_area', params.max_area);
+    if (params.has_parking !== undefined && params.has_parking !== null) p = p.set('has_parking', params.has_parking);
     if (params.is_landowner_share !== undefined && params.is_landowner_share !== null) p = p.set('is_landowner_share', params.is_landowner_share);
 
     return this.http.get<UnitPagedResponse>(`${this.baseUrl}/units/paged`, { params: p });

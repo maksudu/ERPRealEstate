@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { Subscription, interval } from 'rxjs';
 import { InventoryService } from '../../../core/services/inventory.service';
 import { ProjectService } from '../../../core/services/project.service';
@@ -27,7 +27,7 @@ import {
   ModalComponent
 } from '../../../shared/components';
 
-export type InventoryTab = 'dashboard' | 'matrix' | 'units' | 'area_calc' | 'parking';
+export type InventoryTab = 'search' | 'dashboard' | 'matrix' | 'units' | 'area_calc' | 'parking';
 
 @Component({
   selector: 'app-property-inventory',
@@ -50,9 +50,34 @@ export class PropertyInventoryComponent implements OnInit, OnDestroy {
   private projectService = inject(ProjectService);
   private fb = inject(FormBuilder);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
-  // Active workspace tab
-  activeTab = signal<InventoryTab>('dashboard');
+  // Active workspace tab: Defaults to 3.0 Property Inventory Search
+  activeTab = signal<InventoryTab>('search');
+  Math = Math;
+
+  // Quick Search & Filter Signals
+  searchProject = signal<string>('all');
+  searchUnitCode = signal<string>('');
+  searchTower = signal<string>('all');
+  searchFloor = signal<string>('all');
+  searchPropertyType = signal<string>('all');
+  searchStatus = signal<string>('all');
+
+  // Advanced Filter Signals
+  showAdvancedFilters = signal<boolean>(false);
+  searchLocation = signal<string>('all');
+  searchMinPrice = signal<number | null>(null);
+  searchMaxPrice = signal<number | null>(null);
+  searchBedCount = signal<string>('all');
+  searchMinArea = signal<number | null>(null);
+  searchMaxArea = signal<number | null>(null);
+  searchParking = signal<string>('all');
+  searchHandover = signal<string>('all');
+  searchHold = signal<string>('all');
+
+  // Results View Mode (Cards or Table)
+  viewMode = signal<'cards' | 'table'>('cards');
 
   // Loading States
   loadingDashboard = signal<boolean>(true);
@@ -194,6 +219,60 @@ export class PropertyInventoryComponent implements OnInit, OnDestroy {
     { label: 'Corporate Office Space', value: 'CORPORATE_OFFICE' }
   ];
 
+  floorOptions: SelectOption[] = [
+    { label: 'All Floors', value: 'all' },
+    ...Array.from({ length: 30 }, (_, i) => ({ label: `Floor ${i + 1}`, value: String(i + 1) }))
+  ];
+
+  propertyTypeSearchOptions: SelectOption[] = [
+    { label: 'All Types', value: 'all' },
+    { label: 'Apartment', value: 'Apartment' },
+    { label: 'Commercial Unit', value: 'Commercial Unit' },
+    { label: 'Shop', value: 'Shop' },
+    { label: 'Penthouse', value: 'Penthouse' },
+    { label: 'Duplex', value: 'Duplex' },
+    { label: 'Studio', value: 'Studio' }
+  ];
+
+  statusSearchOptions: SelectOption[] = [
+    { label: 'All Statuses', value: 'all' },
+    { label: 'Available', value: 'Available' },
+    { label: 'Reserved', value: 'Reserved' },
+    { label: 'On Hold', value: 'On Hold' },
+    { label: 'Booked', value: 'Booked' },
+    { label: 'Sold', value: 'Sold' },
+    { label: 'Handed Over', value: 'Handed Over' },
+    { label: 'Landowner Share', value: 'Landowner Share' },
+    { label: 'Blocked', value: 'Blocked' }
+  ];
+
+  bedroomOptions: SelectOption[] = [
+    { label: 'All Bedrooms', value: 'all' },
+    { label: '1 Bedroom', value: '1' },
+    { label: '2 Bedrooms', value: '2' },
+    { label: '3 Bedrooms', value: '3' },
+    { label: '4 Bedrooms', value: '4' },
+    { label: '5+ Bedrooms', value: '5' }
+  ];
+
+  parkingSearchOptions: SelectOption[] = [
+    { label: 'All Parking', value: 'all' },
+    { label: 'Parking: Yes', value: 'yes' },
+    { label: 'Parking: No', value: 'no' }
+  ];
+
+  handoverOptions: SelectOption[] = [
+    { label: 'All Completion', value: 'all' },
+    { label: 'Handover Ready', value: 'ready' },
+    { label: 'Under Construction', value: 'construction' }
+  ];
+
+  holdOptions: SelectOption[] = [
+    { label: 'All Units', value: 'all' },
+    { label: 'Without Legal Hold', value: 'no' },
+    { label: 'Under Admin / Legal Hold', value: 'yes' }
+  ];
+
   unitCategoryOptions: SelectOption[] = [
     { label: 'Standard Category', value: 'Standard' },
     { label: 'Premium Lakefront', value: 'Premium' },
@@ -215,6 +294,13 @@ export class PropertyInventoryComponent implements OnInit, OnDestroy {
     this.loadUnitsPaged();
     this.loadParkingSlots();
     this.initRealTimeListeners();
+
+    this.route.queryParams.subscribe(params => {
+      const tabParam = params['tab'] as InventoryTab;
+      if (tabParam && ['search', 'dashboard', 'matrix', 'units', 'area_calc', 'parking'].includes(tabParam)) {
+        this.setTab(tabParam);
+      }
+    });
   }
 
   ngOnDestroy(): void {
@@ -308,20 +394,33 @@ export class PropertyInventoryComponent implements OnInit, OnDestroy {
 
   loadUnitsPaged(): void {
     this.loadingUnits.set(true);
-    const prjId = this.selectedProjectFilter() !== 'all' ? Number(this.selectedProjectFilter()) : null;
-    const twrId = this.selectedTowerFilter() !== 'all' ? Number(this.selectedTowerFilter()) : null;
-    const stId = this.selectedStatusFilter() !== 'all' ? this.selectedStatusFilter() : null;
-    const fcId = this.selectedFacingFilter() !== 'all' ? this.selectedFacingFilter() : null;
+    
+    // Quick search parameters
+    const prjId = this.searchProject() !== 'all' ? Number(this.searchProject()) : (this.selectedProjectFilter() !== 'all' ? Number(this.selectedProjectFilter()) : null);
+    const twrId = this.searchTower() !== 'all' ? Number(this.searchTower()) : (this.selectedTowerFilter() !== 'all' ? Number(this.selectedTowerFilter()) : null);
+    const flr = this.searchFloor() !== 'all' ? Number(this.searchFloor()) : null;
+    const stId = this.searchStatus() !== 'all' ? this.searchStatus() : (this.selectedStatusFilter() !== 'all' ? this.selectedStatusFilter() : null);
+    const pType = this.searchPropertyType() !== 'all' ? this.searchPropertyType() : null;
+    const minBeds = this.searchBedCount() !== 'all' ? Number(this.searchBedCount()) : null;
+    const hasPark = this.searchParking() === 'yes' ? true : (this.searchParking() === 'no' ? false : null);
     const isLand = this.selectedAllocationFilter() === 'LANDOWNER' ? true : (this.selectedAllocationFilter() === 'DEVELOPER' ? false : null);
+    const searchVal = this.searchUnitCode().trim() || this.unitSearchTerm().trim() || undefined;
 
     this.inventoryService.getUnitsPaged({
       page: this.currentPage(),
       limit: this.pageSize(),
-      search: this.unitSearchTerm() || undefined,
+      search: searchVal,
       project_id: prjId,
       tower_id: twrId,
+      floor_number: flr,
       status_id: stId,
-      facing_id: fcId,
+      unit_type_id: pType,
+      min_beds: minBeds,
+      min_price: this.searchMinPrice(),
+      max_price: this.searchMaxPrice(),
+      min_area: this.searchMinArea(),
+      max_area: this.searchMaxArea(),
+      has_parking: hasPark,
       is_landowner_share: isLand
     }).subscribe({
       next: (res) => {
@@ -334,6 +433,53 @@ export class PropertyInventoryComponent implements OnInit, OnDestroy {
         this.loadingUnits.set(false);
       }
     });
+  }
+
+  applyFilters(): void {
+    this.currentPage.set(1);
+    this.loadUnitsPaged();
+  }
+
+  resetFilters(): void {
+    this.searchProject.set('all');
+    this.searchUnitCode.set('');
+    this.searchTower.set('all');
+    this.searchFloor.set('all');
+    this.searchPropertyType.set('all');
+    this.searchStatus.set('all');
+    this.searchLocation.set('all');
+    this.searchMinPrice.set(null);
+    this.searchMaxPrice.set(null);
+    this.searchBedCount.set('all');
+    this.searchMinArea.set(null);
+    this.searchMaxArea.set(null);
+    this.searchParking.set('all');
+    this.searchHandover.set('all');
+    this.searchHold.set('all');
+    this.selectedProjectFilter.set('all');
+    this.selectedTowerFilter.set('all');
+    this.selectedStatusFilter.set('all');
+    this.currentPage.set(1);
+    this.loadUnitsPaged();
+  }
+
+  openUnitDetail(id: number): void {
+    this.router.navigate(['/inventory/units', id]);
+  }
+
+  openCreateUnit(): void {
+    this.router.navigate(['/inventory/units/new']);
+  }
+
+  openEditUnit(id: number): void {
+    this.router.navigate(['/inventory/units', id, 'edit']);
+  }
+
+  goToPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages()) {
+      this.currentPage.set(page);
+      this.loadUnitsPaged();
+    }
   }
 
   loadStackingPlan(): void {
@@ -386,19 +532,6 @@ export class PropertyInventoryComponent implements OnInit, OnDestroy {
     if (this.activeTab() === 'matrix') {
       this.loadStackingPlan();
     }
-  }
-
-  resetFilters(): void {
-    this.selectedProjectFilter.set('all');
-    this.selectedTowerFilter.set('all');
-    this.selectedStatusFilter.set('all');
-    this.selectedFacingFilter.set('all');
-    this.selectedPropertyTypeFilter.set('all');
-    this.selectedAllocationFilter.set('all');
-    this.unitSearchTerm.set('');
-    this.currentPage.set(1);
-    this.loadDashboardData();
-    this.loadUnitsPaged();
   }
 
   // Unit CRUD Modals
@@ -618,13 +751,6 @@ export class PropertyInventoryComponent implements OnInit, OnDestroy {
         alert(err.error?.detail || 'Failed to allocate parking slot.');
       }
     });
-  }
-
-  // Pagination navigation
-  goToPage(page: number): void {
-    if (page < 1 || page > this.totalPages()) return;
-    this.currentPage.set(page);
-    this.loadUnitsPaged();
   }
 
   totalPages = computed(() => {

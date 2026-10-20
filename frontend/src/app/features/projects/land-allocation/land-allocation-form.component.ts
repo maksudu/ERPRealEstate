@@ -102,6 +102,6 @@ export class ProjectLandAllocationFormComponent implements OnInit {
     if (this.form.invalid || this.saving()) { this.form.markAllAsTouched(); return; }
     const payload = this.form.getRawValue(); this.saving.set(true); this.error.set('');
     const request = this.allocationId() ? this.service.updateLandAllocation(this.allocationId()!, payload) : this.service.createLandAllocation(payload);
-    request.subscribe({ next: () => this.router.navigate(['/projects/land-allocation']), error: e => { this.error.set(e?.error?.detail || 'Could not save this allocation.'); this.saving.set(false); } });
+    request.subscribe({ next: () => this.router.navigate(['/projects/land-allocation'], { state: { success: this.allocationId() ? 'Land allocation updated successfully.' : 'Land allocation created successfully.' } }), error: e => { this.error.set(e?.error?.detail || 'Could not save this allocation.'); this.saving.set(false); } });
   }
 }

@@ -609,16 +609,19 @@ async def delete_expense_control(exp_id: int, db: AsyncSession = Depends(get_db)
 async def list_budget_variations(
     project_id: Optional[int] = None,
     stage: Optional[str] = None,
+    search: Optional[str] = None,
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db)
 ):
-    await get_or_create_initial_seed(db)
     q = select(BudgetVariation)
     if project_id:
         q = q.where(BudgetVariation.project_id == project_id)
     if stage:
         q = q.where(BudgetVariation.stage == stage)
+    if search:
+        pattern = f"%{search.strip()}%"
+        q = q.where(BudgetVariation.title.ilike(pattern) | BudgetVariation.variation_code.ilike(pattern))
 
     count_q = select(func.count()).select_from(q.subquery())
     total_count = (await db.execute(count_q)).scalar() or 0
@@ -645,6 +648,14 @@ async def create_budget_variation(payload: BudgetVariationCreate, db: AsyncSessi
     return var
 
 
+@router.get("/variations/{var_id}", response_model=BudgetVariationResponse)
+async def get_budget_variation(var_id: int, db: AsyncSession = Depends(get_db)):
+    variation = await db.get(BudgetVariation, var_id)
+    if variation is None:
+        raise HTTPException(status_code=404, detail="Variation not found")
+    return variation
+
+
 @router.put("/variations/{var_id}", response_model=BudgetVariationResponse)
 async def update_budget_variation(var_id: int, payload: BudgetVariationUpdate, db: AsyncSession = Depends(get_db)):
     var = await db.get(BudgetVariation, var_id)
@@ -657,6 +668,16 @@ async def update_budget_variation(var_id: int, payload: BudgetVariationUpdate, d
     await db.commit()
     await db.refresh(var)
     return var
+
+
+@router.delete("/variations/{var_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_budget_variation(var_id: int, db: AsyncSession = Depends(get_db)):
+    var = await db.get(BudgetVariation, var_id)
+    if not var:
+        raise HTTPException(status_code=404, detail="Variation not found")
+    await db.delete(var)
+    await db.commit()
+    return None
 
 
 # =========================================================================
