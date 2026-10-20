@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, desc, update
+from sqlalchemy import select, func, desc, update, Integer
 from sqlalchemy.orm import selectinload
 from typing import List, Optional
 from datetime import date
@@ -14,9 +14,9 @@ from app.modules.projects.models import (
 )
 from app.modules.projects.schemas import (
     ProjectCreate, ProjectUpdate, ProjectResponse,
-    TowerCreate, TowerUpdate, TowerResponse,
-    FloorCreate, FloorUpdate, FloorResponse,
-    ProjectUnitCreate, ProjectUnitUpdate, ProjectUnitResponse,
+    TowerCreate, TowerUpdate, TowerResponse, TowerPageResponse,
+    FloorCreate, FloorUpdate, FloorResponse, FloorPageResponse,
+    ProjectUnitCreate, ProjectUnitUpdate, ProjectUnitResponse, ProjectUnitPageResponse,
     ProjectHierarchyTreeResponse, TreeTowerNode, TreeFloorNode, TreeUnitNode,
     ProjectLandAllocationCreate, ProjectLandAllocationUpdate, ProjectLandAllocationResponse,
     ProjectLandAllocationPaginationResponse, LandAllocationReconciliationSummary,
@@ -61,6 +61,36 @@ async def calculate_far(
 # -------------------------------------------------------------
 # 2. Project Master Endpoints
 # -------------------------------------------------------------
+@router.get("/search/options")
+async def project_search_options(db: AsyncSession = Depends(get_db)):
+    names = await db.execute(select(Project.project_name).where(Project.project_name.is_not(None)).distinct().order_by(Project.project_name))
+    districts = await db.execute(select(Project.district).where(Project.district.is_not(None)).distinct().order_by(Project.district))
+    thanas = await db.execute(select(Project.thana_upazila).where(Project.thana_upazila.is_not(None)).distinct().order_by(Project.thana_upazila))
+    return {"project_names": names.scalars().all(), "locations": list(dict.fromkeys([*thanas.scalars().all(), *districts.scalars().all()]))}
+
+
+@router.get("/search")
+async def search_projects(
+    project_name: Optional[str] = Query(None),
+    location: Optional[str] = Query(None),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
+    db: AsyncSession = Depends(get_db)
+):
+    filters = []
+    if project_name:
+        filters.append(Project.project_name == project_name)
+    if location:
+        filters.append((Project.district == location) | (Project.thana_upazila == location))
+    total = await db.scalar(select(func.count(Project.id)).where(*filters)) or 0
+    stmt = select(Project).options(
+        selectinload(Project.towers), selectinload(Project.clearances),
+        selectinload(Project.boq_items), selectinload(Project.drawings)
+    ).where(*filters).order_by(desc(Project.id)).offset(skip).limit(limit)
+    result = await db.execute(stmt)
+    return {"items": result.scalars().all(), "total": total, "skip": skip, "limit": limit}
+
+
 @router.get("/list", response_model=List[ProjectResponse])
 async def list_projects(
     authority: Optional[str] = Query(None),
@@ -745,156 +775,57 @@ async def list_land_allocations(
     allocation_method: Optional[str] = Query(None),
     status: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
-    skip: int = Query(0, ge=0),
+    skip: Optional[int] = Query(None, ge=0),
+    offset: Optional[int] = Query(None, ge=0),
     limit: int = Query(20, ge=1, le=100),
     db: AsyncSession = Depends(get_db)
 ):
-    """
-    Submodule 2.3 - List project-wise land and cost allocations with filters and pagination.
-    Seeds realistic baseline data (including Green Valley Twin Towers ৳8.50 Cr allocation) if empty.
-    """
-    # Check if empty, auto-seed sample allocations
-    count_stmt = select(func.count(ProjectLandAllocation.id))
-    total_existing = (await db.execute(count_stmt)).scalar() or 0
-
-    if total_existing == 0:
-        # Fetch or verify a project exists
-        p_stmt = select(Project).order_by(Project.id.asc()).limit(1)
-        p_res = (await db.execute(p_stmt)).scalar_one_or_none()
-        p_id = p_res.id if p_res else 1
-        p_name = p_res.project_name if p_res else "Green Valley Twin Towers"
-
-        # Fetch or verify land parcel exists
-        lp_stmt = select(LandParcel).order_by(LandParcel.id.asc()).limit(1)
-        lp_res = (await db.execute(lp_stmt)).scalar_one_or_none()
-        lp_id = lp_res.id if lp_res else None
-        lp_ident = f"{lp_res.parcel_id} - Mouza {lp_res.mouza_name}, Dag {lp_res.dag_number}" if lp_res else "LND-000125 - Mouza Gulshan, Dag 452"
-
-        seed_allocations = [
-            ProjectLandAllocation(
-                project_id=p_id,
-                parcel_id=lp_id,
-                allocation_code="PLA-2026-001",
-                project_name=p_name,
-                parcel_identifier=lp_ident,
-                allocated_area_decimal=25.60,
-                allocated_area_katha=15.50,
-                allocated_area_sqft=11160.00,
-                allocation_percentage=100.00,
-                effective_date=date(2026, 1, 15),
-                allocation_method="DIRECT_ASSIGNMENT",
-                allocation_basis_notes="100% direct assignment to Green Valley Twin Towers master footprint",
-                is_shared_parcel=False,
-                land_purchase_price=80000000.00, # ৳8,00,00,000 (8.00 Crore)
-                legal_fees=1500000.00,
-                registration_costs=2500000.00,
-                acquisition_related_expenses=1000000.00, # Related expenses ৳50,00,000 total
-                total_allocated_cost=85000000.00, # ৳8,50,00,000 (8.50 Crore)
-                original_allocated_cost=85000000.00,
-                revised_allocated_cost=85000000.00,
-                unallocated_balance=0.00,
-                acquisition_ledger_ref="ACQ-LDG-2026-8812",
-                reconciliation_status="RECONCILED",
-                approval_status="APPROVED",
-                remarks="Reconciled with Land Acquisition General Ledger. Full land cost recognized."
-            ),
-            ProjectLandAllocation(
-                project_id=p_id,
-                parcel_id=None,
-                allocation_code="PLA-2026-002",
-                project_name="Blue Oceans Tech Park",
-                parcel_identifier="LND-000188 - Mouza Badda, Dag 780",
-                allocated_area_decimal=39.60,
-                allocated_area_katha=24.00,
-                allocated_area_sqft=17280.00,
-                allocation_percentage=60.00,
-                effective_date=date(2026, 2, 1),
-                allocation_method="AREA_PROPORTION",
-                allocation_basis_notes="Shared parcel: 60% apportioned to Phase 1 Tech Park, 40% reserved for Phase 2 infrastructure",
-                is_shared_parcel=True,
-                shared_projects_notes="Shared with Phase 2 Substation & Access Road",
-                common_infrastructure_scope="60ft Central Access Boulevard & 33kV Substation Compound",
-                land_purchase_price=120000000.00,
-                legal_fees=2000000.00,
-                registration_costs=4000000.00,
-                acquisition_related_expenses=2000000.00,
-                total_allocated_cost=128000000.00,
-                original_allocated_cost=128000000.00,
-                revised_allocated_cost=128000000.00,
-                unallocated_balance=51200000.00,
-                acquisition_ledger_ref="ACQ-LDG-2026-9041",
-                reconciliation_status="RECONCILED",
-                approval_status="APPROVED",
-                remarks="Apportioned under rule PR-2026-04. Unallocated balance remains in land bank."
-            ),
-            ProjectLandAllocation(
-                project_id=p_id,
-                parcel_id=None,
-                allocation_code="PLA-2026-003",
-                project_name="Banani Lakefront Heights",
-                parcel_identifier="LND-000210 - Mouza Banani, Dag 112",
-                allocated_area_decimal=29.70,
-                allocated_area_katha=18.00,
-                allocated_area_sqft=12960.00,
-                allocation_percentage=100.00,
-                effective_date=date(2026, 3, 10),
-                allocation_method="DIRECT_ASSIGNMENT",
-                allocation_basis_notes="Exclusive parcel for 20-storey residential development",
-                is_shared_parcel=False,
-                land_purchase_price=105000000.00,
-                legal_fees=1800000.00,
-                registration_costs=3200000.00,
-                acquisition_related_expenses=1500000.00,
-                total_allocated_cost=111500000.00,
-                original_allocated_cost=111500000.00,
-                revised_allocated_cost=111500000.00,
-                unallocated_balance=0.00,
-                acquisition_ledger_ref="ACQ-LDG-2026-9188",
-                reconciliation_status="PENDING",
-                approval_status="UNDER_REVIEW",
-                remarks="Final sub-registry deed verification pending from Land Dept."
-            )
-        ]
-        db.add_all(seed_allocations)
-        await db.commit()
-
-    # Query with filters
+    """List persisted project land allocations with filtered totals and aggregates."""
+    page_offset = offset if offset is not None else (skip if skip is not None else 0)
     stmt = select(ProjectLandAllocation)
-    if project_id:
+    if project_id is not None:
         stmt = stmt.where(ProjectLandAllocation.project_id == project_id)
     if allocation_method:
         stmt = stmt.where(ProjectLandAllocation.allocation_method == allocation_method)
     if status:
         stmt = stmt.where(ProjectLandAllocation.approval_status == status)
     if search:
-        s = f"%{search}%"
+        pattern = f"%{search}%"
         stmt = stmt.where(
-            (ProjectLandAllocation.allocation_code.ilike(s)) |
-            (ProjectLandAllocation.project_name.ilike(s)) |
-            (ProjectLandAllocation.parcel_identifier.ilike(s))
+            ProjectLandAllocation.allocation_code.ilike(pattern) |
+            ProjectLandAllocation.project_name.ilike(pattern) |
+            ProjectLandAllocation.parcel_identifier.ilike(pattern)
         )
 
-    # Compute aggregation totals
-    all_allocs = (await db.execute(stmt)).scalars().all()
-    total_count = len(all_allocs)
-    total_cost = sum(float(a.total_allocated_cost or 0) for a in all_allocs)
-    total_katha = sum(float(a.allocated_area_katha or 0) for a in all_allocs)
-    total_decimal = sum(float(a.allocated_area_decimal or 0) for a in all_allocs)
-    shared_parcels = sum(1 for a in all_allocs if a.is_shared_parcel)
-
-    # Apply pagination
-    paginated_stmt = stmt.order_by(desc(ProjectLandAllocation.id)).offset(skip).limit(limit)
-    items = (await db.execute(paginated_stmt)).scalars().all()
-
+    total = (await db.execute(select(func.count()).select_from(stmt.subquery()))).scalar_one()
+    aggregate_stmt = select(
+        func.coalesce(func.sum(ProjectLandAllocation.total_allocated_cost), 0),
+        func.coalesce(func.sum(ProjectLandAllocation.allocated_area_katha), 0),
+        func.coalesce(func.sum(ProjectLandAllocation.allocated_area_decimal), 0),
+        func.coalesce(func.sum(ProjectLandAllocation.is_shared_parcel.cast(Integer)), 0),
+    ).select_from(ProjectLandAllocation)
+    if project_id is not None:
+        aggregate_stmt = aggregate_stmt.where(ProjectLandAllocation.project_id == project_id)
+    if allocation_method:
+        aggregate_stmt = aggregate_stmt.where(ProjectLandAllocation.allocation_method == allocation_method)
+    if status:
+        aggregate_stmt = aggregate_stmt.where(ProjectLandAllocation.approval_status == status)
+    if search:
+        pattern = f"%{search}%"
+        aggregate_stmt = aggregate_stmt.where(
+            ProjectLandAllocation.allocation_code.ilike(pattern) |
+            ProjectLandAllocation.project_name.ilike(pattern) |
+            ProjectLandAllocation.parcel_identifier.ilike(pattern)
+        )
+    total_cost, total_katha, total_decimal, shared_count = (await db.execute(aggregate_stmt)).one()
+    rows = (await db.execute(stmt.order_by(desc(ProjectLandAllocation.id)).offset(page_offset).limit(limit))).scalars().all()
     return ProjectLandAllocationPaginationResponse(
-        items=[ProjectLandAllocationResponse.model_validate(i) for i in items],
-        total=total_count,
-        skip=skip,
-        limit=limit,
-        total_allocated_cost_bdt=total_cost,
-        total_allocated_katha=total_katha,
-        total_allocated_decimal=total_decimal,
-        shared_parcels_count=shared_parcels
+        items=[ProjectLandAllocationResponse.model_validate(row) for row in rows],
+        total=total, skip=page_offset, offset=page_offset, limit=limit,
+        total_allocated_cost_bdt=float(total_cost or 0),
+        total_allocated_katha=float(total_katha or 0),
+        total_allocated_decimal=float(total_decimal or 0),
+        shared_parcels_count=int(shared_count or 0),
     )
 
 
@@ -1031,6 +962,13 @@ async def get_land_allocation_reconciliation(db: AsyncSession = Depends(get_db))
         pending_reconciliation_count=pending
     )
 
+
+@router.get("/land-allocations/{allocation_id}", response_model=ProjectLandAllocationResponse)
+async def get_land_allocation(allocation_id: int, db: AsyncSession = Depends(get_db)):
+    allocation = (await db.execute(select(ProjectLandAllocation).where(ProjectLandAllocation.id == allocation_id))).scalar_one_or_none()
+    if allocation is None:
+        raise HTTPException(status_code=404, detail="Land allocation record not found")
+    return ProjectLandAllocationResponse.model_validate(allocation)
 
 # =============================================================
 # 2.4 Building, Tower, Floor & Unit Setup Endpoints
@@ -1270,27 +1208,50 @@ async def get_project_hierarchy_tree(
 # -------------------------------------------------------------
 # Tower CRUD Endpoints
 # -------------------------------------------------------------
-@router.get("/towers", response_model=List[TowerResponse])
+@router.get("/towers")
 async def list_towers(
     project_id: Optional[int] = Query(None),
+    search: Optional[str] = Query(None),
+    building_type: Optional[str] = Query(None),
+    construction_status: Optional[str] = Query(None),
+    skip: Optional[int] = Query(None, ge=0),
+    offset: Optional[int] = Query(None, ge=0),
+    limit: Optional[int] = Query(None, ge=1, le=200),
     db: AsyncSession = Depends(get_db)
 ):
-    stmt = (
-        select(Tower)
-        .options(selectinload(Tower.floors), selectinload(Tower.units))
-        .order_by(Tower.id.asc())
-    )
-    if project_id:
-        stmt = stmt.where(Tower.project_id == project_id)
-    towers = (await db.execute(stmt)).scalars().all()
+    stmt = select(Tower).options(selectinload(Tower.floors), selectinload(Tower.units)).order_by(Tower.id.asc())
+    if project_id is not None: stmt = stmt.where(Tower.project_id == project_id)
+    if building_type: stmt = stmt.where(Tower.building_type == building_type)
+    if construction_status: stmt = stmt.where(Tower.construction_status == construction_status)
+    if search:
+        pattern = f"%{search}%"
+        stmt = stmt.where(Tower.tower_code.ilike(pattern) | Tower.tower_name.ilike(pattern) | Tower.building_code.ilike(pattern))
+    total = (await db.execute(select(func.count()).select_from(stmt.order_by(None).subquery()))).scalar_one()
+    page_offset = offset if offset is not None else (skip if skip is not None else 0)
+    paged = skip is not None or offset is not None or limit is not None
+    page_limit = limit if limit is not None else 200
+    page_stmt = stmt.offset(page_offset)
+    if paged: page_stmt = page_stmt.limit(page_limit)
+    rows = (await db.execute(page_stmt)).scalars().all()
+    items = []
+    for tower in rows:
+        response = TowerResponse.model_validate(tower)
+        response.floor_count = len(tower.floors or [])
+        response.unit_count = len(tower.units or [])
+        items.append(response)
+    if paged:
+        return TowerPageResponse(items=items, total=total, limit=page_limit, offset=page_offset)
+    return items
 
-    resp = []
-    for t in towers:
-        tr = TowerResponse.model_validate(t)
-        tr.floor_count = len(t.floors) if t.floors else 0
-        tr.unit_count = len(t.units) if t.units else 0
-        resp.append(tr)
-    return resp
+
+@router.get("/towers/{tower_id}", response_model=TowerResponse)
+async def get_tower(tower_id: int, db: AsyncSession = Depends(get_db)):
+    tower = (await db.execute(select(Tower).options(selectinload(Tower.floors), selectinload(Tower.units)).where(Tower.id == tower_id))).scalar_one_or_none()
+    if tower is None: raise HTTPException(status_code=404, detail="Tower not found")
+    response = TowerResponse.model_validate(tower)
+    response.floor_count = len(tower.floors or [])
+    response.unit_count = len(tower.units or [])
+    return response
 
 
 @router.post("/towers", response_model=TowerResponse, status_code=status.HTTP_201_CREATED)
@@ -1330,30 +1291,54 @@ async def delete_tower(tower_id: int, db: AsyncSession = Depends(get_db)):
 # -------------------------------------------------------------
 # Floor CRUD Endpoints
 # -------------------------------------------------------------
-@router.get("/floors", response_model=List[FloorResponse])
+@router.get("/floors")
 async def list_floors(
     project_id: Optional[int] = Query(None),
     tower_id: Optional[int] = Query(None),
+    search: Optional[str] = Query(None),
+    floor_type: Optional[str] = Query(None),
+    construction_status: Optional[str] = Query(None),
+    inspection_status: Optional[str] = Query(None),
+    skip: Optional[int] = Query(None, ge=0),
+    offset: Optional[int] = Query(None, ge=0),
+    limit: Optional[int] = Query(None, ge=1, le=500),
     db: AsyncSession = Depends(get_db)
 ):
-    stmt = (
-        select(ProjectFloor)
-        .options(selectinload(ProjectFloor.tower), selectinload(ProjectFloor.units))
-        .order_by(ProjectFloor.floor_number.asc())
-    )
-    if project_id:
-        stmt = stmt.where(ProjectFloor.project_id == project_id)
-    if tower_id:
-        stmt = stmt.where(ProjectFloor.tower_id == tower_id)
+    stmt = select(ProjectFloor).options(selectinload(ProjectFloor.tower), selectinload(ProjectFloor.units)).order_by(ProjectFloor.floor_number.asc())
+    if project_id is not None: stmt = stmt.where(ProjectFloor.project_id == project_id)
+    if tower_id is not None: stmt = stmt.where(ProjectFloor.tower_id == tower_id)
+    if floor_type: stmt = stmt.where(ProjectFloor.floor_type == floor_type)
+    if construction_status: stmt = stmt.where(ProjectFloor.construction_status == construction_status)
+    if inspection_status: stmt = stmt.where(ProjectFloor.inspection_status == inspection_status)
+    if search:
+        pattern = f"%{search}%"
+        stmt = stmt.where(ProjectFloor.display_name.ilike(pattern) | ProjectFloor.floor_type.ilike(pattern))
+    total = (await db.execute(select(func.count()).select_from(stmt.order_by(None).subquery()))).scalar_one()
+    page_offset = offset if offset is not None else (skip if skip is not None else 0)
+    paged = skip is not None or offset is not None or limit is not None
+    page_limit = limit if limit is not None else 200
+    page_stmt = stmt.offset(page_offset)
+    if paged: page_stmt = page_stmt.limit(page_limit)
+    rows = (await db.execute(page_stmt)).scalars().all()
+    items = []
+    for floor in rows:
+        response = FloorResponse.model_validate(floor)
+        response.tower_name = floor.tower.tower_name if floor.tower else None
+        response.unit_count = len(floor.units or [])
+        items.append(response)
+    if paged:
+        return FloorPageResponse(items=items, total=total, limit=page_limit, offset=page_offset)
+    return items
 
-    floors = (await db.execute(stmt)).scalars().all()
-    resp = []
-    for fl in floors:
-        fr = FloorResponse.model_validate(fl)
-        fr.tower_name = fl.tower.tower_name if fl.tower else None
-        fr.unit_count = len(fl.units) if fl.units else 0
-        resp.append(fr)
-    return resp
+
+@router.get("/floors/{floor_id}", response_model=FloorResponse)
+async def get_floor(floor_id: int, db: AsyncSession = Depends(get_db)):
+    floor = (await db.execute(select(ProjectFloor).options(selectinload(ProjectFloor.tower), selectinload(ProjectFloor.units)).where(ProjectFloor.id == floor_id))).scalar_one_or_none()
+    if floor is None: raise HTTPException(status_code=404, detail="Floor not found")
+    response = FloorResponse.model_validate(floor)
+    response.tower_name = floor.tower.tower_name if floor.tower else None
+    response.unit_count = len(floor.units or [])
+    return response
 
 
 @router.post("/floors", response_model=FloorResponse, status_code=status.HTTP_201_CREATED)
@@ -1392,49 +1377,45 @@ async def delete_floor(floor_id: int, db: AsyncSession = Depends(get_db)):
 # -------------------------------------------------------------
 # Unit CRUD Endpoints with Strict Validation Rules
 # -------------------------------------------------------------
-@router.get("/units", response_model=List[ProjectUnitResponse])
+@router.get("/units")
 async def list_units(
     project_id: Optional[int] = Query(None),
     tower_id: Optional[int] = Query(None),
     floor_id: Optional[int] = Query(None),
     unit_status: Optional[str] = Query(None),
     ownership: Optional[str] = Query(None),
+    unit_type: Optional[str] = Query(None),
+    configuration_stage: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
-    skip: int = Query(0, ge=0),
-    limit: int = Query(50, ge=1, le=200),
+    skip: Optional[int] = Query(None, ge=0),
+    offset: Optional[int] = Query(None, ge=0),
+    limit: Optional[int] = Query(None, ge=1, le=500),
     db: AsyncSession = Depends(get_db)
 ):
-    stmt = (
-        select(ProjectUnit)
-        .options(selectinload(ProjectUnit.project), selectinload(ProjectUnit.tower))
-        .order_by(ProjectUnit.floor_number.asc(), ProjectUnit.unit_code.asc())
-    )
-    if project_id:
-        stmt = stmt.where(ProjectUnit.project_id == project_id)
-    if tower_id:
-        stmt = stmt.where(ProjectUnit.tower_id == tower_id)
-    if floor_id:
-        stmt = stmt.where(ProjectUnit.floor_id == floor_id)
-    if unit_status:
-        stmt = stmt.where(ProjectUnit.unit_status == unit_status)
-    if ownership:
-        stmt = stmt.where(ProjectUnit.ownership_classification == ownership)
+    stmt = select(ProjectUnit).options(selectinload(ProjectUnit.project), selectinload(ProjectUnit.tower)).order_by(ProjectUnit.floor_number.asc(), ProjectUnit.unit_code.asc())
+    if project_id is not None: stmt = stmt.where(ProjectUnit.project_id == project_id)
+    if tower_id is not None: stmt = stmt.where(ProjectUnit.tower_id == tower_id)
+    if floor_id is not None: stmt = stmt.where(ProjectUnit.floor_id == floor_id)
+    if unit_status: stmt = stmt.where(ProjectUnit.unit_status == unit_status)
+    if ownership: stmt = stmt.where(ProjectUnit.ownership_classification == ownership)
+    if unit_type: stmt = stmt.where(ProjectUnit.unit_type == unit_type)
+    if configuration_stage: stmt = stmt.where(ProjectUnit.configuration_stage == configuration_stage)
     if search:
-        s = f"%{search}%"
-        stmt = stmt.where(
-            (ProjectUnit.unit_code.ilike(s)) |
-            (ProjectUnit.unit_type.ilike(s)) |
-            (ProjectUnit.unit_orientation.ilike(s))
-        )
-
-    units = (await db.execute(stmt.offset(skip).limit(limit))).scalars().all()
-    resp = []
-    for u in units:
-        ur = ProjectUnitResponse.model_validate(u)
-        ur.project_name = u.project.project_name if u.project else None
-        ur.tower_name = u.tower.tower_name if u.tower else None
-        resp.append(ur)
-    return resp
+        pattern = f"%{search}%"
+        stmt = stmt.where(ProjectUnit.unit_code.ilike(pattern) | ProjectUnit.unit_type.ilike(pattern) | ProjectUnit.unit_orientation.ilike(pattern))
+    total = (await db.execute(select(func.count()).select_from(stmt.order_by(None).subquery()))).scalar_one()
+    page_offset = offset if offset is not None else (skip if skip is not None else 0)
+    page_limit = limit if limit is not None else 50
+    rows = (await db.execute(stmt.offset(page_offset).limit(page_limit))).scalars().all()
+    items = []
+    for unit in rows:
+        response = ProjectUnitResponse.model_validate(unit)
+        response.project_name = unit.project.project_name if unit.project else None
+        response.tower_name = unit.tower.tower_name if unit.tower else None
+        items.append(response)
+    if skip is not None or offset is not None or limit is not None:
+        return ProjectUnitPageResponse(items=items, total=total, limit=page_limit, offset=page_offset)
+    return items
 
 
 @router.post("/units", response_model=ProjectUnitResponse, status_code=status.HTTP_201_CREATED)
@@ -1553,6 +1534,21 @@ async def get_units_area_reconciliation(
         "authority_approved_count": authority_approved_units,
         "planned_only_count": planned_only_units
     }
+
+
+@router.get("/units/{unit_id}", response_model=ProjectUnitResponse)
+async def get_unit(unit_id: int, db: AsyncSession = Depends(get_db)):
+    unit = (await db.execute(
+        select(ProjectUnit)
+        .options(selectinload(ProjectUnit.project), selectinload(ProjectUnit.tower))
+        .where(ProjectUnit.id == unit_id)
+    )).scalar_one_or_none()
+    if unit is None:
+        raise HTTPException(status_code=404, detail="Unit not found")
+    response = ProjectUnitResponse.model_validate(unit)
+    response.project_name = unit.project.project_name if unit.project else None
+    response.tower_name = unit.tower.tower_name if unit.tower else None
+    return response
 
 
 # =============================================================================

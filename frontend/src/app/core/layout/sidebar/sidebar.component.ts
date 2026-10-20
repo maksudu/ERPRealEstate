@@ -341,7 +341,7 @@ export class SidebarComponent implements OnInit {
   erpMenuGroups: MenuGroup[] = [
     {
       id: 'bi',
-      title: 'Executive BI & Strategy',
+      title: 'Executive Strategy',
       iconSvg: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
       items: [
         { id: 'bi-cockpit', label: 'Executive', route: '/bi/cockpit' },
@@ -352,7 +352,7 @@ export class SidebarComponent implements OnInit {
     },
     {
       id: 'settings',
-      title: 'Settings & Core',
+      title: 'Settings',
       iconSvg: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z',
       items: [
         { id: 'governance', label: 'Maker-Checker Approval', route: '/governance/approvals' },
@@ -363,9 +363,8 @@ export class SidebarComponent implements OnInit {
     },
     {
       id: 'security-management',
-      title: 'User, Role & Security',
+      title: 'User Management',
       iconSvg: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z',
-      badge: '18',
       items: [
         { id: 'sec-cockpit', label: 'Security', route: '/security/dashboard' },
         { id: 'sec-users', label: 'Users', route: '/security/users' },
@@ -395,7 +394,6 @@ export class SidebarComponent implements OnInit {
         {
           id: 'sec-reports-suite',
           label: 'Security Reports',
-          badge: '3',
           children: [
             { id: 'rep-sec-matrix', label: 'Access Matrix', route: '/security/reports', queryParams: { tab: 'user_access_matrix' } },
             { id: 'rep-sec-priv', label: 'Privileged Access', route: '/security/privileged-accounts' },
@@ -406,9 +404,8 @@ export class SidebarComponent implements OnInit {
     },
     {
       id: 'legal-compliance',
-      title: 'Legal & Statutory Compliance',
+      title: 'Legal Statutory',
       iconSvg: 'M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3',
-      badge: '12',
       items: [
         { id: 'leg-dashboard', label: 'Legal', route: '/legal/dashboard' },
         { id: 'leg-deeds', label: 'Deeds & Mutation', route: '/legal/records/registered_record' },
@@ -428,12 +425,12 @@ export class SidebarComponent implements OnInit {
     },
     {
       id: 'land',
-      title: 'Land Bank & Acquisition',
+      title: 'Land Acquisition',
       iconSvg: 'M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7',
       items: [
         { id: 'land-dashboard', label: 'Land Intelligence', route: '/land/dashboard' },
         { id: 'landowners-registry', label: 'Landowners', route: '/land/landowners' },
-        { id: 'land-proposals', label: 'Land Search', route: '/land/proposals' },
+        { id: 'land-proposals', label: 'Land Acquisition', route: '/land/proposals' },
         { id: 'land-parcels', label: 'Land Registry', route: '/land/parcels' },
         { id: 'land-conversions', label: 'Area', route: '/land/conversions' },
         { id: 'joint-ownership', label: 'Joint Agreements', route: '/land/joint-ownership' },
@@ -441,42 +438,41 @@ export class SidebarComponent implements OnInit {
         { id: 'valuation-costing', label: 'Valuation', route: '/land/valuation-costing' },
         { id: 'negotiation-agreements', label: 'Negotiation', route: '/land/negotiation' },
         { id: 'payment-schedules', label: 'Payment Schedules', route: '/land/payment-schedules' },
+        { id: 'khatian', label: 'Historic Surveys (CS/SA/RS/BS)', route: '/land/surveys' },
+        { id: 'joint-venture', label: 'JV Agreements & Allocation', route: '/land/jv-agreements' },
         {
           id: 'land-reports-sub',
-          label: 'Land Reports',
-          badge: 'Reports',
+          label: 'Land Bank Reports',
           children: [
-            { id: 'rep-1', label: 'Landowner Master', route: '/land/reports', queryParams: { type: 'landowner-master' } },
-            { id: 'rep-2', label: 'Parcel Register', route: '/land/reports', queryParams: { type: 'parcel-register' } },
-            { id: 'rep-3', label: 'Acquisition Pipeline', route: '/land/reports', queryParams: { type: 'opportunity-pipeline' } },
-            { id: 'rep-4', label: 'Area Summary', route: '/land/reports', queryParams: { type: 'area-summary' } },
-            { id: 'rep-5', label: 'Ownership Discrepancy', route: '/land/reports', queryParams: { type: 'ownership-discrepancy' } },
-            { id: 'rep-6', label: 'Unverified Documents', route: '/land/reports', queryParams: { type: 'unverified-documents' } },
-            { id: 'rep-7', label: 'Due Diligence', route: '/land/reports', queryParams: { type: 'due-diligence-encumbrance' } },
-            { id: 'rep-8', label: 'Valuation', route: '/land/reports', queryParams: { type: 'valuation-cost-sqft' } },
-            { id: 'rep-9', label: 'Approved', route: '/land/reports', queryParams: { type: 'expenditure-variance' } },
-            { id: 'rep-10', label: 'Agreement Milestones', route: '/land/reports', queryParams: { type: 'agreement-milestones' } },
-            { id: 'rep-11', label: 'Payment Schedule', route: '/land/reports', queryParams: { type: 'payment-schedule-balance' } },
-            { id: 'rep-12', label: 'Overdue Installments', route: '/land/reports', queryParams: { type: 'overdue-installments' } },
-            { id: 'rep-13', label: 'Project Acquired Land', route: '/land/reports', queryParams: { type: 'project-wise-summary' } },
-            { id: 'rep-14', label: 'Approval & Exceptions', route: '/land/reports', queryParams: { type: 'approval-exception-history' } },
-            { id: 'rep-15', label: 'Audit Trail', route: '/land/reports', queryParams: { type: 'acquisition-audit-trail' } }
+            { id: 'rep-1', label: 'Land Bank Register', route: '/land/reports', queryParams: { type: 'land-bank-register' } },
+            { id: 'rep-2', label: 'Proposed & Acquired Land', route: '/land/reports', queryParams: { type: 'proposed-acquired-land' } },
+            { id: 'rep-3', label: 'Landowner & Joint-Owner', route: '/land/reports', queryParams: { type: 'landowner-joint-owner' } },
+            { id: 'rep-4', label: 'Mouza, Khatian & Dag', route: '/land/reports', queryParams: { type: 'mouza-khatian-dag' } },
+            { id: 'rep-5', label: 'Deed & Mutation Status', route: '/land/reports', queryParams: { type: 'deed-mutation-status' } },
+            { id: 'rep-6', label: 'Area Reconciliation', route: '/land/reports', queryParams: { type: 'land-area-reconciliation' } },
+            { id: 'rep-7', label: 'Valuation & Cost', route: '/land/reports', queryParams: { type: 'valuation-acquisition-cost' } },
+            { id: 'rep-8', label: 'Owner Payment & Due', route: '/land/reports', queryParams: { type: 'owner-payment-outstanding' } },
+            { id: 'rep-9', label: 'JV Entitlement & Agreement', route: '/land/reports', queryParams: { type: 'jv-entitlement-agreement' } },
+            { id: 'rep-10', label: 'Legal Risk & Litigation', route: '/land/reports', queryParams: { type: 'legal-risk-litigation' } },
+            { id: 'rep-11', label: 'Missing Docs & Compliance', route: '/land/reports', queryParams: { type: 'missing-docs-compliance' } },
+            { id: 'rep-12', label: 'Future Projects Available', route: '/land/reports', queryParams: { type: 'future-projects-available' } },
+            { id: 'rep-13', label: 'Project Land Allocation', route: '/land/reports', queryParams: { type: 'project-land-allocation' } },
+            { id: 'rep-14', label: 'Budget vs Actual', route: '/land/reports', queryParams: { type: 'budget-vs-actual' } }
           ]
-        },
-        { id: 'khatian', label: 'Historic Surveys (CS/SA/RS/BS)', route: '/land/surveys' },
-        { id: 'joint-venture', label: 'JV Agreements & Allocation', route: '/land/jv-agreements' }
+        }
       ]
     },
     {
       id: 'projects',
-      title: 'Project Development & Management',
+      title: 'Project Development',
       iconSvg: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4',
       items: [
+        { id: 'prj-search', label: 'Project Search', route: '/projects/search' },
         { id: 'prj-master', label: 'Master Setup', route: '/projects/master' },
         { id: 'prj-feasibility', label: 'Feasibility', route: '/projects/feasibility' },
         { id: 'prj-land-alloc', label: 'Land Allocation', route: '/projects/land-allocation' },
         { id: 'prj-building-setup', label: 'Building Setup', route: '/projects/towers-units' },
-        { id: 'prj-budget-planning', label: 'Budget & Cost Planning', route: '/projects/budget-planning' },
+        { id: 'prj-budget-planning', label: 'Budget & Cost Planning', route: '/budgeting/planning' },
         { id: 'prj-profitability-roi', label: 'Profitability & ROI', route: '/projects/profitability-roi' },
         { id: 'prj-timeline-milestones', label: 'Timeline & Milestones', route: '/projects/timeline-milestones' },
         { id: 'prj-regulatory-approvals', label: 'Regulatory Approvals & Compliance', route: '/projects/regulatory-approvals' },
@@ -485,8 +481,22 @@ export class SidebarComponent implements OnInit {
         { id: 'prj-risk-issues', label: 'Risk & Issue Management', route: '/projects/risk-issues' },
         { id: 'prj-change-orders', label: 'Change Orders', route: '/projects/change-orders' },
         { id: 'prj-fin-perf', label: 'Financial Performance', route: '/projects/financial-performance' },
-        { id: 'prj-reports-dash', label: 'Reports', route: '/projects/reports-dashboard' },
-        { id: 'prj-handover-closure', label: 'Handover', route: '/projects/handover-closure' }
+        { id: 'prj-handover-closure', label: 'Handover', route: '/projects/handover-closure' },
+        {
+          id: 'prj-reports-dash',
+          label: 'Project Reports',
+          children: [
+            { id: 'prj-rep-1', label: 'Project Statement', route: '/projects/reports-dashboard', queryParams: { type: 'pnl-summary' } },
+            { id: 'prj-rep-2', label: 'Budget Actual', route: '/projects/reports-dashboard', queryParams: { type: 'budget-vs-actual' } },
+            { id: 'prj-rep-3', label: 'Revenue Collections', route: '/projects/reports-dashboard', queryParams: { type: 'revenue-vs-collections' } },
+            { id: 'prj-rep-4', label: 'Direct Cost Overheads', route: '/projects/reports-dashboard', queryParams: { type: 'direct-cost-breakdown' } },
+            { id: 'prj-rep-5', label: 'Committed Cost EAC', route: '/projects/reports-dashboard', queryParams: { type: 'committed-vs-forecast' } },
+            { id: 'prj-rep-6', label: 'Margin Return Metrics', route: '/projects/reports-dashboard', queryParams: { type: 'margin-metrics' } },
+            { id: 'prj-rep-7', label: 'Tower Unit Profitability', route: '/projects/reports-dashboard', queryParams: { type: 'tower-unit-profitability' } },
+            { id: 'prj-rep-8', label: 'JV Sharing Summary', route: '/projects/reports-dashboard', queryParams: { type: 'jv-sharing-summary' } },
+            { id: 'prj-rep-9', label: 'Actual vs Feasibility', route: '/projects/reports-dashboard', queryParams: { type: 'actual-vs-feasibility' } }
+          ]
+        },
       ]
     },
     {
@@ -509,9 +519,8 @@ export class SidebarComponent implements OnInit {
     },
     {
       id: 'budgeting-cost-control',
-      title: 'Budgeting & Cost Control',
+      title: 'Budgeting',
       iconSvg: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
-      badge: '12',
       items: [
         { id: 'bcc-dashboard', label: 'Dashboard', route: '/budgeting/dashboard' },
         { id: 'bcc-planning', label: 'Planning', route: '/budgeting/planning' },
@@ -527,7 +536,6 @@ export class SidebarComponent implements OnInit {
         {
           id: 'bcc-reports-suite',
           label: 'Budget Reports',
-          badge: '10',
           children: [
             { id: 'rep-bcc-1', label: 'Approved & Spent', route: '/budgeting/reports', queryParams: { type: 'project_expenditure' } },
             { id: 'rep-bcc-2', label: 'BOQ Budget vs Actual Cost', route: '/budgeting/reports', queryParams: { type: 'boq_vs_actual' } },
@@ -547,7 +555,6 @@ export class SidebarComponent implements OnInit {
       id: 'fixed-assets',
       title: 'Fixed Asset Management',
       iconSvg: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4',
-      badge: '10',
       items: [
         { id: 'fa-dash', label: 'Dashboard', route: '/fixed-assets/dashboard' },
         { id: 'fa-register', label: 'Asset Register', route: '/fixed-assets/asset-register' },
@@ -560,7 +567,6 @@ export class SidebarComponent implements OnInit {
         {
           id: 'fa-reports-suite',
           label: 'Fixed Asset Reports',
-          badge: '10',
           children: [
             { id: 'rep-fa-1', label: 'Asset Register & Acquisition', route: '/fixed-assets/reports', queryParams: { tab: 'asset_register' } },
             { id: 'rep-fa-2', label: 'Accumulated Depreciation & NBV', route: '/fixed-assets/reports', queryParams: { tab: 'accumulated_depreciation' } },
@@ -580,7 +586,6 @@ export class SidebarComponent implements OnInit {
       id: 'procurement',
       title: 'Procurement & Inventory',
       iconSvg: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4',
-      badge: '15',
       items: [
         { id: 'proc-dash', label: 'Dashboard', route: '/procurement/dashboard' },
         { id: 'proc-vendor', label: 'Vendors', route: '/procurement/vendors' },
@@ -656,59 +661,6 @@ export class SidebarComponent implements OnInit {
       ]
     },
     {
-      id: 'mobile-sales',
-      title: 'Mobile Sales App Suite',
-      iconSvg: 'M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z',
-      badge: '9',
-      items: [
-        { id: 'mob-dash', label: 'Dashboard', route: '/mobile-sales/dashboard' },
-        { id: 'mob-leads', label: 'Lead Management', route: '/mobile-sales/leads' },
-        { id: 'mob-customers', label: 'Customer Management', route: '/mobile-sales/customers' },
-        { id: 'mob-props', label: 'Project & Property', route: '/mobile-sales/properties' },
-        { id: 'mob-quotes', label: 'Quotation Management', route: '/mobile-sales/quotations' },
-        { id: 'mob-visits', label: 'Site Visit Management', route: '/mobile-sales/site-visits' },
-        { id: 'mob-bookings', label: 'Booking Management', route: '/mobile-sales/bookings' },
-        { id: 'mob-approvals', label: 'Approval Workflow', route: '/mobile-sales/approvals' },
-        { id: 'mob-notifs', label: 'Notifications', route: '/mobile-sales/notifications' }
-      ]
-    },
-    {
-      id: 'mobile-site',
-      title: 'Mobile Site App Suite',
-      iconSvg: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4',
-      badge: '10',
-      items: [
-        { id: 'site-dash', label: 'Dashboard', route: '/mobile-site/dashboard' },
-        { id: 'site-dpr', label: 'Daily Progress Report', route: '/mobile-site/dpr' },
-        { id: 'site-tasks', label: 'Task & Milestones', route: '/mobile-site/tasks' },
-        { id: 'site-reqs', label: 'Material Requisition', route: '/mobile-site/requisitions' },
-        { id: 'site-tx', label: 'Receiving & Issue', route: '/mobile-site/transactions' },
-        { id: 'site-photos', label: 'Photo Documentation', route: '/mobile-site/photos' },
-        { id: 'site-qc', label: 'Quality Control', route: '/mobile-site/quality' },
-        { id: 'site-contractors', label: 'Contractor Management', route: '/mobile-site/contractors' },
-        { id: 'site-safety', label: 'Safety Management', route: '/mobile-site/safety' },
-        { id: 'site-sync', label: 'Offline & Sync', route: '/mobile-site/offline-sync' }
-      ]
-    },
-    {
-      id: 'mobile-collection',
-      title: 'Mobile Collection App Suite',
-      iconSvg: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z',
-      badge: '10',
-      items: [
-        { id: 'col-dash', label: 'Dashboard', route: '/mobile-collection/dashboard' },
-        { id: 'col-cust', label: 'Customer Search', route: '/mobile-collection/customers' },
-        { id: 'col-sch', label: 'Schedule', route: '/mobile-collection/schedules' },
-        { id: 'col-due', label: 'Due & Overdue', route: '/mobile-collection/due-overdue' },
-        { id: 'col-pay', label: 'Payment', route: '/mobile-collection/payments' },
-        { id: 'col-rec', label: 'Receipt Generator', route: '/mobile-collection/receipts' },
-        { id: 'col-led', label: 'Customer Ledger', route: '/mobile-collection/ledger' },
-        { id: 'col-loan', label: 'Bank Loan Tracking', route: '/mobile-collection/loans' },
-        { id: 'col-app', label: 'Approval Workflow', route: '/mobile-collection/approvals' },
-        { id: 'col-rep', label: 'Collection Reports', route: '/mobile-collection/reports' }
-      ]
-    },
-    {
       id: 'installment-collection',
       title: 'Installment & Collection',
       iconSvg: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z',
@@ -727,7 +679,6 @@ export class SidebarComponent implements OnInit {
         {
           id: 'inst-reports-suite',
           label: 'Installment & Collection Reports',
-          badge: '7',
           children: [
             { id: 'rep-inst-cockpit', label: 'Executive Cockpit', route: '/installments/reports-dashboard' },
             { id: 'rep-inst-collections', label: 'Collection Summary Report', route: '/installments/collections' },
@@ -768,7 +719,7 @@ export class SidebarComponent implements OnInit {
         },
         {
           id: 'cash-bank-menu',
-          label: 'Cash & Bank Management',
+          label: 'Cash Management',
           children: [
             { id: 'cb-overview', label: 'Overview Cockpit', route: '/accounts/cash-bank', queryParams: { tab: 'overview' } },
             { id: 'cb-cash', label: 'Cash Management', route: '/accounts/cash-bank', queryParams: { tab: 'cash' } },
@@ -801,7 +752,7 @@ export class SidebarComponent implements OnInit {
         },
         {
           id: 'loans-financing-menu',
-          label: 'Loans & Financing',
+          label: 'Loans Financing',
           children: [
             { id: 'loan-facilities', label: 'Facilities Portfolio', route: '/accounts/loans-financing', exact: true },
             { id: 'loan-disbursements', label: 'Disbursements & Vouchers', route: '/accounts/loans-financing/disbursements' },
@@ -812,8 +763,7 @@ export class SidebarComponent implements OnInit {
         { id: 'pdc-kanban', label: 'PDC Vault', route: '/accounts/pdc-kanban' },
         {
           id: 'financial-reports-suite',
-          label: 'Financial & Audit Reports',
-          badge: '15',
+          label: 'Financial Reports',
           children: [
             { id: 'rep-gl', label: 'General Ledger', route: '/accounts/financial-reports', queryParams: { tab: 'gl' } },
             { id: 'rep-cashbook', label: 'Cash & Bank Book', route: '/accounts/financial-reports', queryParams: { tab: 'cashbook' } },
@@ -836,7 +786,7 @@ export class SidebarComponent implements OnInit {
     },
     {
       id: 'tax',
-      title: 'NBR Tax & Statutory VAT',
+      title: 'NBR Tax VAT',
       iconSvg: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
       items: [
         { id: 'tax-cockpit', label: 'NBR Tax & VAT', route: '/tax/cockpit' },
@@ -850,13 +800,12 @@ export class SidebarComponent implements OnInit {
       id: 'hrms-suite',
       title: 'Human Resources',
       iconSvg: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z',
-      badge: '16',
       items: [],
       subGroups: []
     },
     {
       id: 'handover',
-      title: 'Handover & Facilities',
+      title: 'Handover Facilities',
       iconSvg: 'M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z',
       items: [
         { id: 'snagging', label: 'Snagging Warranty', route: '/handover/snagging' },
@@ -948,9 +897,13 @@ export class SidebarComponent implements OnInit {
     const cleanUrl = url.split('?')[0];
     for (const group of this.menuGroups()) {
       // Check direct items and their children
+      let matchedSubItemId: string | null = null;
       const matchItem = group.items?.some(item => {
         if (item.route && (cleanUrl === item.route || cleanUrl.startsWith(item.route + '/'))) return true;
-        if (item.children?.some(c => c.route && (cleanUrl === c.route || cleanUrl.startsWith(c.route + '/')))) return true;
+        if (item.children?.some(c => c.route && (cleanUrl === c.route || cleanUrl.startsWith(c.route + '/')))) {
+          matchedSubItemId = item.id;
+          return true;
+        }
         return false;
       });
 
@@ -958,6 +911,11 @@ export class SidebarComponent implements OnInit {
         const current = new Set(this.expandedGroupIds());
         current.add(group.id);
         this.expandedGroupIds.set(current);
+        if (matchedSubItemId) {
+          const currentSub = new Set(this.expandedSubItemIds());
+          currentSub.add(matchedSubItemId);
+          this.expandedSubItemIds.set(currentSub);
+        }
         break;
       }
 

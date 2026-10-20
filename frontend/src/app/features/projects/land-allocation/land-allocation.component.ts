@@ -1,326 +1,71 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ProjectService } from '../../../core/services/project.service';
-import { Project, ProjectMetaOptions } from '../../../core/models/project.model';
-import { ProjectNavComponent } from '../project-nav/project-nav.component';
-import { CardContainerComponent, SearchableSelectComponent } from '../../../shared/components';
+import { Project } from '../../../core/models/project.model';
+import { CardContainerComponent, SearchableSelectComponent, SelectOption } from '../../../shared/components';
 
-export interface LandAllocationRecord {
-  id: number;
-  project_id: number;
-  project_name: string;
-  project_code: string;
-  land_bank_id: number;
-  parcel_number: string;
-  mouza_name: string;
-  khatian_no: string;
-  dag_no: string;
-  allocated_area_katha: number;
-  allocated_area_sqft: number;
-  allocation_ratio_pct: number;
-  landowner_jv_split: string;
-  mutation_status: 'MUTATED' | 'IN_PROCESS' | 'PENDING';
-  possession_date: string;
-  remarks: string;
+interface Allocation {
+  id: number; project_id: number; project_name: string; parcel_id?: number | null;
+  allocation_code: string; parcel_identifier: string; allocated_area_decimal: number;
+  allocated_area_katha: number; allocated_area_sqft: number; allocation_percentage: number;
+  effective_date: string; allocation_method: string; land_purchase_price: number;
+  total_allocated_cost: number; reconciliation_status: string; approval_status: string;
+  is_shared_parcel: boolean; remarks?: string;
 }
 
 @Component({
-  selector: 'app-project-land-allocation',
-  standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    ReactiveFormsModule,
-    ProjectNavComponent,
-    CardContainerComponent,
-    SearchableSelectComponent
-  ],
+  selector: 'app-project-land-allocation', standalone: true,
+  imports: [CommonModule, FormsModule, RouterLink, CardContainerComponent, SearchableSelectComponent],
   template: `
     <div class="space-y-5">
-      <app-project-nav activeCode="2.3"></app-project-nav>
-
-      <!-- KPI Overview Cards -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-2xs">
-          <p class="text-[11px] font-semibold text-slate-500 uppercase">Total Allocated Katha</p>
-          <p class="text-xl font-bold font-display text-slate-900 dark:text-slate-100 mt-1">{{ totalAllocatedKatha() | number:'1.1-2' }} <span class="text-xs font-normal">Katha</span></p>
-          <p class="text-[10px] text-slate-400">Demarcated to active projects</p>
+      <app-card-container title="Project-wise Land Allocation Register" subtitle="Allocate acquired land parcels and track area, cost, and reconciliation.">
+        <div card-actions><a routerLink="create" class="rounded-lg bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-700">+ Add allocation</a></div>
+        <div class="mb-4 grid grid-cols-1 gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 md:grid-cols-4 dark:border-slate-800 dark:bg-slate-800/40">
+          <input class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900" placeholder="Search code, project or parcel" [(ngModel)]="search" (keyup.enter)="applyFilters()">
+          <app-searchable-select label="Project" [options]="projectOptions()" [ngModel]="projectId" (ngModelChange)="projectId=$event; applyFilters()" placeholder="All projects" [allowCreateNew]="false"></app-searchable-select>
+          <input class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900" placeholder="Allocation method" [(ngModel)]="method" (keyup.enter)="applyFilters()">
+          <input class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900" placeholder="Approval status" [(ngModel)]="status" (keyup.enter)="applyFilters()">
+          <div class="flex gap-2 md:col-span-4"><button (click)="applyFilters()" class="rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white">Search</button><button (click)="resetFilters()" class="rounded-lg border border-slate-300 px-4 py-2 text-xs font-semibold dark:border-slate-700">Reset</button></div>
         </div>
-        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-2xs">
-          <p class="text-[11px] font-semibold text-slate-500 uppercase">Allocated Parcels</p>
-          <p class="text-xl font-bold font-display text-emerald-600 dark:text-emerald-400 mt-1">{{ allocations().length }}</p>
-          <p class="text-[10px] text-slate-400">Linked to Land Bank Master</p>
-        </div>
-        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-2xs">
-          <p class="text-[11px] font-semibold text-slate-500 uppercase">Mutated Land Area</p>
-          <p class="text-xl font-bold font-display text-blue-600 dark:text-blue-400 mt-1">{{ mutatedKatha() | number:'1.1-2' }} <span class="text-xs font-normal">Katha</span></p>
-          <p class="text-[10px] text-slate-400">Mutation Completed in AC Land</p>
-        </div>
-        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-2xs">
-          <p class="text-[11px] font-semibold text-slate-500 uppercase">Avg. JV Allocation</p>
-          <p class="text-xl font-bold font-display text-purple-600 dark:text-purple-400 mt-1">50:50</p>
-          <p class="text-[10px] text-slate-400">Landowner vs Developer</p>
-        </div>
-      </div>
-
-      <!-- Main Container -->
-      <app-card-container
-        title="Project-wise Land Allocation Register"
-      >
-        <div card-actions class="flex items-center gap-2">
-          <button
-            (click)="openAddModal()"
-            class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700 shadow-2xs transition-colors"
-          >
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-            </svg>
-            <span>Allocate Land Parcel</span>
-          </button>
-        </div>
-
-        <!-- Toolbar -->
-        <div class="mb-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-3 bg-slate-50/70 dark:bg-slate-800/50 rounded-xl border border-slate-200/80 dark:border-slate-800">
-          <div class="relative flex-1">
-            <input
-              type="text"
-              [ngModel]="searchQuery()"
-              (ngModelChange)="searchQuery.set($event)"
-              placeholder="Search by Project, Mouza, Khatian or Dag No..."
-              class="w-full pl-3 pr-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-            />
+        @if (error()) { <div class="mb-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">{{ error() }} <button (click)="load()" class="ml-2 font-semibold underline">Retry</button></div> }
+        @if (success()) { <div role="status" class="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">{{ success() }}</div> }
+        @if (loading()) { <div class="py-14 text-center text-sm text-slate-500">Loading land allocations…</div> }
+        @else {
+          <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+            <table class="w-full min-w-[900px] text-left text-xs">
+              <thead class="bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-300"><tr><th class="p-3">Allocation / Project</th><th class="p-3">Parcel</th><th class="p-3">Allocated Area</th><th class="p-3">Method</th><th class="p-3">Allocated Cost</th><th class="p-3">Status</th><th class="p-3 text-right">Actions</th></tr></thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                @for (a of allocations(); track a.id) { <tr class="text-slate-700 dark:text-slate-300"><td class="p-3"><b>{{ a.allocation_code }}</b><div>{{ a.project_name }}</div></td><td class="p-3">{{ a.parcel_identifier }}</td><td class="p-3">{{ a.allocated_area_katha | number:'1.0-2' }} Katha<div class="text-slate-400">{{ a.allocated_area_decimal | number:'1.0-3' }} Decimal</div></td><td class="p-3">{{ a.allocation_method }}</td><td class="p-3">৳{{ a.total_allocated_cost | number:'1.0-2' }}</td><td class="p-3">{{ a.approval_status }}<div class="text-slate-400">{{ a.reconciliation_status }}</div></td><td class="p-3 text-right"><a [routerLink]="[a.id, 'edit']" class="mr-3 font-semibold text-blue-600">Edit</a><button (click)="remove(a)" class="font-semibold text-rose-600">Delete</button></td></tr> }
+                @empty { <tr><td colspan="7" class="p-12 text-center text-sm text-slate-500">No land allocations found.</td></tr> }
+              </tbody>
+            </table>
           </div>
-        </div>
-
-        <!-- Table -->
-        <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
-          <table class="w-full text-left text-xs">
-            <thead class="bg-slate-50 dark:bg-slate-800/70 border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-semibold uppercase">
-              <tr>
-                <th class="px-4 py-3">Project & Code</th>
-                <th class="px-4 py-3">Land Parcel & Mouza</th>
-                <th class="px-4 py-3">Khatian / Dag</th>
-                <th class="px-4 py-3">Allocated Area</th>
-                <th class="px-4 py-3">JV Split</th>
-                <th class="px-4 py-3">Mutation</th>
-                <th class="px-4 py-3 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
-              @for (a of filteredAllocations(); track a.id) {
-                <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40">
-                  <td class="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
-                    {{ a.project_name }}
-                    <div class="text-[10px] text-emerald-600 font-mono">{{ a.project_code }}</div>
-                  </td>
-                  <td class="px-4 py-3">
-                    <div class="font-medium text-slate-800 dark:text-slate-200">{{ a.parcel_number }}</div>
-                    <div class="text-[10px] text-slate-400">Mouza: {{ a.mouza_name }}</div>
-                  </td>
-                  <td class="px-4 py-3 font-mono">
-                    Khatian: {{ a.khatian_no }} | Dag: {{ a.dag_no }}
-                  </td>
-                  <td class="px-4 py-3 font-bold text-slate-900 dark:text-slate-100">
-                    {{ a.allocated_area_katha }} Katha
-                    <div class="text-[10px] text-slate-400 font-normal font-mono">({{ a.allocated_area_sqft | number:'1.0-0' }} SqFt)</div>
-                  </td>
-                  <td class="px-4 py-3 font-bold text-blue-600">
-                    {{ a.landowner_jv_split }}
-                  </td>
-                  <td class="px-4 py-3">
-                    <span class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold border"
-                      [ngClass]="a.mutation_status === 'MUTATED' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60' : 'bg-amber-50 text-amber-700 border-amber-200'">
-                      {{ a.mutation_status }}
-                    </span>
-                  </td>
-                  <td class="px-4 py-3 text-right">
-                    <button (click)="removeAllocation(a.id)" class="text-rose-600 hover:text-rose-800 font-semibold text-xs">Remove</button>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
+          <div class="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500"><span>{{ total() ? offset + 1 : 0 }}–{{ min(offset + limit, total()) }} of {{ total() }}</span><div class="flex items-center gap-2"><button (click)="page(-1)" [disabled]="offset===0" class="rounded border px-3 py-1 disabled:opacity-40">Previous</button><button (click)="page(1)" [disabled]="offset+limit>=total()" class="rounded border px-3 py-1 disabled:opacity-40">Next</button></div></div>
+        }
       </app-card-container>
-
-      <!-- Allocation Modal -->
-      @if (isModalOpen()) {
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl p-6 space-y-4">
-            <h2 class="text-base font-bold text-slate-900 dark:text-slate-100">Allocate Land Parcel to Project</h2>
-            <form [formGroup]="allocForm" (ngSubmit)="saveAllocation()" class="space-y-3">
-              <div>
-                <app-searchable-select
-                  label="Select Project"
-                  [required]="true"
-                  [options]="projectOptions()"
-                  formControlName="project_id"
-                  placeholder="Select project..."
-                  [allowCreateNew]="false"
-                ></app-searchable-select>
-              </div>
-              <div class="grid grid-cols-2 gap-3">
-                <div>
-                  <label class="block text-xs font-semibold mb-1">Parcel Ref / Number</label>
-                  <input type="text" formControlName="parcel_number" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900" />
-                </div>
-                <div>
-                  <label class="block text-xs font-semibold mb-1">Mouza Name</label>
-                  <input type="text" formControlName="mouza_name" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900" />
-                </div>
-              </div>
-              <div class="grid grid-cols-2 gap-3">
-                <div>
-                  <label class="block text-xs font-semibold mb-1">Allocated Katha</label>
-                  <input type="number" formControlName="allocated_area_katha" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold" />
-                </div>
-                <div>
-                  <label class="block text-xs font-semibold mb-1">JV Sharing Ratio</label>
-                  <select formControlName="landowner_jv_split" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
-                    <option value="50:50">50:50</option>
-                    <option value="40:60">40:60</option>
-                    <option value="45:55">45:55</option>
-                  </select>
-                </div>
-              </div>
-              <div class="flex items-center justify-end gap-2 pt-3">
-                <button type="button" (click)="isModalOpen.set(false)" class="px-4 py-2 text-xs font-semibold text-slate-600 rounded-xl">Cancel</button>
-                <button type="submit" class="px-5 py-2 text-xs font-bold bg-emerald-600 text-white rounded-xl shadow-xs">Save Allocation</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      }
-    </div>
-  `
+    </div>`
 })
 export class ProjectLandAllocationComponent implements OnInit {
-  private projectService = inject(ProjectService);
-  private fb = inject(FormBuilder);
-
-  projects = signal<Project[]>([]);
-  isModalOpen = signal<boolean>(false);
-  searchQuery = signal<string>('');
-
-  allocations = signal<LandAllocationRecord[]>([
-    {
-      id: 1,
-      project_id: 1,
-      project_name: 'Green Valley Twin Towers',
-      project_code: 'PRJ-2026-001',
-      land_bank_id: 1,
-      parcel_number: 'PARCEL-GLS-01',
-      mouza_name: 'Gulshan',
-      khatian_no: 'RS-4521',
-      dag_no: '8910',
-      allocated_area_katha: 20.0,
-      allocated_area_sqft: 14400,
-      allocation_ratio_pct: 100.0,
-      landowner_jv_split: '50:50',
-      mutation_status: 'MUTATED',
-      possession_date: '2026-01-15',
-      remarks: 'Full physical possession handed over to civil contractor.'
-    },
-    {
-      id: 2,
-      project_id: 2,
-      project_name: 'Apex Horizon Bay Complex',
-      project_code: 'PRJ-2026-002',
-      land_bank_id: 2,
-      parcel_number: 'PARCEL-BND-03',
-      mouza_name: 'Bashundhara R/A',
-      khatian_no: 'BS-1290',
-      dag_no: '4502',
-      allocated_area_katha: 15.5,
-      allocated_area_sqft: 11160,
-      allocation_ratio_pct: 100.0,
-      landowner_jv_split: '40:60',
-      mutation_status: 'IN_PROCESS',
-      possession_date: '2026-02-10',
-      remarks: 'Demarcation boundary pillars erected.'
-    }
-  ]);
-
-  projectOptions = computed(() => {
-    return this.projects().map(p => ({
-      value: p.id,
-      label: `[${p.project_code}] ${p.project_name}`,
-      subLabel: `${p.thana_upazila}, ${p.district}`
-    }));
-  });
-
-  totalAllocatedKatha = computed(() => this.allocations().reduce((acc, a) => acc + a.allocated_area_katha, 0));
-  mutatedKatha = computed(() => this.allocations().filter(a => a.mutation_status === 'MUTATED').reduce((acc, a) => acc + a.allocated_area_katha, 0));
-
-  filteredAllocations = computed(() => {
-    const q = this.searchQuery().trim().toLowerCase();
-    if (!q) return this.allocations();
-    return this.allocations().filter(a =>
-      a.project_name.toLowerCase().includes(q) ||
-      a.mouza_name.toLowerCase().includes(q) ||
-      a.khatian_no.toLowerCase().includes(q) ||
-      a.dag_no.toLowerCase().includes(q)
-    );
-  });
-
-  allocForm: FormGroup = this.fb.group({
-    project_id: [null, Validators.required],
-    parcel_number: ['PARCEL-NEW-01', Validators.required],
-    mouza_name: ['Gulshan', Validators.required],
-    khatian_no: ['RS-1001'],
-    dag_no: ['2001'],
-    allocated_area_katha: [10.0, Validators.required],
-    landowner_jv_split: ['50:50'],
-    mutation_status: ['MUTATED']
-  });
-
-  ngOnInit(): void {
-    this.projectService.getProjects().subscribe(p => this.projects.set(p || []));
-  }
-
-  openAddModal(): void {
-    this.allocForm.reset({
-      project_id: this.projects().length > 0 ? this.projects()[0].id : null,
-      parcel_number: `PARCEL-GLS-${this.allocations().length + 1}`,
-      mouza_name: 'Gulshan',
-      khatian_no: 'RS-9081',
-      dag_no: '3412',
-      allocated_area_katha: 12.5,
-      landowner_jv_split: '50:50',
-      mutation_status: 'MUTATED'
+  private service = inject(ProjectService);
+  private route = inject(ActivatedRoute);
+  allocations = signal<Allocation[]>([]); projects = signal<Project[]>([]);
+  total = signal(0); loading = signal(false); error = signal(''); success = signal('');
+  search = ''; method = ''; status = ''; projectId: number | null = null;
+  limit = 10; offset = 0;
+  projectOptions = computed<SelectOption[]>(() => [{ value: '', label: 'All projects' }, ...this.projects().map(p => ({ value: p.id, label: `[${p.project_code}] ${p.project_name}` }))]);
+  ngOnInit(): void { this.success.set(history.state?.success || ''); this.service.getProjects({ limit: 500 }).subscribe({ next: p => this.projects.set(p || []), error: () => this.projects.set([]) }); this.load(); }
+  load(): void {
+    this.loading.set(true); this.error.set('');
+    this.service.getLandAllocations({ project_id: this.projectId || undefined, allocation_method: this.method.trim() || undefined, status: this.status.trim() || undefined, search: this.search.trim() || undefined, limit: this.limit, offset: this.offset }).subscribe({
+      next: r => { this.allocations.set(r?.items || []); this.total.set(Number(r?.total || 0)); this.loading.set(false); },
+      error: e => { this.allocations.set([]); this.total.set(0); this.error.set(e?.error?.detail || 'Could not load land allocations.'); this.loading.set(false); }
     });
-    this.isModalOpen.set(true);
   }
-
-  saveAllocation(): void {
-    if (this.allocForm.invalid) return;
-    const v = this.allocForm.value;
-    const proj = this.projects().find(p => p.id === Number(v.project_id));
-    const newRecord: LandAllocationRecord = {
-      id: Date.now(),
-      project_id: Number(v.project_id),
-      project_name: proj?.project_name || 'Selected Project',
-      project_code: proj?.project_code || 'PRJ-2026',
-      land_bank_id: 1,
-      parcel_number: v.parcel_number,
-      mouza_name: v.mouza_name,
-      khatian_no: v.khatian_no,
-      dag_no: v.dag_no,
-      allocated_area_katha: Number(v.allocated_area_katha),
-      allocated_area_sqft: Number(v.allocated_area_katha) * 720,
-      allocation_ratio_pct: 100.0,
-      landowner_jv_split: v.landowner_jv_split,
-      mutation_status: v.mutation_status,
-      possession_date: new Date().toISOString().split('T')[0],
-      remarks: 'Allocated via master setup.'
-    };
-
-    this.allocations.update(items => [newRecord, ...items]);
-    this.isModalOpen.set(false);
-  }
-
-  removeAllocation(id: number): void {
-    this.allocations.update(items => items.filter(a => a.id !== id));
-  }
+  applyFilters(): void { this.offset = 0; this.load(); }
+  resetFilters(): void { this.search = ''; this.method = ''; this.status = ''; this.projectId = null; this.applyFilters(); }
+  page(direction: number): void { this.offset = Math.max(0, this.offset + direction * this.limit); this.load(); }
+  remove(row: Allocation): void { if (!confirm(`Delete allocation ${row.allocation_code}?`)) return; this.service.deleteLandAllocation(row.id).subscribe({ next: () => { this.success.set(`Allocation ${row.allocation_code} deleted successfully.`); this.load(); }, error: e => this.error.set(e?.error?.detail || 'Could not delete this allocation.') }); }
+  min(a: number, b: number): number { return Math.min(a, b); }
 }

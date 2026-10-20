@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ProjectService } from '../../../core/services/project.service';
 import { Project } from '../../../core/models/project.model';
-import { ProjectNavComponent } from '../project-nav/project-nav.component';
 import { CardContainerComponent, SearchableSelectComponent } from '../../../shared/components';
 
 export interface BudgetLineItem {
@@ -30,13 +29,11 @@ export interface BudgetLineItem {
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
-    ProjectNavComponent,
     CardContainerComponent,
     SearchableSelectComponent
   ],
   template: `
     <div class="space-y-5">
-      <app-project-nav activeCode="2.5"></app-project-nav>
 
       <!-- KPI Overview Cards -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

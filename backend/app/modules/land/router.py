@@ -937,6 +937,9 @@ async def list_proposals(
     status_filter: Optional[str] = Query(None, alias="status"),
     workflow_stage_filter: Optional[str] = Query(None, alias="workflow_stage"),
     deal_type_filter: Optional[str] = Query(None, alias="deal_type"),
+    project_code: Optional[str] = Query(None),
+    proposal_title: Optional[str] = Query(None),
+    location: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
     skip: int = 0,
     limit: int = 100,
@@ -967,6 +970,20 @@ async def list_proposals(
         stmt = stmt.where(LandBank.workflow_stage == workflow_stage_filter)
     if deal_type_filter:
         stmt = stmt.where(LandBank.deal_type == deal_type_filter)
+    if project_code:
+        stmt = stmt.where(LandBank.project_code.ilike(f"%{project_code.strip()}%"))
+    if proposal_title:
+        stmt = stmt.where(LandBank.proposal_title.ilike(f"%{proposal_title.strip()}%"))
+    if location:
+        location_pattern = f"%{location.strip()}%"
+        stmt = stmt.where(
+            or_(
+                LandBank.mouza_name.ilike(location_pattern),
+                LandBank.upazila_thana.ilike(location_pattern),
+                LandBank.district.ilike(location_pattern),
+                LandBank.location_description.ilike(location_pattern)
+            )
+        )
     if search:
         search_pattern = f"%{search.strip()}%"
         stmt = stmt.where(

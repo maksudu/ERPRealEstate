@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ProjectService } from '../../../core/services/project.service';
 import { Project, ProjectMetaOptions } from '../../../core/models/project.model';
-import { ProjectNavComponent } from '../project-nav/project-nav.component';
 import { 
   CardContainerComponent, 
   CustomInputComponent, 
@@ -19,7 +18,6 @@ import {
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
-    ProjectNavComponent,
     CardContainerComponent,
     CustomInputComponent,
     CustomTextareaComponent,

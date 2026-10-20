@@ -2,7 +2,6 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { BudgetingService, CostAllocation } from '../../../core/services/budgeting.service';
-import { BudgetingNavComponent } from '../budgeting-nav/budgeting-nav.component';
 import { CardContainerComponent, SearchableSelectComponent, ModalComponent } from '../../../shared/components';
 
 @Component({
@@ -12,15 +11,12 @@ import { CardContainerComponent, SearchableSelectComponent, ModalComponent } fro
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
-    BudgetingNavComponent,
     CardContainerComponent,
     SearchableSelectComponent,
     ModalComponent
   ],
   template: `
     <div class="space-y-5">
-      <app-budgeting-nav activeCode="5.0"></app-budgeting-nav>
-
       <!-- Cost Allocation Hierarchy Visualizer -->
       <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
         <div class="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-center shadow-2xs">

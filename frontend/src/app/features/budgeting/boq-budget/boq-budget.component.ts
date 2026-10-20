@@ -2,7 +2,6 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { BudgetingService, BoqItem } from '../../../core/services/budgeting.service';
-import { BudgetingNavComponent } from '../budgeting-nav/budgeting-nav.component';
 import { CardContainerComponent, SearchableSelectComponent, ModalComponent } from '../../../shared/components';
 
 @Component({
@@ -12,15 +11,12 @@ import { CardContainerComponent, SearchableSelectComponent, ModalComponent } fro
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
-    BudgetingNavComponent,
     CardContainerComponent,
     SearchableSelectComponent,
     ModalComponent
   ],
   template: `
     <div class="space-y-5">
-      <app-budgeting-nav activeCode="4.0"></app-budgeting-nav>
-
       <app-card-container
         title="4.0 Bill of Quantities (BOQ) Budget Management"
         subtitle="Itemized construction activity costing, materials, labor, equipment & certified quantity tracking"

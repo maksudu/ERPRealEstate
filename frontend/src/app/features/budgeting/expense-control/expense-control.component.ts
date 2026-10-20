@@ -2,7 +2,6 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { BudgetingService, ExpenseControl } from '../../../core/services/budgeting.service';
-import { BudgetingNavComponent } from '../budgeting-nav/budgeting-nav.component';
 import { CardContainerComponent, SearchableSelectComponent, ModalComponent } from '../../../shared/components';
 
 @Component({
@@ -12,15 +11,12 @@ import { CardContainerComponent, SearchableSelectComponent, ModalComponent } fro
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
-    BudgetingNavComponent,
     CardContainerComponent,
     SearchableSelectComponent,
     ModalComponent
   ],
   template: `
     <div class="space-y-5">
-      <app-budgeting-nav activeCode="8.0"></app-budgeting-nav>
-
       <app-card-container
         title="8.0 Construction Expense & Contractor Billing Control"
         subtitle="Track running account (RA) contractor bills, certified amounts, retention, statutory tax/VAT withholding and settlement"

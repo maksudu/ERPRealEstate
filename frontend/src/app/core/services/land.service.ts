@@ -175,11 +175,14 @@ export class LandService {
   }
 
   // 4. Land Search and Acquisition Proposals (2.2)
-  getProposals(filters?: { status?: string; workflow_stage?: string; deal_type?: string; search?: string; skip?: number; limit?: number }): Observable<LandBank[]> {
+  getProposals(filters?: { status?: string; workflow_stage?: string; deal_type?: string; project_code?: string; proposal_title?: string; location?: string; search?: string; skip?: number; limit?: number }): Observable<LandBank[]> {
     let params = new HttpParams();
     if (filters?.status) params = params.set('status', filters.status);
     if (filters?.workflow_stage) params = params.set('workflow_stage', filters.workflow_stage);
     if (filters?.deal_type) params = params.set('deal_type', filters.deal_type);
+    if (filters?.project_code) params = params.set('project_code', filters.project_code);
+    if (filters?.proposal_title) params = params.set('proposal_title', filters.proposal_title);
+    if (filters?.location) params = params.set('location', filters.location);
     if (filters?.search) params = params.set('search', filters.search);
     if (filters?.skip !== undefined) params = params.set('skip', filters.skip);
     if (filters?.limit !== undefined) params = params.set('limit', filters.limit);

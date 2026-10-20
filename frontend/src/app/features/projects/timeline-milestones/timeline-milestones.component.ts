@@ -4,7 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { ProjectService } from '../../../core/services/project.service';
 import { Project, ProjectMilestone, ProjectMilestonePaginationResponse } from '../../../core/models/project.model';
-import { ProjectNavComponent } from '../project-nav/project-nav.component';
 import {
   CardContainerComponent,
   CustomInputComponent,
@@ -20,7 +19,6 @@ import {
     CommonModule,
     FormsModule,
     RouterLink,
-    ProjectNavComponent,
     CardContainerComponent,
     CustomInputComponent,
     CustomButtonComponent,
@@ -28,7 +26,6 @@ import {
   ],
   template: `
     <div class="space-y-6">
-      <app-project-nav activeCode="2.7"></app-project-nav>
 
       <!-- KPI Summary Cards -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

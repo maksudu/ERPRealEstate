@@ -2,7 +2,6 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BudgetingService, ApprovalWorkflowStep } from '../../../core/services/budgeting.service';
-import { BudgetingNavComponent } from '../budgeting-nav/budgeting-nav.component';
 import { CardContainerComponent, ModalComponent } from '../../../shared/components';
 
 @Component({
@@ -11,14 +10,11 @@ import { CardContainerComponent, ModalComponent } from '../../../shared/componen
   imports: [
     CommonModule,
     FormsModule,
-    BudgetingNavComponent,
     CardContainerComponent,
     ModalComponent
   ],
   template: `
     <div class="space-y-5">
-      <app-budgeting-nav activeCode="6.0"></app-budgeting-nav>
-
       <!-- Stepper Header -->
       <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-2xs">
         <h3 class="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200 mb-3">

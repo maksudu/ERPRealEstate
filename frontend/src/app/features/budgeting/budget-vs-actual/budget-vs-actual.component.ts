@@ -2,7 +2,6 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BudgetingService } from '../../../core/services/budgeting.service';
-import { BudgetingNavComponent } from '../budgeting-nav/budgeting-nav.component';
 import { CardContainerComponent, SearchableSelectComponent } from '../../../shared/components';
 
 @Component({
@@ -11,14 +10,11 @@ import { CardContainerComponent, SearchableSelectComponent } from '../../../shar
   imports: [
     CommonModule,
     FormsModule,
-    BudgetingNavComponent,
     CardContainerComponent,
     SearchableSelectComponent
   ],
   template: `
     <div class="space-y-5">
-      <app-budgeting-nav activeCode="10.0"></app-budgeting-nav>
-
       <!-- Section 5 Context Alert -->
       <div class="bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-xl p-4 flex items-start gap-3">
         <div class="p-1.5 rounded-lg bg-blue-600 text-white shrink-0">

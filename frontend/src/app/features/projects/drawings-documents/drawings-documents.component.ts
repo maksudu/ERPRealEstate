@@ -4,7 +4,6 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ProjectService } from '../../../core/services/project.service';
 import { Project, Drawing, DrawingPaginationResponse } from '../../../core/models/project.model';
-import { ProjectNavComponent } from '../project-nav/project-nav.component';
 import {
   CardContainerComponent,
   SearchableSelectComponent,
@@ -20,7 +19,6 @@ import {
     FormsModule,
     ReactiveFormsModule,
     RouterLink,
-    ProjectNavComponent,
     CardContainerComponent,
     SearchableSelectComponent,
     CustomInputComponent
@@ -28,7 +26,6 @@ import {
   template: `
     <div class="space-y-6">
       <!-- Modular Project Nav Strip -->
-      <app-project-nav activeCode="2.9"></app-project-nav>
 
       <!-- KPI Overview Cards -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

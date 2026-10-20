@@ -2,7 +2,6 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BudgetingService } from '../../../core/services/budgeting.service';
-import { BudgetingNavComponent } from '../budgeting-nav/budgeting-nav.component';
 import { CardContainerComponent, SearchableSelectComponent } from '../../../shared/components';
 
 @Component({
@@ -11,14 +10,11 @@ import { CardContainerComponent, SearchableSelectComponent } from '../../../shar
   imports: [
     CommonModule,
     FormsModule,
-    BudgetingNavComponent,
     CardContainerComponent,
     SearchableSelectComponent
   ],
   template: `
     <div class="space-y-5">
-      <app-budgeting-nav activeCode="11.0"></app-budgeting-nav>
-
       <!-- KPI Summary Cards -->
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-2xs">

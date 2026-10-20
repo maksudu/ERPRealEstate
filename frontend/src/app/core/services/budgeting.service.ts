@@ -187,6 +187,10 @@ export class BudgetingService {
     return this.http.get<{ items: BudgetPlan[]; total: number }>(`${this.apiUrl}/plans`, { params });
   }
 
+  getPlan(id: number): Observable<BudgetPlan> {
+    return this.http.get<BudgetPlan>(`${this.apiUrl}/plans/${id}`);
+  }
+
   createPlan(data: Partial<BudgetPlan>): Observable<BudgetPlan> {
     return this.http.post<BudgetPlan>(`${this.apiUrl}/plans`, data);
   }

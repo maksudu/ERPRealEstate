@@ -94,6 +94,10 @@
   <app-card-container [hasHeader]="true" title="Land Search & Acquisition Proposals">
     <!-- Card Actions in Header -->
     <div card-actions class="flex items-center gap-2">
+      <button type="button" (click)="navigateToSearch()"
+        class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg border border-blue-200 bg-blue-50 text-blue-800 hover:bg-blue-100 transition-colors">
+        Acquisition Search
+      </button>
       <!-- Opportunity Comparison Modal Button -->
       <button type="button" (click)="openComparisonModal()"
         class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-purple-300 dark:border-purple-700 bg-purple-50 dark:bg-purple-950/40 text-purple-800 dark:text-purple-300 hover:bg-purple-100 transition-colors shadow-2xs">

@@ -80,6 +80,11 @@ export const routes: Routes = [
         title: 'Edit Landowner Profile'
       },
       {
+        path: 'land/search',
+        loadComponent: () => import('./features/land/acquisition-search/acquisition-search.component').then(m => m.AcquisitionSearchComponent),
+        title: 'Land Acquisition Search'
+      },
+      {
         path: 'land/proposals',
         loadComponent: () => import('./features/land/proposals/proposals.component').then(m => m.ProposalsComponent),
         title: 'Land Search & Acquisition Proposals'
@@ -204,24 +209,29 @@ export const routes: Routes = [
         title: 'Project Registration & Master Setup '
       },
       {
+        path: 'projects/search',
+        loadComponent: () => import('./features/projects/project-search/project-search.component').then(m => m.ProjectSearchComponent),
+        title: 'Project Search'
+      },
+      {
         path: 'projects/feasibility',
         loadComponent: () => import('./features/projects/feasibility/feasibility.component').then(m => m.ProjectFeasibilityComponent),
         title: 'Project Feasibility & Investment Analysis '
       },
       {
         path: 'projects/land-allocation',
-        loadComponent: () => import('./features/projects/land-allocation/land-allocation.component').then(m => m.ProjectLandAllocationComponent),
+        loadChildren: () => import('./features/projects/land-allocation/land-allocation.routes').then(m => m.LAND_ALLOCATION_ROUTES),
         title: 'Project-wise Land Allocation '
       },
       {
         path: 'projects/towers-units',
-        loadComponent: () => import('./features/projects/towers-units/towers-units.component').then(m => m.ProjectTowersUnitsComponent),
+        loadChildren: () => import('./features/projects/towers-units/towers-units.routes').then(m => m.TOWERS_UNITS_ROUTES),
         title: '2.4 Building, Tower, Floor & Unit Setup '
       },
       {
         path: 'projects/budget-planning',
-        loadComponent: () => import('./features/projects/budget-planning/budget-planning.component').then(m => m.ProjectBudgetPlanningComponent),
-        title: '2.5 Project Budget & Cost Planning '
+        redirectTo: '/budgeting/planning',
+        pathMatch: 'full'
       },
       {
         path: 'projects/profitability-roi',

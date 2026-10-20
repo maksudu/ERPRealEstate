@@ -12,6 +12,16 @@ export const BUDGETING_ROUTES: Routes = [
     title: 'Budgeting & Cost Control Dashboard - Bangladesh Real Estate ERP'
   },
   {
+    path: 'planning/create',
+    loadComponent: () => import('./budget-planning/budget-plan-form.component').then(m => m.BudgetPlanFormComponent),
+    title: 'Create Budget Plan - Bangladesh Real Estate ERP'
+  },
+  {
+    path: 'planning/edit/:id',
+    loadComponent: () => import('./budget-planning/budget-plan-form.component').then(m => m.BudgetPlanFormComponent),
+    title: 'Edit Budget Plan - Bangladesh Real Estate ERP'
+  },
+  {
     path: 'planning',
     loadComponent: () => import('./budget-planning/budget-planning.component').then(m => m.BudgetPlanningComponent),
     title: 'Budget Planning Master - Bangladesh Real Estate ERP'

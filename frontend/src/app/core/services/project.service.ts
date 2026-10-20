@@ -34,12 +34,26 @@ export class ProjectService {
   }
 
   // 2. Projects Master
-  getProjects(filters?: { authority?: string; status?: string; search?: string }): Observable<Project[]> {
+  getProjects(filters?: { authority?: string; status?: string; search?: string; limit?: number; skip?: number }): Observable<Project[]> {
     let params = new HttpParams();
     if (filters?.authority) params = params.set('authority', filters.authority);
     if (filters?.status) params = params.set('status', filters.status);
     if (filters?.search) params = params.set('search', filters.search);
+    if (filters?.limit !== undefined) params = params.set('limit', filters.limit);
+    if (filters?.skip !== undefined) params = params.set('skip', filters.skip);
     return this.http.get<Project[]>(`${this.baseUrl}/list`, { params });
+  }
+
+  getProjectSearchOptions(): Observable<{ project_names: string[]; locations: string[] }> {
+    return this.http.get<{ project_names: string[]; locations: string[] }>(`${this.baseUrl}/search/options`);
+  }
+
+  searchProjects(filters: { project_name?: string; location?: string; skip?: number; limit?: number }): Observable<{ items: Project[]; total: number; skip: number; limit: number }> {
+    let params = new HttpParams();
+    if (filters.project_name) params = params.set('project_name', filters.project_name);
+    if (filters.location) params = params.set('location', filters.location);
+    params = params.set('skip', filters.skip ?? 0).set('limit', filters.limit ?? 20);
+    return this.http.get<{ items: Project[]; total: number; skip: number; limit: number }>(`${this.baseUrl}/search`, { params });
   }
 
   getProject(id: number): Observable<Project> {
@@ -190,10 +204,106 @@ export class ProjectService {
     return this.createDrawing(payload);
   }
 
+  getLandAllocations(filters?: { project_id?: number; allocation_method?: string; status?: string; search?: string; limit?: number; offset?: number }): Observable<any> {
+    let params = new HttpParams();
+    Object.entries(filters || {}).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') params = params.set(key, value);
+    });
+    return this.http.get<any>(`${this.baseUrl}/land-allocations`, { params });
+  }
+
+  getLandAllocation(id: number): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/land-allocations/${id}`);
+  }
+
+  createLandAllocation(payload: any): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/land-allocations`, payload);
+  }
+
+  updateLandAllocation(id: number, payload: any): Observable<any> {
+    return this.http.put<any>(`${this.baseUrl}/land-allocations/${id}`, payload);
+  }
+
+  deleteLandAllocation(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/land-allocations/${id}`);
+  }
+
   getTowers(projectId?: number): Observable<Tower[]> {
     let params = new HttpParams();
     if (projectId) params = params.set('project_id', projectId);
     return this.http.get<Tower[]>(`${this.baseUrl}/towers`, { params });
+  }
+
+  getTowersPaged(filters?: { project_id?: number; search?: string; construction_status?: string; limit?: number; offset?: number }): Observable<any> {
+    let params = new HttpParams();
+    Object.entries(filters || {}).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') params = params.set(key, value);
+    });
+    return this.http.get<any>(`${this.baseUrl}/towers`, { params });
+  }
+
+  getTower(id: number): Observable<Tower> {
+    return this.http.get<Tower>(`${this.baseUrl}/towers/${id}`);
+  }
+
+  createTower(payload: any): Observable<Tower> {
+    return this.http.post<Tower>(`${this.baseUrl}/towers`, payload);
+  }
+
+  updateTower(id: number, payload: any): Observable<Tower> {
+    return this.http.put<Tower>(`${this.baseUrl}/towers/${id}`, payload);
+  }
+
+  deleteTower(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/towers/${id}`);
+  }
+
+  getFloors(filters?: { project_id?: number; tower_id?: number; floor_type?: string; construction_status?: string; search?: string; limit?: number; offset?: number }): Observable<any> {
+    let params = new HttpParams();
+    Object.entries(filters || {}).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') params = params.set(key, value);
+    });
+    return this.http.get<any>(`${this.baseUrl}/floors`, { params });
+  }
+
+  getFloor(id: number): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/floors/${id}`);
+  }
+
+  createFloor(payload: any): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/floors`, payload);
+  }
+
+  updateFloor(id: number, payload: any): Observable<any> {
+    return this.http.put<any>(`${this.baseUrl}/floors/${id}`, payload);
+  }
+
+  deleteFloor(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/floors/${id}`);
+  }
+
+  getUnits(filters?: { project_id?: number; tower_id?: number; floor_id?: number; unit_status?: string; ownership?: string; search?: string; limit?: number; offset?: number }): Observable<any> {
+    let params = new HttpParams();
+    Object.entries(filters || {}).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') params = params.set(key, value);
+    });
+    return this.http.get<any>(`${this.baseUrl}/units`, { params });
+  }
+
+  getUnit(id: number): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/units/${id}`);
+  }
+
+  createUnit(payload: any): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/units`, payload);
+  }
+
+  updateUnit(id: number, payload: any): Observable<any> {
+    return this.http.put<any>(`${this.baseUrl}/units/${id}`, payload);
+  }
+
+  deleteUnit(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/units/${id}`);
   }
 
   seedStandardDrawings(projectId: number): Observable<any> {

@@ -2,7 +2,6 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { BudgetingService, PurchaseBudgetCheck } from '../../../core/services/budgeting.service';
-import { BudgetingNavComponent } from '../budgeting-nav/budgeting-nav.component';
 import { CardContainerComponent, SearchableSelectComponent, ModalComponent } from '../../../shared/components';
 
 @Component({
@@ -12,15 +11,12 @@ import { CardContainerComponent, SearchableSelectComponent, ModalComponent } fro
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
-    BudgetingNavComponent,
     CardContainerComponent,
     SearchableSelectComponent,
     ModalComponent
   ],
   template: `
     <div class="space-y-5">
-      <app-budgeting-nav activeCode="7.0"></app-budgeting-nav>
-
       <!-- Automated Control Warning Banner -->
       <div class="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl p-4 flex items-start gap-3">
         <div class="p-1.5 rounded-lg bg-amber-500 text-white shrink-0">

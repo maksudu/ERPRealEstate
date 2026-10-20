@@ -1,340 +1,84 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { ProjectService } from '../../../core/services/project.service';
-import { Project, Tower } from '../../../core/models/project.model';
-import { ProjectNavComponent } from '../project-nav/project-nav.component';
-import { CardContainerComponent, SearchableSelectComponent } from '../../../shared/components';
+import { CardContainerComponent } from '../../../shared/components';
 
-export interface TowerBlockDetail {
-  id: number;
-  project_id: number;
-  project_name: string;
-  project_code: string;
-  tower_code: string;
-  tower_name: string;
-  basement_floors: number;
-  residential_floors: number;
-  commercial_floors: number;
-  total_units: number;
-  total_lifts: number;
-  fire_escape_stairs: number;
-  structural_system: string;
-  status: 'DESIGN' | 'FOUNDATION' | 'UNDER_CONSTRUCTION' | 'COMPLETED';
-}
+type Entity = 'towers' | 'floors' | 'units';
+type Row = Record<string, any> & { id: number };
+type Page = { items: Row[]; total: number; limit: number; offset: number };
 
 @Component({
-  selector: 'app-project-towers-units',
-  standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    ReactiveFormsModule,
-    ProjectNavComponent,
-    CardContainerComponent,
-    SearchableSelectComponent
-  ],
+  selector: 'app-project-towers-units', standalone: true,
+  imports: [CommonModule, FormsModule, RouterLink, CardContainerComponent],
   template: `
-    <div class="space-y-5">
-      <app-project-nav activeCode="2.4"></app-project-nav>
-
-      <!-- KPI Overview Cards -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-2xs">
-          <p class="text-[11px] font-semibold text-slate-500 uppercase">Configured Towers</p>
-          <p class="text-xl font-bold font-display text-slate-900 dark:text-slate-100 mt-1">{{ towers().length }} <span class="text-xs font-normal">Blocks</span></p>
-          <p class="text-[10px] text-slate-400">Across All Active Projects</p>
-        </div>
-        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-2xs">
-          <p class="text-[11px] font-semibold text-slate-500 uppercase">Total Residential Units</p>
-          <p class="text-xl font-bold font-display text-emerald-600 dark:text-emerald-400 mt-1">{{ totalUnits() }} <span class="text-xs font-normal">Apartments</span></p>
-          <p class="text-[10px] text-slate-400">Configured in Stacking Plan</p>
-        </div>
-        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-2xs">
-          <p class="text-[11px] font-semibold text-slate-500 uppercase">Basement Parking Levels</p>
-          <p class="text-xl font-bold font-display text-blue-600 dark:text-blue-400 mt-1">{{ totalBasements() }} <span class="text-xs font-normal">Levels</span></p>
-          <p class="text-[10px] text-slate-400">Semi-Basement & Deep Raft</p>
-        </div>
-        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-2xs">
-          <p class="text-[11px] font-semibold text-slate-500 uppercase">High-Speed Lifts</p>
-          <p class="text-xl font-bold font-display text-purple-600 dark:text-purple-400 mt-1">{{ totalLifts() }} <span class="text-xs font-normal">Passenger & Fire Lifts</span></p>
-          <p class="text-[10px] text-slate-400">BNBC 2020 Compliance</p>
-        </div>
-      </div>
-
-      <!-- Main Container -->
-      <app-card-container
-        title="2.4 Building, Tower, Floor & Unit Setup"
-        subtitle="Structural block hierarchy, floor configurations, vertical transit systems, and unit count specifications"
-        badge="BIM & Spatial Structure"
-      >
-        <div card-actions class="flex items-center gap-2">
-          <button
-            (click)="openAddModal()"
-            class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700 shadow-2xs transition-colors"
-          >
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-            </svg>
-            <span>Configure New Tower</span>
-          </button>
-        </div>
-
-        <!-- Filter Toolbar -->
-        <div class="mb-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-3 bg-slate-50/70 dark:bg-slate-800/50 rounded-xl border border-slate-200/80 dark:border-slate-800">
-          <div class="relative flex-1">
-            <input
-              type="text"
-              [ngModel]="searchQuery()"
-              (ngModelChange)="searchQuery.set($event)"
-              placeholder="Search by Tower Name, Code, Project..."
-              class="w-full pl-3 pr-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-            />
+    <div class="space-y-4">
+      <app-card-container title="Buildings, Floors & Units" subtitle="Manage project building hierarchy from live records">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <div class="flex gap-2" role="tablist">
+            @for (tab of tabs; track tab.key) {
+              <button type="button" (click)="select(tab.key)" [class]="entity() === tab.key ? activeTab : idleTab">{{ tab.label }}</button>
+            }
           </div>
+          <a [routerLink]="['/projects/towers-units', entity(), 'new']" class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white">Add {{ label() }}</a>
         </div>
-
-        <!-- Table -->
-        <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
-          <table class="w-full text-left text-xs">
-            <thead class="bg-slate-50 dark:bg-slate-800/70 border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-semibold uppercase">
-              <tr>
-                <th class="px-4 py-3">Tower Block & Code</th>
-                <th class="px-4 py-3">Linked Project</th>
-                <th class="px-4 py-3">Floor Matrix (B + G + Res + Com)</th>
-                <th class="px-4 py-3">Unit Capacity</th>
-                <th class="px-4 py-3">Vertical Circulation</th>
-                <th class="px-4 py-3">Construction Status</th>
-                <th class="px-4 py-3 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
-              @for (t of filteredTowers(); track t.id) {
-                <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40">
-                  <td class="px-4 py-3">
-                    <div class="font-bold text-slate-900 dark:text-slate-100">{{ t.tower_name }}</div>
-                    <span class="font-mono text-[10px] text-emerald-600 font-semibold">{{ t.tower_code }}</span>
-                  </td>
-                  <td class="px-4 py-3">
-                    <div class="font-semibold text-slate-800 dark:text-slate-200">{{ t.project_name }}</div>
-                    <div class="text-[10px] text-slate-400 font-mono">{{ t.project_code }}</div>
-                  </td>
-                  <td class="px-4 py-3 font-medium">
-                    <span class="text-blue-600 font-bold">{{ t.basement_floors }}B</span> + 
-                    <span class="text-slate-800 dark:text-slate-200 font-bold">G</span> + 
-                    <span class="text-emerald-600 font-bold">{{ t.residential_floors }} Floors</span>
-                    @if (t.commercial_floors > 0) {
-                      + <span class="text-purple-600 font-bold">{{ t.commercial_floors }} Com</span>
-                    }
-                  </td>
-                  <td class="px-4 py-3 font-bold text-slate-900 dark:text-slate-100">
-                    {{ t.total_units }} Units
-                  </td>
-                  <td class="px-4 py-3">
-                    <div>{{ t.total_lifts }} Lifts | {{ t.fire_escape_stairs }} Stairs</div>
-                    <div class="text-[10px] text-slate-400 font-mono">{{ t.structural_system }}</div>
-                  </td>
-                  <td class="px-4 py-3">
-                    <span class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold border"
-                      [ngClass]="{
-                        'bg-emerald-50 text-emerald-700 border-emerald-200': t.status === 'COMPLETED',
-                        'bg-blue-50 text-blue-700 border-blue-200': t.status === 'UNDER_CONSTRUCTION',
-                        'bg-amber-50 text-amber-700 border-amber-200': t.status === 'FOUNDATION' || t.status === 'DESIGN'
-                      }"
-                    >
-                      {{ t.status }}
-                    </span>
-                  </td>
-                  <td class="px-4 py-3 text-right">
-                    <button (click)="removeTower(t.id)" class="text-rose-600 hover:text-rose-800 font-semibold text-xs">Remove</button>
-                  </td>
-                </tr>
-              }
+        <div class="grid gap-3 sm:grid-cols-[1fr_220px_auto] mb-4">
+          <input class="rounded-lg border border-slate-300 px-3 py-2" [(ngModel)]="search" (keyup.enter)="load()" placeholder="Search records..." />
+          <select class="rounded-lg border border-slate-300 px-3 py-2" [(ngModel)]="projectId" (change)="load()">
+            <option value="">All projects</option>
+            @for (p of projects(); track p.id) { <option [value]="p.id">{{ p.project_code }} — {{ p.project_name }}</option> }
+          </select>
+          <button type="button" (click)="load()" class="rounded-lg border px-4 py-2">Search</button>
+        </div>
+        @if (error()) { <div role="alert" class="mb-3 rounded-lg bg-rose-50 p-3 text-rose-700">{{ error() }}</div> }
+        @if (success()) { <div role="status" class="mb-3 rounded-lg bg-emerald-50 p-3 text-emerald-700">{{ success() }}</div> }
+        <div class="overflow-x-auto rounded-lg border">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-slate-50"><tr>@for (col of columns(); track col.key) { <th class="whitespace-nowrap px-3 py-3">{{ col.label }}</th> }<th class="px-3 py-3 text-right">Actions</th></tr></thead>
+            <tbody>
+              @if (loading()) { <tr><td [attr.colspan]="columns().length + 1" class="p-8 text-center text-slate-500">Loading {{ label().toLowerCase() }}…</td></tr> }
+              @else if (!rows().length) { <tr><td [attr.colspan]="columns().length + 1" class="p-8 text-center text-slate-500">No {{ label().toLowerCase() }} found.</td></tr> }
+              @else { @for (row of rows(); track row.id) { <tr class="border-t hover:bg-slate-50">@for (col of columns(); track col.key) { <td class="px-3 py-3">{{ display(row, col.key) }}</td> }<td class="whitespace-nowrap px-3 py-3 text-right"><a class="mr-3 text-blue-700" [routerLink]="['/projects/towers-units', entity(), row.id, 'edit']">Edit</a><button type="button" class="text-rose-700" (click)="remove(row)">Delete</button></td></tr> } }
             </tbody>
           </table>
         </div>
-      </app-card-container>
-
-      <!-- Tower Setup Modal -->
-      @if (isModalOpen()) {
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl p-6 space-y-4">
-            <h2 class="text-base font-bold text-slate-900 dark:text-slate-100">Setup Tower / Building Block</h2>
-            <form [formGroup]="towerForm" (ngSubmit)="saveTower()" class="space-y-3">
-              <div>
-                <app-searchable-select
-                  label="Select Project"
-                  [required]="true"
-                  [options]="projectOptions()"
-                  formControlName="project_id"
-                  placeholder="Select project..."
-                  [allowCreateNew]="false"
-                ></app-searchable-select>
-              </div>
-              <div class="grid grid-cols-2 gap-3">
-                <div>
-                  <label class="block text-xs font-semibold mb-1">Tower Code <span class="text-rose-500">*</span></label>
-                  <input type="text" formControlName="tower_code" placeholder="e.g. TOWER-A" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold" />
-                </div>
-                <div>
-                  <label class="block text-xs font-semibold mb-1">Tower Name <span class="text-rose-500">*</span></label>
-                  <input type="text" formControlName="tower_name" placeholder="e.g. North Wing Prestige Tower" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold" />
-                </div>
-              </div>
-              <div class="grid grid-cols-3 gap-3">
-                <div>
-                  <label class="block text-xs font-semibold mb-1">Basements</label>
-                  <input type="number" formControlName="basement_floors" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900" />
-                </div>
-                <div>
-                  <label class="block text-xs font-semibold mb-1">Residential Floors</label>
-                  <input type="number" formControlName="residential_floors" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900" />
-                </div>
-                <div>
-                  <label class="block text-xs font-semibold mb-1">Commercial Floors</label>
-                  <input type="number" formControlName="commercial_floors" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900" />
-                </div>
-              </div>
-              <div class="grid grid-cols-2 gap-3">
-                <div>
-                  <label class="block text-xs font-semibold mb-1">Total Unit Capacity</label>
-                  <input type="number" formControlName="total_units" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold" />
-                </div>
-                <div>
-                  <label class="block text-xs font-semibold mb-1">Total Lifts</label>
-                  <input type="number" formControlName="total_lifts" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold" />
-                </div>
-              </div>
-              <div class="flex items-center justify-end gap-2 pt-3">
-                <button type="button" (click)="isModalOpen.set(false)" class="px-4 py-2 text-xs font-semibold text-slate-600 rounded-xl">Cancel</button>
-                <button type="submit" class="px-5 py-2 text-xs font-bold bg-emerald-600 text-white rounded-xl shadow-xs">Save Tower</button>
-              </div>
-            </form>
-          </div>
+        <div class="mt-4 flex items-center justify-between text-sm">
+          <span>{{ total() }} records · Page {{ pageNumber() }} of {{ pageCount() }}</span>
+          <div class="flex gap-2"><button class="rounded border px-3 py-1 disabled:opacity-40" [disabled]="offset() === 0 || loading()" (click)="move(-1)">Previous</button><button class="rounded border px-3 py-1 disabled:opacity-40" [disabled]="offset() + limit() >= total() || loading()" (click)="move(1)">Next</button></div>
         </div>
-      }
-    </div>
-  `
+      </app-card-container>
+    </div>`
 })
 export class ProjectTowersUnitsComponent implements OnInit {
-  private projectService = inject(ProjectService);
-  private fb = inject(FormBuilder);
-
-  projects = signal<Project[]>([]);
-  isModalOpen = signal<boolean>(false);
-  searchQuery = signal<string>('');
-
-  towers = signal<TowerBlockDetail[]>([
-    {
-      id: 1,
-      project_id: 1,
-      project_name: 'Green Valley Twin Towers',
-      project_code: 'PRJ-2026-001',
-      tower_code: 'TOWER-A',
-      tower_name: 'Tower Alpha (Luxury Residential)',
-      basement_floors: 2,
-      residential_floors: 14,
-      commercial_floors: 0,
-      total_units: 56,
-      total_lifts: 3,
-      fire_escape_stairs: 2,
-      structural_system: 'RCC Shear Wall (BNBC 2020)',
-      status: 'UNDER_CONSTRUCTION'
-    },
-    {
-      id: 2,
-      project_id: 1,
-      project_name: 'Green Valley Twin Towers',
-      project_code: 'PRJ-2026-001',
-      tower_code: 'TOWER-B',
-      tower_name: 'Tower Beta (Commercial Suites)',
-      basement_floors: 2,
-      residential_floors: 10,
-      commercial_floors: 4,
-      total_units: 48,
-      total_lifts: 3,
-      fire_escape_stairs: 2,
-      structural_system: 'Post-Tensioned Flat Plate',
-      status: 'FOUNDATION'
-    }
-  ]);
-
-  projectOptions = computed(() => {
-    return this.projects().map(p => ({
-      value: p.id,
-      label: `[${p.project_code}] ${p.project_name}`,
-      subLabel: `${p.thana_upazila}, ${p.district}`
-    }));
-  });
-
-  totalUnits = computed(() => this.towers().reduce((acc, t) => acc + t.total_units, 0));
-  totalBasements = computed(() => this.towers().reduce((acc, t) => acc + t.basement_floors, 0));
-  totalLifts = computed(() => this.towers().reduce((acc, t) => acc + t.total_lifts, 0));
-
-  filteredTowers = computed(() => {
-    const q = this.searchQuery().trim().toLowerCase();
-    if (!q) return this.towers();
-    return this.towers().filter(t => 
-      t.tower_name.toLowerCase().includes(q) ||
-      t.tower_code.toLowerCase().includes(q) ||
-      t.project_name.toLowerCase().includes(q)
-    );
-  });
-
-  towerForm: FormGroup = this.fb.group({
-    project_id: [null, Validators.required],
-    tower_code: ['TOWER-C', Validators.required],
-    tower_name: ['Tower Gamma', Validators.required],
-    basement_floors: [2],
-    residential_floors: [14],
-    commercial_floors: [0],
-    total_units: [56],
-    total_lifts: [2]
-  });
-
-  ngOnInit(): void {
-    this.projectService.getProjects().subscribe(p => this.projects.set(p || []));
+  private api = inject(ProjectService);
+  readonly tabs: { key: Entity; label: string }[] = [{ key: 'towers', label: 'Towers' }, { key: 'floors', label: 'Floors' }, { key: 'units', label: 'Units' }];
+  readonly activeTab = 'rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white';
+  readonly idleTab = 'rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700';
+  entity = signal<Entity>('towers'); rows = signal<Row[]>([]); projects = signal<any[]>([]);
+  loading = signal(false); error = signal(''); success = signal(''); total = signal(0); offset = signal(0); limit = signal(20);
+  search = ''; projectId = '';
+  label = () => this.tabs.find(t => t.key === this.entity())!.label;
+  pageNumber = () => Math.floor(this.offset() / this.limit()) + 1;
+  pageCount = () => Math.max(1, Math.ceil(this.total() / this.limit()));
+  columns = () => ({
+    towers: [{ key: 'tower_code', label: 'Code' }, { key: 'tower_name', label: 'Tower' }, { key: 'building_type', label: 'Building type' }, { key: 'total_floors', label: 'Floors' }, { key: 'total_lifts', label: 'Lifts' }, { key: 'construction_status', label: 'Status' }],
+    floors: [{ key: 'tower_name', label: 'Tower' }, { key: 'floor_number', label: 'Floor #' }, { key: 'display_name', label: 'Name' }, { key: 'floor_type', label: 'Type' }, { key: 'floor_area_sqft', label: 'Area (sq ft)' }, { key: 'construction_status', label: 'Status' }],
+    units: [{ key: 'unit_code', label: 'Unit' }, { key: 'tower_name', label: 'Tower' }, { key: 'floor_number', label: 'Floor' }, { key: 'unit_type', label: 'Type' }, { key: 'saleable_area_sqft', label: 'Area (sq ft)' }, { key: 'planned_price_bdt', label: 'Price (BDT)' }, { key: 'unit_status', label: 'Status' }]
+  }[this.entity()]);
+  ngOnInit() { this.success.set(history.state?.success || ''); this.api.getProjects().subscribe({ next: x => this.projects.set(x || []), error: () => this.error.set('Could not load projects.') }); this.load(); }
+  select(entity: Entity) { if (this.entity() !== entity) { this.entity.set(entity); this.offset.set(0); this.load(); } }
+  display(row: Row, key: string) { const val = row[key]; return val === null || val === undefined || val === '' ? 'N/A' : val; }
+  move(dir: number) { this.offset.update(x => Math.max(0, x + dir * this.limit())); this.load(); }
+  load() {
+    this.loading.set(true); this.error.set(''); this.success.set('');
+    const filters: any = { search: this.search.trim() || undefined, project_id: this.projectId ? Number(this.projectId) : undefined, limit: this.limit(), offset: this.offset() };
+    const req = this.entity() === 'towers' ? this.api.getTowersPaged(filters) : this.entity() === 'floors' ? this.api.getFloors(filters) : this.api.getUnits(filters);
+    req.subscribe({ next: (page: Page | Row[]) => { const result = Array.isArray(page) ? { items: page, total: page.length, limit: this.limit(), offset: this.offset() } : page; this.rows.set(result.items || []); this.total.set(result.total || 0); this.limit.set(result.limit || 20); this.offset.set(result.offset || 0); this.loading.set(false); }, error: e => { this.error.set(e?.error?.detail || `Could not load ${this.label().toLowerCase()}.`); this.loading.set(false); } });
   }
-
-  openAddModal(): void {
-    this.towerForm.reset({
-      project_id: this.projects().length > 0 ? this.projects()[0].id : null,
-      tower_code: `TOWER-${String.fromCharCode(65 + this.towers().length)}`,
-      tower_name: `Tower ${String.fromCharCode(65 + this.towers().length)}`,
-      basement_floors: 2,
-      residential_floors: 14,
-      commercial_floors: 0,
-      total_units: 56,
-      total_lifts: 2
-    });
-    this.isModalOpen.set(true);
-  }
-
-  saveTower(): void {
-    if (this.towerForm.invalid) return;
-    const v = this.towerForm.value;
-    const proj = this.projects().find(p => p.id === Number(v.project_id));
-    const newTower: TowerBlockDetail = {
-      id: Date.now(),
-      project_id: Number(v.project_id),
-      project_name: proj?.project_name || 'Selected Project',
-      project_code: proj?.project_code || 'PRJ-2026',
-      tower_code: v.tower_code,
-      tower_name: v.tower_name,
-      basement_floors: Number(v.basement_floors),
-      residential_floors: Number(v.residential_floors),
-      commercial_floors: Number(v.commercial_floors),
-      total_units: Number(v.total_units),
-      total_lifts: Number(v.total_lifts),
-      fire_escape_stairs: 2,
-      structural_system: 'RCC Frame (BNBC 2020)',
-      status: 'DESIGN'
-    };
-
-    this.towers.update(items => [newTower, ...items]);
-    this.isModalOpen.set(false);
-  }
-
-  removeTower(id: number): void {
-    this.towers.update(items => items.filter(t => t.id !== id));
+  remove(row: Row) {
+    if (!confirm(`Delete this ${this.entity().slice(0, -1)}?`)) return;
+    const req = this.entity() === 'towers' ? this.api.deleteTower(row.id) : this.entity() === 'floors' ? this.api.deleteFloor(row.id) : this.api.deleteUnit(row.id);
+    req.subscribe({ next: () => { const message = `${this.label().slice(0, -1)} deleted.`; this.load(); this.success.set(message); }, error: e => this.error.set(e?.error?.detail || 'Delete failed.') });
   }
 }

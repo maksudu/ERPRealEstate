@@ -189,6 +189,10 @@ export class ProposalsComponent implements OnInit {
     this.router.navigate(['/land/proposals/create']);
   }
 
+  navigateToSearch(): void {
+    this.router.navigate(['/land/search']);
+  }
+
   navigateToEdit(proposal: LandBank): void {
     this.router.navigate(['/land/proposals', proposal.id, 'edit']);
   }

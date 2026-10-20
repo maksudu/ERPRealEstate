@@ -2,7 +2,6 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { BudgetingService, ProjectBudgetLine } from '../../../core/services/budgeting.service';
-import { BudgetingNavComponent } from '../budgeting-nav/budgeting-nav.component';
 import { CardContainerComponent, SearchableSelectComponent, ModalComponent } from '../../../shared/components';
 
 @Component({
@@ -12,15 +11,12 @@ import { CardContainerComponent, SearchableSelectComponent, ModalComponent } fro
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
-    BudgetingNavComponent,
     CardContainerComponent,
     SearchableSelectComponent,
     ModalComponent
   ],
   template: `
     <div class="space-y-5">
-      <app-budgeting-nav activeCode="3.0"></app-budgeting-nav>
-
       <app-card-container
         title="3.0 Project Budget Management"
         subtitle="Manage detailed cost categories for land acquisition, civil, structural, MEP, interior finishing, administrative and marketing"

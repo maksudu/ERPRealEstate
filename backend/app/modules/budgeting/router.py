@@ -157,7 +157,6 @@ async def list_budget_plans(
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db)
 ):
-    await get_or_create_initial_seed(db)
     q = select(BudgetPlan)
     if search:
         search_filter = f"%{search}%"
@@ -187,7 +186,7 @@ async def list_budget_plans(
     results = []
     for item in items:
         p_dict = BudgetPlanResponse.model_validate(item).model_dump()
-        p_dict["project_name"] = proj_names.get(item.project_id, "Twin Tower Residential Project")
+        p_dict["project_name"] = proj_names.get(item.project_id)
         results.append(p_dict)
 
     return {"items": results, "total": total_count, "limit": limit, "offset": offset}

@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { BudgetingService } from '../../../core/services/budgeting.service';
-import { BudgetingNavComponent } from '../budgeting-nav/budgeting-nav.component';
 import { CardContainerComponent, SearchableSelectComponent } from '../../../shared/components';
 
 export interface ReportTabItem {
@@ -18,14 +17,11 @@ export interface ReportTabItem {
   imports: [
     CommonModule,
     FormsModule,
-    BudgetingNavComponent,
     CardContainerComponent,
     SearchableSelectComponent
   ],
   template: `
     <div class="space-y-5">
-      <app-budgeting-nav activeCode="12.0"></app-budgeting-nav>
-
       <!-- Recommended Approval Rule & Audit Governance Banner -->
       <div class="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl p-4 flex items-start gap-3">
         <div class="p-1.5 rounded-lg bg-emerald-600 text-white shrink-0">

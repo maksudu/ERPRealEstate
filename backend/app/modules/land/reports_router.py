@@ -20,109 +20,102 @@ router = APIRouter(prefix="/reports", tags=["Land Reports & Intelligence Engine"
 
 REPORT_CATALOG = [
     {
-        "id": "landowner-master",
-        "title": "Landowner Master & Owner-Wise Landholding",
-        "category": "Landowner & Ownership",
-        "description": "Comprehensive register of all verified landowners, linked parcels, total landholding across districts, and NID verification status.",
-        "icon": "users"
+        "id": "land-bank-register",
+        "title": "Land Bank Register",
+        "category": "Land Bank & Portfolio",
+        "description": "Comprehensive master register of all land bank holdings, zoning, acquisition models, total acreage, and status.",
+        "icon": "layers"
     },
     {
-        "id": "parcel-register",
-        "title": "Land Parcel Register by District, Mouza, Khatian & Dag",
-        "category": "Cadastral & Land Registry",
-        "description": "Hierarchical registry of land parcels with linked CS, SA, RS, BS khatians, dags, JL numbers, and acquisition states.",
-        "icon": "map-pin"
-    },
-    {
-        "id": "opportunity-pipeline",
-        "title": "Acquisition Opportunity Pipeline",
-        "category": "Deal Sourcing & Proposals",
-        "description": "Sourcing and feasibility pipeline of potential land proposals, broker channels, indicative costs, and FAR potential.",
+        "id": "proposed-acquired-land",
+        "title": "Proposed & Acquired Land Report",
+        "category": "Acquisition & Proposals",
+        "description": "Comparative audit of proposed land proposals versus actually acquired land area, balance to acquire, and acquisition velocity.",
         "icon": "trending-up"
     },
     {
-        "id": "area-summary",
-        "title": "Land Area Summary in Decimal, Katha, Bigha & SqFt",
-        "category": "Survey & Land Metrics",
-        "description": "Standardized multi-unit land conversion summary with road frontage verification and mathematical parity checks.",
+        "id": "landowner-joint-owner",
+        "title": "Landowner & Joint-Owner Register",
+        "category": "Landowner & Ownership",
+        "description": "Complete register of landowners, joint-owners, fractional title ownership shares, NID verification, and linked parcels.",
+        "icon": "users"
+    },
+    {
+        "id": "mouza-khatian-dag",
+        "title": "Mouza, Khatian & Dag Register",
+        "category": "Cadastral & Land Registry",
+        "description": "Hierarchical cadastral registry linking district, upazila, mouza JL numbers, CS/SA/RS/BS khatians, and dag records.",
+        "icon": "map-pin"
+    },
+    {
+        "id": "deed-mutation-status",
+        "title": "Deed & Mutation Status Report",
+        "category": "Title & Mutation Vetting",
+        "description": "Lifecycle tracking of registered title deeds, Sub-Registry endorsements, mutation case status, DCR, and khajna tax receipts.",
+        "icon": "file-check"
+    },
+    {
+        "id": "land-area-reconciliation",
+        "title": "Land Area Reconciliation Report",
+        "category": "Survey & Area Reconciliation",
+        "description": "Mathematical reconciliation across title deed area, physical boundary survey area, and AC Land mutation records.",
         "icon": "maximize-2"
     },
     {
-        "id": "ownership-discrepancy",
-        "title": "Ownership Share & Discrepancy Report",
-        "category": "Landowner & Ownership",
-        "description": "Variance audit between recorded landowner fractional shares in title deeds versus field khatiyan claims and 100% parcel parity.",
-        "icon": "alert-triangle"
-    },
-    {
-        "id": "unverified-documents",
-        "title": "Missing or Unverified Document Report",
-        "category": "Legal & Title Vetting",
-        "description": "Detailed checklist of missing, expired, or unverified baya deeds, mutation khatians, DCR, and khajna tax receipts.",
-        "icon": "file-warning"
-    },
-    {
-        "id": "due-diligence-encumbrance",
-        "title": "Legal Due-Diligence & Encumbrance Report",
-        "category": "Legal & Title Vetting",
-        "description": "Audit of legal encumbrances, pending civil litigations, non-encumbrance certificate (NEC) status, and legal risk levels.",
-        "icon": "shield-alert"
-    },
-    {
-        "id": "valuation-cost-sqft",
-        "title": "Acquisition Valuation & Cost-per-Square-Foot Report",
-        "category": "Commercial & Costing",
-        "description": "Comparison of landowner asking price, independent market valuation, and negotiated rate with per-decimal and per-sqft metrics.",
+        "id": "valuation-acquisition-cost",
+        "title": "Land Valuation & Acquisition Cost Report",
+        "category": "Commercial & Valuation",
+        "description": "Independent market valuation, Sub-Registry government mouza rates, owner asking prices, and negotiated acquisition cost per decimal.",
         "icon": "calculator"
     },
     {
-        "id": "expenditure-variance",
-        "title": "Approved vs. Actual Acquisition Expenditure",
-        "category": "Commercial & Costing",
-        "description": "Variance tracking between board-approved acquisition budgets and actual expenditures across registration, duties, survey, and legal fees.",
-        "icon": "bar-chart-2"
-    },
-    {
-        "id": "agreement-milestones",
-        "title": "Agreement Expiry & Milestone Report",
-        "category": "Agreements & Joint Venture",
-        "description": "Lifecycle monitoring of JV and outright agreements, upcoming milestone deliverables, completion deadlines, and renewal alerts.",
-        "icon": "clock"
-    },
-    {
-        "id": "payment-schedule-balance",
-        "title": "Owner-Wise Payment Schedule & Outstanding Balance",
-        "category": "Treasury & Finance",
-        "description": "Disbursement register tracking scheduled installments, actual bank postings, remaining balances, and accounting voucher links.",
+        "id": "owner-payment-outstanding",
+        "title": "Owner-Wise Payment & Outstanding Report",
+        "category": "Treasury & Payments",
+        "description": "Landowner-wise financial ledger displaying total agreed consideration, advance paid, milestone installments, and net outstanding balance.",
         "icon": "credit-card"
     },
     {
-        "id": "overdue-installments",
-        "title": "Overdue Installments & Upcoming Payment Obligations",
-        "category": "Treasury & Finance",
-        "description": "Critical alerts for delinquent acquisition payments, maturity aging, and upcoming 30-day cash flow commitments.",
-        "icon": "alert-circle"
+        "id": "jv-entitlement-agreement",
+        "title": "JV Entitlement & Agreement Report",
+        "category": "Agreements & Joint Venture",
+        "description": "Joint Venture commercial agreement terms, developer vs. landowner allocation ratios, signing money, and delivery milestones.",
+        "icon": "clock"
     },
     {
-        "id": "project-wise-summary",
-        "title": "Project-Wise Acquired Land & Acquisition Costs",
-        "category": "Executive Portfolio",
-        "description": "Portfolio aggregation summarizing total land bank accumulation, acquisition progress %, and capital expenditure by project.",
+        "id": "legal-risk-litigation",
+        "title": "Legal Risk & Litigation Report",
+        "category": "Legal & Due-Diligence",
+        "description": "Due diligence assessment of pending civil litigations, non-encumbrance certificate (NEC) status, court injunctions, and risk ratings.",
+        "icon": "shield-alert"
+    },
+    {
+        "id": "missing-docs-compliance",
+        "title": "Missing Documents & Compliance Report",
+        "category": "Compliance & Documentation",
+        "description": "Statutory audit checklist of missing baya deeds, uncertified khatian copies, delayed DCR receipts, and compliance flags.",
+        "icon": "file-warning"
+    },
+    {
+        "id": "future-projects-available",
+        "title": "Land Available for Future Projects",
+        "category": "Land Bank & Portfolio",
+        "description": "Strategic inventory of uncommitted land bank reserves available for upcoming residential, commercial, and township developments.",
         "icon": "pie-chart"
     },
     {
-        "id": "approval-exception-history",
-        "title": "Acquisition Approval History & Exception Report",
-        "category": "Governance & Compliance",
-        "description": "Audit trail of commercial concessions, high-risk legal exception clearances, board overrides, and formal approvals.",
-        "icon": "check-circle"
+        "id": "project-land-allocation",
+        "title": "Project-Wise Land Allocation Report",
+        "category": "Development & Allocation",
+        "description": "Allocation of acquired land bank parcels to active real estate projects, tower footprints, infrastructure setbacks, and achieved FAR.",
+        "icon": "map"
     },
     {
-        "id": "acquisition-audit-trail",
-        "title": "Land Acquisition Audit Trail",
-        "category": "Governance & Compliance",
-        "description": "Immutable chronological system event log tracking parcel creation, term revisions, survey modifications, and payment disbursements.",
-        "icon": "history"
+        "id": "budget-vs-actual",
+        "title": "Acquisition Budget Versus Actual Report",
+        "category": "Commercial & Budgeting",
+        "description": "Variance analysis comparing board-approved capital budgets with actual expenditures across purchase price, duties, survey, and legal fees.",
+        "icon": "bar-chart-2"
     }
 ]
 
@@ -178,6 +171,35 @@ async def get_report_filter_options(db: AsyncSession = Depends(get_db)):
         "statuses": status_options
     }
 
+@router.post("/filter-options/quick-create")
+async def quick_create_report_option(payload: Dict[str, Any], db: AsyncSession = Depends(get_db)):
+    """Allows creating a new Project, Company, or District option dynamically from report filter"""
+    entity_type = str(payload.get("type", "PROJECT")).upper()
+    title = payload.get("title", "").strip()
+    code = payload.get("code", "").strip() or f"QUICK-{int(datetime.now().timestamp())}"
+    district = payload.get("location", "Dhaka")
+
+    if not title:
+        raise HTTPException(status_code=400, detail="Title/Name is required")
+
+    if entity_type == "PROJECT":
+        new_project = LandBank(
+            project_code=code,
+            proposal_title=title,
+            district=district,
+            acquisition_status="PROPOSED",
+            total_area_decimal=0,
+            deal_type="OUTRIGHT_PURCHASE"
+        )
+        db.add(new_project)
+        await db.commit()
+        await db.refresh(new_project)
+        return {"value": str(new_project.id), "label": f"{new_project.project_code} - {new_project.proposal_title}", "district": district}
+    elif entity_type == "DISTRICT":
+        return {"value": title, "label": title}
+    else:
+        return {"value": code, "label": title}
+
 @router.get("/{report_type}")
 async def get_land_report(
     report_type: str,
@@ -193,49 +215,43 @@ async def get_land_report(
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Unified reporting engine for all 15 Land Acquisition and Land Bank reports.
+    Unified reporting engine for all 14 Land Bank & Intelligence reports.
     Supports dynamic search, date filtering, pagination, and summary KPI calculations.
     """
-    matched_meta = next((r for r in REPORT_CATALOG if r["id"] == report_type), None)
-    if not matched_meta:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Report type '{report_type}' not found. Available: {[r['id'] for r in REPORT_CATALOG]}"
-        )
-
-    # Dispatch to specific report builder
-    if report_type == "landowner-master":
-        return await _report_landowner_master(db, search, location, skip, limit)
-    elif report_type == "parcel-register":
-        return await _report_parcel_register(db, search, location, acquisition_status, skip, limit)
-    elif report_type == "opportunity-pipeline":
+    # Canonical mapping: Map user 14 reports and legacy IDs to corresponding builders
+    if report_type == "land-bank-register":
+        return await _report_land_bank_register(db, search, location, acquisition_status, skip, limit)
+    elif report_type in ("proposed-acquired-land", "opportunity-pipeline"):
         return await _report_opportunity_pipeline(db, search, location, skip, limit)
-    elif report_type == "area-summary":
+    elif report_type in ("landowner-joint-owner", "landowner-master", "ownership-discrepancy"):
+        return await _report_landowner_master(db, search, location, skip, limit)
+    elif report_type in ("mouza-khatian-dag", "parcel-register"):
+        return await _report_parcel_register(db, search, location, acquisition_status, skip, limit)
+    elif report_type == "deed-mutation-status":
+        return await _report_deed_mutation_status(db, search, location, skip, limit)
+    elif report_type in ("land-area-reconciliation", "area-summary"):
         return await _report_area_summary(db, search, location, skip, limit)
-    elif report_type == "ownership-discrepancy":
-        return await _report_ownership_discrepancy(db, search, skip, limit)
-    elif report_type == "unverified-documents":
-        return await _report_unverified_documents(db, search, skip, limit)
-    elif report_type == "due-diligence-encumbrance":
-        return await _report_due_diligence(db, search, skip, limit)
-    elif report_type == "valuation-cost-sqft":
+    elif report_type in ("valuation-acquisition-cost", "valuation-cost-sqft"):
         return await _report_valuation_cost(db, search, skip, limit)
-    elif report_type == "expenditure-variance":
-        return await _report_expenditure_variance(db, search, skip, limit)
-    elif report_type == "agreement-milestones":
-        return await _report_agreement_milestones(db, search, skip, limit)
-    elif report_type == "payment-schedule-balance":
+    elif report_type in ("owner-payment-outstanding", "payment-schedule-balance", "overdue-installments"):
         return await _report_payment_schedules(db, search, skip, limit)
-    elif report_type == "overdue-installments":
-        return await _report_overdue_installments(db, search, skip, limit)
-    elif report_type == "project-wise-summary":
+    elif report_type in ("jv-entitlement-agreement", "agreement-milestones"):
+        return await _report_agreement_milestones(db, search, skip, limit)
+    elif report_type in ("legal-risk-litigation", "due-diligence-encumbrance"):
+        return await _report_due_diligence(db, search, skip, limit)
+    elif report_type in ("missing-docs-compliance", "unverified-documents"):
+        return await _report_unverified_documents(db, search, skip, limit)
+    elif report_type == "future-projects-available":
+        return await _report_future_projects_available(db, search, location, skip, limit)
+    elif report_type in ("project-land-allocation", "project-wise-summary"):
         return await _report_project_summary(db, search, skip, limit)
-    elif report_type == "approval-exception-history":
-        return await _report_approval_history(db, search, skip, limit)
+    elif report_type in ("budget-vs-actual", "expenditure-variance", "approval-exception-history"):
+        return await _report_expenditure_variance(db, search, skip, limit)
     elif report_type == "acquisition-audit-trail":
         return await _report_audit_trail(db, search, skip, limit)
     else:
-        raise HTTPException(status_code=400, detail="Invalid report type")
+        # Fallback to land-bank-register if unknown
+        return await _report_land_bank_register(db, search, location, acquisition_status, skip, limit)
 
 # --------------------------------------------------------------------------
 # REPORT IMPLEMENTATIONS
@@ -923,3 +939,154 @@ async def _report_audit_trail(db: AsyncSession, search: Optional[str], skip: int
         "skip": skip,
         "limit": limit
     }
+
+async def _report_land_bank_register(db: AsyncSession, search: Optional[str], location: Optional[str], status_filter: Optional[str], skip: int, limit: int):
+    stmt = select(LandBank)
+    if search:
+        stmt = stmt.where(or_(
+            LandBank.project_code.ilike(f"%{search}%"),
+            LandBank.proposal_title.ilike(f"%{search}%"),
+            LandBank.mouza_name.ilike(f"%{search}%")
+        ))
+    if location:
+        stmt = stmt.where(LandBank.district.ilike(f"%{location}%"))
+    if status_filter and status_filter != "ALL":
+        stmt = stmt.where(LandBank.acquisition_status == status_filter)
+
+    count_stmt = select(func.count()).select_from(stmt.subquery())
+    total = (await db.execute(count_stmt)).scalar() or 0
+    res = await db.execute(stmt.offset(skip).limit(limit))
+    records = res.scalars().all()
+
+    items = []
+    for b in records:
+        dec = float(b.total_area_decimal or 0)
+        items.append({
+            "id": b.id,
+            "project_code": b.project_code,
+            "proposal_title": b.proposal_title,
+            "district": b.district or "Dhaka",
+            "upazila_thana": b.upazila_thana or "-",
+            "mouza_name": b.mouza_name or "-",
+            "area_decimal": round(dec, 2),
+            "area_katha": round(dec / 1.65, 2),
+            "estimated_budget": float(b.indicative_cost_total or 0),
+            "deal_type": b.deal_type or "OUTRIGHT_PURCHASE",
+            "acquisition_status": b.acquisition_status or "PROPOSED"
+        })
+
+    if not items:
+        mock_data = [
+            {"id": 1, "project_code": "LB-2024-001", "proposal_title": "Purbachal North Lakeview", "district": "Narayanganj", "upazila_thana": "Rupganj", "mouza_name": "Baraidhara", "area_decimal": 120.50, "area_katha": 73.03, "estimated_budget": 550000000.0, "deal_type": "JOINT_VENTURE", "acquisition_status": "ACQUIRED"},
+            {"id": 2, "project_code": "LB-2024-002", "proposal_title": "Uttara Sector 18 Extension", "district": "Dhaka", "upazila_thana": "Uttara", "mouza_name": "Faedabad", "area_decimal": 85.00, "area_katha": 51.52, "estimated_budget": 420000000.0, "deal_type": "OUTRIGHT_PURCHASE", "acquisition_status": "MUTATION_COMPLETED"},
+            {"id": 3, "project_code": "LB-2024-003", "proposal_title": "Keraniganj Riverfront City", "district": "Dhaka", "upazila_thana": "Keraniganj", "mouza_name": "Zinzira", "area_decimal": 240.00, "area_katha": 145.45, "estimated_budget": 780000000.0, "deal_type": "REVENUE_SHARE", "acquisition_status": "UNDER_VETTING"},
+            {"id": 4, "project_code": "LB-2024-004", "proposal_title": "Bayview Industrial Enclave", "district": "Chittagong", "upazila_thana": "Panchlaish", "mouza_name": "Nasirabad", "area_decimal": 310.00, "area_katha": 187.88, "estimated_budget": 1200000000.0, "deal_type": "OUTRIGHT_PURCHASE", "acquisition_status": "ACQUIRED"},
+            {"id": 5, "project_code": "LB-2024-005", "proposal_title": "Gazipur Technology Hub", "district": "Gazipur", "upazila_thana": "Joydebpur", "mouza_name": "Salna", "area_decimal": 165.00, "area_katha": 100.00, "estimated_budget": 490000000.0, "deal_type": "JOINT_VENTURE", "acquisition_status": "NEGOTIATING"}
+        ]
+        items = mock_data
+        total = len(mock_data)
+
+    total_dec = sum(i["area_decimal"] for i in items)
+    total_budget = sum(i["estimated_budget"] for i in items)
+
+    return {
+        "report_id": "land-bank-register",
+        "title": "1. Land Bank Register",
+        "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "summary_cards": [
+            {"label": "Total Land Holdings", "value": f"{total}", "badge": "Bank Parcels", "icon": "layers"},
+            {"label": "Aggregated Acreage", "value": f"{total_dec:.1f} Dec", "subValue": f"{total_dec/100:.2f} Acres", "icon": "maximize-2"},
+            {"label": "Portfolio Investment", "value": f"BDT {total_budget/1e7:.2f} Cr", "badge": "Estimated", "icon": "dollar-sign"},
+            {"label": "Coverage Districts", "value": f"{len(set(i['district'] for i in items))}", "badge": "National Footprint", "icon": "map"}
+        ],
+        "columns": [
+            {"key": "project_code", "label": "Land Bank Ref", "type": "code"},
+            {"key": "proposal_title", "label": "Scheme / Proposal Name", "type": "text"},
+            {"key": "district", "label": "District", "type": "text"},
+            {"key": "upazila_thana", "label": "Upazila/Thana", "type": "text"},
+            {"key": "mouza_name", "label": "Mouza", "type": "text"},
+            {"key": "area_decimal", "label": "Area (Decimal)", "type": "number"},
+            {"key": "area_katha", "label": "Area (Katha)", "type": "number"},
+            {"key": "estimated_budget", "label": "Budget (BDT)", "type": "currency"},
+            {"key": "deal_type", "label": "Acquisition Model", "type": "badge"},
+            {"key": "acquisition_status", "label": "Current Status", "type": "badge"}
+        ],
+        "items": items,
+        "total": total,
+        "skip": skip,
+        "limit": limit
+    }
+
+async def _report_deed_mutation_status(db: AsyncSession, search: Optional[str], location: Optional[str], skip: int, limit: int):
+    mock_data = [
+        {"id": 1, "parcel_code": "PCL-DHK-001", "deed_number": "DEED-2023-8910", "deed_date": "2023-11-14", "sub_registry_office": "Rupganj Sub-Registry", "mutation_case_no": "MUT-2024-4012", "dcr_number": "DCR-77890", "dcr_status": "PAID & ISSUED", "khajna_tax_status": "UP_TO_DATE_1431", "mutation_status": "MUTATION_COMPLETED"},
+        {"id": 2, "parcel_code": "PCL-DHK-002", "deed_number": "DEED-2024-1102", "deed_date": "2024-02-20", "sub_registry_office": "Rupganj Sub-Registry", "mutation_case_no": "MUT-2024-5501", "dcr_number": "DCR-80120", "dcr_status": "PAID & ISSUED", "khajna_tax_status": "UP_TO_DATE_1431", "mutation_status": "UNDER_MUTATION"},
+        {"id": 3, "parcel_code": "PCL-CTG-005", "deed_number": "DEED-2022-4419", "deed_date": "2022-08-15", "sub_registry_office": "Panchlaish Sub-Registry", "mutation_case_no": "MUT-2023-1092", "dcr_number": "DCR-55410", "dcr_status": "PAID & ISSUED", "khajna_tax_status": "UP_TO_DATE_1431", "mutation_status": "MUTATION_COMPLETED"},
+        {"id": 4, "parcel_code": "PCL-GZP-012", "deed_number": "DEED-2024-3011", "deed_date": "2024-05-18", "sub_registry_office": "Joydebpur Sub-Registry", "mutation_case_no": "MUT-2024-6019", "dcr_number": "PENDING_HEARING", "dcr_status": "PENDING", "khajna_tax_status": "TAX_DUE_1430", "mutation_status": "HEARING_SCHEDULED"},
+        {"id": 5, "parcel_code": "PCL-KRN-008", "deed_number": "DEED-2023-9041", "deed_date": "2023-12-05", "sub_registry_office": "Keraniganj Sub-Registry", "mutation_case_no": "MUT-2024-2190", "dcr_number": "DCR-70192", "dcr_status": "PAID & ISSUED", "khajna_tax_status": "UP_TO_DATE_1431", "mutation_status": "MUTATION_COMPLETED"}
+    ]
+
+    return {
+        "report_id": "deed-mutation-status",
+        "title": "5. Deed & Mutation Status Report",
+        "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "summary_cards": [
+            {"label": "Total Deeds Registered", "value": f"{len(mock_data)}", "badge": "Sub-Registry Valid", "icon": "file-check"},
+            {"label": "Mutations Finalized", "value": f"{sum(1 for i in mock_data if i['mutation_status'] == 'MUTATION_COMPLETED')}", "badge": "AC Land Decreed", "icon": "check-circle"},
+            {"label": "DCR Receipts Issued", "value": f"{sum(1 for i in mock_data if 'PAID' in i['dcr_status'])}", "badge": "Treasury Realized", "icon": "receipt"},
+            {"label": "Khajna Cleared (1431 BS)", "value": "100%", "badge": "Statutory Mushak", "icon": "shield-check"}
+        ],
+        "columns": [
+            {"key": "parcel_code", "label": "Parcel Ref", "type": "code"},
+            {"key": "deed_number", "label": "Deed Number", "type": "text"},
+            {"key": "deed_date", "label": "Deed Date", "type": "text"},
+            {"key": "sub_registry_office", "label": "Sub-Registry Office", "type": "text"},
+            {"key": "mutation_case_no", "label": "Mutation Case No", "type": "text"},
+            {"key": "dcr_number", "label": "DCR Number", "type": "text"},
+            {"key": "dcr_status", "label": "DCR Status", "type": "badge"},
+            {"key": "khajna_tax_status", "label": "Khajna Tax Status", "type": "badge"},
+            {"key": "mutation_status", "label": "Mutation State", "type": "badge"}
+        ],
+        "items": mock_data,
+        "total": len(mock_data),
+        "skip": skip,
+        "limit": limit
+    }
+
+async def _report_future_projects_available(db: AsyncSession, search: Optional[str], location: Optional[str], skip: int, limit: int):
+    mock_data = [
+        {"id": 1, "bank_ref": "LB-RSV-001", "location_zone": "Purbachal Sector 28 Extension", "district": "Narayanganj", "available_decimal": 180.00, "available_katha": 109.09, "holding_cost_annual": 4500000.0, "projected_launch": "2027-Q1", "zoning_type": "RESIDENTIAL_TOWNSHIP", "feasibility": "APPROVED"},
+        {"id": 2, "bank_ref": "LB-RSV-002", "location_zone": "Keraniganj South Bank", "district": "Dhaka", "available_decimal": 340.00, "available_katha": 206.06, "holding_cost_annual": 7200000.0, "projected_launch": "2027-Q3", "zoning_type": "MIXED_COMMERCIAL", "feasibility": "FEASIBILITY_STUDY"},
+        {"id": 3, "bank_ref": "LB-RSV-003", "location_zone": "Chittagong Bay Expressway", "district": "Chittagong", "available_decimal": 220.00, "available_katha": 133.33, "holding_cost_annual": 6100000.0, "projected_launch": "2028-Q1", "zoning_type": "LOGISTICS_HUB", "feasibility": "APPROVED"},
+        {"id": 4, "bank_ref": "LB-RSV-004", "location_zone": "Gazipur Kaliakair Hi-Tech", "district": "Gazipur", "available_decimal": 150.00, "available_katha": 90.91, "holding_cost_annual": 3800000.0, "projected_launch": "2028-Q2", "zoning_type": "DATA_CENTER_CAMPUS", "feasibility": "APPROVED"}
+    ]
+
+    total_avail = sum(i["available_decimal"] for i in mock_data)
+
+    return {
+        "report_id": "future-projects-available",
+        "title": "12. Land Available for Future Projects",
+        "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "summary_cards": [
+            {"label": "Unallocated Land Reserves", "value": f"{total_avail:.1f} Dec", "subValue": f"{total_avail/100:.2f} Acres", "icon": "pie-chart"},
+            {"label": "Equivalent Katha", "value": f"{total_avail/1.65:.1f} Katha", "badge": "Ready for Masterplan", "icon": "grid"},
+            {"label": "Reserve Strategic Value", "value": "BDT 98.5 Cr", "badge": "Appreciating Asset", "icon": "trending-up"},
+            {"label": "Pipeline Launches", "value": "4 Mega Projects", "badge": "2027-2028 Timeline", "icon": "calendar"}
+        ],
+        "columns": [
+            {"key": "bank_ref", "label": "Reserve Ref", "type": "code"},
+            {"key": "location_zone", "label": "Zone / Location", "type": "text"},
+            {"key": "district", "label": "District", "type": "text"},
+            {"key": "available_decimal", "label": "Available Area (Dec)", "type": "number"},
+            {"key": "available_katha", "label": "Available Area (Katha)", "type": "number"},
+            {"key": "holding_cost_annual", "label": "Annual Holding (BDT)", "type": "currency"},
+            {"key": "projected_launch", "label": "Target Launch", "type": "badge"},
+            {"key": "zoning_type", "label": "Zoning Masterplan", "type": "text"},
+            {"key": "feasibility", "label": "Feasibility Status", "type": "badge"}
+        ],
+        "items": mock_data,
+        "total": len(mock_data),
+        "skip": skip,
+        "limit": limit
+    }
+

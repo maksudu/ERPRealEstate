@@ -1,40 +1,42 @@
-<div class="space-y-6 print:space-y-3">
-  <!-- TOP HEADER & ACTIONS -->
+<div class="space-y-5 print:space-y-3">
+  <!-- TOP HEADER & EXPORT ACTIONS -->
   <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 print:hidden">
     <div>
       <div class="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
         <a routerLink="/land/dashboard" class="hover:text-blue-600 transition-colors">Land Intelligence</a>
         <span>/</span>
-        <span class="text-slate-700 dark:text-slate-200 font-semibold">Reports & Analytics (15)</span>
+        <span class="text-slate-700 dark:text-slate-200 font-semibold">Land Bank Reports (14)</span>
       </div>
       <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mt-1">
-        Land Acquisition & Bank Intelligence Reports
+        Land Bank & Intelligence Reports
       </h1>
-      <p class="text-sm text-slate-500 dark:text-slate-400">
-        Enterprise statutory reports, cadastral audits, financial variance, and title due-diligence registers.
+      <p class="text-xs text-slate-500 dark:text-slate-400">
+        Statutory cadastral registers, deed vetting, financial schedules, and portfolio allocation analytics.
       </p>
     </div>
 
     <div class="flex items-center gap-2.5 flex-wrap">
-      <button 
-        (click)="exportToExcel()" 
+      <app-custom-button
+        variant="secondary"
+        size="sm"
         [disabled]="isLoading || rows.length === 0"
-        class="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all disabled:opacity-50">
-        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        (clicked)="exportToExcel()">
+        <svg class="w-4 h-4 text-emerald-600 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
-        Export Excel (CSV)
-      </button>
+        Export Excel
+      </app-custom-button>
 
-      <button 
-        (click)="exportToPDF()" 
+      <app-custom-button
+        variant="secondary"
+        size="sm"
         [disabled]="isLoading || rows.length === 0"
-        class="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-xl bg-slate-800 hover:bg-slate-900 text-white shadow-sm transition-all disabled:opacity-50 dark:bg-slate-700 dark:hover:bg-slate-600">
-        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        (clicked)="exportToPDF()">
+        <svg class="w-4 h-4 text-slate-600 dark:text-slate-300 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
         </svg>
         Print / PDF
-      </button>
+      </app-custom-button>
     </div>
   </div>
 
@@ -46,23 +48,23 @@
         <p class="text-xs text-slate-600">{{ currentReportMeta.description }}</p>
       </div>
       <div class="text-right text-xs text-slate-500">
-        <p>Oxland Land Intelligence System</p>
+        <p>BlueOceans Land Intelligence System</p>
         <p>Generated: {{ activeReport?.generated_at }}</p>
       </div>
     </div>
   </div>
 
-  <!-- UNIFIED CARD CONTAINER -->
-  <app-card-container [customClass]="'p-4 md:p-6 space-y-6'">
-    <!-- ACTIVE REPORT HEADER BANNER WITH INLINE REPORT SWITCHER -->
-    <div class="p-4 md:p-5 rounded-2xl bg-gradient-to-r from-blue-50 via-indigo-50/40 to-slate-50 dark:from-slate-800/90 dark:via-slate-850 dark:to-slate-900 border border-blue-100/80 dark:border-slate-700/80 flex flex-col md:flex-row md:items-center justify-between gap-4">
+  <!-- ROOT REUSABLE CARD CONTAINER -->
+  <app-card-container [customClass]="'p-4 md:p-6 space-y-5'">
+    <!-- ACTIVE REPORT HEADER BANNER WITH SEARCHABLE SELECT REPORT SWITCHER -->
+    <div class="p-4 md:p-5 rounded-2xl bg-gradient-to-r from-blue-50/70 via-indigo-50/30 to-slate-50 dark:from-slate-800/90 dark:via-slate-850 dark:to-slate-900 border border-blue-100 dark:border-slate-800 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
       <div class="space-y-1">
         <div class="flex items-center gap-2 flex-wrap">
           <span class="px-2 py-0.5 text-[10px] font-bold rounded-md bg-blue-600 text-white uppercase tracking-wider">
             {{ currentReportMeta.category }}
           </span>
           <span class="text-xs text-slate-500 dark:text-slate-400">
-            Report ID: <code class="font-mono text-blue-600 dark:text-blue-400 font-semibold">{{ currentReportMeta.id }}</code>
+            Report Key: <code class="font-mono text-blue-600 dark:text-blue-400 font-semibold">{{ currentReportMeta.id }}</code>
           </span>
         </div>
         <h2 class="text-xl font-bold text-slate-900 dark:text-white">
@@ -73,134 +75,129 @@
         </p>
       </div>
 
-      <!-- INLINE ACTIVE REPORT SELECTOR & TOTAL BADGE -->
+      <!-- SEARCHABLE REPORT SELECTOR & TOTAL ENTRIES BADGE -->
       <div class="flex items-center gap-4 flex-wrap sm:flex-nowrap flex-shrink-0">
-        <div class="space-y-1 print:hidden">
-          <label class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">
-            Switch Report:
+        <div class="w-full sm:w-72 print:hidden">
+          <label class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-1">
+            Switch Report (1-14):
           </label>
-          <select 
-            [ngModel]="selectedReportId"
-            (ngModelChange)="onReportChange($event)"
-            class="w-full sm:w-72 px-3 py-2 text-xs font-bold rounded-xl border border-blue-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-blue-700 dark:text-blue-300 shadow-2xs focus:ring-2 focus:ring-blue-500 focus:outline-none cursor-pointer">
-            @for (rep of reportCatalog; track rep.id) {
-              <option [value]="rep.id">{{ rep.title }}</option>
-            }
-          </select>
+          <app-searchable-select
+            [options]="reportOptions"
+            [value]="selectedReportId"
+            (valueChange)="onReportChange($event)"
+            placeholder="Select a land bank report..."
+            [allowCreateNew]="false"
+            [searchable]="true">
+          </app-searchable-select>
         </div>
 
-        <div class="text-right pl-3 border-l border-slate-200 dark:border-slate-700">
+        <div class="text-right pl-3 border-l border-slate-200 dark:border-slate-700 shrink-0">
           <span class="text-[10px] uppercase font-bold text-slate-400 block">Total Entries</span>
           <span class="text-2xl font-black text-blue-600 dark:text-blue-400">{{ totalRecords }}</span>
         </div>
       </div>
     </div>
 
-    <!-- DYNAMIC FILTER BAR (SEARCHABLE DROPDOWNS & DATES) -->
-    <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 space-y-3 print:hidden">
+    <!-- DYNAMIC FILTER BAR WITH REUSABLE SEARCHABLE DROPDOWNS -->
+    <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 space-y-4 print:hidden">
       <div class="flex items-center justify-between">
-        <span class="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
+        <span class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
           <svg class="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
           </svg>
-          Dynamic Report Filters & Multi-Criteria Search
+          Dynamic Searchable Filters
         </span>
-        <div class="flex items-center gap-2">
-          <button 
-            (click)="resetFilters()"
-            class="text-[11px] font-semibold text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">
-            Clear Filters
-          </button>
-        </div>
+        <button 
+          type="button"
+          (click)="resetFilters()"
+          class="text-xs font-medium text-slate-500 hover:text-blue-600 transition-colors cursor-pointer">
+          Reset All Filters
+        </button>
       </div>
 
+      <!-- Filter Controls Grid -->
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        <!-- Company Dropdown with inline Add New -->
+        <!-- 1. Company Searchable Select -->
         <div>
-          <div class="flex items-center justify-between mb-1">
-            <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Company</label>
-            <button (click)="openQuickAdd('COMPANY')" class="text-[10px] text-blue-600 hover:underline font-bold">+ New</button>
-          </div>
-          <select 
-            [(ngModel)]="selectedCompany" 
-            (change)="applyFilters()"
-            class="w-full px-2.5 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-1 focus:ring-blue-500">
-            <option value="">All Companies</option>
-            @for (opt of companyOptions; track opt.value) {
-              <option [value]="opt.value">{{ opt.label }}</option>
-            }
-          </select>
+          <app-searchable-select
+            label="Company"
+            [options]="companyOptions"
+            [value]="selectedCompany"
+            (valueChange)="selectedCompany = $event; applyFilters()"
+            (createNew)="openQuickAdd('COMPANY')"
+            placeholder="All Companies"
+            [allowCreateNew]="true"
+            [searchable]="true">
+          </app-searchable-select>
         </div>
 
-        <!-- Project Dropdown with inline Add New -->
+        <!-- 2. Project Searchable Select -->
         <div>
-          <div class="flex items-center justify-between mb-1">
-            <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Project</label>
-            <button (click)="openQuickAdd('PROJECT')" class="text-[10px] text-blue-600 hover:underline font-bold">+ New</button>
-          </div>
-          <select 
-            [(ngModel)]="selectedProject" 
-            (change)="applyFilters()"
-            class="w-full px-2.5 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-1 focus:ring-blue-500">
-            <option value="">All Projects</option>
-            @for (opt of projectOptions; track opt.value) {
-              <option [value]="opt.value">{{ opt.label }}</option>
-            }
-          </select>
+          <app-searchable-select
+            label="Project"
+            [options]="projectOptions"
+            [value]="selectedProject"
+            (valueChange)="selectedProject = $event; applyFilters()"
+            (createNew)="openQuickAdd('PROJECT')"
+            placeholder="All Projects"
+            [allowCreateNew]="true"
+            [searchable]="true">
+          </app-searchable-select>
         </div>
 
-        <!-- Location / District Dropdown with inline Add New -->
+        <!-- 3. Location / District Searchable Select -->
         <div>
-          <div class="flex items-center justify-between mb-1">
-            <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Location / District</label>
-            <button (click)="openQuickAdd('LOCATION')" class="text-[10px] text-blue-600 hover:underline font-bold">+ New</button>
-          </div>
-          <select 
-            [(ngModel)]="selectedLocation" 
-            (change)="applyFilters()"
-            class="w-full px-2.5 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-1 focus:ring-blue-500">
-            <option value="">All Districts</option>
-            @for (opt of locationOptions; track opt.value) {
-              <option [value]="opt.value">{{ opt.label }}</option>
-            }
-          </select>
+          <app-searchable-select
+            label="District / Location"
+            [options]="locationOptions"
+            [value]="selectedLocation"
+            (valueChange)="selectedLocation = $event; applyFilters()"
+            (createNew)="openQuickAdd('LOCATION')"
+            placeholder="All Districts"
+            [allowCreateNew]="true"
+            [searchable]="true">
+          </app-searchable-select>
         </div>
 
-        <!-- Acquisition Status -->
+        <!-- 4. Acquisition Status Searchable Select -->
         <div>
-          <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">Status</label>
-          <select 
-            [(ngModel)]="selectedStatus" 
-            (change)="applyFilters()"
-            class="w-full px-2.5 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-1 focus:ring-blue-500">
-            @for (opt of statusOptions; track opt.value) {
-              <option [value]="opt.value">{{ opt.label }}</option>
-            }
-          </select>
+          <app-searchable-select
+            label="Status"
+            [options]="statusOptions"
+            [value]="selectedStatus"
+            (valueChange)="selectedStatus = $event; applyFilters()"
+            placeholder="All Statuses"
+            [allowCreateNew]="false"
+            [searchable]="true">
+          </app-searchable-select>
         </div>
 
-        <!-- Start Date -->
+        <!-- 5. Start Date -->
         <div>
-          <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">Start Date</label>
+          <label class="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1.5 tracking-wide">
+            From Date
+          </label>
           <input 
             type="date" 
             [(ngModel)]="startDate" 
             (change)="applyFilters()"
-            class="w-full px-2.5 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-1 focus:ring-blue-500" />
+            class="erp-input text-xs" />
         </div>
 
-        <!-- End Date -->
+        <!-- 6. End Date -->
         <div>
-          <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">End Date</label>
+          <label class="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1.5 tracking-wide">
+            To Date
+          </label>
           <input 
             type="date" 
             [(ngModel)]="endDate" 
             (change)="applyFilters()"
-            class="w-full px-2.5 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-1 focus:ring-blue-500" />
+            class="erp-input text-xs" />
         </div>
       </div>
 
-      <!-- Quick Search Input & Filter Execution -->
+      <!-- Full-text Keyword Search Bar -->
       <div class="flex items-center gap-2 pt-1">
         <div class="relative flex-1">
           <input 
@@ -208,20 +205,18 @@
             [(ngModel)]="searchTerm" 
             (keyup.enter)="applyFilters()"
             placeholder="Type keyword, landowner name, parcel code, deed # or khatian..." 
-            class="w-full pl-8 pr-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500" />
+            class="erp-input text-xs pl-8" />
           <svg class="w-4 h-4 absolute left-2.5 top-2.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
         </div>
 
-        <button 
-          (click)="applyFilters()"
-          class="px-4 py-2 text-xs font-semibold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-all flex items-center gap-1.5 flex-shrink-0">
-          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-          Filter Report
-        </button>
+        <app-custom-button
+          variant="primary"
+          size="sm"
+          (clicked)="applyFilters()">
+          Filter Data
+        </app-custom-button>
       </div>
     </div>
 
@@ -229,7 +224,7 @@
     @if (summaryCards && summaryCards.length > 0) {
       <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
         @for (card of summaryCards; track card.label) {
-          <div class="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col justify-between">
+          <div class="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs flex flex-col justify-between">
             <div class="flex items-center justify-between text-slate-500 dark:text-slate-400">
               <span class="text-xs font-semibold text-slate-700 dark:text-slate-300">{{ card.label }}</span>
               @if (card.badge) {
@@ -249,15 +244,15 @@
       </div>
     }
 
-    <!-- REPORT DATA TABLE -->
-    <div class="rounded-2xl border border-slate-200/90 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900 shadow-xs">
+    <!-- REPORT TABULAR RESULTS -->
+    <div class="rounded-2xl border border-slate-200/90 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900 shadow-2xs">
       <div class="p-3.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/60 dark:bg-slate-800/40">
         <div class="flex items-center gap-2">
           <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
           <span class="text-xs font-bold text-slate-800 dark:text-slate-200">
             {{ currentReportMeta.title }} — Tabular Results
           </span>
-          <span class="text-xs text-slate-400">({{ totalRecords }} records)</span>
+          <span class="text-xs text-slate-400 font-mono">({{ totalRecords }} records)</span>
         </div>
         <span class="text-[11px] text-slate-500 dark:text-slate-400 hidden sm:inline">
           Click any row for complete audit drill-down
@@ -272,7 +267,7 @@
               @for (col of columns; track col.key) {
                 <th class="py-3 px-3.5">{{ col.label }}</th>
               }
-              <th class="py-3 px-3.5 text-right w-20 print:hidden">Audit</th>
+              <th class="py-3 px-3.5 text-right w-20 print:hidden">Action</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100 dark:divide-slate-800/70 text-xs text-slate-800 dark:text-slate-200 font-medium">
@@ -328,8 +323,9 @@
 
                   <td class="py-2.5 px-3.5 text-right print:hidden">
                     <button 
+                      type="button"
                       (click)="openRowDetail(row); $event.stopPropagation()"
-                      class="text-blue-600 hover:text-blue-800 dark:text-blue-400 text-xs font-semibold">
+                      class="text-blue-600 hover:text-blue-800 dark:text-blue-400 text-xs font-semibold cursor-pointer">
                       Inspect
                     </button>
                   </td>
@@ -340,28 +336,44 @@
         </table>
       </div>
 
-      <!-- SERVER-SIDE PAGINATION BAR -->
+      <!-- SERVER-SIDE PAGINATION TOOLBAR -->
       <div class="p-3.5 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/40 dark:bg-slate-900/40 print:hidden">
-        <span class="text-xs text-slate-500">
-          Showing Page {{ currentPage }} of {{ totalPages }} ({{ totalRecords }} total entries)
-        </span>
+        <div class="flex items-center gap-3 text-xs text-slate-500">
+          <span>
+            Showing {{ totalRecords === 0 ? 0 : (currentPage - 1) * pageSize + 1 }} to {{ currentEndIndex }} of {{ totalRecords }} entries
+          </span>
+
+          <div class="flex items-center gap-1.5">
+            <span class="text-slate-400">Page size:</span>
+            <select
+              [ngModel]="pageSize"
+              (ngModelChange)="onPageSizeChange($event)"
+              class="px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+              @for (size of pageSizeOptions; track size) {
+                <option [value]="size">{{ size }}</option>
+              }
+            </select>
+          </div>
+        </div>
 
         <div class="flex items-center gap-1.5">
           <button 
+            type="button"
             [disabled]="currentPage === 1" 
             (click)="onPageChange(currentPage - 1)"
-            class="px-2.5 py-1 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 disabled:opacity-40 hover:bg-slate-100">
+            class="px-2.5 py-1 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 disabled:opacity-40 hover:bg-slate-100 cursor-pointer">
             ← Prev
           </button>
           
           <span class="px-3 py-1 text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 rounded-lg">
-            {{ currentPage }}
+            {{ currentPage }} / {{ totalPages }}
           </span>
 
           <button 
+            type="button"
             [disabled]="currentPage >= totalPages" 
             (click)="onPageChange(currentPage + 1)"
-            class="px-2.5 py-1 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 disabled:opacity-40 hover:bg-slate-100">
+            class="px-2.5 py-1 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 disabled:opacity-40 hover:bg-slate-100 cursor-pointer">
             Next →
           </button>
         </div>
@@ -369,7 +381,7 @@
     </div>
   </app-card-container>
 
-  <!-- DETAIL AUDIT MODAL -->
+  <!-- DETAIL AUDIT MODAL (DRILL-DOWN) -->
   @if (isDetailModalOpen && selectedRowDetail) {
     <app-modal 
       title="Audit Inspection & Full Record Details" 
@@ -390,11 +402,12 @@
         </div>
 
         <div class="flex items-center justify-end pt-3 border-t border-slate-200 dark:border-slate-700">
-          <button 
-            (click)="closeDetailModal()"
-            class="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-800 hover:bg-slate-900 text-white dark:bg-slate-700">
+          <app-custom-button
+            variant="secondary"
+            size="sm"
+            (clicked)="closeDetailModal()">
             Close Audit View
-          </button>
+          </app-custom-button>
         </div>
       </div>
     </app-modal>
@@ -415,7 +428,7 @@
             type="text" 
             [(ngModel)]="quickAddTitle" 
             placeholder="e.g. Uttara Extension Phase 3 or Gazipur"
-            class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500" />
+            class="erp-input text-xs" />
         </div>
 
         @if (quickAddType === 'PROJECT') {
@@ -425,24 +438,37 @@
               type="text" 
               [(ngModel)]="quickAddCode" 
               placeholder="e.g. PRJ-UTTARA-03"
-              class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500" />
+              class="erp-input text-xs" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">District / Location</label>
+            <input 
+              type="text" 
+              [(ngModel)]="quickAddLocation" 
+              placeholder="e.g. Dhaka or Narayanganj"
+              class="erp-input text-xs" />
           </div>
         }
 
         <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-700">
-          <button 
-            (click)="isQuickAddModalOpen = false"
-            class="px-3.5 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100">
+          <app-custom-button
+            variant="secondary"
+            size="sm"
+            (clicked)="isQuickAddModalOpen = false">
             Cancel
-          </button>
-          <button 
-            (click)="saveQuickOption()"
-            [disabled]="!quickAddTitle"
-            class="px-4 py-1.5 text-xs font-semibold rounded-xl bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50">
-            Save & Apply
-          </button>
+          </app-custom-button>
+
+          <app-custom-button
+            variant="primary"
+            size="sm"
+            [loading]="isSavingQuickOption"
+            [disabled]="!quickAddTitle.trim() || isSavingQuickOption"
+            (clicked)="saveQuickOption()">
+            Save & Select
+          </app-custom-button>
         </div>
       </div>
     </app-modal>
   }
 </div>
+

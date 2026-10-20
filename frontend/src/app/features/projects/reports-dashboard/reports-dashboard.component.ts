@@ -1,10 +1,9 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { ProjectService } from '../../../core/services/project.service';
 import { Project, ProjectPnLAnalyticsResponse } from '../../../core/models/project.model';
-import { ProjectNavComponent } from '../project-nav/project-nav.component';
 import {
   CardContainerComponent,
   SearchableSelectComponent,
@@ -17,14 +16,12 @@ import {
   imports: [
     CommonModule,
     FormsModule,
-    ProjectNavComponent,
     CardContainerComponent,
     SearchableSelectComponent
   ],
   template: `
     <div class="space-y-6">
       <!-- Project Navigation Bar -->
-      <app-project-nav activeCode="2.14"></app-project-nav>
 
       <!-- Executive KPI Overview Ribbon -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -187,24 +184,6 @@ import {
           </div>
         </div>
 
-        <!-- 9 Interactive Report Tabs Navigation Strip -->
-        <div class="border-b border-border mb-6">
-          <div class="flex items-center gap-1 overflow-x-auto pb-2 scrollbar-thin">
-            @for (tab of reportTabs; track tab.id) {
-              <button
-                type="button"
-                (click)="activeReportTab.set(tab.id)"
-                [class]="activeReportTab() === tab.id
-                  ? 'bg-primary text-primary-foreground font-semibold shadow-xs'
-                  : 'bg-card text-muted-foreground hover:text-foreground hover:bg-muted border border-border/60'"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs whitespace-nowrap transition-colors duration-150"
-              >
-                <span class="font-mono text-[10px] opacity-75 font-bold">{{ tab.code }}</span>
-                <span>{{ tab.label }}</span>
-              </button>
-            }
-          </div>
-        </div>
 
         <!-- Loading State -->
         @if (isLoading()) {
@@ -702,6 +681,7 @@ import {
 export class ProjectReportsDashboardComponent implements OnInit {
   private projectService = inject(ProjectService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   // Filter signals
   selectedProjectId = signal<number | null>(null);
@@ -784,6 +764,12 @@ export class ProjectReportsDashboardComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.route.queryParams.subscribe(params => {
+      const type = params['type'] || params['tab'];
+      if (type) {
+        this.activeReportTab.set(type);
+      }
+    });
     this.loadProjects();
     this.loadReportAnalytics();
   }

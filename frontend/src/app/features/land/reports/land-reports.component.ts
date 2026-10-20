@@ -1,11 +1,15 @@
-import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 import { LandService } from '../../../core/services/land.service';
 import { CardContainerComponent } from '../../../shared/components/card-container/card-container.component';
 import { ModalComponent } from '../../../shared/components/modal/modal.component';
 import { StatusBadgeComponent, StatusVariant } from '../../../shared/components/status-badge/status-badge.component';
+import { SearchableSelectComponent, SelectOption } from '../../../shared/components/searchable-select/searchable-select.component';
+import { CustomInputComponent } from '../../../shared/components/custom-input/custom-input.component';
+import { CustomButtonComponent } from '../../../shared/components/custom-button/custom-button.component';
 
 export interface ReportMeta {
   id: string;
@@ -38,127 +42,124 @@ export interface ReportColumn {
     RouterModule,
     CardContainerComponent,
     ModalComponent,
-    StatusBadgeComponent
+    StatusBadgeComponent,
+    SearchableSelectComponent,
+    CustomInputComponent,
+    CustomButtonComponent
   ],
   templateUrl: './land-reports.component.html',
   styleUrls: []
 })
 export class LandReportsComponent implements OnInit {
   private landService = inject(LandService);
+  private http = inject(HttpClient);
   private cdr = inject(ChangeDetectorRef);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
 
-  // 15 Reports Catalog
+  // Exact 14 Land Bank Reports matching user specification
   reportCatalog: ReportMeta[] = [
     {
-      id: 'landowner-master',
-      title: '1. Landowner Master & Owner-Wise Landholding',
-      category: 'Landowner & Ownership',
-      description: 'Comprehensive register of verified landowners, linked parcels, total landholding across districts, and NID verification status.',
-      icon: 'users'
+      id: 'land-bank-register',
+      title: '1. Land Bank Register',
+      category: 'Land Bank & Portfolio',
+      description: 'Comprehensive master register of all land bank holdings, zoning, acquisition models, total acreage, and status.',
+      icon: 'layers'
     },
     {
-      id: 'parcel-register',
-      title: '2. Land Parcel Register by District, Mouza, Khatian & Dag',
-      category: 'Cadastral & Land Registry',
-      description: 'Hierarchical registry of land parcels with linked CS, SA, RS, BS khatians, dags, JL numbers, and acquisition states.',
-      icon: 'map-pin'
-    },
-    {
-      id: 'opportunity-pipeline',
-      title: '3. Acquisition Opportunity Pipeline',
-      category: 'Deal Sourcing & Proposals',
-      description: 'Sourcing and feasibility pipeline of potential land proposals, broker channels, indicative costs, and FAR potential.',
+      id: 'proposed-acquired-land',
+      title: '2. Proposed & Acquired Land Report',
+      category: 'Acquisition & Proposals',
+      description: 'Comparative audit of proposed land proposals versus actually acquired land area, balance to acquire, and acquisition velocity.',
       icon: 'trending-up'
     },
     {
-      id: 'area-summary',
-      title: '4. Land Area Summary in Decimal, Katha, Bigha & SqFt',
-      category: 'Survey & Land Metrics',
-      description: 'Standardized multi-unit land conversion summary with road frontage verification and mathematical parity checks.',
+      id: 'landowner-joint-owner',
+      title: '3. Landowner & Joint-Owner Register',
+      category: 'Landowner & Ownership',
+      description: 'Complete register of landowners, joint-owners, fractional title ownership shares, NID verification, and linked parcels.',
+      icon: 'users'
+    },
+    {
+      id: 'mouza-khatian-dag',
+      title: '4. Mouza, Khatian & Dag Register',
+      category: 'Cadastral & Land Registry',
+      description: 'Hierarchical cadastral registry linking district, upazila, mouza JL numbers, CS/SA/RS/BS khatians, and dag records.',
+      icon: 'map-pin'
+    },
+    {
+      id: 'deed-mutation-status',
+      title: '5. Deed & Mutation Status Report',
+      category: 'Title & Mutation Vetting',
+      description: 'Lifecycle tracking of registered title deeds, Sub-Registry endorsements, mutation case status, DCR, and khajna tax receipts.',
+      icon: 'file-check'
+    },
+    {
+      id: 'land-area-reconciliation',
+      title: '6. Land Area Reconciliation Report',
+      category: 'Survey & Area Reconciliation',
+      description: 'Mathematical reconciliation across title deed area, physical boundary survey area, and AC Land mutation records.',
       icon: 'maximize-2'
     },
     {
-      id: 'ownership-discrepancy',
-      title: '5. Ownership Share & Discrepancy Report',
-      category: 'Landowner & Ownership',
-      description: 'Variance audit between recorded landowner fractional shares in title deeds versus field khatiyan claims.',
-      icon: 'alert-triangle'
-    },
-    {
-      id: 'unverified-documents',
-      title: '6. Missing or Unverified Document Report',
-      category: 'Legal & Title Vetting',
-      description: 'Detailed checklist of missing, expired, or unverified baya deeds, mutation khatians, DCR, and khajna tax receipts.',
-      icon: 'file-warning'
-    },
-    {
-      id: 'due-diligence-encumbrance',
-      title: '7. Legal Due-Diligence & Encumbrance Report',
-      category: 'Legal & Title Vetting',
-      description: 'Audit of legal encumbrances, pending civil litigations, non-encumbrance certificate (NEC) status, and legal risk levels.',
-      icon: 'shield-alert'
-    },
-    {
-      id: 'valuation-cost-sqft',
-      title: '8. Acquisition Valuation & Cost-per-Square-Foot Report',
-      category: 'Commercial & Costing',
-      description: 'Comparison of landowner asking price, independent market valuation, and negotiated rate with per-decimal and per-sqft metrics.',
+      id: 'valuation-acquisition-cost',
+      title: '7. Land Valuation & Acquisition Cost Report',
+      category: 'Commercial & Valuation',
+      description: 'Independent market valuation, Sub-Registry government mouza rates, owner asking prices, and negotiated acquisition cost per decimal.',
       icon: 'calculator'
     },
     {
-      id: 'expenditure-variance',
-      title: '9. Approved vs. Actual Acquisition Expenditure',
-      category: 'Commercial & Costing',
-      description: 'Variance tracking between board-approved acquisition budgets and actual expenditures across registration, duties, and legal fees.',
-      icon: 'bar-chart-2'
-    },
-    {
-      id: 'agreement-milestones',
-      title: '10. Agreement Expiry & Milestone Report',
-      category: 'Agreements & Joint Venture',
-      description: 'Lifecycle monitoring of JV and outright agreements, upcoming milestone deliverables, completion deadlines, and renewal alerts.',
-      icon: 'clock'
-    },
-    {
-      id: 'payment-schedule-balance',
-      title: '11. Owner-Wise Payment Schedule & Outstanding Balance',
-      category: 'Treasury & Finance',
-      description: 'Disbursement register tracking scheduled installments, actual bank postings, remaining balances, and accounting voucher links.',
+      id: 'owner-payment-outstanding',
+      title: '8. Owner-Wise Payment & Outstanding Report',
+      category: 'Treasury & Payments',
+      description: 'Landowner-wise financial ledger displaying total agreed consideration, advance paid, milestone installments, and net outstanding balance.',
       icon: 'credit-card'
     },
     {
-      id: 'overdue-installments',
-      title: '12. Overdue Installments & Upcoming Payment Obligations',
-      category: 'Treasury & Finance',
-      description: 'Critical alerts for delinquent acquisition payments, maturity aging, and upcoming 30-day cash flow commitments.',
-      icon: 'alert-circle'
+      id: 'jv-entitlement-agreement',
+      title: '9. JV Entitlement & Agreement Report',
+      category: 'Agreements & Joint Venture',
+      description: 'Joint Venture commercial agreement terms, developer vs. landowner allocation ratios, signing money, and delivery milestones.',
+      icon: 'clock'
     },
     {
-      id: 'project-wise-summary',
-      title: '13. Project-Wise Acquired Land & Acquisition Costs',
-      category: 'Executive Portfolio',
-      description: 'Portfolio aggregation summarizing total land bank accumulation, acquisition progress %, and capital expenditure by project.',
+      id: 'legal-risk-litigation',
+      title: '10. Legal Risk & Litigation Report',
+      category: 'Legal & Due-Diligence',
+      description: 'Due diligence assessment of pending civil litigations, non-encumbrance certificate (NEC) status, court injunctions, and risk ratings.',
+      icon: 'shield-alert'
+    },
+    {
+      id: 'missing-docs-compliance',
+      title: '11. Missing Documents & Compliance Report',
+      category: 'Compliance & Documentation',
+      description: 'Statutory audit checklist of missing baya deeds, uncertified khatian copies, delayed DCR receipts, and compliance flags.',
+      icon: 'file-warning'
+    },
+    {
+      id: 'future-projects-available',
+      title: '12. Land Available for Future Projects',
+      category: 'Land Bank & Portfolio',
+      description: 'Strategic inventory of uncommitted land bank reserves available for upcoming residential, commercial, and township developments.',
       icon: 'pie-chart'
     },
     {
-      id: 'approval-exception-history',
-      title: '14. Acquisition Approval History & Exception Report',
-      category: 'Governance & Compliance',
-      description: 'Audit trail of commercial concessions, high-risk legal exception clearances, board overrides, and formal approvals.',
-      icon: 'check-circle'
+      id: 'project-land-allocation',
+      title: '13. Project-Wise Land Allocation Report',
+      category: 'Development & Allocation',
+      description: 'Allocation of acquired land bank parcels to active real estate projects, tower footprints, infrastructure setbacks, and achieved FAR.',
+      icon: 'map'
     },
     {
-      id: 'acquisition-audit-trail',
-      title: '15. Land Acquisition Audit Trail',
-      category: 'Governance & Compliance',
-      description: 'Immutable chronological system event log tracking parcel creation, term revisions, survey modifications, and payment disbursements.',
-      icon: 'history'
+      id: 'budget-vs-actual',
+      title: '14. Acquisition Budget Versus Actual Report',
+      category: 'Commercial & Budgeting',
+      description: 'Variance analysis comparing board-approved capital budgets with actual expenditures across purchase price, duties, survey, and legal fees.',
+      icon: 'bar-chart-2'
     }
   ];
 
-  selectedReportId = 'landowner-master';
+  selectedReportId = 'land-bank-register';
   selectedCategory = 'ALL';
   reportSearchQuery = '';
 
@@ -175,12 +176,13 @@ export class LandReportsComponent implements OnInit {
   currentPage = 1;
   pageSize = 10;
   totalRecords = 0;
+  pageSizeOptions = [10, 25, 50, 100];
 
   // Dynamic Options (Searchable Dropdowns)
-  companyOptions: { value: any; label: string }[] = [];
-  projectOptions: { value: any; label: string }[] = [];
-  locationOptions: { value: any; label: string }[] = [];
-  statusOptions: { value: any; label: string }[] = [];
+  companyOptions: SelectOption[] = [];
+  projectOptions: SelectOption[] = [];
+  locationOptions: SelectOption[] = [];
+  statusOptions: SelectOption[] = [];
 
   // Active Report Data
   isLoading = false;
@@ -195,51 +197,18 @@ export class LandReportsComponent implements OnInit {
   detailKeys: string[] = [];
 
   isQuickAddModalOpen = false;
-  quickAddType = 'PROJECT';
+  quickAddType: 'PROJECT' | 'LOCATION' | 'COMPANY' = 'PROJECT';
   quickAddTitle = '';
   quickAddCode = '';
   quickAddLocation = '';
+  isSavingQuickOption = false;
 
-  ngOnInit(): void {
-    const d = new Date();
-    this.endDate = d.toISOString().substring(0, 10);
-    const past = new Date(d.setDate(d.getDate() - 90));
-    this.startDate = past.toISOString().substring(0, 10);
-
-    this.loadFilterOptions();
-
-    // Listen to queryParams from sidebar submenu clicks
-    this.route.queryParams.subscribe(params => {
-      if (params['type'] && params['type'] !== this.selectedReportId) {
-        this.selectedReportId = params['type'];
-        this.currentPage = 1;
-        this.loadReportData();
-      } else if (!this.activeReport) {
-        this.loadReportData();
-      }
-    });
-  }
-
-  onReportChange(newId: string): void {
-    if (this.selectedReportId === newId) return;
-    this.selectedReportId = newId;
-    this.currentPage = 1;
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { type: newId },
-      queryParamsHandling: 'merge'
-    });
-    this.loadReportData();
-  }
-
-  get filteredCatalog(): ReportMeta[] {
-    return this.reportCatalog.filter(r => {
-      const matchCat = this.selectedCategory === 'ALL' || r.category === this.selectedCategory;
-      const matchQuery = !this.reportSearchQuery ||
-        r.title.toLowerCase().includes(this.reportSearchQuery.toLowerCase()) ||
-        r.description.toLowerCase().includes(this.reportSearchQuery.toLowerCase());
-      return matchCat && matchQuery;
-    });
+  get reportOptions(): SelectOption[] {
+    return this.reportCatalog.map(r => ({
+      value: r.id,
+      label: r.title,
+      subLabel: r.category
+    }));
   }
 
   get currentReportMeta(): ReportMeta {
@@ -251,27 +220,79 @@ export class LandReportsComponent implements OnInit {
     return ['ALL', ...cats];
   }
 
+  ngOnInit(): void {
+    const d = new Date();
+    this.endDate = d.toISOString().substring(0, 10);
+    const past = new Date();
+    past.setDate(d.getDate() - 90);
+    this.startDate = past.toISOString().substring(0, 10);
+
+    this.loadFilterOptions();
+
+    // Listen to queryParams from sidebar clicks
+    this.route.queryParams.subscribe(params => {
+      if (params['type']) {
+        const found = this.reportCatalog.find(r => r.id === params['type']);
+        if (found) {
+          this.selectedReportId = found.id;
+        } else {
+          // Backward compatibility alias check
+          const aliasMap: Record<string, string> = {
+            'landowner-master': 'landowner-joint-owner',
+            'parcel-register': 'mouza-khatian-dag',
+            'opportunity-pipeline': 'proposed-acquired-land',
+            'area-summary': 'land-area-reconciliation',
+            'unverified-documents': 'missing-docs-compliance',
+            'due-diligence-encumbrance': 'legal-risk-litigation',
+            'valuation-cost-sqft': 'valuation-acquisition-cost',
+            'expenditure-variance': 'budget-vs-actual',
+            'agreement-milestones': 'jv-entitlement-agreement',
+            'payment-schedule-balance': 'owner-payment-outstanding',
+            'project-wise-summary': 'project-land-allocation'
+          };
+          this.selectedReportId = aliasMap[params['type']] || 'land-bank-register';
+        }
+        this.currentPage = 1;
+        this.loadReportData();
+      } else if (!this.activeReport) {
+        this.loadReportData();
+      }
+    });
+  }
+
+  onReportChange(newId: any): void {
+    const idStr = String(newId || '');
+    if (!idStr || this.selectedReportId === idStr) return;
+    this.selectedReportId = idStr;
+    this.currentPage = 1;
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { type: idStr },
+      queryParamsHandling: 'merge'
+    });
+    this.loadReportData();
+  }
+
   loadFilterOptions(): void {
     this.landService.getReportFilterOptions().subscribe({
       next: (res: any) => {
         if (res) {
-          this.companyOptions = res.companies || [];
-          this.projectOptions = res.projects || [];
-          this.locationOptions = res.districts || [];
-          this.statusOptions = res.statuses || [];
+          this.companyOptions = (res.companies || []).map((c: any) => ({ value: String(c.value), label: c.label }));
+          this.projectOptions = (res.projects || []).map((p: any) => ({ value: String(p.value), label: p.label, subLabel: p.district }));
+          this.locationOptions = (res.districts || []).map((d: any) => ({ value: String(d.value), label: d.label }));
+          this.statusOptions = (res.statuses || []).map((s: any) => ({ value: String(s.value), label: s.label }));
         }
         this.cdr.detectChanges();
       },
       error: () => {
-        // Fallback default options
         this.companyOptions = [
           { value: '1', label: 'Blue Oceans Real Estate Holdings Ltd.' },
           { value: '2', label: 'Blue Oceans Land Development Corp.' }
         ];
         this.projectOptions = [
-          { value: '1', label: 'PRJ-DHAKA-NORTH - Uttara Sector 18 Extension' },
-          { value: '2', label: 'PRJ-PURBACHAL-04 - Purbachal Smart Enclave' },
-          { value: '3', label: 'PRJ-KERANIGANJ-01 - Riverview Township' }
+          { value: '1', label: 'PRJ-DHAKA-NORTH - Uttara Sector 18 Extension', subLabel: 'Dhaka' },
+          { value: '2', label: 'PRJ-PURBACHAL-04 - Purbachal Smart Enclave', subLabel: 'Narayanganj' },
+          { value: '3', label: 'PRJ-KERANIGANJ-01 - Riverview Township', subLabel: 'Dhaka' }
         ];
         this.locationOptions = [
           { value: 'Dhaka', label: 'Dhaka' },
@@ -288,13 +309,6 @@ export class LandReportsComponent implements OnInit {
         this.cdr.detectChanges();
       }
     });
-  }
-
-  selectReport(reportId: string): void {
-    if (this.selectedReportId === reportId) return;
-    this.selectedReportId = reportId;
-    this.currentPage = 1;
-    this.loadReportData();
   }
 
   loadReportData(): void {
@@ -323,7 +337,7 @@ export class LandReportsComponent implements OnInit {
         this.cdr.detectChanges();
       },
       error: (err) => {
-        console.error('Error loading report', err);
+        console.error('Error loading land report', err);
         this.isLoading = false;
         this.cdr.detectChanges();
       }
@@ -350,6 +364,18 @@ export class LandReportsComponent implements OnInit {
     this.loadReportData();
   }
 
+  onPageSizeChange(newSize: number): void {
+    this.pageSize = Number(newSize);
+    this.currentPage = 1;
+    this.loadReportData();
+  }
+
+  readonly Math = Math;
+
+  get currentEndIndex(): number {
+    return Math.min(this.currentPage * this.pageSize, this.totalRecords);
+  }
+
   get totalPages(): number {
     return Math.ceil(this.totalRecords / this.pageSize) || 1;
   }
@@ -366,7 +392,7 @@ export class LandReportsComponent implements OnInit {
     this.selectedRowDetail = null;
   }
 
-  // --- Quick Create Dropdown Options ---
+  // --- Dynamic Quick Add for Dropdowns ---
   openQuickAdd(type: 'PROJECT' | 'LOCATION' | 'COMPANY'): void {
     this.quickAddType = type;
     this.quickAddTitle = '';
@@ -376,26 +402,61 @@ export class LandReportsComponent implements OnInit {
   }
 
   saveQuickOption(): void {
-    if (!this.quickAddTitle) return;
-    const newVal = String(Date.now());
-    if (this.quickAddType === 'PROJECT') {
-      const opt = { value: newVal, label: `${this.quickAddCode || 'PRJ'} - ${this.quickAddTitle}` };
-      this.projectOptions = [opt, ...this.projectOptions];
-      this.selectedProject = newVal;
-    } else if (this.quickAddType === 'LOCATION') {
-      const opt = { value: this.quickAddTitle, label: this.quickAddTitle };
-      this.locationOptions = [opt, ...this.locationOptions];
-      this.selectedLocation = this.quickAddTitle;
-    } else if (this.quickAddType === 'COMPANY') {
-      const opt = { value: newVal, label: this.quickAddTitle };
-      this.companyOptions = [opt, ...this.companyOptions];
-      this.selectedCompany = newVal;
-    }
-    this.isQuickAddModalOpen = false;
-    this.applyFilters();
+    if (!this.quickAddTitle.trim()) return;
+    this.isSavingQuickOption = true;
+
+    const payload = {
+      type: this.quickAddType,
+      title: this.quickAddTitle.trim(),
+      code: this.quickAddCode.trim(),
+      location: this.quickAddLocation.trim() || 'Dhaka'
+    };
+
+    this.http.post<any>('/api/v1/land/reports/filter-options/quick-create', payload).subscribe({
+      next: (res) => {
+        const newVal = String(res.value || Date.now());
+        const newLabel = res.label || this.quickAddTitle;
+        if (this.quickAddType === 'PROJECT') {
+          const opt: SelectOption = { value: newVal, label: newLabel, subLabel: res.district };
+          this.projectOptions = [opt, ...this.projectOptions];
+          this.selectedProject = newVal;
+        } else if (this.quickAddType === 'LOCATION') {
+          const opt: SelectOption = { value: res.value || this.quickAddTitle, label: newLabel };
+          this.locationOptions = [opt, ...this.locationOptions];
+          this.selectedLocation = String(res.value || this.quickAddTitle);
+        } else if (this.quickAddType === 'COMPANY') {
+          const opt: SelectOption = { value: newVal, label: newLabel };
+          this.companyOptions = [opt, ...this.companyOptions];
+          this.selectedCompany = newVal;
+        }
+        this.isSavingQuickOption = false;
+        this.isQuickAddModalOpen = false;
+        this.applyFilters();
+      },
+      error: () => {
+        // Fallback local addition if network fails
+        const fallbackVal = String(Date.now());
+        if (this.quickAddType === 'PROJECT') {
+          const opt: SelectOption = { value: fallbackVal, label: `${this.quickAddCode || 'PRJ'} - ${this.quickAddTitle}` };
+          this.projectOptions = [opt, ...this.projectOptions];
+          this.selectedProject = fallbackVal;
+        } else if (this.quickAddType === 'LOCATION') {
+          const opt: SelectOption = { value: this.quickAddTitle, label: this.quickAddTitle };
+          this.locationOptions = [opt, ...this.locationOptions];
+          this.selectedLocation = this.quickAddTitle;
+        } else if (this.quickAddType === 'COMPANY') {
+          const opt: SelectOption = { value: fallbackVal, label: this.quickAddTitle };
+          this.companyOptions = [opt, ...this.companyOptions];
+          this.selectedCompany = fallbackVal;
+        }
+        this.isSavingQuickOption = false;
+        this.isQuickAddModalOpen = false;
+        this.applyFilters();
+      }
+    });
   }
 
-  // --- Export to Excel ---
+  // --- Export to Excel (CSV) ---
   exportToExcel(): void {
     if (!this.rows || this.rows.length === 0) return;
     const headers = this.columns.map(c => `"${c.label.replace(/"/g, '""')}"`).join(',');
@@ -423,13 +484,13 @@ export class LandReportsComponent implements OnInit {
   getStatusVariant(val: string): StatusVariant {
     if (!val) return 'info';
     const s = String(val).toUpperCase();
-    if (s.includes('VERIFIED') || s.includes('CLEARED') || s.includes('ACQUIRED') || s.includes('APPROVED') || s.includes('ACTIVE') || s.includes('DISBURSED') || s.includes('UNDER_BUDGET')) {
+    if (s.includes('VERIFIED') || s.includes('CLEARED') || s.includes('ACQUIRED') || s.includes('APPROVED') || s.includes('ACTIVE') || s.includes('DISBURSED') || s.includes('COMPLETED')) {
       return 'success';
     }
-    if (s.includes('PENDING') || s.includes('REVIEW') || s.includes('CONDITION') || s.includes('EXPIRING') || s.includes('PARTIAL')) {
+    if (s.includes('PENDING') || s.includes('REVIEW') || s.includes('CONDITION') || s.includes('EXPIRING') || s.includes('PARTIAL') || s.includes('NEGOTIATING') || s.includes('MUTATION')) {
       return 'warning';
     }
-    if (s.includes('DISCREPANCY') || s.includes('MISSING') || s.includes('BLOCKED') || s.includes('OVERDUE') || s.includes('EXCEEDED') || s.includes('EXPIRED') || s.includes('CRITICAL')) {
+    if (s.includes('DISCREPANCY') || s.includes('MISSING') || s.includes('BLOCKED') || s.includes('OVERDUE') || s.includes('EXCEEDED') || s.includes('EXPIRED') || s.includes('CRITICAL') || s.includes('DISPUTED')) {
       return 'danger';
     }
     return 'info';
@@ -446,3 +507,4 @@ export class LandReportsComponent implements OnInit {
     return String(val);
   }
 }
+

@@ -144,6 +144,12 @@ class TowerResponse(TowerBase):
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
+class TowerPageResponse(BaseModel):
+    items: List[TowerResponse]
+    total: int
+    limit: int
+    offset: int
+
 
 # -------------------------------------------------------------
 # Floor Schemas (Submodule 2.4)
@@ -184,6 +190,12 @@ class FloorResponse(FloorBase):
     tower_name: Optional[str] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+
+class FloorPageResponse(BaseModel):
+    items: List[FloorResponse]
+    total: int
+    limit: int
+    offset: int
 
 
 # -------------------------------------------------------------
@@ -249,6 +261,12 @@ class ProjectUnitResponse(ProjectUnitBase):
     project_name: Optional[str] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+
+class ProjectUnitPageResponse(BaseModel):
+    items: List[ProjectUnitResponse]
+    total: int
+    limit: int
+    offset: int
 
 
 # -------------------------------------------------------------
@@ -864,6 +882,7 @@ class ProjectLandAllocationPaginationResponse(BaseModel):
     total: int
     skip: int
     limit: int
+    offset: int = 0
     total_allocated_cost_bdt: float = 0.00
     total_allocated_katha: float = 0.00
     total_allocated_decimal: float = 0.00

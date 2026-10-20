@@ -4,7 +4,6 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink, Router } from '@angular/router';
 import { ProjectService } from '../../../core/services/project.service';
 import { Project, AuthorityClearance, AuthorityClearancePaginationResponse } from '../../../core/models/project.model';
-import { ProjectNavComponent } from '../project-nav/project-nav.component';
 import {
   CardContainerComponent,
   SearchableSelectComponent,
@@ -21,7 +20,6 @@ import {
     FormsModule,
     ReactiveFormsModule,
     RouterLink,
-    ProjectNavComponent,
     CardContainerComponent,
     SearchableSelectComponent,
     CustomInputComponent
@@ -29,7 +27,6 @@ import {
   template: `
     <div class="space-y-6">
       <!-- Modular Submodule Header Strip -->
-      <app-project-nav activeCode="2.8"></app-project-nav>
 
       <!-- KPI Overview Cards -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
