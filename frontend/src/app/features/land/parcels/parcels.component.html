@@ -440,43 +440,88 @@
     <div class="space-y-4">
       <!-- Add Owner Association Form -->
       <div class="p-3 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl space-y-3">
-        <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200">Associate Landowner with Fractional Share</h4>
+        <div class="flex items-center justify-between">
+          <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200">Associate Landowner with Fractional Share</h4>
+          <!-- Live Calculated Share Preview -->
+          <div class="text-[11px] font-mono font-semibold px-2 py-0.5 rounded bg-purple-50 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+            Share: {{ newLinkSharePercent() }}% = {{ calculatedLinkDecimal() }} Dec ({{ calculatedLinkKatha() }} Katha | {{ calculatedLinkSqft() }} SFT)
+          </div>
+        </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
           <!-- Landowner Select -->
-          <div class="md:col-span-1">
-            <label class="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">Landowner *</label>
+          <div class="sm:col-span-2">
+            <label class="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">Landowner (ভূমির মালিক) *</label>
             <select [value]="newLinkOwnerId()" (change)="newLinkOwnerId.set(Number($any($event.target).value))"
               class="w-full px-2.5 py-1 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-purple-500">
               <option [value]="null">Select Owner...</option>
               @for (lo of landowners(); track lo.id) {
-              <option [value]="lo.id">{{ lo.full_name_en }} ({{ lo.landowner_code }})</option>
+              <option [value]="lo.id">{{ lo.full_name_en }} ({{ lo.landowner_code }}) - {{ lo.owner_type }}</option>
               }
+            </select>
+          </div>
+
+          <!-- Ownership Source / Nature -->
+          <div>
+            <label class="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">Ownership Source (উৎস) *</label>
+            <select [value]="newLinkOwnershipSource()" (change)="newLinkOwnershipSource.set($any($event.target).value)"
+              class="w-full px-2.5 py-1 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-purple-500">
+              <option value="INHERITANCE">Inherited (ওয়ারিশ সূত্রে)</option>
+              <option value="PURCHASE">Purchased Deed (সাব-কবলা)</option>
+              <option value="PARTITION_DEED">Partition Deed (বণ্টননামা)</option>
+              <option value="GIFT_HEBA">Gift / Heba Deed (হেবা/দানপত্র)</option>
+              <option value="COURT_DECREE">Court Decree (আদালতের ডিক্রি)</option>
             </select>
           </div>
 
           <!-- Share % -->
           <div>
-            <label class="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">Ownership Share (%)
-              *</label>
-            <input type="number" step="0.01" [value]="newLinkSharePercent()"
+            <label class="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">Share (%) *</label>
+            <input type="number" step="0.01" min="0.01" max="100" [value]="newLinkSharePercent()"
               (input)="newLinkSharePercent.set(Number($any($event.target).value))" placeholder="e.g. 50.00"
-              class="w-full px-2.5 py-1 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-purple-500" />
+              class="w-full px-2.5 py-1 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 font-mono font-bold focus:outline-none focus:ring-1 focus:ring-purple-500" />
           </div>
 
           <!-- Title Deed No -->
-          <div>
-            <label class="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">Title Deed
-              Number</label>
+          <div class="sm:col-span-2">
+            <label class="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">Title Deed Number / দলিলের নম্বর</label>
             <input type="text" [value]="newLinkDeedNo()" (input)="newLinkDeedNo.set($any($event.target).value)"
-              placeholder="Deed Ref..."
+              placeholder="e.g. Registered Deed # 12458/2023"
               class="w-full px-2.5 py-1 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-purple-500" />
+          </div>
+
+          <!-- Succession Document Name & Upload -->
+          <div class="sm:col-span-2">
+            <label class="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
+              Succession / Deed Attachment (ডকুমেন্টের নাম ও আপলোড)
+            </label>
+            <div class="flex items-center gap-2">
+              <input type="text" [value]="newLinkDocName()" (input)="newLinkDocName.set($any($event.target).value)"
+                placeholder="Document Name (e.g. Warishnamah / Deed Copy)"
+                class="flex-1 px-2.5 py-1 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 focus:outline-none" />
+
+              <input #parcelLinkDocInput type="file" class="hidden" accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx" (change)="onLinkDocSelected($event)" />
+
+              <button type="button" (click)="parcelLinkDocInput.click()" [disabled]="isUploadingLinkDoc()"
+                class="px-2.5 py-1 text-xs font-medium rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 text-slate-700 dark:text-slate-200 transition shrink-0 flex items-center gap-1 disabled:opacity-50">
+                @if (isUploadingLinkDoc()) {
+                  <svg class="animate-spin w-3 h-3 text-purple-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>
+                } @else {
+                  <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                }
+                <span>{{ newLinkDocFileUrl() ? 'Change' : 'Upload' }}</span>
+              </button>
+
+              @if (newLinkDocFileUrl()) {
+                <span class="text-xs text-emerald-600 font-bold">✓</span>
+              }
+            </div>
           </div>
         </div>
 
-        <div class="flex justify-end">
+        <div class="flex justify-end pt-1">
           <button type="button" (click)="addOwnerLink()" [disabled]="isLinkingOwner() || !newLinkOwnerId()"
-            class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-lg bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50 transition-colors shadow-2xs">
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50 transition-colors shadow-2xs">
             @if (isLinkingOwner()) {
             <svg class="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />

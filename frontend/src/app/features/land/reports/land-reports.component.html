@@ -5,7 +5,7 @@
       <div class="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
         <a routerLink="/land/dashboard" class="hover:text-blue-600 transition-colors">Land Intelligence</a>
         <span>/</span>
-        <span class="text-slate-700 dark:text-slate-200 font-semibold">Land Bank Reports (14)</span>
+        <span class="text-slate-700 dark:text-slate-200 font-semibold">Land Bank Reports</span>
       </div>
       <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mt-1">
         Land Bank & Intelligence Reports
@@ -16,24 +16,21 @@
     </div>
 
     <div class="flex items-center gap-2.5 flex-wrap">
-      <app-custom-button
-        variant="secondary"
-        size="sm"
-        [disabled]="isLoading || rows.length === 0"
+      <app-custom-button variant="secondary" size="sm" [disabled]="isLoading || rows.length === 0"
         (clicked)="exportToExcel()">
         <svg class="w-4 h-4 text-emerald-600 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
         Export Excel
       </app-custom-button>
 
-      <app-custom-button
-        variant="secondary"
-        size="sm"
-        [disabled]="isLoading || rows.length === 0"
+      <app-custom-button variant="secondary" size="sm" [disabled]="isLoading || rows.length === 0"
         (clicked)="exportToPDF()">
-        <svg class="w-4 h-4 text-slate-600 dark:text-slate-300 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+        <svg class="w-4 h-4 text-slate-600 dark:text-slate-300 mr-1.5" fill="none" viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
         </svg>
         Print / PDF
       </app-custom-button>
@@ -57,14 +54,16 @@
   <!-- ROOT REUSABLE CARD CONTAINER -->
   <app-card-container [customClass]="'p-4 md:p-6 space-y-5'">
     <!-- ACTIVE REPORT HEADER BANNER WITH SEARCHABLE SELECT REPORT SWITCHER -->
-    <div class="p-4 md:p-5 rounded-2xl bg-gradient-to-r from-blue-50/70 via-indigo-50/30 to-slate-50 dark:from-slate-800/90 dark:via-slate-850 dark:to-slate-900 border border-blue-100 dark:border-slate-800 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+    <div
+      class="p-4 md:p-5 rounded-2xl bg-gradient-to-r from-blue-50/70 via-indigo-50/30 to-slate-50 dark:from-slate-800/90 dark:via-slate-850 dark:to-slate-900 border border-blue-100 dark:border-slate-800 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
       <div class="space-y-1">
         <div class="flex items-center gap-2 flex-wrap">
           <span class="px-2 py-0.5 text-[10px] font-bold rounded-md bg-blue-600 text-white uppercase tracking-wider">
             {{ currentReportMeta.category }}
           </span>
           <span class="text-xs text-slate-500 dark:text-slate-400">
-            Report Key: <code class="font-mono text-blue-600 dark:text-blue-400 font-semibold">{{ currentReportMeta.id }}</code>
+            Report Key: <code
+              class="font-mono text-blue-600 dark:text-blue-400 font-semibold">{{ currentReportMeta.id }}</code>
           </span>
         </div>
         <h2 class="text-xl font-bold text-slate-900 dark:text-white">
@@ -81,12 +80,8 @@
           <label class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-1">
             Switch Report (1-14):
           </label>
-          <app-searchable-select
-            [options]="reportOptions"
-            [value]="selectedReportId"
-            (valueChange)="onReportChange($event)"
-            placeholder="Select a land bank report..."
-            [allowCreateNew]="false"
+          <app-searchable-select [options]="reportOptions" [value]="selectedReportId"
+            (valueChange)="onReportChange($event)" placeholder="Select a land bank report..." [allowCreateNew]="false"
             [searchable]="true">
           </app-searchable-select>
         </div>
@@ -99,17 +94,18 @@
     </div>
 
     <!-- DYNAMIC FILTER BAR WITH REUSABLE SEARCHABLE DROPDOWNS -->
-    <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 space-y-4 print:hidden">
+    <div
+      class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 space-y-4 print:hidden">
       <div class="flex items-center justify-between">
-        <span class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+        <span
+          class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
           <svg class="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
           </svg>
           Dynamic Searchable Filters
         </span>
-        <button 
-          type="button"
-          (click)="resetFilters()"
+        <button type="button" (click)="resetFilters()"
           class="text-xs font-medium text-slate-500 hover:text-blue-600 transition-colors cursor-pointer">
           Reset All Filters
         </button>
@@ -119,55 +115,32 @@
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         <!-- 1. Company Searchable Select -->
         <div>
-          <app-searchable-select
-            label="Company"
-            [options]="companyOptions"
-            [value]="selectedCompany"
-            (valueChange)="selectedCompany = $event; applyFilters()"
-            (createNew)="openQuickAdd('COMPANY')"
-            placeholder="All Companies"
-            [allowCreateNew]="true"
-            [searchable]="true">
+          <app-searchable-select label="Company" [options]="companyOptions" [value]="selectedCompany"
+            (valueChange)="selectedCompany = $event; applyFilters()" (createNew)="openQuickAdd('COMPANY')"
+            placeholder="All Companies" [allowCreateNew]="true" [searchable]="true">
           </app-searchable-select>
         </div>
 
         <!-- 2. Project Searchable Select -->
         <div>
-          <app-searchable-select
-            label="Project"
-            [options]="projectOptions"
-            [value]="selectedProject"
-            (valueChange)="selectedProject = $event; applyFilters()"
-            (createNew)="openQuickAdd('PROJECT')"
-            placeholder="All Projects"
-            [allowCreateNew]="true"
-            [searchable]="true">
+          <app-searchable-select label="Project" [options]="projectOptions" [value]="selectedProject"
+            (valueChange)="selectedProject = $event; applyFilters()" (createNew)="openQuickAdd('PROJECT')"
+            placeholder="All Projects" [allowCreateNew]="true" [searchable]="true">
           </app-searchable-select>
         </div>
 
         <!-- 3. Location / District Searchable Select -->
         <div>
-          <app-searchable-select
-            label="District / Location"
-            [options]="locationOptions"
-            [value]="selectedLocation"
-            (valueChange)="selectedLocation = $event; applyFilters()"
-            (createNew)="openQuickAdd('LOCATION')"
-            placeholder="All Districts"
-            [allowCreateNew]="true"
-            [searchable]="true">
+          <app-searchable-select label="District / Location" [options]="locationOptions" [value]="selectedLocation"
+            (valueChange)="selectedLocation = $event; applyFilters()" (createNew)="openQuickAdd('LOCATION')"
+            placeholder="All Districts" [allowCreateNew]="true" [searchable]="true">
           </app-searchable-select>
         </div>
 
         <!-- 4. Acquisition Status Searchable Select -->
         <div>
-          <app-searchable-select
-            label="Status"
-            [options]="statusOptions"
-            [value]="selectedStatus"
-            (valueChange)="selectedStatus = $event; applyFilters()"
-            placeholder="All Statuses"
-            [allowCreateNew]="false"
+          <app-searchable-select label="Status" [options]="statusOptions" [value]="selectedStatus"
+            (valueChange)="selectedStatus = $event; applyFilters()" placeholder="All Statuses" [allowCreateNew]="false"
             [searchable]="true">
           </app-searchable-select>
         </div>
@@ -177,11 +150,7 @@
           <label class="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1.5 tracking-wide">
             From Date
           </label>
-          <input 
-            type="date" 
-            [(ngModel)]="startDate" 
-            (change)="applyFilters()"
-            class="erp-input text-xs" />
+          <input type="date" [(ngModel)]="startDate" (change)="applyFilters()" class="erp-input text-xs" />
         </div>
 
         <!-- 6. End Date -->
@@ -189,32 +158,24 @@
           <label class="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1.5 tracking-wide">
             To Date
           </label>
-          <input 
-            type="date" 
-            [(ngModel)]="endDate" 
-            (change)="applyFilters()"
-            class="erp-input text-xs" />
+          <input type="date" [(ngModel)]="endDate" (change)="applyFilters()" class="erp-input text-xs" />
         </div>
       </div>
 
       <!-- Full-text Keyword Search Bar -->
       <div class="flex items-center gap-2 pt-1">
         <div class="relative flex-1">
-          <input 
-            type="text" 
-            [(ngModel)]="searchTerm" 
-            (keyup.enter)="applyFilters()"
-            placeholder="Type keyword, landowner name, parcel code, deed # or khatian..." 
+          <input type="text" [(ngModel)]="searchTerm" (keyup.enter)="applyFilters()"
+            placeholder="Type keyword, landowner name, parcel code, deed # or khatian..."
             class="erp-input text-xs pl-8" />
-          <svg class="w-4 h-4 absolute left-2.5 top-2.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          <svg class="w-4 h-4 absolute left-2.5 top-2.5 text-slate-400" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
         </div>
 
-        <app-custom-button
-          variant="primary"
-          size="sm"
-          (clicked)="applyFilters()">
+        <app-custom-button variant="primary" size="sm" (clicked)="applyFilters()">
           Filter Data
         </app-custom-button>
       </div>
@@ -222,31 +183,35 @@
 
     <!-- DYNAMIC SUMMARY KPI CARDS (DEDICATED PER REPORT) -->
     @if (summaryCards && summaryCards.length > 0) {
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-        @for (card of summaryCards; track card.label) {
-          <div class="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs flex flex-col justify-between">
-            <div class="flex items-center justify-between text-slate-500 dark:text-slate-400">
-              <span class="text-xs font-semibold text-slate-700 dark:text-slate-300">{{ card.label }}</span>
-              @if (card.badge) {
-                <span class="px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200/50 dark:border-blue-900/50">
-                  {{ card.badge }}
-                </span>
-              }
-            </div>
-            <div class="mt-2">
-              <h3 class="text-xl font-bold text-slate-900 dark:text-white">{{ card.value }}</h3>
-              @if (card.subValue) {
-                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{{ card.subValue }}</p>
-              }
-            </div>
-          </div>
-        }
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+      @for (card of summaryCards; track card.label) {
+      <div
+        class="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs flex flex-col justify-between">
+        <div class="flex items-center justify-between text-slate-500 dark:text-slate-400">
+          <span class="text-xs font-semibold text-slate-700 dark:text-slate-300">{{ card.label }}</span>
+          @if (card.badge) {
+          <span
+            class="px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200/50 dark:border-blue-900/50">
+            {{ card.badge }}
+          </span>
+          }
+        </div>
+        <div class="mt-2">
+          <h3 class="text-xl font-bold text-slate-900 dark:text-white">{{ card.value }}</h3>
+          @if (card.subValue) {
+          <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{{ card.subValue }}</p>
+          }
+        </div>
       </div>
+      }
+    </div>
     }
 
     <!-- REPORT TABULAR RESULTS -->
-    <div class="rounded-2xl border border-slate-200/90 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900 shadow-2xs">
-      <div class="p-3.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/60 dark:bg-slate-800/40">
+    <div
+      class="rounded-2xl border border-slate-200/90 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900 shadow-2xs">
+      <div
+        class="p-3.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/60 dark:bg-slate-800/40">
         <div class="flex items-center gap-2">
           <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
           <span class="text-xs font-bold text-slate-800 dark:text-slate-200">
@@ -262,117 +227,111 @@
       <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse">
           <thead>
-            <tr class="bg-slate-50/90 dark:bg-slate-800/80 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200/70 dark:border-slate-800">
+            <tr
+              class="bg-slate-50/90 dark:bg-slate-800/80 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200/70 dark:border-slate-800">
               <th class="py-3 px-3.5 w-12 text-center">#</th>
               @for (col of columns; track col.key) {
-                <th class="py-3 px-3.5">{{ col.label }}</th>
+              <th class="py-3 px-3.5">{{ col.label }}</th>
               }
               <th class="py-3 px-3.5 text-right w-20 print:hidden">Action</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-slate-100 dark:divide-slate-800/70 text-xs text-slate-800 dark:text-slate-200 font-medium">
+          <tbody
+            class="divide-y divide-slate-100 dark:divide-slate-800/70 text-xs text-slate-800 dark:text-slate-200 font-medium">
             @if (isLoading) {
-              <tr>
-                <td [attr.colspan]="columns.length + 2" class="py-12 text-center text-slate-500">
-                  <div class="inline-flex items-center gap-2">
-                    <svg class="animate-spin h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24">
-                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-                    </svg>
-                    <span>Loading report registers...</span>
-                  </div>
-                </td>
-              </tr>
+            <tr>
+              <td [attr.colspan]="columns.length + 2" class="py-12 text-center text-slate-500">
+                <div class="inline-flex items-center gap-2">
+                  <svg class="animate-spin h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                  </svg>
+                  <span>Loading report registers...</span>
+                </div>
+              </td>
+            </tr>
             } @else if (rows.length === 0) {
-              <tr>
-                <td [attr.colspan]="columns.length + 2" class="py-12 text-center text-slate-500">
-                  <div class="flex flex-col items-center justify-center gap-1.5">
-                    <svg class="w-8 h-8 text-slate-300 dark:text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    <p class="font-semibold text-slate-700 dark:text-slate-300">No report records found</p>
-                    <p class="text-xs text-slate-400">Try adjusting your date range or filter criteria.</p>
-                  </div>
-                </td>
-              </tr>
+            <tr>
+              <td [attr.colspan]="columns.length + 2" class="py-12 text-center text-slate-500">
+                <div class="flex flex-col items-center justify-center gap-1.5">
+                  <svg class="w-8 h-8 text-slate-300 dark:text-slate-600" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <p class="font-semibold text-slate-700 dark:text-slate-300">No report records found</p>
+                  <p class="text-xs text-slate-400">Try adjusting your date range or filter criteria.</p>
+                </div>
+              </td>
+            </tr>
             } @else {
-              @for (row of rows; track $index) {
-                <tr 
-                  (click)="openRowDetail(row)"
-                  class="hover:bg-blue-50/50 dark:hover:bg-blue-950/20 cursor-pointer transition-colors">
-                  <td class="py-2.5 px-3.5 text-center text-slate-400 text-[11px]">
-                    {{ (currentPage - 1) * pageSize + $index + 1 }}
-                  </td>
+            @for (row of rows; track $index) {
+            <tr (click)="openRowDetail(row)"
+              class="hover:bg-blue-50/50 dark:hover:bg-blue-950/20 cursor-pointer transition-colors">
+              <td class="py-2.5 px-3.5 text-center text-slate-400 text-[11px]">
+                {{ (currentPage - 1) * pageSize + $index + 1 }}
+              </td>
 
-                  @for (col of columns; track col.key) {
-                    <td class="py-2.5 px-3.5">
-                      @if (col.type === 'badge') {
-                        <app-status-badge 
-                          [status]="row[col.key]" 
-                          [variant]="getStatusVariant(row[col.key])">
-                        </app-status-badge>
-                      } @else if (col.type === 'code') {
-                        <span class="font-mono text-[11px] font-bold text-blue-600 dark:text-blue-400">
-                          {{ row[col.key] || '-' }}
-                        </span>
-                      } @else {
-                        <span>{{ formatValue(row[col.key], col.type) }}</span>
-                      }
-                    </td>
-                  }
-
-                  <td class="py-2.5 px-3.5 text-right print:hidden">
-                    <button 
-                      type="button"
-                      (click)="openRowDetail(row); $event.stopPropagation()"
-                      class="text-blue-600 hover:text-blue-800 dark:text-blue-400 text-xs font-semibold cursor-pointer">
-                      Inspect
-                    </button>
-                  </td>
-                </tr>
+              @for (col of columns; track col.key) {
+              <td class="py-2.5 px-3.5">
+                @if (col.type === 'badge') {
+                <app-status-badge [status]="row[col.key]" [variant]="getStatusVariant(row[col.key])">
+                </app-status-badge>
+                } @else if (col.type === 'code') {
+                <span class="font-mono text-[11px] font-bold text-blue-600 dark:text-blue-400">
+                  {{ row[col.key] || '-' }}
+                </span>
+                } @else {
+                <span>{{ formatValue(row[col.key], col.type) }}</span>
+                }
+              </td>
               }
+
+              <td class="py-2.5 px-3.5 text-right print:hidden">
+                <button type="button" (click)="openRowDetail(row); $event.stopPropagation()"
+                  class="text-blue-600 hover:text-blue-800 dark:text-blue-400 text-xs font-semibold cursor-pointer">
+                  Inspect
+                </button>
+              </td>
+            </tr>
+            }
             }
           </tbody>
         </table>
       </div>
 
       <!-- SERVER-SIDE PAGINATION TOOLBAR -->
-      <div class="p-3.5 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/40 dark:bg-slate-900/40 print:hidden">
+      <div
+        class="p-3.5 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/40 dark:bg-slate-900/40 print:hidden">
         <div class="flex items-center gap-3 text-xs text-slate-500">
           <span>
-            Showing {{ totalRecords === 0 ? 0 : (currentPage - 1) * pageSize + 1 }} to {{ currentEndIndex }} of {{ totalRecords }} entries
+            Showing {{ totalRecords === 0 ? 0 : (currentPage - 1) * pageSize + 1 }} to {{ currentEndIndex }} of {{
+            totalRecords }} entries
           </span>
 
           <div class="flex items-center gap-1.5">
             <span class="text-slate-400">Page size:</span>
-            <select
-              [ngModel]="pageSize"
-              (ngModelChange)="onPageSizeChange($event)"
+            <select [ngModel]="pageSize" (ngModelChange)="onPageSizeChange($event)"
               class="px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300">
               @for (size of pageSizeOptions; track size) {
-                <option [value]="size">{{ size }}</option>
+              <option [value]="size">{{ size }}</option>
               }
             </select>
           </div>
         </div>
 
         <div class="flex items-center gap-1.5">
-          <button 
-            type="button"
-            [disabled]="currentPage === 1" 
-            (click)="onPageChange(currentPage - 1)"
+          <button type="button" [disabled]="currentPage === 1" (click)="onPageChange(currentPage - 1)"
             class="px-2.5 py-1 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 disabled:opacity-40 hover:bg-slate-100 cursor-pointer">
             ← Prev
           </button>
-          
-          <span class="px-3 py-1 text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 rounded-lg">
+
+          <span
+            class="px-3 py-1 text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 rounded-lg">
             {{ currentPage }} / {{ totalPages }}
           </span>
 
-          <button 
-            type="button"
-            [disabled]="currentPage >= totalPages" 
-            (click)="onPageChange(currentPage + 1)"
+          <button type="button" [disabled]="currentPage >= totalPages" (click)="onPageChange(currentPage + 1)"
             class="px-2.5 py-1 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 disabled:opacity-40 hover:bg-slate-100 cursor-pointer">
             Next →
           </button>
@@ -383,92 +342,67 @@
 
   <!-- DETAIL AUDIT MODAL (DRILL-DOWN) -->
   @if (isDetailModalOpen && selectedRowDetail) {
-    <app-modal 
-      title="Audit Inspection & Full Record Details" 
-      subtitle="Complete data attributes and statutory audit trail."
-      (close)="closeDetailModal()">
-      <div class="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          @for (k of detailKeys; track k) {
-            <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60">
-              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-                {{ k.replace('_', ' ') }}
-              </span>
-              <span class="text-xs font-semibold text-slate-800 dark:text-slate-200 break-words mt-0.5 block">
-                {{ selectedRowDetail[k] ?? '-' }}
-              </span>
-            </div>
-          }
+  <app-modal title="Audit Inspection & Full Record Details"
+    subtitle="Complete data attributes and statutory audit trail." (close)="closeDetailModal()">
+    <div class="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        @for (k of detailKeys; track k) {
+        <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+            {{ k.replace('_', ' ') }}
+          </span>
+          <span class="text-xs font-semibold text-slate-800 dark:text-slate-200 break-words mt-0.5 block">
+            {{ selectedRowDetail[k] ?? '-' }}
+          </span>
         </div>
-
-        <div class="flex items-center justify-end pt-3 border-t border-slate-200 dark:border-slate-700">
-          <app-custom-button
-            variant="secondary"
-            size="sm"
-            (clicked)="closeDetailModal()">
-            Close Audit View
-          </app-custom-button>
-        </div>
+        }
       </div>
-    </app-modal>
+
+      <div class="flex items-center justify-end pt-3 border-t border-slate-200 dark:border-slate-700">
+        <app-custom-button variant="secondary" size="sm" (clicked)="closeDetailModal()">
+          Close Audit View
+        </app-custom-button>
+      </div>
+    </div>
+  </app-modal>
   }
 
   <!-- QUICK ADD OPTION MODAL (FOR DYNAMIC DROPDOWNS) -->
   @if (isQuickAddModalOpen) {
-    <app-modal 
-      [title]="'Add New ' + quickAddType" 
-      subtitle="Creates a dynamic option and instantly selects it in this report."
-      (close)="isQuickAddModalOpen = false">
-      <div class="space-y-4">
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-            {{ quickAddType }} Title / Name *
-          </label>
-          <input 
-            type="text" 
-            [(ngModel)]="quickAddTitle" 
-            placeholder="e.g. Uttara Extension Phase 3 or Gazipur"
-            class="erp-input text-xs" />
-        </div>
-
-        @if (quickAddType === 'PROJECT') {
-          <div>
-            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Project Code</label>
-            <input 
-              type="text" 
-              [(ngModel)]="quickAddCode" 
-              placeholder="e.g. PRJ-UTTARA-03"
-              class="erp-input text-xs" />
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">District / Location</label>
-            <input 
-              type="text" 
-              [(ngModel)]="quickAddLocation" 
-              placeholder="e.g. Dhaka or Narayanganj"
-              class="erp-input text-xs" />
-          </div>
-        }
-
-        <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-700">
-          <app-custom-button
-            variant="secondary"
-            size="sm"
-            (clicked)="isQuickAddModalOpen = false">
-            Cancel
-          </app-custom-button>
-
-          <app-custom-button
-            variant="primary"
-            size="sm"
-            [loading]="isSavingQuickOption"
-            [disabled]="!quickAddTitle.trim() || isSavingQuickOption"
-            (clicked)="saveQuickOption()">
-            Save & Select
-          </app-custom-button>
-        </div>
+  <app-modal [title]="'Add New ' + quickAddType"
+    subtitle="Creates a dynamic option and instantly selects it in this report." (close)="isQuickAddModalOpen = false">
+    <div class="space-y-4">
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+          {{ quickAddType }} Title / Name *
+        </label>
+        <input type="text" [(ngModel)]="quickAddTitle" placeholder="e.g. Uttara Extension Phase 3 or Gazipur"
+          class="erp-input text-xs" />
       </div>
-    </app-modal>
+
+      @if (quickAddType === 'PROJECT') {
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Project Code</label>
+        <input type="text" [(ngModel)]="quickAddCode" placeholder="e.g. PRJ-UTTARA-03" class="erp-input text-xs" />
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">District / Location</label>
+        <input type="text" [(ngModel)]="quickAddLocation" placeholder="e.g. Dhaka or Narayanganj"
+          class="erp-input text-xs" />
+      </div>
+      }
+
+      <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-700">
+        <app-custom-button variant="secondary" size="sm" (clicked)="isQuickAddModalOpen = false">
+          Cancel
+        </app-custom-button>
+
+        <app-custom-button variant="primary" size="sm" [loading]="isSavingQuickOption"
+          [disabled]="!quickAddTitle.trim() || isSavingQuickOption" (clicked)="saveQuickOption()">
+          Save & Select
+        </app-custom-button>
+      </div>
+    </div>
+  </app-modal>
   }
 </div>
-

@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status, UploadFile, File, Form
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, desc, or_
 from sqlalchemy.orm import selectinload
 from typing import List, Optional
 from datetime import date, datetime, timedelta
+import os, uuid, shutil
 
 from app.core.database import get_db
 from app.modules.land.models import (
@@ -171,6 +172,9 @@ async def create_landowner(
         full_name_en=payload.full_name_en.strip(),
         full_name_bn=payload.full_name_bn.strip() if payload.full_name_bn else None,
         father_mother_spouse_name=payload.father_mother_spouse_name,
+        father_name=payload.father_name,
+        mother_name=payload.mother_name,
+        spouse_name=payload.spouse_name,
         present_address=payload.present_address,
         permanent_address=payload.permanent_address,
         nid_number=payload.nid_number.strip() if payload.nid_number else None,
@@ -203,6 +207,76 @@ async def create_landowner(
     resp = LandownerResponse.model_validate(landowner)
     resp.linked_parcels_count = 0
     return resp
+
+
+NID_UPLOAD_DIR = os.path.join("app", "static", "uploads", "nid_scans")
+os.makedirs(NID_UPLOAD_DIR, exist_ok=True)
+
+@router.post("/landowners/{landowner_id}/upload-nid", status_code=200)
+async def upload_landowner_nid(
+    landowner_id: int,
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db)
+):
+    """Upload NID scan/image for a landowner and save path to their record."""
+    stmt = select(Landowner).where(Landowner.id == landowner_id)
+    res = await db.execute(stmt)
+    landowner = res.scalar_one_or_none()
+    if not landowner:
+        raise HTTPException(status_code=404, detail="Landowner not found")
+
+    filename = file.filename or "nid_scan.jpg"
+    ext = os.path.splitext(filename)[1].lower()
+    allowed_exts = [".jpg", ".jpeg", ".png", ".webp", ".pdf"]
+    if ext not in allowed_exts:
+        raise HTTPException(status_code=400, detail=f"Unsupported file format '{ext}'. Allowed: jpg, jpeg, png, webp, pdf")
+
+    unique_filename = f"nid_{landowner_id}_{uuid.uuid4().hex[:8]}{ext}"
+    file_path = os.path.join(NID_UPLOAD_DIR, unique_filename)
+
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    nid_url = f"/static/uploads/nid_scans/{unique_filename}"
+    landowner.nid_image_path = nid_url
+    await db.commit()
+
+    return {"nid_image_path": nid_url, "message": "NID image uploaded successfully"}
+
+
+LANDOWNER_DOCS_DIR = os.path.join("app", "static", "uploads", "landowner_docs")
+os.makedirs(LANDOWNER_DOCS_DIR, exist_ok=True)
+
+@router.post("/landowners/upload-document", status_code=200)
+async def upload_landowner_document(
+    file: UploadFile = File(...),
+    document_name: Optional[str] = Form(None)
+):
+    """Upload supporting document for landowner (works in both Create and Edit modes)."""
+    filename = file.filename or "document.pdf"
+    ext = os.path.splitext(filename)[1].lower()
+    allowed_exts = [".jpg", ".jpeg", ".png", ".webp", ".pdf", ".doc", ".docx", ".xls", ".xlsx"]
+    if ext not in allowed_exts:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported file format '{ext}'. Allowed: {', '.join(allowed_exts)}"
+        )
+
+    unique_filename = f"doc_{uuid.uuid4().hex[:12]}{ext}"
+    file_path = os.path.join(LANDOWNER_DOCS_DIR, unique_filename)
+
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    doc_url = f"/static/uploads/landowner_docs/{unique_filename}"
+    return {
+        "file_url": doc_url,
+        "file_name": filename,
+        "document_name": document_name or filename,
+        "file_size": os.path.getsize(file_path),
+        "extension": ext
+    }
+
 
 
 @router.post("/landowners/check-duplicate", response_model=LandownerDuplicateCheckResponse)
@@ -1056,7 +1130,8 @@ async def create_proposal(
         status=payload.status.upper() if payload.status else "DRAFT_PROPOSAL",
         workflow_stage=payload.workflow_stage or "IDENTIFIED",
         location_description=payload.location_description,
-        preliminary_valuation_notes=payload.preliminary_valuation_notes
+        preliminary_valuation_notes=payload.preliminary_valuation_notes,
+        feasibility_report_summary=payload.feasibility_report_summary
     )
 
     db.add(proposal)
@@ -1068,13 +1143,18 @@ async def create_proposal(
             lo = Landowner(
                 landowner_code=lo_code,
                 land_bank_id=proposal.id,
-                owner_type=lo_data.owner_type,
+                owner_type=lo_data.owner_type or "INDIVIDUAL",
+                ownership_nature=lo_data.ownership_nature or "INHERITED",
                 full_name_en=lo_data.full_name_en,
                 full_name_bn=lo_data.full_name_bn,
+                father_name=lo_data.father_name,
+                mother_name=lo_data.mother_name,
+                spouse_name=lo_data.spouse_name,
                 nid_number=lo_data.nid_number,
                 tin_number=lo_data.tin_number,
                 phone_number=lo_data.phone_number,
-                ownership_share_ratio=lo_data.ownership_share_ratio,
+                ownership_share_ratio=lo_data.ownership_share_ratio if lo_data.ownership_share_ratio is not None else 1.0,
+                supporting_documents=lo_data.supporting_documents,
                 bank_details=lo_data.bank_details,
                 status="ACTIVE"
             )
@@ -1192,6 +1272,8 @@ async def update_proposal(
         proposal.workflow_stage = payload.workflow_stage
     if payload.preliminary_valuation_notes is not None:
         proposal.preliminary_valuation_notes = payload.preliminary_valuation_notes
+    if payload.feasibility_report_summary is not None:
+        proposal.feasibility_report_summary = payload.feasibility_report_summary
     if payload.location_description is not None:
         proposal.location_description = payload.location_description
 
@@ -1206,9 +1288,35 @@ async def update_proposal(
         proposal.total_area_bigha = converted["bigha"]
         proposal.total_area_sqft = converted["sqft"]
 
-        # Re-calc built-up
         far = float(proposal.far_potential or 4.5)
         proposal.estimated_builtup_sqft = round(converted["sqft"] * far, 2)
+
+    if payload.landowners is not None:
+        for lo in proposal.landowners or []:
+            await db.delete(lo)
+        await db.flush()
+        for idx, lo_data in enumerate(payload.landowners):
+            lo_code = f"LND-OWN-{(proposal.id * 10 + idx + 1):04d}"
+            lo = Landowner(
+                landowner_code=lo_code,
+                land_bank_id=proposal.id,
+                owner_type=lo_data.owner_type or "INDIVIDUAL",
+                ownership_nature=lo_data.ownership_nature or "INHERITED",
+                full_name_en=lo_data.full_name_en,
+                full_name_bn=lo_data.full_name_bn,
+                father_name=lo_data.father_name,
+                mother_name=lo_data.mother_name,
+                spouse_name=lo_data.spouse_name,
+                nid_number=lo_data.nid_number,
+                tin_number=lo_data.tin_number,
+                phone_number=lo_data.phone_number,
+                ownership_share_ratio=lo_data.ownership_share_ratio if lo_data.ownership_share_ratio is not None else 1.0,
+                supporting_documents=lo_data.supporting_documents,
+                bank_details=lo_data.bank_details,
+                status="ACTIVE"
+            )
+            db.add(lo)
+        await db.flush()
 
     await db.commit()
     await db.refresh(proposal)
@@ -1387,10 +1495,13 @@ async def convert_area_regional(
     # Calculate base sqft from input
     unit = payload.input_unit.upper()
     val = payload.input_value
+    sqm_to_sqft = 10.7639104167
 
     calculated_sqft = 0.0
     if unit == "SQFT":
         calculated_sqft = val
+    elif unit == "SQM":
+        calculated_sqft = val * sqm_to_sqft
     elif unit == "DECIMAL":
         calculated_sqft = val * decimal_factor
     elif unit == "KATHA":
@@ -1406,6 +1517,7 @@ async def convert_area_regional(
 
     converted = {
         "sqft": round(calculated_sqft, 2),
+        "sqm": round(calculated_sqft / sqm_to_sqft, 4),
         "decimal": round(calculated_sqft / decimal_factor, 4) if decimal_factor > 0 else 0.0,
         "katha": round(calculated_sqft / katha_factor, 4) if katha_factor > 0 else 0.0,
         "bigha": round(calculated_sqft / bigha_sqft, 4) if bigha_sqft > 0 else 0.0,
@@ -1429,6 +1541,7 @@ async def convert_area_regional(
             "bigha_to_katha": bigha_to_katha,
             "bigha_to_sqft": bigha_sqft,
             "acre_to_sqft": acre_factor,
+            "sqm_to_sqft": sqm_to_sqft,
             "kani_to_sqft": kani_sqft,
             "gonda_to_sqft": gonda_sqft
         }
@@ -1851,7 +1964,8 @@ async def list_jv_agreements(
         select(JVAgreement)
         .options(
             selectinload(JVAgreement.unit_allocations),
-            selectinload(JVAgreement.milestones)
+            selectinload(JVAgreement.milestones),
+            selectinload(JVAgreement.parcel)
         )
         .order_by(desc(JVAgreement.id))
     )
@@ -1872,18 +1986,47 @@ async def create_jv_agreement(
             detail=f"Landowner share ({payload.landowner_share_percent}%) + Developer share ({payload.developer_share_percent}%) must sum to 100.00%."
         )
 
+    lb_id = payload.land_bank_id
+    if not lb_id and payload.parcel_id:
+        p_res = await db.execute(select(LandParcel).where(LandParcel.id == payload.parcel_id))
+        p_obj = p_res.scalar_one_or_none()
+        if p_obj and p_obj.land_bank_id:
+            lb_id = p_obj.land_bank_id
+    if not lb_id:
+        lb_res = await db.execute(select(LandBank.id).limit(1))
+        lb_id = lb_res.scalar()
+
     jv = JVAgreement(
-        land_bank_id=payload.land_bank_id,
+        land_bank_id=lb_id,
+        parcel_id=payload.parcel_id,
         agreement_deed_no=payload.agreement_deed_no.strip(),
+        agreement_type=payload.agreement_type or "JOINT_VENTURE_DEVELOPMENT",
+        registration_deed_no=payload.registration_deed_no,
+        registration_office=payload.registration_office,
+        registration_date=payload.registration_date,
+        witness_count=payload.witness_count if payload.witness_count is not None else 2,
         landowner_share_percent=payload.landowner_share_percent,
         developer_share_percent=payload.developer_share_percent,
         signing_money_total=payload.signing_money_total,
         signing_money_paid=payload.signing_money_paid or 0.0,
         tenure_months=payload.tenure_months,
+        allocated_flats_count=payload.allocated_flats_count or 0,
+        allocated_shops_count=payload.allocated_shops_count or 0,
+        allocated_car_parks_count=payload.allocated_car_parks_count or 0,
+        allocated_cash_bdt=payload.allocated_cash_bdt or 0.0,
+        obligations_developer=payload.obligations_developer,
+        obligations_landowner=payload.obligations_landowner,
+        special_conditions=payload.special_conditions,
+        amendment_number=payload.amendment_number or 0,
+        termination_conditions=payload.termination_conditions,
+        missing_consents_flag=bool(payload.missing_consents_flag),
         poa_deed_number=payload.poa_deed_number,
         poa_execution_date=payload.poa_execution_date,
         poa_expiry_date=payload.poa_expiry_date,
         poa_verified=payload.poa_verified if payload.poa_verified is not None else True,
+        agreement_document_name=payload.agreement_document_name,
+        agreement_file_url=payload.agreement_file_url,
+        supporting_documents=payload.supporting_documents,
         status="ACTIVE"
     )
 
@@ -1903,7 +2046,7 @@ async def create_jv_agreement(
                 gross_sft=u.gross_sft or 1500.0,
                 parking_slot_number=u.parking_slot_number,
                 allocation_notes=u.allocation_notes,
-                is_locked_for_sales=False
+                is_locked_for_sales=(u.allocation_type == "LANDOWNER_UNIT")
             )
             db.add(alloc)
 
@@ -3120,6 +3263,40 @@ async def get_negotiation_alerts(
     )
 
 
+AGREEMENT_DOCS_DIR = os.path.join("app", "static", "uploads", "agreement_docs")
+os.makedirs(AGREEMENT_DOCS_DIR, exist_ok=True)
+
+@router.post("/negotiations/upload-agreement", status_code=200)
+async def upload_negotiation_agreement_document(
+    file: UploadFile = File(...),
+    document_name: Optional[str] = Form(None)
+):
+    """Upload agreement document (PDF, JPG, PNG, DOC, DOCX) for commercial negotiations."""
+    filename = file.filename or "agreement.pdf"
+    ext = os.path.splitext(filename)[1].lower()
+    allowed_exts = [".pdf", ".jpg", ".jpeg", ".png", ".webp", ".doc", ".docx"]
+    if ext not in allowed_exts:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported file format '{ext}'. Allowed: {', '.join(allowed_exts)}"
+        )
+
+    unique_filename = f"agmt_{uuid.uuid4().hex[:12]}{ext}"
+    file_path = os.path.join(AGREEMENT_DOCS_DIR, unique_filename)
+
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    doc_url = f"/static/uploads/agreement_docs/{unique_filename}"
+    return {
+        "file_url": doc_url,
+        "file_name": filename,
+        "document_name": document_name or filename,
+        "file_size": os.path.getsize(file_path),
+        "extension": ext
+    }
+
+
 @router.get("/negotiations", response_model=List[LandNegotiationResponse])
 async def list_negotiations(
     parcel_id: Optional[int] = Query(None),
@@ -3228,6 +3405,9 @@ async def create_negotiation(
         agreement_execution_date=payload.agreement_execution_date,
         agreement_expiry_date=payload.agreement_expiry_date,
         agreement_status=payload.agreement_status or "DRAFTING",
+        agreement_document_name=payload.agreement_document_name,
+        agreement_file_url=payload.agreement_file_url,
+        supporting_documents=payload.supporting_documents,
         is_delayed=is_delayed,
         current_version=1
     )

@@ -1,45 +1,39 @@
 <app-card-container [paddingClass]="'p-4 sm:p-6'">
   <!-- Header & Actions -->
-  <div class="flex flex-col md:flex-row md:items-center justify-between pb-6 mb-6 border-b border-slate-200 dark:border-slate-800 gap-4">
+  <div
+    class="flex flex-col md:flex-row md:items-center justify-between pb-6 mb-6 border-b border-slate-200 dark:border-slate-800 gap-4">
     <div>
       <div class="flex items-center gap-2.5">
-        <div class="w-10 h-10 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/20">
+        <div
+          class="w-10 h-10 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/20">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
           </svg>
         </div>
         <div>
           <h1 class="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
             Land Payment Schedules & Outstanding Balances
-            <span class="text-xs px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 font-semibold border border-emerald-200 dark:border-emerald-800">
-              Module 2.10
-            </span>
           </h1>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Connects land acquisition agreements with treasury and general ledger. Manages contractual installments, variation controls, and GL voucher postings.
-          </p>
         </div>
       </div>
     </div>
 
     <!-- Top Action Buttons -->
     <div class="flex items-center gap-2.5 shrink-0">
-      <button
-        (click)="openAutoGenerateModal()"
-        class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/30 hover:bg-blue-100 text-blue-700 dark:text-blue-300 font-medium text-xs transition-all duration-150 active:scale-95"
-      >
+      <button (click)="openAutoGenerateModal()"
+        class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/30 hover:bg-blue-100 text-blue-700 dark:text-blue-300 font-medium text-xs transition-all duration-150 active:scale-95">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
         </svg>
         Auto-Generate From Agreement
       </button>
 
-      <button
-        (click)="openCreateModal()"
-        class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs shadow-sm shadow-emerald-500/20 transition-all duration-150 active:scale-95"
-      >
+      <button (click)="openCreateModal()"
+        class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs shadow-sm shadow-emerald-500/20 transition-all duration-150 active:scale-95">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
         </svg>
         New Payment Installment
       </button>
@@ -49,79 +43,95 @@
   <!-- KPI Reconciliation Overview Cards -->
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 mb-6">
     <!-- Total Contractual Due -->
-    <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 flex items-center justify-between">
+    <div
+      class="p-4 rounded-xl bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 flex items-center justify-between">
       <div>
-        <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Contractual Dues</p>
+        <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total
+          Contractual Dues</p>
         <h3 class="text-base font-bold text-slate-900 dark:text-slate-100 mt-1">
           BDT {{ (reconciliation?.total_contractual_due_bdt || 0) | number:'1.2-2' }}
         </h3>
-        <p class="text-[11px] text-slate-400 mt-0.5">{{ reconciliation?.schedules_count || 0 }} scheduled installments</p>
+        <p class="text-[11px] text-slate-400 mt-0.5">{{ reconciliation?.schedules_count || 0 }} scheduled installments
+        </p>
       </div>
-      <div class="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-500/20">
+      <div
+        class="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-500/20">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
         </svg>
       </div>
     </div>
 
     <!-- Approved for Payment -->
-    <div class="p-4 rounded-xl bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-200/50 dark:border-indigo-900/40 flex items-center justify-between">
+    <div
+      class="p-4 rounded-xl bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-200/50 dark:border-indigo-900/40 flex items-center justify-between">
       <div>
-        <p class="text-[11px] font-semibold uppercase tracking-wider text-indigo-700 dark:text-indigo-400">Approved for Payment</p>
+        <p class="text-[11px] font-semibold uppercase tracking-wider text-indigo-700 dark:text-indigo-400">Approved for
+          Payment</p>
         <h3 class="text-base font-bold text-indigo-900 dark:text-indigo-200 mt-1">
           BDT {{ (reconciliation?.total_approved_bdt || 0) | number:'1.2-2' }}
         </h3>
         <p class="text-[11px] text-indigo-600/80 mt-0.5">Authorized by treasury</p>
       </div>
-      <div class="w-9 h-9 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center border border-indigo-500/20">
+      <div
+        class="w-9 h-9 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center border border-indigo-500/20">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       </div>
     </div>
 
     <!-- Total Paid & Posted -->
-    <div class="p-4 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-800/40 flex items-center justify-between">
+    <div
+      class="p-4 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-800/40 flex items-center justify-between">
       <div>
-        <p class="text-[11px] font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Posted & Disbursed</p>
+        <p class="text-[11px] font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Posted &
+          Disbursed</p>
         <h3 class="text-base font-bold text-emerald-800 dark:text-emerald-300 mt-1">
           BDT {{ (reconciliation?.total_paid_bdt || 0) | number:'1.2-2' }}
         </h3>
         <p class="text-[11px] text-emerald-600 mt-0.5">{{ reconciliation?.paid_count || 0 }} settled vouchers</p>
       </div>
-      <div class="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/20">
+      <div
+        class="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/20">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       </div>
     </div>
 
     <!-- Outstanding Payable Balance -->
-    <div class="p-4 rounded-xl bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-800/40 flex items-center justify-between">
+    <div
+      class="p-4 rounded-xl bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-800/40 flex items-center justify-between">
       <div>
-        <p class="text-[11px] font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-400">Outstanding Balance</p>
+        <p class="text-[11px] font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-400">Outstanding
+          Balance</p>
         <h3 class="text-base font-bold text-amber-800 dark:text-amber-300 mt-1">
           BDT {{ (reconciliation?.total_outstanding_bdt || 0) | number:'1.2-2' }}
         </h3>
         <p class="text-[11px] text-amber-600 mt-0.5">{{ reconciliation?.pending_count || 0 }} remaining installments</p>
       </div>
-      <div class="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-500/20">
+      <div
+        class="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-500/20">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       </div>
     </div>
 
     <!-- Overdue Installments -->
-    <div 
-      (click)="selectTab('overdue')"
-      class="p-4 rounded-xl bg-rose-50/60 dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-800/40 flex items-center justify-between cursor-pointer hover:border-rose-300 transition-colors"
-    >
+    <div (click)="selectTab('overdue')"
+      class="p-4 rounded-xl bg-rose-50/60 dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-800/40 flex items-center justify-between cursor-pointer hover:border-rose-300 transition-colors">
       <div>
         <div class="flex items-center gap-1.5">
-          <p class="text-[11px] font-semibold uppercase tracking-wider text-rose-700 dark:text-rose-400">Overdue Dues</p>
+          <p class="text-[11px] font-semibold uppercase tracking-wider text-rose-700 dark:text-rose-400">Overdue Dues
+          </p>
           @if ((reconciliation?.overdue_count || 0) > 0) {
-            <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
+          <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
           }
         </div>
         <h3 class="text-base font-bold text-rose-800 dark:text-rose-300 mt-1">
@@ -129,9 +139,11 @@
         </h3>
         <p class="text-[11px] text-rose-600 mt-0.5">{{ reconciliation?.overdue_count || 0 }} overdue installments</p>
       </div>
-      <div class="w-9 h-9 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center border border-rose-500/20">
+      <div
+        class="w-9 h-9 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center border border-rose-500/20">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
         </svg>
       </div>
     </div>
@@ -139,782 +151,685 @@
 
   <!-- Tab Navigation -->
   <div class="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 mb-6 overflow-x-auto">
-    <button
-      (click)="selectTab('schedules')"
+    <button (click)="selectTab('schedules')"
       [ngClass]="activeTab === 'schedules' ? 'border-emerald-600 text-emerald-600 dark:text-emerald-400' : 'border-transparent text-slate-600 dark:text-slate-400'"
-      class="flex items-center gap-2 py-3 px-4 border-b-2 font-medium text-xs whitespace-nowrap transition-colors hover:text-slate-900 dark:hover:text-slate-200"
-    >
+      class="flex items-center gap-2 py-3 px-4 border-b-2 font-medium text-xs whitespace-nowrap transition-colors hover:text-slate-900 dark:hover:text-slate-200">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
       </svg>
       Contractual Payment Schedules
-      <span class="px-2 py-0.5 rounded-full text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+      <span
+        class="px-2 py-0.5 rounded-full text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
         {{ schedules.length }}
       </span>
     </button>
 
-    <button
-      (click)="selectTab('disbursements')"
+    <button (click)="selectTab('disbursements')"
       [ngClass]="activeTab === 'disbursements' ? 'border-emerald-600 text-emerald-600 dark:text-emerald-400' : 'border-transparent text-slate-600 dark:text-slate-400'"
-      class="flex items-center gap-2 py-3 px-4 border-b-2 font-medium text-xs whitespace-nowrap transition-colors hover:text-slate-900 dark:hover:text-slate-200"
-    >
+      class="flex items-center gap-2 py-3 px-4 border-b-2 font-medium text-xs whitespace-nowrap transition-colors hover:text-slate-900 dark:hover:text-slate-200">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
       </svg>
       Treasury Disbursements & Ledger Vouchers
-      <span class="px-2 py-0.5 rounded-full text-[10px] bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+      <span
+        class="px-2 py-0.5 rounded-full text-[10px] bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
         {{ getAllDisbursements().length }}
       </span>
     </button>
 
-    <button
-      (click)="selectTab('approvals')"
+    <button (click)="selectTab('approvals')"
       [ngClass]="activeTab === 'approvals' ? 'border-emerald-600 text-emerald-600 dark:text-emerald-400' : 'border-transparent text-slate-600 dark:text-slate-400'"
-      class="flex items-center gap-2 py-3 px-4 border-b-2 font-medium text-xs whitespace-nowrap transition-colors hover:text-slate-900 dark:hover:text-slate-200"
-    >
+      class="flex items-center gap-2 py-3 px-4 border-b-2 font-medium text-xs whitespace-nowrap transition-colors hover:text-slate-900 dark:hover:text-slate-200">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
       </svg>
       Approval & Variation Queue
       @if (getPendingApprovalSchedules().length > 0) {
-        <span class="px-2 py-0.5 rounded-full text-[10px] bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 font-bold">
-          {{ getPendingApprovalSchedules().length }}
-        </span>
+      <span
+        class="px-2 py-0.5 rounded-full text-[10px] bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 font-bold">
+        {{ getPendingApprovalSchedules().length }}
+      </span>
       }
     </button>
 
-    <button
-      (click)="selectTab('overdue')"
+    <button (click)="selectTab('overdue')"
       [ngClass]="activeTab === 'overdue' ? 'border-emerald-600 text-emerald-600 dark:text-emerald-400' : 'border-transparent text-slate-600 dark:text-slate-400'"
-      class="flex items-center gap-2 py-3 px-4 border-b-2 font-medium text-xs whitespace-nowrap transition-colors hover:text-slate-900 dark:hover:text-slate-200"
-    >
+      class="flex items-center gap-2 py-3 px-4 border-b-2 font-medium text-xs whitespace-nowrap transition-colors hover:text-slate-900 dark:hover:text-slate-200">
       <svg class="w-4 h-4 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
       </svg>
       Overdue Installments Alert
       @if ((reconciliation?.overdue_count || 0) > 0) {
-        <span class="px-2 py-0.5 rounded-full text-[10px] bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 font-bold">
-          {{ reconciliation?.overdue_count }}
-        </span>
+      <span
+        class="px-2 py-0.5 rounded-full text-[10px] bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 font-bold">
+        {{ reconciliation?.overdue_count }}
+      </span>
       }
     </button>
   </div>
 
   <!-- TAB 1: CONTRACTUAL PAYMENT SCHEDULES & DUES -->
   @if (activeTab === 'schedules') {
-    <!-- Filter Bar -->
-    <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 mb-6">
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-2">
-        <!-- Search -->
-        <div>
-          <label class="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1.5">Search Dues & Vouchers</label>
-          <input
-            type="text"
-            [(ngModel)]="searchTerm"
-            (keyup.enter)="applyFilters()"
-            placeholder="Search code, title, voucher, ref..."
-            class="erp-input text-xs"
-          />
-        </div>
+  <!-- Filter Bar -->
+  <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 mb-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-2">
+      <!-- Search -->
+      <div>
+        <label class="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1.5">Search Dues &
+          Vouchers</label>
+        <input type="text" [(ngModel)]="searchTerm" (keyup.enter)="applyFilters()"
+          placeholder="Search code, title, voucher, ref..." class="erp-input text-xs" />
+      </div>
 
-        <!-- Parcel Filter -->
-        <div>
-          <app-searchable-select
-            label="Filter by Parcel"
-            [options]="parcelOptions"
-            [(ngModel)]="selectedParcelFilter"
-            (selectionChange)="applyFilters()"
-            placeholder="All Parcels"
-          ></app-searchable-select>
-        </div>
+      <!-- Parcel Filter -->
+      <div>
+        <app-searchable-select label="Filter by Parcel" [options]="parcelOptions" [(ngModel)]="selectedParcelFilter"
+          (selectionChange)="applyFilters()" placeholder="All Parcels"></app-searchable-select>
+      </div>
 
-        <!-- Payment Type Filter (Dynamic Lookup) -->
-        <div>
-          <app-searchable-select
-            categoryCode="LAND_PAYMENT_TYPE"
-            label="Payment Type"
-            [(ngModel)]="selectedTypeFilter"
-            (selectionChange)="applyFilters()"
-            placeholder="All Payment Types"
-          ></app-searchable-select>
-        </div>
+      <!-- Payment Type Filter (Dynamic Lookup) -->
+      <div>
+        <app-searchable-select categoryCode="LAND_PAYMENT_TYPE" label="Payment Type" [(ngModel)]="selectedTypeFilter"
+          (selectionChange)="applyFilters()" placeholder="All Payment Types"></app-searchable-select>
+      </div>
 
-        <!-- Approval Status Filter (Dynamic Lookup) -->
-        <div>
-          <app-searchable-select
-            categoryCode="LAND_PAYMENT_STATUS"
-            label="Approval / Settlement Status"
-            [(ngModel)]="selectedStatusFilter"
-            (selectionChange)="applyFilters()"
-            placeholder="All Statuses"
-          ></app-searchable-select>
-        </div>
+      <!-- Approval Status Filter (Dynamic Lookup) -->
+      <div>
+        <app-searchable-select categoryCode="LAND_PAYMENT_STATUS" label="Approval / Settlement Status"
+          [(ngModel)]="selectedStatusFilter" (selectionChange)="applyFilters()"
+          placeholder="All Statuses"></app-searchable-select>
+      </div>
 
-        <!-- Overdue Toggle & Reset -->
-        <div class="flex items-end gap-2">
-          <label class="flex items-center gap-2 text-xs font-medium text-slate-700 dark:text-slate-300 cursor-pointer h-9 px-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 select-none">
-            <input
-              type="checkbox"
-              [(ngModel)]="onlyOverdueFilter"
-              (change)="applyFilters()"
-              class="rounded border-slate-300 text-rose-600 focus:ring-rose-500"
-            />
-            <span class="text-rose-600 dark:text-rose-400 font-semibold">Overdue Only</span>
-          </label>
+      <!-- Overdue Toggle & Reset -->
+      <div class="flex items-end gap-2">
+        <label
+          class="flex items-center gap-2 text-xs font-medium text-slate-700 dark:text-slate-300 cursor-pointer h-9 px-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 select-none">
+          <input type="checkbox" [(ngModel)]="onlyOverdueFilter" (change)="applyFilters()"
+            class="rounded border-slate-300 text-rose-600 focus:ring-rose-500" />
+          <span class="text-rose-600 dark:text-rose-400 font-semibold">Overdue Only</span>
+        </label>
 
-          <button
-            (click)="resetFilters()"
-            class="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-medium transition-colors h-9"
-          >
-            Reset
-          </button>
-        </div>
+        <button (click)="resetFilters()"
+          class="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-medium transition-colors h-9">
+          Reset
+        </button>
       </div>
     </div>
+  </div>
 
-    <!-- Master Schedules Table -->
-    <div class="rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900 shadow-xs mb-4">
-      <div class="overflow-x-auto">
-        <table class="w-full text-left text-xs">
-          <thead class="bg-slate-50 dark:bg-slate-850 border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-            <tr>
-              <th class="py-3 px-4">Code & Stage</th>
-              <th class="py-3 px-4">Parcel & Beneficiary</th>
-              <th class="py-3 px-4">Due Date</th>
-              <th class="py-3 px-4">Contractual Due</th>
-              <th class="py-3 px-4">Paid / Settled</th>
-              <th class="py-3 px-4">Outstanding Balance</th>
-              <th class="py-3 px-4">Status & GL Voucher</th>
-              <th class="py-3 px-4 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
-            @if (isLoading) {
-              <tr>
-                <td colspan="8" class="text-center py-10 text-slate-500">
-                  <div class="inline-flex items-center gap-2">
-                    <svg class="animate-spin h-4 w-4 text-emerald-600" fill="none" viewBox="0 0 24 24">
-                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-                    </svg>
-                    Loading payment schedules...
-                  </div>
-                </td>
-              </tr>
-            } @else if (schedules.length === 0) {
-              <tr>
-                <td colspan="8" class="text-center py-12 text-slate-500">
-                  <div class="max-w-xs mx-auto text-center">
-                    <svg class="w-10 h-10 mx-auto text-slate-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                    </svg>
-                    <p class="font-medium text-slate-700 dark:text-slate-300">No payment schedules found</p>
-                    <p class="text-[11px] text-slate-400 mt-1">Generate a 4-stage schedule from an approved agreement or create one manually.</p>
-                    <button
-                      (click)="openAutoGenerateModal()"
-                      class="mt-3 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-medium hover:bg-emerald-700"
-                    >
-                      + Auto-Generate Schedule
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            } @else {
-              @for (sched of schedules; track sched.id) {
-                <tr 
-                  (click)="selectSchedule(sched)"
-                  [ngClass]="activeSchedule?.id === sched.id ? 'bg-emerald-50/40 dark:bg-emerald-950/20' : ''"
-                  class="hover:bg-slate-50 dark:hover:bg-slate-850/60 transition-colors cursor-pointer"
-                >
-                  <!-- Code & Stage -->
-                  <td class="py-3 px-4">
-                    <div class="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
-                      {{ sched.schedule_code }}
-                      @if (sched.is_overdue) {
-                        <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 border border-rose-200 dark:border-rose-900">
-                          OVERDUE
-                        </span>
-                      }
-                    </div>
-                    <div class="text-[11px] text-slate-600 dark:text-slate-400 font-medium truncate max-w-xs" [title]="sched.installment_title">
-                      {{ sched.installment_title }}
-                    </div>
-                  </td>
+  <!-- Master Schedules Table -->
+  <div
+    class="rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900 shadow-xs mb-4">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs">
+        <thead
+          class="bg-slate-50 dark:bg-slate-850 border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+          <tr>
+            <th class="py-3 px-4">Code & Stage</th>
+            <th class="py-3 px-4">Parcel & Beneficiary</th>
+            <th class="py-3 px-4">Due Date</th>
+            <th class="py-3 px-4">Contractual Due</th>
+            <th class="py-3 px-4">Paid / Settled</th>
+            <th class="py-3 px-4">Outstanding Balance</th>
+            <th class="py-3 px-4">Status & GL Voucher</th>
+            <th class="py-3 px-4 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+          @if (isLoading) {
+          <tr>
+            <td colspan="8" class="text-center py-10 text-slate-500">
+              <div class="inline-flex items-center gap-2">
+                <svg class="animate-spin h-4 w-4 text-emerald-600" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                </svg>
+                Loading payment schedules...
+              </div>
+            </td>
+          </tr>
+          } @else if (schedules.length === 0) {
+          <tr>
+            <td colspan="8" class="text-center py-12 text-slate-500">
+              <div class="max-w-xs mx-auto text-center">
+                <svg class="w-10 h-10 mx-auto text-slate-400 mb-2" fill="none" stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <p class="font-medium text-slate-700 dark:text-slate-300">No payment schedules found</p>
+                <p class="text-[11px] text-slate-400 mt-1">Generate a 4-stage schedule from an approved agreement or
+                  create one manually.</p>
+                <button (click)="openAutoGenerateModal()"
+                  class="mt-3 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-medium hover:bg-emerald-700">
+                  + Auto-Generate Schedule
+                </button>
+              </div>
+            </td>
+          </tr>
+          } @else {
+          @for (sched of schedules; track sched.id) {
+          <tr (click)="selectSchedule(sched)"
+            [ngClass]="activeSchedule?.id === sched.id ? 'bg-emerald-50/40 dark:bg-emerald-950/20' : ''"
+            class="hover:bg-slate-50 dark:hover:bg-slate-850/60 transition-colors cursor-pointer">
+            <!-- Code & Stage -->
+            <td class="py-3 px-4">
+              <div class="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                {{ sched.schedule_code }}
+                @if (sched.is_overdue) {
+                <span
+                  class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 border border-rose-200 dark:border-rose-900">
+                  OVERDUE
+                </span>
+                }
+              </div>
+              <div class="text-[11px] text-slate-600 dark:text-slate-400 font-medium truncate max-w-xs"
+                [title]="sched.installment_title">
+                {{ sched.installment_title }}
+              </div>
+            </td>
 
-                  <!-- Parcel & Beneficiary -->
-                  <td class="py-3 px-4">
-                    <div class="font-medium text-slate-800 dark:text-slate-200">
-                      {{ getParcelName(sched.parcel_id) }}
-                    </div>
-                    <div class="text-[11px] text-slate-500 dark:text-slate-400">
-                      {{ sched.beneficiary_name || getLandownerName(sched.landowner_id) }}
-                      @if (sched.beneficiary_bank_name) {
-                        <span class="text-[10px] text-slate-400">&bull; {{ sched.beneficiary_bank_name }}</span>
-                      }
-                    </div>
-                  </td>
+            <!-- Parcel & Beneficiary -->
+            <td class="py-3 px-4">
+              <div class="font-medium text-slate-800 dark:text-slate-200">
+                {{ getParcelName(sched.parcel_id) }}
+              </div>
+              <div class="text-[11px] text-slate-500 dark:text-slate-400">
+                {{ sched.beneficiary_name || getLandownerName(sched.landowner_id) }}
+                @if (sched.beneficiary_bank_name) {
+                <span class="text-[10px] text-slate-400">&bull; {{ sched.beneficiary_bank_name }}</span>
+                }
+              </div>
+            </td>
 
-                  <!-- Due Date -->
-                  <td class="py-3 px-4">
-                    <div class="font-medium text-slate-800 dark:text-slate-200">
-                      {{ sched.due_date }}
-                    </div>
-                    <div class="text-[10px] text-slate-500">
-                      {{ sched.payment_method }}
-                    </div>
-                  </td>
+            <!-- Due Date -->
+            <td class="py-3 px-4">
+              <div class="font-medium text-slate-800 dark:text-slate-200">
+                {{ sched.due_date }}
+              </div>
+              <div class="text-[10px] text-slate-500">
+                {{ sched.payment_method }}
+              </div>
+            </td>
 
-                  <!-- Contractual Due -->
-                  <td class="py-3 px-4 font-bold text-slate-900 dark:text-slate-100">
-                    BDT {{ sched.due_amount_bdt | number:'1.2-2' }}
-                    @if (sched.approved_variation_amount > 0) {
-                      <div class="text-[10px] text-amber-600">
-                        + Var: BDT {{ sched.approved_variation_amount | number:'1.2-2' }}
-                      </div>
-                    }
-                  </td>
-
-                  <!-- Paid Amount -->
-                  <td class="py-3 px-4 font-semibold text-emerald-600 dark:text-emerald-400">
-                    BDT {{ sched.paid_amount_bdt | number:'1.2-2' }}
-                  </td>
-
-                  <!-- Outstanding Balance -->
-                  <td class="py-3 px-4 font-bold" [ngClass]="sched.outstanding_amount_bdt > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400'">
-                    BDT {{ sched.outstanding_amount_bdt | number:'1.2-2' }}
-                  </td>
-
-                  <!-- Status & Voucher -->
-                  <td class="py-3 px-4">
-                    <div class="flex flex-col gap-1 items-start">
-                      <app-status-badge [status]="sched.approval_status" [variant]="getStatusVariant(sched.approval_status)"></app-status-badge>
-                      @if (sched.accounting_voucher_no) {
-                        <span class="text-[10px] font-mono font-medium text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">
-                          {{ sched.accounting_voucher_no }}
-                        </span>
-                      }
-                    </div>
-                  </td>
-
-                  <!-- Actions -->
-                  <td class="py-3 px-4 text-right" (click)="$event.stopPropagation()">
-                    <div class="flex items-center justify-end gap-1.5">
-                      <!-- Disburse Payment Button -->
-                      @if (sched.outstanding_amount_bdt > 0) {
-                        <button
-                          (click)="openDisburseModal(sched)"
-                          class="p-1.5 rounded-lg border border-emerald-200 dark:border-emerald-800/60 bg-emerald-50/50 dark:bg-emerald-950/30 hover:bg-emerald-100 text-emerald-700 dark:text-emerald-300 transition-colors"
-                          title="Disburse Payment & Link GL Voucher"
-                        >
-                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
-                          </svg>
-                        </button>
-                      }
-
-                      <!-- Approve Variation / Schedule -->
-                      @if (sched.approval_status !== 'POSTED_PAID') {
-                        <button
-                          (click)="openApproveModal(sched)"
-                          class="p-1.5 rounded-lg border border-indigo-200 dark:border-indigo-800/60 bg-indigo-50/50 dark:bg-indigo-950/30 hover:bg-indigo-100 text-indigo-700 dark:text-indigo-300 transition-colors"
-                          title="Authorize Payment & Variation Limits"
-                        >
-                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-                          </svg>
-                        </button>
-                      }
-
-                      <!-- Edit Schedule -->
-                      <button
-                        (click)="openEditModal(sched)"
-                        class="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors"
-                        title="Edit Schedule Parameters"
-                      >
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                        </svg>
-                      </button>
-
-                      <!-- Delete Schedule -->
-                      @if (sched.paid_amount_bdt === 0) {
-                        <button
-                          (click)="deleteSchedule(sched.id)"
-                          class="p-1.5 rounded-lg border border-rose-200 dark:border-rose-800 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-rose-600 dark:text-rose-400 transition-colors"
-                          title="Delete Schedule"
-                        >
-                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                          </svg>
-                        </button>
-                      }
-                    </div>
-                  </td>
-                </tr>
+            <!-- Contractual Due -->
+            <td class="py-3 px-4 font-bold text-slate-900 dark:text-slate-100">
+              BDT {{ sched.due_amount_bdt | number:'1.2-2' }}
+              @if (sched.approved_variation_amount > 0) {
+              <div class="text-[10px] text-amber-600">
+                + Var: BDT {{ sched.approved_variation_amount | number:'1.2-2' }}
+              </div>
               }
-            }
-          </tbody>
-        </table>
-      </div>
+            </td>
 
-      <!-- Pagination Footer -->
-      <div class="px-4 py-3 bg-slate-50 dark:bg-slate-850 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500">
-        <div>
-          Page {{ currentPage }} &bull; {{ schedules.length }} installments listed
-        </div>
-        <div class="flex items-center gap-2">
-          <button
-            (click)="prevPage()"
-            [disabled]="currentPage === 1"
-            class="px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 disabled:opacity-50 text-slate-700 dark:text-slate-300"
-          >
-            Previous
-          </button>
-          <button
-            (click)="nextPage()"
-            [disabled]="schedules.length < pageSize"
-            class="px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 disabled:opacity-50 text-slate-700 dark:text-slate-300"
-          >
-            Next
-          </button>
-        </div>
+            <!-- Paid Amount -->
+            <td class="py-3 px-4 font-semibold text-emerald-600 dark:text-emerald-400">
+              BDT {{ sched.paid_amount_bdt | number:'1.2-2' }}
+            </td>
+
+            <!-- Outstanding Balance -->
+            <td class="py-3 px-4 font-bold"
+              [ngClass]="sched.outstanding_amount_bdt > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400'">
+              BDT {{ sched.outstanding_amount_bdt | number:'1.2-2' }}
+            </td>
+
+            <!-- Status & Voucher -->
+            <td class="py-3 px-4">
+              <div class="flex flex-col gap-1 items-start">
+                <app-status-badge [status]="sched.approval_status"
+                  [variant]="getStatusVariant(sched.approval_status)"></app-status-badge>
+                @if (sched.accounting_voucher_no) {
+                <span
+                  class="text-[10px] font-mono font-medium text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">
+                  {{ sched.accounting_voucher_no }}
+                </span>
+                }
+              </div>
+            </td>
+
+            <!-- Actions -->
+            <td class="py-3 px-4 text-right" (click)="$event.stopPropagation()">
+              <div class="flex items-center justify-end gap-1.5">
+                <!-- Disburse Payment Button -->
+                @if (sched.outstanding_amount_bdt > 0) {
+                <button (click)="openDisburseModal(sched)"
+                  class="p-1.5 rounded-lg border border-emerald-200 dark:border-emerald-800/60 bg-emerald-50/50 dark:bg-emerald-950/30 hover:bg-emerald-100 text-emerald-700 dark:text-emerald-300 transition-colors"
+                  title="Disburse Payment & Link GL Voucher">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                </button>
+                }
+
+                <!-- Approve Variation / Schedule -->
+                @if (sched.approval_status !== 'POSTED_PAID') {
+                <button (click)="openApproveModal(sched)"
+                  class="p-1.5 rounded-lg border border-indigo-200 dark:border-indigo-800/60 bg-indigo-50/50 dark:bg-indigo-950/30 hover:bg-indigo-100 text-indigo-700 dark:text-indigo-300 transition-colors"
+                  title="Authorize Payment & Variation Limits">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                </button>
+                }
+
+                <!-- Edit Schedule -->
+                <button (click)="openEditModal(sched)"
+                  class="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors"
+                  title="Edit Schedule Parameters">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
+
+                <!-- Delete Schedule -->
+                @if (sched.paid_amount_bdt === 0) {
+                <button (click)="deleteSchedule(sched.id)"
+                  class="p-1.5 rounded-lg border border-rose-200 dark:border-rose-800 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-rose-600 dark:text-rose-400 transition-colors"
+                  title="Delete Schedule">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+                }
+              </div>
+            </td>
+          </tr>
+          }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Footer -->
+    <div
+      class="px-4 py-3 bg-slate-50 dark:bg-slate-850 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500">
+      <div>
+        Page {{ currentPage }} &bull; {{ schedules.length }} installments listed
+      </div>
+      <div class="flex items-center gap-2">
+        <button (click)="prevPage()" [disabled]="currentPage === 1"
+          class="px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 disabled:opacity-50 text-slate-700 dark:text-slate-300">
+          Previous
+        </button>
+        <button (click)="nextPage()" [disabled]="schedules.length < pageSize"
+          class="px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 disabled:opacity-50 text-slate-700 dark:text-slate-300">
+          Next
+        </button>
       </div>
     </div>
+  </div>
   }
 
   <!-- TAB 2: TREASURY DISBURSEMENTS & LEDGER VOUCHERS -->
   @if (activeTab === 'disbursements') {
-    <div class="rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900 shadow-xs mb-6">
-      <div class="px-4 py-3 bg-slate-50 dark:bg-slate-850 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-        <h3 class="font-bold text-xs text-slate-900 dark:text-slate-100 flex items-center gap-2">
-          <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-          </svg>
-          Posted Treasury Disbursements & General Ledger Transactions
-        </h3>
-        <span class="text-[11px] text-slate-500">Immutable ledger vouchers & audit correction records</span>
-      </div>
-
-      <div class="overflow-x-auto">
-        <table class="w-full text-left text-xs">
-          <thead class="bg-slate-50/50 dark:bg-slate-850/50 border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
-            <tr>
-              <th class="py-3 px-4">Transaction Code & Date</th>
-              <th class="py-3 px-4">Schedule Reference & Stage</th>
-              <th class="py-3 px-4">Amount Disbursed</th>
-              <th class="py-3 px-4">Method & Instrument #</th>
-              <th class="py-3 px-4">GL Accounting Voucher</th>
-              <th class="py-3 px-4">Posted By Officer</th>
-              <th class="py-3 px-4">Audit Status</th>
-              <th class="py-3 px-4 text-right">Correction</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
-            @if (getAllDisbursements().length === 0) {
-              <tr>
-                <td colspan="8" class="text-center py-8 text-slate-500">
-                  No treasury disbursements posted yet.
-                </td>
-              </tr>
-            } @else {
-              @for (item of getAllDisbursements(); track item.txn.id) {
-                <tr [ngClass]="item.txn.is_reversal ? 'bg-rose-50/30 dark:bg-rose-950/20' : 'hover:bg-slate-50 dark:hover:bg-slate-850/60'">
-                  <td class="py-3 px-4">
-                    <div class="font-bold text-slate-900 dark:text-slate-100">
-                      {{ item.txn.transaction_code }}
-                    </div>
-                    <div class="text-[11px] text-slate-500">
-                      {{ item.txn.transaction_date }}
-                    </div>
-                  </td>
-
-                  <td class="py-3 px-4">
-                    <div class="font-medium text-slate-800 dark:text-slate-200">
-                      {{ item.sched.schedule_code }}
-                    </div>
-                    <div class="text-[11px] text-slate-500">
-                      {{ item.sched.installment_title }}
-                    </div>
-                  </td>
-
-                  <td class="py-3 px-4 font-bold" [ngClass]="item.txn.is_reversal ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'">
-                    BDT {{ item.txn.amount_bdt | number:'1.2-2' }}
-                  </td>
-
-                  <td class="py-3 px-4">
-                    <div class="font-medium text-slate-700 dark:text-slate-300">
-                      {{ item.txn.payment_method }}
-                    </div>
-                    <div class="text-[10px] text-slate-500">
-                      {{ item.txn.instrument_no || 'Direct BEFTN/RTGS' }}
-                    </div>
-                  </td>
-
-                  <td class="py-3 px-4">
-                    <span class="font-mono font-bold text-xs text-blue-600 dark:text-blue-400">
-                      {{ item.txn.accounting_voucher_no || 'Pending GL Link' }}
-                    </span>
-                  </td>
-
-                  <td class="py-3 px-4 text-slate-600 dark:text-slate-400">
-                    {{ item.txn.posted_by }}
-                  </td>
-
-                  <td class="py-3 px-4">
-                    @if (item.txn.is_reversal) {
-                      <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300">
-                        REVERSED
-                      </span>
-                      @if (item.txn.reversal_reason) {
-                        <p class="text-[10px] text-rose-600 dark:text-rose-400 mt-0.5 truncate max-w-xs">{{ item.txn.reversal_reason }}</p>
-                      }
-                    } @else {
-                      <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-                        POSTED
-                      </span>
-                    }
-                  </td>
-
-                  <td class="py-3 px-4 text-right">
-                    @if (!item.txn.is_reversal) {
-                      <button
-                        (click)="openReversalModal(item.txn, item.sched)"
-                        class="px-2.5 py-1 rounded border border-rose-200 dark:border-rose-900 text-rose-600 dark:text-rose-400 hover:bg-rose-50 text-xs font-medium"
-                        title="Audit Reversal / Correction"
-                      >
-                        Reverse
-                      </button>
-                    }
-                  </td>
-                </tr>
-              }
-            }
-          </tbody>
-        </table>
-      </div>
+  <div
+    class="rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900 shadow-xs mb-6">
+    <div
+      class="px-4 py-3 bg-slate-50 dark:bg-slate-850 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+      <h3 class="font-bold text-xs text-slate-900 dark:text-slate-100 flex items-center gap-2">
+        <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+        </svg>
+        Posted Treasury Disbursements & General Ledger Transactions
+      </h3>
+      <span class="text-[11px] text-slate-500">Immutable ledger vouchers & audit correction records</span>
     </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs">
+        <thead
+          class="bg-slate-50/50 dark:bg-slate-850/50 border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+          <tr>
+            <th class="py-3 px-4">Transaction Code & Date</th>
+            <th class="py-3 px-4">Schedule Reference & Stage</th>
+            <th class="py-3 px-4">Amount Disbursed</th>
+            <th class="py-3 px-4">Method & Instrument #</th>
+            <th class="py-3 px-4">GL Accounting Voucher</th>
+            <th class="py-3 px-4">Posted By Officer</th>
+            <th class="py-3 px-4">Audit Status</th>
+            <th class="py-3 px-4 text-right">Correction</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+          @if (getAllDisbursements().length === 0) {
+          <tr>
+            <td colspan="8" class="text-center py-8 text-slate-500">
+              No treasury disbursements posted yet.
+            </td>
+          </tr>
+          } @else {
+          @for (item of getAllDisbursements(); track item.txn.id) {
+          <tr
+            [ngClass]="item.txn.is_reversal ? 'bg-rose-50/30 dark:bg-rose-950/20' : 'hover:bg-slate-50 dark:hover:bg-slate-850/60'">
+            <td class="py-3 px-4">
+              <div class="font-bold text-slate-900 dark:text-slate-100">
+                {{ item.txn.transaction_code }}
+              </div>
+              <div class="text-[11px] text-slate-500">
+                {{ item.txn.transaction_date }}
+              </div>
+            </td>
+
+            <td class="py-3 px-4">
+              <div class="font-medium text-slate-800 dark:text-slate-200">
+                {{ item.sched.schedule_code }}
+              </div>
+              <div class="text-[11px] text-slate-500">
+                {{ item.sched.installment_title }}
+              </div>
+            </td>
+
+            <td class="py-3 px-4 font-bold"
+              [ngClass]="item.txn.is_reversal ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'">
+              BDT {{ item.txn.amount_bdt | number:'1.2-2' }}
+            </td>
+
+            <td class="py-3 px-4">
+              <div class="font-medium text-slate-700 dark:text-slate-300">
+                {{ item.txn.payment_method }}
+              </div>
+              <div class="text-[10px] text-slate-500">
+                {{ item.txn.instrument_no || 'Direct BEFTN/RTGS' }}
+              </div>
+            </td>
+
+            <td class="py-3 px-4">
+              <span class="font-mono font-bold text-xs text-blue-600 dark:text-blue-400">
+                {{ item.txn.accounting_voucher_no || 'Pending GL Link' }}
+              </span>
+            </td>
+
+            <td class="py-3 px-4 text-slate-600 dark:text-slate-400">
+              {{ item.txn.posted_by }}
+            </td>
+
+            <td class="py-3 px-4">
+              @if (item.txn.is_reversal) {
+              <span
+                class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300">
+                REVERSED
+              </span>
+              @if (item.txn.reversal_reason) {
+              <p class="text-[10px] text-rose-600 dark:text-rose-400 mt-0.5 truncate max-w-xs">{{
+                item.txn.reversal_reason }}</p>
+              }
+              } @else {
+              <span
+                class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                POSTED
+              </span>
+              }
+            </td>
+
+            <td class="py-3 px-4 text-right">
+              @if (!item.txn.is_reversal) {
+              <button (click)="openReversalModal(item.txn, item.sched)"
+                class="px-2.5 py-1 rounded border border-rose-200 dark:border-rose-900 text-rose-600 dark:text-rose-400 hover:bg-rose-50 text-xs font-medium"
+                title="Audit Reversal / Correction">
+                Reverse
+              </button>
+              }
+            </td>
+          </tr>
+          }
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
   }
 
   <!-- TAB 3: APPROVAL & VARIATION QUEUE -->
   @if (activeTab === 'approvals') {
-    <div class="space-y-4">
-      <div class="p-4 rounded-xl bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-200/50 dark:border-indigo-900/40">
-        <h3 class="font-bold text-xs text-indigo-950 dark:text-indigo-200 mb-1">
-          Contractual Variation & Payment Authorization Queue
-        </h3>
-        <p class="text-[11px] text-indigo-700 dark:text-indigo-400">
-          Enforces that payment requests cannot be disbursed without authorized sign-off. Authorize contractual variations to prevent unapproved budget overruns.
-        </p>
-      </div>
+  <div class="space-y-4">
+    <div
+      class="p-4 rounded-xl bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-200/50 dark:border-indigo-900/40">
+      <h3 class="font-bold text-xs text-indigo-950 dark:text-indigo-200 mb-1">
+        Contractual Variation & Payment Authorization Queue
+      </h3>
+      <p class="text-[11px] text-indigo-700 dark:text-indigo-400">
+        Enforces that payment requests cannot be disbursed without authorized sign-off. Authorize contractual variations
+        to prevent unapproved budget overruns.
+      </p>
+    </div>
 
-      @if (getPendingApprovalSchedules().length === 0) {
-        <div class="p-8 text-center text-slate-500 border border-dashed border-slate-300 dark:border-slate-700 rounded-xl">
-          All payment schedules are currently reviewed and approved.
-        </div>
-      } @else {
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          @for (s of getPendingApprovalSchedules(); track s.id) {
-            <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs flex flex-col justify-between">
-              <div>
-                <div class="flex items-center justify-between mb-2">
-                  <span class="font-bold text-xs text-slate-900 dark:text-slate-100">{{ s.schedule_code }}</span>
-                  <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
-                    Due: {{ s.due_date }}
-                  </span>
-                </div>
-                <h4 class="font-semibold text-xs text-slate-800 dark:text-slate-200 mb-1">{{ s.installment_title }}</h4>
-                <p class="text-[11px] text-slate-500 mb-3">{{ getParcelName(s.parcel_id) }} &bull; Beneficiary: {{ s.beneficiary_name }}</p>
+    @if (getPendingApprovalSchedules().length === 0) {
+    <div class="p-8 text-center text-slate-500 border border-dashed border-slate-300 dark:border-slate-700 rounded-xl">
+      All payment schedules are currently reviewed and approved.
+    </div>
+    } @else {
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      @for (s of getPendingApprovalSchedules(); track s.id) {
+      <div
+        class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <span class="font-bold text-xs text-slate-900 dark:text-slate-100">{{ s.schedule_code }}</span>
+            <span
+              class="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+              Due: {{ s.due_date }}
+            </span>
+          </div>
+          <h4 class="font-semibold text-xs text-slate-800 dark:text-slate-200 mb-1">{{ s.installment_title }}</h4>
+          <p class="text-[11px] text-slate-500 mb-3">{{ getParcelName(s.parcel_id) }} &bull; Beneficiary: {{
+            s.beneficiary_name }}</p>
 
-                <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-850 text-xs mb-3 space-y-1">
-                  <div class="flex justify-between">
-                    <span class="text-slate-500">Contractual Due:</span>
-                    <span class="font-bold text-slate-900 dark:text-slate-100">BDT {{ s.due_amount_bdt | number:'1.2-2' }}</span>
-                  </div>
-                  <div class="flex justify-between">
-                    <span class="text-slate-500">Payment Method:</span>
-                    <span class="font-semibold text-slate-700 dark:text-slate-300">{{ s.payment_method }}</span>
-                  </div>
-                  <div class="flex justify-between">
-                    <span class="text-slate-500">GL Account:</span>
-                    <span class="font-mono text-slate-600 dark:text-slate-400">{{ s.gl_account_code }}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
-                <button
-                  (click)="openApproveModal(s)"
-                  class="px-3 py-1.5 rounded-lg text-xs bg-indigo-600 text-white font-medium hover:bg-indigo-700 shadow-xs"
-                >
-                  Authorize Payment & Variations
-                </button>
-              </div>
+          <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-850 text-xs mb-3 space-y-1">
+            <div class="flex justify-between">
+              <span class="text-slate-500">Contractual Due:</span>
+              <span class="font-bold text-slate-900 dark:text-slate-100">BDT {{ s.due_amount_bdt | number:'1.2-2'
+                }}</span>
             </div>
-          }
+            <div class="flex justify-between">
+              <span class="text-slate-500">Payment Method:</span>
+              <span class="font-semibold text-slate-700 dark:text-slate-300">{{ s.payment_method }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-500">GL Account:</span>
+              <span class="font-mono text-slate-600 dark:text-slate-400">{{ s.gl_account_code }}</span>
+            </div>
+          </div>
         </div>
+
+        <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+          <button (click)="openApproveModal(s)"
+            class="px-3 py-1.5 rounded-lg text-xs bg-indigo-600 text-white font-medium hover:bg-indigo-700 shadow-xs">
+            Authorize Payment & Variations
+          </button>
+        </div>
+      </div>
       }
     </div>
+    }
+  </div>
   }
 
   <!-- TAB 4: OVERDUE INSTALLMENTS ALERT -->
   @if (activeTab === 'overdue') {
-    <div class="space-y-4">
-      <div class="p-4 rounded-xl bg-rose-50/70 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900">
-        <h3 class="font-bold text-xs text-rose-950 dark:text-rose-200 mb-1 flex items-center gap-1.5">
-          <svg class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-          </svg>
-          Overdue Land Acquisition Dues & Treasury Settlement Alerts
-        </h3>
-        <p class="text-[11px] text-rose-700 dark:text-rose-400">
-          Installments past scheduled due date requiring urgent treasury settlement or deadline restructuring.
-        </p>
-      </div>
+  <div class="space-y-4">
+    <div class="p-4 rounded-xl bg-rose-50/70 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900">
+      <h3 class="font-bold text-xs text-rose-950 dark:text-rose-200 mb-1 flex items-center gap-1.5">
+        <svg class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+        Overdue Land Acquisition Dues & Treasury Settlement Alerts
+      </h3>
+      <p class="text-[11px] text-rose-700 dark:text-rose-400">
+        Installments past scheduled due date requiring urgent treasury settlement or deadline restructuring.
+      </p>
+    </div>
 
-      @if (getOverdueSchedules().length === 0) {
-        <div class="p-8 text-center text-slate-500 border border-dashed border-slate-300 dark:border-slate-700 rounded-xl">
-          No overdue payment installments. All acquisition dues are currently up to date!
-        </div>
-      } @else {
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          @for (s of getOverdueSchedules(); track s.id) {
-            <div class="p-4 rounded-xl border border-rose-200 dark:border-rose-900 bg-white dark:bg-slate-900 shadow-xs flex flex-col justify-between">
-              <div>
-                <div class="flex items-center justify-between mb-2">
-                  <span class="font-bold text-xs text-slate-900 dark:text-slate-100">{{ s.schedule_code }}</span>
-                  <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300">
-                    Past Due: {{ s.due_date }}
-                  </span>
-                </div>
-                <h4 class="font-semibold text-xs text-slate-800 dark:text-slate-200 mb-1">{{ s.installment_title }}</h4>
-                <p class="text-[11px] text-slate-500 mb-2">{{ getParcelName(s.parcel_id) }}</p>
+    @if (getOverdueSchedules().length === 0) {
+    <div class="p-8 text-center text-slate-500 border border-dashed border-slate-300 dark:border-slate-700 rounded-xl">
+      No overdue payment installments. All acquisition dues are currently up to date!
+    </div>
+    } @else {
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      @for (s of getOverdueSchedules(); track s.id) {
+      <div
+        class="p-4 rounded-xl border border-rose-200 dark:border-rose-900 bg-white dark:bg-slate-900 shadow-xs flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <span class="font-bold text-xs text-slate-900 dark:text-slate-100">{{ s.schedule_code }}</span>
+            <span
+              class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300">
+              Past Due: {{ s.due_date }}
+            </span>
+          </div>
+          <h4 class="font-semibold text-xs text-slate-800 dark:text-slate-200 mb-1">{{ s.installment_title }}</h4>
+          <p class="text-[11px] text-slate-500 mb-2">{{ getParcelName(s.parcel_id) }}</p>
 
-                <div class="p-2.5 rounded-lg bg-rose-50/50 dark:bg-rose-950/20 text-xs mb-3 space-y-1">
-                  <div class="flex justify-between">
-                    <span class="text-rose-700 dark:text-rose-300">Outstanding Balance:</span>
-                    <span class="font-bold text-rose-900 dark:text-rose-200">BDT {{ s.outstanding_amount_bdt | number:'1.2-2' }}</span>
-                  </div>
-                  <div class="flex justify-between text-[11px] text-slate-500">
-                    <span>Beneficiary:</span>
-                    <span>{{ s.beneficiary_name }} ({{ s.beneficiary_bank_name || 'Bank' }})</span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
-                <button
-                  (click)="openDisburseModal(s)"
-                  class="px-3 py-1.5 rounded-lg text-xs bg-emerald-600 text-white font-medium hover:bg-emerald-700 shadow-xs"
-                >
-                  Disburse Now
-                </button>
-              </div>
+          <div class="p-2.5 rounded-lg bg-rose-50/50 dark:bg-rose-950/20 text-xs mb-3 space-y-1">
+            <div class="flex justify-between">
+              <span class="text-rose-700 dark:text-rose-300">Outstanding Balance:</span>
+              <span class="font-bold text-rose-900 dark:text-rose-200">BDT {{ s.outstanding_amount_bdt | number:'1.2-2'
+                }}</span>
             </div>
-          }
+            <div class="flex justify-between text-[11px] text-slate-500">
+              <span>Beneficiary:</span>
+              <span>{{ s.beneficiary_name }} ({{ s.beneficiary_bank_name || 'Bank' }})</span>
+            </div>
+          </div>
         </div>
+
+        <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+          <button (click)="openDisburseModal(s)"
+            class="px-3 py-1.5 rounded-lg text-xs bg-emerald-600 text-white font-medium hover:bg-emerald-700 shadow-xs">
+            Disburse Now
+          </button>
+        </div>
+      </div>
       }
     </div>
+    }
+  </div>
   }
 
   <!-- MODAL 1: CREATE / EDIT MANUAL INSTALLMENT -->
-  <app-modal
-    [isOpen]="isCreateEditModalOpen"
+  <app-modal [isOpen]="isCreateEditModalOpen"
     [title]="editingScheduleId ? 'Edit Payment Installment Schedule' : 'New Contractual Payment Schedule'"
     [subtitle]="'Define installment milestone, due date, contractual amount, and beneficiary bank account details.'"
-    size="xl"
-    (closeModal)="isCreateEditModalOpen = false"
-  >
+    size="xl" (closeModal)="isCreateEditModalOpen = false">
     <div class="space-y-4">
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <!-- Target Parcel -->
-        <app-searchable-select
-          label="Target Land Parcel"
-          [options]="parcelOptions"
-          [(ngModel)]="scheduleFormData.parcel_id"
-          [required]="true"
-          placeholder="Select Parcel..."
-        ></app-searchable-select>
+        <app-searchable-select label="Target Land Parcel" [options]="parcelOptions"
+          [(ngModel)]="scheduleFormData.parcel_id" [required]="true"
+          placeholder="Select Parcel..."></app-searchable-select>
 
         <!-- Beneficiary Landowner -->
-        <app-searchable-select
-          label="Beneficiary Landowner"
-          [options]="landownerOptions"
-          [(ngModel)]="scheduleFormData.landowner_id"
-          placeholder="Select Landowner..."
-        ></app-searchable-select>
+        <app-searchable-select label="Beneficiary Landowner" [options]="landownerOptions"
+          [(ngModel)]="scheduleFormData.landowner_id" placeholder="Select Landowner..."></app-searchable-select>
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <app-custom-input
-          type="number"
-          label="Installment #"
-          [(ngModel)]="scheduleFormData.installment_number"
-          [required]="true"
-        ></app-custom-input>
+        <app-custom-input type="number" label="Installment #" [(ngModel)]="scheduleFormData.installment_number"
+          [required]="true"></app-custom-input>
 
         <div class="sm:col-span-2">
-          <app-custom-input
-            label="Installment Milestone Title"
-            [(ngModel)]="scheduleFormData.installment_title"
-            [required]="true"
-            placeholder="e.g. Installment 2: Title Chain & Mutation Delivery"
-          ></app-custom-input>
+          <app-custom-input label="Installment Milestone Title" [(ngModel)]="scheduleFormData.installment_title"
+            [required]="true" placeholder="e.g. Installment 2: Title Chain & Mutation Delivery"></app-custom-input>
         </div>
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <app-searchable-select
-          categoryCode="LAND_PAYMENT_TYPE"
-          label="Payment Type"
-          [(ngModel)]="scheduleFormData.payment_type"
-          placeholder="Select Type..."
-        ></app-searchable-select>
+        <app-searchable-select categoryCode="LAND_PAYMENT_TYPE" label="Payment Type"
+          [(ngModel)]="scheduleFormData.payment_type" placeholder="Select Type..."></app-searchable-select>
 
-        <app-custom-input
-          type="date"
-          label="Due Date"
-          [(ngModel)]="scheduleFormData.due_date"
-          [required]="true"
-        ></app-custom-input>
+        <app-custom-input type="date" label="Due Date" [(ngModel)]="scheduleFormData.due_date"
+          [required]="true"></app-custom-input>
 
-        <app-custom-input
-          type="number"
-          label="Contractual Due Amount (BDT)"
-          [(ngModel)]="scheduleFormData.due_amount_bdt"
-          [required]="true"
-          placeholder="0.00"
-        ></app-custom-input>
+        <app-custom-input type="number" label="Contractual Due Amount (BDT)"
+          [(ngModel)]="scheduleFormData.due_amount_bdt" [required]="true" placeholder="0.00"></app-custom-input>
       </div>
 
       <!-- Beneficiary Bank Account Details Section -->
       <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800">
         <h4 class="text-xs font-bold text-slate-900 dark:text-slate-100 mb-3 flex items-center gap-1.5">
           <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
           </svg>
           Beneficiary Bank Account & Payment Routing
         </h4>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-          <app-custom-input
-            label="Beneficiary Full Name"
-            [(ngModel)]="scheduleFormData.beneficiary_name"
-            placeholder="e.g. Mohammad Shamsul Huda"
-          ></app-custom-input>
+          <app-custom-input label="Beneficiary Full Name" [(ngModel)]="scheduleFormData.beneficiary_name"
+            placeholder="e.g. Mohammad Shamsul Huda"></app-custom-input>
 
-          <app-searchable-select
-            categoryCode="LAND_PAYMENT_METHOD"
-            label="Payment Method"
-            [(ngModel)]="scheduleFormData.payment_method"
-            placeholder="Select Method..."
-          ></app-searchable-select>
+          <app-searchable-select categoryCode="LAND_PAYMENT_METHOD" label="Payment Method"
+            [(ngModel)]="scheduleFormData.payment_method" placeholder="Select Method..."></app-searchable-select>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <app-custom-input
-            label="Bank Name"
-            [(ngModel)]="scheduleFormData.beneficiary_bank_name"
-            placeholder="e.g. Dutch-Bangla Bank PLC"
-          ></app-custom-input>
+          <app-custom-input label="Bank Name" [(ngModel)]="scheduleFormData.beneficiary_bank_name"
+            placeholder="e.g. Dutch-Bangla Bank PLC"></app-custom-input>
 
-          <app-custom-input
-            label="Branch Name"
-            [(ngModel)]="scheduleFormData.beneficiary_bank_branch"
-            placeholder="e.g. Gulshan Branch"
-          ></app-custom-input>
+          <app-custom-input label="Branch Name" [(ngModel)]="scheduleFormData.beneficiary_bank_branch"
+            placeholder="e.g. Gulshan Branch"></app-custom-input>
 
-          <app-custom-input
-            label="Bank Account No"
-            [(ngModel)]="scheduleFormData.beneficiary_account_no"
-            placeholder="e.g. 115.120.98421"
-          ></app-custom-input>
+          <app-custom-input label="Bank Account No" [(ngModel)]="scheduleFormData.beneficiary_account_no"
+            placeholder="e.g. 115.120.98421"></app-custom-input>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
-          <app-custom-input
-            label="Routing Number"
-            [(ngModel)]="scheduleFormData.beneficiary_routing_no"
-            placeholder="e.g. 090271822"
-          ></app-custom-input>
+          <app-custom-input label="Routing Number" [(ngModel)]="scheduleFormData.beneficiary_routing_no"
+            placeholder="e.g. 090271822"></app-custom-input>
 
-          <app-custom-input
-            label="GL Account Code"
-            [(ngModel)]="scheduleFormData.gl_account_code"
-            placeholder="1120-LAND-ACQ-CAPEX"
-          ></app-custom-input>
+          <app-custom-input label="GL Account Code" [(ngModel)]="scheduleFormData.gl_account_code"
+            placeholder="1120-LAND-ACQ-CAPEX"></app-custom-input>
         </div>
       </div>
 
-      <app-custom-textarea
-        label="Schedule Notes & Milestone Criteria"
-        [(ngModel)]="scheduleFormData.notes"
-        placeholder="Specific prerequisites for releasing this installment..."
-        [rows]="2"
-      ></app-custom-textarea>
+      <app-custom-textarea label="Schedule Notes & Milestone Criteria" [(ngModel)]="scheduleFormData.notes"
+        placeholder="Specific prerequisites for releasing this installment..." [rows]="2"></app-custom-textarea>
     </div>
 
     <div modal-footer class="flex items-center justify-end gap-2 w-full">
-      <button
-        type="button"
-        (click)="isCreateEditModalOpen = false"
-        class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-medium"
-      >
+      <button type="button" (click)="isCreateEditModalOpen = false"
+        class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-medium">
         Cancel
       </button>
-      <button
-        type="button"
-        (click)="saveSchedule()"
-        [disabled]="isSubmitting"
-        class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium shadow-sm transition-all"
-      >
+      <button type="button" (click)="saveSchedule()" [disabled]="isSubmitting"
+        class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium shadow-sm transition-all">
         {{ isSubmitting ? 'Saving...' : (editingScheduleId ? 'Update Schedule' : 'Create Schedule') }}
       </button>
     </div>
   </app-modal>
 
   <!-- MODAL 2: AUTO-GENERATE SCHEDULE -->
-  <app-modal
-    [isOpen]="isAutoGenerateModalOpen"
-    [title]="'Auto-Generate 4-Stage Payment Schedule From Agreement'"
-    [subtitle]="'Splits approved consideration into 4 statutory acquisition phases automatically.'"
-    size="lg"
-    (closeModal)="isAutoGenerateModalOpen = false"
-  >
+  <app-modal [isOpen]="isAutoGenerateModalOpen" [title]="'Auto-Generate 4-Stage Payment Schedule From Agreement'"
+    [subtitle]="'Splits approved consideration into 4 statutory acquisition phases automatically.'" size="lg"
+    (closeModal)="isAutoGenerateModalOpen = false">
     <div class="space-y-4">
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <app-searchable-select
-          label="Target Land Parcel"
-          [options]="parcelOptions"
-          [(ngModel)]="autoGenerateFormData.parcel_id"
-          [required]="true"
-          placeholder="Select Parcel..."
-        ></app-searchable-select>
+        <app-searchable-select label="Target Land Parcel" [options]="parcelOptions"
+          [(ngModel)]="autoGenerateFormData.parcel_id" [required]="true"
+          placeholder="Select Parcel..."></app-searchable-select>
 
-        <app-searchable-select
-          label="Landowner / Beneficiary"
-          [options]="landownerOptions"
-          [(ngModel)]="autoGenerateFormData.landowner_id"
-          placeholder="Select Landowner..."
-        ></app-searchable-select>
+        <app-searchable-select label="Landowner / Beneficiary" [options]="landownerOptions"
+          [(ngModel)]="autoGenerateFormData.landowner_id" placeholder="Select Landowner..."></app-searchable-select>
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div class="sm:col-span-2">
-          <app-custom-input
-            type="number"
-            label="Total Agreed Consideration (BDT)"
-            [(ngModel)]="autoGenerateFormData.total_agreed_amount_bdt"
-            [required]="true"
-            placeholder="e.g. 50000000.00"
-          ></app-custom-input>
+          <app-custom-input type="number" label="Total Agreed Consideration (BDT)"
+            [(ngModel)]="autoGenerateFormData.total_agreed_amount_bdt" [required]="true"
+            placeholder="e.g. 50000000.00"></app-custom-input>
         </div>
 
-        <app-custom-input
-          type="date"
-          label="Schedule Start Date"
-          [(ngModel)]="autoGenerateFormData.start_date"
-          [required]="true"
-        ></app-custom-input>
+        <app-custom-input type="date" label="Schedule Start Date" [(ngModel)]="autoGenerateFormData.start_date"
+          [required]="true"></app-custom-input>
       </div>
 
       <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800">
@@ -922,271 +837,173 @@
           Stage Allocation Percentages (Must sum to 100%)
         </h4>
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <app-custom-input
-            type="number"
-            label="1. Booking %"
-            [(ngModel)]="autoGenerateFormData.earnest_money_percent"
-          ></app-custom-input>
+          <app-custom-input type="number" label="1. Booking %"
+            [(ngModel)]="autoGenerateFormData.earnest_money_percent"></app-custom-input>
 
-          <app-custom-input
-            type="number"
-            label="2. Bayna Advance %"
-            [(ngModel)]="autoGenerateFormData.advance_bayna_percent"
-          ></app-custom-input>
+          <app-custom-input type="number" label="2. Bayna Advance %"
+            [(ngModel)]="autoGenerateFormData.advance_bayna_percent"></app-custom-input>
 
-          <app-custom-input
-            type="number"
-            label="3. Mutation %"
-            [(ngModel)]="autoGenerateFormData.interim_milestone_percent"
-          ></app-custom-input>
+          <app-custom-input type="number" label="3. Mutation %"
+            [(ngModel)]="autoGenerateFormData.interim_milestone_percent"></app-custom-input>
 
-          <app-custom-input
-            type="number"
-            label="4. Final Registry %"
-            [(ngModel)]="autoGenerateFormData.final_settlement_percent"
-          ></app-custom-input>
+          <app-custom-input type="number" label="4. Final Registry %"
+            [(ngModel)]="autoGenerateFormData.final_settlement_percent"></app-custom-input>
         </div>
       </div>
 
-      <app-custom-input
-        type="number"
-        label="Interval Between Milestone Stages (Days)"
-        [(ngModel)]="autoGenerateFormData.days_interval_between_stages"
-        placeholder="30"
-      ></app-custom-input>
+      <app-custom-input type="number" label="Interval Between Milestone Stages (Days)"
+        [(ngModel)]="autoGenerateFormData.days_interval_between_stages" placeholder="30"></app-custom-input>
     </div>
 
     <div modal-footer class="flex items-center justify-end gap-2 w-full">
-      <button
-        type="button"
-        (click)="isAutoGenerateModalOpen = false"
-        class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-medium"
-      >
+      <button type="button" (click)="isAutoGenerateModalOpen = false"
+        class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-medium">
         Cancel
       </button>
-      <button
-        type="button"
-        (click)="submitAutoGenerate()"
-        [disabled]="isSubmitting"
-        class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium shadow-sm transition-all"
-      >
+      <button type="button" (click)="submitAutoGenerate()" [disabled]="isSubmitting"
+        class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium shadow-sm transition-all">
         {{ isSubmitting ? 'Generating 4 Stages...' : 'Generate 4-Stage Schedules' }}
       </button>
     </div>
   </app-modal>
 
   <!-- MODAL 3: PAYMENT APPROVAL & CONTRACTUAL VARIATIONS -->
-  <app-modal
-    [isOpen]="isApproveModalOpen"
-    [title]="'Authorize Installment Payment & Contractual Variations'"
-    [subtitle]="'Verify title requirements and authorize disbursement limits.'"
-    size="md"
-    (closeModal)="isApproveModalOpen = false"
-  >
+  <app-modal [isOpen]="isApproveModalOpen" [title]="'Authorize Installment Payment & Contractual Variations'"
+    [subtitle]="'Verify title requirements and authorize disbursement limits.'" size="md"
+    (closeModal)="isApproveModalOpen = false">
     <div class="space-y-4">
-      <div class="p-3 rounded-lg bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-900 text-xs text-slate-700 dark:text-slate-300">
-        Authorizing: <span class="font-bold text-slate-900 dark:text-slate-100">{{ activeSchedule?.schedule_code }}</span>
-        <br/>{{ activeSchedule?.installment_title }}
-        <br/>Contractual Due: <span class="font-bold">BDT {{ (activeSchedule?.due_amount_bdt || 0) | number:'1.2-2' }}</span>
+      <div
+        class="p-3 rounded-lg bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-900 text-xs text-slate-700 dark:text-slate-300">
+        Authorizing: <span class="font-bold text-slate-900 dark:text-slate-100">{{ activeSchedule?.schedule_code
+          }}</span>
+        <br />{{ activeSchedule?.installment_title }}
+        <br />Contractual Due: <span class="font-bold">BDT {{ (activeSchedule?.due_amount_bdt || 0) | number:'1.2-2'
+          }}</span>
       </div>
 
-      <app-custom-input
-        label="Authorizing Officer / Approver Name"
-        [(ngModel)]="approvalFormData.approved_by"
-        [required]="true"
-        placeholder="e.g. Head of Treasury & Land Finance"
-      ></app-custom-input>
+      <app-custom-input label="Authorizing Officer / Approver Name" [(ngModel)]="approvalFormData.approved_by"
+        [required]="true" placeholder="e.g. Head of Treasury & Land Finance"></app-custom-input>
 
       <div>
         <label class="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1.5">Approval Decision</label>
-        <select
-          [(ngModel)]="approvalFormData.approval_status"
-          class="erp-input text-xs"
-        >
+        <select [(ngModel)]="approvalFormData.approval_status" class="erp-input text-xs">
           <option value="APPROVED_FOR_PAYMENT">Approved for Payment</option>
           <option value="REJECTED">Reject Payment Request</option>
         </select>
       </div>
 
-      <app-custom-input
-        type="number"
-        label="Approved Variation Amount (BDT) [Optional]"
+      <app-custom-input type="number" label="Approved Variation Amount (BDT) [Optional]"
         [(ngModel)]="approvalFormData.approved_variation_amount"
-        hint="Allows controlled budget variation over initial contract."
-        placeholder="0.00"
-      ></app-custom-input>
+        hint="Allows controlled budget variation over initial contract." placeholder="0.00"></app-custom-input>
 
-      <app-custom-textarea
-        label="Authorization Remarks & Audit Notes"
-        [(ngModel)]="approvalFormData.approval_notes"
-        placeholder="Verification notes or Board approval reference..."
-        [rows]="3"
-      ></app-custom-textarea>
+      <app-custom-textarea label="Authorization Remarks & Audit Notes" [(ngModel)]="approvalFormData.approval_notes"
+        placeholder="Verification notes or Board approval reference..." [rows]="3"></app-custom-textarea>
     </div>
 
     <div modal-footer class="flex items-center justify-end gap-2 w-full">
-      <button
-        type="button"
-        (click)="isApproveModalOpen = false"
-        class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-medium"
-      >
+      <button type="button" (click)="isApproveModalOpen = false"
+        class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-medium">
         Cancel
       </button>
-      <button
-        type="button"
-        (click)="saveApproval()"
-        [disabled]="isSubmitting"
-        class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium shadow-sm transition-all"
-      >
+      <button type="button" (click)="saveApproval()" [disabled]="isSubmitting"
+        class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium shadow-sm transition-all">
         {{ isSubmitting ? 'Saving Approval...' : 'Confirm Authorization' }}
       </button>
     </div>
   </app-modal>
 
   <!-- MODAL 4: DISBURSE PAYMENT & LINK GL VOUCHER -->
-  <app-modal
-    [isOpen]="isDisburseModalOpen"
-    [title]="'Disburse Payment & Link General Ledger Voucher'"
+  <app-modal [isOpen]="isDisburseModalOpen" [title]="'Disburse Payment & Link General Ledger Voucher'"
     [subtitle]="'Posts actual payment transaction, updates outstanding balance, and logs GL voucher reference.'"
-    size="lg"
-    (closeModal)="isDisburseModalOpen = false"
-  >
+    size="lg" (closeModal)="isDisburseModalOpen = false">
     <div class="space-y-4">
-      <div class="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 text-xs text-slate-700 dark:text-slate-300 flex justify-between items-center">
+      <div
+        class="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 text-xs text-slate-700 dark:text-slate-300 flex justify-between items-center">
         <div>
-          Installment: <span class="font-bold text-slate-900 dark:text-slate-100">{{ activeSchedule?.schedule_code }}</span>
-          <br/>{{ activeSchedule?.installment_title }}
+          Installment: <span class="font-bold text-slate-900 dark:text-slate-100">{{ activeSchedule?.schedule_code
+            }}</span>
+          <br />{{ activeSchedule?.installment_title }}
         </div>
         <div class="text-right">
           <span class="text-slate-500">Remaining Balance:</span>
-          <div class="font-bold text-amber-600 text-sm">BDT {{ (activeSchedule?.outstanding_amount_bdt || 0) | number:'1.2-2' }}</div>
+          <div class="font-bold text-amber-600 text-sm">BDT {{ (activeSchedule?.outstanding_amount_bdt || 0) |
+            number:'1.2-2' }}</div>
         </div>
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <app-custom-input
-          type="date"
-          label="Disbursement Date"
-          [(ngModel)]="disburseFormData.transaction_date"
-          [required]="true"
-        ></app-custom-input>
+        <app-custom-input type="date" label="Disbursement Date" [(ngModel)]="disburseFormData.transaction_date"
+          [required]="true"></app-custom-input>
 
-        <app-custom-input
-          type="number"
-          label="Payment Amount (BDT)"
-          [(ngModel)]="disburseFormData.amount_bdt"
-          [required]="true"
-        ></app-custom-input>
+        <app-custom-input type="number" label="Payment Amount (BDT)" [(ngModel)]="disburseFormData.amount_bdt"
+          [required]="true"></app-custom-input>
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <app-searchable-select
-          categoryCode="LAND_PAYMENT_METHOD"
-          label="Payment Method"
-          [(ngModel)]="disburseFormData.payment_method"
-          placeholder="Select Method..."
-        ></app-searchable-select>
+        <app-searchable-select categoryCode="LAND_PAYMENT_METHOD" label="Payment Method"
+          [(ngModel)]="disburseFormData.payment_method" placeholder="Select Method..."></app-searchable-select>
 
-        <app-custom-input
-          label="GL Accounting Voucher No"
-          [(ngModel)]="disburseFormData.accounting_voucher_no"
-          [required]="true"
-          placeholder="e.g. PV-LAND-2026-0042"
-          hint="Links payment directly to finance general ledger."
-        ></app-custom-input>
+        <app-custom-input label="GL Accounting Voucher No" [(ngModel)]="disburseFormData.accounting_voucher_no"
+          [required]="true" placeholder="e.g. PV-LAND-2026-0042"
+          hint="Links payment directly to finance general ledger."></app-custom-input>
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <app-custom-input
-          label="Disbursement Bank Name"
-          [(ngModel)]="disburseFormData.bank_name"
-          placeholder="e.g. Eastern Bank PLC"
-        ></app-custom-input>
+        <app-custom-input label="Disbursement Bank Name" [(ngModel)]="disburseFormData.bank_name"
+          placeholder="e.g. Eastern Bank PLC"></app-custom-input>
 
-        <app-custom-input
-          label="Cheque / Instrument / BEFTN Ref #"
-          [(ngModel)]="disburseFormData.instrument_no"
-          placeholder="e.g. CHQ-889104 or BEFTN-1002"
-        ></app-custom-input>
+        <app-custom-input label="Cheque / Instrument / BEFTN Ref #" [(ngModel)]="disburseFormData.instrument_no"
+          placeholder="e.g. CHQ-889104 or BEFTN-1002"></app-custom-input>
       </div>
 
-      <app-custom-input
-        label="Treasury Officer Name"
-        [(ngModel)]="disburseFormData.posted_by"
-        [required]="true"
-      ></app-custom-input>
+      <app-custom-input label="Treasury Officer Name" [(ngModel)]="disburseFormData.posted_by"
+        [required]="true"></app-custom-input>
 
-      <app-custom-textarea
-        label="Transaction Notes & Payee Acknowledgement"
-        [(ngModel)]="disburseFormData.notes"
-        placeholder="e.g. Money receipt #MR-2026-90 received from landowner."
-        [rows]="2"
-      ></app-custom-textarea>
+      <app-custom-textarea label="Transaction Notes & Payee Acknowledgement" [(ngModel)]="disburseFormData.notes"
+        placeholder="e.g. Money receipt #MR-2026-90 received from landowner." [rows]="2"></app-custom-textarea>
     </div>
 
     <div modal-footer class="flex items-center justify-end gap-2 w-full">
-      <button
-        type="button"
-        (click)="isDisburseModalOpen = false"
-        class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-medium"
-      >
+      <button type="button" (click)="isDisburseModalOpen = false"
+        class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-medium">
         Cancel
       </button>
-      <button
-        type="button"
-        (click)="saveDisbursement()"
-        [disabled]="isSubmitting"
-        class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium shadow-sm transition-all"
-      >
+      <button type="button" (click)="saveDisbursement()" [disabled]="isSubmitting"
+        class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium shadow-sm transition-all">
         {{ isSubmitting ? 'Posting Voucher...' : 'Confirm Disbursement' }}
       </button>
     </div>
   </app-modal>
 
   <!-- MODAL 5: AUDIT PAYMENT REVERSAL -->
-  <app-modal
-    [isOpen]="isReversalModalOpen"
-    [title]="'Audit Payment Reversal & Correction'"
+  <app-modal [isOpen]="isReversalModalOpen" [title]="'Audit Payment Reversal & Correction'"
     [subtitle]="'Reverses posted transaction, restores outstanding balance, and logs audit reason without deleting history.'"
-    size="md"
-    (closeModal)="isReversalModalOpen = false"
-  >
+    size="md" (closeModal)="isReversalModalOpen = false">
     <div class="space-y-4">
-      <div class="p-3 rounded-lg bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900 text-xs text-slate-700 dark:text-slate-300">
-        Reversing Transaction: <span class="font-bold text-rose-900 dark:text-rose-200">{{ reversingTransaction?.transaction_code }}</span>
-        <br/>Amount: <span class="font-bold">BDT {{ (reversingTransaction?.amount_bdt || 0) | number:'1.2-2' }}</span>
-        <br/>Voucher: <span class="font-mono">{{ reversingTransaction?.accounting_voucher_no }}</span>
+      <div
+        class="p-3 rounded-lg bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900 text-xs text-slate-700 dark:text-slate-300">
+        Reversing Transaction: <span class="font-bold text-rose-900 dark:text-rose-200">{{
+          reversingTransaction?.transaction_code }}</span>
+        <br />Amount: <span class="font-bold">BDT {{ (reversingTransaction?.amount_bdt || 0) | number:'1.2-2' }}</span>
+        <br />Voucher: <span class="font-mono">{{ reversingTransaction?.accounting_voucher_no }}</span>
       </div>
 
-      <app-custom-textarea
-        label="Audit Justification / Reversal Reason"
-        [(ngModel)]="reversalFormData.reversal_reason"
+      <app-custom-textarea label="Audit Justification / Reversal Reason" [(ngModel)]="reversalFormData.reversal_reason"
         [required]="true"
         placeholder="State reason for reversal (e.g. Cheque returned/bounced, voucher adjustment, wrong beneficiary account)..."
-        [rows]="3"
-      ></app-custom-textarea>
+        [rows]="3"></app-custom-textarea>
 
-      <app-custom-input
-        label="Authorizing Officer / Controller"
-        [(ngModel)]="reversalFormData.posted_by"
-        [required]="true"
-      ></app-custom-input>
+      <app-custom-input label="Authorizing Officer / Controller" [(ngModel)]="reversalFormData.posted_by"
+        [required]="true"></app-custom-input>
     </div>
 
     <div modal-footer class="flex items-center justify-end gap-2 w-full">
-      <button
-        type="button"
-        (click)="isReversalModalOpen = false"
-        class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-medium"
-      >
+      <button type="button" (click)="isReversalModalOpen = false"
+        class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-medium">
         Cancel
       </button>
-      <button
-        type="button"
-        (click)="saveReversal()"
-        [disabled]="isSubmitting"
-        class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-medium shadow-sm transition-all"
-      >
+      <button type="button" (click)="saveReversal()" [disabled]="isSubmitting"
+        class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-medium shadow-sm transition-all">
         {{ isSubmitting ? 'Posting Reversal...' : 'Confirm Audit Reversal' }}
       </button>
     </div>

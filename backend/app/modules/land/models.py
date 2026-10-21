@@ -73,11 +73,15 @@ class Landowner(Base):
     owner_type = Column(String(32), nullable=False, default="INDIVIDUAL") # INDIVIDUAL, JOINT_OWNER, COMPANY, POA_HOLDER
     full_name_en = Column(String(191), nullable=False, index=True)
     full_name_bn = Column(String(191), nullable=True)
-    father_mother_spouse_name = Column(String(191), nullable=True)
+    father_mother_spouse_name = Column(String(191), nullable=True)  # legacy combined field
+    father_name = Column(String(191), nullable=True)
+    mother_name = Column(String(191), nullable=True)
+    spouse_name = Column(String(191), nullable=True)
     present_address = Column(Text, nullable=True)
     permanent_address = Column(Text, nullable=True)
     
     nid_number = Column(String(64), nullable=True, index=True)
+    nid_image_path = Column(String(512), nullable=True)  # uploaded NID scan/image path
     passport_number = Column(String(64), nullable=True)
     company_reg_number = Column(String(64), nullable=True)
     tin_number = Column(String(64), nullable=True)
@@ -363,7 +367,7 @@ class JVAgreement(Base):
     __tablename__ = "lnd_jv_agreements"
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
-    land_bank_id = Column(BigInteger, ForeignKey("lnd_land_banks.id", ondelete="CASCADE"), nullable=False, index=True)
+    land_bank_id = Column(BigInteger, ForeignKey("lnd_land_banks.id", ondelete="CASCADE"), nullable=True, index=True)
     parcel_id = Column(BigInteger, ForeignKey("lnd_parcels.id", ondelete="SET NULL"), nullable=True, index=True)
     agreement_deed_no = Column(String(128), unique=True, nullable=False, index=True)
     agreement_type = Column(String(64), nullable=False, default="JOINT_VENTURE_DEVELOPMENT") # JOINT_VENTURE_DEVELOPMENT, OUTRIGHT_PURCHASE_AGREEMENT, POWER_OF_ATTORNEY_AGREEMENT, SUPPLEMENTARY_AMENDMENT, PARTITION_SETTLEMENT
@@ -403,6 +407,11 @@ class JVAgreement(Base):
     poa_expiry_date = Column(Date, nullable=True)
     poa_verified = Column(Boolean, nullable=False, default=True)
     
+    # Agreement Document Attachments
+    agreement_document_name = Column(String(255), nullable=True)
+    agreement_file_url = Column(String(500), nullable=True)
+    supporting_documents = Column(JSON, nullable=True)
+
     signing_date = Column(TIMESTAMP, nullable=True)
     handover_commitment_date = Column(TIMESTAMP, nullable=True)
     status = Column(String(32), nullable=False, default="ACTIVE") # DRAFT, ACTIVE, COMPLETED, TERMINATED
@@ -693,6 +702,9 @@ class LandNegotiation(Base):
     agreement_expiry_date = Column(Date, nullable=True) # Alert trigger for expiring agreement
     
     agreement_status = Column(String(64), nullable=False, default="DRAFTING", index=True) # DRAFTING, LEGAL_VETTING, MANAGEMENT_REVIEW, READY_FOR_EXECUTION, EXECUTED_REGISTERED, EXPIRED, TERMINATED
+    agreement_document_name = Column(String(255), nullable=True)
+    agreement_file_url = Column(String(500), nullable=True)
+    supporting_documents = Column(JSON, nullable=True)
     is_delayed = Column(Boolean, nullable=False, default=False)
     delay_reason = Column(Text, nullable=True)
     

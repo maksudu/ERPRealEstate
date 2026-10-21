@@ -1,98 +1,26 @@
-<div class="space-y-5">
-  <!-- Top KPI Cards -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-    <!-- Card 1: Base Unit -->
-    <div
-      class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-2xs flex items-center justify-between">
+<div class="space-y-6">
+  <header class="relative overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs">
+    <div class="absolute inset-y-0 left-0 w-1.5 bg-emerald-600"></div>
+    <div class="absolute right-0 top-0 h-full w-1/3 opacity-40 pointer-events-none"
+      style="background-image: linear-gradient(135deg, transparent 49.5%, rgb(16 185 129 / 0.12) 50%, transparent 50.5%); background-size: 22px 22px"></div>
+    <div class="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 px-5 py-5 sm:px-7 sm:py-6">
       <div>
-        <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Base Display Unit</p>
-        <h3 class="text-xl font-bold text-slate-900 dark:text-slate-100 mt-1">Square Feet (sq ft)</h3>
-        <p class="text-[11px] text-emerald-600 dark:text-emerald-400 mt-0.5 flex items-center gap-1 font-medium">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          Mathematical Standard Anchor
-        </p>
+        <p class="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-400">Land records <span class="mx-1 text-slate-300">/</span> Measurement reference</p>
+        <h1 class="mt-1.5 text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Area conversions</h1>
+        <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">Convert recorded areas and maintain regional land-unit conventions.</p>
       </div>
-      <div
-        class="w-11 h-11 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7c0-2-1-3-3-3H7C5 4 4 5 4 7z" />
-        </svg>
-      </div>
+      <button type="button" (click)="createConvention()"
+        class="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2">
+        <span aria-hidden="true">＋</span> New convention
+      </button>
     </div>
+  </header>
 
-    <!-- Card 2: Decimal Definition -->
-    <div
-      class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-2xs flex items-center justify-between">
-      <div>
-        <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Standard Decimal (শতাংশ)</p>
-        <h3 class="text-xl font-bold text-slate-900 dark:text-slate-100 mt-1">435.60 sq ft</h3>
-        <p class="text-[11px] text-blue-600 dark:text-blue-400 mt-0.5 flex items-center gap-1 font-medium">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          1/100 of 1 Acre (Universal)
-        </p>
-      </div>
-      <div
-        class="w-11 h-11 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 flex items-center justify-center text-blue-600 dark:text-blue-400">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-        </svg>
-      </div>
-    </div>
-
-    <!-- Card 3: Regional Presets -->
-    <div
-      class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-2xs flex items-center justify-between">
-      <div>
-        <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Configured Regional Presets</p>
-        <h3 class="text-xl font-bold text-slate-900 dark:text-slate-100 mt-1">{{ conventions().length }} Regions</h3>
-        <p class="text-[11px] text-amber-600 dark:text-amber-400 mt-0.5 flex items-center gap-1 font-medium">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-          </svg>
-          Dhaka, Ctg, Rajshahi, Sylhet
-        </p>
-      </div>
-      <div
-        class="w-11 h-11 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 flex items-center justify-center text-amber-600 dark:text-amber-400">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      </div>
-    </div>
-
-    <!-- Card 4: Legal Protection -->
-    <div
-      class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-2xs flex items-center justify-between">
-      <div>
-        <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Deed Audit Integrity</p>
-        <h3 class="text-xl font-bold text-slate-900 dark:text-slate-100 mt-1">100% Preserved</h3>
-        <p class="text-[11px] text-purple-600 dark:text-purple-400 mt-0.5 flex items-center gap-1 font-medium">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-          </svg>
-          No Silent Area Overwrite
-        </p>
-      </div>
-      <div
-        class="w-11 h-11 rounded-xl bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800 flex items-center justify-center text-purple-600 dark:text-purple-400">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-        </svg>
-      </div>
-    </div>
+  @if (saveSuccess()) {
+  <div role="status" class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200">
+    {{ saveSuccess() }}
   </div>
+  }
 
   <!-- Interactive Regional Conversion Engine Card -->
   <div
@@ -108,20 +36,18 @@
         </div>
         <div>
           <h2 class="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-            2.4 Bangladesh Regional Land Measurement Calculator
-            <span
-              class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">Live
-              Engine</span>
+            Conversion workspace
+            <span class="px-2 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">Live</span>
           </h2>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Preserve legal deed measurements while instantly converting to standard square feet and all regional units.
+          <p class="text-sm text-slate-600 dark:text-slate-400 mt-0.5">
+            Keep the entered unit and value alongside calculated equivalents.
           </p>
         </div>
       </div>
 
       <div class="flex items-center gap-2">
         <button type="button" (click)="runLiveConversion()" [disabled]="isCalculating()"
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-colors shadow-2xs disabled:opacity-50">
+        class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white transition-colors shadow-2xs disabled:opacity-50">
           <svg class="w-3.5 h-3.5" [ngClass]="{'animate-spin': isCalculating()}" fill="none" stroke="currentColor"
             viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -134,13 +60,26 @@
 
     <!-- Calculator Controls Grid -->
     <div class="p-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850/50">
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      @if (selectedConvention(); as convention) {
+      <div class="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-lg border-l-4 border-emerald-600 bg-white dark:bg-slate-900 px-4 py-3 shadow-2xs">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Active land convention</p>
+          <p class="mt-0.5 text-sm font-bold text-slate-900 dark:text-slate-100">{{ convention.convention_name }}</p>
+        </div>
+        <p class="text-sm text-slate-600 dark:text-slate-300">
+          {{ convention.region_district }} <span class="mx-1 text-slate-300">·</span>
+          <span class="font-mono font-semibold text-emerald-800 dark:text-emerald-300">{{ convention.katha_to_sqft | number:'1.0-2' }} sq ft / katha</span>
+        </p>
+      </div>
+      }
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <!-- Select Regional Convention -->
         <div>
-          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+          <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
             Regional Convention (অঞ্চল ও কনভেনশন) *
           </label>
           <select [value]="selectedConventionId() || ''" (change)="onConventionSelect($any($event.target).value)"
+            [disabled]="isLoading() || conventions().length === 0"
             class="w-full px-3 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500">
             @for (c of conventions(); track c.id) {
             <option [value]="c.id">
@@ -148,14 +87,14 @@
             </option>
             }
           </select>
-          <span class="text-[10px] text-slate-400 mt-1 block">
+          <span class="text-xs text-slate-500 dark:text-slate-400 mt-1 block">
             Controls katha, bigha, kani, and gonda multipliers.
           </span>
         </div>
 
         <!-- Input Unit -->
         <div>
-          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+          <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
             Input Measurement Unit (পরিমাপের একক) *
           </label>
           <select [value]="inputUnit()" (change)="onUnitChange($any($event.target).value)"
@@ -164,14 +103,14 @@
             <option [value]="u.value">{{ u.label }}</option>
             }
           </select>
-          <span class="text-[10px] text-slate-400 mt-1 block">
+          <span class="text-xs text-slate-500 dark:text-slate-400 mt-1 block">
             Unit specified in legal deed or boundary survey.
           </span>
         </div>
 
         <!-- Input Value -->
         <div>
-          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+          <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
             Measured Value (পরিমাপের পরিমাণ) *
           </label>
           <div class="relative">
@@ -183,27 +122,27 @@
               {{ inputUnit() }}
             </span>
           </div>
-          <span class="text-[10px] text-slate-400 mt-1 block">
+          <span class="text-xs text-slate-500 dark:text-slate-400 mt-1 block">
             Exact quantity to convert across all units.
           </span>
         </div>
 
-        <!-- Legally Recorded Deed Text (Preservation Requirement) -->
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-            Preserved Legal Deed Text (আইনি দলিলে লিখিত বর্ণনা)
-          </label>
-          <input type="text" [value]="recordedDeedText()" (input)="onDeedTextChange($any($event.target).value)"
-            placeholder="e.g. ১০ শতাংশ নাল জমি..."
-            class="w-full px-3 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500" />
-          <span class="text-[10px] text-emerald-600 dark:text-emerald-400 mt-1 block font-medium">
-            Strictly retained to prevent legal area modification.
-          </span>
-        </div>
       </div>
+      <p class="mt-3 text-xs text-emerald-700 dark:text-emerald-400">
+        The original unit and value are sent as registered deed fields and remain separate from calculated values.
+      </p>
     </div>
 
     <!-- Live Converted Units Output Grid -->
+    @if (calculationError()) {
+    <div role="alert" class="mx-5 mt-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-200">
+      {{ calculationError() }}
+      <button type="button" (click)="runLiveConversion()" class="ml-2 font-semibold underline">Retry conversion</button>
+    </div>
+    }
+    @if (isCalculating() && !conversionResult()) {
+    <div class="px-5 py-8 text-center text-sm text-slate-500" role="status">Calculating area…</div>
+    }
     @if (conversionResult()) {
     <div class="p-5">
       <div class="flex items-center justify-between mb-3">
@@ -212,15 +151,15 @@
           <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
           </svg>
-          Converted Measurements Matrix ({{ conversionResult()?.convention_name }})
+          Converted Measurements Matrix ({{ conversionResult()?.convention_used }})
         </h3>
         <span class="text-xs text-slate-500 dark:text-slate-400">
-          Regional Convention: <strong class="text-slate-800 dark:text-slate-200">{{ conversionResult()?.region_district
+          Regional Convention: <strong class="text-slate-800 dark:text-slate-200">{{ conversionResult()?.region
             }}</strong>
         </span>
       </div>
 
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
         <!-- Sq Ft (Base) -->
         <div
           class="p-3.5 rounded-xl border-2 border-emerald-500 bg-emerald-50/40 dark:bg-emerald-950/20 text-center relative overflow-hidden">
@@ -231,6 +170,15 @@
             {{ conversionResult()?.converted_units?.sqft | number:'1.2-2' }}
           </span>
           <span class="text-[10px] text-slate-400">বর্গফুট</span>
+        </div>
+
+        <!-- Square metres -->
+        <div class="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-850/80 text-center">
+          <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">Square Metres (m²)</span>
+          <span class="text-lg font-bold text-slate-900 dark:text-slate-100 block mt-1">
+            {{ conversionResult()?.converted_units?.sqm | number:'1.2-4' }}
+          </span>
+          <span class="text-[10px] text-slate-400">বর্গমিটার</span>
         </div>
 
         <!-- Decimal -->
@@ -289,21 +237,9 @@
       </div>
 
       <!-- Formula & Audit Preservation Notice -->
-      <div
-        class="mt-4 p-3 rounded-lg bg-slate-100/70 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-xs">
-        <div class="flex items-center gap-2">
-          <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
-          <span class="text-slate-700 dark:text-slate-300 font-medium">
-            {{ conversionResult()?.explanation }}
-          </span>
-        </div>
-
-        @if (conversionResult()?.preserved_original_input?.recorded_deed_text) {
-        <div
-          class="text-emerald-700 dark:text-emerald-300 font-mono text-[11px] bg-emerald-50 dark:bg-emerald-950/80 px-2.5 py-1 rounded border border-emerald-200 dark:border-emerald-800">
-          Audit Record: "{{ conversionResult()?.preserved_original_input?.recorded_deed_text }}"
-        </div>
-        }
+      <div class="mt-4 p-3 rounded-lg bg-slate-100/70 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 text-xs text-slate-700 dark:text-slate-300">
+        Preserved deed record:
+        <strong>{{ conversionResult()?.original_deed_record?.preserved_statutory_text }}</strong>
       </div>
     </div>
     }
@@ -313,12 +249,12 @@
   <app-card-container [hasHeader]="true" title="Configurable Regional Measurement Conventions">
     <!-- Card Actions in Header -->
     <div card-actions class="flex items-center gap-2">
-      <button type="button" (click)="openCreateModal()"
+      <button type="button" (click)="createConvention()"
         class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-colors shadow-2xs">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
         </svg>
-        Add Regional Convention
+        New convention
       </button>
     </div>
 
@@ -338,16 +274,63 @@
           class="w-full pl-9 pr-3 py-1.5 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-emerald-500" />
       </div>
 
-      <div class="text-xs text-slate-500 dark:text-slate-400">
+      <div class="text-sm text-slate-600 dark:text-slate-400">
         Showing {{ filteredConventions().length }} regional conventions
       </div>
     </div>
 
+    <!-- Compact convention cards keep identity and editing visible on phones/tablets. -->
+    <div class="lg:hidden divide-y divide-slate-200 dark:divide-slate-800">
+      @if (isLoading()) {
+      <div class="px-4 py-8 text-center text-sm text-slate-500" role="status">Loading regional conventions…</div>
+      } @else if (loadError()) {
+      <div class="px-4 py-8 text-center">
+        <p class="text-sm font-semibold text-rose-700 dark:text-rose-300">{{ loadError() }}</p>
+        <button type="button" (click)="loadConventions()" class="mt-2 text-sm font-semibold text-emerald-700 dark:text-emerald-400 underline">Retry loading conventions</button>
+      </div>
+      } @else if (paginatedConventions().length === 0) {
+      <div class="px-4 py-8 text-center text-sm text-slate-500">
+        @if (searchTerm()) { No conventions match “{{ searchTerm() }}”. Try another search or clear the filter. }
+        @else { No regional conventions are configured yet. Create the first convention to enable regional conversions. }
+      </div>
+      } @else {
+      @for (c of paginatedConventions(); track c.id) {
+      <article class="p-4 hover:bg-slate-50/80 dark:hover:bg-slate-850/50">
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <div class="flex flex-wrap items-center gap-2">
+              <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100">{{ c.convention_name }}</h3>
+              @if (c.is_default) {
+              <span class="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">Default</span>
+              }
+            </div>
+            <p class="mt-1 font-mono text-xs text-slate-500 dark:text-slate-400">{{ c.convention_code }}</p>
+            <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">{{ c.region_district }}</p>
+          </div>
+          <button type="button" (click)="editConvention(c)" [attr.aria-label]="'Edit ' + c.convention_name"
+            class="shrink-0 rounded-lg border border-slate-200 dark:border-slate-700 p-2 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            </svg>
+          </button>
+        </div>
+        <div class="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 border-t border-slate-100 dark:border-slate-800 pt-3 text-sm">
+          <div><span class="text-slate-500 dark:text-slate-400">Katha</span><p class="font-mono font-semibold text-slate-900 dark:text-slate-100">{{ c.katha_to_sqft | number:'1.1-2' }} sq ft</p></div>
+          <div><span class="text-slate-500 dark:text-slate-400">Decimal</span><p class="font-mono font-semibold text-slate-900 dark:text-slate-100">{{ c.decimal_to_sqft | number:'1.2-2' }} sq ft</p></div>
+          <div><span class="text-slate-500 dark:text-slate-400">Bigha</span><p class="font-mono font-semibold text-slate-900 dark:text-slate-100">{{ c.bigha_to_katha | number:'1.1-2' }} katha</p></div>
+          <div><span class="text-slate-500 dark:text-slate-400">Acre</span><p class="font-mono font-semibold text-slate-900 dark:text-slate-100">{{ c.acre_to_decimal | number:'1.0-0' }} decimal</p></div>
+        </div>
+        <button type="button" (click)="testInCalculator(c)" class="mt-3 text-sm font-semibold text-emerald-700 dark:text-emerald-400 hover:underline">Use in converter</button>
+      </article>
+      }
+      }
+    </div>
+
     <!-- Table Container -->
-    <div class="overflow-x-auto">
-      <table class="w-full text-left text-xs text-slate-700 dark:text-slate-300">
+    <div class="hidden lg:block overflow-x-auto">
+      <table class="min-w-[980px] w-full text-left text-sm text-slate-700 dark:text-slate-300">
         <thead
-          class="bg-slate-100/70 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-700 text-[11px] uppercase tracking-wider">
+          class="bg-slate-100/70 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-700 text-xs uppercase tracking-wider">
           <tr>
             <th class="py-3 px-4">Convention Code & Name</th>
             <th class="py-3 px-4">Region / District</th>
@@ -373,10 +356,23 @@
               </div>
             </td>
           </tr>
+          } @else if (loadError()) {
+          <tr>
+            <td colspan="9" class="py-10 text-center">
+              <p class="text-sm font-semibold text-rose-700 dark:text-rose-300">{{ loadError() }}</p>
+              <button type="button" (click)="loadConventions()" class="mt-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400 underline">
+                Retry loading conventions
+              </button>
+            </td>
+          </tr>
           } @else if (paginatedConventions().length === 0) {
           <tr>
             <td colspan="9" class="py-10 text-center text-slate-400">
-              No measurement conventions found matching your criteria.
+              @if (searchTerm()) {
+              <span>No conventions match “{{ searchTerm() }}”. Try another search or clear the filter.</span>
+              } @else {
+              <span>No regional conventions are configured yet. Create the first convention to enable regional conversions.</span>
+              }
             </td>
           </tr>
           } @else {
@@ -391,7 +387,7 @@
                   class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">Default</span>
                 }
               </div>
-              <div class="font-mono text-[10px] text-slate-400 mt-0.5">{{ c.convention_code }}</div>
+              <div class="font-mono text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ c.convention_code }}</div>
             </td>
 
             <!-- Region / District -->
@@ -429,11 +425,11 @@
             <td class="py-3 px-4 text-center">
               @if (c.kani_to_sqft) {
               <span
-                class="text-[11px] font-mono text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 px-2 py-0.5 rounded border border-amber-200 dark:border-amber-800">
+                class="text-xs font-mono text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 px-2 py-0.5 rounded border border-amber-200 dark:border-amber-800">
                 {{ c.kani_to_sqft | number:'1.0-0' }} sqft/kani
               </span>
               } @else {
-              <span class="text-slate-400 text-[11px]">—</span>
+              <span class="text-xs text-slate-500 dark:text-slate-400">—</span>
               }
             </td>
 
@@ -441,12 +437,12 @@
             <td class="py-3 px-4 text-center">
               @if (c.is_default) {
               <span
-                class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
                 Standard
               </span>
               } @else {
               <span
-                class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
                 Regional
               </span>
               }
@@ -456,10 +452,10 @@
             <td class="py-3 px-4 text-right">
               <div class="inline-flex items-center gap-1.5">
                 <button type="button" (click)="testInCalculator(c)" title="Load into Live Calculator"
-                  class="px-2 py-1 text-[11px] font-semibold rounded bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900 border border-emerald-200 dark:border-emerald-800 transition-colors">
+                  class="px-2 py-1 text-xs font-semibold rounded bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900 border border-emerald-200 dark:border-emerald-800 transition-colors">
                   Test
                 </button>
-                <button type="button" (click)="openEditModal(c)" title="Edit Convention"
+                <button type="button" (click)="editConvention(c)" title="Edit Convention"
                   class="p-1 rounded text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -514,115 +510,4 @@
     </div>
   </app-card-container>
 
-  <!-- Add / Edit Convention Modal -->
-  <app-modal [isOpen]="isModalOpen()"
-    [title]="isEditMode() ? 'Edit Regional Measurement Convention' : 'Register New Regional Convention'"
-    [subtitle]="'Configure regional multipliers (Katha, Bigha, Kani) while ensuring deed measurements remain intact.'"
-    [badge]="isEditMode() ? 'Edit Convention' : 'New Convention'" size="xl" (closed)="closeModal()">
-    <form [formGroup]="conventionForm" (ngSubmit)="saveConvention()" class="space-y-4">
-      <!-- Basic Details -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <div>
-          <app-custom-input label="Convention Code *" formControlName="convention_code"
-            placeholder="e.g. BARISAL_COASTAL" [required]="true"></app-custom-input>
-        </div>
-
-        <div>
-          <app-custom-input label="Convention Name *" formControlName="convention_name"
-            placeholder="e.g. Barisal Division Land Convention" [required]="true"></app-custom-input>
-        </div>
-
-        <div>
-          <app-searchable-select categoryCode="MEASUREMENT_REGIONS" label="Region / District *"
-            formControlName="region_district" [allowCreateNew]="true"
-            placeholder="Select or add region..."></app-searchable-select>
-        </div>
-      </div>
-
-      <!-- Conversion Multipliers -->
-      <div
-        class="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850/50 space-y-3">
-        <h4 class="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
-          <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-          </svg>
-          Multipliers & Unit Ratios
-        </h4>
-
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-          <div>
-            <app-custom-input label="1 Katha in Sq Ft *" formControlName="katha_to_sqft" type="number" step="0.01"
-              placeholder="720.00" [required]="true"></app-custom-input>
-          </div>
-
-          <div>
-            <app-custom-input label="1 Decimal in Sq Ft *" formControlName="decimal_to_sqft" type="number" step="0.01"
-              placeholder="435.60" [required]="true"></app-custom-input>
-          </div>
-
-          <div>
-            <app-custom-input label="1 Bigha in Katha *" formControlName="bigha_to_katha" type="number" step="0.01"
-              placeholder="20.00" [required]="true"></app-custom-input>
-          </div>
-
-          <div>
-            <app-custom-input label="1 Acre in Decimal *" formControlName="acre_to_decimal" type="number" step="0.01"
-              placeholder="100.00" [required]="true"></app-custom-input>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
-          <div>
-            <app-custom-input label="1 Kani in Sq Ft (Optional - Ctg)" formControlName="kani_to_sqft" type="number"
-              step="0.01" placeholder="17280.00"></app-custom-input>
-          </div>
-
-          <div>
-            <app-custom-input label="1 Gonda in Sq Ft (Optional - Ctg)" formControlName="gonda_to_sqft" type="number"
-              step="0.01" placeholder="864.00"></app-custom-input>
-          </div>
-        </div>
-      </div>
-
-      <!-- Notes & Default -->
-      <div class="space-y-3">
-        <app-custom-textarea label="Historical Legal Notes & Boundary Details" formControlName="notes"
-          placeholder="State whether this convention conforms to local survey parcha conventions or deed practices..."
-          [rows]="2"></app-custom-textarea>
-
-        <label class="flex items-center gap-2 cursor-pointer pt-1">
-          <input type="checkbox" formControlName="is_default"
-            class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 dark:border-slate-700" />
-          <span class="text-xs font-semibold text-slate-800 dark:text-slate-200">
-            Set as Default System Convention for New Parcel Registrations
-          </span>
-        </label>
-      </div>
-
-      <!-- Modal Actions -->
-      <div class="flex items-center justify-end gap-2 pt-4 border-t border-slate-200 dark:border-slate-800">
-        <button type="button" (click)="closeModal()"
-          class="px-4 py-2 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
-          Cancel
-        </button>
-
-        <button type="submit" [disabled]="isSaving()"
-          class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-colors shadow-2xs disabled:opacity-50">
-          @if (isSaving()) {
-          <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-          </svg>
-          Saving...
-          } @else {
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-          </svg>
-          {{ isEditMode() ? 'Update Convention' : 'Save Convention' }}
-          }
-        </button>
-      </div>
-    </form>
-  </app-modal>
 </div>

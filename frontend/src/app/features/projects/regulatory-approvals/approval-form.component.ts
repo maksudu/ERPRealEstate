@@ -83,7 +83,7 @@ import {
         </svg>
         <div>
           <strong>Regulatory Compliance Protocol (Bangladesh Jurisdiction):</strong>
-          The ERP tracks regulatory requirements and documentary evidence; submitting an application does NOT constitute approved authority sanction. Construction teams must only build against currently authorized, version-controlled drawing sets.
+          Bangladesh National Building Code 2020 (BNBC 2020) and other authority-specific requirements vary by jurisdiction and clearance type; confirm applicability with the competent authority. Submitting an application does NOT constitute approval. Construction teams must only build against currently authorized, version-controlled drawing sets.
         </div>
       </div>
 
@@ -123,7 +123,13 @@ import {
               [options]="clearanceTypeOptions"
               formControlName="clearance_type_id"
               [required]="true"
+              (ngModelChange)="onClearanceTypeSelected($event)"
             ></app-searchable-select>
+          </div>
+
+          <div *ngIf="selectedProjectAuthority()" class="mt-3 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-muted-foreground">
+            Project jurisdiction: <strong class="text-foreground">{{ selectedProjectAuthority() }}</strong>.
+            Authority is suggested by clearance type; confirm the competent authority and applicability for this project.
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
@@ -148,6 +154,9 @@ import {
           title="2. Submissions, Official Memos & Validity Schedule"
           subtitle="Authority submission numbers, official sanction gazettes, and renewal timelines"
         >
+          <div *ngIf="requiresApprovalEvidence()" class="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-300">
+            APPROVED requires an official approval memo number, approval date, and an official approval document URL.
+          </div>
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <!-- Submission Column -->
             <div class="p-3.5 rounded-xl border border-border bg-secondary/30 space-y-3">
@@ -170,12 +179,14 @@ import {
               <app-custom-input
                 label="Approved Sanction Memo No"
                 formControlName="approved_memo_no"
+                [required]="requiresApprovalEvidence()"
                 placeholder="e.g. RAJUK/SANCTION/8812"
               ></app-custom-input>
               <app-custom-input
                 label="Approval / Sanction Date"
                 type="date"
                 formControlName="approval_date"
+                [required]="requiresApprovalEvidence()"
               ></app-custom-input>
             </div>
 
@@ -278,8 +289,9 @@ import {
         >
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <app-custom-input
-              label="Approved Sanction Document / Drawing URL"
+              label="Official Approval Document URL"
               formControlName="document_url"
+              [required]="requiresApprovalEvidence()"
               placeholder="e.g. https://storage.corp/approvals/rajuk-sanction-8812.pdf"
             ></app-custom-input>
 
@@ -415,6 +427,8 @@ export class ApprovalFormComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.form.get('status')?.valueChanges.subscribe(() => this.updateApprovalEvidenceValidators());
+    this.updateApprovalEvidenceValidators();
     this.loadProjects();
 
     const id = this.route.snapshot.paramMap.get('id');
@@ -430,8 +444,9 @@ export class ApprovalFormComponent implements OnInit {
       next: (data) => {
         this.projects.set(data);
         if (!this.isEditMode() && data.length > 0 && !this.form.get('project_id')?.value) {
-          this.form.patchValue({ project_id: data[0].id });
+          this.form.patchValue({ project_id: data[0].id }, { emitEvent: false });
           this.form.patchValue({ reference_no: `CLR-${data[0].project_code}-BP-01` });
+          this.applyRecommendedAuthority(data[0], this.form.get('clearance_type_id')?.value);
         }
       }
     });
@@ -439,10 +454,68 @@ export class ApprovalFormComponent implements OnInit {
 
   onProjectSelected(projectId: any): void {
     const proj = this.projects().find(p => p.id === Number(projectId));
+    if (proj) {
+      this.applyRecommendedAuthority(proj, this.form.get('clearance_type_id')?.value);
+    }
     if (proj && !this.isEditMode()) {
       const type = this.form.get('clearance_type_id')?.value || 'PERMIT';
       this.form.patchValue({ reference_no: `CLR-${proj.project_code}-${type}-01` });
     }
+  }
+
+  onClearanceTypeSelected(clearanceTypeId: string): void {
+    const project = this.projects().find(p => p.id === Number(this.form.get('project_id')?.value));
+    if (project) {
+      this.applyRecommendedAuthority(project, clearanceTypeId);
+    }
+  }
+
+  selectedProjectAuthority(): string {
+    const project = this.projects().find(p => p.id === Number(this.form.get('project_id')?.value));
+    if (!project?.development_authority_id) return '';
+    const authority = project.development_authority_id.toUpperCase();
+    return this.authorityOptions.find(option => option.value === authority)?.label || authority;
+  }
+
+  requiresApprovalEvidence(): boolean {
+    return this.form.get('status')?.value === 'APPROVED';
+  }
+
+  private applyRecommendedAuthority(project: Project, clearanceTypeId: string): void {
+    const projectAuthority = (project.development_authority_id || 'RAJUK').toUpperCase();
+    const authorityByType: Record<string, string> = {
+      LUC: projectAuthority,
+      BUILDING_PLAN: projectAuthority,
+      DRAWING_APPROVAL: projectAuthority,
+      CONSTRUCTION_INSPECTION: projectAuthority,
+      OCCUPANCY_CERT: projectAuthority,
+      FIRE_NOC: 'FSCD',
+      AVIATION_HEIGHT: 'CAAB',
+      ENVIRONMENTAL: 'DoE',
+      WASA: 'WASA',
+      DESCO_DPDC: 'DESCO_DPDC'
+    };
+    this.form.patchValue({
+      authority_name: authorityByType[clearanceTypeId] || projectAuthority
+    }, { emitEvent: false });
+  }
+
+  private updateApprovalEvidenceValidators(): void {
+    const required = this.requiresApprovalEvidence();
+    ['approved_memo_no', 'approval_date', 'document_url'].forEach(fieldName => {
+      const control = this.form.get(fieldName);
+      if (!control) return;
+      if (required) {
+        const validators = [Validators.required];
+        if (fieldName === 'document_url') {
+          validators.push(Validators.pattern(/^https?:\/\/\S+$/i));
+        }
+        control.setValidators(validators);
+      } else {
+        control.clearValidators();
+      }
+      control.updateValueAndValidity({ emitEvent: false });
+    });
   }
 
   loadClearance(id: number): void {
@@ -472,7 +545,8 @@ export class ApprovalFormComponent implements OnInit {
           status: c.status,
           document_url: c.document_url,
           remarks: c.remarks
-        });
+        }, { emitEvent: false });
+        this.updateApprovalEvidenceValidators();
       }
     });
   }

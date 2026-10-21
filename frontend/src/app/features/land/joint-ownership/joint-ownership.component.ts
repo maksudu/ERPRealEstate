@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { LandService } from '../../../core/services/land.service';
 import { 
   LandParcel, 
@@ -39,11 +40,31 @@ import {
 export class JointOwnershipComponent implements OnInit {
   private landService = inject(LandService);
   private fb = inject(FormBuilder);
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
 
   Math = Math;
   Number = Number;
 
-  // Active Tab
+  // View Mode: 'LIST' for table registry, or dedicated page views for create/edit
+  currentView = signal<'LIST' | 'CREATE_AGREEMENT' | 'EDIT_AGREEMENT' | 'CREATE_SHARE' | 'EDIT_SHARE'>('LIST');
+
+  // Success & Error Messages
+  successMessage = signal<string>('');
+  errorMessage = signal<string>('');
+
+  // Agreement Document Upload State
+  isUploadingAgreement = signal<boolean>(false);
+  uploadedAgreementDocuments = signal<Array<{
+    document_name: string;
+    file_url: string;
+    file_name?: string;
+    file_size?: number;
+    extension?: string;
+    uploaded_at?: string;
+  }>>([]);
+
+  // Active Tab in List View
   activeTab = signal<'SHARES' | 'AGREEMENTS'>('SHARES');
 
   // State Signals
@@ -93,15 +114,15 @@ export class JointOwnershipComponent implements OnInit {
   parcelOptions = computed(() => {
     return this.parcels().map(p => ({
       value: p.id,
-      label: `${p.project_name} (JL: ${p.jl_number}, Dag: ${p.dag_number})`,
-      subLabel: `${p.mouza_name} - Total Area: ${p.total_area_decimal} Decimal`
+      label: `${p.project_name || p.parcel_id || 'Parcel #' + p.id} (${p.total_area_decimal || 0} Dec - Mouza: ${p.mouza_name || 'N/A'})`,
+      subLabel: `JL: ${p.jl_number || '-'}, Dag: ${p.dag_number || '-'}, District: ${p.district || 'Dhaka'}`
     }));
   });
 
   landownerOptions = computed(() => {
     return this.landowners().map(o => ({
       value: o.id,
-      label: `${o.full_name_en} (${o.landowner_code})`,
+      label: `${o.full_name_en || o.landowner_code || 'Owner #' + o.id} (${o.landowner_code || ''})`,
       subLabel: `NID: ${o.nid_number || 'N/A'}, Phone: ${o.phone_number || 'N/A'}`
     }));
   });
@@ -115,16 +136,16 @@ export class JointOwnershipComponent implements OnInit {
   // Filtered Co-Ownership Links
   filteredLinks = computed(() => {
     let list = this.links();
-    const term = this.searchTerm().trim().toLowerCase();
+    const term = (this.searchTerm() || '').trim().toLowerCase();
     const pId = this.selectedParcelId();
     const consent = this.selectedConsentStatus();
     const source = this.selectedOwnershipSource();
 
     if (term) {
       list = list.filter(l => 
-        (l.landowner && l.landowner.full_name_en.toLowerCase().includes(term)) ||
-        (l.landowner && l.landowner.landowner_code.toLowerCase().includes(term)) ||
-        (l.parcel && l.parcel.project_name.toLowerCase().includes(term)) ||
+        (l.landowner?.full_name_en && l.landowner.full_name_en.toLowerCase().includes(term)) ||
+        (l.landowner?.landowner_code && l.landowner.landowner_code.toLowerCase().includes(term)) ||
+        (l.parcel?.project_name && l.parcel.project_name.toLowerCase().includes(term)) ||
         (l.title_deed_no && l.title_deed_no.toLowerCase().includes(term)) ||
         (l.poa_holder_name && l.poa_holder_name.toLowerCase().includes(term))
       );
@@ -156,15 +177,16 @@ export class JointOwnershipComponent implements OnInit {
   // Filtered Agreements
   filteredAgreements = computed(() => {
     let list = this.agreements();
-    const term = this.searchTerm().trim().toLowerCase();
+    const term = (this.searchTerm() || '').trim().toLowerCase();
     const pId = this.selectedParcelId();
 
     if (term) {
       list = list.filter(a => 
-        a.agreement_deed_no.toLowerCase().includes(term) ||
+        (a.agreement_deed_no && a.agreement_deed_no.toLowerCase().includes(term)) ||
         (a.registration_deed_no && a.registration_deed_no.toLowerCase().includes(term)) ||
         (a.registration_office && a.registration_office.toLowerCase().includes(term)) ||
-        (a.parcel && a.parcel.project_name.toLowerCase().includes(term))
+        (a.parcel?.project_name && a.parcel.project_name.toLowerCase().includes(term)) ||
+        (a.agreement_document_name && a.agreement_document_name.toLowerCase().includes(term))
       );
     }
 
@@ -186,6 +208,14 @@ export class JointOwnershipComponent implements OnInit {
   ngOnInit(): void {
     this.initForms();
     this.loadData();
+
+    const action = this.route.snapshot.queryParams['action'];
+    const currentUrl = this.router.url;
+    if (action === 'new-agreement' || currentUrl.includes('/agreements/create') || currentUrl.includes('/agreement/create') || (currentUrl.endsWith('/joint-ownership/create') && !currentUrl.includes('/shares'))) {
+      this.openCreateAgreementPage();
+    } else if (action === 'new-share' || currentUrl.includes('/shares/create') || currentUrl.includes('/share/create')) {
+      this.openCreateSharePage();
+    }
   }
 
   private initForms(): void {
@@ -231,6 +261,8 @@ export class JointOwnershipComponent implements OnInit {
       poa_execution_date: [null],
       poa_expiry_date: [null],
       poa_verified: [true],
+      agreement_document_name: [''],
+      agreement_file_url: [''],
       status: ['ACTIVE', Validators.required]
     });
   }
@@ -241,7 +273,8 @@ export class JointOwnershipComponent implements OnInit {
     // 1. Load Joint Ownership Links
     this.landService.getJointOwnershipLinks().subscribe({
       next: (data) => {
-        this.links.set(data);
+        const list = Array.isArray(data) ? data : (data as any)?.items || [];
+        this.links.set(list);
         this.isLoading.set(false);
       },
       error: (err) => {
@@ -253,10 +286,11 @@ export class JointOwnershipComponent implements OnInit {
     // 2. Load Parcels
     this.landService.getParcels().subscribe({
       next: (parcels) => {
-        this.parcels.set(parcels);
-        if (parcels.length > 0 && !this.auditParcelId()) {
-          this.auditParcelId.set(parcels[0].id);
-          this.runAuditForParcel(parcels[0].id);
+        const list = Array.isArray(parcels) ? parcels : (parcels as any)?.items || [];
+        this.parcels.set(list);
+        if (list.length > 0 && !this.auditParcelId()) {
+          this.auditParcelId.set(list[0].id);
+          this.runAuditForParcel(list[0].id);
         }
       },
       error: (err) => console.error('Failed to load parcels', err)
@@ -264,13 +298,19 @@ export class JointOwnershipComponent implements OnInit {
 
     // 3. Load Landowners
     this.landService.getLandowners().subscribe({
-      next: (owners) => this.landowners.set(owners),
+      next: (owners) => {
+        const list = Array.isArray(owners) ? owners : (owners as any)?.items || [];
+        this.landowners.set(list);
+      },
       error: (err) => console.error('Failed to load landowners', err)
     });
 
     // 4. Load Agreements
     this.landService.getJVAgreements().subscribe({
-      next: (agreements) => this.agreements.set(agreements),
+      next: (agreements) => {
+        const list = Array.isArray(agreements) ? agreements : (agreements as any)?.items || [];
+        this.agreements.set(list);
+      },
       error: (err) => console.error('Failed to load agreements', err)
     });
   }
@@ -308,8 +348,10 @@ export class JointOwnershipComponent implements OnInit {
     this.isAuditModalOpen.set(false);
   }
 
-  // Modal 1: Register / Edit Co-Owner Share
-  openCreateShareModal(presetParcelId?: number): void {
+  // Co-Owner Share Page Navigation
+  openCreateSharePage(presetParcelId?: number): void {
+    this.errorMessage.set('');
+    this.successMessage.set('');
     this.isEditShareMode.set(false);
     this.editingLinkId.set(null);
     const defParcel = presetParcelId || this.auditParcelId() || (this.parcels().length > 0 ? this.parcels()[0].id : null);
@@ -327,10 +369,12 @@ export class JointOwnershipComponent implements OnInit {
       title_deed_no: '',
       status: 'ACTIVE'
     });
-    this.isShareModalOpen.set(true);
+    this.currentView.set('CREATE_SHARE');
   }
 
-  openEditShareModal(link: LandownerParcelLink): void {
+  openEditSharePage(link: LandownerParcelLink): void {
+    this.errorMessage.set('');
+    this.successMessage.set('');
     this.isEditShareMode.set(true);
     this.editingLinkId.set(link.id);
     this.shareForm.patchValue({
@@ -347,16 +391,28 @@ export class JointOwnershipComponent implements OnInit {
       title_deed_no: link.title_deed_no || '',
       status: link.status || 'ACTIVE'
     });
-    this.isShareModalOpen.set(true);
+    this.currentView.set('EDIT_SHARE');
+  }
+
+  openCreateShareModal(presetParcelId?: number): void {
+    this.openCreateSharePage(presetParcelId);
+  }
+
+  openEditShareModal(link: LandownerParcelLink): void {
+    this.openEditSharePage(link);
   }
 
   closeShareModal(): void {
-    this.isShareModalOpen.set(false);
+    this.backToList();
   }
 
   saveShare(): void {
+    this.errorMessage.set('');
+    this.successMessage.set('');
+
     if (this.shareForm.invalid) {
       this.shareForm.markAllAsTouched();
+      this.errorMessage.set('Please fill all required fields correctly before saving.');
       return;
     }
 
@@ -365,27 +421,33 @@ export class JointOwnershipComponent implements OnInit {
 
     if (this.isEditShareMode() && this.editingLinkId()) {
       this.landService.updateJointOwnershipLink(this.editingLinkId()!, formVal).subscribe({
-        next: (updated) => {
+        next: () => {
           this.isSaving.set(false);
-          this.closeShareModal();
+          this.successMessage.set('Co-owner share updated successfully!');
+          this.currentView.set('LIST');
           this.loadData();
           if (this.auditParcelId()) this.runAuditForParcel(this.auditParcelId()!);
+          setTimeout(() => this.successMessage.set(''), 6000);
         },
         error: (err) => {
           console.error('Failed to update share', err);
+          this.errorMessage.set(err.error?.detail || 'Failed to update co-owner share. Please check input values.');
           this.isSaving.set(false);
         }
       });
     } else {
       this.landService.linkOwnerToParcel(formVal.parcel_id, formVal).subscribe({
-        next: (created) => {
+        next: () => {
           this.isSaving.set(false);
-          this.closeShareModal();
+          this.successMessage.set('New co-owner share registered successfully!');
+          this.currentView.set('LIST');
           this.loadData();
           if (this.auditParcelId()) this.runAuditForParcel(this.auditParcelId()!);
+          setTimeout(() => this.successMessage.set(''), 6000);
         },
         error: (err) => {
           console.error('Failed to register share', err);
+          this.errorMessage.set(err.error?.detail || 'Failed to register co-owner share. Please check input values.');
           this.isSaving.set(false);
         }
       });
@@ -399,17 +461,25 @@ export class JointOwnershipComponent implements OnInit {
 
     this.landService.deleteJointOwnershipLink(link.id).subscribe({
       next: () => {
+        this.successMessage.set('Co-owner share deleted successfully.');
         this.loadData();
         if (this.auditParcelId()) this.runAuditForParcel(this.auditParcelId()!);
+        setTimeout(() => this.successMessage.set(''), 5000);
       },
-      error: (err) => console.error('Failed to delete share', err)
+      error: (err) => {
+        console.error('Failed to delete share', err);
+        this.errorMessage.set(err.error?.detail || 'Failed to delete share.');
+      }
     });
   }
 
-  // Modal 3: Register / Edit Agreement
-  openCreateAgreementModal(): void {
+  // Developer-Landowner Agreement Page Navigation
+  openCreateAgreementPage(): void {
+    this.errorMessage.set('');
+    this.successMessage.set('');
     this.isEditAgreementMode.set(false);
     this.editingAgreementId.set(null);
+    this.uploadedAgreementDocuments.set([]);
     this.agreementForm.reset({
       parcel_id: this.parcels().length > 0 ? this.parcels()[0].id : null,
       agreement_deed_no: `JV-AGR-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`,
@@ -437,14 +507,32 @@ export class JointOwnershipComponent implements OnInit {
       poa_execution_date: null,
       poa_expiry_date: null,
       poa_verified: true,
+      agreement_document_name: '',
+      agreement_file_url: '',
       status: 'ACTIVE'
     });
-    this.isAgreementModalOpen.set(true);
+    this.currentView.set('CREATE_AGREEMENT');
   }
 
-  openEditAgreementModal(agr: JVAgreement): void {
+  openEditAgreementPage(agr: JVAgreement): void {
+    this.errorMessage.set('');
+    this.successMessage.set('');
     this.isEditAgreementMode.set(true);
     this.editingAgreementId.set(agr.id);
+
+    const docs: any[] = [];
+    if (agr.supporting_documents && Array.isArray(agr.supporting_documents)) {
+      docs.push(...agr.supporting_documents);
+    } else if (agr.agreement_file_url) {
+      docs.push({
+        document_name: agr.agreement_document_name || 'Landowner-Developer Agreement Deed',
+        file_url: agr.agreement_file_url,
+        file_name: agr.agreement_document_name || 'agreement_deed.pdf',
+        uploaded_at: agr.updated_at || agr.created_at
+      });
+    }
+    this.uploadedAgreementDocuments.set(docs);
+
     this.agreementForm.patchValue({
       parcel_id: agr.parcel_id || null,
       agreement_deed_no: agr.agreement_deed_no,
@@ -472,51 +560,153 @@ export class JointOwnershipComponent implements OnInit {
       poa_execution_date: agr.poa_execution_date || null,
       poa_expiry_date: agr.poa_expiry_date || null,
       poa_verified: agr.poa_verified ?? true,
+      agreement_document_name: agr.agreement_document_name || '',
+      agreement_file_url: agr.agreement_file_url || '',
       status: agr.status || 'ACTIVE'
     });
-    this.isAgreementModalOpen.set(true);
+    this.currentView.set('EDIT_AGREEMENT');
+  }
+
+  openCreateAgreementModal(): void {
+    this.openCreateAgreementPage();
+  }
+
+  openEditAgreementModal(agr: JVAgreement): void {
+    this.openEditAgreementPage(agr);
   }
 
   closeAgreementModal(): void {
+    this.backToList();
+  }
+
+  backToList(): void {
+    this.currentView.set('LIST');
+    this.errorMessage.set('');
+    this.isShareModalOpen.set(false);
     this.isAgreementModalOpen.set(false);
   }
 
+  // Agreement Document Upload Handlers
+  onAgreementFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+
+    const file = input.files[0];
+    const docName = this.agreementForm.get('agreement_document_name')?.value || file.name.replace(/\.[^/.]+$/, "");
+    this.isUploadingAgreement.set(true);
+    this.errorMessage.set('');
+
+    this.landService.uploadJVAgreementDocument(file, docName).subscribe({
+      next: (res) => {
+        this.isUploadingAgreement.set(false);
+        const newDoc = {
+          document_name: docName,
+          file_url: res.file_url || res.url,
+          file_name: res.file_name || file.name,
+          file_size: file.size,
+          extension: file.name.split('.').pop()?.toLowerCase(),
+          uploaded_at: new Date().toISOString()
+        };
+
+        const currentDocs = [...this.uploadedAgreementDocuments(), newDoc];
+        this.uploadedAgreementDocuments.set(currentDocs);
+
+        if (!this.agreementForm.get('agreement_file_url')?.value || currentDocs.length === 1) {
+          this.agreementForm.patchValue({
+            agreement_document_name: docName,
+            agreement_file_url: newDoc.file_url
+          });
+        }
+        input.value = '';
+      },
+      error: (err) => {
+        this.isUploadingAgreement.set(false);
+        this.errorMessage.set(err.error?.detail || 'Failed to upload agreement document. Please try again.');
+        input.value = '';
+      }
+    });
+  }
+
+  removeAgreementDocument(index: number): void {
+    const docs = [...this.uploadedAgreementDocuments()];
+    docs.splice(index, 1);
+    this.uploadedAgreementDocuments.set(docs);
+
+    if (docs.length > 0) {
+      this.agreementForm.patchValue({
+        agreement_document_name: docs[0].document_name,
+        agreement_file_url: docs[0].file_url
+      });
+    } else {
+      this.agreementForm.patchValue({
+        agreement_document_name: '',
+        agreement_file_url: ''
+      });
+    }
+  }
+
+  formatFileSize(bytes?: number): string {
+    if (!bytes) return 'N/A';
+    const kb = bytes / 1024;
+    if (kb < 1024) return kb.toFixed(1) + ' KB';
+    return (kb / 1024).toFixed(2) + ' MB';
+  }
+
   saveAgreement(): void {
+    this.errorMessage.set('');
+    this.successMessage.set('');
+
     if (this.agreementForm.invalid) {
       this.agreementForm.markAllAsTouched();
+      this.errorMessage.set('Please fill all mandatory fields marked with an asterisk (*).');
       return;
     }
 
-    const formVal = this.agreementForm.value;
-    const sumRatio = Number(formVal.landowner_share_percent) + Number(formVal.developer_share_percent);
+    const formVal = { ...this.agreementForm.value };
+    const sumRatio = Number(formVal.landowner_share_percent || 0) + Number(formVal.developer_share_percent || 0);
     if (Math.abs(sumRatio - 100.0) > 0.01) {
-      alert(`Landowner Share (${formVal.landowner_share_percent}%) + Developer Share (${formVal.developer_share_percent}%) must sum to exactly 100.00%. Current sum: ${sumRatio}%.`);
+      this.errorMessage.set(`Landowner Share (${formVal.landowner_share_percent}%) + Developer Share (${formVal.developer_share_percent}%) must sum to exactly 100.00%. Current sum is ${sumRatio.toFixed(2)}%.`);
       return;
+    }
+
+    const docs = this.uploadedAgreementDocuments();
+    if (docs.length > 0) {
+      formVal.supporting_documents = docs;
+      if (!formVal.agreement_file_url) {
+        formVal.agreement_file_url = docs[0].file_url;
+        formVal.agreement_document_name = docs[0].document_name;
+      }
     }
 
     this.isSaving.set(true);
 
     if (this.isEditAgreementMode() && this.editingAgreementId()) {
       this.landService.updateJVAgreement(this.editingAgreementId()!, formVal).subscribe({
-        next: (updated) => {
+        next: () => {
           this.isSaving.set(false);
-          this.closeAgreementModal();
+          this.successMessage.set('Agreement updated successfully!');
+          this.currentView.set('LIST');
           this.loadData();
+          setTimeout(() => this.successMessage.set(''), 6000);
         },
         error: (err) => {
           console.error('Failed to update agreement', err);
+          this.errorMessage.set(err.error?.detail || 'Failed to update agreement deed.');
           this.isSaving.set(false);
         }
       });
     } else {
       this.landService.createJVAgreement(formVal).subscribe({
-        next: (created) => {
+        next: () => {
           this.isSaving.set(false);
-          this.closeAgreementModal();
+          this.successMessage.set('New Developer-Landowner Agreement registered successfully!');
+          this.currentView.set('LIST');
           this.loadData();
+          setTimeout(() => this.successMessage.set(''), 6000);
         },
         error: (err) => {
           console.error('Failed to create agreement', err);
+          this.errorMessage.set(err.error?.detail || 'Failed to register agreement deed.');
           this.isSaving.set(false);
         }
       });
@@ -564,6 +754,10 @@ export class JointOwnershipComponent implements OnInit {
     }
   }
 
+  onPageChange(page: number): void {
+    this.goToPage(page);
+  }
+
   onPageSizeChange(event: Event): void {
     const select = event.target as HTMLSelectElement;
     this.pageSize.set(Number(select.value));
@@ -574,6 +768,10 @@ export class JointOwnershipComponent implements OnInit {
     if (page >= 1 && page <= this.totalAgreementsPages()) {
       this.agreementsPage.set(page);
     }
+  }
+
+  onAgreementsPageChange(page: number): void {
+    this.goToAgreementsPage(page);
   }
 
   onAgreementsPageSizeChange(event: Event): void {

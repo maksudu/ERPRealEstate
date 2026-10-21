@@ -37,20 +37,20 @@
   <!-- USER SPECIFICATION: ILLUSTRATIVE FEASIBILITY CALCULATION HERO CARDS (BDT) -->
   <!-- ========================================================================= -->
   <div
-    class="bg-gradient-to-r from-slate-900 via-slate-850 to-slate-900 text-white rounded-2xl p-5 border border-slate-800 shadow-xl relative overflow-hidden">
+    class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden">
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
       <div>
         <div class="flex items-center gap-2">
           <span
-            class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+            class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30">
             2.2 Viability Benchmark Engine
           </span>
-          <span class="text-xs text-slate-400">All amounts in BDT (৳)</span>
+          <span class="text-xs text-slate-500 dark:text-slate-400">All amounts in BDT (৳)</span>
         </div>
-        <h2 class="text-base font-bold font-display text-white mt-1">
+        <h2 class="text-base font-bold font-display text-slate-900 dark:text-white mt-1">
           Project Commercial, Technical & Financial Feasibility Analysis
         </h2>
-        <p class="text-xs text-slate-400 mt-0.5">
+        <p class="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
           Distinguishes Gross Project Profit, Operating Profit, and Profit after Financing & Tax. Segregated from actual
           accounting results.
         </p>
@@ -58,7 +58,7 @@
 
       <div class="flex items-center gap-2">
         <button (click)="openCreateModal()"
-          class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-emerald-500 text-slate-950 hover:bg-emerald-400 shadow-md transition-all cursor-pointer">
+          class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-500 dark:text-slate-950 dark:hover:bg-emerald-400 shadow-sm transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900">
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
           </svg>
@@ -68,35 +68,42 @@
     </div>
 
     <!-- 4 Key Example Metric Tiles (৳50 Cr Revenue, ৳38 Cr Cost, ৳12 Cr Profit, 24% Margin) -->
+    <div aria-hidden="true"
+      class="hidden lg:flex w-3/4 mx-auto items-center justify-between mb-1 relative before:absolute before:inset-x-0 before:top-1/2 before:h-px before:bg-slate-200 dark:before:bg-slate-700">
+      <span class="relative z-10 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-900"></span>
+      <span class="relative z-10 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-white dark:ring-slate-900"></span>
+      <span class="relative z-10 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-900"></span>
+      <span class="relative z-10 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-900"></span>
+    </div>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-      <div class="bg-slate-800/80 backdrop-blur-md rounded-xl p-3.5 border border-slate-700/60 shadow-inner">
-        <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Estimated Revenue</p>
-        <p class="text-2xl font-bold font-display text-white mt-1">৳50 <span
-            class="text-sm font-normal text-slate-300">crore</span></p>
-        <p class="text-[10px] text-slate-400 mt-0.5 font-mono">৳50,00,00,000 BDT</p>
+      <div class="bg-slate-50 dark:bg-slate-800/80 rounded-xl p-3.5 border border-slate-200 dark:border-slate-700/60 border-l-2 border-l-emerald-500">
+        <p class="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Estimated Revenue</p>
+        <p class="text-2xl font-bold font-display text-slate-900 dark:text-white mt-1">৳50 <span
+            class="text-sm font-normal text-slate-600 dark:text-slate-300">crore</span></p>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-mono">৳50,00,00,000 BDT</p>
       </div>
 
-      <div class="bg-slate-800/80 backdrop-blur-md rounded-xl p-3.5 border border-slate-700/60 shadow-inner">
-        <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Estimated Total Cost</p>
-        <p class="text-2xl font-bold font-display text-amber-400 mt-1">৳38 <span
-            class="text-sm font-normal text-slate-300">crore</span></p>
-        <p class="text-[10px] text-slate-400 mt-0.5 font-mono">৳38,00,00,000 BDT</p>
+      <div class="bg-slate-50 dark:bg-slate-800/80 rounded-xl p-3.5 border border-slate-200 dark:border-slate-700/60 border-l-2 border-l-amber-500">
+        <p class="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Estimated Total Cost</p>
+        <p class="text-2xl font-bold font-display text-amber-700 dark:text-amber-400 mt-1">৳38 <span
+            class="text-sm font-normal text-slate-600 dark:text-slate-300">crore</span></p>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-mono">৳38,00,00,000 BDT</p>
       </div>
 
-      <div class="bg-slate-800/80 backdrop-blur-md rounded-xl p-3.5 border border-slate-700/60 shadow-inner">
-        <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Estimated Gross Profit</p>
-        <p class="text-2xl font-bold font-display text-emerald-400 mt-1">৳12 <span
-            class="text-sm font-normal text-slate-300">crore</span></p>
-        <p class="text-[10px] text-slate-400 mt-0.5 font-mono">৳12,00,00,000 BDT</p>
+      <div class="bg-slate-50 dark:bg-slate-800/80 rounded-xl p-3.5 border border-slate-200 dark:border-slate-700/60 border-l-2 border-l-emerald-500">
+        <p class="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Estimated Gross Profit</p>
+        <p class="text-2xl font-bold font-display text-emerald-700 dark:text-emerald-400 mt-1">৳12 <span
+            class="text-sm font-normal text-slate-600 dark:text-slate-300">crore</span></p>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-mono">৳12,00,00,000 BDT</p>
       </div>
 
-      <div class="bg-slate-800/80 backdrop-blur-md rounded-xl p-3.5 border border-slate-700/60 shadow-inner">
-        <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Profit Margin</p>
+      <div class="bg-slate-50 dark:bg-slate-800/80 rounded-xl p-3.5 border border-slate-200 dark:border-slate-700/60 border-l-2 border-l-emerald-500">
+        <p class="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Profit Margin</p>
         <div class="flex items-baseline gap-2 mt-1">
-          <p class="text-2xl font-bold font-display text-emerald-300">24%</p>
-          <span class="text-[10px] text-slate-400 font-mono">(Revenue − Cost) ÷ Revenue × 100</span>
+          <p class="text-2xl font-bold font-display text-emerald-700 dark:text-emerald-300">24%</p>
+          <span class="text-xs text-slate-600 dark:text-slate-400 font-mono">(Revenue − Cost) ÷ Revenue × 100</span>
         </div>
-        <p class="text-[10px] text-emerald-400 mt-0.5 font-semibold">Healthy Commercial Margin</p>
+        <p class="text-xs text-emerald-700 dark:text-emerald-400 mt-0.5 font-semibold">Healthy Commercial Margin</p>
       </div>
     </div>
   </div>

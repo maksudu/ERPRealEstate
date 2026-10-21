@@ -11,21 +11,31 @@ class Project(Base):
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     land_bank_id = Column(BigInteger, ForeignKey("lnd_land_banks.id", ondelete="SET NULL"), nullable=True, index=True)
+    parcel_id = Column(BigInteger, ForeignKey("lnd_parcels.id", ondelete="SET NULL"), nullable=True, index=True)
     project_code = Column(String(64), unique=True, nullable=False, index=True)
     project_name = Column(String(191), nullable=False)
+    project_name_bn = Column(String(191), nullable=True)
     company_name = Column(String(191), nullable=True, default="Apex Properties Ltd.")
-    project_type = Column(String(64), nullable=False, default="RESIDENTIAL", index=True) # RESIDENTIAL, COMMERCIAL, MIXED_USE, LAND_DEVELOPMENT
-    project_category = Column(String(64), nullable=False, default="APARTMENT", index=True) # APARTMENT, CONDOMINIUM, SHOPPING_COMPLEX, COMMERCIAL_TOWER, DUPLEX
+    project_type = Column(String(64), nullable=False, default="RESIDENTIAL", index=True) # RESIDENTIAL, COMMERCIAL, MIXED_USE, INDUSTRIAL, LAND_DEVELOPMENT
+    project_category = Column(String(64), nullable=False, default="APARTMENT", index=True) # APARTMENT, CONDOMINIUM, SHOPPING_COMPLEX, OFFICE_BUILDING, COMMERCIAL_TOWER, DUPLEX
+    project_ownership = Column(String(64), nullable=False, default="OWNED", index=True) # OWNED, JOINT_VENTURE, PARTNERSHIP
     
     # Location
+    division = Column(String(64), nullable=False, default="Dhaka", index=True)
     district = Column(String(64), nullable=False, default="Dhaka", index=True)
     thana_upazila = Column(String(64), nullable=False, default="Gulshan", index=True)
+    locality = Column(String(191), nullable=True)
     site_address = Column(Text, nullable=True)
+    latitude = Column(Numeric(10, 7), nullable=True)
+    longitude = Column(Numeric(10, 7), nullable=True)
+    google_maps_url = Column(String(500), nullable=True)
     
     # Ownership & Personnel
     project_manager = Column(String(128), nullable=True)
     project_director = Column(String(128), nullable=True)
     department = Column(String(128), nullable=True, default="Engineering & Civil Projects")
+    project_team_structure = Column(JSON, nullable=True)
+    site_offices = Column(JSON, nullable=True)
     
     development_authority_id = Column(String(32), nullable=False, default="RAJUK", index=True) # RAJUK, CDA, KDA, RDA
     
@@ -52,13 +62,21 @@ class Project(Base):
     # Financial & Funding
     project_funding_source = Column(String(128), nullable=False, default="EQUITY_AND_PRE_SALES") # EQUITY, BANK_FINANCE, CUSTOMER_ADVANCES, JOINT_VENTURE, SYNDICATE
     cost_center_code = Column(String(64), nullable=True)
+    financial_year = Column(String(32), nullable=False, default="FY 2026-2027", index=True)
+    estimated_budget_bdt = Column(Numeric(16, 2), nullable=False, default=0.00)
+    approved_budget_bdt = Column(Numeric(16, 2), nullable=False, default=0.00)
     target_customer_segment = Column(String(128), nullable=True, default="UPPER_MIDDLE_CLASS")
     project_scope = Column(Text, nullable=True)
     
-    # Status: PROPOSED, FEASIBILITY, APPROVED, ACTIVE, ON_HOLD, COMPLETED
-    status = Column(String(32), nullable=False, default="PROPOSED", index=True)
+    # Status & Lifecycle
+    # Status: DRAFT, FEASIBILITY, UNDER_REVIEW, APPROVED, PLANNING, UNDER_CONSTRUCTION, ON_HOLD, COMPLETED, CLOSED
+    status = Column(String(32), nullable=False, default="PLANNING", index=True)
     approval_status = Column(String(32), nullable=False, default="DRAFT", index=True)
+    project_phase = Column(String(64), nullable=False, default="PLANNING", index=True)
     land_parcel_ids = Column(JSON, nullable=True)
+    landowner_ids = Column(JSON, nullable=True)
+    status_history = Column(JSON, nullable=True)
+    project_documents = Column(JSON, nullable=True)
     
     description = Column(Text, nullable=True)
     created_at = Column(TIMESTAMP, server_default=func.now())
@@ -420,27 +438,37 @@ class ProjectFeasibility(Base):
 
     # Imported / Estimated Cost Components
     land_acquisition_cost = Column(Numeric(18, 2), nullable=False, default=0.00)
+    jv_landowner_cash_consideration = Column(Numeric(18, 2), nullable=False, default=0.00)
     legal_and_vetting_expenses = Column(Numeric(16, 2), nullable=False, default=0.00)
     preliminary_arch_engineering_cost = Column(Numeric(16, 2), nullable=False, default=0.00)
     estimated_construction_cost = Column(Numeric(18, 2), nullable=False, default=0.00)
     infrastructure_and_site_dev = Column(Numeric(16, 2), nullable=False, default=0.00)
     utility_connection_expenses = Column(Numeric(16, 2), nullable=False, default=0.00)
     professional_authority_fees = Column(Numeric(16, 2), nullable=False, default=0.00)
+    marketing_and_brokerage_cost = Column(Numeric(16, 2), nullable=False, default=0.00)
     financing_and_interest_cost = Column(Numeric(16, 2), nullable=False, default=0.00)
     contingency_reserve = Column(Numeric(16, 2), nullable=False, default=0.00)
 
-    # Architectural specs
+    # Architectural specs & Inventory Estimates
     proposed_building_height_meters = Column(Numeric(8, 2), nullable=False, default=45.00)
     proposed_floor_count = Column(Integer, nullable=False, default=14)
     proposed_unit_count = Column(Integer, nullable=False, default=56)
+    apartment_unit_count = Column(Integer, nullable=False, default=40)
+    commercial_unit_count = Column(Integer, nullable=False, default=8)
+    parking_bay_count = Column(Integer, nullable=False, default=50)
     total_saleable_area_sqft = Column(Numeric(16, 2), nullable=False, default=0.00)
+    total_common_area_sqft = Column(Numeric(16, 2), nullable=False, default=0.00)
+    saleable_efficiency_percent = Column(Numeric(5, 2), nullable=False, default=80.00)
 
     # JV Allocation Split
     landowner_jv_sharing_ratio = Column(String(32), nullable=False, default="50:50")
     developer_share_sqft = Column(Numeric(16, 2), nullable=False, default=0.00)
     landowner_share_sqft = Column(Numeric(16, 2), nullable=False, default=0.00)
 
-    # Revenue Components
+    # Revenue Components & Estimated Selling Rates
+    avg_apartment_rate_sqft = Column(Numeric(12, 2), nullable=False, default=10000.00)
+    avg_commercial_rate_sqft = Column(Numeric(12, 2), nullable=False, default=15000.00)
+    avg_parking_rate_unit = Column(Numeric(12, 2), nullable=False, default=600000.00)
     estimated_apartment_sales_revenue = Column(Numeric(18, 2), nullable=False, default=0.00)
     estimated_commercial_sales_revenue = Column(Numeric(18, 2), nullable=False, default=0.00)
     estimated_parking_sales_revenue = Column(Numeric(18, 2), nullable=False, default=0.00)
@@ -455,15 +483,27 @@ class ProjectFeasibility(Base):
     profit_margin_percent = Column(Numeric(6, 2), nullable=False, default=0.00)
     roi_percent = Column(Numeric(6, 2), nullable=False, default=0.00)
 
-    # Scenario Analysis & Cash Flow Modeling
-    cash_flow_forecast = Column(JSON, nullable=True)
-    scenario_models = Column(JSON, nullable=True)
+    # Break-even Analysis
+    break_even_sales_bdt = Column(Numeric(18, 2), nullable=False, default=0.00)
+    break_even_sqft = Column(Numeric(16, 2), nullable=False, default=0.00)
+    break_even_percent = Column(Numeric(5, 2), nullable=False, default=0.00)
 
-    # Workflow & Management Approval
+    # Timeline & Cash Flow Modeling
+    project_duration_months = Column(Integer, nullable=False, default=24)
+    expected_start_date = Column(Date, nullable=True)
+    expected_handover_date = Column(Date, nullable=True)
+    cash_flow_forecast = Column(JSON, nullable=True)
+    customer_collection_schedule = Column(JSON, nullable=True)
+    scenario_models = Column(JSON, nullable=True)
+    sensitivity_analysis = Column(JSON, nullable=True)
+
+    # Workflow, Investment Committee Review & Governance
     status = Column(String(32), nullable=False, default="DRAFT", index=True) # DRAFT, SUBMITTED, APPROVED, REJECTED, RESUBMISSION_REQUIRED
     reviewed_by = Column(String(128), nullable=True)
     review_date = Column(Date, nullable=True)
     review_remarks = Column(Text, nullable=True)
+    investment_committee_notes = Column(Text, nullable=True)
+    committee_decision = Column(String(64), nullable=False, default="RECOMMENDED") # RECOMMENDED, CONDITIONALLY_APPROVED, REJECTED
 
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())

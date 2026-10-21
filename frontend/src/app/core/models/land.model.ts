@@ -5,10 +5,14 @@ export interface Landowner {
   owner_type: 'INDIVIDUAL' | 'JOINT_OWNER' | 'COMPANY' | 'POA_HOLDER';
   full_name_en: string;
   full_name_bn?: string;
-  father_mother_spouse_name?: string;
+  father_mother_spouse_name?: string;  // legacy
+  father_name?: string;
+  mother_name?: string;
+  spouse_name?: string;
   present_address?: string;
   permanent_address?: string;
   nid_number?: string;
+  nid_image_path?: string;
   passport_number?: string;
   company_reg_number?: string;
   tin_number?: string;
@@ -182,7 +186,7 @@ export interface LandDeedDocument {
   file_size_bytes?: number;
   mime_type?: string;
   document_version?: string;
-  verification_status: 'PENDING' | 'VERIFIED' | 'REJECTED' | 'EXPIRED' | 'REQUIRES_CLARIFICATION' | 'PENDING_SEARCH' | 'OBJECTION' | string;
+  verification_status: 'PENDING' | 'RECEIVED' | 'UNDER_VERIFICATION' | 'VERIFIED' | 'REJECTED' | 'EXPIRED' | string;
   verification_officer?: string;
   verification_date?: string;
   verification_remarks?: string;
@@ -193,6 +197,20 @@ export interface LandDeedDocument {
   renewal_reminder_days?: number;
   notes?: string;
   days_until_expiry?: number;
+  registration_date?: string;
+  sub_registrar_volume_no?: string;
+  sub_registrar_page_no?: string;
+  sub_registrar_book_no?: string;
+  mutation_case_no?: string;
+  mutation_khatian_no?: string;
+  dcr_number?: string;
+  tax_dakhila_no?: string;
+  tax_paid_up_to_year?: string;
+  survey_type?: string;
+  mouza_sheet_no?: string;
+  is_certified_copy?: boolean;
+  review_comments?: Array<{ date: string; reviewer: string; comment: string; status: string }>;
+  audit_trail?: Array<{ timestamp: string; user: string; action: string; details: string }>;
   parcel?: LandParcel;
   landowner?: Landowner;
   created_at?: string;
@@ -200,7 +218,7 @@ export interface LandDeedDocument {
 }
 
 export interface DocumentVerifyRequest {
-  verification_status: 'VERIFIED' | 'REJECTED' | 'REQUIRES_CLARIFICATION';
+  verification_status: 'PENDING' | 'RECEIVED' | 'UNDER_VERIFICATION' | 'VERIFIED' | 'REJECTED' | 'EXPIRED' | string;
   verification_officer: string;
   verification_remarks?: string;
   is_independently_verified: boolean;
@@ -237,32 +255,48 @@ export interface MeasurementConvention {
   decimal_to_sqft: number;
   bigha_to_katha: number;
   acre_to_decimal: number;
-  kani_to_sqft?: number;
-  gonda_to_sqft?: number;
+  kani_to_sqft?: number | null;
+  gonda_to_sqft?: number | null;
   is_default: boolean;
-  notes?: string;
-  created_at?: string;
-  updated_at?: string;
+  notes?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+export interface MeasurementConventionPayload {
+  convention_code: string;
+  convention_name: string;
+  region_district: string;
+  katha_to_sqft: number;
+  decimal_to_sqft: number;
+  bigha_to_katha: number;
+  acre_to_decimal: number;
+  kani_to_sqft?: number | null;
+  gonda_to_sqft?: number | null;
+  is_default: boolean;
+  notes?: string | null;
 }
 
 export interface RegionalConversionRequest {
   convention_id?: number;
   convention_code?: string;
-  input_unit: 'SQFT' | 'DECIMAL' | 'KATHA' | 'BIGHA' | 'ACRE' | 'KANI' | 'GONDA' | string;
+  input_unit: 'SQFT' | 'SQM' | 'DECIMAL' | 'KATHA' | 'BIGHA' | 'ACRE' | 'KANI' | 'GONDA' | string;
   input_value: number;
-  recorded_deed_text?: string;
+  original_registered_unit?: string;
+  original_registered_value?: number;
 }
 
 export interface RegionalConversionResponse {
-  convention_name: string;
-  region_district: string;
-  preserved_original_input: {
-    unit: string;
-    value: number;
-    recorded_deed_text?: string;
+  convention_used: string;
+  region: string;
+  original_deed_record: {
+    registered_unit: string;
+    registered_value: number;
+    preserved_statutory_text: string;
   };
   converted_units: {
     sqft: number;
+    sqm: number;
     decimal: number;
     katha: number;
     bigha: number;
@@ -270,7 +304,7 @@ export interface RegionalConversionResponse {
     kani?: number;
     gonda?: number;
   };
-  explanation: string;
+  conversion_factors: Record<string, number>;
 }
 
 export interface LandDocumentExpiryAlert {
@@ -305,7 +339,7 @@ export interface JVUnitAllocation {
   floor_number: number;
   unit_number: string;
   unit_identifier: string;
-  unit_type: 'APARTMENT' | 'COMMERCIAL' | 'PARKING_BAY';
+  unit_type: 'APARTMENT' | 'COMMERCIAL' | 'SHOP' | 'PARKING_BAY' | string;
   allocation_type: 'LANDOWNER_UNIT' | 'DEVELOPER_UNIT';
   is_locked_for_sales: boolean;
   gross_sft: number;
@@ -359,6 +393,16 @@ export interface JVAgreement {
   signing_date?: string;
   handover_commitment_date?: string;
   status: 'DRAFT' | 'ACTIVE' | 'COMPLETED' | 'TERMINATED' | string;
+  agreement_document_name?: string | null;
+  agreement_file_url?: string | null;
+  supporting_documents?: Array<{
+    document_name: string;
+    file_url: string;
+    file_name?: string;
+    file_size?: number;
+    extension?: string;
+    uploaded_at?: string;
+  }> | null;
   parcel?: LandParcel;
   unit_allocations?: JVUnitAllocation[];
   milestones?: LandJVMilestonePayment[];
@@ -709,6 +753,16 @@ export interface LandNegotiation {
   agreement_execution_date?: string | null;
   agreement_expiry_date?: string | null;
   agreement_status: 'DRAFTING' | 'LEGAL_VETTING' | 'MANAGEMENT_REVIEW' | 'READY_FOR_EXECUTION' | 'EXECUTED_REGISTERED' | 'EXPIRED' | 'TERMINATED' | string;
+  agreement_document_name?: string | null;
+  agreement_file_url?: string | null;
+  supporting_documents?: Array<{
+    document_name: string;
+    file_url: string;
+    file_name?: string;
+    file_size?: number;
+    extension?: string;
+    uploaded_at?: string;
+  }> | null;
   is_delayed: boolean;
   delay_reason?: string | null;
   terms_approved_by?: string | null;
@@ -847,5 +901,3 @@ export interface PaymentReconciliationSummary {
   paid_count: number;
   pending_count: number;
 }
-
-

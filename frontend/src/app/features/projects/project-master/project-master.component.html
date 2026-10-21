@@ -45,10 +45,9 @@
         </svg>
       </div>
       <div>
-        <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Registered
-          Projects</p>
+        <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Registered Projects</p>
         <p class="text-xl font-bold font-display text-slate-900 dark:text-slate-100">{{ totalProjectsCount() }}</p>
-        <p class="text-[10px] text-slate-400">Under Single Entity / Group</p>
+        <p class="text-[10px] text-slate-400">Multi-Project Central Register</p>
       </div>
     </div>
 
@@ -62,10 +61,9 @@
         </svg>
       </div>
       <div>
-        <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Active
-          Construction Sites</p>
+        <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Active Execution Sites</p>
         <p class="text-xl font-bold font-display text-emerald-600 dark:text-emerald-400">{{ activeProjectsCount() }}</p>
-        <p class="text-[10px] text-slate-400">Under Execution & Piling</p>
+        <p class="text-[10px] text-slate-400">Planning & Construction</p>
       </div>
     </div>
 
@@ -79,11 +77,9 @@
         </svg>
       </div>
       <div>
-        <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Allocated Land
-          Bank</p>
-        <p class="text-xl font-bold font-display text-slate-900 dark:text-slate-100">{{ totalLandKatha() |
-          number:'1.1-2' }} <span class="text-xs font-normal">Katha</span></p>
-        <p class="text-[10px] text-slate-400">Integrated from Land Module</p>
+        <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Allocated Land Bank</p>
+        <p class="text-xl font-bold font-display text-slate-900 dark:text-slate-100">{{ totalLandKatha() | number:'1.1-2' }} <span class="text-xs font-normal">Katha</span></p>
+        <p class="text-[10px] text-slate-400">Integrated Acquired Land</p>
       </div>
     </div>
 
@@ -93,15 +89,13 @@
         class="w-11 h-11 rounded-xl bg-purple-50 dark:bg-purple-950/80 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 border border-purple-200 dark:border-purple-800">
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       </div>
       <div>
-        <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Planned
-          Built-Up</p>
-        <p class="text-xl font-bold font-display text-slate-900 dark:text-slate-100">{{ totalBuiltUpSqFt() |
-          number:'1.0-0' }} <span class="text-xs font-normal">SqFt</span></p>
-        <p class="text-[10px] text-slate-400">FAR Allocated Area</p>
+        <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Approved Budget</p>
+        <p class="text-xl font-bold font-display text-slate-900 dark:text-slate-100">৳ {{ (totalApprovedBudgetBDT() / 10000000) | number:'1.2-2' }} <span class="text-xs font-normal">Cr</span></p>
+        <p class="text-[10px] text-slate-400">Cost Center Monitored</p>
       </div>
     </div>
   </div>
@@ -118,128 +112,147 @@
       </button>
     </div>
 
-    <!-- Filters & Search Toolbar -->
-    <div
-      class="mb-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-3 bg-slate-50/70 dark:bg-slate-800/50 rounded-xl border border-slate-200/80 dark:border-slate-800">
+    <!-- Filter & Search Toolbar -->
+    <div class="p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex flex-wrap items-center gap-3">
       <!-- Search Input -->
-      <div class="relative flex-1">
-        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-        </span>
-        <input type="text" [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)"
-          placeholder="Search by Project ID, Name, Location or Project Manager..."
-          class="w-full pl-9 pr-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all" />
+      <div class="relative flex-1 min-w-[200px]">
+        <svg class="w-4 h-4 absolute left-3 top-2.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <input type="text" [value]="searchQuery()" (input)="searchQuery.set($any($event.target).value)"
+          placeholder="Search by code, English/Bangla name, locality, cost center, manager..."
+          class="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20" />
       </div>
 
-      <!-- Quick Status Filters -->
-      <div class="flex items-center flex-wrap gap-2">
-        <select [ngModel]="selectedStatusFilter()" (ngModelChange)="selectedStatusFilter.set($event)"
-          class="text-xs px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
-          <option value="">All Statuses</option>
-          <option value="PROPOSED">Proposed</option>
-          <option value="FEASIBILITY">Feasibility</option>
-          <option value="APPROVED">Approved</option>
-          <option value="ACTIVE">Active / Construction</option>
-          <option value="ON_HOLD">On Hold</option>
-          <option value="COMPLETED">Completed</option>
-        </select>
+      <!-- Lifecycle Status Filter -->
+      <select [value]="selectedStatusFilter()" (change)="selectedStatusFilter.set($any($event.target).value)"
+        class="px-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 focus:outline-none">
+        <option value="">All Lifecycle Statuses</option>
+        <option value="DRAFT">Draft</option>
+        <option value="FEASIBILITY">Feasibility</option>
+        <option value="UNDER_REVIEW">Under Review</option>
+        <option value="APPROVED">Approved</option>
+        <option value="PLANNING">Planning</option>
+        <option value="UNDER_CONSTRUCTION">Under Construction</option>
+        <option value="ON_HOLD">On Hold</option>
+        <option value="COMPLETED">Completed</option>
+        <option value="CLOSED">Closed</option>
+      </select>
 
-        <select [ngModel]="selectedTypeFilter()" (ngModelChange)="selectedTypeFilter.set($event)"
-          class="text-xs px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
-          <option value="">All Project Types</option>
-          <option value="RESIDENTIAL">Residential</option>
-          <option value="COMMERCIAL">Commercial</option>
-          <option value="MIXED_USE">Mixed-Use</option>
-          <option value="LAND_DEVELOPMENT">Land Development</option>
-        </select>
+      <!-- Ownership Filter -->
+      <select [value]="selectedOwnershipFilter()" (change)="selectedOwnershipFilter.set($any($event.target).value)"
+        class="px-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 focus:outline-none">
+        <option value="">All Ownership Types</option>
+        <option value="OWNED">100% Owned</option>
+        <option value="JOINT_VENTURE">Joint Venture (JV)</option>
+        <option value="PARTNERSHIP">Partnership</option>
+      </select>
 
-        <select [ngModel]="selectedAuthorityFilter()" (ngModelChange)="selectedAuthorityFilter.set($event)"
-          class="text-xs px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
-          <option value="">All Authorities</option>
-          <option value="RAJUK">RAJUK (Dhaka)</option>
-          <option value="CDA">CDA (Chittagong)</option>
-          <option value="KDA">KDA (Khulna)</option>
-          <option value="RDA">RDA (Rajshahi)</option>
-        </select>
+      <!-- Project Type Filter -->
+      <select [value]="selectedTypeFilter()" (change)="selectedTypeFilter.set($any($event.target).value)"
+        class="px-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 focus:outline-none">
+        <option value="">All Types</option>
+        <option value="RESIDENTIAL">Residential</option>
+        <option value="COMMERCIAL">Commercial</option>
+        <option value="MIXED_USE">Mixed-Use</option>
+        <option value="INDUSTRIAL">Industrial</option>
+        <option value="LAND_DEVELOPMENT">Land Development</option>
+      </select>
 
-        @if (searchQuery() || selectedStatusFilter() || selectedTypeFilter() || selectedAuthorityFilter()) {
-        <button
-          (click)="searchQuery.set(''); selectedStatusFilter.set(''); selectedTypeFilter.set(''); selectedAuthorityFilter.set('')"
-          class="px-2.5 py-2 text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded-lg transition-colors">
-          Clear Filters
-        </button>
-        }
-      </div>
+      <!-- Authority Filter -->
+      <select [value]="selectedAuthorityFilter()" (change)="selectedAuthorityFilter.set($any($event.target).value)"
+        class="px-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 focus:outline-none">
+        <option value="">All Authorities</option>
+        <option value="RAJUK">RAJUK (Dhaka)</option>
+        <option value="CDA">CDA (Chittagong)</option>
+        <option value="KDA">KDA (Khulna)</option>
+        <option value="RDA">RDA (Rajshahi)</option>
+      </select>
     </div>
 
-    <!-- Data Table (No form underneath table!) -->
-    <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+    <!-- Master Table -->
+    <div class="overflow-x-auto">
       <table class="w-full text-left text-xs">
-        <thead
-          class="bg-slate-50 dark:bg-slate-800/70 border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-semibold uppercase tracking-wider">
+        <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 uppercase text-[10px] font-semibold border-b border-slate-200 dark:border-slate-800">
           <tr>
-            <th class="px-4 py-3">Project ID & Name</th>
-            <th class="px-4 py-3">Type & Category</th>
-            <th class="px-4 py-3">Location & Authority</th>
-            <th class="px-4 py-3">Land & Floor Area</th>
-            <th class="px-4 py-3">Manager & Director</th>
+            <th class="px-4 py-3">Code & Name</th>
+            <th class="px-4 py-3">Ownership & Category</th>
+            <th class="px-4 py-3">Location & Locality</th>
+            <th class="px-4 py-3">Land & Built-Up</th>
+            <th class="px-4 py-3">Budget & Cost Center</th>
+            <th class="px-4 py-3">Team & Timeline</th>
             <th class="px-4 py-3">Status</th>
             <th class="px-4 py-3 text-right">Actions</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
           @if (isLoading()) {
           <tr>
-            <td colspan="7" class="px-4 py-8 text-center text-slate-400">
-              <div class="flex items-center justify-center gap-2">
-                <div class="w-4 h-4 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
-                <span>Loading project records...</span>
+            <td colspan="8" class="text-center py-10 text-slate-400">
+              <div class="inline-flex items-center gap-2">
+                <div class="w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+                <span>Loading projects register...</span>
               </div>
             </td>
           </tr>
           } @else if (paginatedProjects().length === 0) {
           <tr>
-            <td colspan="7" class="px-4 py-10 text-center text-slate-400">
-              <p class="font-medium">No projects found matching the filter criteria.</p>
-              <p class="text-[11px] text-slate-500 mt-1">Click "Register New Project" above to create your first master
-                record.</p>
+            <td colspan="8" class="text-center py-10 text-slate-400">
+              <p>No project master records found matching filter criteria.</p>
             </td>
           </tr>
           } @else {
           @for (p of paginatedProjects(); track p.id) {
-          <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
-            <!-- Project ID & Name -->
+          <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+            <!-- Code & Name -->
             <td class="px-4 py-3">
-              <div class="font-bold text-slate-900 dark:text-slate-100">{{ p.project_name }}</div>
-              <div class="flex items-center gap-1.5 mt-0.5">
-                <span class="font-mono text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">{{
-                  p.project_code }}</span>
-                @if (p.cost_center_code) {
-                <span class="text-[10px] text-slate-400">| {{ p.cost_center_code }}</span>
-                }
-              </div>
-            </td>
-
-            <!-- Type & Category -->
-            <td class="px-4 py-3">
-              <div class="font-semibold text-slate-800 dark:text-slate-200">{{ p.project_type | titlecase }}</div>
-              <div class="text-[11px] text-slate-500">{{ p.project_category | titlecase }}</div>
-              <div class="text-[10px] text-slate-400">{{ p.company_name }}</div>
-            </td>
-
-            <!-- Location & Authority -->
-            <td class="px-4 py-3">
-              <div class="font-medium text-slate-800 dark:text-slate-200">{{ p.thana_upazila }}, {{ p.district }}</div>
-              <div class="flex items-center gap-1.5 mt-0.5">
-                <span
-                  class="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950/70 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                  {{ p.development_authority_id }}
+              <div class="flex items-center gap-1.5">
+                <span class="font-mono font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/60 px-1.5 py-0.5 rounded text-[11px] border border-emerald-200 dark:border-emerald-800">
+                  {{ p.project_code }}
                 </span>
-                <span class="text-[10px] text-slate-400">FAR: {{ p.far_allocated | number:'1.2-2' }}</span>
+                <span class="font-bold text-slate-900 dark:text-slate-100 text-xs">{{ p.project_name }}</span>
               </div>
+              @if (p.project_name_bn) {
+              <div class="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium mt-0.5">
+                {{ p.project_name_bn }}
+              </div>
+              }
+              <div class="text-[10px] text-slate-400 mt-0.5">{{ p.company_name }}</div>
+            </td>
+
+            <!-- Ownership & Category -->
+            <td class="px-4 py-3">
+              <div class="flex flex-col gap-1 items-start">
+                <span [ngClass]="{
+                  'bg-emerald-50 text-emerald-700 border-emerald-200': p.project_ownership === 'OWNED',
+                  'bg-blue-50 text-blue-700 border-blue-200': p.project_ownership === 'JOINT_VENTURE',
+                  'bg-purple-50 text-purple-700 border-purple-200': p.project_ownership === 'PARTNERSHIP'
+                }" class="px-2 py-0.5 rounded-full text-[10px] font-bold border">
+                  {{ p.project_ownership === 'JOINT_VENTURE' ? 'Joint Venture (JV)' : (p.project_ownership || 'OWNED') }}
+                </span>
+                <span class="text-[11px] font-medium text-slate-700 dark:text-slate-300">
+                  {{ p.project_type | titlecase }} / {{ p.project_category | titlecase }}
+                </span>
+                <span class="text-[10px] text-slate-400">Auth: {{ p.development_authority_id }}</span>
+              </div>
+            </td>
+
+            <!-- Location & Locality -->
+            <td class="px-4 py-3">
+              <div class="font-medium text-slate-800 dark:text-slate-200">
+                {{ p.locality ? p.locality + ', ' : '' }}{{ p.thana_upazila }}
+              </div>
+              <div class="text-[11px] text-slate-500">
+                {{ p.district }}, {{ p.division || 'Dhaka' }}
+              </div>
+              @if (p.latitude && p.longitude) {
+              <div class="text-[10px] text-blue-500 flex items-center gap-1 mt-0.5">
+                <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                </svg>
+                <span>{{ p.latitude | number:'1.4-4' }}, {{ p.longitude | number:'1.4-4' }}</span>
+              </div>
+              }
             </td>
 
             <!-- Land & Floor Area -->
@@ -250,58 +263,65 @@
               <div class="text-[11px] text-slate-500">
                 {{ (p.total_builtup_area_sqft || 0) | number:'1.0-0' }} SqFt Built-up
               </div>
-              @if (p.target_completion_date) {
-              <div class="text-[10px] text-slate-400">Due: {{ p.target_completion_date }}</div>
-              }
+              <div class="text-[10px] text-slate-400">FAR: {{ p.far_allocated | number:'1.2-2' }} (MGC {{ p.mgc_percent }}%)</div>
             </td>
 
-            <!-- Manager & Director -->
+            <!-- Budget & Cost Center -->
             <td class="px-4 py-3">
-              <div class="font-medium text-slate-800 dark:text-slate-200">{{ p.project_manager || 'Not Assigned' }}
+              <div class="font-bold text-slate-900 dark:text-slate-100">
+                ৳ {{ ((p.approved_budget_bdt || p.estimated_budget_bdt || 0) / 100000) | number:'1.2-2' }} Lakh
               </div>
+              <div class="text-[11px] font-mono font-medium text-emerald-600">
+                {{ p.cost_center_code || 'No Cost Center' }}
+              </div>
+              <div class="text-[10px] text-slate-400">{{ p.financial_year || 'FY 2026-2027' }}</div>
+            </td>
+
+            <!-- Team & Timeline -->
+            <td class="px-4 py-3">
+              <div class="font-medium text-slate-800 dark:text-slate-200">{{ p.project_manager || 'PM Unassigned' }}</div>
               <div class="text-[11px] text-slate-500">{{ p.project_director || p.department }}</div>
+              @if (p.target_completion_date) {
+              <div class="text-[10px] text-slate-400">Target: {{ p.target_completion_date }}</div>
+              }
             </td>
 
             <!-- Status -->
             <td class="px-4 py-3">
               <span [ngClass]="{
-                      'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800': p.status === 'ACTIVE' || p.status === 'APPROVED',
-                      'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800': p.status === 'FEASIBILITY' || p.status === 'PROPOSED',
-                      'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/60 dark:text-purple-300 dark:border-purple-800': p.status === 'COMPLETED',
-                      'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-800': p.status === 'ON_HOLD'
-                    }"
-                class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border shadow-2xs">
+                'bg-emerald-50 text-emerald-700 border-emerald-200': p.status === 'UNDER_CONSTRUCTION' || p.status === 'APPROVED',
+                'bg-blue-50 text-blue-700 border-blue-200': p.status === 'PLANNING' || p.status === 'ACTIVE',
+                'bg-amber-50 text-amber-700 border-amber-200': p.status === 'FEASIBILITY' || p.status === 'DRAFT' || p.status === 'UNDER_REVIEW',
+                'bg-purple-50 text-purple-700 border-purple-200': p.status === 'COMPLETED' || p.status === 'CLOSED',
+                'bg-rose-50 text-rose-700 border-rose-200': p.status === 'ON_HOLD'
+              }" class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border shadow-2xs">
                 {{ p.status }}
               </span>
-              <div class="text-[10px] text-slate-400 mt-0.5">Workflow: {{ p.approval_status || 'DRAFT' }}</div>
+              <div class="text-[10px] text-slate-400 mt-0.5">Phase: {{ p.project_phase || 'PLANNING' }}</div>
             </td>
 
             <!-- Row Actions -->
             <td class="px-4 py-3 text-right">
               <div class="flex items-center justify-end gap-1.5">
-                <button (click)="viewProjectDetails(p)" title="View 360 Details"
+                <button (click)="viewProjectDetails(p)" title="View 360 Details & Audit History"
                   class="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/50 rounded-lg transition-colors">
                   <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                   </svg>
                 </button>
 
                 <button (click)="openEditModal(p)" title="Edit Master Record"
                   class="p-1.5 text-slate-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/50 rounded-lg transition-colors">
                   <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                   </svg>
                 </button>
 
                 <button (click)="deleteProject(p)" title="Delete Project"
                   class="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded-lg transition-colors">
                   <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
                 </button>
               </div>
@@ -314,12 +334,9 @@
     </div>
 
     <!-- Table Pagination Footer -->
-    <div card-footer
-      class="px-4 py-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+    <div card-footer class="px-4 py-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
       <div>
-        Showing {{ (currentPage() - 1) * pageSize() + 1 }} to {{ ((currentPage() * pageSize()) >
-        filteredProjects().length ? filteredProjects().length : (currentPage() * pageSize())) }} of {{
-        filteredProjects().length }} projects
+        Showing {{ (currentPage() - 1) * pageSize() + 1 }} to {{ ((currentPage() * pageSize()) > filteredProjects().length ? filteredProjects().length : (currentPage() * pageSize())) }} of {{ filteredProjects().length }} projects
       </div>
       <div class="flex items-center gap-1.5">
         <button [disabled]="currentPage() === 1" (click)="goToPage(currentPage() - 1)"
@@ -340,10 +357,10 @@
   }
 
   <!-- ========================================================================= -->
-  <!-- MODAL: ADD / EDIT PROJECT MASTER SETUP (Dedicated Modal, No In-Page Clutter) -->
+  <!-- MODAL: ADD / EDIT PROJECT MASTER SETUP (Dedicated Modal with 6 Deep Tabs) -->
   <!-- ========================================================================= -->
   @if (isFormModalOpen()) {
-  <div class="w-full py-4">
+  <div class="w-full py-2">
     @if (successMessage()) { <div class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">{{ successMessage() }}</div> }
     @if (errorMessage()) { <div class="mb-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-800">{{ errorMessage() }}</div> }
     <div
@@ -354,10 +371,10 @@
         class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/80 dark:bg-slate-850/80">
         <div>
           <h2 class="text-base font-bold font-display text-slate-900 dark:text-slate-100">
-            {{ isEditing() ? 'Edit Project Master Record' : 'Register New Real Estate Project' }}
+            {{ isEditing() ? 'Edit Real Estate Project Master Record' : 'Register New Real Estate Development Project' }}
           </h2>
           <p class="text-xs text-slate-500 dark:text-slate-400">
-            2.1 Master Setup — Identity, Land Parcel Link, Spatial Regulations, Timeline & Funding
+            Centralized Project Master — Bilingual Name, Ownership, GPS Coordinates, Land Parcels, Site Offices, Documents & Cost Centers
           </p>
         </div>
         <button (click)="isFormModalOpen.set(false)"
@@ -366,62 +383,93 @@
         </button>
       </div>
 
-      <!-- Modal Tab Strip -->
+      <!-- Modal Tab Strip (6 Comprehensive Tabs) -->
       <div
-        class="px-6 border-b border-slate-200 dark:border-slate-800 flex items-center gap-4 bg-white dark:bg-slate-900">
+        class="px-6 border-b border-slate-200 dark:border-slate-800 flex items-center gap-3 overflow-x-auto bg-white dark:bg-slate-900">
         <button type="button" (click)="activeFormTab.set('identity')"
           [ngClass]="activeFormTab() === 'identity' ? 'border-emerald-600 text-emerald-600 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'"
-          class="py-3 border-b-2 text-xs transition-colors">
-          1. Identity & Location
+          class="py-3 border-b-2 text-xs transition-colors shrink-0">
+          1. Identity & Registration
+        </button>
+        <button type="button" (click)="activeFormTab.set('location')"
+          [ngClass]="activeFormTab() === 'location' ? 'border-emerald-600 text-emerald-600 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'"
+          class="py-3 border-b-2 text-xs transition-colors shrink-0">
+          2. Location & Land Links
         </button>
         <button type="button" (click)="activeFormTab.set('spatial')"
           [ngClass]="activeFormTab() === 'spatial' ? 'border-emerald-600 text-emerald-600 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'"
-          class="py-3 border-b-2 text-xs transition-colors">
-          2. Land & Spatial Specs
+          class="py-3 border-b-2 text-xs transition-colors shrink-0">
+          3. Land & Spatial Specs
         </button>
-        <button type="button" (click)="activeFormTab.set('timeline')"
-          [ngClass]="activeFormTab() === 'timeline' ? 'border-emerald-600 text-emerald-600 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'"
-          class="py-3 border-b-2 text-xs transition-colors">
-          3. Management & Timeline
+        <button type="button" (click)="activeFormTab.set('management')"
+          [ngClass]="activeFormTab() === 'management' ? 'border-emerald-600 text-emerald-600 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'"
+          class="py-3 border-b-2 text-xs transition-colors shrink-0">
+          4. Management & Timeline
         </button>
         <button type="button" (click)="activeFormTab.set('financial')"
           [ngClass]="activeFormTab() === 'financial' ? 'border-emerald-600 text-emerald-600 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'"
-          class="py-3 border-b-2 text-xs transition-colors">
-          4. Funding & Scope
+          class="py-3 border-b-2 text-xs transition-colors shrink-0">
+          5. Budgets & Cost Center
+        </button>
+        <button type="button" (click)="activeFormTab.set('sites_docs')"
+          [ngClass]="activeFormTab() === 'sites_docs' ? 'border-emerald-600 text-emerald-600 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'"
+          class="py-3 border-b-2 text-xs transition-colors shrink-0">
+          6. Site Offices & Documents ({{ siteOffices().length }}/{{ projectDocuments().length }})
         </button>
       </div>
 
       <!-- Modal Form Body -->
       <form [formGroup]="projectForm" class="p-6 overflow-y-auto space-y-4 flex-1">
 
-        <!-- TAB 1: IDENTITY & LOCATION -->
+        <!-- TAB 1: IDENTITY & REGISTRATION -->
         @if (activeFormTab() === 'identity') {
         <div class="space-y-4">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Project ID / Code <span class="text-rose-500">*</span>
+                Project Code / ID <span class="text-rose-500">*</span>
               </label>
               <input type="text" formControlName="project_code" placeholder="e.g. PRJ-2026-001"
                 class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 font-mono font-bold" />
-              <p class="text-[10px] text-slate-400 mt-0.5">Must be globally unique (PRJ-YYYY-XXX)</p>
+              <p class="text-[10px] text-slate-400 mt-0.5">Unique registration key</p>
             </div>
 
             <div>
               <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Project Name <span class="text-rose-500">*</span>
+                Project Name (English) <span class="text-rose-500">*</span>
               </label>
-              <input type="text" formControlName="project_name" placeholder="e.g. Green Valley Twin Towers"
+              <input type="text" formControlName="project_name" placeholder="e.g. BlueOceans Apex Heights"
                 class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 font-bold" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                Project Name (Bangla / বাংলায়)
+              </label>
+              <input type="text" formControlName="project_name_bn" placeholder="যেমন: ব্লু ওশেনস অ্যাপেক্স হাইটস"
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 font-medium" />
             </div>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <!-- Company Dropdown (Dynamic & Searchable with Add New) -->
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <!-- Company Dropdown -->
             <div>
-              <app-searchable-select label="Company / Legal Entity" [required]="true" categoryCode="COMPANIES"
+              <app-searchable-select label="Company / Entity" [required]="true" categoryCode="COMPANIES"
                 [options]="metaOptions().companies" formControlName="company_name" placeholder="Select entity..."
                 [allowCreateNew]="true"></app-searchable-select>
+            </div>
+
+            <!-- Ownership Structure -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                Project Ownership <span class="text-rose-500">*</span>
+              </label>
+              <select formControlName="project_ownership"
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-semibold focus:outline-none">
+                <option value="OWNED">100% Developer Owned (Direct)</option>
+                <option value="JOINT_VENTURE">Joint Venture (JV Agreement)</option>
+                <option value="PARTNERSHIP">Partnership / Consortium</option>
+              </select>
             </div>
 
             <!-- Project Type Dropdown -->
@@ -440,184 +488,296 @@
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- Lifecycle Status -->
             <div>
-              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">District <span
-                  class="text-rose-500">*</span></label>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                Lifecycle Status <span class="text-rose-500">*</span>
+              </label>
+              <select formControlName="status"
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-bold text-emerald-600 focus:outline-none">
+                <option value="DRAFT">Draft</option>
+                <option value="FEASIBILITY">Feasibility</option>
+                <option value="UNDER_REVIEW">Under Review</option>
+                <option value="APPROVED">Approved</option>
+                <option value="PLANNING">Planning</option>
+                <option value="UNDER_CONSTRUCTION">Under Construction</option>
+                <option value="ON_HOLD">On Hold</option>
+                <option value="COMPLETED">Completed</option>
+                <option value="CLOSED">Closed</option>
+              </select>
+            </div>
+
+            <!-- Project Phase -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                Operational Phase
+              </label>
+              <select formControlName="project_phase"
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-semibold focus:outline-none">
+                <option value="FEASIBILITY">Feasibility & Due Diligence</option>
+                <option value="PLANNING">Master Planning & Permitting</option>
+                <option value="PILING_FOUNDATION">Piling & Substructure</option>
+                <option value="SUPERSTRUCTURE">Superstructure Civil Works</option>
+                <option value="MEP_FINISHING">MEP & Architectural Finishing</option>
+                <option value="HANDOVER_READY">Handover & Utility Commissioning</option>
+              </select>
+            </div>
+
+            <!-- Governance Approval Status -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Governance Status</label>
+              <select formControlName="approval_status"
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-semibold focus:outline-none">
+                <option value="DRAFT">Draft</option>
+                <option value="IN_REVIEW">In Review (PMO)</option>
+                <option value="APPROVED">Approved by Board</option>
+                <option value="REJECTED">Rejected</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        }
+
+        <!-- TAB 2: LOCATION & LAND LINKS -->
+        @if (activeFormTab() === 'location') {
+        <div class="space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Division <span class="text-rose-500">*</span></label>
+              <select formControlName="division"
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-semibold focus:outline-none">
+                <option value="Dhaka">Dhaka Division</option>
+                <option value="Chittagong">Chittagong Division</option>
+                <option value="Rajshahi">Rajshahi Division</option>
+                <option value="Khulna">Khulna Division</option>
+                <option value="Barishal">Barishal Division</option>
+                <option value="Sylhet">Sylhet Division</option>
+                <option value="Rangpur">Rangpur Division</option>
+                <option value="Mymensingh">Mymensingh Division</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">District <span class="text-rose-500">*</span></label>
               <input type="text" formControlName="district" placeholder="e.g. Dhaka"
                 class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200" />
             </div>
 
             <div>
-              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Thana / Upazila <span
-                  class="text-rose-500">*</span></label>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Thana / Upazila <span class="text-rose-500">*</span></label>
               <input type="text" formControlName="thana_upazila" placeholder="e.g. Gulshan"
                 class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200" />
             </div>
 
             <div>
-              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Development
-                Authority</label>
-              <select formControlName="development_authority_id"
-                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-semibold">
-                <option value="RAJUK">RAJUK (Dhaka)</option>
-                <option value="CDA">CDA (Chittagong)</option>
-                <option value="KDA">KDA (Khulna)</option>
-                <option value="RDA">RDA (Rajshahi)</option>
-              </select>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Locality / Area</label>
+              <input type="text" formControlName="locality" placeholder="e.g. Gulshan-2, Road 71"
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200" />
             </div>
           </div>
 
           <div>
-            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Full Site Address / Plot
-              Location</label>
-            <textarea formControlName="site_address" rows="2"
-              placeholder="e.g. Plot #12, Road #45, Block C, Gulshan-2, Dhaka-1212"
-              class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200"></textarea>
-          </div>
-        </div>
-        }
-
-        <!-- TAB 2: LAND & SPATIAL SPECS -->
-        @if (activeFormTab() === 'spatial') {
-        <div class="space-y-4">
-          <!-- Linked Land Parcel from Land Acquisition Module -->
-          <div
-            class="p-3.5 bg-emerald-50/60 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl">
-            <app-searchable-select label="Associated Land Acquisition Parcel (Imports registered area)"
-              categoryCode="LAND_PARCELS" [options]="metaOptions().land_banks" formControlName="land_bank_id"
-              (selectionChange)="onLandBankSelected($event)" placeholder="Select registered land bank parcel..."
-              [allowCreateNew]="false"
-              hint="Links this project to acquired parcels from Land Bank module and pulls exact surveyed area."></app-searchable-select>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Plot Area (SqFt) <span
-                  class="text-rose-500">*</span></label>
-              <input type="number" formControlName="total_land_area_sqft" (input)="onAreaOrRoadChanged()"
-                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-bold" />
-            </div>
-
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Calculated
-                Katha</label>
-              <input type="number" formControlName="total_land_area_katha" step="0.001"
-                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold" />
-              <p class="text-[10px] text-slate-400 mt-0.5">1 Katha = 720 SqFt</p>
-            </div>
-
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Connecting Road Width
-                (Ft) <span class="text-rose-500">*</span></label>
-              <input type="number" formControlName="road_width_feet" (input)="onAreaOrRoadChanged()"
-                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-bold" />
-              <p class="text-[10px] text-slate-400 mt-0.5">Determines permissible FAR under 2008 Rules</p>
-            </div>
-          </div>
-
-          <!-- Dhaka 2008 Rules Engine Computed Strip -->
-          <div
-            class="p-3 bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-xl grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
-            <div>
-              <p class="text-[10px] text-slate-500 uppercase font-semibold">Allocated FAR</p>
-              <p class="text-base font-bold text-blue-700 dark:text-blue-300 font-mono">{{
-                projectForm.get('far_allocated')?.value | number:'1.2-2' }}</p>
-            </div>
-            <div>
-              <p class="text-[10px] text-slate-500 uppercase font-semibold">Max Ground Coverage</p>
-              <p class="text-base font-bold text-blue-700 dark:text-blue-300 font-mono">{{
-                projectForm.get('mgc_percent')?.value }}%</p>
-            </div>
-            <div>
-              <p class="text-[10px] text-slate-500 uppercase font-semibold">Total Built-Up Area</p>
-              <p class="text-base font-bold text-blue-700 dark:text-blue-300 font-mono">{{
-                projectForm.get('total_builtup_area_sqft')?.value | number:'1.0-0' }} SqFt</p>
-            </div>
-            <div>
-              <p class="text-[10px] text-slate-500 uppercase font-semibold">Est. Saleable Area (78%)</p>
-              <p class="text-base font-bold text-emerald-600 dark:text-emerald-400 font-mono">{{
-                projectForm.get('total_saleable_area_sqft')?.value | number:'1.0-0' }} SqFt</p>
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Planned Construction Area
-              (Approved Floor Area)</label>
-            <input type="number" formControlName="planned_construction_area_sqft" placeholder="SqFt"
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Full Site Physical Address</label>
+            <input type="text" formControlName="site_address" placeholder="e.g. Plot #12, Road #71, Gulshan-2, Dhaka-1212"
               class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200" />
           </div>
+
+          <!-- GPS Coordinates & Google Maps Link -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 p-3.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">GPS Latitude (°N)</label>
+              <input type="number" step="0.000001" formControlName="latitude" placeholder="e.g. 23.792500"
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-mono" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">GPS Longitude (°E)</label>
+              <input type="number" step="0.000001" formControlName="longitude" placeholder="e.g. 90.407800"
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-mono" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Google Maps Location URL</label>
+              <input type="url" formControlName="google_maps_url" placeholder="https://maps.google.com/?q=..."
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200" />
+            </div>
+          </div>
+
+          <!-- Acquired Land Parcels & Land Bank Link -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <app-searchable-select label="Link to Land Bank Proposal" [options]="metaOptions().land_banks"
+                formControlName="land_bank_id" placeholder="Select registered land bank..."
+                (valueChange)="onLandBankSelected($event)"></app-searchable-select>
+              <p class="text-[10px] text-slate-400 mt-0.5">Auto-fills area, thana & district</p>
+            </div>
+
+            <div>
+              <app-searchable-select label="Link Acquired Land Parcel" [options]="metaOptions().parcels || []"
+                formControlName="parcel_id" placeholder="Select acquired land parcel..."
+                (valueChange)="onParcelSelected($event)"></app-searchable-select>
+              <p class="text-[10px] text-slate-400 mt-0.5">Integrates deed dag & mouza specs</p>
+            </div>
+          </div>
         </div>
         }
 
-        <!-- TAB 3: MANAGEMENT & TIMELINE -->
-        @if (activeFormTab() === 'timeline') {
+        <!-- TAB 3: LAND & SPATIAL SPECS -->
+        @if (activeFormTab() === 'spatial') {
         <div class="space-y-4">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- Project Manager Dropdown -->
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-              <app-searchable-select label="Responsible Project Manager" categoryCode="PROJECT_MANAGERS"
-                [options]="metaOptions().project_managers" formControlName="project_manager"
-                placeholder="Assign project manager..." [allowCreateNew]="true"></app-searchable-select>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Land Area (Sq. Ft.) <span class="text-rose-500">*</span></label>
+              <input type="number" formControlName="total_land_area_sqft" (change)="onAreaOrRoadChanged()"
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-bold focus:ring-2 focus:ring-emerald-500/20" />
             </div>
 
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Equivalent Katha</label>
+              <input type="number" formControlName="total_land_area_katha" readonly
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Equivalent Decimal</label>
+              <input type="number" formControlName="total_land_area_decimal" readonly
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Connecting Road Width (Ft) <span class="text-rose-500">*</span></label>
+              <input type="number" formControlName="road_width_feet" (change)="onAreaOrRoadChanged()"
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-bold" />
+            </div>
+          </div>
+
+          <!-- Dhaka Building Rules 2008 FAR Engine Outputs -->
+          <div class="p-4 bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 rounded-xl space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-emerald-800 dark:text-emerald-300">Dhaka Imarat Nirman Bidhimala 2008 Auto-FAR Engine</span>
+              <button type="button" (click)="recalculateFAR()" class="text-[11px] text-emerald-600 hover:underline font-semibold">
+                Recalculate FAR
+              </button>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+              <div class="bg-white dark:bg-slate-900 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800">
+                <span class="text-[10px] text-slate-500 uppercase">Permissible FAR</span>
+                <p class="text-sm font-bold text-emerald-600 mt-0.5">{{ projectForm.get('far_allocated')?.value | number:'1.2-2' }}</p>
+              </div>
+              <div class="bg-white dark:bg-slate-900 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800">
+                <span class="text-[10px] text-slate-500 uppercase">Max Ground Coverage</span>
+                <p class="text-sm font-bold text-slate-800 dark:text-slate-200 mt-0.5">{{ projectForm.get('mgc_percent')?.value }}%</p>
+              </div>
+              <div class="bg-white dark:bg-slate-900 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800">
+                <span class="text-[10px] text-slate-500 uppercase">Total Built-Up Area</span>
+                <p class="text-sm font-bold text-slate-800 dark:text-slate-200 mt-0.5">{{ projectForm.get('total_builtup_area_sqft')?.value | number:'1.0-0' }} SqFt</p>
+              </div>
+              <div class="bg-white dark:bg-slate-900 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800">
+                <span class="text-[10px] text-slate-500 uppercase">Est. Saleable Area</span>
+                <p class="text-sm font-bold text-blue-600 mt-0.5">{{ projectForm.get('total_saleable_area_sqft')?.value | number:'1.0-0' }} SqFt</p>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Development Authority</label>
+            <select formControlName="development_authority_id"
+              class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-semibold focus:outline-none">
+              <option value="RAJUK">RAJUK — Rajdhani Unnayan Kartripakkha (Dhaka)</option>
+              <option value="CDA">CDA — Chittagong Development Authority</option>
+              <option value="KDA">KDA — Khulna Development Authority</option>
+              <option value="RDA">RDA — Rajshahi Development Authority</option>
+            </select>
+          </div>
+        </div>
+        }
+
+        <!-- TAB 4: MANAGEMENT & TIMELINE -->
+        @if (activeFormTab() === 'management') {
+        <div class="space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <!-- Project Director Dropdown -->
             <div>
-              <app-searchable-select label="Project Director / Executive Owner" categoryCode="PROJECT_DIRECTORS"
+              <app-searchable-select label="Project Director" categoryCode="PROJECT_DIRECTORS"
                 [options]="metaOptions().project_directors" formControlName="project_director"
-                placeholder="Assign project director..." [allowCreateNew]="true"></app-searchable-select>
+                placeholder="Assign Project Director..." [allowCreateNew]="true"></app-searchable-select>
+            </div>
+
+            <!-- Project Manager Dropdown -->
+            <div>
+              <app-searchable-select label="Project Manager" categoryCode="PROJECT_MANAGERS"
+                [options]="metaOptions().project_managers" formControlName="project_manager"
+                placeholder="Assign Project Manager..." [allowCreateNew]="true"></app-searchable-select>
+            </div>
+
+            <!-- Department Dropdown -->
+            <div>
+              <app-searchable-select label="Operating Department" categoryCode="DEPARTMENTS"
+                [options]="metaOptions().departments" formControlName="department"
+                placeholder="Select department..." [allowCreateNew]="true"></app-searchable-select>
             </div>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-              <app-searchable-select label="Department" categoryCode="PROJECT_DEPARTMENTS"
-                [options]="metaOptions().departments" formControlName="department" placeholder="Select department..."
-                [allowCreateNew]="true"></app-searchable-select>
-            </div>
-
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Project Status</label>
-              <select formControlName="status"
-                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-semibold">
-                <option value="PROPOSED">Proposed</option>
-                <option value="FEASIBILITY">Feasibility</option>
-                <option value="APPROVED">Approved</option>
-                <option value="ACTIVE">Active (Under Construction)</option>
-                <option value="ON_HOLD">On Hold</option>
-                <option value="COMPLETED">Completed</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Planned Start
-                Date</label>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Project Start Date</label>
               <input type="date" formControlName="project_start_date" (change)="onDateChanged()"
                 class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200" />
             </div>
 
             <div>
-              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Target Completion
-                Date</label>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Target Completion Date</label>
               <input type="date" formControlName="target_completion_date" (change)="onDateChanged()"
                 class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200" />
             </div>
 
             <div>
-              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Project Duration
-                (Months)</label>
-              <input type="number" formControlName="project_duration_months"
-                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold" />
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Revised Completion Date</label>
+              <input type="date" formControlName="revised_completion_date"
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Planned Handover Date</label>
+              <input type="date" formControlName="planned_handover_date"
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200" />
             </div>
           </div>
         </div>
         }
 
-        <!-- TAB 4: FUNDING & SCOPE -->
+        <!-- TAB 5: BUDGETS & COST CENTER -->
         @if (activeFormTab() === 'financial') {
         <div class="space-y-4">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Financial Year <span class="text-rose-500">*</span></label>
+              <input type="text" formControlName="financial_year" placeholder="e.g. FY 2026-2027"
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-semibold" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Estimated Budget (BDT ৳)</label>
+              <input type="number" formControlName="estimated_budget_bdt" placeholder="e.g. 50000000"
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-mono font-bold" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Approved Board Budget (BDT ৳)</label>
+              <input type="number" formControlName="approved_budget_bdt" placeholder="e.g. 55000000"
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-mono font-bold text-emerald-600" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Accounting Cost Center Code</label>
+              <input type="text" formControlName="cost_center_code" placeholder="e.g. CC-PRJ-2026-001"
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-mono font-bold" />
+              <p class="text-[10px] text-slate-400 mt-0.5">Links this project to Accounts vouchers</p>
+            </div>
+
             <!-- Funding Source Dropdown -->
             <div>
               <app-searchable-select label="Project Funding Source" categoryCode="FUNDING_SOURCES"
@@ -626,42 +786,148 @@
             </div>
 
             <div>
-              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Accounting Cost Center
-                Reference</label>
-              <input type="text" formControlName="cost_center_code" placeholder="e.g. CC-PRJ-2026-001"
-                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-mono font-bold" />
-              <p class="text-[10px] text-slate-400 mt-0.5">Links this project to Accounts & General Ledger vouchers</p>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Target Customer
-                Segment</label>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Target Customer Segment</label>
               <input type="text" formControlName="target_customer_segment"
                 placeholder="e.g. Upper Middle Class, NRI Investors, Luxury HNW"
                 class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200" />
             </div>
-
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Governance Approval
-                Status</label>
-              <select formControlName="approval_status"
-                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-semibold">
-                <option value="DRAFT">Draft</option>
-                <option value="IN_REVIEW">In Review (PMO)</option>
-                <option value="APPROVED">Approved by Board</option>
-                <option value="REJECTED">Rejected</option>
-              </select>
-            </div>
           </div>
 
           <div>
-            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Project Scope & Strategic
-              Objectives</label>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Project Scope & Strategic Objectives</label>
             <textarea formControlName="project_scope" rows="3"
               placeholder="Outline development scope, target deliverables, architectural vision, and commercial milestones..."
               class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200"></textarea>
+          </div>
+        </div>
+        }
+
+        <!-- TAB 6: SITE OFFICES & DOCUMENTS -->
+        @if (activeFormTab() === 'sites_docs') {
+        <div class="space-y-6">
+          <!-- Section 1: Multiple Construction Sites & Site Offices -->
+          <div class="p-4 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Multiple Construction Sites & Site Offices</h3>
+                <p class="text-[11px] text-slate-500">Add branch site offices, site engineer in-charge and field contact info</p>
+              </div>
+              <button type="button" (click)="addSiteOffice()"
+                class="px-3 py-1.5 text-xs font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                <span>Add Site Office</span>
+              </button>
+            </div>
+
+            @if (siteOffices().length === 0) {
+            <div class="text-center py-6 border border-dashed border-slate-200 dark:border-slate-700 rounded-lg text-slate-400 text-xs">
+              No site offices added yet. Click "+ Add Site Office" to register construction site offices.
+            </div>
+            } @else {
+            <div class="space-y-3">
+              @for (so of siteOffices(); track $index) {
+              <div class="p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 grid grid-cols-1 sm:grid-cols-4 gap-2 items-center">
+                <div>
+                  <label class="block text-[10px] text-slate-400 font-semibold mb-0.5">Office / Site Name</label>
+                  <input type="text" [value]="so.office_name" (input)="updateSiteOffice($index, 'office_name', $any($event.target).value)"
+                    placeholder="e.g. Site Office #1"
+                    class="w-full px-2.5 py-1.5 text-xs rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800" />
+                </div>
+                <div>
+                  <label class="block text-[10px] text-slate-400 font-semibold mb-0.5">Site Address</label>
+                  <input type="text" [value]="so.site_address" (input)="updateSiteOffice($index, 'site_address', $any($event.target).value)"
+                    placeholder="e.g. Gate 2, Plot 14"
+                    class="w-full px-2.5 py-1.5 text-xs rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800" />
+                </div>
+                <div>
+                  <label class="block text-[10px] text-slate-400 font-semibold mb-0.5">Engineer In-Charge</label>
+                  <input type="text" [value]="so.engineer_in_charge || ''" (input)="updateSiteOffice($index, 'engineer_in_charge', $any($event.target).value)"
+                    placeholder="e.g. Engr. Shafiq"
+                    class="w-full px-2.5 py-1.5 text-xs rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800" />
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="flex-1">
+                    <label class="block text-[10px] text-slate-400 font-semibold mb-0.5">Contact Phone</label>
+                    <input type="text" [value]="so.contact_phone || ''" (input)="updateSiteOffice($index, 'contact_phone', $any($event.target).value)"
+                      placeholder="e.g. 01711-XXXXXX"
+                      class="w-full px-2.5 py-1.5 text-xs rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-mono" />
+                  </div>
+                  <button type="button" (click)="removeSiteOffice($index)" title="Remove Site Office"
+                    class="mt-4 p-1.5 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded transition-colors">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              }
+            </div>
+            }
+          </div>
+
+          <!-- Section 2: Project-wise Document Repository -->
+          <div class="p-4 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Project-Wise Document Repository</h3>
+                <p class="text-[11px] text-slate-500">Store project master plans, agreements, soil tests, RAJUK approvals, NOCs</p>
+              </div>
+              <button type="button" (click)="addProjectDocument()"
+                class="px-3 py-1.5 text-xs font-semibold bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors flex items-center gap-1">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                <span>Upload Document</span>
+              </button>
+            </div>
+
+            @if (projectDocuments().length === 0) {
+            <div class="text-center py-6 border border-dashed border-slate-200 dark:border-slate-700 rounded-lg text-slate-400 text-xs">
+              No project documents attached yet. Click "+ Upload Document" to attach project master documents.
+            </div>
+            } @else {
+            <div class="space-y-3">
+              @for (doc of projectDocuments(); track $index) {
+              <div class="p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 grid grid-cols-1 sm:grid-cols-4 gap-2 items-center">
+                <div>
+                  <label class="block text-[10px] text-slate-400 font-semibold mb-0.5">Document Title</label>
+                  <input type="text" [value]="doc.title" (input)="updateProjectDocument($index, 'title', $any($event.target).value)"
+                    placeholder="e.g. Master Layout Plan 2026"
+                    class="w-full px-2.5 py-1.5 text-xs rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800" />
+                </div>
+                <div>
+                  <label class="block text-[10px] text-slate-400 font-semibold mb-0.5">Document Type</label>
+                  <select [value]="doc.doc_type" (change)="updateProjectDocument($index, 'doc_type', $any($event.target).value)"
+                    class="w-full px-2.5 py-1.5 text-xs rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+                    <option value="SITE_LAYOUT_PLAN">Site Layout Plan</option>
+                    <option value="RAJUK_SANCTION_LETTER">RAJUK / CDA Sanction Letter</option>
+                    <option value="JV_DEVELOPMENT_AGREEMENT">JV Development Agreement</option>
+                    <option value="SOIL_INVESTIGATION_REPORT">Soil Investigation Report</option>
+                    <option value="ENVIRONMENTAL_NOC">DoE Environmental NOC</option>
+                    <option value="FIRE_SAFETY_NOC">Fire & Civil Defence NOC</option>
+                    <option value="STRUCTURAL_DESIGN_CALC">Structural Design Calculation</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-[10px] text-slate-400 font-semibold mb-0.5">Attach File (PDF/Doc/JPG)</label>
+                  <input type="file" (change)="onDocumentUpload($event, $index)"
+                    class="w-full text-[11px] text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[10px] file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100" />
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-[10px] text-slate-400">{{ doc.upload_date }}</span>
+                  <button type="button" (click)="removeProjectDocument($index)" title="Remove Document"
+                    class="p-1.5 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded transition-colors">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              }
+            </div>
+            }
           </div>
         </div>
         }
@@ -671,7 +937,7 @@
       <div
         class="px-6 py-3.5 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-850/80">
         <div class="text-[11px] text-slate-400">
-          * All fields adhere to Real Estate Regulatory Act & RAJUK FAR standards.
+          * Meets all Bangladesh Real Estate Regulatory Act & RAJUK FAR standards.
         </div>
         <div class="flex items-center gap-2">
           <button type="button" (click)="isFormModalOpen.set(false)"
@@ -693,137 +959,329 @@
   }
 
   <!-- ========================================================================= -->
-  <!-- MODAL: VIEW PROJECT 360° MASTER RECORD DETAILS -->
+  <!-- MODAL: VIEW PROJECT 360° MASTER RECORD DETAILS (Bilingual, GPS, Audit Log) -->
   <!-- ========================================================================= -->
   @if (isDetailsModalOpen() && selectedProject(); as p) {
   <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs overflow-y-auto">
     <div
-      class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-4xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
 
+      <!-- Details Header -->
       <div
         class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/80 dark:bg-slate-850/80">
         <div>
           <div class="flex items-center gap-2">
             <span
-              class="font-mono text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">{{
-              p.project_code }}</span>
+              class="font-mono text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
+              {{ p.project_code }}
+            </span>
             <h2 class="text-base font-bold font-display text-slate-900 dark:text-slate-100">{{ p.project_name }}</h2>
+            @if (p.project_name_bn) {
+            <span class="text-xs text-emerald-700 dark:text-emerald-400 font-semibold font-display">({{ p.project_name_bn }})</span>
+            }
           </div>
-          <p class="text-xs text-slate-500 mt-0.5">{{ p.company_name }} — {{ p.project_type | titlecase }} / {{
-            p.project_category | titlecase }}</p>
+          <p class="text-xs text-slate-500 mt-0.5">
+            {{ p.company_name }} — {{ p.project_type | titlecase }} ({{ p.project_category | titlecase }}) • Ownership: {{ p.project_ownership || 'OWNED' }}
+          </p>
         </div>
         <button (click)="isDetailsModalOpen.set(false)"
           class="text-slate-400 hover:text-slate-600 text-lg">&times;</button>
       </div>
 
-      <div class="p-6 overflow-y-auto space-y-5 flex-1 text-xs">
-        <!-- Summary Grid -->
-        <div
-          class="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800">
-          <div>
-            <p class="text-[10px] text-slate-500 uppercase font-semibold">Total Land Area</p>
-            <p class="text-sm font-bold text-slate-900 dark:text-slate-100 mt-0.5">{{ (p.total_land_area_katha || 0) |
-              number:'1.1-2' }} Katha</p>
-            <p class="text-[10px] text-slate-400">{{ (p.total_land_area_sqft || 0) | number:'1.0-0' }} SqFt</p>
-          </div>
-          <div>
-            <p class="text-[10px] text-slate-500 uppercase font-semibold">Allocated FAR</p>
-            <p class="text-sm font-bold text-blue-600 dark:text-blue-400 mt-0.5 font-mono">{{ p.far_allocated }} (MGC {{
-              p.mgc_percent }}%)</p>
-            <p class="text-[10px] text-slate-400">{{ p.development_authority_id }}</p>
-          </div>
-          <div>
-            <p class="text-[10px] text-slate-500 uppercase font-semibold">Total Built-Up Area</p>
-            <p class="text-sm font-bold text-slate-900 dark:text-slate-100 mt-0.5">{{ (p.total_builtup_area_sqft || 0) |
-              number:'1.0-0' }} SqFt</p>
-            <p class="text-[10px] text-slate-400">Saleable: {{ (p.total_saleable_area_sqft || 0) | number:'1.0-0' }}
-              SqFt</p>
-          </div>
-          <div>
-            <p class="text-[10px] text-slate-500 uppercase font-semibold">Project Status</p>
-            <p class="text-sm font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">{{ p.status }}</p>
-            <p class="text-[10px] text-slate-400">Workflow: {{ p.approval_status || 'DRAFT' }}</p>
-          </div>
-        </div>
-
-        <!-- Location & Authority -->
-        <div class="space-y-1.5">
-          <h3 class="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">Location & Statutory
-            Jurisdiction</h3>
-          <div
-            class="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 grid grid-cols-2 gap-3">
-            <div>
-              <span class="text-slate-400">Jurisdiction:</span>
-              <span class="font-semibold text-slate-800 dark:text-slate-200 ml-1">{{ p.thana_upazila }}, {{ p.district
-                }}</span>
-            </div>
-            <div>
-              <span class="text-slate-400">Authority:</span>
-              <span class="font-semibold text-slate-800 dark:text-slate-200 ml-1">{{ p.development_authority_id
-                }}</span>
-            </div>
-            <div class="col-span-2">
-              <span class="text-slate-400">Site Address:</span>
-              <span class="font-medium text-slate-800 dark:text-slate-200 ml-1">{{ p.site_address || 'Address details
-                pending confirmation' }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Management & Financials -->
-        <div class="space-y-1.5">
-          <h3 class="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">Personnel,
-            Governance & Funding</h3>
-          <div
-            class="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 grid grid-cols-2 gap-3">
-            <div>
-              <span class="text-slate-400">Project Manager:</span>
-              <span class="font-semibold text-slate-800 dark:text-slate-200 ml-1">{{ p.project_manager || 'Not Assigned'
-                }}</span>
-            </div>
-            <div>
-              <span class="text-slate-400">Project Director:</span>
-              <span class="font-semibold text-slate-800 dark:text-slate-200 ml-1">{{ p.project_director || 'Not
-                Assigned' }}</span>
-            </div>
-            <div>
-              <span class="text-slate-400">Cost Center:</span>
-              <span class="font-mono font-bold text-slate-800 dark:text-slate-200 ml-1">{{ p.cost_center_code }}</span>
-            </div>
-            <div>
-              <span class="text-slate-400">Funding Source:</span>
-              <span class="font-semibold text-slate-800 dark:text-slate-200 ml-1">{{ p.project_funding_source }}</span>
-            </div>
-            <div>
-              <span class="text-slate-400">Start Date:</span>
-              <span class="font-medium text-slate-800 dark:text-slate-200 ml-1">{{ p.project_start_date || 'TBD'
-                }}</span>
-            </div>
-            <div>
-              <span class="text-slate-400">Target Completion:</span>
-              <span class="font-medium text-slate-800 dark:text-slate-200 ml-1">{{ p.target_completion_date || 'TBD' }}
-                ({{ p.project_duration_months }} Months)</span>
-            </div>
-          </div>
-        </div>
-
-        @if (p.project_scope) {
-        <div class="space-y-1.5">
-          <h3 class="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">Scope & Objectives
-          </h3>
-          <p
-            class="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300">
-            {{ p.project_scope }}
-          </p>
-        </div>
-        }
+      <!-- Detail Sub-Navigation Tabs -->
+      <div class="px-6 border-b border-slate-200 dark:border-slate-800 flex items-center gap-3 bg-white dark:bg-slate-900 text-xs">
+        <button type="button" (click)="activeDetailTab.set('overview')"
+          [ngClass]="activeDetailTab() === 'overview' ? 'border-emerald-600 text-emerald-600 font-bold' : 'border-transparent text-slate-500'"
+          class="py-2.5 border-b-2 transition-colors">
+          Overview & Location
+        </button>
+        <button type="button" (click)="activeDetailTab.set('spatial')"
+          [ngClass]="activeDetailTab() === 'spatial' ? 'border-emerald-600 text-emerald-600 font-bold' : 'border-transparent text-slate-500'"
+          class="py-2.5 border-b-2 transition-colors">
+          Spatial Specs & FAR
+        </button>
+        <button type="button" (click)="activeDetailTab.set('financial')"
+          [ngClass]="activeDetailTab() === 'financial' ? 'border-emerald-600 text-emerald-600 font-bold' : 'border-transparent text-slate-500'"
+          class="py-2.5 border-b-2 transition-colors">
+          Budgets & Cost Center
+        </button>
+        <button type="button" (click)="activeDetailTab.set('sites')"
+          [ngClass]="activeDetailTab() === 'sites' ? 'border-emerald-600 text-emerald-600 font-bold' : 'border-transparent text-slate-500'"
+          class="py-2.5 border-b-2 transition-colors">
+          Site Offices ({{ (p.site_offices || []).length }})
+        </button>
+        <button type="button" (click)="activeDetailTab.set('docs')"
+          [ngClass]="activeDetailTab() === 'docs' ? 'border-emerald-600 text-emerald-600 font-bold' : 'border-transparent text-slate-500'"
+          class="py-2.5 border-b-2 transition-colors">
+          Document Repository ({{ (p.project_documents || []).length }})
+        </button>
+        <button type="button" (click)="activeDetailTab.set('history')"
+          [ngClass]="activeDetailTab() === 'history' ? 'border-emerald-600 text-emerald-600 font-bold' : 'border-transparent text-slate-500'"
+          class="py-2.5 border-b-2 transition-colors">
+          Lifecycle Change Log ({{ (p.status_history || []).length }})
+        </button>
       </div>
 
+      <!-- Detail Body -->
+      <div class="p-6 overflow-y-auto space-y-4 flex-1 text-xs">
+
+        <!-- TAB: OVERVIEW & LOCATION -->
+        @if (activeDetailTab() === 'overview') {
+        <div class="space-y-4">
+          <!-- Summary Key Metrics -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800">
+            <div>
+              <p class="text-[10px] text-slate-500 uppercase font-semibold">Total Land Area</p>
+              <p class="text-sm font-bold text-slate-900 dark:text-slate-100 mt-0.5">{{ (p.total_land_area_katha || 0) | number:'1.1-2' }} Katha</p>
+              <p class="text-[10px] text-slate-400">{{ (p.total_land_area_sqft || 0) | number:'1.0-0' }} SqFt ({{ (p.total_land_area_decimal || 0) | number:'1.2-2' }} Dec)</p>
+            </div>
+            <div>
+              <p class="text-[10px] text-slate-500 uppercase font-semibold">Allocated FAR</p>
+              <p class="text-sm font-bold text-blue-600 dark:text-blue-400 mt-0.5 font-mono">{{ p.far_allocated }} (MGC {{ p.mgc_percent }}%)</p>
+              <p class="text-[10px] text-slate-400">{{ p.development_authority_id }}</p>
+            </div>
+            <div>
+              <p class="text-[10px] text-slate-500 uppercase font-semibold">Approved Budget</p>
+              <p class="text-sm font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">৳ {{ ((p.approved_budget_bdt || p.estimated_budget_bdt || 0) / 10000000) | number:'1.2-2' }} Cr</p>
+              <p class="text-[10px] text-slate-400">{{ p.financial_year || 'FY 2026-2027' }}</p>
+            </div>
+            <div>
+              <p class="text-[10px] text-slate-500 uppercase font-semibold">Lifecycle Status</p>
+              <p class="text-sm font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">{{ p.status }}</p>
+              <p class="text-[10px] text-slate-400">Phase: {{ p.project_phase || 'PLANNING' }}</p>
+            </div>
+          </div>
+
+          <!-- Location & GPS Map -->
+          <div class="space-y-2">
+            <h3 class="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">Site Location & GPS Coordinates</h3>
+            <div class="p-3.5 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <span class="text-slate-400">Division & District:</span>
+                <span class="font-semibold text-slate-800 dark:text-slate-200 ml-1">{{ p.division || 'Dhaka' }}, {{ p.district }}</span>
+              </div>
+              <div>
+                <span class="text-slate-400">Thana & Locality:</span>
+                <span class="font-semibold text-slate-800 dark:text-slate-200 ml-1">{{ p.thana_upazila }}{{ p.locality ? ' (' + p.locality + ')' : '' }}</span>
+              </div>
+              <div class="col-span-2">
+                <span class="text-slate-400">Physical Address:</span>
+                <span class="font-medium text-slate-800 dark:text-slate-200 ml-1">{{ p.site_address || 'Address pending verification' }}</span>
+              </div>
+              <div>
+                <span class="text-slate-400">GPS Coordinates:</span>
+                <span class="font-mono font-semibold text-slate-800 dark:text-slate-200 ml-1">
+                  {{ p.latitude ? p.latitude + '°N, ' + p.longitude + '°E' : 'Not recorded' }}
+                </span>
+              </div>
+              <div>
+                @if (p.google_maps_url) {
+                <a [href]="p.google_maps_url" target="_blank"
+                  class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg border border-blue-200 transition-colors">
+                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                  <span>Open in Google Maps</span>
+                </a>
+                } @else {
+                <span class="text-slate-400">No Google Map link registered</span>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Project Team & Management -->
+          <div class="space-y-2">
+            <h3 class="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">Team Assignment & Governance</h3>
+            <div class="p-3.5 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 grid grid-cols-2 gap-3">
+              <div>
+                <span class="text-slate-400">Project Director:</span>
+                <span class="font-semibold text-slate-800 dark:text-slate-200 ml-1">{{ p.project_director || 'Not Assigned' }}</span>
+              </div>
+              <div>
+                <span class="text-slate-400">Project Manager:</span>
+                <span class="font-semibold text-slate-800 dark:text-slate-200 ml-1">{{ p.project_manager || 'Not Assigned' }}</span>
+              </div>
+              <div>
+                <span class="text-slate-400">Department:</span>
+                <span class="font-medium text-slate-800 dark:text-slate-200 ml-1">{{ p.department }}</span>
+              </div>
+              <div>
+                <span class="text-slate-400">Governance Approval:</span>
+                <span class="font-semibold text-emerald-600 ml-1">{{ p.approval_status || 'DRAFT' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        }
+
+        <!-- TAB: SPATIAL SPECS & FAR -->
+        @if (activeDetailTab() === 'spatial') {
+        <div class="space-y-4">
+          <div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div>
+              <span class="text-slate-400 text-[10px] uppercase font-semibold">Plot Area</span>
+              <p class="text-sm font-bold text-slate-900 dark:text-slate-100 mt-0.5">{{ (p.total_land_area_sqft || 0) | number:'1.0-0' }} SqFt</p>
+              <p class="text-[10px] text-slate-500">{{ (p.total_land_area_katha || 0) | number:'1.2-2' }} Katha</p>
+            </div>
+            <div>
+              <span class="text-slate-400 text-[10px] uppercase font-semibold">Connecting Road</span>
+              <p class="text-sm font-bold text-slate-900 dark:text-slate-100 mt-0.5">{{ p.road_width_feet }} Feet</p>
+              <p class="text-[10px] text-slate-500">Dhaka Rules 2008 Standard</p>
+            </div>
+            <div>
+              <span class="text-slate-400 text-[10px] uppercase font-semibold">FAR & Coverage</span>
+              <p class="text-sm font-bold text-blue-600 mt-0.5">{{ p.far_allocated }} FAR</p>
+              <p class="text-[10px] text-slate-500">MGC: {{ p.mgc_percent }}%</p>
+            </div>
+            <div>
+              <span class="text-slate-400 text-[10px] uppercase font-semibold">Total Built-Up Area</span>
+              <p class="text-sm font-bold text-emerald-600 mt-0.5">{{ (p.total_builtup_area_sqft || 0) | number:'1.0-0' }} SqFt</p>
+              <p class="text-[10px] text-slate-500">Saleable: {{ (p.total_saleable_area_sqft || 0) | number:'1.0-0' }} SqFt</p>
+            </div>
+          </div>
+        </div>
+        }
+
+        <!-- TAB: FINANCIALS & BUDGETS -->
+        @if (activeDetailTab() === 'financial') {
+        <div class="space-y-4">
+          <div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 grid grid-cols-2 sm:grid-cols-3 gap-4">
+            <div>
+              <span class="text-slate-400 text-[10px] uppercase font-semibold">Accounting Cost Center</span>
+              <p class="text-sm font-mono font-bold text-emerald-600 mt-0.5">{{ p.cost_center_code }}</p>
+              <p class="text-[10px] text-slate-500">GL Cost Accounting Node</p>
+            </div>
+            <div>
+              <span class="text-slate-400 text-[10px] uppercase font-semibold">Financial Year</span>
+              <p class="text-sm font-bold text-slate-900 dark:text-slate-100 mt-0.5">{{ p.financial_year || 'FY 2026-2027' }}</p>
+              <p class="text-[10px] text-slate-500">Active Operational Period</p>
+            </div>
+            <div>
+              <span class="text-slate-400 text-[10px] uppercase font-semibold">Funding Structure</span>
+              <p class="text-sm font-bold text-slate-900 dark:text-slate-100 mt-0.5">{{ p.project_funding_source }}</p>
+              <p class="text-[10px] text-slate-500">Equity & Advance Booking</p>
+            </div>
+            <div>
+              <span class="text-slate-400 text-[10px] uppercase font-semibold">Estimated Budget</span>
+              <p class="text-sm font-mono font-bold text-slate-900 dark:text-slate-100 mt-0.5">৳ {{ (p.estimated_budget_bdt || 0) | number:'1.2-2' }}</p>
+            </div>
+            <div>
+              <span class="text-slate-400 text-[10px] uppercase font-semibold">Approved Board Budget</span>
+              <p class="text-sm font-mono font-bold text-emerald-600 mt-0.5">৳ {{ (p.approved_budget_bdt || 0) | number:'1.2-2' }}</p>
+            </div>
+            <div>
+              <span class="text-slate-400 text-[10px] uppercase font-semibold">Target Customer Segment</span>
+              <p class="text-sm font-medium text-slate-900 dark:text-slate-100 mt-0.5">{{ p.target_customer_segment || 'Upper Middle Class' }}</p>
+            </div>
+          </div>
+        </div>
+        }
+
+        <!-- TAB: SITE OFFICES -->
+        @if (activeDetailTab() === 'sites') {
+        <div class="space-y-3">
+          @if (!p.site_offices || p.site_offices.length === 0) {
+          <div class="text-center py-8 text-slate-400">No site offices recorded for this project yet.</div>
+          } @else {
+          <table class="w-full text-left text-xs border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+            <thead class="bg-slate-50 dark:bg-slate-800 text-slate-500 uppercase text-[10px]">
+              <tr>
+                <th class="px-3 py-2.5">Office / Site</th>
+                <th class="px-3 py-2.5">Address</th>
+                <th class="px-3 py-2.5">In-Charge Engineer</th>
+                <th class="px-3 py-2.5">Phone Contact</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+              @for (so of p.site_offices; track $index) {
+              <tr>
+                <td class="px-3 py-2.5 font-bold text-slate-800 dark:text-slate-200">{{ so.office_name }}</td>
+                <td class="px-3 py-2.5 text-slate-600 dark:text-slate-400">{{ so.site_address }}</td>
+                <td class="px-3 py-2.5 text-slate-700 dark:text-slate-300 font-medium">{{ so.engineer_in_charge || 'N/A' }}</td>
+                <td class="px-3 py-2.5 font-mono text-emerald-600">{{ so.contact_phone || 'N/A' }}</td>
+              </tr>
+              }
+            </tbody>
+          </table>
+          }
+        </div>
+        }
+
+        <!-- TAB: DOCUMENTS -->
+        @if (activeDetailTab() === 'docs') {
+        <div class="space-y-3">
+          @if (!p.project_documents || p.project_documents.length === 0) {
+          <div class="text-center py-8 text-slate-400">No project documents uploaded yet.</div>
+          } @else {
+          <table class="w-full text-left text-xs border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+            <thead class="bg-slate-50 dark:bg-slate-800 text-slate-500 uppercase text-[10px]">
+              <tr>
+                <th class="px-3 py-2.5">Document Title</th>
+                <th class="px-3 py-2.5">Category</th>
+                <th class="px-3 py-2.5">Uploaded By</th>
+                <th class="px-3 py-2.5">Date</th>
+                <th class="px-3 py-2.5 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+              @for (d of p.project_documents; track $index) {
+              <tr>
+                <td class="px-3 py-2.5 font-bold text-slate-800 dark:text-slate-200">{{ d.title }}</td>
+                <td class="px-3 py-2.5 text-slate-600 dark:text-slate-400">{{ d.doc_type }}</td>
+                <td class="px-3 py-2.5 text-slate-600 dark:text-slate-400">{{ d.uploaded_by || 'Admin' }}</td>
+                <td class="px-3 py-2.5 text-slate-500">{{ d.upload_date }}</td>
+                <td class="px-3 py-2.5 text-right">
+                  <a [href]="d.file_url || '#'" target="_blank"
+                    class="px-2.5 py-1 text-[11px] font-semibold bg-emerald-50 text-emerald-700 rounded border border-emerald-200 hover:bg-emerald-100">
+                    Download
+                  </a>
+                </td>
+              </tr>
+              }
+            </tbody>
+          </table>
+          }
+        </div>
+        }
+
+        <!-- TAB: AUDIT LOG & STATUS HISTORY -->
+        @if (activeDetailTab() === 'history') {
+        <div class="space-y-3">
+          @if (!p.status_history || p.status_history.length === 0) {
+          <div class="text-center py-8 text-slate-400">No status change log recorded yet.</div>
+          } @else {
+          <div class="space-y-2">
+            @for (h of p.status_history; track $index) {
+            <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-200 text-slate-700">{{ h.from_status || 'INIT' }}</span>
+                  <span class="text-slate-400 text-xs">→</span>
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">{{ h.to_status }}</span>
+                </div>
+                <p class="text-xs text-slate-700 dark:text-slate-300 mt-1">{{ h.note || 'Status updated' }}</p>
+              </div>
+              <div class="text-right text-[11px] text-slate-400">
+                <div>{{ h.changed_at }}</div>
+                <div>By: {{ h.changed_by || 'System Admin' }}</div>
+              </div>
+            </div>
+            }
+          </div>
+          }
+        </div>
+        }
+
+      </div>
+
+      <!-- Detail Modal Footer -->
       <div
-        class="px-6 py-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end bg-slate-50 dark:bg-slate-850">
+        class="px-6 py-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-850">
+        <span class="text-[11px] text-slate-400">ID: {{ p.id }} • Created: {{ p.created_at || 'Recently' }}</span>
         <button (click)="isDetailsModalOpen.set(false)"
           class="px-4 py-2 text-xs font-semibold bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 text-slate-700 dark:text-slate-200 rounded-xl transition-colors">
-          Close
+          Close 360 View
         </button>
       </div>
 

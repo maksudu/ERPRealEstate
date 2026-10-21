@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LandService } from '../../../../core/services/land.service';
-import { LandParcel } from '../../../../core/models/land.model';
+import { LandParcel, Landowner, LandownerParcelLink } from '../../../../core/models/land.model';
 import { 
   CardContainerComponent, 
   CustomInputComponent, 
@@ -144,6 +144,15 @@ import {
             >
               <span class="w-5 h-5 rounded-full text-center leading-5 text-[11px]" [ngClass]="activeTab === 'deed' ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300' : 'bg-slate-100 text-slate-600'">4</span>
               Survey & Legal Deed Records
+            </button>
+            <button
+              type="button"
+              (click)="activeTab = 'owners'"
+              [ngClass]="activeTab === 'owners' ? 'border-emerald-600 text-emerald-600 dark:text-emerald-400 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'"
+              class="px-4 py-2.5 text-xs border-b-2 whitespace-nowrap transition-colors flex items-center gap-2"
+            >
+              <span class="w-5 h-5 rounded-full text-center leading-5 text-[11px]" [ngClass]="activeTab === 'owners' ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300' : 'bg-slate-100 text-slate-600'">5</span>
+              Owners & Succession (অংশীদার মালিকানা ও দলিল)
             </button>
           </div>
 
@@ -399,6 +408,295 @@ import {
               </div>
             }
 
+            <!-- TAB 5: LANDOWNERS & FRACTIONAL OWNERSHIP -->
+            @if (activeTab === 'owners') {
+              <div class="space-y-6">
+                <!-- Info banner -->
+                <div class="p-3.5 rounded-xl border border-sky-200 dark:border-sky-800 bg-sky-50 dark:bg-sky-950/40 text-sky-900 dark:text-sky-200 text-xs">
+                  <div class="font-bold flex items-center gap-1.5 mb-1">
+                    <svg class="w-4 h-4 text-sky-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Individual, Joint, Inherited & Company Ownership Registry
+                  </div>
+                  <p class="text-[11px] leading-relaxed text-sky-800 dark:text-sky-300">
+                    একাধিক মালিককে এই প্লটের সাথে যুক্ত করুন অথবা একক মালিক নির্ধারণ করুন। উত্তরাধিকার (Inherited), খরিদ (Purchased), বণ্টননামা (Partition Deed) ইত্যাদির ভিত্তি এবং উত্তরাধিকার/মালিকানা দলিল আপলোড করুন।
+                  </p>
+                </div>
+
+                <!-- Summary Bar: Total Parcel Area & Allocated Share -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 dark:bg-slate-900/60 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800">
+                  <div>
+                    <span class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block">Parcel Total Area</span>
+                    <span class="text-sm font-bold text-slate-800 dark:text-slate-100">
+                      {{ convertedDecimal }} Dec / {{ convertedKatha }} Katha
+                    </span>
+                    <span class="text-[10px] text-slate-400 block">{{ convertedSqft.toLocaleString() }} Sq.Ft</span>
+                  </div>
+                  <div>
+                    <span class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block">Allocated Share</span>
+                    <span class="text-sm font-bold" [ngClass]="totalAllocatedShare() > 100 ? 'text-rose-600' : 'text-emerald-600 dark:text-emerald-400'">
+                      {{ totalAllocatedShare().toFixed(2) }}%
+                    </span>
+                    <span class="text-[10px] text-slate-400 block">{{ stagedOwners.length }} Owner(s) Linked</span>
+                  </div>
+                  <div>
+                    <span class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block">Unallocated Share</span>
+                    <span class="text-sm font-bold" [ngClass]="(100 - totalAllocatedShare()) < 0 ? 'text-rose-600' : 'text-slate-700 dark:text-slate-300'">
+                      {{ (100 - totalAllocatedShare()).toFixed(2) }}%
+                    </span>
+                    <span class="text-[10px] text-slate-400 block">Remaining</span>
+                  </div>
+                  <div>
+                    <span class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block">Distribution Status</span>
+                    @if (totalAllocatedShare() === 100) {
+                      <span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 mt-1">
+                        ✓ 100% Fully Distributed
+                      </span>
+                    } @else if (totalAllocatedShare() > 100) {
+                      <span class="inline-flex items-center gap-1 text-[11px] font-bold text-rose-600 mt-1">
+                        ⚠ Exceeds 100%
+                      </span>
+                    } @else {
+                      <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-600 dark:text-amber-400 mt-1">
+                        Partially Allocated
+                      </span>
+                    }
+                  </div>
+                </div>
+
+                <!-- Add Owner Section -->
+                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 space-y-4">
+                  <div class="text-xs font-bold text-slate-800 dark:text-slate-200 border-b border-slate-100 dark:border-slate-800 pb-2 flex items-center justify-between">
+                    <span>+ Link Landowner & Allocate Share (মালিক যুক্ত ও অংশ নির্ধারণ)</span>
+                    <span class="text-[10px] text-slate-400 font-normal">Select from registered landowners</span>
+                  </div>
+
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div class="md:col-span-2">
+                      <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        Landowner (জমি মালিক) *
+                      </label>
+                      <app-searchable-select
+                        [options]="landownerOptions"
+                        [value]="newOwnerId"
+                        (selectionChange)="newOwnerId = $event?.value || $event?.item_code || $event"
+                        placeholder="Search by Name, NID, or Landowner Code..."
+                      ></app-searchable-select>
+                    </div>
+
+                    <div>
+                      <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        Ownership Nature / Source (মালিকানার সূত্র) *
+                      </label>
+                      <select
+                        [(ngModel)]="newOwnerSource"
+                        [ngModelOptions]="{standalone: true}"
+                        class="w-full text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-slate-800 dark:text-slate-100 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                      >
+                        <option value="INHERITANCE">ওয়ারিশ সূত্রে (Inherited / Succession)</option>
+                        <option value="PURCHASE">খরিদ সূত্রে (Purchased / Saf-Kabala)</option>
+                        <option value="PARTITION_DEED">বণ্টননামা সূত্রে (Partition Deed)</option>
+                        <option value="GIFT_HEBA">হেবা / দানপত্র সূত্রে (Gift / Heba)</option>
+                        <option value="COURT_DECREE">আদালতের ডিক্রি সূত্রে (Court Decree)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+                    <div>
+                      <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        Ownership Share (%) *
+                      </label>
+                      <input
+                        type="number"
+                        min="0.01"
+                        max="100"
+                        step="0.01"
+                        [(ngModel)]="newOwnerShare"
+                        [ngModelOptions]="{standalone: true}"
+                        class="w-full text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-slate-800 dark:text-slate-100 focus:outline-hidden focus:ring-1 focus:ring-emerald-500 font-semibold"
+                        placeholder="e.g. 50.00"
+                      />
+                    </div>
+
+                    <div class="p-2 rounded-lg bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800">
+                      <span class="text-[10px] text-emerald-700 dark:text-emerald-400 font-semibold block">Equivalent Area (হিসেবকৃত জমি)</span>
+                      <span class="text-xs font-bold text-emerald-800 dark:text-emerald-200">
+                        {{ ((convertedDecimal * newOwnerShare) / 100).toFixed(2) }} Dec ({{ ((convertedKatha * newOwnerShare) / 100).toFixed(2) }} Katha)
+                      </span>
+                    </div>
+
+                    <div>
+                      <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        Title Deed / Bonton No
+                      </label>
+                      <input
+                        type="text"
+                        [(ngModel)]="newOwnerDeedNo"
+                        [ngModelOptions]="{standalone: true}"
+                        class="w-full text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-slate-800 dark:text-slate-100 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                        placeholder="e.g. Deed #1234/2024"
+                      />
+                    </div>
+
+                    <div>
+                      <button
+                        type="button"
+                        (click)="addStagedOwner()"
+                        [disabled]="!newOwnerId || newOwnerShare <= 0"
+                        class="w-full py-2 px-3 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-50 transition shadow-2xs flex items-center justify-center gap-1.5"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                        </svg>
+                        Add to Parcel
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Succession & Title Deed Documents Upload for this link -->
+                  <div class="pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <span class="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-2">
+                      উত্তরাধিকার ও মালিকানা দলিল (Inherited / Succession / Title Documents)
+                    </span>
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+                      <div class="md:col-span-5">
+                        <label class="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
+                          ডকুমেন্টের নাম (Document Name/Title)
+                        </label>
+                        <input
+                          type="text"
+                          [(ngModel)]="newOwnerDocName"
+                          [ngModelOptions]="{standalone: true}"
+                          placeholder="e.g. ওয়ারিশ সনদ / বণ্টননামা দলিল / বায়না চুক্তি"
+                          class="w-full text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-slate-800 dark:text-slate-100 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                        />
+                      </div>
+                      <div class="md:col-span-7">
+                        <label class="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
+                          ফাইল আপলোড (Upload File)
+                        </label>
+                        <div class="flex items-center gap-2">
+                          <input
+                            type="file"
+                            (change)="onDocFileSelected($event)"
+                            class="text-xs text-slate-600 dark:text-slate-300 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-100 dark:file:bg-slate-800 hover:file:bg-slate-200 cursor-pointer"
+                          />
+                          @if (isUploadingDoc) {
+                            <span class="text-[11px] text-emerald-600 flex items-center gap-1 font-medium">
+                              <svg class="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+                              </svg>
+                              Uploading...
+                            </span>
+                          }
+                          @if (newOwnerDocFileUrl) {
+                            <span class="text-[11px] text-emerald-600 font-semibold flex items-center gap-1">
+                              ✓ Uploaded
+                            </span>
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Staged / Linked Landowners Table -->
+                <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+                  <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-50 dark:bg-slate-900/60 text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-800">
+                      <tr>
+                        <th class="p-3 font-semibold">Landowner</th>
+                        <th class="p-3 font-semibold">Ownership Nature</th>
+                        <th class="p-3 font-semibold text-right">Share %</th>
+                        <th class="p-3 font-semibold text-right">Equivalent Area</th>
+                        <th class="p-3 font-semibold">Title Deed / Succession Doc</th>
+                        <th class="p-3 font-semibold text-center w-16">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                      @if (stagedOwners.length === 0) {
+                        <tr>
+                          <td colspan="6" class="p-6 text-center text-slate-400">
+                            No owners linked to this parcel yet. You can add one or more owners with fractional shares above.
+                          </td>
+                        </tr>
+                      } @else {
+                        @for (owner of stagedOwners; track $index) {
+                          <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
+                            <td class="p-3">
+                              <div class="font-bold text-slate-800 dark:text-slate-200">
+                                {{ owner.landowner_name }}
+                              </div>
+                              <div class="text-[10px] text-slate-400">
+                                Landowner ID: #{{ owner.landowner_id }}
+                              </div>
+                            </td>
+                            <td class="p-3">
+                              <span class="inline-block px-2 py-0.5 rounded text-[10px] font-semibold"
+                                [ngClass]="{
+                                  'bg-purple-50 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300': owner.ownership_source === 'INHERITANCE',
+                                  'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300': owner.ownership_source === 'PURCHASE',
+                                  'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300': owner.ownership_source === 'PARTITION_DEED',
+                                  'bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300': owner.ownership_source === 'GIFT_HEBA',
+                                  'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300': owner.ownership_source === 'COURT_DECREE'
+                                }"
+                              >
+                                {{ getSourceLabel(owner.ownership_source) }}
+                              </span>
+                            </td>
+                            <td class="p-3 text-right font-bold text-slate-800 dark:text-slate-200">
+                              {{ owner.ownership_share_percent }}%
+                            </td>
+                            <td class="p-3 text-right">
+                              <div class="font-semibold text-slate-700 dark:text-slate-300">
+                                {{ ((convertedDecimal * owner.ownership_share_percent) / 100).toFixed(2) }} Dec
+                              </div>
+                              <div class="text-[10px] text-slate-400">
+                                {{ ((convertedKatha * owner.ownership_share_percent) / 100).toFixed(2) }} Katha
+                              </div>
+                            </td>
+                            <td class="p-3">
+                              @if (owner.title_deed_no) {
+                                <div class="text-[11px] font-medium text-slate-700 dark:text-slate-300">
+                                  Deed: {{ owner.title_deed_no }}
+                                </div>
+                              }
+                              @if (owner.doc_url) {
+                                <a
+                                  [href]="apiBase + owner.doc_url"
+                                  target="_blank"
+                                  class="text-[11px] font-semibold text-emerald-600 hover:underline inline-flex items-center gap-1"
+                                >
+                                  📎 {{ owner.doc_name || 'Succession Document' }}
+                                </a>
+                              } @else if (!owner.title_deed_no) {
+                                <span class="text-[10px] text-slate-400">None attached</span>
+                              }
+                            </td>
+                            <td class="p-3 text-center">
+                              <button
+                                type="button"
+                                (click)="removeStagedOwner($index)"
+                                class="p-1 rounded text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40"
+                                title="Remove owner link"
+                              >
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                              </button>
+                            </td>
+                          </tr>
+                        }
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            }
+
             <!-- Form Action Footer -->
             <div class="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-slate-800">
               <div class="flex items-center gap-2">
@@ -411,7 +709,7 @@ import {
                     &larr; Previous Step
                   </button>
                 }
-                @if (activeTab !== 'deed') {
+                @if (activeTab !== 'owners') {
                   <button
                     type="button"
                     (click)="goToNextTab()"
@@ -464,10 +762,34 @@ export class ParcelFormComponent implements OnInit {
   isLoading = false;
   isSaving = false;
 
-  activeTab: 'location' | 'area' | 'boundaries' | 'deed' = 'location';
+  activeTab: 'location' | 'area' | 'boundaries' | 'deed' | 'owners' = 'location';
 
   successMessage = '';
   errorMessage = '';
+
+  readonly apiBase = 'http://localhost:8000';
+  landowners: Landowner[] = [];
+  landownerOptions: SelectOption[] = [];
+
+  stagedOwners: Array<{
+    link_id?: number;
+    landowner_id: number;
+    landowner_name: string;
+    ownership_share_percent: number;
+    ownership_source: string;
+    title_deed_no?: string;
+    doc_name?: string;
+    doc_url?: string;
+  }> = [];
+
+  newOwnerId: number | null = null;
+  newOwnerShare: number = 50.0;
+  newOwnerSource: string = 'INHERITANCE';
+  newOwnerDeedNo: string = '';
+  newOwnerDocName: string = '';
+  newOwnerDocFileUrl: string = '';
+  newOwnerDocFileName: string = '';
+  isUploadingDoc: boolean = false;
 
   // Converted Unit Preview
   convertedDecimal = 20.0;
@@ -523,6 +845,7 @@ export class ParcelFormComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.loadLandowners();
     const idParam = this.route.snapshot.params['id'];
     if (idParam) {
       this.isEditMode = true;
@@ -535,6 +858,7 @@ export class ParcelFormComponent implements OnInit {
 
   loadParcel(id: number): void {
     this.isLoading = true;
+    this.loadParcelOwners(id);
     this.landService.getParcel(id).subscribe({
       next: (parcel: LandParcel) => {
         this.loadedParcelCode = parcel.parcel_id || `ID #${parcel.id}`;
@@ -624,7 +948,8 @@ export class ParcelFormComponent implements OnInit {
   }
 
   goToPrevTab(): void {
-    if (this.activeTab === 'deed') this.activeTab = 'boundaries';
+    if (this.activeTab === 'owners') this.activeTab = 'deed';
+    else if (this.activeTab === 'deed') this.activeTab = 'boundaries';
     else if (this.activeTab === 'boundaries') this.activeTab = 'area';
     else if (this.activeTab === 'area') this.activeTab = 'location';
   }
@@ -633,6 +958,147 @@ export class ParcelFormComponent implements OnInit {
     if (this.activeTab === 'location') this.activeTab = 'area';
     else if (this.activeTab === 'area') this.activeTab = 'boundaries';
     else if (this.activeTab === 'boundaries') this.activeTab = 'deed';
+    else if (this.activeTab === 'deed') this.activeTab = 'owners';
+  }
+
+  loadLandowners(): void {
+    this.landService.getLandowners().subscribe({
+      next: (list) => {
+        this.landowners = list;
+        this.landownerOptions = list.map(l => ({
+          value: l.id,
+          label: `${l.full_name_en} (${l.landowner_code}) — ${l.owner_type} — NID: ${l.nid_number || 'N/A'}`
+        }));
+      },
+      error: () => {}
+    });
+  }
+
+  loadParcelOwners(parcelId: number): void {
+    this.landService.getParcelOwners(parcelId).subscribe({
+      next: (links) => {
+        this.stagedOwners = links.map(link => {
+          let docName = '';
+          let docUrl = '';
+          if (link.dispute_remarks) {
+            try {
+              const parsed = JSON.parse(link.dispute_remarks);
+              docName = parsed.doc_name || '';
+              docUrl = parsed.doc_url || '';
+            } catch {
+              // not json
+            }
+          }
+          return {
+            link_id: link.id,
+            landowner_id: link.landowner_id,
+            landowner_name: link.landowner?.full_name_en || `Landowner #${link.landowner_id}`,
+            ownership_share_percent: Number(link.ownership_share_percent || 0),
+            ownership_source: link.ownership_source || 'INHERITANCE',
+            title_deed_no: link.title_deed_no,
+            doc_name: docName,
+            doc_url: docUrl
+          };
+        });
+      },
+      error: () => {}
+    });
+  }
+
+  onDocFileSelected(event: any): void {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    this.isUploadingDoc = true;
+    this.landService.uploadLandownerDocument(file, this.newOwnerDocName).subscribe({
+      next: (res) => {
+        this.newOwnerDocFileUrl = res.file_url;
+        this.newOwnerDocFileName = res.file_name;
+        this.isUploadingDoc = false;
+      },
+      error: (err) => {
+        alert(err.error?.detail || err.message || 'Upload failed');
+        this.isUploadingDoc = false;
+      }
+    });
+  }
+
+  addStagedOwner(): void {
+    if (!this.newOwnerId || this.newOwnerShare <= 0) return;
+
+    const matchedOwner = this.landowners.find(l => l.id === Number(this.newOwnerId));
+    const ownerName = matchedOwner ? matchedOwner.full_name_en : `Landowner #${this.newOwnerId}`;
+
+    this.stagedOwners.push({
+      landowner_id: Number(this.newOwnerId),
+      landowner_name: ownerName,
+      ownership_share_percent: Number(this.newOwnerShare),
+      ownership_source: this.newOwnerSource,
+      title_deed_no: this.newOwnerDeedNo.trim() || undefined,
+      doc_name: this.newOwnerDocName.trim() || this.newOwnerDocFileName || undefined,
+      doc_url: this.newOwnerDocFileUrl || undefined
+    });
+
+    this.newOwnerId = null;
+    this.newOwnerShare = 50.0;
+    this.newOwnerDeedNo = '';
+    this.newOwnerDocName = '';
+    this.newOwnerDocFileUrl = '';
+    this.newOwnerDocFileName = '';
+  }
+
+  removeStagedOwner(index: number): void {
+    const owner = this.stagedOwners[index];
+    if (owner.link_id && this.editingParcelId) {
+      if (confirm('Are you sure you want to unlink this owner from this parcel?')) {
+        this.landService.unlinkOwnerFromParcel(this.editingParcelId, owner.link_id).subscribe({
+          next: () => {
+            this.stagedOwners.splice(index, 1);
+          },
+          error: (err) => {
+            alert(err.error?.detail || 'Failed to unlink owner');
+          }
+        });
+      }
+    } else {
+      this.stagedOwners.splice(index, 1);
+    }
+  }
+
+  totalAllocatedShare(): number {
+    return this.stagedOwners.reduce((sum, o) => sum + (Number(o.ownership_share_percent) || 0), 0);
+  }
+
+  getSourceLabel(source: string): string {
+    switch (source) {
+      case 'INHERITANCE': return 'ওয়ারিশ সূত্রে (Inherited)';
+      case 'PURCHASE': return 'খরিদ সূত্রে (Purchased)';
+      case 'PARTITION_DEED': return 'বণ্টননামা (Partition Deed)';
+      case 'GIFT_HEBA': return 'হেবা / দানপত্র (Gift)';
+      case 'COURT_DECREE': return 'আদালতের ডিক্রি (Court Decree)';
+      default: return source;
+    }
+  }
+
+  private syncOwners(parcelId: number): void {
+    const pendingOwners = this.stagedOwners.filter(o => !o.link_id);
+    for (const owner of pendingOwners) {
+      this.landService.linkOwnerToParcel(parcelId, {
+        landowner_id: owner.landowner_id,
+        ownership_share_percent: owner.ownership_share_percent,
+        ownership_source: owner.ownership_source,
+        title_deed_no: owner.title_deed_no,
+        dispute_remarks: owner.doc_url ? JSON.stringify({
+          doc_name: owner.doc_name || 'Succession Document',
+          doc_url: owner.doc_url
+        }) : undefined
+      }).subscribe({
+        next: (createdLink) => {
+          owner.link_id = createdLink.id;
+        },
+        error: () => {}
+      });
+    }
   }
 
   onSubmit(): void {
@@ -685,6 +1151,7 @@ export class ParcelFormComponent implements OnInit {
         next: (updated) => {
           this.isSaving = false;
           this.loadedParcelCode = updated.parcel_id;
+          this.syncOwners(updated.id);
           this.successMessage = `Land parcel ${updated.parcel_id} successfully updated!`;
         },
         error: (err) => {
@@ -697,6 +1164,7 @@ export class ParcelFormComponent implements OnInit {
         next: (created) => {
           this.isSaving = false;
           this.loadedParcelCode = created.parcel_id;
+          this.syncOwners(created.id);
           this.successMessage = `Land parcel ${created.parcel_id} successfully registered!`;
         },
         error: (err) => {
@@ -711,6 +1179,7 @@ export class ParcelFormComponent implements OnInit {
     this.successMessage = '';
     this.errorMessage = '';
     this.activeTab = 'location';
+    this.stagedOwners = [];
     this.parcelForm.reset({
       parcel_id: '',
       project_name: '',

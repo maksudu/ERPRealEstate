@@ -23,6 +23,7 @@ import {
   JVAutoAllocationRequest,
   JVAutoAllocationResponse,
   MeasurementConvention,
+  MeasurementConventionPayload,
   RegionalConversionRequest,
   RegionalConversionResponse,
   DocumentVerifyRequest,
@@ -103,6 +104,21 @@ export class LandService {
 
   addLandownerNegotiationNote(id: number, payload: LandownerNegotiationNoteRequest): Observable<Landowner> {
     return this.http.post<Landowner>(`${this.baseUrl}/landowners/${id}/negotiation-notes`, payload);
+  }
+
+  uploadLandownerNid(id: number, file: File): Observable<{ nid_image_path: string; message: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<{ nid_image_path: string; message: string }>(`${this.baseUrl}/landowners/${id}/upload-nid`, formData);
+  }
+
+  uploadLandownerDocument(file: File, documentName?: string): Observable<{ file_url: string; file_name: string; document_name: string; file_size: number; extension: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (documentName) {
+      formData.append('document_name', documentName);
+    }
+    return this.http.post<{ file_url: string; file_name: string; document_name: string; file_size: number; extension: string }>(`${this.baseUrl}/landowners/upload-document`, formData);
   }
 
   // 3. Land Parcel and Location Registry (2.3)
@@ -260,11 +276,11 @@ export class LandService {
     return this.http.get<MeasurementConvention[]>(`${this.baseUrl}/measurement-conventions`);
   }
 
-  createMeasurementConvention(payload: any): Observable<MeasurementConvention> {
+  createMeasurementConvention(payload: MeasurementConventionPayload): Observable<MeasurementConvention> {
     return this.http.post<MeasurementConvention>(`${this.baseUrl}/measurement-conventions`, payload);
   }
 
-  updateMeasurementConvention(id: number, payload: any): Observable<MeasurementConvention> {
+  updateMeasurementConvention(id: number, payload: Partial<MeasurementConventionPayload>): Observable<MeasurementConvention> {
     return this.http.put<MeasurementConvention>(`${this.baseUrl}/measurement-conventions/${id}`, payload);
   }
 
@@ -329,6 +345,15 @@ export class LandService {
     if (filters?.land_bank_id) params = params.set('land_bank_id', filters.land_bank_id);
     if (filters?.status) params = params.set('status', filters.status);
     return this.http.get<JVAgreement[]>(`${this.baseUrl}/jv-agreements`, { params });
+  }
+
+  uploadJVAgreementDocument(file: File, documentName?: string): Observable<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (documentName) {
+      formData.append('document_name', documentName);
+    }
+    return this.http.post<any>(`${this.baseUrl}/negotiations/upload-agreement`, formData);
   }
 
   createJVAgreement(payload: any): Observable<JVAgreement> {
@@ -501,6 +526,15 @@ export class LandService {
     return this.http.get<LandNegotiation>(`${this.baseUrl}/negotiations/${id}`);
   }
 
+  uploadNegotiationAgreement(file: File, documentName?: string): Observable<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (documentName) {
+      formData.append('document_name', documentName);
+    }
+    return this.http.post<any>(`${this.baseUrl}/negotiations/upload-agreement`, formData);
+  }
+
   createNegotiation(payload: any): Observable<LandNegotiation> {
     return this.http.post<LandNegotiation>(`${this.baseUrl}/negotiations`, payload);
   }
@@ -611,5 +645,4 @@ export class LandService {
     return this.http.get<any>(`${this.baseUrl}/dashboard/analytics`, { params });
   }
 }
-
 

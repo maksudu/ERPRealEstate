@@ -58,11 +58,15 @@ class LandownerBase(BaseModel):
     owner_type: str = "INDIVIDUAL"  # INDIVIDUAL, JOINT_OWNER, COMPANY, POA_HOLDER
     full_name_en: str
     full_name_bn: Optional[str] = None
-    father_mother_spouse_name: Optional[str] = None
+    father_mother_spouse_name: Optional[str] = None  # legacy
+    father_name: Optional[str] = None
+    mother_name: Optional[str] = None
+    spouse_name: Optional[str] = None
     present_address: Optional[str] = None
     permanent_address: Optional[str] = None
 
     nid_number: Optional[str] = None
+    nid_image_path: Optional[str] = None
     passport_number: Optional[str] = None
     company_reg_number: Optional[str] = None
     tin_number: Optional[str] = None
@@ -99,9 +103,13 @@ class LandownerUpdate(BaseModel):
     full_name_en: Optional[str] = None
     full_name_bn: Optional[str] = None
     father_mother_spouse_name: Optional[str] = None
+    father_name: Optional[str] = None
+    mother_name: Optional[str] = None
+    spouse_name: Optional[str] = None
     present_address: Optional[str] = None
     permanent_address: Optional[str] = None
     nid_number: Optional[str] = None
+    nid_image_path: Optional[str] = None
     passport_number: Optional[str] = None
     company_reg_number: Optional[str] = None
     tin_number: Optional[str] = None
@@ -533,7 +541,7 @@ class MeasurementConventionResponse(MeasurementConventionBase):
 class RegionalConversionCalculationRequest(BaseModel):
     convention_id: Optional[int] = None
     convention_code: Optional[str] = "DHAKA_STANDARD"
-    input_unit: str  # SQFT, DECIMAL, KATHA, BIGHA, ACRE, KANI, GONDA
+    input_unit: str  # SQFT, SQM, DECIMAL, KATHA, BIGHA, ACRE, KANI, GONDA
     input_value: float
     original_registered_unit: Optional[str] = None
     original_registered_value: Optional[float] = None
@@ -672,6 +680,9 @@ class JVAgreementBase(BaseModel):
     handover_commitment_date: Optional[datetime] = None
     status: str = "ACTIVE"
     parcel_id: Optional[int] = None
+    agreement_document_name: Optional[str] = None
+    agreement_file_url: Optional[str] = None
+    supporting_documents: Optional[List[Dict[str, Any]]] = None
 
 
 class JVAgreementCreate(BaseModel):
@@ -706,6 +717,9 @@ class JVAgreementCreate(BaseModel):
     poa_execution_date: Optional[date] = None
     poa_expiry_date: Optional[date] = None
     poa_verified: Optional[bool] = True
+    agreement_document_name: Optional[str] = None
+    agreement_file_url: Optional[str] = None
+    supporting_documents: Optional[List[Dict[str, Any]]] = None
     unit_allocations: Optional[List[JVUnitAllocationCreate]] = []
     milestones: Optional[List[LandJVMilestonePaymentCreate]] = []
 
@@ -736,6 +750,10 @@ class JVAgreementUpdate(BaseModel):
     poa_expiry_date: Optional[date] = None
     poa_verified: Optional[bool] = None
     status: Optional[str] = None
+    parcel_id: Optional[int] = None
+    agreement_document_name: Optional[str] = None
+    agreement_file_url: Optional[str] = None
+    supporting_documents: Optional[List[Dict[str, Any]]] = None
 
 
 class JVAgreementResponse(JVAgreementBase):
@@ -931,6 +949,7 @@ class LandBankCreate(BaseModel):
     workflow_stage: Optional[str] = "IDENTIFIED"
     location_description: Optional[str] = None
     preliminary_valuation_notes: Optional[str] = None
+    feasibility_report_summary: Optional[Dict[str, Any]] = None
     landowners: Optional[List[LandownerCreate]] = []
 
 
@@ -956,7 +975,10 @@ class LandBankUpdate(BaseModel):
     status: Optional[str] = None
     workflow_stage: Optional[str] = None
     preliminary_valuation_notes: Optional[str] = None
+    feasibility_report_summary: Optional[Dict[str, Any]] = None
     location_description: Optional[str] = None
+    landowners: Optional[List[LandownerCreate]] = None
+
 
 
 class LandBankResponse(LandBankBase):
@@ -1317,6 +1339,9 @@ class LandNegotiationBase(BaseModel):
     agreement_execution_date: Optional[date] = None
     agreement_expiry_date: Optional[date] = None
     agreement_status: str = "DRAFTING"
+    agreement_document_name: Optional[str] = None
+    agreement_file_url: Optional[str] = None
+    supporting_documents: Optional[List[Dict[str, Any]]] = None
     is_delayed: bool = False
     delay_reason: Optional[str] = None
 
@@ -1340,6 +1365,9 @@ class LandNegotiationCreate(BaseModel):
     agreement_execution_date: Optional[date] = None
     agreement_expiry_date: Optional[date] = None
     agreement_status: Optional[str] = "DRAFTING"
+    agreement_document_name: Optional[str] = None
+    agreement_file_url: Optional[str] = None
+    supporting_documents: Optional[List[Dict[str, Any]]] = None
 
 class LandNegotiationUpdate(BaseModel):
     negotiation_title: Optional[str] = None
@@ -1359,6 +1387,9 @@ class LandNegotiationUpdate(BaseModel):
     agreement_execution_date: Optional[date] = None
     agreement_expiry_date: Optional[date] = None
     agreement_status: Optional[str] = None
+    agreement_document_name: Optional[str] = None
+    agreement_file_url: Optional[str] = None
+    supporting_documents: Optional[List[Dict[str, Any]]] = None
     is_delayed: Optional[bool] = None
     delay_reason: Optional[str] = None
 
@@ -1558,4 +1589,3 @@ class PaymentReconciliationSummary(BaseModel):
     schedules_count: int
     paid_count: int
     pending_count: int
-

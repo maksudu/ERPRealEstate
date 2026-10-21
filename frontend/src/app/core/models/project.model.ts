@@ -99,20 +99,57 @@ export interface Drawing {
   created_at?: string;
 }
 
+export interface ProjectSiteOffice {
+  office_name: string;
+  site_address: string;
+  engineer_in_charge?: string;
+  contact_phone?: string;
+}
+
+export interface ProjectDocumentItem {
+  doc_id?: string;
+  title: string;
+  doc_type: string;
+  file_url?: string;
+  upload_date?: string;
+  uploaded_by?: string;
+  file_size_kb?: number;
+}
+
+export interface ProjectStatusHistoryEntry {
+  from_status?: string;
+  to_status: string;
+  changed_at: string;
+  note?: string;
+  changed_by?: string;
+}
+
 export interface Project {
   id: number;
   land_bank_id?: number;
+  parcel_id?: number;
   project_code: string;
   project_name: string;
+  project_name_bn?: string;
   company_name?: string;
   project_type?: string;
   project_category?: string;
+  project_ownership?: 'OWNED' | 'JOINT_VENTURE' | 'PARTNERSHIP' | string;
+  
+  division?: string;
   district?: string;
   thana_upazila?: string;
+  locality?: string;
   site_address?: string;
+  latitude?: number;
+  longitude?: number;
+  google_maps_url?: string;
+  
   project_manager?: string;
   project_director?: string;
   department?: string;
+  project_team_structure?: any;
+  site_offices?: ProjectSiteOffice[];
   development_authority_id: string; // RAJUK, CDA, KDA, RDA
   
   total_land_area_katha?: number;
@@ -135,12 +172,19 @@ export interface Project {
   
   project_funding_source?: string;
   cost_center_code?: string;
+  financial_year?: string;
+  estimated_budget_bdt?: number;
+  approved_budget_bdt?: number;
   target_customer_segment?: string;
   project_scope?: string;
   
-  status: 'PROPOSED' | 'FEASIBILITY' | 'APPROVED' | 'ACTIVE' | 'ON_HOLD' | 'COMPLETED' | 'PLANNING' | 'PERMIT_PENDING' | 'UNDER_CONSTRUCTION' | 'HANDOVER_PHASE';
-  approval_status?: 'DRAFT' | 'IN_REVIEW' | 'APPROVED' | 'REJECTED';
+  status: 'DRAFT' | 'FEASIBILITY' | 'UNDER_REVIEW' | 'APPROVED' | 'PLANNING' | 'UNDER_CONSTRUCTION' | 'ON_HOLD' | 'COMPLETED' | 'CLOSED' | 'ACTIVE' | 'PROPOSED' | string;
+  approval_status?: 'DRAFT' | 'IN_REVIEW' | 'APPROVED' | 'REJECTED' | string;
+  project_phase?: string;
   land_parcel_ids?: number[];
+  landowner_ids?: number[];
+  status_history?: ProjectStatusHistoryEntry[];
+  project_documents?: ProjectDocumentItem[];
   description?: string;
   towers?: Tower[];
   clearances?: AuthorityClearance[];
@@ -204,9 +248,15 @@ export interface ProjectFeasibility {
 
 export interface ProjectMetaOptions {
   land_banks: { value: number; label: string; subLabel: string; katha: number; decimal: number; sqft: number; thana: string; district: string }[];
+  parcels?: { value: number; label: string; subLabel: string; decimal: number; sqft: number; mouza: string; status: string }[];
+  landowners?: { value: number; label: string; subLabel: string }[];
   companies: { value: string; label: string; subLabel: string }[];
   project_types: { value: string; label: string; subLabel: string }[];
   project_categories: { value: string; label: string; subLabel: string }[];
+  project_ownerships?: { value: string; label: string; subLabel: string }[];
+  project_phases?: { value: string; label: string; subLabel: string }[];
+  lifecycle_statuses?: { value: string; label: string; subLabel: string }[];
+  divisions?: { value: string; label: string }[];
   funding_sources: { value: string; label: string; subLabel: string }[];
   departments: { value: string; label: string }[];
   project_managers: { value: string; label: string; subLabel: string }[];

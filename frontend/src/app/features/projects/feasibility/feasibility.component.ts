@@ -249,7 +249,14 @@ export class ProjectFeasibilityComponent implements OnInit {
     this.activeModalTab.set('costs');
 
     const yr = new Date().getFullYear();
-    const nextNum = String(this.feasibilityStudies().length + 1).padStart(3, '0');
+    const codePrefix = `FS-${yr}-`;
+    const nextNum = String(
+      this.feasibilityStudies().reduce((max, study) => {
+        if (!study.feasibility_code.startsWith(codePrefix)) return max;
+        const sequence = Number(study.feasibility_code.slice(codePrefix.length));
+        return Number.isInteger(sequence) ? Math.max(max, sequence) : max;
+      }, 0) + 1
+    ).padStart(3, '0');
     const autoCode = `FS-${yr}-${nextNum}`;
 
     this.feasibilityForm.reset({

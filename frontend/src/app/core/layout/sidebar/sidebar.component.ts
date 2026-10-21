@@ -280,7 +280,7 @@ export class SidebarComponent implements OnInit {
     },
     {
       id: 'hr-project-alloc',
-      title: 'Project-wise HR & Cost Allocation',
+      title: 'Project Wise',
       iconSvg: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4',
       items: [
         { id: 'proj-emp-assign', label: 'Employee Assignment', route: '/hrms/project-hr/assignments' },
@@ -295,7 +295,7 @@ export class SidebarComponent implements OnInit {
     },
     {
       id: 'hr-reports',
-      title: 'HR Reports & Analytics',
+      title: 'HR Reports',
       iconSvg: 'M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
       items: [
         { id: 'rpt-emp-register', label: 'Employee Register', route: '/hrms/reports/employee-register' },
@@ -316,7 +316,7 @@ export class SidebarComponent implements OnInit {
     },
     {
       id: 'hr-config-sec',
-      title: 'HR Configuration & Security',
+      title: 'Configuration',
       iconSvg: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z',
       items: [
         { id: 'cfg-settings', label: 'HR Settings', route: '/hrms/config/settings' },
@@ -428,7 +428,7 @@ export class SidebarComponent implements OnInit {
       title: 'Land Acquisition',
       iconSvg: 'M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7',
       items: [
-        { id: 'land-dashboard', label: 'Land Intelligence', route: '/land/dashboard' },
+        { id: 'land-dashboard', label: 'Dashboard', route: '/land/dashboard' },
         { id: 'landowners-registry', label: 'Landowners', route: '/land/landowners' },
         { id: 'land-proposals', label: 'Land Acquisition', route: '/land/proposals' },
         { id: 'land-parcels', label: 'Land Registry', route: '/land/parcels' },

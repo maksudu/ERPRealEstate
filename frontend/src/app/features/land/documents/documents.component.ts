@@ -86,6 +86,46 @@ export class DocumentsComponent implements OnInit {
   checklistData = signal<DocumentChecklistResponse | null>(null);
   isLoadingChecklist = signal<boolean>(false);
 
+  // Modal 5: Legal Review Comments & Approval History
+  isHistoryModalOpen = signal<boolean>(false);
+  historyDoc = signal<LandDeedDocument | null>(null);
+  newReviewComment = signal<string>('');
+  newReviewStatus = signal<string>('VERIFIED');
+
+  // Modal 6: Document Access Restrictions & Audit Trail
+  isAuditModalOpen = signal<boolean>(false);
+  auditDoc = signal<LandDeedDocument | null>(null);
+
+  // File upload state (PDF, JPG, PNG)
+  selectedFile = signal<File | null>(null);
+  uploadProgress = signal<number>(0);
+
+  // Document Categories
+  documentCategoryOptions = [
+    { value: 'DEED_SALE', label: 'Sale Deed (Saf-Kabala / Conveyance)', subLabel: 'Primary registered transfer deed from seller to buyer' },
+    { value: 'DEED_GIFT', label: 'Gift Deed (Heba / Dan-Patra)', subLabel: 'Registered gift or Heba deed among family/relatives' },
+    { value: 'DEED_PARTITION', label: 'Partition Deed (Bonton-Nama)', subLabel: 'Registered amicable partition deed among co-sharers' },
+    { value: 'INHERITANCE_WARIS', label: 'Inheritance & Succession Documents', subLabel: 'Waris Certificate, Succession Sanad & Faraiz schedule' },
+    { value: 'CHAIN_BAYA_DEED', label: 'Historical Title Chain (Baya Deed 25+ Years)', subLabel: 'Parent deeds establishing unbroken 25-30 year chain' },
+    { value: 'MUTATION_RECORD', label: 'Mutation Application & Namjari Khatian', subLabel: 'Namjari order, DCR receipt & AC Land mutation record' },
+    { value: 'TAX_DAKHILA', label: 'Land Development Tax Receipts (Khajna)', subLabel: 'Updated land revenue payment receipts & dakhila' },
+    { value: 'SURVEY_REPORT', label: 'Statutory Survey Parcha (CS/SA/RS/BS)', subLabel: 'Government survey khatians and settlement records' },
+    { value: 'MOUZA_MAP', label: 'Survey Maps & Boundary Plans', subLabel: 'Certified CS/RS/BS Mouza sheet and boundary demarcation' },
+    { value: 'CERTIFIED_COPY', label: 'Certified Copies (Nokol Records)', subLabel: 'Sub-Registry volume or DC Record Room certified copies' },
+    { value: 'POA_DEED', label: 'Power of Attorney (PoA)', subLabel: 'Registered Irrevocable General Power of Attorney' },
+    { value: 'NOC_PERMISSION', label: 'NOC & Statutory Sanctions', subLabel: 'RAJUK, Fire, CDA, Environment, Civil Aviation NOCs' }
+  ];
+
+  // Suggested Document Statuses
+  documentStatusOptions = [
+    { value: 'PENDING', label: 'Pending', color: 'slate', subLabel: 'Document queued or requested' },
+    { value: 'RECEIVED', label: 'Received', color: 'blue', subLabel: 'Document uploaded / received from owner' },
+    { value: 'UNDER_VERIFICATION', label: 'Under Verification', color: 'amber', subLabel: 'Sub-registry & AC Land title vetting active' },
+    { value: 'VERIFIED', label: 'Verified', color: 'emerald', subLabel: 'Independently checked against volume books' },
+    { value: 'REJECTED', label: 'Rejected', color: 'rose', subLabel: 'Defective title, tampered record or encumbered' },
+    { value: 'EXPIRED', label: 'Expired', color: 'red', subLabel: 'Validity elapsed (Khajna, NOC, PoA)' }
+  ];
+
   // Dynamic Select Options for Parcels and Owners
   parcelOptions = computed(() => {
     return this.parcels().map(p => ({
@@ -99,13 +139,15 @@ export class DocumentsComponent implements OnInit {
     return this.landowners().map(o => ({
       value: o.id,
       label: `${o.full_name_en} (${o.landowner_code})`,
-      subLabel: `NID: ${o.nid_number || 'N/A'}, Phone: ${o.phone_number || 'N/A'}`
+      subLabel: `NID: ${o.nid_number || 'N/A'}, Phone: ${(o as any).mobile_number || (o as any).phone_primary || 'N/A'}`
     }));
   });
 
   // Top KPI Metrics
   totalDocsCount = computed(() => this.documents().length);
   verifiedDocsCount = computed(() => this.documents().filter(d => d.is_independently_verified || d.verification_status === 'VERIFIED').length);
+  underVerificationCount = computed(() => this.documents().filter(d => d.verification_status === 'UNDER_VERIFICATION').length);
+  receivedDocsCount = computed(() => this.documents().filter(d => d.verification_status === 'RECEIVED').length);
   pendingVerificationCount = computed(() => this.documents().filter(d => d.verification_status === 'PENDING' || d.verification_status === 'PENDING_SEARCH').length);
   expiringDocsCount = computed(() => this.documents().filter(d => d.is_expired || (d.days_until_expiry !== undefined && d.days_until_expiry !== null && d.days_until_expiry <= 30)).length);
 
@@ -162,15 +204,39 @@ export class DocumentsComponent implements OnInit {
       doc_type: ['SALE_DEED', Validators.required],
       doc_number: ['', Validators.required],
       reference_number: [''],
-      issuing_office: ['', Validators.required],
+      issuing_office: ['Sub-Registry Office, Gulshan', Validators.required],
       execution_date: [new Date().toISOString().substring(0, 10), Validators.required],
+      registration_date: [new Date().toISOString().substring(0, 10)],
       expiry_date: [null],
       document_version: ['v1.0', Validators.required],
+      verification_status: ['RECEIVED', Validators.required],
       parcel_id: [null],
       landowner_id: [null],
+
+      // Sub-Registrar Office Details
+      sub_registrar_volume_no: [''],
+      sub_registrar_page_no: [''],
+      sub_registrar_book_no: ['Book 1'],
+
+      // Mutation Specifics
+      mutation_case_no: [''],
+      mutation_khatian_no: [''],
+      dcr_number: [''],
+
+      // Tax & Dakhila
+      tax_dakhila_no: [''],
+      tax_paid_up_to_year: ['1432 BS (2025-2026)'],
+
+      // Survey & Certified Copy
+      survey_type: ['RS'],
+      mouza_sheet_no: [''],
+      is_certified_copy: [false],
+
+      // Security & Notifications
       access_security_level: ['CONFIDENTIAL'],
       renewal_reminder_days: [30],
       file_url: ['https://storage.googleapis.com/realestate-deeds/demo-deed.pdf'],
+      file_name: [''],
       notes: ['']
     });
 
@@ -188,7 +254,34 @@ export class DocumentsComponent implements OnInit {
     // Load Documents
     this.landService.getDocuments().subscribe({
       next: (docs) => {
-        this.documents.set(docs);
+        // Hydrate mock review comments and audit trail if missing
+        const hydrated = docs.map(d => ({
+          ...d,
+          review_comments: d.review_comments || [
+            {
+              date: d.verification_date || '2026-01-16',
+              reviewer: d.verification_officer || 'Advocate Shamsul Haque',
+              comment: d.verification_remarks || 'Deed vetted against Volume Book at Sub-Registry. No mortgage or court injunction recorded.',
+              status: d.verification_status || 'VERIFIED'
+            }
+          ],
+          audit_trail: d.audit_trail || [
+            {
+              timestamp: '2026-01-16 10:30 AM',
+              user: 'Acquisitions Legal Team',
+              action: 'DOCUMENT_UPLOAD',
+              details: `Initial version ${d.document_version || 'v1.0'} uploaded.`
+            },
+            {
+              timestamp: '2026-01-16 02:45 PM',
+              user: d.verification_officer || 'Advocate Shamsul Haque',
+              action: 'INDEPENDENT_VERIFICATION',
+              details: `Status set to ${d.verification_status}. Physical inspection confirmed.`
+            }
+          ]
+        }));
+
+        this.documents.set(hydrated);
         this.isLoading.set(false);
       },
       error: (err) => {
@@ -243,25 +336,58 @@ export class DocumentsComponent implements OnInit {
     this.currentPage.set(1);
   }
 
+  // File Upload Handler (PDF, JPG, PNG)
+  onFileSelected(event: any): void {
+    const file: File = event.target.files[0];
+    if (file) {
+      const allowed = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
+      if (!allowed.includes(file.type)) {
+        alert('Invalid file format. Please upload PDF, JPG, or PNG.');
+        return;
+      }
+      this.selectedFile.set(file);
+      this.documentForm.patchValue({
+        file_name: file.name,
+        mime_type: file.type,
+        file_size_bytes: file.size
+      });
+    }
+  }
+
   // Modal 1: Register / Edit Document
   openCreateModal(): void {
     this.isEditMode.set(false);
     this.editingDocId.set(null);
+    this.selectedFile.set(null);
     this.documentForm.reset({
       doc_title: '',
       document_category: 'DEED_SALE',
       doc_type: 'SALE_DEED',
-      doc_number: '',
+      doc_number: `DEED-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
       reference_number: '',
       issuing_office: 'Sub-Registry Office, Gulshan',
       execution_date: new Date().toISOString().substring(0, 10),
+      registration_date: new Date().toISOString().substring(0, 10),
       expiry_date: null,
       document_version: 'v1.0',
+      verification_status: 'RECEIVED',
       parcel_id: this.parcels().length > 0 ? this.parcels()[0].id : null,
       landowner_id: this.landowners().length > 0 ? this.landowners()[0].id : null,
+      sub_registrar_volume_no: 'Vol 42-A',
+      sub_registrar_page_no: '184-192',
+      sub_registrar_book_no: 'Book 1',
+      mutation_case_no: '',
+      mutation_khatian_no: '',
+      dcr_number: '',
+      tax_dakhila_no: '',
+      tax_paid_up_to_year: '1432 BS (2025-2026)',
+      survey_type: 'RS',
+      mouza_sheet_no: 'Sheet #01',
+      is_certified_copy: false,
       access_security_level: 'CONFIDENTIAL',
       renewal_reminder_days: 30,
       file_url: 'https://storage.googleapis.com/realestate-deeds/sample-legal-deed.pdf',
+      file_name: 'Deed_Document.pdf',
       notes: ''
     });
     this.isDocModalOpen.set(true);
@@ -270,6 +396,7 @@ export class DocumentsComponent implements OnInit {
   openEditModal(doc: LandDeedDocument): void {
     this.isEditMode.set(true);
     this.editingDocId.set(doc.id);
+    this.selectedFile.set(null);
     this.documentForm.patchValue({
       doc_title: doc.doc_title || `${doc.doc_type} - ${doc.doc_number}`,
       document_category: doc.document_category || 'DEED_SALE',
@@ -278,13 +405,27 @@ export class DocumentsComponent implements OnInit {
       reference_number: doc.reference_number || '',
       issuing_office: doc.issuing_office,
       execution_date: doc.execution_date,
+      registration_date: doc.registration_date || doc.execution_date,
       expiry_date: doc.expiry_date || null,
       document_version: doc.document_version || 'v1.0',
+      verification_status: doc.verification_status || 'RECEIVED',
       parcel_id: doc.parcel_id || null,
       landowner_id: doc.landowner_id || null,
+      sub_registrar_volume_no: doc.sub_registrar_volume_no || '',
+      sub_registrar_page_no: doc.sub_registrar_page_no || '',
+      sub_registrar_book_no: doc.sub_registrar_book_no || 'Book 1',
+      mutation_case_no: doc.mutation_case_no || '',
+      mutation_khatian_no: doc.mutation_khatian_no || '',
+      dcr_number: doc.dcr_number || '',
+      tax_dakhila_no: doc.tax_dakhila_no || '',
+      tax_paid_up_to_year: doc.tax_paid_up_to_year || '1432 BS',
+      survey_type: doc.survey_type || 'RS',
+      mouza_sheet_no: doc.mouza_sheet_no || '',
+      is_certified_copy: !!doc.is_certified_copy,
       access_security_level: doc.access_security_level || 'CONFIDENTIAL',
       renewal_reminder_days: doc.renewal_reminder_days || 30,
       file_url: doc.file_url || '',
+      file_name: doc.file_name || 'Document.pdf',
       notes: doc.notes || ''
     });
     this.isDocModalOpen.set(true);
@@ -305,7 +446,7 @@ export class DocumentsComponent implements OnInit {
 
     if (this.isEditMode() && this.editingDocId()) {
       this.landService.updateDocument(this.editingDocId()!, formVal).subscribe({
-        next: (updated) => {
+        next: () => {
           this.isSaving.set(false);
           this.closeDocModal();
           this.loadData();
@@ -317,7 +458,7 @@ export class DocumentsComponent implements OnInit {
       });
     } else {
       this.landService.createDocument(formVal).subscribe({
-        next: (created) => {
+        next: () => {
           this.isSaving.set(false);
           this.closeDocModal();
           this.loadData();
@@ -334,7 +475,7 @@ export class DocumentsComponent implements OnInit {
   openVerifyModal(doc: LandDeedDocument): void {
     this.verifyingDoc.set(doc);
     this.verifyForm.reset({
-      verification_status: doc.verification_status === 'VERIFIED' ? 'VERIFIED' : 'VERIFIED',
+      verification_status: doc.verification_status || 'VERIFIED',
       verification_officer: doc.verification_officer || 'Advocate Shamsul Haque (Head of Legal Title Vetting)',
       verification_remarks: doc.verification_remarks || 'Title vetted against volume books at Sub-Registry. Dag & Khatian matches AC Land record.',
       physical_records_vetted: true
@@ -362,7 +503,7 @@ export class DocumentsComponent implements OnInit {
     };
 
     this.landService.verifyDocument(this.verifyingDoc()!.id, req).subscribe({
-      next: (res) => {
+      next: () => {
         this.isSaving.set(false);
         this.closeVerifyModal();
         this.loadData();
@@ -372,6 +513,60 @@ export class DocumentsComponent implements OnInit {
         this.isSaving.set(false);
       }
     });
+  }
+
+  // Modal 5: Legal Review Comments & Approval History
+  openHistoryModal(doc: LandDeedDocument): void {
+    this.historyDoc.set(doc);
+    this.newReviewComment.set('');
+    this.newReviewStatus.set(doc.verification_status || 'VERIFIED');
+    this.isHistoryModalOpen.set(true);
+  }
+
+  closeHistoryModal(): void {
+    this.isHistoryModalOpen.set(false);
+    this.historyDoc.set(null);
+  }
+
+  addReviewComment(): void {
+    const doc = this.historyDoc();
+    const comment = this.newReviewComment().trim();
+    if (!doc || !comment) return;
+
+    const newComment = {
+      date: new Date().toISOString().substring(0, 10),
+      reviewer: 'Senior Legal Officer',
+      comment: comment,
+      status: this.newReviewStatus()
+    };
+
+    const comments = doc.review_comments || [];
+    doc.review_comments = [...comments, newComment];
+    doc.verification_status = this.newReviewStatus();
+    doc.is_independently_verified = this.newReviewStatus() === 'VERIFIED';
+
+    // Persist via update
+    this.landService.updateDocument(doc.id, {
+      verification_status: doc.verification_status,
+      verification_remarks: comment,
+      is_independently_verified: doc.is_independently_verified
+    }).subscribe({
+      next: () => {
+        this.newReviewComment.set('');
+        this.loadData();
+      }
+    });
+  }
+
+  // Modal 6: Document Access Restrictions & Audit Trail
+  openAuditModal(doc: LandDeedDocument): void {
+    this.auditDoc.set(doc);
+    this.isAuditModalOpen.set(true);
+  }
+
+  closeAuditModal(): void {
+    this.isAuditModalOpen.set(false);
+    this.auditDoc.set(null);
   }
 
   // Modal 3: AI OCR Document Extraction
@@ -459,5 +654,23 @@ export class DocumentsComponent implements OnInit {
     const select = event.target as HTMLSelectElement;
     this.pageSize.set(Number(select.value));
     this.currentPage.set(1);
+  }
+
+  getStatusBadgeClass(status?: string): string {
+    switch (status) {
+      case 'VERIFIED':
+        return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800';
+      case 'UNDER_VERIFICATION':
+        return 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border-amber-300 dark:border-amber-800';
+      case 'RECEIVED':
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 border-blue-300 dark:border-blue-800';
+      case 'REJECTED':
+        return 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 border-rose-300 dark:border-rose-800';
+      case 'EXPIRED':
+        return 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300 border-red-300 dark:border-red-800';
+      case 'PENDING':
+      default:
+        return 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-300 dark:border-slate-700';
+    }
   }
 }

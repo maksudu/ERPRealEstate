@@ -120,6 +120,16 @@ export const routes: Routes = [
         title: 'Land Area & Measurement Conversion'
       },
       {
+        path: 'land/conversions/create',
+        loadComponent: () => import('./features/land/conversions/convention-form/convention-form.component').then(m => m.ConventionFormComponent),
+        title: 'Create Measurement Convention'
+      },
+      {
+        path: 'land/conversions/:id/edit',
+        loadComponent: () => import('./features/land/conversions/convention-form/convention-form.component').then(m => m.ConventionFormComponent),
+        title: 'Edit Measurement Convention'
+      },
+      {
         path: 'land/documents',
         loadComponent: () => import('./features/land/documents/documents.component').then(m => m.DocumentsComponent),
         title: 'Deed, Mutation, Survey & Ownership Documents'
@@ -128,6 +138,21 @@ export const routes: Routes = [
         path: 'land/joint-ownership',
         loadComponent: () => import('./features/land/joint-ownership/joint-ownership.component').then(m => m.JointOwnershipComponent),
         title: 'Joint Ownership & Landowner Agreements'
+      },
+      {
+        path: 'land/joint-ownership/create',
+        loadComponent: () => import('./features/land/joint-ownership/joint-ownership.component').then(m => m.JointOwnershipComponent),
+        title: 'Register Developer-Landowner Agreement'
+      },
+      {
+        path: 'land/joint-ownership/agreements/create',
+        loadComponent: () => import('./features/land/joint-ownership/joint-ownership.component').then(m => m.JointOwnershipComponent),
+        title: 'Register Developer-Landowner Agreement'
+      },
+      {
+        path: 'land/joint-ownership/shares/create',
+        loadComponent: () => import('./features/land/joint-ownership/joint-ownership.component').then(m => m.JointOwnershipComponent),
+        title: 'Register Co-Owner Share'
       },
       {
         path: 'land/due-diligence',
@@ -2615,4 +2640,3 @@ export const routes: Routes = [
     redirectTo: 'settings/lookups'
   }
 ];
-

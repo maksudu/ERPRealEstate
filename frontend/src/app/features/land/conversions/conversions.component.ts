@@ -1,42 +1,28 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { LandService } from '../../../core/services/land.service';
 import { 
   MeasurementConvention, 
   RegionalConversionRequest, 
   RegionalConversionResponse 
 } from '../../../core/models/land.model';
-import { 
-  CardContainerComponent, 
-  CustomInputComponent, 
-  CustomTextareaComponent, 
-  CustomButtonComponent,
-  SearchableSelectComponent,
-  ModalComponent,
-  StatusBadgeComponent
-} from '../../../shared/components';
+import { CardContainerComponent, SearchableSelectComponent } from '../../../shared/components';
 
 @Component({
   selector: 'app-land-conversions',
   standalone: true,
   imports: [
     CommonModule,
-    FormsModule,
-    ReactiveFormsModule,
     CardContainerComponent,
-    CustomInputComponent,
-    CustomTextareaComponent,
-    CustomButtonComponent,
-    SearchableSelectComponent,
-    ModalComponent,
-    StatusBadgeComponent
+    SearchableSelectComponent
   ],
   templateUrl: './conversions.component.html'
 })
 export class ConversionsComponent implements OnInit {
   private landService = inject(LandService);
-  private fb = inject(FormBuilder);
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
 
   Math = Math;
   Number = Number;
@@ -44,8 +30,10 @@ export class ConversionsComponent implements OnInit {
   // State Signals
   conventions = signal<MeasurementConvention[]>([]);
   isLoading = signal<boolean>(false);
-  isSaving = signal<boolean>(false);
+  loadError = signal<string | null>(null);
+  saveSuccess = signal<string | null>(null);
   isCalculating = signal<boolean>(false);
+  calculationError = signal<string | null>(null);
   searchTerm = signal<string>('');
 
   // Pagination
@@ -57,18 +45,12 @@ export class ConversionsComponent implements OnInit {
   selectedConventionId = signal<number | null>(null);
   inputUnit = signal<string>('DECIMAL');
   inputValue = signal<number>(10);
-  recordedDeedText = signal<string>('দলিলে লিখিত: ১০ শতাংশ নাল জমি (মৌজা বাড্ডা)');
   conversionResult = signal<RegionalConversionResponse | null>(null);
-
-  // Modal State: Create / Edit Convention
-  isModalOpen = signal<boolean>(false);
-  isEditMode = signal<boolean>(false);
-  editingConventionId = signal<number | null>(null);
-  conventionForm!: FormGroup;
 
   // Preset Unit Options for calculator
   unitOptions = [
     { value: 'SQFT', label: 'Square Feet (sq ft) - Base Unit' },
+    { value: 'SQM', label: 'Square Metres (m²)' },
     { value: 'DECIMAL', label: 'Decimal / Shatangsho (শতাংশ) - 435.6 sq ft' },
     { value: 'KATHA', label: 'Katha (কাঠা) - Regional Convention' },
     { value: 'BIGHA', label: 'Bigha (বিঘা) - 20 Katha / Regional' },
@@ -83,9 +65,9 @@ export class ConversionsComponent implements OnInit {
     const term = this.searchTerm().trim().toLowerCase();
     if (term) {
       list = list.filter(c => 
-        c.convention_name.toLowerCase().includes(term) ||
-        c.convention_code.toLowerCase().includes(term) ||
-        c.region_district.toLowerCase().includes(term)
+        c.convention_name?.toLowerCase().includes(term) ||
+        c.convention_code?.toLowerCase().includes(term) ||
+        c.region_district?.toLowerCase().includes(term)
       );
     }
     return list;
@@ -100,42 +82,59 @@ export class ConversionsComponent implements OnInit {
   totalPages = computed(() => Math.ceil(this.filteredConventions().length / this.pageSize()) || 1);
 
   defaultConvention = computed(() => this.conventions().find(c => c.is_default) || this.conventions()[0]);
+  selectedConvention = computed(() => this.conventions().find(c => c.id === this.selectedConventionId()) || null);
 
   ngOnInit(): void {
-    this.initForm();
+    this.route.queryParamMap.subscribe(params => {
+      const saved = params.get('saved');
+      if (saved === 'created' || saved === 'updated') {
+        this.saveSuccess.set(`Regional convention ${saved} successfully.`);
+        this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: { saved: null },
+          queryParamsHandling: 'merge',
+          replaceUrl: true
+        });
+      }
+    });
     this.loadConventions();
   }
 
-  private initForm(): void {
-    this.conventionForm = this.fb.group({
-      convention_code: ['', [Validators.required, Validators.pattern(/^[A-Z0-9_]+$/)]],
-      convention_name: ['', Validators.required],
-      region_district: ['', Validators.required],
-      katha_to_sqft: [720, [Validators.required, Validators.min(1)]],
-      decimal_to_sqft: [435.60, [Validators.required, Validators.min(1)]],
-      bigha_to_katha: [20, [Validators.required, Validators.min(1)]],
-      acre_to_decimal: [100, [Validators.required, Validators.min(1)]],
-      kani_to_sqft: [null],
-      gonda_to_sqft: [null],
-      is_default: [false],
-      notes: ['']
-    });
+  createConvention(): void {
+    this.router.navigate(['/land/conversions/create']);
+  }
+
+  editConvention(convention: MeasurementConvention): void {
+    this.router.navigate(['/land/conversions', convention.id, 'edit']);
   }
 
   loadConventions(): void {
     this.isLoading.set(true);
+    this.loadError.set(null);
     this.landService.getMeasurementConventions().subscribe({
       next: (data) => {
-        this.conventions.set(data);
+        const response: unknown = data;
+        if (!Array.isArray(response) || !response.every(item => this.isMeasurementConvention(item))) {
+          this.conventions.set([]);
+          this.loadError.set('The conventions endpoint returned invalid data. Refresh the page or contact support.');
+          this.isLoading.set(false);
+          return;
+        }
+        this.conventions.set(response);
         this.isLoading.set(false);
-        if (data.length > 0 && !this.selectedConventionId()) {
-          const def = data.find(c => c.is_default) || data[0];
+        if (this.conventions().length > 0 && !this.selectedConventionId()) {
+          const def = this.conventions().find(c => c.is_default) || this.conventions()[0];
           this.selectedConventionId.set(def.id);
           this.runLiveConversion();
+        }
+        if (this.conventions().length === 0) {
+          this.conversionResult.set(null);
+          this.selectedConventionId.set(null);
         }
       },
       error: (err) => {
         console.error('Failed to load conventions', err);
+        this.loadError.set(this.getErrorMessage(err, 'Could not load measurement conventions. Check your connection and retry.'));
         this.isLoading.set(false);
       }
     });
@@ -146,11 +145,14 @@ export class ConversionsComponent implements OnInit {
       return;
     }
     this.isCalculating.set(true);
+    this.calculationError.set(null);
+    this.conversionResult.set(null);
     const req: RegionalConversionRequest = {
       convention_id: this.selectedConventionId()!,
       input_unit: this.inputUnit(),
       input_value: Number(this.inputValue()),
-      recorded_deed_text: this.recordedDeedText()
+      original_registered_unit: this.inputUnit(),
+      original_registered_value: Number(this.inputValue())
     };
 
     this.landService.convertRegional(req).subscribe({
@@ -160,6 +162,7 @@ export class ConversionsComponent implements OnInit {
       },
       error: (err) => {
         console.error('Conversion calculation failed', err);
+        this.calculationError.set(this.getErrorMessage(err, 'Conversion failed. Check the selected convention and input, then retry.'));
         this.isCalculating.set(false);
       }
     });
@@ -178,88 +181,6 @@ export class ConversionsComponent implements OnInit {
   onInputValueChange(val: any): void {
     this.inputValue.set(Number(val));
     this.runLiveConversion();
-  }
-
-  onDeedTextChange(text: string): void {
-    this.recordedDeedText.set(text);
-  }
-
-  openCreateModal(): void {
-    this.isEditMode.set(false);
-    this.editingConventionId.set(null);
-    this.conventionForm.reset({
-      convention_code: '',
-      convention_name: '',
-      region_district: 'Dhaka',
-      katha_to_sqft: 720,
-      decimal_to_sqft: 435.60,
-      bigha_to_katha: 20,
-      acre_to_decimal: 100,
-      kani_to_sqft: null,
-      gonda_to_sqft: null,
-      is_default: false,
-      notes: ''
-    });
-    this.isModalOpen.set(true);
-  }
-
-  openEditModal(conv: MeasurementConvention): void {
-    this.isEditMode.set(true);
-    this.editingConventionId.set(conv.id);
-    this.conventionForm.patchValue({
-      convention_code: conv.convention_code,
-      convention_name: conv.convention_name,
-      region_district: conv.region_district,
-      katha_to_sqft: conv.katha_to_sqft,
-      decimal_to_sqft: conv.decimal_to_sqft,
-      bigha_to_katha: conv.bigha_to_katha,
-      acre_to_decimal: conv.acre_to_decimal,
-      kani_to_sqft: conv.kani_to_sqft,
-      gonda_to_sqft: conv.gonda_to_sqft,
-      is_default: conv.is_default,
-      notes: conv.notes || ''
-    });
-    this.isModalOpen.set(true);
-  }
-
-  closeModal(): void {
-    this.isModalOpen.set(false);
-  }
-
-  saveConvention(): void {
-    if (this.conventionForm.invalid) {
-      this.conventionForm.markAllAsTouched();
-      return;
-    }
-
-    this.isSaving.set(true);
-    const formVal = this.conventionForm.value;
-
-    if (this.isEditMode() && this.editingConventionId()) {
-      this.landService.updateMeasurementConvention(this.editingConventionId()!, formVal).subscribe({
-        next: (updated) => {
-          this.isSaving.set(false);
-          this.closeModal();
-          this.loadConventions();
-        },
-        error: (err) => {
-          console.error('Failed to update convention', err);
-          this.isSaving.set(false);
-        }
-      });
-    } else {
-      this.landService.createMeasurementConvention(formVal).subscribe({
-        next: (created) => {
-          this.isSaving.set(false);
-          this.closeModal();
-          this.loadConventions();
-        },
-        error: (err) => {
-          console.error('Failed to create convention', err);
-          this.isSaving.set(false);
-        }
-      });
-    }
   }
 
   testInCalculator(conv: MeasurementConvention): void {
@@ -285,5 +206,25 @@ export class ConversionsComponent implements OnInit {
     const select = event.target as HTMLSelectElement;
     this.pageSize.set(Number(select.value));
     this.currentPage.set(1);
+  }
+
+  private getErrorMessage(error: any, fallback: string): string {
+    const detail = error?.error?.detail;
+    if (typeof detail === 'string') return detail;
+    if (Array.isArray(detail)) {
+      const messages = detail.map(item => item?.msg).filter(Boolean);
+      if (messages.length) return messages.join(' ');
+    }
+    return error?.error?.message || fallback;
+  }
+
+  private isMeasurementConvention(value: unknown): value is MeasurementConvention {
+    if (!value || typeof value !== 'object') return false;
+    const item = value as Record<string, unknown>;
+    const requiredStrings = ['convention_code', 'convention_name', 'region_district'];
+    const requiredNumbers = ['id', 'katha_to_sqft', 'decimal_to_sqft', 'bigha_to_katha', 'acre_to_decimal'];
+    return requiredStrings.every(key => typeof item[key] === 'string' && Boolean(item[key])) &&
+      requiredNumbers.every(key => typeof item[key] === 'number' && Number.isFinite(item[key])) &&
+      typeof item['is_default'] === 'boolean';
   }
 }

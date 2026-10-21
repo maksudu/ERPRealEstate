@@ -1,63 +1,78 @@
 <div class="space-y-5">
   <!-- Top KPI Cards -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
     <!-- Card 1: Total Documents -->
-    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-2xs flex items-center justify-between">
-      <div>
-        <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Total Legal Documents</p>
-        <h3 class="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">{{ totalDocsCount() }}</h3>
-        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-1">
-          Deeds, Parcha, DCR & Surveys
-        </p>
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 shadow-2xs">
+      <div class="flex items-center justify-between mb-1">
+        <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Total Legal Docs</span>
+        <div class="w-6 h-6 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        </div>
       </div>
-      <div class="w-11 h-11 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-      </div>
+      <div class="text-xl font-bold text-slate-900 dark:text-slate-100">{{ totalDocsCount() }}</div>
+      <div class="text-[10px] text-slate-400 mt-0.5">Deeds, Parcha & Maps</div>
     </div>
 
     <!-- Card 2: Independently Verified -->
-    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-2xs flex items-center justify-between">
-      <div>
-        <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Independently Verified</p>
-        <h3 class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">{{ verifiedDocsCount() }}</h3>
-        <p class="text-[11px] text-emerald-600 dark:text-emerald-400 mt-0.5 flex items-center gap-1 font-medium">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-          Sub-Registry & AC Land Vetted
-        </p>
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 shadow-2xs">
+      <div class="flex items-center justify-between mb-1">
+        <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Verified</span>
+        <div class="w-6 h-6 rounded-lg bg-emerald-50 dark:bg-emerald-950 flex items-center justify-center text-emerald-600">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
       </div>
-      <div class="w-11 h-11 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-      </div>
+      <div class="text-xl font-bold text-emerald-600 dark:text-emerald-400">{{ verifiedDocsCount() }}</div>
+      <div class="text-[10px] text-emerald-600 dark:text-emerald-400 mt-0.5">Title Vetted</div>
     </div>
 
-    <!-- Card 3: Pending Title Search -->
-    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-2xs flex items-center justify-between">
-      <div>
-        <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Pending Title Search</p>
-        <h3 class="text-2xl font-bold text-amber-600 dark:text-amber-400 mt-1">{{ pendingVerificationCount() }}</h3>
-        <p class="text-[11px] text-amber-600 dark:text-amber-400 mt-0.5 flex items-center gap-1 font-medium">
+    <!-- Card 3: Under Verification -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 shadow-2xs">
+      <div class="flex items-center justify-between mb-1">
+        <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Under Review</span>
+        <div class="w-6 h-6 rounded-lg bg-amber-50 dark:bg-amber-950 flex items-center justify-center text-amber-600">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          Legal Opinion Awaited
-        </p>
+        </div>
       </div>
-      <div class="w-11 h-11 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 flex items-center justify-center text-amber-600 dark:text-amber-400">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-      </div>
+      <div class="text-xl font-bold text-amber-600 dark:text-amber-400">{{ underVerificationCount() }}</div>
+      <div class="text-[10px] text-amber-600 dark:text-amber-400 mt-0.5">In Progress</div>
     </div>
 
-    <!-- Card 4: Expiring / Renewals -->
-    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-2xs flex items-center justify-between">
-      <div>
-        <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Expiring / Renewal Alerts</p>
-        <h3 class="text-2xl font-bold text-red-600 dark:text-red-400 mt-1">{{ expiringDocsCount() }}</h3>
-        <p class="text-[11px] text-red-600 dark:text-red-400 mt-0.5 flex items-center gap-1 font-medium">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          Khajna Dakhila & NOC
-        </p>
+    <!-- Card 4: Received -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 shadow-2xs">
+      <div class="flex items-center justify-between mb-1">
+        <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Received</span>
+        <div class="w-6 h-6 rounded-lg bg-blue-50 dark:bg-blue-950 flex items-center justify-center text-blue-600">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+        </div>
       </div>
-      <div class="w-11 h-11 rounded-xl bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-800 flex items-center justify-center text-red-600 dark:text-red-400">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      <div class="text-xl font-bold text-blue-600 dark:text-blue-400">
+        {{ receivedDocsCount() }}
       </div>
+      <div class="text-[10px] text-blue-500 mt-0.5">Awaiting Search</div>
+    </div>
+
+    <!-- Card 5: Pending Queue -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 shadow-2xs">
+      <div class="flex items-center justify-between mb-1">
+        <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Pending</span>
+        <div class="w-6 h-6 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500">
+          <span class="text-xs font-bold">⏱</span>
+        </div>
+      </div>
+      <div class="text-xl font-bold text-slate-600 dark:text-slate-300">{{ pendingVerificationCount() }}</div>
+      <div class="text-[10px] text-slate-400 mt-0.5">Deed Requested</div>
+    </div>
+
+    <!-- Card 6: Expiring / Renewals -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 shadow-2xs">
+      <div class="flex items-center justify-between mb-1">
+        <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Expiring / Alerts</span>
+        <div class="w-6 h-6 rounded-lg bg-rose-50 dark:bg-rose-950 flex items-center justify-center text-rose-600">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        </div>
+      </div>
+      <div class="text-xl font-bold text-rose-600 dark:text-rose-400">{{ expiringDocsCount() }}</div>
+      <div class="text-[10px] text-rose-500 mt-0.5">Khajna / PoA</div>
     </div>
   </div>
 
@@ -75,8 +90,8 @@
   <!-- Main Documents Register Card -->
   <app-card-container
     [hasHeader]="true"
-    title="2.5 Legal Deed, Mutation, Survey & Ownership Documents"
-    subtitle="Maintain all legal and technical documents connected to each parcel, landowner, and acquisition with independent title vetting."
+    title="Deed, Mutation, Survey & Ownership Documents"
+    subtitle="Central statutory registry of registered deeds, mutation cases, tax dakhila, survey parchas and boundary plans with independent legal vetting."
     badge="Module 2.5"
   >
     <!-- Card Actions in Header -->
@@ -87,7 +102,7 @@
         class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors shadow-2xs"
       >
         <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
-        Acquisition Checklist
+        Missing-Doc Checklist
       </button>
 
       <button 
@@ -111,7 +126,7 @@
           type="text" 
           [value]="searchTerm()"
           (input)="onSearch($event)"
-          placeholder="Search by title, deed number, khatian, or issuing office..."
+          placeholder="Search by deed no, mutation case, khatian, or issuing office..."
           class="w-full pl-9 pr-3 py-1.5 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-emerald-500"
         />
       </div>
@@ -124,30 +139,22 @@
           (change)="onCategoryFilter($any($event.target).value)"
           class="px-2.5 py-1.5 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-300 focus:outline-none"
         >
-          <option value="">All Categories</option>
-          <option value="DEED_SALE">Sale Deed (Saf-Kabala)</option>
-          <option value="DEED_BAYA_CHAIN">Baya Deeds (25-yr Chain)</option>
-          <option value="SURVEY_CS_SA_RS_BS">Survey Records (CS/SA/RS/BS)</option>
-          <option value="KHATIAN_DAG_EXTRACT">Khatian & Dag Extracts</option>
-          <option value="MUTATION_NAMJARI">Mutation & DCR Parcha</option>
-          <option value="KHAJNA_DAKHILA">Land Tax (Khajna Dakhila)</option>
-          <option value="SURVEY_DEMARCATION_MAP">Demarcation & Survey Maps</option>
-          <option value="NOC_STATUTORY_CLEARANCE">NOC & Clearances</option>
-          <option value="POA_WARIS_PARTITION">POA / Waris / Partition</option>
+          <option value="">All Document Categories</option>
+          @for (cat of documentCategoryOptions; track cat.value) {
+            <option [value]="cat.value">{{ cat.label }}</option>
+          }
         </select>
 
-        <!-- Verification Status Filter -->
+        <!-- Suggested Document Status Filter -->
         <select
           [value]="selectedVerificationStatus()"
           (change)="onStatusFilter($any($event.target).value)"
-          class="px-2.5 py-1.5 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-300 focus:outline-none"
+          class="px-2.5 py-1.5 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-300 focus:outline-none font-semibold"
         >
-          <option value="">All Verification Status</option>
-          <option value="VERIFIED">Independently Verified</option>
-          <option value="PENDING">Pending Legal Search</option>
-          <option value="REQUIRES_CLARIFICATION">Requires Clarification</option>
-          <option value="REJECTED">Rejected / Disputed</option>
-          <option value="EXPIRED">Expired</option>
+          <option value="">All Document Statuses</option>
+          @for (st of documentStatusOptions; track st.value) {
+            <option [value]="st.value">{{ st.label }}</option>
+          }
         </select>
 
         <!-- Parcel Filter -->
@@ -170,12 +177,12 @@
         <thead class="bg-slate-100/70 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-700 text-[11px] uppercase tracking-wider">
           <tr>
             <th class="py-3 px-4">Doc Title & Category</th>
-            <th class="py-3 px-4">Deed / Ref Number</th>
+            <th class="py-3 px-4">Deed / Mutation Case / Khatian</th>
             <th class="py-3 px-4">Linked Parcel & Owner</th>
-            <th class="py-3 px-4">Dates & Expiry</th>
-            <th class="py-3 px-4 text-center">Version & Security</th>
-            <th class="py-3 px-4 text-center">Independent Vetting</th>
-            <th class="py-3 px-4 text-center">OCR Status</th>
+            <th class="py-3 px-4">Registration & Dates</th>
+            <th class="py-3 px-4 text-center">Version & Access</th>
+            <th class="py-3 px-4 text-center">Document Status</th>
+            <th class="py-3 px-4 text-center">OCR & Review</th>
             <th class="py-3 px-4 text-right">Actions</th>
           </tr>
         </thead>
@@ -202,22 +209,39 @@
                 <td class="py-3 px-4">
                   <div class="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
                     {{ doc.doc_title || (doc.doc_type + ' #' + doc.doc_number) }}
+                    @if (doc.is_certified_copy) {
+                      <span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300">
+                        Nokol / Certified
+                      </span>
+                    }
                   </div>
                   <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
                     Category: <span class="font-semibold text-slate-700 dark:text-slate-300">{{ doc.document_category || doc.doc_type }}</span>
                   </div>
-                  <div class="text-[10px] text-slate-400">
+                  <div class="text-[10px] text-slate-400 truncate max-w-[180px]">
                     Office: {{ doc.issuing_office }}
                   </div>
                 </td>
 
-                <!-- Deed / Ref Number -->
+                <!-- Deed / Mutation Case / Khatian -->
                 <td class="py-3 px-4">
                   <div class="font-mono font-bold text-slate-900 dark:text-slate-100">
                     {{ doc.doc_number }}
                   </div>
-                  @if (doc.reference_number) {
-                    <div class="font-mono text-[10px] text-slate-400">Ref: {{ doc.reference_number }}</div>
+                  @if (doc.mutation_case_no) {
+                    <div class="text-[10px] font-mono text-indigo-600 dark:text-indigo-400">
+                      Mutation Case: {{ doc.mutation_case_no }}
+                    </div>
+                  }
+                  @if (doc.tax_dakhila_no) {
+                    <div class="text-[10px] text-emerald-600 dark:text-emerald-400">
+                      Dakhila: {{ doc.tax_dakhila_no }} ({{ doc.tax_paid_up_to_year || '1432 BS' }})
+                    </div>
+                  }
+                  @if (doc.sub_registrar_volume_no) {
+                    <div class="text-[10px] text-slate-400">
+                      Vol: {{ doc.sub_registrar_volume_no }}, Pg: {{ doc.sub_registrar_page_no || 'N/A' }}
+                    </div>
                   }
                 </td>
 
@@ -247,6 +271,11 @@
                   <div class="text-[11px] text-slate-700 dark:text-slate-300">
                     Executed: <strong class="font-mono">{{ doc.execution_date }}</strong>
                   </div>
+                  @if (doc.registration_date && doc.registration_date !== doc.execution_date) {
+                    <div class="text-[10px] text-slate-500 font-mono">
+                      Registered: {{ doc.registration_date }}
+                    </div>
+                  }
                   @if (doc.expiry_date) {
                     <div class="text-[11px] mt-0.5 flex items-center gap-1">
                       <span>Expires:</span>
@@ -274,7 +303,7 @@
                       [ngClass]="{
                         'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300': doc.access_security_level === 'PUBLIC',
                         'bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300': doc.access_security_level === 'CONFIDENTIAL',
-                        'bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300': doc.access_security_level === 'RESTRICTED_LEGAL',
+                        'bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300': doc.access_security_level === 'RESTRICTED' || doc.access_security_level === 'RESTRICTED_LEGAL',
                         'bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300': doc.access_security_level === 'DIRECTOR_ONLY'
                       }"
                     >
@@ -283,58 +312,56 @@
                   </div>
                 </td>
 
-                <!-- Independent Verification -->
+                <!-- Suggested Document Status Badge -->
                 <td class="py-3 px-4 text-center">
-                  @if (doc.is_independently_verified || doc.verification_status === 'VERIFIED') {
-                    <div class="inline-flex flex-col items-center">
-                      <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
-                        <svg class="w-3 h-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                        Verified
-                      </span>
-                      @if (doc.verification_officer) {
-                        <span class="text-[9px] text-slate-500 dark:text-slate-400 mt-0.5 truncate max-w-[120px]" title="{{ doc.verification_officer }}">
-                          {{ doc.verification_officer }}
-                        </span>
-                      }
-                    </div>
-                  } @else if (doc.verification_status === 'REJECTED') {
-                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300 border border-red-300 dark:border-red-800">
-                      Rejected
-                    </span>
-                  } @else if (doc.verification_status === 'REQUIRES_CLARIFICATION') {
-                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
-                      Clarification
-                    </span>
-                  } @else {
-                    <div class="inline-flex flex-col items-center">
-                      <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                        Pending Search
-                      </span>
-                      <span class="text-[9px] text-amber-600 dark:text-amber-400 font-medium mt-0.5">Vetting Needed</span>
+                  <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold border"
+                    [ngClass]="getStatusBadgeClass(doc.verification_status)">
+                    @if (doc.verification_status === 'VERIFIED') {
+                      <svg class="w-3 h-3 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                      Verified
+                    } @else if (doc.verification_status === 'UNDER_VERIFICATION') {
+                      <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                      Under Verification
+                    } @else if (doc.verification_status === 'RECEIVED') {
+                      <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                      Received
+                    } @else if (doc.verification_status === 'REJECTED') {
+                      ✕ Rejected
+                    } @else if (doc.verification_status === 'EXPIRED') {
+                      ⚠ Expired
+                    } @else {
+                      ⏱ Pending
+                    }
+                  </span>
+                  @if (doc.verification_officer) {
+                    <div class="text-[9px] text-slate-400 mt-1 truncate max-w-[120px] mx-auto" title="{{ doc.verification_officer }}">
+                      {{ doc.verification_officer }}
                     </div>
                   }
                 </td>
 
-                <!-- OCR Status -->
+                <!-- OCR & Review -->
                 <td class="py-3 px-4 text-center">
-                  @if (doc.ocr_status === 'EXTRACTED' || doc.ocr_status === 'VERIFIED_CORRECT') {
-                    <button
-                      type="button"
-                      (click)="openOcrModal(doc)"
-                      class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-medium bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300 border border-purple-200 dark:border-purple-800 hover:bg-purple-100 transition-colors"
-                    >
-                      <svg class="w-3 h-3 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                      OCR Ready
-                    </button>
-                  } @else {
-                    <button
-                      type="button"
-                      (click)="openOcrModal(doc)"
-                      class="text-[10px] text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
-                    >
-                      Run OCR
-                    </button>
-                  }
+                  <div class="flex items-center justify-center gap-1">
+                    @if (doc.ocr_status === 'EXTRACTED' || doc.ocr_status === 'VERIFIED_CORRECT') {
+                      <button
+                        type="button"
+                        (click)="openOcrModal(doc)"
+                        title="AI OCR Scanned Data"
+                        class="px-1.5 py-0.5 rounded text-[10px] font-mono font-medium bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300 border border-purple-200 dark:border-purple-800 hover:bg-purple-100 transition-colors"
+                      >
+                        OCR Ready
+                      </button>
+                    } @else {
+                      <button
+                        type="button"
+                        (click)="openOcrModal(doc)"
+                        class="text-[10px] text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+                      >
+                        Run OCR
+                      </button>
+                    }
+                  </div>
                 </td>
 
                 <!-- Actions -->
@@ -350,6 +377,26 @@
                       Verify
                     </button>
 
+                    <!-- Legal Review Comments & Approval History -->
+                    <button
+                      type="button"
+                      (click)="openHistoryModal(doc)"
+                      title="Legal Review Comments & Approval History"
+                      class="p-1 rounded text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 transition-colors"
+                    >
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+                    </button>
+
+                    <!-- Document Access & Audit Trail -->
+                    <button
+                      type="button"
+                      (click)="openAuditModal(doc)"
+                      title="Access Restrictions & Audit Trail"
+                      class="p-1 rounded text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-colors"
+                    >
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                    </button>
+
                     <!-- Edit Document -->
                     <button
                       type="button"
@@ -357,7 +404,7 @@
                       title="Edit Document"
                       class="p-1 rounded text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                     >
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                     </button>
 
                     <!-- Delete Document -->
@@ -367,7 +414,7 @@
                       title="Delete Document"
                       class="p-1 rounded text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/50 transition-colors"
                     >
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                     </button>
                   </div>
                 </td>
@@ -422,11 +469,13 @@
     </div>
   </app-card-container>
 
-  <!-- Modal 1: Register / Edit Legal Document -->
+  <!-- ========================================================================= -->
+  <!-- MODAL 1: REGISTER / EDIT LEGAL DOCUMENT (ALL FUNCTIONAL REQUIREMENTS)    -->
+  <!-- ========================================================================= -->
   <app-modal
     [isOpen]="isDocModalOpen()"
     [title]="isEditMode() ? 'Edit Legal Document' : 'Register New Legal Document'"
-    [subtitle]="'Upload and record legal deeds, survey parchas, or tax dakhilas with full versioning and audit trails.'"
+    [subtitle]="'Upload and record legal deeds, mutation records, survey parchas, or tax dakhilas with full versioning and audit trails.'"
     [badge]="isEditMode() ? 'Edit Document' : 'New Document'"
     size="xl"
     (closed)="closeDocModal()"
@@ -440,67 +489,163 @@
         </div>
       </div>
 
-      <!-- Row 1: Title, Category & Type -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <div>
-          <app-custom-input
-            label="Document Title *"
-            formControlName="doc_title"
-            placeholder="e.g. Saf-Kabala Deed #4521/2021"
-            [required]="true"
-          ></app-custom-input>
+      <!-- Section 1: Core Document Classification -->
+      <div class="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850/50 space-y-3">
+        <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
+          1. Document Category & Classification
+        </h4>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div class="md:col-span-2">
+            <app-custom-input
+              label="Document Title *"
+              formControlName="doc_title"
+              placeholder="e.g. Registered Saf-Kabala Sale Deed #8942/2021"
+              [required]="true"
+            ></app-custom-input>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              Document Category *
+            </label>
+            <select
+              formControlName="document_category"
+              class="w-full px-3 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 font-semibold"
+            >
+              @for (cat of documentCategoryOptions; track cat.value) {
+                <option [value]="cat.value">{{ cat.label }}</option>
+              }
+            </select>
+          </div>
         </div>
 
-        <div>
-          <app-searchable-select
-            categoryCode="LAND_DOCUMENT_CATEGORY"
-            label="Document Category *"
-            formControlName="document_category"
-            [allowCreateNew]="true"
-            placeholder="Select category..."
-          ></app-searchable-select>
-        </div>
-
-        <div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
           <app-custom-input
-            label="Document Type Code *"
-            formControlName="doc_type"
-            placeholder="e.g. SALE_DEED or MUTATION_PARCHA"
-            [required]="true"
-          ></app-custom-input>
-        </div>
-      </div>
-
-      <!-- Row 2: Numbers & Office -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <div>
-          <app-custom-input
-            label="Deed / Document Number *"
+            label="Document / Deed Number *"
             formControlName="doc_number"
-            placeholder="e.g. 4521/2021 or DP-982"
+            placeholder="e.g. 8942/2021"
             [required]="true"
           ></app-custom-input>
-        </div>
 
-        <div>
           <app-custom-input
-            label="Reference / Volume Number"
-            formControlName="reference_number"
-            placeholder="e.g. Book 1, Volume 42, Page 112"
-          ></app-custom-input>
-        </div>
-
-        <div>
-          <app-custom-input
-            label="Issuing Office / Authority *"
+            label="Issuing Office / Sub-Registry *"
             formControlName="issuing_office"
-            placeholder="e.g. Sub-Registry Office, Gulshan"
+            placeholder="Sub-Registry Office, Gulshan"
             [required]="true"
+          ></app-custom-input>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              Document Status *
+            </label>
+            <select
+              formControlName="verification_status"
+              class="w-full px-3 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 font-semibold"
+            >
+              @for (st of documentStatusOptions; track st.value) {
+                <option [value]="st.value">{{ st.label }}</option>
+              }
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2: Registration & Sub-Registrar Office Specifics -->
+      <div class="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850/50 space-y-3">
+        <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center justify-between">
+          <span>2. Deed Execution & Registration Record</span>
+          <label class="inline-flex items-center gap-1.5 text-[11px] font-normal text-indigo-600 dark:text-indigo-400 cursor-pointer">
+            <input type="checkbox" formControlName="is_certified_copy" class="rounded text-indigo-600">
+            <span>Certified Copy / Nokol from Record Room</span>
+          </label>
+        </h4>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <app-custom-input
+            label="Execution Date *"
+            formControlName="execution_date"
+            type="date"
+            [required]="true"
+          ></app-custom-input>
+
+          <app-custom-input
+            label="Sub-Registry Registration Date"
+            formControlName="registration_date"
+            type="date"
+          ></app-custom-input>
+
+          <app-custom-input
+            label="Sub-Registrar Volume No."
+            formControlName="sub_registrar_volume_no"
+            placeholder="e.g. Volume 42-A"
+          ></app-custom-input>
+
+          <app-custom-input
+            label="Page & Book No."
+            formControlName="sub_registrar_page_no"
+            placeholder="Page 184-192, Book 1"
           ></app-custom-input>
         </div>
       </div>
 
-      <!-- Row 3: Entity Linking (Parcel & Landowner) -->
+      <!-- Section 3: Mutation, Land Development Tax (Khajna) & Survey Specifics -->
+      <div class="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850/50 space-y-3">
+        <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
+          3. Mutation, Tax (Khajna) & Survey Map Tracking
+        </h4>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <app-custom-input
+            label="Mutation Case Number"
+            formControlName="mutation_case_no"
+            placeholder="e.g. 1422/IX-I/2025-26"
+          ></app-custom-input>
+
+          <app-custom-input
+            label="Namjari Khatian Number"
+            formControlName="mutation_khatian_no"
+            placeholder="e.g. Khatian 841/1"
+          ></app-custom-input>
+
+          <app-custom-input
+            label="DCR Number"
+            formControlName="dcr_number"
+            placeholder="e.g. DCR-98214"
+          ></app-custom-input>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <app-custom-input
+            label="Tax Dakhila Receipt No."
+            formControlName="tax_dakhila_no"
+            placeholder="e.g. DKH-2026-081"
+          ></app-custom-input>
+
+          <app-custom-input
+            label="Tax Paid Up To (Bangla/Year)"
+            formControlName="tax_paid_up_to_year"
+            placeholder="e.g. 1432 BS (2025-2026)"
+          ></app-custom-input>
+
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-semibold text-slate-700 dark:text-slate-300">Survey Record Type</label>
+            <select formControlName="survey_type" class="w-full px-3 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg">
+              <option value="CS">CS (Cadastral Survey)</option>
+              <option value="SA">SA (State Acquisition)</option>
+              <option value="RS">RS (Revisional Survey)</option>
+              <option value="BS">BS / City Jarip</option>
+              <option value="DIARA">Diara Survey</option>
+            </select>
+          </div>
+
+          <app-custom-input
+            label="Mouza Sheet / Naksha No."
+            formControlName="mouza_sheet_no"
+            placeholder="e.g. Sheet #02"
+          ></app-custom-input>
+        </div>
+      </div>
+
+      <!-- Section 4: Entity Linking (Parcel & Landowner) -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
           <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
@@ -533,26 +678,29 @@
         </div>
       </div>
 
-      <!-- Row 4: Dates & Versioning -->
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-        <div>
-          <app-custom-input
-            label="Execution / Issue Date *"
-            formControlName="execution_date"
-            type="date"
-            [required]="true"
-          ></app-custom-input>
-        </div>
+      <!-- Section 5: Document Upload (PDF, JPG, PNG) & Version Control -->
+      <div class="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850/50 space-y-3">
+        <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
+          5. Document Upload & Version Control
+        </h4>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div class="md:col-span-2">
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              Upload Document File (PDF, JPG, PNG)
+            </label>
+            <input 
+              type="file" 
+              accept=".pdf,.jpg,.jpeg,.png"
+              (change)="onFileSelected($event)"
+              class="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 dark:file:bg-emerald-950 dark:file:text-emerald-300"
+            />
+            @if (documentForm.get('file_name')?.value) {
+              <div class="text-[11px] text-emerald-600 dark:text-emerald-400 mt-1 font-mono">
+                Selected: {{ documentForm.get('file_name')?.value }}
+              </div>
+            }
+          </div>
 
-        <div>
-          <app-custom-input
-            label="Expiry Date (if applicable)"
-            formControlName="expiry_date"
-            type="date"
-          ></app-custom-input>
-        </div>
-
-        <div>
           <app-custom-input
             label="Document Version *"
             formControlName="document_version"
@@ -561,28 +709,25 @@
           ></app-custom-input>
         </div>
 
-        <div>
-          <app-searchable-select
-            categoryCode="LAND_SECURITY_LEVEL"
-            label="Access Security Level"
-            formControlName="access_security_level"
-            [allowCreateNew]="true"
-            placeholder="Select security level..."
-          ></app-searchable-select>
-        </div>
-      </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              Access Security Level
+            </label>
+            <select formControlName="access_security_level" class="w-full px-3 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg">
+              <option value="PUBLIC">PUBLIC - General Project Team</option>
+              <option value="INTERNAL">INTERNAL - Company Staff Only</option>
+              <option value="CONFIDENTIAL">CONFIDENTIAL - Legal & Land Team</option>
+              <option value="RESTRICTED">RESTRICTED - Board & Executive Only</option>
+            </select>
+          </div>
 
-      <!-- Row 5: File & Reminders -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <div class="md:col-span-2">
           <app-custom-input
-            label="Scanned File URL / Cloud Path"
-            formControlName="file_url"
-            placeholder="https://storage.googleapis.com/... or /uploads/deed.pdf"
+            label="Expiry Date (if applicable)"
+            formControlName="expiry_date"
+            type="date"
           ></app-custom-input>
-        </div>
 
-        <div>
           <app-custom-input
             label="Renewal Reminder (Days Before)"
             formControlName="renewal_reminder_days"
@@ -595,9 +740,9 @@
       <!-- Notes -->
       <div>
         <app-custom-textarea
-          label="Legal Notes & Search Annotations"
+          label="Legal Notes & Title Chain Vetting Remarks"
           formControlName="notes"
-          placeholder="State any volume search notes, AC land mutation status, or pending boundary verifications..."
+          placeholder="Record any volume search notes, AC Land namjari progress, or historical link verification notes..."
           [rows]="2"
         ></app-custom-textarea>
       </div>
@@ -622,14 +767,16 @@
             Saving...
           } @else {
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-            {{ isEditMode() ? 'Update Document' : 'Save Document' }}
+            {{ isEditMode() ? 'Update Document' : 'Save & Register Document' }}
           }
         </button>
       </div>
     </form>
   </app-modal>
 
-  <!-- Modal 2: Independent Title Verification (Legal Officer) -->
+  <!-- ========================================================================= -->
+  <!-- MODAL 2: INDEPENDENT TITLE VERIFICATION (LEGAL OFFICER)                   -->
+  <!-- ========================================================================= -->
   <app-modal
     [isOpen]="isVerifyModalOpen()"
     title="Independent Legal Title Vetting"
@@ -647,7 +794,7 @@
               {{ verifyingDoc()?.doc_title || verifyingDoc()?.doc_number }}
             </h4>
             <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-              Type: {{ verifyingDoc()?.doc_type }} | Office: {{ verifyingDoc()?.issuing_office }}
+              Category: {{ verifyingDoc()?.document_category }} | Office: {{ verifyingDoc()?.issuing_office }}
             </p>
           </div>
           <span class="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950 px-2.5 py-1 rounded border border-emerald-200 dark:border-emerald-800">
@@ -666,8 +813,10 @@
               class="w-full px-3 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500 font-semibold"
             >
               <option value="VERIFIED">VERIFIED - Title Clear, Chain Intact & Authentic</option>
-              <option value="REQUIRES_CLARIFICATION">REQUIRES CLARIFICATION - Discrepancy Found in Survey or Name</option>
+              <option value="UNDER_VERIFICATION">UNDER VERIFICATION - Sub-Registry / AC Land Search Active</option>
+              <option value="RECEIVED">RECEIVED - Initial Document Stored</option>
               <option value="REJECTED">REJECTED - Title Defect, Disputed or Invalid Deed</option>
+              <option value="EXPIRED">EXPIRED - Statutory Validity Elapsed</option>
             </select>
           </div>
 
@@ -684,29 +833,28 @@
           <!-- Remarks -->
           <div>
             <app-custom-textarea
-              label="Legal Vetting Findings & Volume Search Opinion *"
+              label="Formal Legal Opinion & Title Search Remarks *"
               formControlName="verification_remarks"
-              placeholder="Record details of Sub-Registry Book 1 search, AC Land mutation record verification, and chain link validity..."
-              [rows]="3"
+              placeholder="Detail Volume book inspection, non-encumbrance certificate findings, and DAG boundary confirmation..."
               [required]="true"
+              [rows]="3"
             ></app-custom-textarea>
           </div>
 
           <!-- Physical Records Checkbox -->
-          <div class="p-3 rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/20">
-            <label class="flex items-start gap-2.5 cursor-pointer">
-              <input
-                type="checkbox"
-                formControlName="physical_records_vetted"
-                class="w-4 h-4 mt-0.5 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 dark:border-slate-700"
-              />
-              <span class="text-xs font-semibold text-slate-800 dark:text-slate-200">
-                I certify that I have physically examined the original deed/parcha and cross-verified with official government revenue archives.
-              </span>
+          <div class="flex items-center gap-2 p-3 rounded-lg bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/60">
+            <input 
+              type="checkbox" 
+              id="physicalRecordsVetted"
+              formControlName="physical_records_vetted"
+              class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500"
+            />
+            <label for="physicalRecordsVetted" class="text-xs font-semibold text-emerald-900 dark:text-emerald-200">
+              I confirm that physical volume books and AC Land revenue registers have been inspected.
             </label>
           </div>
 
-          <!-- Form Actions -->
+          <!-- Actions -->
           <div class="flex items-center justify-end gap-2 pt-4 border-t border-slate-200 dark:border-slate-800">
             <button
               type="button"
@@ -725,8 +873,8 @@
                 <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
                 Saving Decision...
               } @else {
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                Commit Legal Decision
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                Authorize Title Decision
               }
             </button>
           </div>
@@ -735,25 +883,181 @@
     }
   </app-modal>
 
-  <!-- Modal 3: AI OCR Document Extraction Simulation & Preview -->
+  <!-- ========================================================================= -->
+  <!-- MODAL 5: LEGAL REVIEW COMMENTS & APPROVAL HISTORY (REQ #14)               -->
+  <!-- ========================================================================= -->
+  <app-modal
+    [isOpen]="isHistoryModalOpen()"
+    title="Legal Review Comments & Approval Audit History"
+    subtitle="Chronological review findings, title chain objections, and formal legal opinions."
+    badge="Review Log"
+    size="lg"
+    (closed)="closeHistoryModal()"
+  >
+    @if (historyDoc()) {
+      <div class="space-y-4 text-xs">
+        <div class="p-3.5 rounded-xl border border-indigo-200 dark:border-indigo-800/60 bg-indigo-50/20 dark:bg-indigo-950/20 flex items-center justify-between">
+          <div>
+            <h4 class="font-bold text-indigo-900 dark:text-indigo-200">{{ historyDoc()?.doc_title || historyDoc()?.doc_number }}</h4>
+            <p class="text-[11px] text-slate-500 mt-0.5">Deed No: {{ historyDoc()?.doc_number }} | Category: {{ historyDoc()?.document_category }}</p>
+          </div>
+          <span class="px-2.5 py-1 rounded-full text-[10px] font-bold border" [ngClass]="getStatusBadgeClass(historyDoc()?.verification_status)">
+            {{ historyDoc()?.verification_status }}
+          </span>
+        </div>
+
+        <!-- Timeline of Previous Comments -->
+        <div class="space-y-2.5 max-h-[40vh] overflow-y-auto pr-1">
+          <h5 class="text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Historical Review Trail</h5>
+          @for (comm of historyDoc()?.review_comments; track comm.date + $index) {
+            <div class="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-850/50 space-y-1">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-slate-900 dark:text-slate-100">{{ comm.reviewer }}</span>
+                <span class="text-[10px] text-slate-400 font-mono">{{ comm.date }}</span>
+              </div>
+              <p class="text-slate-700 dark:text-slate-300">{{ comm.comment }}</p>
+              <div class="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">Decision Status: {{ comm.status }}</div>
+            </div>
+          } @empty {
+            <div class="py-6 text-center text-slate-400">No review comments recorded yet.</div>
+          }
+        </div>
+
+        <!-- Add New Legal Comment Form -->
+        <div class="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-3">
+          <h5 class="text-[11px] font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Append New Legal Finding</h5>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">Set Decision Status</label>
+              <select 
+                [value]="newReviewStatus()"
+                (change)="newReviewStatus.set($any($event.target).value)"
+                class="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-semibold"
+              >
+                <option value="VERIFIED">VERIFIED</option>
+                <option value="UNDER_VERIFICATION">UNDER VERIFICATION</option>
+                <option value="REJECTED">REJECTED</option>
+                <option value="RECEIVED">RECEIVED</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <textarea 
+              [value]="newReviewComment()"
+              (input)="newReviewComment.set($any($event.target).value)"
+              rows="2"
+              placeholder="Enter legal title inspection notes, record room cross-check, or objection details..."
+              class="w-full p-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
+            ></textarea>
+          </div>
+          <div class="flex justify-end">
+            <button 
+              type="button"
+              (click)="addReviewComment()"
+              [disabled]="!newReviewComment().trim()"
+              class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
+            >
+              + Append Review Opinion
+            </button>
+          </div>
+        </div>
+
+        <div class="flex justify-end pt-3 border-t border-slate-200 dark:border-slate-800">
+          <button (click)="closeHistoryModal()" class="px-4 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700">
+            Close
+          </button>
+        </div>
+      </div>
+    }
+  </app-modal>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL 6: DOCUMENT ACCESS RESTRICTIONS & AUDIT TRAIL (REQ #15)             -->
+  <!-- ========================================================================= -->
+  <app-modal
+    [isOpen]="isAuditModalOpen()"
+    title="Document Access Security & Audit Trail"
+    subtitle="Role-based security level and complete digital access log."
+    badge="Audit Trail"
+    size="lg"
+    (closed)="closeAuditModal()"
+  >
+    @if (auditDoc()) {
+      <div class="space-y-4 text-xs">
+        <div class="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-850/50 flex items-center justify-between">
+          <div>
+            <h4 class="font-bold text-slate-900 dark:text-slate-100">{{ auditDoc()?.doc_title || auditDoc()?.doc_number }}</h4>
+            <p class="text-[11px] text-slate-400 mt-0.5">Version: {{ auditDoc()?.document_version || 'v1.0' }} | Ref: {{ auditDoc()?.reference_number || 'N/A' }}</p>
+          </div>
+          <div class="text-right">
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 uppercase">
+              {{ auditDoc()?.access_security_level || 'CONFIDENTIAL' }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Audit Access Log Table -->
+        <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+          <table class="w-full text-left text-xs text-slate-700 dark:text-slate-300">
+            <thead class="bg-slate-100/70 dark:bg-slate-800/60 text-slate-500 font-semibold text-[11px] uppercase">
+              <tr>
+                <th class="py-2.5 px-3">Timestamp</th>
+                <th class="py-2.5 px-3">Authorized User</th>
+                <th class="py-2.5 px-3">Action Type</th>
+                <th class="py-2.5 px-3">Details</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+              @for (log of auditDoc()?.audit_trail; track log.timestamp + $index) {
+                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-850/30">
+                  <td class="py-2 px-3 font-mono text-[11px] text-slate-400">{{ log.timestamp }}</td>
+                  <td class="py-2 px-3 font-semibold">{{ log.user }}</td>
+                  <td class="py-2 px-3">
+                    <span class="px-1.5 py-0.2 rounded text-[10px] font-mono font-bold bg-slate-100 dark:bg-slate-800">
+                      {{ log.action }}
+                    </span>
+                  </td>
+                  <td class="py-2 px-3 text-slate-600 dark:text-slate-400">{{ log.details }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="4" class="py-6 text-center text-slate-400">No security audit logs recorded.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="flex justify-end pt-3 border-t border-slate-200 dark:border-slate-800">
+          <button (click)="closeAuditModal()" class="px-4 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700">
+            Close
+          </button>
+        </div>
+      </div>
+    }
+  </app-modal>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL 3: AI OCR EXTRACTION SIMULATION & PREVIEW                           -->
+  <!-- ========================================================================= -->
   <app-modal
     [isOpen]="isOcrModalOpen()"
-    title="AI OCR Document Field Extraction"
-    subtitle="Automated recognition of deed number, khatian, dag, registered area, and landowner name."
-    badge="AI Assisted"
+    title="AI Document OCR Extraction & Verification"
+    subtitle="Simulate AI optical character recognition to extract deed number, dag/khatian, area and landowner details."
+    badge="AI Document OCR"
     size="lg"
     (closed)="closeOcrModal()"
   >
     @if (ocrDoc()) {
       <div class="space-y-4">
-        <!-- Target Document Info -->
+        <!-- Document Header Card -->
         <div class="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-850/50 flex items-center justify-between">
           <div>
             <h4 class="text-xs font-bold text-slate-900 dark:text-slate-100">
-              {{ ocrDoc()?.doc_title }}
+              {{ ocrDoc()?.doc_title || (ocrDoc()?.doc_type + ' #' + ocrDoc()?.doc_number) }}
             </h4>
             <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-              Doc #: <strong class="text-slate-700 dark:text-slate-300 font-mono">{{ ocrDoc()?.doc_number }}</strong> | File: {{ ocrDoc()?.file_url || 'sample-deed.pdf' }}
+              Category: {{ ocrDoc()?.document_category }} | Office: {{ ocrDoc()?.issuing_office }}
             </p>
           </div>
 
@@ -761,32 +1065,30 @@
             type="button"
             (click)="runOcrSimulation()"
             [disabled]="isOcrRunning()"
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-purple-600 hover:bg-purple-700 text-white transition-colors shadow-2xs disabled:opacity-50"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-purple-600 hover:bg-purple-700 text-white transition-colors disabled:opacity-50"
           >
             @if (isOcrRunning()) {
               <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
-              Extracting Fields...
+              Extracting Text...
             } @else {
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
               Run OCR Extraction
             }
           </button>
         </div>
 
-        <!-- OCR Extracted Fields Output -->
         @if (ocrResult()) {
-          <div class="p-4 rounded-xl border border-purple-200 dark:border-purple-800 bg-purple-50/30 dark:bg-purple-950/20 space-y-3">
+          <div class="p-4 rounded-xl border border-purple-200 dark:border-purple-800 bg-purple-50/50 dark:bg-purple-950/20 space-y-3">
             <div class="flex items-center justify-between">
-              <h4 class="text-xs font-bold text-purple-900 dark:text-purple-300 flex items-center gap-1.5">
-                <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                Extracted Metadata (Subject to Manual Verification)
-              </h4>
-              <span class="text-[11px] font-mono text-purple-700 dark:text-purple-300 font-bold">
-                Confidence: {{ ocrResult()?.confidence_score ? (ocrResult()?.confidence_score * 100 | number:'1.1-1') + '%' : '98.5%' }}
+              <span class="text-xs font-bold text-purple-900 dark:text-purple-200 uppercase tracking-wider">
+                Extracted Title Deed Schedule
+              </span>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+                Confidence: {{ ocrResult()?.confidence_score || '98.5%' }}
               </span>
             </div>
 
-            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-xs">
               <div class="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
                 <span class="text-[10px] text-slate-400 block">Deed Number</span>
                 <span class="font-mono font-bold text-slate-900 dark:text-slate-100">
@@ -850,7 +1152,9 @@
     }
   </app-modal>
 
-  <!-- Modal 4: Parcel Acquisition Document Checklist -->
+  <!-- ========================================================================= -->
+  <!-- MODAL 4: PARCEL ACQUISITION DOCUMENT CHECKLIST (REQ #13)                  -->
+  <!-- ========================================================================= -->
   <app-modal
     [isOpen]="isChecklistModalOpen()"
     title="Parcel Acquisition Document Checklist"

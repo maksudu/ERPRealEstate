@@ -50,7 +50,7 @@ async def get_dashboard_analytics(
     db_dd_items = dd_items_res.scalars().all()
 
     # 5. LIVE VALUATIONS & EXPENDITURES
-    exp_res = await db.execute(select(func.sum(AcquisitionCosting.actual_expenditure_total)))
+    exp_res = await db.execute(select(func.sum(AcquisitionCosting.total_actual_cost_bdt)))
     total_cost_spent = float(exp_res.scalar() or 0.0)
 
     # If no recorded costings yet, aggregate from LandBank indicative costs or live parcels
@@ -148,7 +148,7 @@ async def get_dashboard_analytics(
             activity_feed.append({
                 "id": 200 + dd.id,
                 "title": f"Legal title vetted ({dd.diligence_code})",
-                "subtitle": f"Status: {dd.clearance_status} (Risk: {dd.risk_level})",
+                "subtitle": f"Status: {dd.clearance_status} (Risk: {getattr(dd, 'overall_risk_level', 'LOW')})",
                 "timestamp": "Recent",
                 "type": "verified",
                 "iconBg": "bg-emerald-100 dark:bg-emerald-900/40",

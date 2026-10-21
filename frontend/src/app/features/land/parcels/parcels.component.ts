@@ -75,6 +75,31 @@ export class ParcelsComponent implements OnInit {
   newLinkOwnerId = signal<number | null>(null);
   newLinkSharePercent = signal<number>(50.0);
   newLinkDeedNo = signal<string>('');
+  newLinkOwnershipSource = signal<string>('INHERITANCE');
+  newLinkDocName = signal<string>('');
+  newLinkDocFileUrl = signal<string>('');
+  newLinkDocFileName = signal<string>('');
+  isUploadingLinkDoc = signal<boolean>(false);
+
+  readonly apiBase = 'http://localhost:8000';
+
+  calculatedLinkDecimal = computed(() => {
+    const p = this.selectedParcelForOwners();
+    if (!p) return '0.00';
+    return ((Number(p.total_area_decimal || 0) * this.newLinkSharePercent()) / 100).toFixed(2);
+  });
+
+  calculatedLinkKatha = computed(() => {
+    const p = this.selectedParcelForOwners();
+    if (!p) return '0.00';
+    return ((Number(p.total_area_katha || 0) * this.newLinkSharePercent()) / 100).toFixed(2);
+  });
+
+  calculatedLinkSqft = computed(() => {
+    const p = this.selectedParcelForOwners();
+    if (!p) return '0';
+    return Math.round((Number(p.total_area_sqft || 0) * this.newLinkSharePercent()) / 100).toLocaleString();
+  });
 
 
 
@@ -234,6 +259,29 @@ export class ParcelsComponent implements OnInit {
     });
   }
 
+  onLinkDocSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+    const file = input.files[0];
+    if (!this.newLinkDocName().trim()) {
+      this.newLinkDocName.set(file.name.replace(/\.[^/.]+$/, '').replace(/[_-]/g, ' '));
+    }
+    this.newLinkDocFileName.set(file.name);
+    this.isUploadingLinkDoc.set(true);
+
+    this.landService.uploadLandownerDocument(file, this.newLinkDocName()).subscribe({
+      next: (res) => {
+        this.newLinkDocFileUrl.set(res.file_url);
+        this.newLinkDocFileName.set(res.file_name);
+        this.isUploadingLinkDoc.set(false);
+      },
+      error: (err) => {
+        alert(err.error?.detail || err.message || 'Upload failed');
+        this.isUploadingLinkDoc.set(false);
+      }
+    });
+  }
+
   addOwnerLink(): void {
     const parcel = this.selectedParcelForOwners();
     const ownerId = this.newLinkOwnerId();
@@ -246,13 +294,21 @@ export class ParcelsComponent implements OnInit {
     this.landService.linkOwnerToParcel(parcel.id, {
       landowner_id: ownerId,
       ownership_share_percent: this.newLinkSharePercent(),
-      title_deed_no: this.newLinkDeedNo().trim() || undefined
+      ownership_source: this.newLinkOwnershipSource(),
+      title_deed_no: this.newLinkDeedNo().trim() || undefined,
+      dispute_remarks: this.newLinkDocFileUrl() ? JSON.stringify({
+        doc_name: this.newLinkDocName() || this.newLinkDocFileName(),
+        doc_url: this.newLinkDocFileUrl()
+      }) : undefined
     }).subscribe({
       next: (newLink) => {
         this.parcelOwnerLinks.update(list => [...list, newLink]);
         // Update local parcel linked count
         this.parcels.update(list => list.map(p => p.id === parcel.id ? { ...p, linked_owners_count: (p.linked_owners_count || 0) + 1 } : p));
         this.newLinkOwnerId.set(null);
+        this.newLinkDocName.set('');
+        this.newLinkDocFileUrl.set('');
+        this.newLinkDocFileName.set('');
         this.isLinkingOwner.set(false);
       },
       error: (err) => {

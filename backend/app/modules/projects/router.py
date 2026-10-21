@@ -3,10 +3,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, desc, update, Integer
 from sqlalchemy.orm import selectinload
 from typing import List, Optional
-from datetime import date
+from datetime import date, datetime
+from urllib.parse import urlparse
 
 from app.core.database import get_db
-from app.modules.land.models import LandBank, LandParcel
+from app.modules.land.models import LandBank, LandParcel, Landowner
 from app.modules.projects.models import (
     Project, Tower, AuthorityClearance, BOQItem, Drawing, DrawingRevision, ProjectFeasibility,
     ProjectLandAllocation, ProjectFloor, ProjectUnit, ProjectProfitability, ProjectMilestone,
@@ -37,6 +38,43 @@ from app.modules.projects.schemas import (
 )
 
 router = APIRouter(prefix="/projects", tags=["Project Spatial Planning, Permits & BOQ Master"])
+
+
+def _competent_authority_for_clearance(clearance_type_id: str, project_authority: str) -> str:
+    project_authority = (project_authority or "RAJUK").upper()
+    authority_by_type = {
+        "FIRE_NOC": "FSCD",
+        "AVIATION_HEIGHT": "CAAB",
+        "ENVIRONMENTAL": "DoE",
+        "WASA": "WASA",
+        "DESCO_DPDC": "DESCO_DPDC",
+    }
+    return authority_by_type.get(clearance_type_id, project_authority)
+
+
+def _validate_approved_clearance_evidence(
+    status_value: Optional[str],
+    approved_memo_no: Optional[str],
+    approval_date: Optional[date],
+    document_url: Optional[str],
+) -> None:
+    if (status_value or "").strip().upper() != "APPROVED":
+        return
+
+    missing = []
+    if not (approved_memo_no or "").strip():
+        missing.append("approved memo number")
+    if not approval_date:
+        missing.append("approval date")
+    url = (document_url or "").strip()
+    parsed_url = urlparse(url)
+    if parsed_url.scheme.lower() not in {"http", "https"} or not parsed_url.netloc:
+        missing.append("official approval document URL (http or https)")
+    if missing:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="APPROVED clearances require " + ", ".join(missing) + ".",
+        )
 
 
 # -------------------------------------------------------------
@@ -153,19 +191,38 @@ async def create_project(
         road_width_feet=payload.road_width_feet or 40.0
     )
 
+    initial_status = payload.status or "PLANNING"
+    history_entry = [{
+        "from_status": None,
+        "to_status": initial_status,
+        "changed_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "note": "Initial project registration in Project Master register",
+        "changed_by": "System Admin"
+    }]
+
     project = Project(
         land_bank_id=payload.land_bank_id,
+        parcel_id=payload.parcel_id,
         project_code=payload.project_code.strip().upper(),
         project_name=payload.project_name.strip(),
+        project_name_bn=payload.project_name_bn.strip() if payload.project_name_bn else None,
         company_name=payload.company_name or "Apex Properties Ltd.",
         project_type=payload.project_type or "RESIDENTIAL",
         project_category=payload.project_category or "APARTMENT",
+        project_ownership=payload.project_ownership or "OWNED",
+        division=payload.division or "Dhaka",
         district=payload.district or "Dhaka",
         thana_upazila=payload.thana_upazila or "Gulshan",
+        locality=payload.locality,
         site_address=payload.site_address,
+        latitude=payload.latitude,
+        longitude=payload.longitude,
+        google_maps_url=payload.google_maps_url,
         project_manager=payload.project_manager,
         project_director=payload.project_director,
         department=payload.department or "Engineering & Civil Projects",
+        project_team_structure=payload.project_team_structure,
+        site_offices=payload.site_offices,
         development_authority_id=(payload.development_authority_id or "RAJUK").upper(),
         
         total_land_area_katha=payload.total_land_area_katha or (plot_sqft / 720.0),
@@ -188,12 +245,19 @@ async def create_project(
         
         project_funding_source=payload.project_funding_source or "EQUITY_AND_PRE_SALES",
         cost_center_code=payload.cost_center_code or f"CC-{payload.project_code.strip().upper()}",
+        financial_year=payload.financial_year or "FY 2026-2027",
+        estimated_budget_bdt=payload.estimated_budget_bdt or 0.00,
+        approved_budget_bdt=payload.approved_budget_bdt or 0.00,
         target_customer_segment=payload.target_customer_segment or "UPPER_MIDDLE_CLASS",
         project_scope=payload.project_scope,
         
-        status=payload.status or "PROPOSED",
+        status=initial_status,
         approval_status=payload.approval_status or "DRAFT",
+        project_phase=payload.project_phase or "PLANNING",
         land_parcel_ids=payload.land_parcel_ids,
+        landowner_ids=payload.landowner_ids,
+        status_history=payload.status_history or history_entry,
+        project_documents=payload.project_documents,
         description=payload.description
     )
     db.add(project)
@@ -222,6 +286,9 @@ async def create_project(
         db.add(AuthorityClearance(
             project_id=project.id,
             clearance_type_id=cl_type,
+            authority_name=_competent_authority_for_clearance(
+                cl_type, project.development_authority_id
+            ),
             status="NOT_APPLIED"
         ))
     await db.flush()
@@ -274,9 +341,21 @@ async def update_project(
     if not p:
         raise HTTPException(status_code=404, detail="Project not found")
 
+    old_status = p.status
     for field, val in payload.model_dump(exclude_unset=True).items():
         if hasattr(p, field):
             setattr(p, field, val)
+
+    if payload.status and payload.status != old_status:
+        history = list(p.status_history or [])
+        history.append({
+            "from_status": old_status,
+            "to_status": payload.status,
+            "changed_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "note": f"Lifecycle status updated from {old_status} to {payload.status}",
+            "changed_by": "User"
+        })
+        p.status_history = history
 
     await db.commit()
 
@@ -447,6 +526,36 @@ async def get_project_meta_options(db: AsyncSession = Depends(get_db)):
         for lb in land_banks
     ]
 
+    # Fetch acquired individual parcels
+    parcel_stmt = select(LandParcel).order_by(desc(LandParcel.id)).limit(100)
+    parcel_res = await db.execute(parcel_stmt)
+    parcels_db = parcel_res.scalars().all()
+    parcel_options = [
+        {
+            "value": p.id,
+            "label": f"Parcel #{p.id} [{p.parcel_id}] - Dag: {p.dag_number}, Mouza: {p.mouza_name}",
+            "subLabel": f"{float(p.total_area_decimal or 0):.2f} Decimal ({float(p.total_area_sqft or 0):,.0f} SqFt) - {p.acquisition_status}",
+            "decimal": float(p.total_area_decimal or 0),
+            "sqft": float(p.total_area_sqft or 0),
+            "mouza": p.mouza_name,
+            "status": p.acquisition_status
+        }
+        for p in parcels_db
+    ]
+
+    # Fetch landowners
+    lo_stmt = select(Landowner).order_by(desc(Landowner.id)).limit(100)
+    lo_res = await db.execute(lo_stmt)
+    landowners_db = lo_res.scalars().all()
+    landowner_options = [
+        {
+            "value": lo.id,
+            "label": f"{lo.full_name_en or lo.full_name_bn} ({lo.phone_number or 'No Phone'})",
+            "subLabel": f"NID: {lo.nid_number or 'N/A'} - {lo.present_address or ''}"
+        }
+        for lo in landowners_db
+    ]
+
     # Pre-defined companies
     companies = [
         {"value": "Apex Properties Ltd.", "label": "Apex Properties Ltd.", "subLabel": "Registered Real Estate Developer"},
@@ -460,6 +569,7 @@ async def get_project_meta_options(db: AsyncSession = Depends(get_db)):
         {"value": "RESIDENTIAL", "label": "Residential Development", "subLabel": "Apartments, Condominiums, Villas"},
         {"value": "COMMERCIAL", "label": "Commercial & Retail", "subLabel": "Office Towers, Shopping Malls, Tech Parks"},
         {"value": "MIXED_USE", "label": "Mixed-Use Complex", "subLabel": "Combined Residential, Retail & Hospitality"},
+        {"value": "INDUSTRIAL", "label": "Industrial & Warehousing", "subLabel": "Factory, Logistics, Cold Storage & Warehouses"},
         {"value": "LAND_DEVELOPMENT", "label": "Land Development & Plotting", "subLabel": "Gated Subdivided Residential Estates"}
     ]
 
@@ -467,8 +577,47 @@ async def get_project_meta_options(db: AsyncSession = Depends(get_db)):
         {"value": "APARTMENT", "label": "Luxury Apartment Building", "subLabel": "Standard 14-20 Storey Living"},
         {"value": "CONDOMINIUM", "label": "Gated Condominium Community", "subLabel": "Multi-Tower with Club House & Amenities"},
         {"value": "SHOPPING_COMPLEX", "label": "Commercial Shopping Complex", "subLabel": "Multi-Level Retail Center"},
-        {"value": "COMMERCIAL_TOWER", "label": "Corporate Office Tower", "subLabel": "Grade-A Commercial Space"},
+        {"value": "OFFICE_BUILDING", "label": "Commercial Office Building", "subLabel": "Grade-A Multi-Tenant Corporate Space"},
+        {"value": "COMMERCIAL_TOWER", "label": "Corporate Office Tower", "subLabel": "Grade-A High-Rise Commercial Space"},
         {"value": "DUPLEX", "label": "Exclusive Duplex Suites", "subLabel": "Low-Density Luxury Villas"}
+    ]
+
+    project_ownerships = [
+        {"value": "OWNED", "label": "100% Developer Owned (Direct Acquisition)", "subLabel": "Directly purchased freehold land"},
+        {"value": "JOINT_VENTURE", "label": "Joint Venture (JV with Landowner)", "subLabel": "30-50% area sharing development agreement"},
+        {"value": "PARTNERSHIP", "label": "Consortium / Partnership Project", "subLabel": "Equity or syndicate development arrangement"}
+    ]
+
+    project_phases = [
+        {"value": "FEASIBILITY", "label": "Feasibility & Due Diligence", "subLabel": "Soil test, legal vetting & viability"},
+        {"value": "PLANNING", "label": "Master Planning & Permitting", "subLabel": "RAJUK/CDA layout and architectural vetting"},
+        {"value": "PILING_FOUNDATION", "label": "Piling & Substructure", "subLabel": "Earth excavation, cast-in-situ piling & basement"},
+        {"value": "SUPERSTRUCTURE", "label": "Superstructure Civil Works", "subLabel": "Columns, shear walls, beams & floor slabs"},
+        {"value": "MEP_FINISHING", "label": "MEP & Architectural Finishing", "subLabel": "Electrical, plumbing, brickwork & plaster"},
+        {"value": "HANDOVER_READY", "label": "Handover & Utility Commissioning", "subLabel": "WASA, DESCO, gas & fire certification"}
+    ]
+
+    lifecycle_statuses = [
+        {"value": "DRAFT", "label": "Draft", "subLabel": "Initial proposal draft"},
+        {"value": "FEASIBILITY", "label": "Feasibility", "subLabel": "Detailed soil & financial review"},
+        {"value": "UNDER_REVIEW", "label": "Under Review", "subLabel": "Under board and legal committee review"},
+        {"value": "APPROVED", "label": "Approved", "subLabel": "Board approved for development"},
+        {"value": "PLANNING", "label": "Planning", "subLabel": "Architectural drawings & permit applications"},
+        {"value": "UNDER_CONSTRUCTION", "label": "Under Construction", "subLabel": "Active site civil & structural works"},
+        {"value": "ON_HOLD", "label": "On Hold", "subLabel": "Temporarily stalled or deferred"},
+        {"value": "COMPLETED", "label": "Completed", "subLabel": "Construction 100% completed"},
+        {"value": "CLOSED", "label": "Closed", "subLabel": "Project accounts audited and closed"}
+    ]
+
+    divisions = [
+        {"value": "Dhaka", "label": "Dhaka Division"},
+        {"value": "Chittagong", "label": "Chittagong Division"},
+        {"value": "Rajshahi", "label": "Rajshahi Division"},
+        {"value": "Khulna", "label": "Khulna Division"},
+        {"value": "Barishal", "label": "Barishal Division"},
+        {"value": "Sylhet", "label": "Sylhet Division"},
+        {"value": "Rangpur", "label": "Rangpur Division"},
+        {"value": "Mymensingh", "label": "Mymensingh Division"}
     ]
 
     funding_sources = [
@@ -501,9 +650,15 @@ async def get_project_meta_options(db: AsyncSession = Depends(get_db)):
 
     return {
         "land_banks": land_options,
+        "parcels": parcel_options,
+        "landowners": landowner_options,
         "companies": companies,
         "project_types": project_types,
         "project_categories": project_categories,
+        "project_ownerships": project_ownerships,
+        "project_phases": project_phases,
+        "lifecycle_statuses": lifecycle_statuses,
+        "divisions": divisions,
         "funding_sources": funding_sources,
         "departments": departments,
         "project_managers": project_managers,
@@ -524,12 +679,14 @@ def _calculate_feasibility_metrics(data: dict) -> dict:
 
     cost = (
         float(data.get("land_acquisition_cost", 0) or 0) +
+        float(data.get("jv_landowner_cash_consideration", 0) or 0) +
         float(data.get("legal_and_vetting_expenses", 0) or 0) +
         float(data.get("preliminary_arch_engineering_cost", 0) or 0) +
         float(data.get("estimated_construction_cost", 0) or 0) +
         float(data.get("infrastructure_and_site_dev", 0) or 0) +
         float(data.get("utility_connection_expenses", 0) or 0) +
         float(data.get("professional_authority_fees", 0) or 0) +
+        float(data.get("marketing_and_brokerage_cost", 0) or 0) +
         float(data.get("financing_and_interest_cost", 0) or 0) +
         float(data.get("contingency_reserve", 0) or 0)
     )
@@ -543,10 +700,20 @@ def _calculate_feasibility_metrics(data: dict) -> dict:
     margin_pct = round((gross_profit / revenue * 100.0), 2) if revenue > 0 else 0.0
     roi_pct = round((gross_profit / cost * 100.0), 2) if cost > 0 else 0.0
 
-    # 3 Scenarios
+    # Break-even Analysis
+    saleable_sqft = float(data.get("total_saleable_area_sqft", 0) or 0)
+    common_sqft = float(data.get("total_common_area_sqft", 0) or 0)
+    eff_pct = round((saleable_sqft / (saleable_sqft + common_sqft) * 100.0), 2) if (saleable_sqft + common_sqft) > 0 else 80.0
+    
+    avg_price_per_sqft = (revenue / saleable_sqft) if saleable_sqft > 0 else 10000.0
+    break_even_sales_bdt = cost
+    break_even_sqft = round(cost / avg_price_per_sqft, 2) if avg_price_per_sqft > 0 else 0.0
+    break_even_pct = round((cost / revenue * 100.0), 2) if revenue > 0 else 0.0
+
+    # 3 Scenarios: Base Case (Expected), Optimistic (Best Case), Stress Case (Worst Case)
     scenarios = {
         "base_case": {
-            "name": "Base Feasibility Model",
+            "name": "Expected Case (Base Feasibility Model)",
             "revenue": revenue,
             "cost": cost,
             "profit": gross_profit,
@@ -554,7 +721,7 @@ def _calculate_feasibility_metrics(data: dict) -> dict:
             "roi_percent": roi_pct
         },
         "optimistic_case": {
-            "name": "Optimistic (+10% Sales, -5% Construction Cost)",
+            "name": "Best-Case (+10% Sales Price, -5% Construction Cost)",
             "revenue": round(revenue * 1.10, 2),
             "cost": round(cost * 0.95, 2),
             "profit": round((revenue * 1.10) - (cost * 0.95), 2),
@@ -562,7 +729,7 @@ def _calculate_feasibility_metrics(data: dict) -> dict:
             "roi_percent": round((((revenue * 1.10) - (cost * 0.95)) / (cost * 0.95)) * 100.0, 2) if cost > 0 else 0.0
         },
         "stress_case": {
-            "name": "Stress Test (-15% Sales Price, +15% Cost Escalation)",
+            "name": "Worst-Case / Stress Test (-15% Sales Price, +15% Cost Escalation)",
             "revenue": round(revenue * 0.85, 2),
             "cost": round(cost * 1.15, 2),
             "profit": round((revenue * 0.85) - (cost * 1.15), 2),
@@ -570,6 +737,35 @@ def _calculate_feasibility_metrics(data: dict) -> dict:
             "roi_percent": round((((revenue * 0.85) - (cost * 1.15)) / (cost * 1.15)) * 100.0, 2) if cost > 0 else 0.0
         }
     }
+
+    # 2D Sensitivity Analysis Grid: Cost Variations (-5%, 0%, +5%, +10%, +15%) vs Sales Price Changes (-10%, -5%, 0%, +5%, +10%)
+    price_multipliers = [-0.10, -0.05, 0.00, 0.05, 0.10]
+    cost_multipliers = [-0.05, 0.00, 0.05, 0.10, 0.15]
+    sensitivity_grid = []
+    for c_mult in cost_multipliers:
+        c_val = cost * (1.0 + c_mult)
+        row = {"cost_escalation_pct": round(c_mult * 100, 1), "cost_bdt": round(c_val, 2), "variations": []}
+        for p_mult in price_multipliers:
+            r_val = revenue * (1.0 + p_mult)
+            p_val = r_val - c_val
+            m_val = (p_val / r_val * 100.0) if r_val > 0 else 0.0
+            row["variations"].append({
+                "price_change_pct": round(p_mult * 100, 1),
+                "revenue_bdt": round(r_val, 2),
+                "gross_profit_bdt": round(p_val, 2),
+                "margin_pct": round(m_val, 2)
+            })
+        sensitivity_grid.append(row)
+
+    # Projected Customer Collection Schedule (Milestone-based)
+    collection_schedule = [
+        {"stage": "Booking Advance (10%)", "milestone_pct": 10.0, "projected_amount": round(revenue * 0.10, 2), "tentative_period": "Month 1-3"},
+        {"stage": "Down Payment & Allotment Agreement (15%)", "milestone_pct": 15.0, "projected_amount": round(revenue * 0.15, 2), "tentative_period": "Month 4-6"},
+        {"stage": "Piling & Substructure Completion (15%)", "milestone_pct": 15.0, "projected_amount": round(revenue * 0.15, 2), "tentative_period": "Month 7-10"},
+        {"stage": "Superstructure Roof Casting L1-L14 (30%)", "milestone_pct": 30.0, "projected_amount": round(revenue * 0.30, 2), "tentative_period": "Month 11-18"},
+        {"stage": "Finishing, Brickwork & MEP Works (20%)", "milestone_pct": 20.0, "projected_amount": round(revenue * 0.20, 2), "tentative_period": "Month 19-22"},
+        {"stage": "Handover & Utility Connection (10%)", "milestone_pct": 10.0, "projected_amount": round(revenue * 0.10, 2), "tentative_period": "Month 23-24"}
+    ]
 
     # Cash Flow Projection (8 Quarters)
     cash_flow = [
@@ -591,7 +787,13 @@ def _calculate_feasibility_metrics(data: dict) -> dict:
         "net_profit_after_tax": net_profit_after_tax,
         "profit_margin_percent": margin_pct,
         "roi_percent": roi_pct,
+        "break_even_sales_bdt": break_even_sales_bdt,
+        "break_even_sqft": break_even_sqft,
+        "break_even_percent": break_even_pct,
+        "saleable_efficiency_percent": eff_pct,
         "scenarios": scenarios,
+        "sensitivity_analysis": {"grid": sensitivity_grid},
+        "customer_collection_schedule": collection_schedule,
         "cash_flow_forecast": cash_flow
     }
 
@@ -2186,6 +2388,12 @@ async def create_regulatory_clearance(
     if not proj:
         raise HTTPException(status_code=404, detail="Project not found")
 
+    _validate_approved_clearance_evidence(
+        payload.status,
+        payload.approved_memo_no,
+        payload.approval_date,
+        payload.document_url,
+    )
     rec = AuthorityClearance(**payload.model_dump())
     db.add(rec)
     await db.commit()
@@ -2229,6 +2437,12 @@ async def update_regulatory_clearance(
         raise HTTPException(status_code=404, detail="Regulatory approval record not found")
 
     update_dict = payload.model_dump(exclude_unset=True)
+    _validate_approved_clearance_evidence(
+        update_dict.get("status", rec.status),
+        update_dict.get("approved_memo_no", rec.approved_memo_no),
+        update_dict.get("approval_date", rec.approval_date),
+        update_dict.get("document_url", rec.document_url),
+    )
     for key, val in update_dict.items():
         setattr(rec, key, val)
 
@@ -2264,7 +2478,8 @@ async def seed_standard_statutory_clearances(
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Seeds standard statutory authority clearances required for development projects in Bangladesh:
+    Creates draft clearance templates only. Applicability and current requirements
+    must be confirmed with the competent authority for each project:
     1. Land Use Clearance (LUC)
     2. Building Plan Sanction (RAJUK / CDA)
     3. Structural & Architectural Drawing Approval
@@ -2288,37 +2503,30 @@ async def seed_standard_statutory_clearances(
         }
 
     standard_clearances = [
-        ("LUC", "LAND_USE_PERMIT", "RAJUK", f"CLR-{proj.project_code}-LUC-01", "RAJUK/LUC/2026/891", "RAJUK/APP/LUC/4412", date(2026, 1, 10), date(2026, 2, 20), date(2028, 2, 19), "APPROVED", "Town Planner S. Rahman", "LUC Obtained. Proceed with Building Plan submission."),
-        ("BUILDING_PLAN", "BUILDING_PLAN", "RAJUK", f"CLR-{proj.project_code}-BP-01", "RAJUK/BP/2026/1029", "RAJUK/SANCTION/8812", date(2026, 2, 1), date(2026, 3, 15), date(2029, 3, 14), "APPROVED", "Engr. Kabir Hossain", "Sanctioned for 2B + G + 14 Floors under DBCR 2008."),
-        ("FIRE_NOC", "FIRE_SAFETY_CLEARANCE", "FSCD", f"CLR-{proj.project_code}-FIRE-01", "FSCD/HQ/NOC/2026/410", "FSCD/FIRE/APPROVED/902", date(2026, 2, 15), date(2026, 3, 28), date(2027, 3, 27), "APPROVED", "AD Fire Safety D. Hossain", "Fire hydrant, sprinkler and 2-hour fire stairwell conditions attached."),
-        ("AVIATION_HEIGHT", "DRAWING_APPROVAL", "CAAB", f"CLR-{proj.project_code}-CAAB-01", "CAAB/HQ/HT/2026/112", "CAAB/SANCTION/HT/88", date(2026, 1, 20), date(2026, 2, 25), date(2031, 2, 24), "APPROVED", "Aerodrome Officer M. Alam", "Approved maximum height: 45.00 meters above mean sea level."),
-        ("ENVIRONMENTAL", "ENVIRONMENTAL_CLEARANCE", "DoE", f"CLR-{proj.project_code}-DOE-01", "DOE/ECC/ORANGE-B/2026/55", "DOE/CERT/2026/910", date(2026, 2, 10), date(2026, 4, 5), date(2027, 4, 4), "APPROVED", "Deputy Director Environment", "Orange-B category clearance with mandatory STP/ETP provisions."),
-        ("WASA", "UTILITY_SERVICE", "WASA", f"CLR-{proj.project_code}-WASA-01", "DWASA/MODS/ZONE-5/441", None, date(2026, 3, 1), None, None, "IN_REVIEW", "Revenue Officer WASA", "Sewerage main pipe connection fee paid. Inspection pending."),
-        ("DESCO_DPDC", "UTILITY_SERVICE", "DESCO_DPDC", f"CLR-{proj.project_code}-ELEC-01", "DESCO/SUB-STATION/2026/89", None, date(2026, 3, 10), None, None, "SUBMITTED", "Executive Engineer DESCO", "Dedicated 500 KVA substation room space verified in basement 1."),
-        ("CONSTRUCTION_INSPECTION", "CONSTRUCTION_INSPECTION", "RAJUK", f"CLR-{proj.project_code}-INSP-01", "RAJUK/INSP/ZONE-4/PLINTH", None, date(2026, 4, 1), None, None, "DRAFT", "Authorised Officer Zone 4", "Plinth casting milestone inspection checklist prepared."),
-        ("OCCUPANCY_CERT", "OCCUPANCY_CERTIFICATE", "RAJUK", f"CLR-{proj.project_code}-OC-01", None, None, None, None, None, "NOT_APPLIED", "Compliance Director", "To be applied upon completion of civil, electrical, fire and utility works.")
+        ("LUC", "LAND_USE_PERMIT"),
+        ("BUILDING_PLAN", "BUILDING_PLAN"),
+        ("FIRE_NOC", "FIRE_SAFETY_CLEARANCE"),
+        ("AVIATION_HEIGHT", "DRAWING_APPROVAL"),
+        ("ENVIRONMENTAL", "ENVIRONMENTAL_CLEARANCE"),
+        ("WASA", "UTILITY_SERVICE"),
+        ("DESCO_DPDC", "UTILITY_SERVICE"),
+        ("CONSTRUCTION_INSPECTION", "CONSTRUCTION_INSPECTION"),
+        ("OCCUPANCY_CERT", "OCCUPANCY_CERTIFICATE"),
     ]
 
     created = 0
-    for c_type, cat, auth, ref, app_memo, apprv_memo, sub_dt, app_dt, exp_dt, st, off, next_act in standard_clearances:
+    for c_type, cat in standard_clearances:
         rec = AuthorityClearance(
             project_id=project_id,
-            reference_no=ref,
+            reference_no=f"CLR-{proj.project_code}-{c_type}-01",
             clearance_type_id=c_type,
             approval_category=cat,
-            authority_name=auth,
-            application_memo_no=app_memo,
-            approved_memo_no=apprv_memo,
-            submission_date=sub_dt,
-            approval_date=app_dt,
-            expiry_date=exp_dt,
-            validity_months=12 if exp_dt else 0,
-            responsible_officer=off,
-            next_action=next_act,
-            status=st,
-            sanctioned_floors="2B + G + 14 Floors" if c_type in ["BUILDING_PLAN", "LUC"] else None,
-            sanctioned_height_m=45.00 if c_type == "AVIATION_HEIGHT" else None,
-            remarks=f"Statutory compliance requirement for {proj.project_name}"
+            authority_name=_competent_authority_for_clearance(
+                c_type, proj.development_authority_id
+            ),
+            status="NOT_APPLIED",
+            next_action="Confirm applicability, competent authority, and current requirements before application.",
+            remarks="Template record only; confirm project-specific and authority-specific requirements.",
         )
         db.add(rec)
         created += 1
@@ -3367,4 +3575,3 @@ async def delete_project_risk_issue(risk_id: int, db: AsyncSession = Depends(get
     await db.delete(record)
     await db.commit()
     return None
-

@@ -554,15 +554,26 @@ class ProjectBase(BaseModel):
 
     project_code: str
     project_name: str
+    project_name_bn: Optional[str] = None
     company_name: Optional[str] = "Apex Properties Ltd."
     project_type: str = "RESIDENTIAL"
     project_category: str = "APARTMENT"
+    project_ownership: str = "OWNED"
+    
+    division: str = "Dhaka"
     district: str = "Dhaka"
     thana_upazila: str = "Gulshan"
+    locality: Optional[str] = None
     site_address: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    google_maps_url: Optional[str] = None
+    
     project_manager: Optional[str] = None
     project_director: Optional[str] = None
     department: Optional[str] = "Engineering & Civil Projects"
+    project_team_structure: Optional[Dict[str, Any]] = None
+    site_offices: Optional[List[Dict[str, Any]]] = None
     development_authority_id: str = "RAJUK"
     
     total_land_area_katha: float = 0.00
@@ -585,27 +596,46 @@ class ProjectBase(BaseModel):
     
     project_funding_source: str = "EQUITY_AND_PRE_SALES"
     cost_center_code: Optional[str] = None
+    financial_year: str = "FY 2026-2027"
+    estimated_budget_bdt: float = 0.00
+    approved_budget_bdt: float = 0.00
     target_customer_segment: Optional[str] = "UPPER_MIDDLE_CLASS"
     project_scope: Optional[str] = None
     
-    status: str = "PROPOSED"
+    status: str = "PLANNING"
     approval_status: str = "DRAFT"
+    project_phase: str = "PLANNING"
     land_parcel_ids: Optional[List[int]] = None
+    landowner_ids: Optional[List[int]] = None
+    status_history: Optional[List[Dict[str, Any]]] = None
+    project_documents: Optional[List[Dict[str, Any]]] = None
     description: Optional[str] = None
 
 class ProjectCreate(BaseModel):
     land_bank_id: Optional[int] = None
+    parcel_id: Optional[int] = None
     project_code: str
     project_name: str
+    project_name_bn: Optional[str] = None
     company_name: Optional[str] = "Apex Properties Ltd."
     project_type: Optional[str] = "RESIDENTIAL"
     project_category: Optional[str] = "APARTMENT"
+    project_ownership: Optional[str] = "OWNED"
+    
+    division: Optional[str] = "Dhaka"
     district: Optional[str] = "Dhaka"
     thana_upazila: Optional[str] = "Gulshan"
+    locality: Optional[str] = None
     site_address: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    google_maps_url: Optional[str] = None
+    
     project_manager: Optional[str] = None
     project_director: Optional[str] = None
     department: Optional[str] = "Engineering & Civil Projects"
+    project_team_structure: Optional[Dict[str, Any]] = None
+    site_offices: Optional[List[Dict[str, Any]]] = None
     development_authority_id: Optional[str] = "RAJUK"
     
     total_land_area_katha: Optional[float] = 0.00
@@ -628,27 +658,46 @@ class ProjectCreate(BaseModel):
     
     project_funding_source: Optional[str] = "EQUITY_AND_PRE_SALES"
     cost_center_code: Optional[str] = None
+    financial_year: Optional[str] = "FY 2026-2027"
+    estimated_budget_bdt: Optional[float] = 0.00
+    approved_budget_bdt: Optional[float] = 0.00
     target_customer_segment: Optional[str] = "UPPER_MIDDLE_CLASS"
     project_scope: Optional[str] = None
     
-    status: Optional[str] = "PROPOSED"
+    status: Optional[str] = "PLANNING"
     approval_status: Optional[str] = "DRAFT"
+    project_phase: Optional[str] = "PLANNING"
     land_parcel_ids: Optional[List[int]] = None
+    landowner_ids: Optional[List[int]] = None
+    status_history: Optional[List[Dict[str, Any]]] = None
+    project_documents: Optional[List[Dict[str, Any]]] = None
     description: Optional[str] = None
     towers: Optional[List[TowerCreate]] = []
 
 class ProjectUpdate(BaseModel):
     land_bank_id: Optional[int] = None
+    parcel_id: Optional[int] = None
     project_name: Optional[str] = None
+    project_name_bn: Optional[str] = None
     company_name: Optional[str] = None
     project_type: Optional[str] = None
     project_category: Optional[str] = None
+    project_ownership: Optional[str] = None
+    
+    division: Optional[str] = None
     district: Optional[str] = None
     thana_upazila: Optional[str] = None
+    locality: Optional[str] = None
     site_address: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    google_maps_url: Optional[str] = None
+    
     project_manager: Optional[str] = None
     project_director: Optional[str] = None
     department: Optional[str] = None
+    project_team_structure: Optional[Dict[str, Any]] = None
+    site_offices: Optional[List[Dict[str, Any]]] = None
     development_authority_id: Optional[str] = None
     
     total_land_area_katha: Optional[float] = None
@@ -671,16 +720,24 @@ class ProjectUpdate(BaseModel):
     
     project_funding_source: Optional[str] = None
     cost_center_code: Optional[str] = None
+    financial_year: Optional[str] = None
+    estimated_budget_bdt: Optional[float] = None
+    approved_budget_bdt: Optional[float] = None
     target_customer_segment: Optional[str] = None
     project_scope: Optional[str] = None
     status: Optional[str] = None
     approval_status: Optional[str] = None
+    project_phase: Optional[str] = None
     land_parcel_ids: Optional[List[int]] = None
+    landowner_ids: Optional[List[int]] = None
+    status_history: Optional[List[Dict[str, Any]]] = None
+    project_documents: Optional[List[Dict[str, Any]]] = None
     description: Optional[str] = None
 
 class ProjectResponse(ProjectBase):
     id: int
     land_bank_id: Optional[int] = None
+    parcel_id: Optional[int] = None
     towers: List[TowerResponse] = []
     clearances: List[AuthorityClearanceResponse] = []
     boq_items: List[BOQItemResponse] = []
@@ -700,24 +757,34 @@ class ProjectFeasibilityBase(BaseModel):
     version_label: str = "V1.0"
     
     land_acquisition_cost: float = 0.00
+    jv_landowner_cash_consideration: float = 0.00
     legal_and_vetting_expenses: float = 0.00
     preliminary_arch_engineering_cost: float = 0.00
     estimated_construction_cost: float = 0.00
     infrastructure_and_site_dev: float = 0.00
     utility_connection_expenses: float = 0.00
     professional_authority_fees: float = 0.00
+    marketing_and_brokerage_cost: float = 0.00
     financing_and_interest_cost: float = 0.00
     contingency_reserve: float = 0.00
     
     proposed_building_height_meters: float = 45.00
     proposed_floor_count: int = 14
     proposed_unit_count: int = 56
+    apartment_unit_count: int = 40
+    commercial_unit_count: int = 8
+    parking_bay_count: int = 50
     total_saleable_area_sqft: float = 0.00
+    total_common_area_sqft: float = 0.00
+    saleable_efficiency_percent: float = 80.00
     
     landowner_jv_sharing_ratio: str = "50:50"
     developer_share_sqft: float = 0.00
     landowner_share_sqft: float = 0.00
     
+    avg_apartment_rate_sqft: float = 10000.00
+    avg_commercial_rate_sqft: float = 15000.00
+    avg_parking_rate_unit: float = 600000.00
     estimated_apartment_sales_revenue: float = 0.00
     estimated_commercial_sales_revenue: float = 0.00
     estimated_parking_sales_revenue: float = 0.00
@@ -731,13 +798,24 @@ class ProjectFeasibilityBase(BaseModel):
     profit_margin_percent: float = 0.00
     roi_percent: float = 0.00
     
-    cash_flow_forecast: Optional[Dict[str, Any]] = None
+    break_even_sales_bdt: float = 0.00
+    break_even_sqft: float = 0.00
+    break_even_percent: float = 0.00
+    
+    project_duration_months: int = 24
+    expected_start_date: Optional[date] = None
+    expected_handover_date: Optional[date] = None
+    cash_flow_forecast: Optional[List[Dict[str, Any]]] = None
+    customer_collection_schedule: Optional[List[Dict[str, Any]]] = None
     scenario_models: Optional[Dict[str, Any]] = None
+    sensitivity_analysis: Optional[Dict[str, Any]] = None
     
     status: str = "DRAFT"
     reviewed_by: Optional[str] = None
     review_date: Optional[date] = None
     review_remarks: Optional[str] = None
+    investment_committee_notes: Optional[str] = None
+    committee_decision: Optional[str] = "RECOMMENDED"
 
 class ProjectFeasibilityCreate(BaseModel):
     project_id: int
@@ -746,29 +824,45 @@ class ProjectFeasibilityCreate(BaseModel):
     version_label: Optional[str] = "V1.0"
     
     land_acquisition_cost: Optional[float] = 0.00
+    jv_landowner_cash_consideration: Optional[float] = 0.00
     legal_and_vetting_expenses: Optional[float] = 0.00
     preliminary_arch_engineering_cost: Optional[float] = 0.00
     estimated_construction_cost: Optional[float] = 0.00
     infrastructure_and_site_dev: Optional[float] = 0.00
     utility_connection_expenses: Optional[float] = 0.00
     professional_authority_fees: Optional[float] = 0.00
+    marketing_and_brokerage_cost: Optional[float] = 0.00
     financing_and_interest_cost: Optional[float] = 0.00
     contingency_reserve: Optional[float] = 0.00
     
     proposed_building_height_meters: Optional[float] = 45.00
     proposed_floor_count: Optional[int] = 14
     proposed_unit_count: Optional[int] = 56
+    apartment_unit_count: Optional[int] = 40
+    commercial_unit_count: Optional[int] = 8
+    parking_bay_count: Optional[int] = 50
     total_saleable_area_sqft: Optional[float] = 0.00
+    total_common_area_sqft: Optional[float] = 0.00
+    saleable_efficiency_percent: Optional[float] = 80.00
     
     landowner_jv_sharing_ratio: Optional[str] = "50:50"
     
+    avg_apartment_rate_sqft: Optional[float] = 10000.00
+    avg_commercial_rate_sqft: Optional[float] = 15000.00
+    avg_parking_rate_unit: Optional[float] = 600000.00
     estimated_apartment_sales_revenue: Optional[float] = 0.00
     estimated_commercial_sales_revenue: Optional[float] = 0.00
     estimated_parking_sales_revenue: Optional[float] = 0.00
     estimated_other_sales_revenue: Optional[float] = 0.00
     
+    project_duration_months: Optional[int] = 24
+    expected_start_date: Optional[date] = None
+    expected_handover_date: Optional[date] = None
+    
     status: Optional[str] = "DRAFT"
     review_remarks: Optional[str] = None
+    investment_committee_notes: Optional[str] = None
+    committee_decision: Optional[str] = "RECOMMENDED"
 
 class ProjectFeasibilityResponse(ProjectFeasibilityBase):
     id: int
@@ -780,22 +874,33 @@ class ProjectFeasibilityResponse(ProjectFeasibilityBase):
 
 class FeasibilitySimulationRequest(BaseModel):
     land_acquisition_cost: float = 0.00
+    jv_landowner_cash_consideration: float = 0.00
     legal_and_vetting_expenses: float = 0.00
     preliminary_arch_engineering_cost: float = 0.00
     estimated_construction_cost: float = 0.00
     infrastructure_and_site_dev: float = 0.00
     utility_connection_expenses: float = 0.00
     professional_authority_fees: float = 0.00
+    marketing_and_brokerage_cost: float = 0.00
     financing_and_interest_cost: float = 0.00
     contingency_reserve: float = 0.00
     
+    proposed_unit_count: int = 56
+    apartment_unit_count: int = 40
+    commercial_unit_count: int = 8
+    parking_bay_count: int = 50
+    total_saleable_area_sqft: float = 0.00
+    total_common_area_sqft: float = 0.00
+    
+    avg_apartment_rate_sqft: float = 10000.00
+    avg_commercial_rate_sqft: float = 15000.00
+    avg_parking_rate_unit: float = 600000.00
     estimated_apartment_sales_revenue: float = 0.00
     estimated_commercial_sales_revenue: float = 0.00
     estimated_parking_sales_revenue: float = 0.00
     estimated_other_sales_revenue: float = 0.00
     
-    landowner_jv_split_pct: float = 50.00 # 50% landowner, 50% developer
-    total_saleable_area_sqft: float = 0.00
+    landowner_jv_split_pct: float = 50.00
     tax_rate_percent: float = 15.00
 
 
