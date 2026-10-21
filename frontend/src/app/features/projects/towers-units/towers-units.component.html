@@ -1,0 +1,908 @@
+<div class="space-y-6 pb-12">
+  <!-- Top Navigation & Title Header -->
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <div class="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+        <a routerLink="/projects" class="hover:text-emerald-600 transition-colors">Projects</a>
+        <span>/</span>
+        <span class="text-slate-800 dark:text-slate-200 font-semibold">Towers & Units</span>
+      </div>
+      <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+        <span class="p-2 rounded-xl bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-400">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+        </span>
+        Building, Tower, Floor & Unit Configuration
+      </h1>
+      <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
+        Integrated digital model linking land parcels to buildings, towers, vertical floors, units and architectural revisions.
+      </p>
+    </div>
+
+    <!-- Top Action Toolbar -->
+    <div class="flex flex-wrap items-center gap-2.5">
+      <!-- View Switcher -->
+      <div class="inline-flex rounded-xl bg-slate-100 dark:bg-slate-800 p-1 border border-slate-200 dark:border-slate-700">
+        <button
+          type="button"
+          (click)="viewMode.set('tree')"
+          [class]="viewMode() === 'tree' ? 'bg-white dark:bg-slate-700 text-emerald-700 dark:text-emerald-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'"
+          class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"/></svg>
+          Hierarchy Tree
+        </button>
+        <button
+          type="button"
+          (click)="viewMode.set('table')"
+          [class]="viewMode() === 'table' ? 'bg-white dark:bg-slate-700 text-emerald-700 dark:text-emerald-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'"
+          class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+          Data Tables
+        </button>
+      </div>
+
+      <!-- Quick Add Actions -->
+      <div class="flex items-center gap-1.5">
+        <a
+          [routerLink]="['/projects/towers-units', activeTab(), 'new']"
+          class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-xs font-semibold shadow-sm transition-colors"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          Add {{ activeTabLabel() }}
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI Metrics Strip -->
+  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5">
+    <!-- Card 1: Buildings & Towers -->
+    <div class="bg-white dark:bg-slate-900 rounded-xl p-3.5 border border-slate-200 dark:border-slate-800 shadow-xs">
+      <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-medium">
+        <span>Towers / Buildings</span>
+        <span class="p-1.5 bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 rounded-lg">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+        </span>
+      </div>
+      <div class="mt-2 flex items-baseline gap-1.5">
+        <span class="text-xl font-bold text-slate-900 dark:text-white">{{ kpis().totalTowers }}</span>
+        <span class="text-[11px] text-slate-500 dark:text-slate-400">across {{ kpis().totalBuildings }} bldgs</span>
+      </div>
+      <div class="mt-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
+        {{ kpis().activeConstructionTowers }} in construction
+      </div>
+    </div>
+
+    <!-- Card 2: Floors -->
+    <div class="bg-white dark:bg-slate-900 rounded-xl p-3.5 border border-slate-200 dark:border-slate-800 shadow-xs">
+      <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-medium">
+        <span>Total Floor Levels</span>
+        <span class="p-1.5 bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400 rounded-lg">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h18M3 10h18M3 16h18M3 20h18"/></svg>
+        </span>
+      </div>
+      <div class="mt-2 flex items-baseline gap-1.5">
+        <span class="text-xl font-bold text-slate-900 dark:text-white">{{ kpis().totalFloors }}</span>
+        <span class="text-[11px] text-slate-500">floors</span>
+      </div>
+      <div class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+        {{ kpis().basementFloors }} basements · {{ kpis().upperFloors }} upper
+      </div>
+    </div>
+
+    <!-- Card 3: Unit Mix & Inventory -->
+    <div class="bg-white dark:bg-slate-900 rounded-xl p-3.5 border border-slate-200 dark:border-slate-800 shadow-xs">
+      <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-medium">
+        <span>Units & Spaces</span>
+        <span class="p-1.5 bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 rounded-lg">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"/></svg>
+        </span>
+      </div>
+      <div class="mt-2 flex items-baseline gap-1.5">
+        <span class="text-xl font-bold text-slate-900 dark:text-white">{{ kpis().totalUnits }}</span>
+        <span class="text-[11px] text-slate-500">units</span>
+      </div>
+      <div class="mt-1 text-[11px] text-slate-500 dark:text-slate-400 truncate">
+        {{ kpis().residentialUnits }} Res · {{ kpis().commercialUnits }} Com · {{ kpis().parkingBays }} Bays
+      </div>
+    </div>
+
+    <!-- Card 4: Saleable vs Gross Area -->
+    <div class="bg-white dark:bg-slate-900 rounded-xl p-3.5 border border-slate-200 dark:border-slate-800 shadow-xs">
+      <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-medium">
+        <span>Saleable Area</span>
+        <span class="p-1.5 bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 rounded-lg">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+        </span>
+      </div>
+      <div class="mt-2 flex items-baseline gap-1">
+        <span class="text-xl font-bold text-slate-900 dark:text-white">{{ formatNumber(kpis().totalSaleableSqft) }}</span>
+        <span class="text-[11px] text-slate-500">sq ft</span>
+      </div>
+      <div class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+        Gross: {{ formatNumber(kpis().totalGrossSqft) }} sq ft
+      </div>
+    </div>
+
+    <!-- Card 5: Configuration Stage -->
+    <div class="bg-white dark:bg-slate-900 rounded-xl p-3.5 border border-slate-200 dark:border-slate-800 shadow-xs">
+      <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-medium">
+        <span>Approval Stage</span>
+        <span class="p-1.5 bg-purple-50 dark:bg-purple-950 text-purple-600 dark:text-purple-400 rounded-lg">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </span>
+      </div>
+      <div class="mt-2 flex items-baseline gap-1.5">
+        <span class="text-xl font-bold text-emerald-600 dark:text-emerald-400">{{ kpis().approvedStageCount }}</span>
+        <span class="text-[11px] text-slate-500">Approved</span>
+      </div>
+      <div class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+        {{ kpis().proposedStageCount }} Proposed · {{ kpis().asBuiltCount }} As-Built
+      </div>
+    </div>
+
+    <!-- Card 6: Design Revisions -->
+    <div class="bg-white dark:bg-slate-900 rounded-xl p-3.5 border border-slate-200 dark:border-slate-800 shadow-xs">
+      <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-medium">
+        <span>Design Revisions</span>
+        <span class="p-1.5 bg-rose-50 dark:bg-rose-950 text-rose-600 dark:text-rose-400 rounded-lg">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        </span>
+      </div>
+      <div class="mt-2 flex items-baseline gap-1.5">
+        <span class="text-xl font-bold text-slate-900 dark:text-white">{{ kpis().totalRevisions }}</span>
+        <span class="text-[11px] text-slate-500">changes</span>
+      </div>
+      <div class="mt-1 text-[11px] text-amber-600 dark:text-amber-400 font-medium">
+        {{ kpis().pendingRegulatoryRevisions }} require RAJUK NOC
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter & Tab Bar Card -->
+  <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 shadow-xs space-y-4">
+    <!-- Top Filter Row -->
+    <div class="grid gap-3 sm:grid-cols-[1fr_260px_auto]">
+      <!-- Search Input -->
+      <div class="relative">
+        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        </span>
+        <input
+          type="text"
+          class="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none placeholder:text-slate-400"
+          [(ngModel)]="search"
+          (keyup.enter)="loadActiveData()"
+          placeholder="Search by code, name, unit #, floor, drawing ref..."
+        />
+      </div>
+
+      <!-- Project Filter -->
+      <div>
+        <select
+          class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+          [(ngModel)]="projectId"
+          (change)="onProjectChange()"
+        >
+          <option value="">All Projects (Portfolio Wide)</option>
+          @for (p of projects(); track p.id) {
+            <option [value]="p.id">{{ p.project_code }} — {{ p.project_name }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Filter Refresh Button -->
+      <button
+        type="button"
+        (click)="loadActiveData()"
+        class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-semibold transition-colors"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        Filter
+      </button>
+    </div>
+
+    <!-- Tab Strip (For Table Mode) -->
+    @if (viewMode() === 'table') {
+      <div class="flex flex-wrap items-center gap-2 border-t border-slate-200 dark:border-slate-800 pt-3">
+        @for (tab of tabs; track tab.key) {
+          <button
+            type="button"
+            (click)="selectTab(tab.key)"
+            [class]="activeTab() === tab.key
+              ? 'bg-emerald-600 text-white shadow-xs'
+              : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'"
+            class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all"
+          >
+            <span>{{ tab.icon }}</span>
+            <span>{{ tab.label }}</span>
+            <span
+              [class]="activeTab() === tab.key ? 'bg-emerald-700 text-emerald-100' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'"
+              class="px-1.5 py-0.5 rounded-full text-[10px] font-mono"
+            >
+              {{ tabCount(tab.key) }}
+            </span>
+          </button>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Feedback Banners -->
+  @if (error()) {
+    <div role="alert" class="rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 p-4 text-sm text-rose-700 dark:text-rose-300 flex items-center justify-between">
+      <span>{{ error() }}</span>
+      <button (click)="error.set('')" class="text-rose-500 hover:text-rose-700">✕</button>
+    </div>
+  }
+  @if (success()) {
+    <div role="status" class="rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-900 p-4 text-sm text-emerald-700 dark:text-emerald-300 flex items-center justify-between">
+      <span>{{ success() }}</span>
+      <button (click)="success.set('')" class="text-emerald-500 hover:text-emerald-700">✕</button>
+    </div>
+  }
+
+  <!-- ========================================================================= -->
+  <!-- VIEW MODE 1: DIGITAL TWIN HIERARCHY TREE EXPLORER                         -->
+  <!-- ========================================================================= -->
+  @if (viewMode() === 'tree') {
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+      <!-- Left Panel: Towers & Floors Navigation Tree -->
+      <div class="lg:col-span-5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 shadow-xs space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+          <div>
+            <h2 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+              <span>🏛️</span> Towers & Vertical Levels
+            </h2>
+            <p class="text-[11px] text-slate-500">Click any tower or floor to inspect configured units</p>
+          </div>
+          <span class="text-xs font-mono font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded">
+            {{ treeTowers().length }} Towers
+          </span>
+        </div>
+
+        @if (loadingTree()) {
+          <div class="py-12 text-center text-slate-400">
+            <div class="inline-block animate-spin rounded-full h-7 w-7 border-4 border-slate-200 border-t-emerald-600 mb-2"></div>
+            <p class="text-xs">Building hierarchy model…</p>
+          </div>
+        } @else if (!treeTowers().length) {
+          <div class="py-12 text-center text-slate-400">
+            <p class="text-sm">No towers configured for this selection.</p>
+            <a routerLink="/projects/towers-units/towers/new" class="mt-3 inline-block text-xs font-semibold text-emerald-600 hover:underline">
+              + Create First Tower
+            </a>
+          </div>
+        } @else {
+          <div class="space-y-3 max-h-[750px] overflow-y-auto pr-1">
+            @for (tower of treeTowers(); track tower.id) {
+              <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 overflow-hidden">
+                <!-- Tower Header Card -->
+                <div
+                  (click)="selectTreeTower(tower)"
+                  [class.bg-emerald-50]="selectedTowerId() === tower.id"
+                  [class.dark:bg-emerald-950/40]="selectedTowerId() === tower.id"
+                  class="p-3.5 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors flex items-center justify-between"
+                >
+                  <div class="space-y-0.5">
+                    <div class="flex items-center gap-2">
+                      <span class="font-bold text-xs text-slate-900 dark:text-white">{{ tower.tower_code }}</span>
+                      <span class="text-xs text-slate-600 dark:text-slate-300 font-medium">— {{ tower.tower_name }}</span>
+                      <span class="text-[10px] px-1.5 py-0.2 rounded font-mono font-bold" [ngClass]="stageBadgeClass(tower.configuration_stage)">
+                        {{ tower.configuration_stage || 'PROPOSED' }}
+                      </span>
+                    </div>
+                    <div class="text-[11px] text-slate-500 flex items-center gap-2">
+                      <span>Bldg: {{ tower.building_name || 'Main' }}</span>
+                      <span>·</span>
+                      <span>{{ tower.total_floors || 0 }} Flrs</span>
+                      <span>·</span>
+                      <span>{{ tower.total_lifts || 0 }} Lifts</span>
+                      @if (tower.land_parcel_id) {
+                        <span>·</span>
+                        <span class="text-emerald-600 font-medium">Parcel Linked</span>
+                      }
+                    </div>
+                  </div>
+
+                  <div class="flex items-center gap-2">
+                    <button
+                      type="button"
+                      (click)="inspectItem(tower, 'towers'); $event.stopPropagation()"
+                      class="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white dark:hover:bg-slate-700"
+                      title="Inspect 360 BIM Details"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                    </button>
+                    <button
+                      type="button"
+                      (click)="toggleTowerExpand(tower.id); $event.stopPropagation()"
+                      class="text-slate-400 hover:text-slate-600"
+                    >
+                      <svg class="w-4 h-4 transform transition-transform" [class.rotate-180]="isTowerExpanded(tower.id)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Nested Floor Levels (Expandable) -->
+                @if (isTowerExpanded(tower.id)) {
+                  <div class="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 divide-y divide-slate-100 dark:divide-slate-800/60">
+                    @for (flr of towerFloors(tower.id); track flr.id) {
+                      <div
+                        (click)="selectTreeFloor(flr)"
+                        [class.bg-emerald-50]="selectedFloorId() === flr.id"
+                        [class.dark:bg-emerald-950/30]="selectedFloorId() === flr.id"
+                        class="px-4 py-2 text-xs flex items-center justify-between cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                      >
+                        <div class="flex items-center gap-2.5">
+                          <span
+                            [class]="flr.floor_number < 0 ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300' : flr.floor_number === 0 ? 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300' : 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200'"
+                            class="w-8 h-6 flex items-center justify-center font-mono font-bold text-[10px] rounded"
+                          >
+                            {{ flr.floor_number < 0 ? 'B' + Math.abs(flr.floor_number) : flr.floor_number === 0 ? 'G' : 'L' + flr.floor_number }}
+                          </span>
+                          <div>
+                            <span class="font-semibold text-slate-800 dark:text-slate-200">{{ flr.display_name }}</span>
+                            <span class="text-[10px] text-slate-400 ml-1.5 font-normal">({{ flr.floor_type }})</span>
+                          </div>
+                        </div>
+
+                        <div class="flex items-center gap-3 text-[11px] text-slate-500">
+                          <span>{{ formatNumber(flr.floor_area_sqft) }} sq ft</span>
+                          <span class="font-mono text-emerald-600 font-semibold">{{ floorUnitCount(flr.id) }} units</span>
+                        </div>
+                      </div>
+                    }
+                    @if (!towerFloors(tower.id).length) {
+                      <div class="px-4 py-3 text-center text-[11px] text-slate-400">
+                        No floors added yet. <a [routerLink]="['/projects/towers-units/floors/new']" class="text-emerald-600 font-semibold hover:underline">+ Add Floor</a>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Right Panel: Units Grid on Selected Floor / Tower -->
+      <div class="lg:col-span-7 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 shadow-xs space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100 dark:border-slate-800">
+          <div>
+            <h2 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+              <span>🚪</span> Configured Units & Space Layout
+            </h2>
+            <p class="text-[11px] text-slate-500">
+              @if (selectedFloor()) {
+                Showing units for {{ selectedFloor()?.display_name }} (Floor #{{ selectedFloor()?.floor_number }})
+              } @else if (selectedTower()) {
+                Showing all units for {{ selectedTower()?.tower_name }}
+              } @else {
+                Select a floor or tower to inspect units
+              }
+            </p>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <a
+              routerLink="/projects/towers-units/units/new"
+              class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition-colors flex items-center gap-1"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              + Add Unit
+            </a>
+          </div>
+        </div>
+
+        @if (!filteredTreeUnits().length) {
+          <div class="py-16 text-center text-slate-400">
+            <svg class="w-12 h-12 mx-auto text-slate-300 dark:text-slate-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+            <p class="text-sm font-medium">No units found in this view</p>
+            <p class="text-xs text-slate-500 mt-1">Select a tower or floor from the hierarchy tree to see its individual apartments and commercial spaces.</p>
+          </div>
+        } @else {
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 max-h-[750px] overflow-y-auto pr-1">
+            @for (unit of filteredTreeUnits(); track unit.id) {
+              <div class="rounded-xl border border-slate-200 dark:border-slate-800 p-3.5 bg-slate-50/50 dark:bg-slate-800/40 hover:border-emerald-300 dark:hover:border-emerald-700 transition-all shadow-xs flex flex-col justify-between">
+                <div>
+                  <!-- Unit Top Meta -->
+                  <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-1.5">
+                      <span class="font-bold text-sm text-slate-900 dark:text-white font-mono">{{ unit.unit_code }}</span>
+                      <span class="text-[10px] px-2 py-0.5 rounded font-semibold font-mono" [ngClass]="statusBadgeClass(unit.unit_status)">
+                        {{ unit.unit_status || 'AVAILABLE' }}
+                      </span>
+                    </div>
+                    <span class="text-[10px] px-1.5 py-0.5 rounded font-mono font-bold" [ngClass]="stageBadgeClass(unit.configuration_stage)">
+                      {{ unit.configuration_stage || 'PROPOSED' }}
+                    </span>
+                  </div>
+
+                  <!-- Space Typology & Specs -->
+                  <div class="text-xs text-slate-700 dark:text-slate-300 font-medium">
+                    {{ unit.space_type || 'RESIDENTIAL' }} · {{ unit.unit_type || 'Apartment' }}
+                  </div>
+
+                  <div class="mt-2 grid grid-cols-3 gap-1.5 text-center bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-100 dark:border-slate-800 text-[11px]">
+                    <div>
+                      <span class="text-slate-400 block text-[9px] uppercase">Carpet</span>
+                      <span class="font-semibold text-slate-800 dark:text-slate-200">{{ unit.usable_carpet_area_sqft || 0 }} sft</span>
+                    </div>
+                    <div>
+                      <span class="text-slate-400 block text-[9px] uppercase">Balcony</span>
+                      <span class="font-semibold text-slate-800 dark:text-slate-200">{{ unit.balcony_area_sqft || 0 }} sft</span>
+                    </div>
+                    <div>
+                      <span class="text-slate-400 block text-[9px] uppercase">Saleable</span>
+                      <span class="font-semibold text-emerald-600 dark:text-emerald-400">{{ unit.saleable_area_sqft || 0 }} sft</span>
+                    </div>
+                  </div>
+
+                  <!-- Specs icons -->
+                  <div class="mt-2.5 flex items-center justify-between text-xs text-slate-500">
+                    <div class="flex items-center gap-3">
+                      <span>🛏️ {{ unit.bedroom_count || 0 }} Beds</span>
+                      <span>🚿 {{ unit.bathroom_count || 0 }} Baths</span>
+                      <span>🚗 {{ unit.parking_bay_count || 0 }} Bays</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Price & Inspect Button -->
+                <div class="mt-3 pt-2.5 border-t border-slate-200/80 dark:border-slate-800 flex items-center justify-between">
+                  <div class="text-xs">
+                    <span class="text-slate-400 text-[10px] block">Planned Price</span>
+                    <span class="font-bold text-slate-900 dark:text-white">{{ formatBDT(unit.planned_price_bdt) }}</span>
+                  </div>
+
+                  <div class="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      (click)="inspectItem(unit, 'units')"
+                      class="px-2.5 py-1 text-xs font-semibold rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100"
+                    >
+                      360° Specs
+                    </button>
+                    <a
+                      [routerLink]="['/projects/towers-units/units', unit.id, 'edit']"
+                      class="p-1 text-slate-400 hover:text-emerald-600"
+                      title="Edit Unit"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- ========================================================================= -->
+  <!-- VIEW MODE 2: TABULAR RECORDS MANAGEMENT                                  -->
+  <!-- ========================================================================= -->
+  @if (viewMode() === 'table') {
+    <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <!-- ------------------------------------------------------------- -->
+          <!-- TAB 1: TOWERS TABLE HEADERS                                   -->
+          <!-- ------------------------------------------------------------- -->
+          @if (activeTab() === 'towers') {
+            <thead class="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300">
+              <tr>
+                <th class="px-3.5 py-3 font-semibold">Code & Tower Name</th>
+                <th class="px-3.5 py-3 font-semibold">Building Complex</th>
+                <th class="px-3.5 py-3 font-semibold">Land Parcel Link</th>
+                <th class="px-3.5 py-3 font-semibold">Type</th>
+                <th class="px-3.5 py-3 font-semibold text-center">Floors / Lifts / Stairs</th>
+                <th class="px-3.5 py-3 font-semibold">Height / Area</th>
+                <th class="px-3.5 py-3 font-semibold">Drawing References (Arch/MEP/NOC)</th>
+                <th class="px-3.5 py-3 font-semibold">Stage</th>
+                <th class="px-3.5 py-3 font-semibold">Status</th>
+                <th class="px-3.5 py-3 font-semibold text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+              @if (loading()) {
+                <tr><td colspan="10" class="py-12 text-center text-slate-400">Loading towers…</td></tr>
+              } @else if (!rows().length) {
+                <tr><td colspan="10" class="py-12 text-center text-slate-400">No towers configured.</td></tr>
+              } @else {
+                @for (row of rows(); track row.id) {
+                  <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-colors">
+                    <td class="px-3.5 py-3 font-medium">
+                      <div class="font-bold text-slate-900 dark:text-white font-mono">{{ row.tower_code }}</div>
+                      <div class="text-slate-500">{{ row.tower_name }}</div>
+                    </td>
+                    <td class="px-3.5 py-3 text-slate-700 dark:text-slate-300">
+                      {{ row.building_name || 'Main Complex' }}
+                      @if (row.building_code) { <span class="text-[10px] text-slate-400 font-mono block">({{ row.building_code }})</span> }
+                    </td>
+                    <td class="px-3.5 py-3">
+                      @if (row.land_parcel_id) {
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                          Parcel #{{ row.land_parcel_id }}
+                        </span>
+                      } @else {
+                        <span class="text-slate-400 italic">Unlinked</span>
+                      }
+                    </td>
+                    <td class="px-3.5 py-3 text-slate-600 dark:text-slate-400 font-medium">
+                      {{ row.building_type || 'RESIDENTIAL' }}
+                    </td>
+                    <td class="px-3.5 py-3 text-center text-slate-700 dark:text-slate-300 font-mono">
+                      {{ row.total_floors || 0 }} Flrs · {{ row.total_lifts || 0 }} Lfts · {{ row.staircase_count || 0 }} Strs
+                    </td>
+                    <td class="px-3.5 py-3">
+                      <div class="text-slate-800 dark:text-slate-200">{{ formatNumber(row.approved_floor_area_sqft) }} sq ft</div>
+                      <div class="text-[10px] text-slate-400">{{ row.approved_height_m || 0 }}m approved</div>
+                    </td>
+                    <td class="px-3.5 py-3 text-[11px] text-slate-600 dark:text-slate-400">
+                      @if (row.approved_architectural_plan_ref) { <div><span class="font-semibold text-slate-500">Arch:</span> {{ row.approved_architectural_plan_ref }}</div> }
+                      @if (row.structural_drawing_ref) { <div><span class="font-semibold text-slate-500">Str:</span> {{ row.structural_drawing_ref }}</div> }
+                      @if (row.fire_safety_drawing_ref) { <div><span class="font-semibold text-rose-500">Fire NOC:</span> {{ row.fire_safety_drawing_ref }}</div> }
+                      @if (!row.approved_architectural_plan_ref && !row.structural_drawing_ref && !row.fire_safety_drawing_ref) {
+                        <span class="text-slate-400 italic">None recorded</span>
+                      }
+                    </td>
+                    <td class="px-3.5 py-3">
+                      <span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono" [ngClass]="stageBadgeClass(row.configuration_stage)">
+                        {{ row.configuration_stage || 'PROPOSED' }}
+                      </span>
+                    </td>
+                    <td class="px-3.5 py-3">
+                      <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                        {{ row.construction_status || 'PLANNING' }}
+                      </span>
+                    </td>
+                    <td class="px-3.5 py-3 text-right whitespace-nowrap">
+                      <button (click)="inspectItem(row, 'towers')" class="text-slate-600 dark:text-slate-400 hover:text-emerald-600 mr-2 font-medium">View</button>
+                      <a [routerLink]="['/projects/towers-units/towers', row.id, 'edit']" class="text-blue-600 hover:underline mr-2 font-medium">Edit</a>
+                      <button (click)="deleteRow(row, 'towers')" class="text-rose-600 hover:underline font-medium">Delete</button>
+                    </td>
+                  </tr>
+                }
+              }
+            </tbody>
+          }
+
+          <!-- ------------------------------------------------------------- -->
+          <!-- TAB 2: FLOORS TABLE HEADERS                                   -->
+          <!-- ------------------------------------------------------------- -->
+          @if (activeTab() === 'floors') {
+            <thead class="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300">
+              <tr>
+                <th class="px-3.5 py-3 font-semibold">Tower</th>
+                <th class="px-3.5 py-3 font-semibold">Level #</th>
+                <th class="px-3.5 py-3 font-semibold">Floor Display Name</th>
+                <th class="px-3.5 py-3 font-semibold">Space Type</th>
+                <th class="px-3.5 py-3 font-semibold">Floor Area (sq ft)</th>
+                <th class="px-3.5 py-3 font-semibold">Common & Lobby Area</th>
+                <th class="px-3.5 py-3 font-semibold text-center">Lifts & Stairs</th>
+                <th class="px-3.5 py-3 font-semibold">Drawing Reference</th>
+                <th class="px-3.5 py-3 font-semibold">Stage</th>
+                <th class="px-3.5 py-3 font-semibold text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+              @if (loading()) {
+                <tr><td colspan="10" class="py-12 text-center text-slate-400">Loading floors…</td></tr>
+              } @else if (!rows().length) {
+                <tr><td colspan="10" class="py-12 text-center text-slate-400">No floors configured.</td></tr>
+              } @else {
+                @for (row of rows(); track row.id) {
+                  <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-colors">
+                    <td class="px-3.5 py-3 font-medium text-slate-900 dark:text-white">
+                      {{ row.tower_name || 'Tower #' + row.tower_id }}
+                    </td>
+                    <td class="px-3.5 py-3 font-mono font-bold">
+                      <span [class]="row.floor_number < 0 ? 'text-amber-600' : 'text-slate-800 dark:text-slate-200'">
+                        {{ row.floor_number }}
+                      </span>
+                    </td>
+                    <td class="px-3.5 py-3 font-semibold text-slate-800 dark:text-slate-200">
+                      {{ row.display_name }}
+                    </td>
+                    <td class="px-3.5 py-3 text-slate-600 dark:text-slate-400">
+                      {{ row.floor_type }}
+                    </td>
+                    <td class="px-3.5 py-3 font-mono font-medium">
+                      {{ formatNumber(row.floor_area_sqft) }} sq ft
+                    </td>
+                    <td class="px-3.5 py-3 text-[11px] text-slate-600 dark:text-slate-400">
+                      Common: {{ formatNumber(row.common_area_sqft) }} sft · Lobby: {{ formatNumber(row.lobby_area_sqft) }} sft
+                    </td>
+                    <td class="px-3.5 py-3 text-center font-mono">
+                      {{ row.lift_count || 0 }} Lifts · {{ row.staircase_count || 0 }} Stairs
+                    </td>
+                    <td class="px-3.5 py-3 text-[11px] text-slate-500 font-mono">
+                      {{ row.approved_plan_ref || 'N/A' }}
+                    </td>
+                    <td class="px-3.5 py-3">
+                      <span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono" [ngClass]="stageBadgeClass(row.configuration_stage)">
+                        {{ row.configuration_stage || 'PROPOSED' }}
+                      </span>
+                    </td>
+                    <td class="px-3.5 py-3 text-right whitespace-nowrap">
+                      <button (click)="inspectItem(row, 'floors')" class="text-slate-600 dark:text-slate-400 hover:text-emerald-600 mr-2 font-medium">View</button>
+                      <a [routerLink]="['/projects/towers-units/floors', row.id, 'edit']" class="text-blue-600 hover:underline mr-2 font-medium">Edit</a>
+                      <button (click)="deleteRow(row, 'floors')" class="text-rose-600 hover:underline font-medium">Delete</button>
+                    </td>
+                  </tr>
+                }
+              }
+            </tbody>
+          }
+
+          <!-- ------------------------------------------------------------- -->
+          <!-- TAB 3: UNITS TABLE HEADERS                                    -->
+          <!-- ------------------------------------------------------------- -->
+          @if (activeTab() === 'units') {
+            <thead class="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300">
+              <tr>
+                <th class="px-3.5 py-3 font-semibold">Unit Code</th>
+                <th class="px-3.5 py-3 font-semibold">Tower & Floor</th>
+                <th class="px-3.5 py-3 font-semibold">Space Type</th>
+                <th class="px-3.5 py-3 font-semibold text-center">Beds / Baths / Balcony</th>
+                <th class="px-3.5 py-3 font-semibold">Carpet & Balcony</th>
+                <th class="px-3.5 py-3 font-semibold">Saleable Area</th>
+                <th class="px-3.5 py-3 font-semibold">Parking Bays</th>
+                <th class="px-3.5 py-3 font-semibold">Planned Price (BDT ৳)</th>
+                <th class="px-3.5 py-3 font-semibold">Ownership & Status</th>
+                <th class="px-3.5 py-3 font-semibold">Stage</th>
+                <th class="px-3.5 py-3 font-semibold text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+              @if (loading()) {
+                <tr><td colspan="11" class="py-12 text-center text-slate-400">Loading units…</td></tr>
+              } @else if (!rows().length) {
+                <tr><td colspan="11" class="py-12 text-center text-slate-400">No units configured.</td></tr>
+              } @else {
+                @for (row of rows(); track row.id) {
+                  <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-colors">
+                    <td class="px-3.5 py-3 font-mono font-bold text-slate-900 dark:text-white">
+                      {{ row.unit_code }}
+                    </td>
+                    <td class="px-3.5 py-3 text-slate-700 dark:text-slate-300">
+                      {{ row.tower_name || 'Tower ' + row.tower_id }} · Flr {{ row.floor_number }}
+                    </td>
+                    <td class="px-3.5 py-3">
+                      <span class="font-semibold text-slate-800 dark:text-slate-200">{{ row.space_type || 'RESIDENTIAL' }}</span>
+                      <span class="text-[10px] text-slate-400 block">{{ row.unit_type }}</span>
+                    </td>
+                    <td class="px-3.5 py-3 text-center text-slate-700 dark:text-slate-300 font-mono">
+                      {{ row.bedroom_count || 0 }}B / {{ row.bathroom_count || 0 }}Ba / {{ row.balcony_count || 0 }}Bal
+                    </td>
+                    <td class="px-3.5 py-3 text-[11px] text-slate-600 dark:text-slate-400 font-mono">
+                      {{ row.usable_carpet_area_sqft || 0 }} + {{ row.balcony_area_sqft || 0 }} sft
+                    </td>
+                    <td class="px-3.5 py-3 font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                      {{ formatNumber(row.saleable_area_sqft) }} sq ft
+                    </td>
+                    <td class="px-3.5 py-3 text-slate-600 dark:text-slate-400 font-mono">
+                      {{ row.parking_bay_count || 0 }} ({{ row.parking_bay_number || 'N/A' }})
+                    </td>
+                    <td class="px-3.5 py-3 font-semibold text-slate-900 dark:text-white">
+                      {{ formatBDT(row.planned_price_bdt) }}
+                    </td>
+                    <td class="px-3.5 py-3">
+                      <span class="px-2 py-0.5 rounded text-[10px] font-semibold font-mono" [ngClass]="statusBadgeClass(row.unit_status)">
+                        {{ row.unit_status || 'AVAILABLE' }}
+                      </span>
+                    </td>
+                    <td class="px-3.5 py-3">
+                      <span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono" [ngClass]="stageBadgeClass(row.configuration_stage)">
+                        {{ row.configuration_stage || 'PROPOSED' }}
+                      </span>
+                    </td>
+                    <td class="px-3.5 py-3 text-right whitespace-nowrap">
+                      <button (click)="inspectItem(row, 'units')" class="text-slate-600 dark:text-slate-400 hover:text-emerald-600 mr-2 font-medium">360°</button>
+                      <a [routerLink]="['/projects/towers-units/units', row.id, 'edit']" class="text-blue-600 hover:underline mr-2 font-medium">Edit</a>
+                      <button (click)="deleteRow(row, 'units')" class="text-rose-600 hover:underline font-medium">Delete</button>
+                    </td>
+                  </tr>
+                }
+              }
+            </tbody>
+          }
+
+          <!-- ------------------------------------------------------------- -->
+          <!-- TAB 4: DESIGN REVISIONS TABLE HEADERS                          -->
+          <!-- ------------------------------------------------------------- -->
+          @if (activeTab() === 'revisions') {
+            <thead class="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300">
+              <tr>
+                <th class="px-3.5 py-3 font-semibold">Revision Code & Date</th>
+                <th class="px-3.5 py-3 font-semibold">Discipline & Level</th>
+                <th class="px-3.5 py-3 font-semibold">Title & Description</th>
+                <th class="px-3.5 py-3 font-semibold">Regulatory Approval Memo</th>
+                <th class="px-3.5 py-3 font-semibold">Cost Impact (BDT ৳)</th>
+                <th class="px-3.5 py-3 font-semibold">Area Impact (sq ft)</th>
+                <th class="px-3.5 py-3 font-semibold">Drawing References</th>
+                <th class="px-3.5 py-3 font-semibold">Status</th>
+                <th class="px-3.5 py-3 font-semibold text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+              @if (loading()) {
+                <tr><td colspan="9" class="py-12 text-center text-slate-400">Loading design revisions…</td></tr>
+              } @else if (!rows().length) {
+                <tr><td colspan="9" class="py-12 text-center text-slate-400">No design revisions logged.</td></tr>
+              } @else {
+                @for (row of rows(); track row.id) {
+                  <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-colors">
+                    <td class="px-3.5 py-3 font-medium">
+                      <div class="font-bold text-slate-900 dark:text-white font-mono">{{ row.revision_code }}</div>
+                      <div class="text-[10px] text-slate-400">{{ row.revision_date }}</div>
+                    </td>
+                    <td class="px-3.5 py-3">
+                      <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300">
+                        {{ row.revision_type }}
+                      </span>
+                      <span class="text-[10px] text-slate-400 block mt-0.5">Level: {{ row.target_level }}</span>
+                    </td>
+                    <td class="px-3.5 py-3 max-w-xs">
+                      <div class="font-semibold text-slate-900 dark:text-white">{{ row.revision_title }}</div>
+                      <div class="text-[11px] text-slate-500 line-clamp-2">{{ row.description }}</div>
+                    </td>
+                    <td class="px-3.5 py-3 text-[11px]">
+                      @if (row.requires_regulatory_approval) {
+                        <div class="font-semibold text-amber-600">{{ row.regulatory_authority || 'RAJUK' }} Approval Required</div>
+                        <div class="text-slate-500 font-mono">Memo: {{ row.approval_memo_number || 'Pending' }}</div>
+                      } @else {
+                        <span class="text-slate-400">Internal Change Only</span>
+                      }
+                    </td>
+                    <td class="px-3.5 py-3 font-mono font-semibold" [class.text-rose-600]="row.cost_impact_bdt > 0" [class.text-emerald-600]="row.cost_impact_bdt <= 0">
+                      {{ row.cost_impact_bdt > 0 ? '+' : '' }}{{ formatBDT(row.cost_impact_bdt) }}
+                    </td>
+                    <td class="px-3.5 py-3 font-mono font-semibold" [class.text-amber-600]="row.area_impact_sqft != 0">
+                      {{ row.area_impact_sqft > 0 ? '+' : '' }}{{ row.area_impact_sqft || 0 }} sq ft
+                    </td>
+                    <td class="px-3.5 py-3 text-[11px] font-mono text-slate-600 dark:text-slate-400">
+                      @if (row.drawing_reference_new) {
+                        <div>New: {{ row.drawing_reference_new }}</div>
+                      }
+                      @if (row.drawing_reference_old) {
+                        <div class="text-slate-400 text-[10px]">Prev: {{ row.drawing_reference_old }}</div>
+                      }
+                    </td>
+                    <td class="px-3.5 py-3">
+                      <span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono" [ngClass]="revisionStatusBadgeClass(row.revision_status)">
+                        {{ row.revision_status || 'DRAFT' }}
+                      </span>
+                    </td>
+                    <td class="px-3.5 py-3 text-right whitespace-nowrap">
+                      <button (click)="inspectItem(row, 'revisions')" class="text-slate-600 dark:text-slate-400 hover:text-emerald-600 mr-2 font-medium">Inspect</button>
+                      <a [routerLink]="['/projects/towers-units/revisions', row.id, 'edit']" class="text-blue-600 hover:underline mr-2 font-medium">Edit</a>
+                      <button (click)="deleteRow(row, 'revisions')" class="text-rose-600 hover:underline font-medium">Delete</button>
+                    </td>
+                  </tr>
+                }
+              }
+            </tbody>
+          }
+        </table>
+      </div>
+
+      <!-- Pagination Footer -->
+      <div class="p-3.5 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-600 dark:text-slate-400">
+        <div>
+          Showing {{ offset() + 1 }} to {{ Math.min(offset() + limit(), total()) }} of {{ total() }} records
+        </div>
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            class="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 disabled:opacity-40 hover:bg-slate-50 dark:hover:bg-slate-800 font-semibold"
+            [disabled]="offset() === 0 || loading()"
+            (click)="paginate(-1)"
+          >
+            Previous
+          </button>
+          <span class="font-mono text-slate-800 dark:text-slate-200">Page {{ pageNumber() }} / {{ pageCount() }}</span>
+          <button
+            type="button"
+            class="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 disabled:opacity-40 hover:bg-slate-50 dark:hover:bg-slate-800 font-semibold"
+            [disabled]="offset() + limit() >= total() || loading()"
+            (click)="paginate(1)"
+          >
+            Next
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ========================================================================= -->
+  <!-- 360° ITEM INSPECT MODAL                                                   -->
+  <!-- ========================================================================= -->
+  <app-modal
+    [isOpen]="inspectModalOpen()"
+    [title]="inspectTitle()"
+    [subtitle]="inspectSubtitle()"
+    size="lg"
+    [showFooter]="true"
+    (closed)="inspectModalOpen.set(false)"
+  >
+    @if (inspectData()) {
+      <div class="space-y-4 text-xs">
+        <!-- Key Data Chips -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800">
+          @for (prop of inspectProperties(); track prop.label) {
+            <div>
+              <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">{{ prop.label }}</span>
+              <span class="font-semibold text-slate-800 dark:text-slate-200 text-xs mt-0.5 block break-words">{{ prop.value || 'N/A' }}</span>
+            </div>
+          }
+        </div>
+
+        <!-- Narrative details / textareas -->
+        @if (inspectData().lobby_corridor_details || inspectData().common_facilities_description || inspectData().rooftop_service_details || inspectData().specifications || inspectData().description || inspectData().impact_summary) {
+          <div class="space-y-3">
+            @if (inspectData().lobby_corridor_details) {
+              <div>
+                <h4 class="font-semibold text-slate-800 dark:text-slate-200">Lobby & Corridor Configuration</h4>
+                <p class="text-slate-600 dark:text-slate-400 mt-1 bg-white dark:bg-slate-900 p-2.5 rounded border border-slate-200 dark:border-slate-800">{{ inspectData().lobby_corridor_details }}</p>
+              </div>
+            }
+            @if (inspectData().common_facilities_description) {
+              <div>
+                <h4 class="font-semibold text-slate-800 dark:text-slate-200">Common Facilities (Gym, Hall, Rooftop)</h4>
+                <p class="text-slate-600 dark:text-slate-400 mt-1 bg-white dark:bg-slate-900 p-2.5 rounded border border-slate-200 dark:border-slate-800">{{ inspectData().common_facilities_description }}</p>
+              </div>
+            }
+            @if (inspectData().rooftop_service_details) {
+              <div>
+                <h4 class="font-semibold text-slate-800 dark:text-slate-200">Rooftop & MEP Utility Shafts</h4>
+                <p class="text-slate-600 dark:text-slate-400 mt-1 bg-white dark:bg-slate-900 p-2.5 rounded border border-slate-200 dark:border-slate-800">{{ inspectData().rooftop_service_details }}</p>
+              </div>
+            }
+            @if (inspectData().specifications) {
+              <div>
+                <h4 class="font-semibold text-slate-800 dark:text-slate-200">Specifications & Finishes</h4>
+                <p class="text-slate-600 dark:text-slate-400 mt-1 bg-white dark:bg-slate-900 p-2.5 rounded border border-slate-200 dark:border-slate-800">{{ inspectData().specifications }}</p>
+              </div>
+            }
+            @if (inspectData().description) {
+              <div>
+                <h4 class="font-semibold text-slate-800 dark:text-slate-200">Revision Description & Scope</h4>
+                <p class="text-slate-600 dark:text-slate-400 mt-1 bg-white dark:bg-slate-900 p-2.5 rounded border border-slate-200 dark:border-slate-800">{{ inspectData().description }}</p>
+              </div>
+            }
+            @if (inspectData().impact_summary) {
+              <div>
+                <h4 class="font-semibold text-slate-800 dark:text-slate-200">Impact Assessment & Compliance</h4>
+                <p class="text-slate-600 dark:text-slate-400 mt-1 bg-white dark:bg-slate-900 p-2.5 rounded border border-slate-200 dark:border-slate-800">{{ inspectData().impact_summary }}</p>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <div modal-footer class="flex items-center justify-end gap-2">
+      <button
+        type="button"
+        (click)="inspectModalOpen.set(false)"
+        class="px-4 py-2 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300"
+      >
+        Close
+      </button>
+      @if (inspectData() && inspectType()) {
+        <a
+          [routerLink]="['/projects/towers-units', inspectType(), inspectData().id, 'edit']"
+          (click)="inspectModalOpen.set(false)"
+          class="px-4 py-2 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white"
+        >
+          Edit Record
+        </a>
+      }
+    </div>
+  </app-modal>
+</div>

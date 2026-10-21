@@ -88,6 +88,8 @@ class TowerBase(BaseModel):
     tower_code: str
     tower_name: str
     building_code: Optional[str] = None
+    building_name: Optional[str] = "Main Building"
+    land_parcel_id: Optional[int] = None
     building_type: str = "RESIDENTIAL" # RESIDENTIAL, COMMERCIAL, MIXED_USE, SHOPPING_COMPLEX
     total_floors: int = 14
     basement_floors: int = 1
@@ -106,8 +108,19 @@ class TowerBase(BaseModel):
     planned_construction_start: Optional[date] = None
     planned_completion_date: Optional[date] = None
     approval_reference_no: Optional[str] = None
+    approved_architectural_plan_ref: Optional[str] = None
     drawing_references: Optional[str] = None
+    structural_drawing_ref: Optional[str] = None
+    electrical_drawing_ref: Optional[str] = None
+    plumbing_drawing_ref: Optional[str] = None
+    fire_safety_drawing_ref: Optional[str] = None
+    staircase_count: int = 2
+    lobby_corridor_details: Optional[str] = None
+    common_facilities_description: Optional[str] = None
+    rooftop_service_details: Optional[str] = None
+    parking_capacity_cars: int = 0
     construction_status: str = "PLANNING"
+    configuration_stage: str = "APPROVED" # PROPOSED, APPROVED, AS_BUILT
 
 class TowerCreate(TowerBase):
     project_id: Optional[int] = None
@@ -116,6 +129,8 @@ class TowerUpdate(BaseModel):
     tower_code: Optional[str] = None
     tower_name: Optional[str] = None
     building_code: Optional[str] = None
+    building_name: Optional[str] = None
+    land_parcel_id: Optional[int] = None
     building_type: Optional[str] = None
     total_floors: Optional[int] = None
     basement_floors: Optional[int] = None
@@ -133,8 +148,19 @@ class TowerUpdate(BaseModel):
     planned_construction_start: Optional[date] = None
     planned_completion_date: Optional[date] = None
     approval_reference_no: Optional[str] = None
+    approved_architectural_plan_ref: Optional[str] = None
     drawing_references: Optional[str] = None
+    structural_drawing_ref: Optional[str] = None
+    electrical_drawing_ref: Optional[str] = None
+    plumbing_drawing_ref: Optional[str] = None
+    fire_safety_drawing_ref: Optional[str] = None
+    staircase_count: Optional[int] = None
+    lobby_corridor_details: Optional[str] = None
+    common_facilities_description: Optional[str] = None
+    rooftop_service_details: Optional[str] = None
+    parking_capacity_cars: Optional[int] = None
     construction_status: Optional[str] = None
+    configuration_stage: Optional[str] = None
 
 class TowerResponse(TowerBase):
     id: int
@@ -162,10 +188,17 @@ class FloorBase(BaseModel):
     floor_type: str = "RESIDENTIAL"
     floor_area_sqft: float = 0.00
     common_area_sqft: float = 0.00
+    lobby_area_sqft: float = 0.00
+    corridor_area_sqft: float = 0.00
+    staircase_count: int = 1
+    lift_count: int = 2
+    utility_service_details: Optional[str] = None
     planned_units_count: int = 4
     construction_status: str = "NOT_STARTED"
     inspection_status: str = "PENDING"
     inspection_history: Optional[str] = None
+    approved_plan_ref: Optional[str] = None
+    configuration_stage: str = "APPROVED"
 
 class FloorCreate(FloorBase):
     project_id: int
@@ -177,10 +210,17 @@ class FloorUpdate(BaseModel):
     floor_type: Optional[str] = None
     floor_area_sqft: Optional[float] = None
     common_area_sqft: Optional[float] = None
+    lobby_area_sqft: Optional[float] = None
+    corridor_area_sqft: Optional[float] = None
+    staircase_count: Optional[int] = None
+    lift_count: Optional[int] = None
+    utility_service_details: Optional[str] = None
     planned_units_count: Optional[int] = None
     construction_status: Optional[str] = None
     inspection_status: Optional[str] = None
     inspection_history: Optional[str] = None
+    approved_plan_ref: Optional[str] = None
+    configuration_stage: Optional[str] = None
 
 class FloorResponse(FloorBase):
     id: int
@@ -206,22 +246,29 @@ class ProjectUnitBase(BaseModel):
 
     unit_code: str
     floor_number: int
+    space_type: str = "RESIDENTIAL"
     unit_type: str = "APARTMENT_3BHK"
     bedroom_count: int = 3
     bathroom_count: int = 3
     balcony_count: int = 2
+    parking_bay_count: int = 1
+    parking_bay_number: Optional[str] = None
     parking_details: Optional[str] = None
     
-    saleable_area_sqft: float = 0.00
     usable_carpet_area_sqft: float = 0.00
+    balcony_area_sqft: float = 0.00
     common_area_allocated_sqft: float = 0.00
+    gross_area_sqft: float = 0.00
+    saleable_area_sqft: float = 0.00
     unit_orientation: str = "SOUTH_FACING"
     specifications: Optional[str] = None
     planned_price_bdt: float = 0.00
     
     ownership_classification: str = "DEVELOPER_INVENTORY"
     unit_status: str = "AVAILABLE"
-    configuration_stage: str = "PLANNED"
+    configuration_stage: str = "APPROVED"
+    approved_plan_reference: Optional[str] = None
+    regulatory_approval_memo: Optional[str] = None
     approval_schedule_ref: Optional[str] = None
     reassignment_authorized: bool = False
     reassignment_reason: Optional[str] = None
@@ -234,20 +281,27 @@ class ProjectUnitCreate(ProjectUnitBase):
 class ProjectUnitUpdate(BaseModel):
     unit_code: Optional[str] = None
     floor_number: Optional[int] = None
+    space_type: Optional[str] = None
     unit_type: Optional[str] = None
     bedroom_count: Optional[int] = None
     bathroom_count: Optional[int] = None
     balcony_count: Optional[int] = None
+    parking_bay_count: Optional[int] = None
+    parking_bay_number: Optional[str] = None
     parking_details: Optional[str] = None
-    saleable_area_sqft: Optional[float] = None
     usable_carpet_area_sqft: Optional[float] = None
+    balcony_area_sqft: Optional[float] = None
     common_area_allocated_sqft: Optional[float] = None
+    gross_area_sqft: Optional[float] = None
+    saleable_area_sqft: Optional[float] = None
     unit_orientation: Optional[str] = None
     specifications: Optional[str] = None
     planned_price_bdt: Optional[float] = None
     ownership_classification: Optional[str] = None
     unit_status: Optional[str] = None
     configuration_stage: Optional[str] = None
+    approved_plan_reference: Optional[str] = None
+    regulatory_approval_memo: Optional[str] = None
     approval_schedule_ref: Optional[str] = None
     reassignment_authorized: Optional[bool] = None
     reassignment_reason: Optional[str] = None
@@ -258,6 +312,81 @@ class ProjectUnitResponse(ProjectUnitBase):
     tower_id: int
     floor_id: Optional[int] = None
     tower_name: Optional[str] = None
+    floor_display_name: Optional[str] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+class ProjectUnitPageResponse(BaseModel):
+    items: List[ProjectUnitResponse]
+    total: int
+    limit: int
+    offset: int
+
+
+# -------------------------------------------------------------
+# Project Design Revision Schemas
+# -------------------------------------------------------------
+class ProjectDesignRevisionBase(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    revision_code: str
+    title: str
+    revision_type: str = "ARCHITECTURAL"
+    target_level: str = "UNIT"
+    previous_configuration: Optional[str] = None
+    proposed_configuration: str
+    reason_for_change: str
+    impact_on_area_sqft: float = 0.00
+    impact_on_cost_bdt: float = 0.00
+    regulatory_approval_required: bool = False
+    regulatory_authority: Optional[str] = None
+    regulatory_memo_no: Optional[str] = None
+    regulatory_approval_date: Optional[date] = None
+    status: str = "PROPOSED"
+    revised_by: Optional[str] = None
+    approved_by: Optional[str] = None
+    approval_date: Optional[date] = None
+
+class ProjectDesignRevisionCreate(ProjectDesignRevisionBase):
+    project_id: int
+    tower_id: Optional[int] = None
+    floor_id: Optional[int] = None
+    unit_id: Optional[int] = None
+
+class ProjectDesignRevisionUpdate(BaseModel):
+    title: Optional[str] = None
+    revision_type: Optional[str] = None
+    target_level: Optional[str] = None
+    previous_configuration: Optional[str] = None
+    proposed_configuration: Optional[str] = None
+    reason_for_change: Optional[str] = None
+    impact_on_area_sqft: Optional[float] = None
+    impact_on_cost_bdt: Optional[float] = None
+    regulatory_approval_required: Optional[bool] = None
+    regulatory_authority: Optional[str] = None
+    regulatory_memo_no: Optional[str] = None
+    regulatory_approval_date: Optional[date] = None
+    status: Optional[str] = None
+    revised_by: Optional[str] = None
+    approved_by: Optional[str] = None
+    approval_date: Optional[date] = None
+
+class ProjectDesignRevisionResponse(ProjectDesignRevisionBase):
+    id: int
+    project_id: int
+    tower_id: Optional[int] = None
+    floor_id: Optional[int] = None
+    unit_id: Optional[int] = None
+    tower_name: Optional[str] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+class ProjectDesignRevisionPageResponse(BaseModel):
+    items: List[ProjectDesignRevisionResponse]
+    total: int
+    limit: int
+    offset: int
+
     project_name: Optional[str] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
@@ -1314,6 +1443,7 @@ class AuthorityClearanceBase(BaseModel):
     next_action: Optional[str] = None
     status: str = "NOT_APPLIED" # DRAFT, NOT_APPLIED, SUBMITTED, QUERY_RAISED, IN_REVIEW, APPROVED, REJECTED, EXPIRED, RENEWAL_PENDING
     document_url: Optional[str] = None
+    approval_evidence_verified: bool = False
     remarks: Optional[str] = None
 
 
@@ -1345,6 +1475,7 @@ class AuthorityClearanceUpdate(BaseModel):
     next_action: Optional[str] = None
     status: Optional[str] = None
     document_url: Optional[str] = None
+    approval_evidence_verified: Optional[bool] = None
     remarks: Optional[str] = None
 
 

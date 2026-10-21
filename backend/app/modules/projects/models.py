@@ -91,6 +91,7 @@ class Project(Base):
     land_allocations = relationship("ProjectLandAllocation", back_populates="project", cascade="all, delete-orphan")
     floors = relationship("ProjectFloor", back_populates="project", cascade="all, delete-orphan")
     units = relationship("ProjectUnit", back_populates="project", cascade="all, delete-orphan")
+    design_revisions = relationship("ProjectDesignRevision", back_populates="project", cascade="all, delete-orphan")
 
 
 class Tower(Base):
@@ -104,6 +105,8 @@ class Tower(Base):
     tower_code = Column(String(64), nullable=False, index=True) # e.g. 'TOWER-A', 'BLOCK-NORTH'
     tower_name = Column(String(128), nullable=False)
     building_code = Column(String(64), nullable=True) # e.g. 'BLD-TWA'
+    building_name = Column(String(128), nullable=True, default="Main Building")
+    land_parcel_id = Column(BigInteger, ForeignKey("lnd_parcels.id", ondelete="SET NULL"), nullable=True)
     building_type = Column(String(64), nullable=False, default="RESIDENTIAL") # RESIDENTIAL, COMMERCIAL, MIXED_USE, SHOPPING_COMPLEX
     total_floors = Column(Integer, nullable=False, default=14)
     basement_floors = Column(Integer, nullable=False, default=1)
@@ -122,16 +125,30 @@ class Tower(Base):
     planned_construction_start = Column(Date, nullable=True)
     planned_completion_date = Column(Date, nullable=True)
     approval_reference_no = Column(String(128), nullable=True)
+    approved_architectural_plan_ref = Column(String(128), nullable=True)
     drawing_references = Column(String(255), nullable=True)
+    structural_drawing_ref = Column(String(128), nullable=True)
+    electrical_drawing_ref = Column(String(128), nullable=True)
+    plumbing_drawing_ref = Column(String(128), nullable=True)
+    fire_safety_drawing_ref = Column(String(128), nullable=True)
+
+    staircase_count = Column(Integer, nullable=False, default=2)
+    lobby_corridor_details = Column(Text, nullable=True)
+    common_facilities_description = Column(Text, nullable=True)
+    rooftop_service_details = Column(Text, nullable=True)
+    parking_capacity_cars = Column(Integer, nullable=False, default=0)
     construction_status = Column(String(64), nullable=False, default="PLANNING") # PLANNING, SUBSTRUCTURE, SUPERSTRUCTURE, FINISHING, COMPLETED
+    configuration_stage = Column(String(64), nullable=False, default="APPROVED") # PROPOSED, APPROVED, AS_BUILT
 
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
 
     project = relationship("Project", back_populates="towers")
+    land_parcel = relationship("LandParcel", foreign_keys=[land_parcel_id])
     boq_items = relationship("BOQItem", back_populates="tower", cascade="all, delete-orphan")
     floors = relationship("ProjectFloor", back_populates="tower", cascade="all, delete-orphan")
     units = relationship("ProjectUnit", back_populates="tower", cascade="all, delete-orphan")
+    design_revisions = relationship("ProjectDesignRevision", back_populates="tower", cascade="all, delete-orphan")
 
 
 class ProjectFloor(Base):
@@ -145,13 +162,20 @@ class ProjectFloor(Base):
     tower_id = Column(BigInteger, ForeignKey("prj_towers.id", ondelete="CASCADE"), nullable=False, index=True)
     floor_number = Column(Integer, nullable=False, index=True) # e.g. -2, -1, 0, 1, 2...
     display_name = Column(String(64), nullable=False) # e.g. 'Basement 1', 'Ground Floor', '5th Floor'
-    floor_type = Column(String(64), nullable=False, default="RESIDENTIAL") # BASEMENT, GROUND, PODIUM, RESIDENTIAL, COMMERCIAL, SERVICE, ROOF
+    floor_type = Column(String(64), nullable=False, default="RESIDENTIAL") # BASEMENT, GROUND, PODIUM, RESIDENTIAL, COMMERCIAL, RETAIL, SERVICE, ROOFTOP, UTILITY
     floor_area_sqft = Column(Numeric(12, 2), nullable=False, default=0.00)
     common_area_sqft = Column(Numeric(12, 2), nullable=False, default=0.00)
+    lobby_area_sqft = Column(Numeric(12, 2), nullable=False, default=0.00)
+    corridor_area_sqft = Column(Numeric(12, 2), nullable=False, default=0.00)
+    staircase_count = Column(Integer, nullable=False, default=1)
+    lift_count = Column(Integer, nullable=False, default=2)
+    utility_service_details = Column(Text, nullable=True)
     planned_units_count = Column(Integer, nullable=False, default=4)
     construction_status = Column(String(64), nullable=False, default="NOT_STARTED") # NOT_STARTED, PILING, CASTING, MASONRY, FINISHING, COMPLETED
     inspection_status = Column(String(64), nullable=False, default="PENDING") # PENDING, APPROVED, DEFECT_REPORTED
     inspection_history = Column(Text, nullable=True)
+    approved_plan_ref = Column(String(128), nullable=True)
+    configuration_stage = Column(String(64), nullable=False, default="APPROVED") # PROPOSED, APPROVED, AS_BUILT
 
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
@@ -173,15 +197,20 @@ class ProjectUnit(Base):
     floor_id = Column(BigInteger, ForeignKey("prj_floors.id", ondelete="SET NULL"), nullable=True, index=True)
     floor_number = Column(Integer, nullable=False, index=True)
     unit_code = Column(String(64), nullable=False, index=True) # e.g. 'TWA-05A'
+    space_type = Column(String(64), nullable=False, default="RESIDENTIAL") # RESIDENTIAL, COMMERCIAL, RETAIL, OFFICE, SHOP, PARKING_BAY, PENTHOUSE, DUPLEX, UTILITY
     unit_type = Column(String(64), nullable=False, default="APARTMENT_3BHK") # APARTMENT_2BHK, APARTMENT_3BHK, APARTMENT_4BHK, PENTHOUSE, DUPLEX, SHOP, OFFICE, PARKING_BAY
     bedroom_count = Column(Integer, nullable=False, default=3)
     bathroom_count = Column(Integer, nullable=False, default=3)
     balcony_count = Column(Integer, nullable=False, default=2)
+    parking_bay_count = Column(Integer, nullable=False, default=1)
+    parking_bay_number = Column(String(64), nullable=True)
     parking_details = Column(String(128), nullable=True)
     
-    saleable_area_sqft = Column(Numeric(10, 2), nullable=False, default=0.00)
     usable_carpet_area_sqft = Column(Numeric(10, 2), nullable=False, default=0.00)
+    balcony_area_sqft = Column(Numeric(10, 2), nullable=False, default=0.00)
     common_area_allocated_sqft = Column(Numeric(10, 2), nullable=False, default=0.00)
+    gross_area_sqft = Column(Numeric(10, 2), nullable=False, default=0.00)
+    saleable_area_sqft = Column(Numeric(10, 2), nullable=False, default=0.00)
     unit_orientation = Column(String(64), nullable=False, default="SOUTH_FACING") # SOUTH_FACING, NORTH_FACING, LAKE_VIEW, CORNER_PLOT, ROAD_FACING, GARDEN_VIEW
     specifications = Column(Text, nullable=True)
     planned_price_bdt = Column(Numeric(16, 2), nullable=False, default=0.00)
@@ -189,7 +218,9 @@ class ProjectUnit(Base):
     # Ownership Classification
     ownership_classification = Column(String(64), nullable=False, default="DEVELOPER_INVENTORY") # DEVELOPER_INVENTORY, LANDOWNER_ALLOCATION, JV_PARTNER, INVESTOR_RETAINED
     unit_status = Column(String(64), nullable=False, default="AVAILABLE") # PLANNED, AVAILABLE, ALLOCATED, RESERVED, SOLD, UNDER_CONSTRUCTION, HANDED_OVER
-    configuration_stage = Column(String(64), nullable=False, default="PLANNED") # PLANNED, AUTHORITY_APPROVED
+    configuration_stage = Column(String(64), nullable=False, default="APPROVED") # PROPOSED, APPROVED, AS_BUILT
+    approved_plan_reference = Column(String(128), nullable=True)
+    regulatory_approval_memo = Column(String(128), nullable=True)
     approval_schedule_ref = Column(String(128), nullable=True)
     reassignment_authorized = Column(Boolean, nullable=False, default=False)
     reassignment_reason = Column(Text, nullable=True)
@@ -200,6 +231,43 @@ class ProjectUnit(Base):
     project = relationship("Project", back_populates="units")
     tower = relationship("Tower", back_populates="units")
     floor = relationship("ProjectFloor", back_populates="units")
+
+
+class ProjectDesignRevision(Base):
+    """
+    Architectural, structural, and engineering revision history tracking changes to approved designs.
+    """
+    __tablename__ = "prj_design_revisions"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    project_id = Column(BigInteger, ForeignKey("prj_projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    tower_id = Column(BigInteger, ForeignKey("prj_towers.id", ondelete="SET NULL"), nullable=True, index=True)
+    floor_id = Column(BigInteger, ForeignKey("prj_floors.id", ondelete="SET NULL"), nullable=True)
+    unit_id = Column(BigInteger, ForeignKey("prj_units.id", ondelete="SET NULL"), nullable=True)
+    revision_code = Column(String(64), nullable=False, unique=True)
+    title = Column(String(255), nullable=False)
+    revision_type = Column(String(64), nullable=False, default="ARCHITECTURAL") # ARCHITECTURAL, STRUCTURAL, ELECTRICAL, PLUMBING_MEP, FIRE_SAFETY, SPACE_REALLOCATION
+    target_level = Column(String(64), nullable=False, default="UNIT") # TOWER, FLOOR, UNIT, PROJECT
+    previous_configuration = Column(Text, nullable=True)
+    proposed_configuration = Column(Text, nullable=False)
+    reason_for_change = Column(Text, nullable=False)
+    impact_on_area_sqft = Column(Numeric(10, 2), nullable=False, default=0.00)
+    impact_on_cost_bdt = Column(Numeric(16, 2), nullable=False, default=0.00)
+    regulatory_approval_required = Column(Boolean, nullable=False, default=False)
+    regulatory_authority = Column(String(64), nullable=True)
+    regulatory_memo_no = Column(String(128), nullable=True)
+    regulatory_approval_date = Column(Date, nullable=True)
+    status = Column(String(64), nullable=False, default="PROPOSED") # PROPOSED, SUBMITTED, IN_REVIEW, REGULATORY_APPROVED, REJECTED, IMPLEMENTED
+    revised_by = Column(String(128), nullable=True)
+    approved_by = Column(String(128), nullable=True)
+    approval_date = Column(Date, nullable=True)
+
+    created_at = Column(TIMESTAMP, server_default=func.now())
+    updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
+
+    project = relationship("Project", back_populates="design_revisions")
+    tower = relationship("Tower", back_populates="design_revisions")
+
 
 
 class AuthorityClearance(Base):
@@ -238,6 +306,7 @@ class AuthorityClearance(Base):
     # Status: DRAFT, NOT_APPLIED, SUBMITTED, QUERY_RAISED, IN_REVIEW, APPROVED, REJECTED, EXPIRED, RENEWAL_PENDING
     status = Column(String(32), nullable=False, default="NOT_APPLIED", index=True)
     document_url = Column(String(255), nullable=True)
+    approval_evidence_verified = Column(Boolean, nullable=False, default=False)
     remarks = Column(String(255), nullable=True)
 
     created_at = Column(TIMESTAMP, server_default=func.now())

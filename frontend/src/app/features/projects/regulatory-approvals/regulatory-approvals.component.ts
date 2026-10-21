@@ -50,7 +50,7 @@ import {
         <!-- 2. Sanctioned & Approved -->
         <div class="bg-card border border-border rounded-xl p-4 shadow-2xs">
           <div class="flex items-center justify-between">
-            <span class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Sanctioned & Approved</span>
+            <span class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Evidence-Verified Approved</span>
             <span class="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
               <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -58,7 +58,7 @@ import {
             </span>
           </div>
           <p class="text-2xl font-bold font-display text-emerald-600 dark:text-emerald-400 mt-2">{{ approvedCount() }}</p>
-          <p class="text-[11px] text-muted-foreground mt-1">Valid & In Good Standing</p>
+          <p class="text-[11px] text-muted-foreground mt-1">Excludes legacy/unverified approval records</p>
         </div>
 
         <!-- 3. In Review / Submitted -->
@@ -322,10 +322,10 @@ import {
                     <!-- 8. Status Badge -->
                     <td class="px-4 py-3">
                       <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold border"
-                        [ngClass]="getStatusBadgeClass(c.status)"
+                        [ngClass]="getClearanceStatusBadgeClass(c)"
                       >
-                        <span class="w-1.5 h-1.5 rounded-full" [ngClass]="getStatusDotClass(c.status)"></span>
-                        {{ formatStatus(c.status) }}
+                        <span class="w-1.5 h-1.5 rounded-full" [ngClass]="getClearanceStatusDotClass(c)"></span>
+                        {{ getClearanceStatusLabel(c) }}
                       </span>
                       @if (c.conditions && c.conditions.length > 0) {
                         <div class="mt-1 text-[10px] text-muted-foreground flex items-center gap-1">
@@ -535,9 +535,14 @@ export class ProjectRegulatoryApprovalsComponent implements OnInit {
         } else if (Array.isArray(resp)) {
           this.clearances.set(resp);
           this.totalCount.set(resp.length);
-          this.approvedCount.set(resp.filter((c: any) => c.status === 'APPROVED').length);
+          this.approvedCount.set(resp.filter((c: AuthorityClearance) =>
+            c.status === 'APPROVED' && c.approval_evidence_verified === true
+          ).length);
           this.submittedCount.set(resp.filter((c: any) => c.status === 'SUBMITTED' || c.status === 'IN_REVIEW').length);
-          this.compliancePct.set(100);
+          const verifiedApproved = resp.filter((c: AuthorityClearance) =>
+            c.status === 'APPROVED' && c.approval_evidence_verified === true
+          ).length;
+          this.compliancePct.set(resp.length ? Math.round(verifiedApproved / resp.length * 1000) / 10 : 100);
         }
       },
       error: () => {
@@ -661,6 +666,27 @@ export class ProjectRegulatoryApprovalsComponent implements OnInit {
       'RENEWAL_PENDING': 'Renewal Pending'
     };
     return map[status] || status;
+  }
+
+  getClearanceStatusLabel(clearance: AuthorityClearance): string {
+    if (clearance.status === 'APPROVED' && clearance.approval_evidence_verified !== true) {
+      return 'APPROVED · EVIDENCE UNVERIFIED';
+    }
+    return this.formatStatus(clearance.status);
+  }
+
+  getClearanceStatusBadgeClass(clearance: AuthorityClearance): string {
+    if (clearance.status === 'APPROVED' && clearance.approval_evidence_verified !== true) {
+      return 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30';
+    }
+    return this.getStatusBadgeClass(clearance.status);
+  }
+
+  getClearanceStatusDotClass(clearance: AuthorityClearance): string {
+    if (clearance.status === 'APPROVED' && clearance.approval_evidence_verified !== true) {
+      return 'bg-amber-500';
+    }
+    return this.getStatusDotClass(clearance.status);
   }
 
   getAuthorityBadgeClass(authority: string): string {

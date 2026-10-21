@@ -31,19 +31,27 @@ export class ClearancesComponent implements OnInit {
   selectedProjectId = signal<number | null>(null);
   isLoading = signal<boolean>(false);
   isSubmitting = signal<boolean>(false);
+  saveError = signal<string>('');
   isEditModalOpen = signal<boolean>(false);
   selectedClearance = signal<AuthorityClearance | null>(null);
 
   editForm: FormGroup = this.fb.group({
-    status: ['APPROVED', Validators.required],
+    status: ['NOT_APPLIED', Validators.required],
     application_memo_no: [''],
     approved_memo_no: [''],
     approval_date: [''],
+    document_url: [''],
+    approval_evidence_verified: [false],
     expiry_date: [''],
     remarks: ['']
   });
 
   ngOnInit(): void {
+    this.editForm.get('status')?.valueChanges.subscribe(() => {
+      this.saveError.set('');
+      this.updateApprovalEvidenceValidators();
+    });
+    this.updateApprovalEvidenceValidators();
     this.loadProjects();
     this.loadClearances();
   }
@@ -85,20 +93,62 @@ export class ClearancesComponent implements OnInit {
       application_memo_no: cl.application_memo_no || '',
       approved_memo_no: cl.approved_memo_no || '',
       approval_date: cl.approval_date || '',
+      document_url: cl.document_url || '',
+      approval_evidence_verified: cl.approval_evidence_verified ?? false,
       expiry_date: cl.expiry_date || '',
       remarks: cl.remarks || ''
     });
+    this.saveError.set('');
+    this.updateApprovalEvidenceValidators();
     this.isEditModalOpen.set(true);
   }
 
   closeEditModal(): void {
     this.isEditModalOpen.set(false);
     this.selectedClearance.set(null);
+    this.saveError.set('');
+  }
+
+  requiresApprovalEvidence(): boolean {
+    return this.editForm.get('status')?.value === 'APPROVED';
+  }
+
+  isUnverifiedApproval(clearance: AuthorityClearance): boolean {
+    return clearance.status === 'APPROVED' && clearance.approval_evidence_verified !== true;
+  }
+
+  private updateApprovalEvidenceValidators(): void {
+    const required = this.requiresApprovalEvidence();
+    ['approved_memo_no', 'approval_date', 'document_url', 'approval_evidence_verified'].forEach(fieldName => {
+      const control = this.editForm.get(fieldName);
+      if (!control) return;
+      if (required) {
+        const validators = fieldName === 'approval_evidence_verified'
+          ? [Validators.requiredTrue]
+          : [Validators.required];
+        if (fieldName === 'document_url') {
+          validators.push(Validators.pattern(/^https?:\/\/\S+$/i));
+        }
+        control.setValidators(validators);
+      } else {
+        control.clearValidators();
+      }
+      control.updateValueAndValidity({ emitEvent: false });
+    });
   }
 
   submitUpdate(): void {
     const cl = this.selectedClearance();
     if (!cl) return;
+
+    this.saveError.set('');
+    if (this.editForm.invalid) {
+      this.editForm.markAllAsTouched();
+      if (this.requiresApprovalEvidence()) {
+        this.saveError.set('APPROVED requires an approval memo number, approval date, official document URL, and checked verification attestation.');
+      }
+      return;
+    }
 
     this.isSubmitting.set(true);
     const f = this.editForm.value;
@@ -107,6 +157,8 @@ export class ClearancesComponent implements OnInit {
       application_memo_no: f.application_memo_no || null,
       approved_memo_no: f.approved_memo_no || null,
       approval_date: f.approval_date || null,
+      document_url: f.document_url || null,
+      approval_evidence_verified: f.approval_evidence_verified === true,
       expiry_date: f.expiry_date || null,
       remarks: f.remarks || null
     };
@@ -117,8 +169,18 @@ export class ClearancesComponent implements OnInit {
         this.closeEditModal();
         this.loadClearances();
       },
-      error: () => this.isSubmitting.set(false)
+      error: (err) => {
+        this.isSubmitting.set(false);
+        this.saveError.set(this.apiErrorMessage(err));
+      }
     });
+  }
+
+  private apiErrorMessage(err: any): string {
+    const detail = err?.error?.detail;
+    if (typeof detail === 'string') return detail;
+    if (detail !== undefined) return JSON.stringify(detail);
+    return 'The clearance could not be updated. Check the fields and try again.';
   }
 
   getClearanceLabel(type: string): string {

@@ -341,7 +341,7 @@
       </div>
 
       <!-- Live Computed Financial Summary Banner -->
-      <div class="px-6 py-3 bg-slate-850 border-b border-slate-800 grid grid-cols-2 sm:grid-cols-4 gap-3 text-white">
+      <div class="px-6 py-3 bg-slate-850 border-b border-slate-800 grid grid-cols-2 sm:grid-cols-5 gap-3 text-white">
         <div class="p-2.5 bg-slate-800/80 rounded-xl border border-slate-700">
           <span class="text-[10px] text-slate-400 uppercase font-semibold">Simulated Revenue</span>
           <p class="text-base font-bold text-white mt-0.5 font-display">৳{{ (simulatedRevenue() / 10000000) |
@@ -349,7 +349,7 @@
           <p class="text-[9px] text-slate-400 font-mono">৳{{ simulatedRevenue() | number:'1.0-0' }}</p>
         </div>
         <div class="p-2.5 bg-slate-800/80 rounded-xl border border-slate-700">
-          <span class="text-[10px] text-slate-400 uppercase font-semibold">Simulated Cost</span>
+          <span class="text-[10px] text-slate-400 uppercase font-semibold">Total Dev Cost</span>
           <p class="text-base font-bold text-amber-400 mt-0.5 font-display">৳{{ (simulatedCost() / 10000000) |
             number:'1.2-2' }} Cr</p>
           <p class="text-[9px] text-slate-400 font-mono">৳{{ simulatedCost() | number:'1.0-0' }}</p>
@@ -358,13 +358,17 @@
           <span class="text-[10px] text-slate-400 uppercase font-semibold">Estimated Gross Profit</span>
           <p class="text-base font-bold text-emerald-400 mt-0.5 font-display">৳{{ (simulatedGrossProfit() / 10000000) |
             number:'1.2-2' }} Cr</p>
-          <p class="text-[9px] text-slate-400 font-mono">৳{{ simulatedGrossProfit() | number:'1.0-0' }}</p>
+          <p class="text-[9px] text-slate-400 font-mono">Margin: {{ simulatedProfitMargin() | number:'1.1-1' }}%</p>
         </div>
         <div class="p-2.5 bg-slate-800/80 rounded-xl border border-slate-700">
-          <span class="text-[10px] text-slate-400 uppercase font-semibold">Profit Margin %</span>
-          <p class="text-base font-bold text-emerald-300 mt-0.5 font-display">{{ simulatedProfitMargin() |
-            number:'1.1-1' }}%</p>
-          <p class="text-[9px] text-slate-400">ROI: {{ simulatedRoi() | number:'1.1-1' }}%</p>
+          <span class="text-[10px] text-slate-400 uppercase font-semibold">Break-Even Sales</span>
+          <p class="text-base font-bold text-blue-300 mt-0.5 font-display">৳{{ (simulatedBreakEvenSales() / 10000000) | number:'1.2-2' }} Cr</p>
+          <p class="text-[9px] text-slate-400">{{ simulatedBreakEvenSqft() | number:'1.0-0' }} sft ({{ simulatedBreakEvenPercent() | number:'1.1-1' }}%)</p>
+        </div>
+        <div class="p-2.5 bg-slate-800/80 rounded-xl border border-slate-700">
+          <span class="text-[10px] text-slate-400 uppercase font-semibold">ROI & Efficiency</span>
+          <p class="text-base font-bold text-emerald-300 mt-0.5 font-display">{{ simulatedRoi() | number:'1.1-1' }}% ROI</p>
+          <p class="text-[9px] text-slate-400">Saleable Efficiency: {{ simulatedEfficiencyPercent() | number:'1.1-1' }}%</p>
         </div>
       </div>
 
@@ -379,22 +383,32 @@
         <button type="button" (click)="activeModalTab.set('revenue')"
           [ngClass]="activeModalTab() === 'revenue' ? 'border-emerald-600 text-emerald-600 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'"
           class="py-3 border-b-2 text-xs transition-colors shrink-0">
-          2. Revenue Projections (৳)
+          2. Inventory & Revenue (৳)
         </button>
         <button type="button" (click)="activeModalTab.set('jv')"
           [ngClass]="activeModalTab() === 'jv' ? 'border-emerald-600 text-emerald-600 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'"
           class="py-3 border-b-2 text-xs transition-colors shrink-0">
-          3. Architectural & JV Allocation
+          3. Architectural, Common Area & JV
+        </button>
+        <button type="button" (click)="activeModalTab.set('timeline')"
+          [ngClass]="activeModalTab() === 'timeline' ? 'border-emerald-600 text-emerald-600 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'"
+          class="py-3 border-b-2 text-xs transition-colors shrink-0">
+          4. Development Timeline & Collections
         </button>
         <button type="button" (click)="activeModalTab.set('scenarios')"
           [ngClass]="activeModalTab() === 'scenarios' ? 'border-emerald-600 text-emerald-600 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'"
           class="py-3 border-b-2 text-xs transition-colors shrink-0">
-          4. Scenario Analysis (3 Models)
+          5. Scenarios & Sensitivity Analysis
         </button>
         <button type="button" (click)="activeModalTab.set('cashflow')"
           [ngClass]="activeModalTab() === 'cashflow' ? 'border-emerald-600 text-emerald-600 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'"
           class="py-3 border-b-2 text-xs transition-colors shrink-0">
-          5. Cash-Flow Forecast (8Q)
+          6. Cash-Flow Forecast (8Q)
+        </button>
+        <button type="button" (click)="activeModalTab.set('committee')"
+          [ngClass]="activeModalTab() === 'committee' ? 'border-emerald-600 text-emerald-600 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'"
+          class="py-3 border-b-2 text-xs transition-colors shrink-0">
+          7. Committee Review & Accounting Basis
         </button>
       </div>
 
@@ -428,198 +442,301 @@
         <div class="space-y-4">
           <div
             class="p-3 bg-amber-50/60 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl text-xs text-amber-800 dark:text-amber-300 flex items-center justify-between">
-            <span>Land costs can be imported directly from Land Acquisition records or entered manually.</span>
+            <span>Direct acquisition costs, JV consideration, civil construction, utilities and contingencies.</span>
             <span class="font-bold">Total Estimated Cost: ৳{{ (simulatedCost() / 10000000) | number:'1.2-2' }} Cr</span>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
-              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Land Acquisition Cost
-                (BDT) <span class="text-rose-500">*</span></label>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Land Acquisition Cost (BDT) <span class="text-rose-500">*</span></label>
               <input type="number" formControlName="land_acquisition_cost" (input)="onFormInputChange()"
                 class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold" />
-              <p class="text-[10px] text-slate-400 mt-0.5">Base purchase or JV premium</p>
+              <p class="text-[10px] text-slate-400 mt-0.5">Base purchase or direct land price</p>
             </div>
 
             <div>
-              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Legal & Vetting
-                Expenses (BDT)</label>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">JV Landowner Cash Consideration (BDT)</label>
+              <input type="number" formControlName="jv_landowner_cash_consideration" (input)="onFormInputChange()"
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold" />
+              <p class="text-[10px] text-slate-400 mt-0.5">Signing money / non-refundable advance</p>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Legal & Vetting Expenses (BDT)</label>
               <input type="number" formControlName="legal_and_vetting_expenses" (input)="onFormInputChange()"
                 class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold" />
-              <p class="text-[10px] text-slate-400 mt-0.5">Deed search, mutation, vetting</p>
+              <p class="text-[10px] text-slate-400 mt-0.5">Title search, mutation & legal vetting</p>
             </div>
 
             <div>
-              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Preliminary
-                Architectural & Eng. (BDT)</label>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Preliminary Architectural & Eng. (BDT)</label>
               <input type="number" formControlName="preliminary_arch_engineering_cost" (input)="onFormInputChange()"
                 class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold" />
-              <p class="text-[10px] text-slate-400 mt-0.5">Soil test, structural design & MEP</p>
+              <p class="text-[10px] text-slate-400 mt-0.5">Soil test, structural design & MEP consultancy</p>
             </div>
 
             <div>
-              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Estimated Civil
-                Construction (BDT) <span class="text-rose-500">*</span></label>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Estimated Civil Construction (BDT) <span class="text-rose-500">*</span></label>
               <input type="number" formControlName="estimated_construction_cost" (input)="onFormInputChange()"
                 class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold text-amber-600 dark:text-amber-400" />
-              <p class="text-[10px] text-slate-400 mt-0.5">Piling, structure, finishing & labor</p>
+              <p class="text-[10px] text-slate-400 mt-0.5">Piling, RCC structure, finishing & labor</p>
             </div>
 
             <div>
-              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Infrastructure & Site
-                Development (BDT)</label>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Infrastructure & Site Development (BDT)</label>
               <input type="number" formControlName="infrastructure_and_site_dev" (input)="onFormInputChange()"
                 class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold" />
-              <p class="text-[10px] text-slate-400 mt-0.5">Internal roads, boundary, drainage</p>
+              <p class="text-[10px] text-slate-400 mt-0.5">Internal roads, boundary wall & drainage</p>
             </div>
 
             <div>
-              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Utility Connections
-                (BDT)</label>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Utility Connection Expenses (BDT)</label>
               <input type="number" formControlName="utility_connection_expenses" (input)="onFormInputChange()"
                 class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold" />
-              <p class="text-[10px] text-slate-400 mt-0.5">DESCO/DPDC, WASA, Substation, Gas</p>
+              <p class="text-[10px] text-slate-400 mt-0.5">DESCO/DPDC substation, WASA & Gas</p>
             </div>
 
             <div>
-              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Professional &
-                Authority Fees (BDT)</label>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Regulatory Approvals & Fees (BDT)</label>
               <input type="number" formControlName="professional_authority_fees" (input)="onFormInputChange()"
                 class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold" />
-              <p class="text-[10px] text-slate-400 mt-0.5">RAJUK plan sanction, Fire NOC</p>
+              <p class="text-[10px] text-slate-400 mt-0.5">RAJUK/CDA sanctions, Fire NOC, DOE clearance</p>
             </div>
 
             <div>
-              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Financing & Loan
-                Interest (BDT)</label>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Marketing, Brokerage & Sales (BDT)</label>
+              <input type="number" formControlName="marketing_and_brokerage_cost" (input)="onFormInputChange()"
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold" />
+              <p class="text-[10px] text-slate-400 mt-0.5">Brand marketing, media & broker commissions</p>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Financing & Loan Interest (BDT)</label>
               <input type="number" formControlName="financing_and_interest_cost" (input)="onFormInputChange()"
                 class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold" />
-              <p class="text-[10px] text-slate-400 mt-0.5">Interest during construction</p>
+              <p class="text-[10px] text-slate-400 mt-0.5">Cost of debt during development period</p>
             </div>
 
             <div>
-              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Contingency Reserve
-                (BDT)</label>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Contingency Reserve (BDT)</label>
               <input type="number" formControlName="contingency_reserve" (input)="onFormInputChange()"
                 class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold" />
-              <p class="text-[10px] text-slate-400 mt-0.5">Standard 5% buffer for price escalation</p>
+              <p class="text-[10px] text-slate-400 mt-0.5">Standard 5-10% price escalation buffer</p>
             </div>
           </div>
         </div>
         }
 
-        <!-- TAB 2: REVENUE PROJECTIONS -->
+        <!-- TAB 2: INVENTORY & REVENUE PROJECTIONS -->
         @if (activeModalTab() === 'revenue') {
         <div class="space-y-4">
           <div
             class="p-3 bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl text-xs text-emerald-800 dark:text-emerald-300 flex items-center justify-between">
-            <span>Calculated developer revenue from apartment units, commercial spaces, and parking sales.</span>
-            <span class="font-bold">Total Estimated Revenue: ৳{{ (simulatedRevenue() / 10000000) | number:'1.2-2' }}
-              Cr</span>
+            <span>Inventory units, target price per sq.ft. and projected revenue streams.</span>
+            <div class="flex items-center gap-3">
+              <button type="button" (click)="calculateRevenueFromInventory()"
+                class="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors">
+                Auto-Compute from Rates
+              </button>
+              <span class="font-bold">Total Estimated Revenue: ৳{{ (simulatedRevenue() / 10000000) | number:'1.2-2' }} Cr</span>
+            </div>
           </div>
 
+          <!-- Unit Inventory & Selling Rates -->
+          <div class="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3">
+            <h4 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Unit Inventory & Pricing Benchmarks</h4>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">Apartment Units Count</label>
+                <input type="number" formControlName="apartment_unit_count" (input)="onFormInputChange()"
+                  class="w-full px-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold" />
+              </div>
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">Commercial Units Count</label>
+                <input type="number" formControlName="commercial_unit_count" (input)="onFormInputChange()"
+                  class="w-full px-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold" />
+              </div>
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">Parking Bays Count</label>
+                <input type="number" formControlName="parking_bay_count" (input)="onFormInputChange()"
+                  class="w-full px-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">Avg Apartment Rate (৳/SqFt)</label>
+                <input type="number" formControlName="avg_apartment_rate_sqft" (input)="onFormInputChange()"
+                  class="w-full px-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">Avg Commercial Rate (৳/SqFt)</label>
+                <input type="number" formControlName="avg_commercial_rate_sqft" (input)="onFormInputChange()"
+                  class="w-full px-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">Avg Parking Rate (৳/Bay)</label>
+                <input type="number" formControlName="avg_parking_rate_unit" (input)="onFormInputChange()"
+                  class="w-full px-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold text-emerald-600 dark:text-emerald-400" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Total Revenue Breakup -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Apartment Units Sales
-                Revenue (BDT) <span class="text-rose-500">*</span></label>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Apartment Units Sales Revenue (BDT) <span class="text-rose-500">*</span></label>
               <input type="number" formControlName="estimated_apartment_sales_revenue" (input)="onFormInputChange()"
                 class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold text-emerald-600 dark:text-emerald-400" />
-              <p class="text-[10px] text-slate-400 mt-0.5">Total expected sales from residential units</p>
+              <p class="text-[10px] text-slate-400 mt-0.5">Total expected sales from residential apartments</p>
             </div>
 
             <div>
-              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Commercial & Shop
-                Revenue (BDT)</label>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Commercial & Shop Revenue (BDT)</label>
               <input type="number" formControlName="estimated_commercial_sales_revenue" (input)="onFormInputChange()"
                 class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold" />
-              <p class="text-[10px] text-slate-400 mt-0.5">Retail, offices, ground floor spaces</p>
+              <p class="text-[10px] text-slate-400 mt-0.5">Retail shops, showrooms & offices</p>
             </div>
 
             <div>
-              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Parking Bays Sales
-                Revenue (BDT)</label>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Parking Bays Sales Revenue (BDT)</label>
               <input type="number" formControlName="estimated_parking_sales_revenue" (input)="onFormInputChange()"
                 class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold" />
-              <p class="text-[10px] text-slate-400 mt-0.5">Basement and ground dedicated parking slots</p>
+              <p class="text-[10px] text-slate-400 mt-0.5">Dedicated basement & ground parking bays</p>
             </div>
 
             <div>
-              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Other Income / Club
-                Amenities (BDT)</label>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Other Income / Amenities (BDT)</label>
               <input type="number" formControlName="estimated_other_sales_revenue" (input)="onFormInputChange()"
                 class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold" />
-              <p class="text-[10px] text-slate-400 mt-0.5">Community hall, transfer fees, solar export</p>
+              <p class="text-[10px] text-slate-400 mt-0.5">Rooftop amenities, community club, transfer fees</p>
             </div>
           </div>
         </div>
         }
 
-        <!-- TAB 3: ARCHITECTURAL & JV SPLIT -->
+        <!-- TAB 3: ARCHITECTURAL, COMMON AREA & JV SPLIT -->
         @if (activeModalTab() === 'jv') {
         <div class="space-y-4">
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Proposed Building
-                Height (Meters)</label>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Proposed Building Height (Meters)</label>
               <input type="number" formControlName="proposed_building_height_meters"
                 class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold" />
             </div>
 
             <div>
-              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Proposed Floor
-                Count</label>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Proposed Floor Count</label>
               <input type="number" formControlName="proposed_floor_count"
                 class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold" />
               <p class="text-[10px] text-slate-400 mt-0.5">e.g. 2 Basement + Ground + 13 Floors</p>
             </div>
 
             <div>
-              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Total Unit
-                Count</label>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Total Unit Count</label>
               <input type="number" formControlName="proposed_unit_count"
                 class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold" />
             </div>
           </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Total Saleable Area
-                (SqFt) <span class="text-rose-500">*</span></label>
-              <input type="number" formControlName="total_saleable_area_sqft"
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Estimated Saleable Area (SqFt) <span class="text-rose-500">*</span></label>
+              <input type="number" formControlName="total_saleable_area_sqft" (input)="onFormInputChange()"
                 class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold" />
             </div>
 
             <div>
-              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Landowner JV Sharing
-                Ratio (Landowner:Developer)</label>
-              <select formControlName="landowner_jv_sharing_ratio"
-                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold">
-                <option value="50:50">50:50 (50% Landowner / 50% Developer)</option>
-                <option value="40:60">40:60 (40% Landowner / 60% Developer)</option>
-                <option value="45:55">45:55 (45% Landowner / 55% Developer)</option>
-                <option value="35:65">35:65 (35% Landowner / 65% Developer)</option>
-                <option value="0:100">0:100 (Outright Purchase — 100% Developer)</option>
-              </select>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Estimated Common Area (SqFt)</label>
+              <input type="number" formControlName="total_common_area_sqft" (input)="onFormInputChange()"
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold" />
+              <p class="text-[10px] text-slate-400 mt-0.5">Lobbies, stairs, lifts, service cores</p>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Saleable Efficiency Ratio</label>
+              <div class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold text-emerald-600 dark:text-emerald-400">
+                {{ simulatedEfficiencyPercent() | number:'1.1-1' }}% Efficiency
+              </div>
+              <p class="text-[10px] text-slate-400 mt-0.5">Saleable ÷ (Saleable + Common)</p>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Landowner JV Sharing Ratio (Landowner:Developer)</label>
+            <select formControlName="landowner_jv_sharing_ratio"
+              class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold">
+              <option value="50:50">50:50 (50% Landowner / 50% Developer)</option>
+              <option value="40:60">40:60 (40% Landowner / 60% Developer)</option>
+              <option value="45:55">45:55 (45% Landowner / 55% Developer)</option>
+              <option value="35:65">35:65 (35% Landowner / 65% Developer)</option>
+              <option value="0:100">0:100 (Outright Land Purchase — 100% Developer)</option>
+            </select>
+          </div>
+        </div>
+        }
+
+        <!-- TAB 4: DEVELOPMENT TIMELINE & CUSTOMER COLLECTION SCHEDULE -->
+        @if (activeModalTab() === 'timeline') {
+        <div class="space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Project Duration (Months) <span class="text-rose-500">*</span></label>
+              <input type="number" formControlName="project_duration_months" (input)="onFormInputChange()"
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Expected Start Date</label>
+              <input type="date" formControlName="expected_start_date"
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Expected Handover Date</label>
+              <input type="date" formControlName="expected_handover_date"
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold" />
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <h4 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Projected Customer Collection Milestones</h4>
+            <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold">
+                  <tr>
+                    <th class="px-3.5 py-2.5">Milestone Stage</th>
+                    <th class="px-3.5 py-2.5">Collection %</th>
+                    <th class="px-3.5 py-2.5">Projected Amount (BDT)</th>
+                    <th class="px-3.5 py-2.5">Target Quarter</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
+                  @for (m of customerCollectionSchedule(); track m.stage) {
+                  <tr>
+                    <td class="px-3.5 py-2 text-slate-800 dark:text-slate-200 font-sans font-medium">{{ m.stage }}</td>
+                    <td class="px-3.5 py-2 text-blue-600 dark:text-blue-400 font-bold">{{ m.percent }}%</td>
+                    <td class="px-3.5 py-2 text-emerald-600 dark:text-emerald-400 font-bold">৳{{ m.amount_bdt | number:'1.0-0' }}</td>
+                    <td class="px-3.5 py-2 text-slate-600 dark:text-slate-400 font-sans">{{ m.target_quarter }}</td>
+                  </tr>
+                  }
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
         }
 
-        <!-- TAB 4: SCENARIOS -->
+        <!-- TAB 5: SCENARIOS & SENSITIVITY ANALYSIS -->
         @if (activeModalTab() === 'scenarios') {
         <div class="space-y-4">
           <p class="text-xs text-slate-500 dark:text-slate-400">
-            Automated multi-scenario stress-testing to analyze resilience against construction inflation and price
-            declines:
+            Multi-scenario stress testing (Base, Optimistic, Stress) and 2D sensitivity analysis against cost escalations and market price shifts:
           </p>
 
           @if (scenarios(); as sc) {
           <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
             <!-- Base Case -->
-            <div
-              class="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
-              <span
-                class="inline-flex px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300">
+            <div class="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
+              <span class="inline-flex px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300">
                 {{ sc.base_case.name }}
               </span>
               <div class="text-xs space-y-1 pt-1">
@@ -631,8 +748,7 @@
                   <span>Cost:</span>
                   <span class="font-bold">৳{{ (sc.base_case.cost / 10000000) | number:'1.2-2' }} Cr</span>
                 </div>
-                <div
-                  class="flex justify-between text-emerald-600 font-bold border-t border-slate-200 dark:border-slate-700 pt-1">
+                <div class="flex justify-between text-emerald-600 font-bold border-t border-slate-200 dark:border-slate-700 pt-1">
                   <span>Profit:</span>
                   <span>৳{{ (sc.base_case.profit / 10000000) | number:'1.2-2' }} Cr</span>
                 </div>
@@ -644,10 +760,8 @@
             </div>
 
             <!-- Optimistic Case -->
-            <div
-              class="p-4 bg-emerald-50/50 dark:bg-emerald-950/30 rounded-xl border border-emerald-200 dark:border-emerald-800 space-y-2">
-              <span
-                class="inline-flex px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300">
+            <div class="p-4 bg-emerald-50/50 dark:bg-emerald-950/30 rounded-xl border border-emerald-200 dark:border-emerald-800 space-y-2">
+              <span class="inline-flex px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300">
                 {{ sc.optimistic_case.name }}
               </span>
               <div class="text-xs space-y-1 pt-1">
@@ -659,8 +773,7 @@
                   <span>Cost:</span>
                   <span class="font-bold">৳{{ (sc.optimistic_case.cost / 10000000) | number:'1.2-2' }} Cr</span>
                 </div>
-                <div
-                  class="flex justify-between text-emerald-600 font-bold border-t border-emerald-200 dark:border-emerald-800 pt-1">
+                <div class="flex justify-between text-emerald-600 font-bold border-t border-emerald-200 dark:border-emerald-800 pt-1">
                   <span>Profit:</span>
                   <span>৳{{ (sc.optimistic_case.profit / 10000000) | number:'1.2-2' }} Cr</span>
                 </div>
@@ -672,10 +785,8 @@
             </div>
 
             <!-- Stress Case -->
-            <div
-              class="p-4 bg-rose-50/50 dark:bg-rose-950/30 rounded-xl border border-rose-200 dark:border-rose-800 space-y-2">
-              <span
-                class="inline-flex px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-300">
+            <div class="p-4 bg-rose-50/50 dark:bg-rose-950/30 rounded-xl border border-rose-200 dark:border-rose-800 space-y-2">
+              <span class="inline-flex px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-300">
                 {{ sc.stress_case.name }}
               </span>
               <div class="text-xs space-y-1 pt-1">
@@ -700,15 +811,61 @@
             </div>
           </div>
           }
+
+          <!-- 2D Sensitivity Analysis Grid -->
+          @if (sensitivityGrid(); as sens) {
+          <div class="space-y-2 pt-2">
+            <h4 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+              Sensitivity Matrix: Construction Cost Variations vs Selling Price Shifts (BDT Crore)
+            </h4>
+            <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold">
+                  <tr>
+                    <th class="px-3.5 py-2">Cost Variation</th>
+                    <th class="px-3.5 py-2">Price -10%</th>
+                    <th class="px-3.5 py-2">Price -5%</th>
+                    <th class="px-3.5 py-2 bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white">Base Price</th>
+                    <th class="px-3.5 py-2">Price +5%</th>
+                    <th class="px-3.5 py-2">Price +10%</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
+                  @for (row of sens.matrix; track row.cost_variation) {
+                  <tr>
+                    <td class="px-3.5 py-2 font-bold font-sans" [ngClass]="row.cost_variation === 'Base Cost' ? 'text-blue-600 dark:text-blue-400 font-bold' : 'text-slate-700 dark:text-slate-300'">
+                      {{ row.cost_variation }}
+                    </td>
+                    <td class="px-3.5 py-2" [ngClass]="row.price_down_10 >= 0 ? 'text-emerald-600' : 'text-rose-600'">
+                      ৳{{ (row.price_down_10 / 10000000) | number:'1.2-2' }} Cr
+                    </td>
+                    <td class="px-3.5 py-2" [ngClass]="row.price_down_5 >= 0 ? 'text-emerald-600' : 'text-rose-600'">
+                      ৳{{ (row.price_down_5 / 10000000) | number:'1.2-2' }} Cr
+                    </td>
+                    <td class="px-3.5 py-2 bg-slate-50/50 dark:bg-slate-800/50 font-bold" [ngClass]="row.price_base >= 0 ? 'text-emerald-600' : 'text-rose-600'">
+                      ৳{{ (row.price_base / 10000000) | number:'1.2-2' }} Cr
+                    </td>
+                    <td class="px-3.5 py-2 text-emerald-600 font-bold">
+                      ৳{{ (row.price_up_5 / 10000000) | number:'1.2-2' }} Cr
+                    </td>
+                    <td class="px-3.5 py-2 text-emerald-600 font-bold">
+                      ৳{{ (row.price_up_10 / 10000000) | number:'1.2-2' }} Cr
+                    </td>
+                  </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+          }
         </div>
         }
 
-        <!-- TAB 5: CASH FLOW FORECAST -->
+        <!-- TAB 6: CASH FLOW FORECAST -->
         @if (activeModalTab() === 'cashflow') {
         <div class="space-y-4">
           <p class="text-xs text-slate-500 dark:text-slate-400">
-            Quarterly Cash Inflow (Customer Advances) vs Outflow (Civil Construction & Milestones) across 24-Month
-            Project Lifecycle:
+            Quarterly Cash Inflow (Customer Advances & Milestones) vs Cash Outflow (Civil Construction, Land & Approvals) across 8 Quarters:
           </p>
 
           <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
@@ -737,6 +894,65 @@
                 }
               </tbody>
             </table>
+          </div>
+        </div>
+        }
+
+        <!-- TAB 7: INVESTMENT COMMITTEE REVIEW & ACCOUNTING BASIS -->
+        @if (activeModalTab() === 'committee') {
+        <div class="space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="space-y-3">
+              <h4 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Investment Committee Review & Governance</h4>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Committee Recommendation Decision</label>
+                <select formControlName="committee_decision"
+                  class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold">
+                  <option value="PENDING">PENDING — Under Committee Vetting</option>
+                  <option value="RECOMMENDED_FOR_APPROVAL">RECOMMENDED_FOR_APPROVAL — Strong Viability</option>
+                  <option value="CONDITIONAL_APPROVAL">CONDITIONAL_APPROVAL — Subject to Cost Adjustments</option>
+                  <option value="REVISE_ESTIMATES">REVISE_ESTIMATES — Re-negotiate JV / Civil Rates</option>
+                  <option value="REJECTED">REJECTED — Financially Unviable</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Committee Vetting Notes & Remarks</label>
+                <textarea formControlName="investment_committee_notes" rows="4"
+                  placeholder="Record investment committee rationale, market risk evaluation, and benchmark observations..."
+                  class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"></textarea>
+              </div>
+            </div>
+
+            <!-- Accounting Basis Reference Card -->
+            <div class="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
+              <h4 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Key Financial Indicators & Accounting Basis</h4>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                The ERP defines the calculation basis for each viability benchmark and explicitly segregates projected figures from post-construction audited accounting ledgers:
+              </p>
+              <div class="space-y-1.5 text-[11px] text-slate-700 dark:text-slate-300">
+                <div class="p-1.5 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">
+                  <span class="font-bold text-slate-900 dark:text-white">Total Development Cost:</span>
+                  <span class="text-slate-500"> Land + Construction + Approvals + Marketing + Finance + Contingencies (Accrual basis).</span>
+                </div>
+                <div class="p-1.5 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">
+                  <span class="font-bold text-slate-900 dark:text-white">Projected Revenue:</span>
+                  <span class="text-slate-500"> Contractual gross realizable value at target price/sft & parking slot rates.</span>
+                </div>
+                <div class="p-1.5 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">
+                  <span class="font-bold text-slate-900 dark:text-white">Gross Project Profit:</span>
+                  <span class="text-slate-500"> Projected Revenue − Total Development Cost.</span>
+                </div>
+                <div class="p-1.5 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">
+                  <span class="font-bold text-slate-900 dark:text-white">Break-even Sales:</span>
+                  <span class="text-slate-500"> Sales volume (BDT & SqFt) strictly required to fully recover total development outlay.</span>
+                </div>
+                <div class="p-1.5 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">
+                  <span class="font-bold text-slate-900 dark:text-white">Cash Flow:</span>
+                  <span class="text-slate-500"> Expected customer collection receipts − expected vendor payments over quarterly milestones.</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         }
@@ -821,9 +1037,26 @@
       </div>
 
       <div>
-        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Board / Committee
-          Remarks</label>
-        <textarea [ngModel]="approvalRemarks()" (ngModelChange)="approvalRemarks.set($event)" rows="3"
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Investment Committee Decision</label>
+        <select [ngModel]="committeeDecision()" (ngModelChange)="committeeDecision.set($event)"
+          class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold">
+          <option value="RECOMMENDED_FOR_APPROVAL">RECOMMENDED_FOR_APPROVAL — Viable Investment</option>
+          <option value="CONDITIONAL_APPROVAL">CONDITIONAL_APPROVAL — Subject to Terms</option>
+          <option value="REVISE_ESTIMATES">REVISE_ESTIMATES — Re-negotiate JV / Costs</option>
+          <option value="REJECTED">REJECTED — Financially Unviable</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Investment Committee Review Notes</label>
+        <textarea [ngModel]="committeeNotes()" (ngModelChange)="committeeNotes.set($event)" rows="2"
+          placeholder="Record committee evaluation, risk thresholds and benchmark directives..."
+          class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200"></textarea>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Board / Executive Remarks</label>
+        <textarea [ngModel]="approvalRemarks()" (ngModelChange)="approvalRemarks.set($event)" rows="2"
           placeholder="State rationale, cost adjustments, or approval stipulations..."
           class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200"></textarea>
       </div>
@@ -848,7 +1081,7 @@
   @if (isDetailsModalOpen() && selectedStudy(); as st) {
   <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs overflow-y-auto">
     <div
-      class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
 
       <div
         class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/80 dark:bg-slate-850/80">
@@ -859,87 +1092,107 @@
               st.feasibility_code }}</span>
             <h2 class="text-base font-bold font-display text-slate-900 dark:text-slate-100">{{ st.title }}</h2>
           </div>
-          <p class="text-xs text-slate-500 mt-0.5">{{ st.project_name }} ({{ st.project_code }}) — {{ st.version_label
-            }}</p>
+          <p class="text-xs text-slate-500 mt-0.5">{{ st.project_name }} ({{ st.project_code }}) — {{ st.version_label }}</p>
         </div>
         <button (click)="isDetailsModalOpen.set(false)"
           class="text-slate-400 hover:text-slate-600 text-lg">&times;</button>
       </div>
 
       <div class="p-6 overflow-y-auto space-y-4 text-xs">
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 bg-slate-900 text-white rounded-xl">
+        <!-- 5 Key Viability Indicator Badges -->
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 p-3.5 bg-slate-900 text-white rounded-xl">
           <div>
             <p class="text-[10px] text-slate-400 uppercase font-semibold">Gross Revenue</p>
-            <p class="text-base font-bold font-display text-white mt-0.5">৳{{ (st.estimated_gross_revenue / 10000000) |
-              number:'1.2-2' }} Cr</p>
+            <p class="text-sm font-bold font-display text-white mt-0.5">৳{{ (st.estimated_gross_revenue / 10000000) | number:'1.2-2' }} Cr</p>
           </div>
           <div>
             <p class="text-[10px] text-slate-400 uppercase font-semibold">Total Cost</p>
-            <p class="text-base font-bold font-display text-amber-400 mt-0.5">৳{{ (st.estimated_total_cost / 10000000) |
-              number:'1.2-2' }} Cr</p>
+            <p class="text-sm font-bold font-display text-amber-400 mt-0.5">৳{{ (st.estimated_total_cost / 10000000) | number:'1.2-2' }} Cr</p>
           </div>
           <div>
             <p class="text-[10px] text-slate-400 uppercase font-semibold">Gross Profit</p>
-            <p class="text-base font-bold font-display text-emerald-400 mt-0.5">৳{{ (st.gross_project_profit / 10000000)
-              | number:'1.2-2' }} Cr</p>
+            <p class="text-sm font-bold font-display text-emerald-400 mt-0.5">৳{{ (st.gross_project_profit / 10000000) | number:'1.2-2' }} Cr</p>
           </div>
           <div>
-            <p class="text-[10px] text-slate-400 uppercase font-semibold">Margin %</p>
-            <p class="text-base font-bold font-display text-emerald-300 mt-0.5">{{ st.profit_margin_percent |
-              number:'1.1-1' }}%</p>
+            <p class="text-[10px] text-slate-400 uppercase font-semibold">Break-Even Sales</p>
+            <p class="text-sm font-bold font-display text-blue-300 mt-0.5">৳{{ ((st.break_even_sales_bdt || 0) / 10000000) | number:'1.2-2' }} Cr</p>
+            <p class="text-[9px] text-slate-400">{{ (st.break_even_sqft || 0) | number:'1.0-0' }} sft ({{ (st.break_even_percent || 0) | number:'1.1-1' }}%)</p>
+          </div>
+          <div>
+            <p class="text-[10px] text-slate-400 uppercase font-semibold">Margin & ROI</p>
+            <p class="text-sm font-bold font-display text-emerald-300 mt-0.5">{{ st.profit_margin_percent | number:'1.1-1' }}%</p>
+            <p class="text-[9px] text-slate-400">ROI: {{ st.roi_percent | number:'1.1-1' }}%</p>
           </div>
         </div>
 
+        <!-- Cost Breakdown -->
         <div class="space-y-2">
-          <h3 class="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">Cost Component
-            Breakdown</h3>
-          <div
-            class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
-            <div><span class="text-slate-400">Land Acquisition:</span> <span class="font-bold ml-1 font-mono">৳{{
-                (st.land_acquisition_cost / 10000000) | number:'1.2-2' }} Cr</span></div>
-            <div><span class="text-slate-400">Civil Construction:</span> <span class="font-bold ml-1 font-mono">৳{{
-                (st.estimated_construction_cost / 10000000) | number:'1.2-2' }} Cr</span></div>
-            <div><span class="text-slate-400">Infrastructure:</span> <span class="font-bold ml-1 font-mono">৳{{
-                (st.infrastructure_and_site_dev / 10000000) | number:'1.2-2' }} Cr</span></div>
-            <div><span class="text-slate-400">Utility Connections:</span> <span class="font-bold ml-1 font-mono">৳{{
-                (st.utility_connection_expenses / 10000000) | number:'1.2-2' }} Cr</span></div>
-            <div><span class="text-slate-400">Arch & Engineering:</span> <span class="font-bold ml-1 font-mono">৳{{
-                (st.preliminary_arch_engineering_cost / 10000000) | number:'1.2-2' }} Cr</span></div>
-            <div><span class="text-slate-400">Financing Cost:</span> <span class="font-bold ml-1 font-mono">৳{{
-                (st.financing_and_interest_cost / 10000000) | number:'1.2-2' }} Cr</span></div>
+          <h3 class="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">Comprehensive Development Cost Breakdown</h3>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+            <div><span class="text-slate-400">Land Acquisition:</span> <span class="font-bold ml-1 font-mono">৳{{ (st.land_acquisition_cost / 10000000) | number:'1.2-2' }} Cr</span></div>
+            <div><span class="text-slate-400">JV Consideration:</span> <span class="font-bold ml-1 font-mono">৳{{ ((st.jv_landowner_cash_consideration || 0) / 10000000) | number:'1.2-2' }} Cr</span></div>
+            <div><span class="text-slate-400">Civil Construction:</span> <span class="font-bold ml-1 font-mono">৳{{ (st.estimated_construction_cost / 10000000) | number:'1.2-2' }} Cr</span></div>
+            <div><span class="text-slate-400">Infrastructure & Site:</span> <span class="font-bold ml-1 font-mono">৳{{ (st.infrastructure_and_site_dev / 10000000) | number:'1.2-2' }} Cr</span></div>
+            <div><span class="text-slate-400">Utility Connections:</span> <span class="font-bold ml-1 font-mono">৳{{ (st.utility_connection_expenses / 10000000) | number:'1.2-2' }} Cr</span></div>
+            <div><span class="text-slate-400">Consultancy & MEP:</span> <span class="font-bold ml-1 font-mono">৳{{ (st.preliminary_arch_engineering_cost / 10000000) | number:'1.2-2' }} Cr</span></div>
+            <div><span class="text-slate-400">Marketing & Sales:</span> <span class="font-bold ml-1 font-mono">৳{{ ((st.marketing_and_brokerage_cost || 0) / 10000000) | number:'1.2-2' }} Cr</span></div>
+            <div><span class="text-slate-400">Financing & Debt:</span> <span class="font-bold ml-1 font-mono">৳{{ (st.financing_and_interest_cost / 10000000) | number:'1.2-2' }} Cr</span></div>
+            <div><span class="text-slate-400">Authority Clearances:</span> <span class="font-bold ml-1 font-mono">৳{{ (st.professional_authority_fees / 10000000) | number:'1.2-2' }} Cr</span></div>
+            <div><span class="text-slate-400">Legal & Title Vetting:</span> <span class="font-bold ml-1 font-mono">৳{{ (st.legal_and_vetting_expenses / 10000000) | number:'1.2-2' }} Cr</span></div>
+            <div><span class="text-slate-400">Contingency Reserve:</span> <span class="font-bold ml-1 font-mono">৳{{ (st.contingency_reserve / 10000000) | number:'1.2-2' }} Cr</span></div>
+            <div><span class="text-slate-400">Total Outlay:</span> <span class="font-bold ml-1 font-mono text-amber-600">৳{{ (st.estimated_total_cost / 10000000) | number:'1.2-2' }} Cr</span></div>
           </div>
         </div>
 
+        <!-- Architectural, Inventory & Rates -->
         <div class="space-y-2">
-          <h3 class="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">Joint Venture &
-            Architectural Specs</h3>
-          <div
-            class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
-            <div><span class="text-slate-400">Proposed Height:</span> <span class="font-bold ml-1">{{
-                st.proposed_building_height_meters }}m ({{ st.proposed_floor_count }} Floors)</span></div>
-            <div><span class="text-slate-400">Total Units:</span> <span class="font-bold ml-1">{{ st.proposed_unit_count
-                }} Units</span></div>
-            <div><span class="text-slate-400">JV Sharing Ratio:</span> <span class="font-bold ml-1">{{
-                st.landowner_jv_sharing_ratio }}</span></div>
-            <div><span class="text-slate-400">Developer Share:</span> <span class="font-bold ml-1 font-mono">{{
-                st.developer_share_sqft | number:'1.0-0' }} SqFt</span></div>
-            <div><span class="text-slate-400">Landowner Share:</span> <span class="font-bold ml-1 font-mono">{{
-                st.landowner_share_sqft | number:'1.0-0' }} SqFt</span></div>
-            <div><span class="text-slate-400">Approval Status:</span> <span class="font-bold ml-1 text-emerald-600">{{
-                st.status }}</span></div>
+          <h3 class="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">Inventory, Pricing & Architectural Parameters</h3>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+            <div><span class="text-slate-400">Apartment Inventory:</span> <span class="font-bold ml-1">{{ st.apartment_unit_count || st.proposed_unit_count }} Units</span></div>
+            <div><span class="text-slate-400">Commercial Units:</span> <span class="font-bold ml-1">{{ st.commercial_unit_count }} Units</span></div>
+            <div><span class="text-slate-400">Parking Bays:</span> <span class="font-bold ml-1">{{ st.parking_bay_count }} Bays</span></div>
+            <div><span class="text-slate-400">Building Height:</span> <span class="font-bold ml-1">{{ st.proposed_building_height_meters }}m ({{ st.proposed_floor_count }} Fl)</span></div>
+            <div><span class="text-slate-400">Avg Apt Rate/SqFt:</span> <span class="font-bold ml-1 font-mono text-emerald-600">৳{{ st.avg_apartment_rate_sqft | number:'1.0-0' }}</span></div>
+            <div><span class="text-slate-400">Avg Comm Rate/SqFt:</span> <span class="font-bold ml-1 font-mono text-emerald-600">৳{{ st.avg_commercial_rate_sqft | number:'1.0-0' }}</span></div>
+            <div><span class="text-slate-400">Avg Parking Rate:</span> <span class="font-bold ml-1 font-mono text-emerald-600">৳{{ st.avg_parking_rate_unit | number:'1.0-0' }}</span></div>
+            <div><span class="text-slate-400">JV Sharing Ratio:</span> <span class="font-bold ml-1">{{ st.landowner_jv_sharing_ratio }}</span></div>
+            <div><span class="text-slate-400">Saleable Area:</span> <span class="font-bold ml-1 font-mono">{{ st.total_saleable_area_sqft | number:'1.0-0' }} SqFt</span></div>
+            <div><span class="text-slate-400">Common Area:</span> <span class="font-bold ml-1 font-mono">{{ st.total_common_area_sqft | number:'1.0-0' }} SqFt</span></div>
+            <div><span class="text-slate-400">Saleable Efficiency:</span> <span class="font-bold ml-1 text-emerald-600">{{ st.saleable_efficiency_percent | number:'1.1-1' }}%</span></div>
+            <div><span class="text-slate-400">Project Duration:</span> <span class="font-bold ml-1">{{ st.project_duration_months }} Months</span></div>
           </div>
         </div>
 
-        @if (st.review_remarks) {
-        <div class="space-y-1">
-          <h3 class="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">Executive Review
-            Remarks</h3>
-          <p
-            class="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300">
-            {{ st.review_remarks }}
-          </p>
+        <!-- Investment Committee Review Verdict -->
+        <div class="space-y-2">
+          <h3 class="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">Investment Committee Review & Accounting Basis</h3>
+          <div class="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-slate-400">Committee Decision:</span>
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-bold"
+                [ngClass]="st.committee_decision === 'RECOMMENDED_FOR_APPROVAL' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300'">
+                {{ st.committee_decision || st.status }}
+              </span>
+            </div>
+            @if (st.investment_committee_notes) {
+            <div>
+              <p class="text-slate-400 text-[10px] uppercase font-semibold">Committee Notes:</p>
+              <p class="text-slate-700 dark:text-slate-300 mt-0.5">{{ st.investment_committee_notes }}</p>
+            </div>
+            }
+            @if (st.review_remarks) {
+            <div>
+              <p class="text-slate-400 text-[10px] uppercase font-semibold">Board Remarks:</p>
+              <p class="text-slate-700 dark:text-slate-300 mt-0.5">{{ st.review_remarks }}</p>
+            </div>
+            }
+          </div>
         </div>
-        }
+
+        <!-- Accounting Basis Notice -->
+        <div class="p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-850 text-[10px] text-slate-500">
+          * Accounting Basis: Total Development Cost is recorded on an accrual basis; Revenue is projected contractual realization value. All figures are segregated from formal post-construction audited general ledgers.
+        </div>
       </div>
 
       <div

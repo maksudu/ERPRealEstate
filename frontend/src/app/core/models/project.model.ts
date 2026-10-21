@@ -51,6 +51,7 @@ export interface AuthorityClearance {
   next_action?: string;
   status: 'DRAFT' | 'NOT_APPLIED' | 'SUBMITTED' | 'QUERY_RAISED' | 'IN_REVIEW' | 'APPROVED' | 'REJECTED' | 'EXPIRED' | 'RENEWAL_PENDING';
   document_url?: string;
+  approval_evidence_verified?: boolean;
   remarks?: string;
   conditions?: AuthorityClearanceCondition[];
   created_at?: string;
@@ -204,24 +205,34 @@ export interface ProjectFeasibility {
   version_label: string;
   
   land_acquisition_cost: number;
+  jv_landowner_cash_consideration?: number;
   legal_and_vetting_expenses: number;
   preliminary_arch_engineering_cost: number;
   estimated_construction_cost: number;
   infrastructure_and_site_dev: number;
   utility_connection_expenses: number;
   professional_authority_fees: number;
+  marketing_and_brokerage_cost?: number;
   financing_and_interest_cost: number;
   contingency_reserve: number;
   
   proposed_building_height_meters: number;
   proposed_floor_count: number;
   proposed_unit_count: number;
+  apartment_unit_count?: number;
+  commercial_unit_count?: number;
+  parking_bay_count?: number;
   total_saleable_area_sqft: number;
+  total_common_area_sqft?: number;
+  saleable_efficiency_percent?: number;
   
   landowner_jv_sharing_ratio: string;
   developer_share_sqft: number;
   landowner_share_sqft: number;
   
+  avg_apartment_rate_sqft?: number;
+  avg_commercial_rate_sqft?: number;
+  avg_parking_rate_unit?: number;
   estimated_apartment_sales_revenue: number;
   estimated_commercial_sales_revenue: number;
   estimated_parking_sales_revenue: number;
@@ -235,13 +246,24 @@ export interface ProjectFeasibility {
   profit_margin_percent: number;
   roi_percent: number;
   
+  break_even_sales_bdt?: number;
+  break_even_sqft?: number;
+  break_even_percent?: number;
+  
+  project_duration_months?: number;
+  expected_start_date?: string;
+  expected_handover_date?: string;
   cash_flow_forecast?: any;
+  customer_collection_schedule?: any;
   scenario_models?: any;
+  sensitivity_analysis?: any;
   
   status: 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'RESUBMISSION_REQUIRED';
   reviewed_by?: string;
   review_date?: string;
   review_remarks?: string;
+  investment_committee_notes?: string;
+  committee_decision?: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -607,6 +629,155 @@ export interface ProjectPnLAnalyticsResponse {
   tower_unit_profitability: any[];
   jv_sharing_summary: any[];
   actual_vs_feasibility: any[];
+}
+
+export interface Tower {
+  id: number;
+  project_id: number;
+  project_name?: string;
+  tower_code: string;
+  tower_name: string;
+  building_code?: string;
+  building_name?: string;
+  land_parcel_id?: number;
+  building_type: string;
+  total_floors: number;
+  basement_floors: number;
+  podium_floors: number;
+  residential_floors: number;
+  commercial_floors: number;
+  total_lifts: number;
+  approved_height_m?: number;
+  approved_floor_area_sqft: number;
+  structural_system?: string;
+  building_specifications?: string;
+  architect_name?: string;
+  consultant_name?: string;
+  contractor_name?: string;
+  planned_construction_start?: string;
+  planned_completion_date?: string;
+  approval_reference_no?: string;
+  approved_architectural_plan_ref?: string;
+  drawing_references?: string;
+  structural_drawing_ref?: string;
+  electrical_drawing_ref?: string;
+  plumbing_drawing_ref?: string;
+  fire_safety_drawing_ref?: string;
+  staircase_count: number;
+  lobby_corridor_details?: string;
+  common_facilities_description?: string;
+  rooftop_service_details?: string;
+  parking_capacity_cars: number;
+  construction_status: string;
+  configuration_stage: 'PROPOSED' | 'APPROVED' | 'AS_BUILT';
+  floor_count?: number;
+  unit_count?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface ProjectFloor {
+  id: number;
+  project_id: number;
+  tower_id: number;
+  tower_name?: string;
+  floor_number: number;
+  display_name: string;
+  floor_type: string;
+  floor_area_sqft: number;
+  common_area_sqft: number;
+  lobby_area_sqft: number;
+  corridor_area_sqft: number;
+  staircase_count: number;
+  lift_count: number;
+  utility_service_details?: string;
+  planned_units_count: number;
+  construction_status: string;
+  inspection_status: string;
+  inspection_history?: string;
+  approved_plan_ref?: string;
+  configuration_stage: 'PROPOSED' | 'APPROVED' | 'AS_BUILT';
+  unit_count?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface ProjectUnit {
+  id: number;
+  project_id: number;
+  project_name?: string;
+  tower_id: number;
+  tower_name?: string;
+  floor_id?: number;
+  floor_display_name?: string;
+  floor_number: number;
+  unit_code: string;
+  space_type: string;
+  unit_type: string;
+  bedroom_count: number;
+  bathroom_count: number;
+  balcony_count: number;
+  parking_bay_count: number;
+  parking_bay_number?: string;
+  parking_details?: string;
+  usable_carpet_area_sqft: number;
+  balcony_area_sqft: number;
+  common_area_allocated_sqft: number;
+  gross_area_sqft: number;
+  saleable_area_sqft: number;
+  unit_orientation: string;
+  specifications?: string;
+  planned_price_bdt: number;
+  ownership_classification: string;
+  unit_status: string;
+  configuration_stage: 'PROPOSED' | 'APPROVED' | 'AS_BUILT';
+  approved_plan_reference?: string;
+  regulatory_approval_memo?: string;
+  approval_schedule_ref?: string;
+  reassignment_authorized: boolean;
+  reassignment_reason?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface ProjectDesignRevision {
+  id: number;
+  project_id: number;
+  tower_id?: number;
+  tower_name?: string;
+  floor_id?: number;
+  unit_id?: number;
+  revision_code: string;
+  title?: string;
+  revision_title?: string;
+  revision_date?: string;
+  revision_type: string;
+  target_level: string;
+  description?: string;
+  justification?: string;
+  impact_summary?: string;
+  previous_configuration?: string;
+  proposed_configuration?: string;
+  reason_for_change?: string;
+  cost_impact_bdt?: number;
+  area_impact_sqft?: number;
+  impact_on_area_sqft?: number;
+  impact_on_cost_bdt?: number;
+  requires_regulatory_approval?: boolean;
+  regulatory_approval_required?: boolean;
+  regulatory_authority?: string;
+  approval_memo_number?: string;
+  regulatory_memo_no?: string;
+  regulatory_approval_date?: string;
+  drawing_reference_old?: string;
+  drawing_reference_new?: string;
+  status?: string;
+  revision_status?: string;
+  revised_by?: string;
+  approved_by?: string;
+  approval_date?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 

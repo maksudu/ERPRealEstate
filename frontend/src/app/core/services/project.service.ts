@@ -12,7 +12,8 @@ import {
   ProjectFinancialPerformance,
   ProjectFinancialPerformancePaginationResponse,
   ProjectPnLAnalyticsResponse,
-  FARCalculationResult
+  FARCalculationResult,
+  ProjectDesignRevision
 } from '../models/project.model';
 
 @Injectable({
@@ -89,10 +90,12 @@ export class ProjectService {
     return this.http.post<any>(`${this.baseUrl}/feasibilities`, payload);
   }
 
-  updateFeasibility(id: number, action?: string, remarks?: string): Observable<any> {
+  updateFeasibility(id: number, action?: string, remarks?: string, committee_decision?: string, committee_notes?: string): Observable<any> {
     let params = new HttpParams();
     if (action) params = params.set('action', action);
     if (remarks) params = params.set('remarks', remarks);
+    if (committee_decision) params = params.set('committee_decision', committee_decision);
+    if (committee_notes) params = params.set('committee_notes', committee_notes);
     return this.http.put<any>(`${this.baseUrl}/feasibilities/${id}`, {}, { params });
   }
 
@@ -314,6 +317,30 @@ export class ProjectService {
 
   deleteUnit(id: number): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/units/${id}`);
+  }
+
+  getDesignRevisions(filters?: { project_id?: number; tower_id?: number; floor_id?: number; unit_id?: number; revision_type?: string; status?: string; search?: string; limit?: number; offset?: number }): Observable<any> {
+    let params = new HttpParams();
+    Object.entries(filters || {}).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') params = params.set(key, value);
+    });
+    return this.http.get<any>(`${this.baseUrl}/design-revisions`, { params });
+  }
+
+  getDesignRevision(id: number): Observable<ProjectDesignRevision> {
+    return this.http.get<ProjectDesignRevision>(`${this.baseUrl}/design-revisions/${id}`);
+  }
+
+  createDesignRevision(payload: any): Observable<ProjectDesignRevision> {
+    return this.http.post<ProjectDesignRevision>(`${this.baseUrl}/design-revisions`, payload);
+  }
+
+  updateDesignRevision(id: number, payload: any): Observable<ProjectDesignRevision> {
+    return this.http.put<ProjectDesignRevision>(`${this.baseUrl}/design-revisions/${id}`, payload);
+  }
+
+  deleteDesignRevision(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/design-revisions/${id}`);
   }
 
   seedStandardDrawings(projectId: number): Observable<any> {

@@ -17,8 +17,8 @@ async def test_approved_clearance_requires_official_evidence(async_client, db_se
         json={
             "project_id": project.id,
             "reference_no": f"TEST-{uuid4().hex[:10]}",
-            "clearance_type_id": "BUILDING_PLAN",
-            "authority_name": project.development_authority_id,
+            "clearance_type_id": "FIRE_NOC",
+            "authority_name": "RAJUK",
             "status": "APPROVED",
         },
     )
@@ -27,6 +27,7 @@ async def test_approved_clearance_requires_official_evidence(async_client, db_se
     assert "approved memo number" in response.json()["detail"]
     assert "approval date" in response.json()["detail"]
     assert "official approval document URL" in response.json()["detail"]
+    assert "approval evidence verification attestation" in response.json()["detail"]
 
 
 @pytest.mark.asyncio
@@ -64,14 +65,17 @@ async def test_approved_clearance_accepts_complete_official_evidence(async_clien
         json={
             "project_id": project.id,
             "reference_no": f"TEST-{uuid4().hex[:10]}",
-            "clearance_type_id": "BUILDING_PLAN",
-            "authority_name": project.development_authority_id,
+            "clearance_type_id": "FIRE_NOC",
+            "authority_name": "RAJUK",
             "status": "APPROVED",
             "approved_memo_no": "AUTH/APPROVAL/TEST-01",
             "approval_date": date.today().isoformat(),
             "document_url": "https://documents.example.test/official-approval.pdf",
+            "approval_evidence_verified": True,
         },
     )
 
     assert response.status_code == 201
     assert response.json()["status"] == "APPROVED"
+    assert response.json()["authority_name"] == "FSCD"
+    assert response.json()["approval_evidence_verified"] is True

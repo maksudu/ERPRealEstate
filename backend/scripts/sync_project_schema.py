@@ -85,6 +85,7 @@ async def migrate():
             ("submission_date", "DATE NULL"),
             ("responsible_officer", "VARCHAR(128) NULL"),
             ("next_action", "VARCHAR(255) NULL"),
+            ("approval_evidence_verified", "BOOLEAN NOT NULL DEFAULT FALSE"),
         ]
         for col, spec in clearance_cols:
             try:

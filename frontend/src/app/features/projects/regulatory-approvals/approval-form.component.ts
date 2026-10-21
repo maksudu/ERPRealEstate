@@ -87,6 +87,11 @@ import {
         </div>
       </div>
 
+      <div *ngIf="saveError()" role="alert" class="rounded-lg border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-700 dark:text-rose-300">
+        <strong>Could not save clearance.</strong> {{ saveError() }}
+        Review the approval evidence fields and try again.
+      </div>
+
       <!-- Main Form -->
       <form [formGroup]="form" class="space-y-6">
         <!-- Section 1: Authority & Scope Association -->
@@ -295,6 +300,18 @@ import {
               placeholder="e.g. https://storage.corp/approvals/rajuk-sanction-8812.pdf"
             ></app-custom-input>
 
+            <label class="flex items-start gap-2 rounded-lg border border-border bg-card p-3 text-xs text-foreground">
+              <input
+                type="checkbox"
+                formControlName="approval_evidence_verified"
+                class="mt-0.5 accent-primary"
+              />
+              <span>
+                I verified that the memo, date, and linked document are the official approval evidence for this clearance. This attestation is required to save as APPROVED.
+                This is an internal attestation; the system does not independently verify the authority or document.
+              </span>
+            </label>
+
             <app-custom-textarea
               label="Approval Conditions & Legal Remarks"
               formControlName="remarks"
@@ -336,6 +353,7 @@ export class ApprovalFormComponent implements OnInit {
   isEditMode = signal<boolean>(false);
   clearanceId = signal<number | null>(null);
   saving = signal<boolean>(false);
+  saveError = signal<string>('');
   projects = signal<Project[]>([]);
 
   authorityOptions: SelectOption[] = [
@@ -423,6 +441,7 @@ export class ApprovalFormComponent implements OnInit {
     next_action: [''],
     status: ['SUBMITTED', Validators.required],
     document_url: [''],
+    approval_evidence_verified: [false],
     remarks: ['']
   });
 
@@ -502,11 +521,13 @@ export class ApprovalFormComponent implements OnInit {
 
   private updateApprovalEvidenceValidators(): void {
     const required = this.requiresApprovalEvidence();
-    ['approved_memo_no', 'approval_date', 'document_url'].forEach(fieldName => {
+    ['approved_memo_no', 'approval_date', 'document_url', 'approval_evidence_verified'].forEach(fieldName => {
       const control = this.form.get(fieldName);
       if (!control) return;
       if (required) {
-        const validators = [Validators.required];
+        const validators = fieldName === 'approval_evidence_verified'
+          ? [Validators.requiredTrue]
+          : [Validators.required];
         if (fieldName === 'document_url') {
           validators.push(Validators.pattern(/^https?:\/\/\S+$/i));
         }
@@ -544,6 +565,7 @@ export class ApprovalFormComponent implements OnInit {
           next_action: c.next_action,
           status: c.status,
           document_url: c.document_url,
+          approval_evidence_verified: c.approval_evidence_verified ?? false,
           remarks: c.remarks
         }, { emitEvent: false });
         this.updateApprovalEvidenceValidators();
@@ -552,8 +574,12 @@ export class ApprovalFormComponent implements OnInit {
   }
 
   saveClearance(): void {
+    this.saveError.set('');
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      if (this.requiresApprovalEvidence()) {
+        this.saveError.set('APPROVED requires an approval memo number, approval date, official document URL, and checked verification attestation.');
+      }
       return;
     }
 
@@ -564,6 +590,8 @@ export class ApprovalFormComponent implements OnInit {
     payload.renewal_reminder_days = Number(payload.renewal_reminder_days || 30);
     payload.renewal_fee_bdt = Number(payload.renewal_fee_bdt || 0);
     payload.sanctioned_height_m = payload.sanctioned_height_m ? Number(payload.sanctioned_height_m) : null;
+    payload.document_url = payload.document_url || null;
+    payload.approval_evidence_verified = payload.approval_evidence_verified === true;
 
     if (this.isEditMode() && this.clearanceId()) {
       this.projectService.updateClearance(this.clearanceId()!, payload).subscribe({
@@ -573,7 +601,7 @@ export class ApprovalFormComponent implements OnInit {
         },
         error: (err) => {
           this.saving.set(false);
-          alert(err.error?.detail || 'Failed to update clearance record.');
+          this.saveError.set(this.apiErrorMessage(err, 'Failed to update clearance record.'));
         }
       });
     } else {
@@ -584,9 +612,16 @@ export class ApprovalFormComponent implements OnInit {
         },
         error: (err) => {
           this.saving.set(false);
-          alert(err.error?.detail || 'Failed to record clearance.');
+          this.saveError.set(this.apiErrorMessage(err, 'Failed to record clearance.'));
         }
       });
     }
+  }
+
+  private apiErrorMessage(err: any, fallback: string): string {
+    const detail = err?.error?.detail;
+    if (typeof detail === 'string') return detail;
+    if (detail !== undefined) return JSON.stringify(detail);
+    return fallback;
   }
 }

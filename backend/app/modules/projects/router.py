@@ -11,7 +11,7 @@ from app.modules.land.models import LandBank, LandParcel, Landowner
 from app.modules.projects.models import (
     Project, Tower, AuthorityClearance, BOQItem, Drawing, DrawingRevision, ProjectFeasibility,
     ProjectLandAllocation, ProjectFloor, ProjectUnit, ProjectProfitability, ProjectMilestone,
-    ProjectFinancialPerformance, ProjectRiskIssue
+    ProjectFinancialPerformance, ProjectRiskIssue, ProjectDesignRevision
 )
 from app.modules.projects.schemas import (
     ProjectCreate, ProjectUpdate, ProjectResponse,
@@ -34,7 +34,9 @@ from app.modules.projects.schemas import (
     ProjectMilestonePaginationResponse,
     ProjectFinancialPerformanceCreate, ProjectFinancialPerformanceUpdate,
     ProjectFinancialPerformanceResponse, ProjectFinancialPerformancePaginationResponse,
-    ProjectRiskIssueCreate, ProjectRiskIssueUpdate, ProjectRiskIssueResponse, ProjectRiskIssuePage
+    ProjectRiskIssueCreate, ProjectRiskIssueUpdate, ProjectRiskIssueResponse, ProjectRiskIssuePage,
+    ProjectDesignRevisionCreate, ProjectDesignRevisionUpdate, ProjectDesignRevisionResponse,
+    ProjectDesignRevisionPageResponse
 )
 
 router = APIRouter(prefix="/projects", tags=["Project Spatial Planning, Permits & BOQ Master"])
@@ -48,6 +50,7 @@ def _competent_authority_for_clearance(clearance_type_id: str, project_authority
         "ENVIRONMENTAL": "DoE",
         "WASA": "WASA",
         "DESCO_DPDC": "DESCO_DPDC",
+        "TITAS_GAS": "TITAS_GAS",
     }
     return authority_by_type.get(clearance_type_id, project_authority)
 
@@ -57,6 +60,7 @@ def _validate_approved_clearance_evidence(
     approved_memo_no: Optional[str],
     approval_date: Optional[date],
     document_url: Optional[str],
+    approval_evidence_verified: Optional[bool],
 ) -> None:
     if (status_value or "").strip().upper() != "APPROVED":
         return
@@ -66,6 +70,8 @@ def _validate_approved_clearance_evidence(
         missing.append("approved memo number")
     if not approval_date:
         missing.append("approval date")
+    if approval_evidence_verified is not True:
+        missing.append("approval evidence verification attestation")
     url = (document_url or "").strip()
     parsed_url = urlparse(url)
     if parsed_url.scheme.lower() not in {"http", "https"} or not parsed_url.netloc:
@@ -278,7 +284,7 @@ async def create_project(
             db.add(tower)
         await db.flush()
 
-    # Pre-populate Standard Statutory Clearances checklist
+    # Pre-populate draft clearance templates with jurisdiction-based authority suggestions.
     standard_clearances = [
         "LUC", "BUILDING_PLAN", "FIRE_NOC", "AVIATION_HEIGHT", "ENVIRONMENTAL", "WASA"
     ]
@@ -882,27 +888,37 @@ async def create_feasibility(
         version_label=payload.version_label or "V1.0",
         
         land_acquisition_cost=payload.land_acquisition_cost or 0.0,
+        jv_landowner_cash_consideration=payload.jv_landowner_cash_consideration or 0.0,
         legal_and_vetting_expenses=payload.legal_and_vetting_expenses or 0.0,
         preliminary_arch_engineering_cost=payload.preliminary_arch_engineering_cost or 0.0,
         estimated_construction_cost=payload.estimated_construction_cost or 0.0,
         infrastructure_and_site_dev=payload.infrastructure_and_site_dev or 0.0,
         utility_connection_expenses=payload.utility_connection_expenses or 0.0,
         professional_authority_fees=payload.professional_authority_fees or 0.0,
+        marketing_and_brokerage_cost=payload.marketing_and_brokerage_cost or 0.0,
         financing_and_interest_cost=payload.financing_and_interest_cost or 0.0,
         contingency_reserve=payload.contingency_reserve or 0.0,
         
         proposed_building_height_meters=payload.proposed_building_height_meters or 45.0,
         proposed_floor_count=payload.proposed_floor_count or 14,
         proposed_unit_count=payload.proposed_unit_count or 56,
+        apartment_unit_count=payload.apartment_unit_count or 40,
+        commercial_unit_count=payload.commercial_unit_count or 8,
+        parking_bay_count=payload.parking_bay_count or 50,
         total_saleable_area_sqft=saleable_sqft,
+        total_common_area_sqft=payload.total_common_area_sqft or 0.0,
+        saleable_efficiency_percent=metrics["saleable_efficiency_percent"],
         
         landowner_jv_sharing_ratio=jv_split_str,
         developer_share_sqft=dev_share,
         landowner_share_sqft=owner_share,
         
+        avg_apartment_rate_sqft=payload.avg_apartment_rate_sqft or 10000.0,
+        avg_commercial_rate_sqft=payload.avg_commercial_rate_sqft or 15000.0,
+        avg_parking_rate_unit=payload.avg_parking_rate_unit or 600000.0,
         estimated_apartment_sales_revenue=payload.estimated_apartment_sales_revenue or 0.0,
         estimated_commercial_sales_revenue=payload.estimated_commercial_sales_revenue or 0.0,
-        estimated_parking_sales_revenue=payload.parking_sales_revenue if hasattr(payload, 'parking_sales_revenue') else (payload.estimated_parking_sales_revenue or 0.0),
+        estimated_parking_sales_revenue=payload.estimated_parking_sales_revenue or 0.0,
         estimated_other_sales_revenue=payload.estimated_other_sales_revenue or 0.0,
         
         estimated_gross_revenue=metrics["estimated_gross_revenue"],
@@ -913,10 +929,22 @@ async def create_feasibility(
         profit_margin_percent=metrics["profit_margin_percent"],
         roi_percent=metrics["roi_percent"],
         
+        break_even_sales_bdt=metrics["break_even_sales_bdt"],
+        break_even_sqft=metrics["break_even_sqft"],
+        break_even_percent=metrics["break_even_percent"],
+        
+        project_duration_months=payload.project_duration_months or 24,
+        expected_start_date=payload.expected_start_date,
+        expected_handover_date=payload.expected_handover_date,
         cash_flow_forecast=metrics["cash_flow_forecast"],
+        customer_collection_schedule=metrics["customer_collection_schedule"],
         scenario_models=metrics["scenarios"],
+        sensitivity_analysis=metrics["sensitivity_analysis"],
+        
         status=payload.status or "DRAFT",
-        review_remarks=payload.review_remarks
+        review_remarks=payload.review_remarks,
+        investment_committee_notes=payload.investment_committee_notes,
+        committee_decision=payload.committee_decision or "RECOMMENDED"
     )
 
     db.add(feasibility)
@@ -934,6 +962,8 @@ async def update_feasibility(
     feasibility_id: int,
     action: Optional[str] = Query(None, description="APPROVE, REJECT, or RESUBMIT"),
     remarks: Optional[str] = Query(None),
+    committee_decision: Optional[str] = Query(None),
+    committee_notes: Optional[str] = Query(None),
     db: AsyncSession = Depends(get_db)
 ):
     stmt = (
@@ -955,9 +985,13 @@ async def update_feasibility(
         elif act == "RESUBMIT":
             f.status = "RESUBMISSION_REQUIRED"
         f.review_date = date.today()
-        f.reviewed_by = "Executive Committee"
+        f.reviewed_by = "Investment Committee"
         if remarks:
             f.review_remarks = remarks
+        if committee_decision:
+            f.committee_decision = committee_decision
+        if committee_notes:
+            f.investment_committee_notes = committee_notes
 
     await db.commit()
     await db.refresh(f)
@@ -1595,7 +1629,11 @@ async def list_units(
     limit: Optional[int] = Query(None, ge=1, le=500),
     db: AsyncSession = Depends(get_db)
 ):
-    stmt = select(ProjectUnit).options(selectinload(ProjectUnit.project), selectinload(ProjectUnit.tower)).order_by(ProjectUnit.floor_number.asc(), ProjectUnit.unit_code.asc())
+    stmt = select(ProjectUnit).options(
+        selectinload(ProjectUnit.project),
+        selectinload(ProjectUnit.tower),
+        selectinload(ProjectUnit.floor)
+    ).order_by(ProjectUnit.floor_number.asc(), ProjectUnit.unit_code.asc())
     if project_id is not None: stmt = stmt.where(ProjectUnit.project_id == project_id)
     if tower_id is not None: stmt = stmt.where(ProjectUnit.tower_id == tower_id)
     if floor_id is not None: stmt = stmt.where(ProjectUnit.floor_id == floor_id)
@@ -1615,6 +1653,7 @@ async def list_units(
         response = ProjectUnitResponse.model_validate(unit)
         response.project_name = unit.project.project_name if unit.project else None
         response.tower_name = unit.tower.tower_name if unit.tower else None
+        response.floor_display_name = unit.floor.display_name if unit.floor else None
         items.append(response)
     if skip is not None or offset is not None or limit is not None:
         return ProjectUnitPageResponse(items=items, total=total, limit=page_limit, offset=page_offset)
@@ -1743,7 +1782,7 @@ async def get_units_area_reconciliation(
 async def get_unit(unit_id: int, db: AsyncSession = Depends(get_db)):
     unit = (await db.execute(
         select(ProjectUnit)
-        .options(selectinload(ProjectUnit.project), selectinload(ProjectUnit.tower))
+        .options(selectinload(ProjectUnit.project), selectinload(ProjectUnit.tower), selectinload(ProjectUnit.floor))
         .where(ProjectUnit.id == unit_id)
     )).scalar_one_or_none()
     if unit is None:
@@ -1751,7 +1790,110 @@ async def get_unit(unit_id: int, db: AsyncSession = Depends(get_db)):
     response = ProjectUnitResponse.model_validate(unit)
     response.project_name = unit.project.project_name if unit.project else None
     response.tower_name = unit.tower.tower_name if unit.tower else None
+    response.floor_display_name = unit.floor.display_name if unit.floor else None
     return response
+
+
+# -------------------------------------------------------------
+# Architectural & Engineering Design Revision History Endpoints
+# -------------------------------------------------------------
+@router.get("/design-revisions")
+async def list_design_revisions(
+    project_id: Optional[int] = Query(None),
+    tower_id: Optional[int] = Query(None),
+    floor_id: Optional[int] = Query(None),
+    unit_id: Optional[int] = Query(None),
+    revision_type: Optional[str] = Query(None),
+    status: Optional[str] = Query(None),
+    search: Optional[str] = Query(None),
+    skip: Optional[int] = Query(None, ge=0),
+    offset: Optional[int] = Query(None, ge=0),
+    limit: Optional[int] = Query(None, ge=1, le=500),
+    db: AsyncSession = Depends(get_db)
+):
+    stmt = (
+        select(ProjectDesignRevision)
+        .options(selectinload(ProjectDesignRevision.tower))
+        .order_by(ProjectDesignRevision.id.desc())
+    )
+    if project_id is not None: stmt = stmt.where(ProjectDesignRevision.project_id == project_id)
+    if tower_id is not None: stmt = stmt.where(ProjectDesignRevision.tower_id == tower_id)
+    if floor_id is not None: stmt = stmt.where(ProjectDesignRevision.floor_id == floor_id)
+    if unit_id is not None: stmt = stmt.where(ProjectDesignRevision.unit_id == unit_id)
+    if revision_type: stmt = stmt.where(ProjectDesignRevision.revision_type == revision_type)
+    if status: stmt = stmt.where(ProjectDesignRevision.status == status)
+    if search:
+        pattern = f"%{search}%"
+        stmt = stmt.where(
+            ProjectDesignRevision.revision_code.ilike(pattern) |
+            ProjectDesignRevision.title.ilike(pattern) |
+            ProjectDesignRevision.reason_for_change.ilike(pattern)
+        )
+    total = (await db.execute(select(func.count()).select_from(stmt.order_by(None).subquery()))).scalar_one()
+    page_offset = offset if offset is not None else (skip if skip is not None else 0)
+    page_limit = limit if limit is not None else 50
+    rows = (await db.execute(stmt.offset(page_offset).limit(page_limit))).scalars().all()
+    items = []
+    for rev in rows:
+        resp = ProjectDesignRevisionResponse.model_validate(rev)
+        resp.tower_name = rev.tower.tower_name if rev.tower else None
+        items.append(resp)
+    if skip is not None or offset is not None or limit is not None:
+        return ProjectDesignRevisionPageResponse(items=items, total=total, limit=page_limit, offset=page_offset)
+    return items
+
+
+@router.get("/design-revisions/{revision_id}", response_model=ProjectDesignRevisionResponse)
+async def get_design_revision(revision_id: int, db: AsyncSession = Depends(get_db)):
+    rev = (await db.execute(
+        select(ProjectDesignRevision)
+        .options(selectinload(ProjectDesignRevision.tower))
+        .where(ProjectDesignRevision.id == revision_id)
+    )).scalar_one_or_none()
+    if not rev:
+        raise HTTPException(status_code=404, detail="Design revision not found")
+    resp = ProjectDesignRevisionResponse.model_validate(rev)
+    resp.tower_name = rev.tower.tower_name if rev.tower else None
+    return resp
+
+
+@router.post("/design-revisions", response_model=ProjectDesignRevisionResponse, status_code=status.HTTP_201_CREATED)
+async def create_design_revision(payload: ProjectDesignRevisionCreate, db: AsyncSession = Depends(get_db)):
+    chk = (await db.execute(select(ProjectDesignRevision).where(ProjectDesignRevision.revision_code == payload.revision_code))).scalar_one_or_none()
+    if chk:
+        raise HTTPException(status_code=400, detail=f"Revision code '{payload.revision_code}' already exists.")
+    rev = ProjectDesignRevision(**payload.model_dump())
+    db.add(rev)
+    await db.commit()
+    await db.refresh(rev)
+    return ProjectDesignRevisionResponse.model_validate(rev)
+
+
+@router.put("/design-revisions/{revision_id}", response_model=ProjectDesignRevisionResponse)
+async def update_design_revision(revision_id: int, payload: ProjectDesignRevisionUpdate, db: AsyncSession = Depends(get_db)):
+    rev = (await db.execute(
+        select(ProjectDesignRevision).where(ProjectDesignRevision.id == revision_id)
+    )).scalar_one_or_none()
+    if not rev:
+        raise HTTPException(status_code=404, detail="Design revision not found")
+    for k, v in payload.model_dump(exclude_unset=True).items():
+        setattr(rev, k, v)
+    await db.commit()
+    await db.refresh(rev)
+    return ProjectDesignRevisionResponse.model_validate(rev)
+
+
+@router.delete("/design-revisions/{revision_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_design_revision(revision_id: int, db: AsyncSession = Depends(get_db)):
+    rev = (await db.execute(
+        select(ProjectDesignRevision).where(ProjectDesignRevision.id == revision_id)
+    )).scalar_one_or_none()
+    if not rev:
+        raise HTTPException(status_code=404, detail="Design revision not found")
+    await db.delete(rev)
+    await db.commit()
+    return None
+
 
 
 # =============================================================================
@@ -2361,7 +2503,10 @@ async def list_regulatory_clearances(
         all_query = all_query.where(AuthorityClearance.project_id == project_id)
     all_records = (await db.execute(all_query)).scalars().all()
 
-    approved_c = sum(1 for c in all_records if c.status == "APPROVED")
+    approved_c = sum(
+        1 for c in all_records
+        if c.status == "APPROVED" and c.approval_evidence_verified is True
+    )
     submitted_c = sum(1 for c in all_records if c.status in ["SUBMITTED", "IN_REVIEW", "QUERY_RAISED"])
     expired_c = sum(1 for c in all_records if c.status == "EXPIRED" or c.renewal_alert_status == "EXPIRED")
     total_c = len(all_records)
@@ -2393,8 +2538,13 @@ async def create_regulatory_clearance(
         payload.approved_memo_no,
         payload.approval_date,
         payload.document_url,
+        payload.approval_evidence_verified,
     )
-    rec = AuthorityClearance(**payload.model_dump())
+    clearance_data = payload.model_dump()
+    clearance_data["authority_name"] = _competent_authority_for_clearance(
+        payload.clearance_type_id, proj.development_authority_id
+    )
+    rec = AuthorityClearance(**clearance_data)
     db.add(rec)
     await db.commit()
     await db.refresh(rec)
@@ -2442,6 +2592,7 @@ async def update_regulatory_clearance(
         update_dict.get("approved_memo_no", rec.approved_memo_no),
         update_dict.get("approval_date", rec.approval_date),
         update_dict.get("document_url", rec.document_url),
+        update_dict.get("approval_evidence_verified", rec.approval_evidence_verified),
     )
     for key, val in update_dict.items():
         setattr(rec, key, val)
@@ -2478,29 +2629,19 @@ async def seed_standard_statutory_clearances(
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Creates draft clearance templates only. Applicability and current requirements
-    must be confirmed with the competent authority for each project:
-    1. Land Use Clearance (LUC)
-    2. Building Plan Sanction (RAJUK / CDA)
-    3. Structural & Architectural Drawing Approval
-    4. Fire Safety Clearance (FSCD Fire NOC)
-    5. Environmental Clearance Certificate (DoE ECC)
-    6. Aviation Height Sanction (CAAB NOC)
-    7. Water Supply & Sewerage Sanction (WASA)
-    8. Electric Substation & Load Clearance (DESCO/DPDC)
-    9. Construction Stage Plinth & Superstructure Inspection
-    10. Occupancy Certificate (OC)
+    Creates draft clearance templates only. This list is not exhaustive or universally
+    applicable; confirm the competent authority and current requirements for each project.
     """
     proj = (await db.execute(select(Project).where(Project.id == project_id))).scalar_one_or_none()
     if not proj:
         raise HTTPException(status_code=404, detail="Project not found")
 
-    existing = (await db.execute(select(AuthorityClearance).where(AuthorityClearance.project_id == project_id))).scalars().all()
-    if existing:
-        return {
-            "message": f"Project already has {len(existing)} clearance records.",
-            "count": len(existing)
-        }
+    existing = (await db.execute(
+        select(AuthorityClearance.clearance_type_id).where(
+            AuthorityClearance.project_id == project_id
+        )
+    )).scalars().all()
+    existing_types = set(existing)
 
     standard_clearances = [
         ("LUC", "LAND_USE_PERMIT"),
@@ -2516,6 +2657,8 @@ async def seed_standard_statutory_clearances(
 
     created = 0
     for c_type, cat in standard_clearances:
+        if c_type in existing_types:
+            continue
         rec = AuthorityClearance(
             project_id=project_id,
             reference_no=f"CLR-{proj.project_code}-{c_type}-01",
@@ -2533,7 +2676,11 @@ async def seed_standard_statutory_clearances(
 
     await db.commit()
     return {
-        "message": f"Successfully created {created} standard statutory clearances for {proj.project_name}",
+        "message": (
+            f"Added {created} missing clearance templates for {proj.project_name}."
+            if created
+            else f"All standard clearance templates already exist for {proj.project_name}."
+        ),
         "count": created
     }
 
