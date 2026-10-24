@@ -1,6 +1,6 @@
 import logging
 from typing import List, Optional
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -8,24 +8,25 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy import func, or_
 
 from app.core.database import get_db
+from app.modules.auth.dependencies import get_current_user, get_current_user_optional
 from app.modules.projects.models import Project, BOQItem
 from app.modules.construction.models import WBSNode, Subcontractor
 from app.modules.auth.models import User
 from app.modules.procurement.models import (
-    Vendor, MaterialItem, SiteStore, StoreStock,
-    PurchaseRequisition, RFQ, RFQVendor,
+    Vendor, VendorApprovalEvent, MaterialItem, SiteStore, StoreStock,
+    PurchaseRequisition, PRWorkflowEvent, RFQ, RFQVendor,
     ComparativeStatement, CSQuotation,
     PurchaseOrder, GoodsReceipt, QualityInspection,
     MaterialIssueNote, StockTransfer, StockLedger
 )
 from app.modules.procurement.schemas import (
-    VendorCreate, VendorUpdate, VendorResponse,
+    VendorCreate, VendorUpdate, VendorResponse, VendorWorkflowAction, VendorApprovalEventResponse, VendorPaymentDetailsResponse,
     MaterialItemCreate, MaterialItemUpdate, MaterialItemResponse,
     SiteStoreCreate, SiteStoreUpdate, SiteStoreResponse, StoreStockResponse, StockAdjustmentCreate,
     StoreStockReservationRequest, PhysicalCycleCountRequest,
-    PurchaseRequisitionCreate, PurchaseRequisitionUpdate, PRWorkflowAction, PurchaseRequisitionResponse,
+    PurchaseRequisitionCreate, PurchaseRequisitionUpdate, PRWorkflowAction, PRWorkflowEventResponse, PurchaseRequisitionResponse,
     RFQCreate, RFQResponse, RFQVendorResponse,
-    ComparativeStatementCreate, ComparativeStatementResponse, CSQuotationResponse,
+    ComparativeStatementCreate, ComparativeStatementResponse, CSQuotationResponse, CSQuotationInput, CSCommitteeDecision,
     PurchaseOrderDirectCreate, PurchaseOrderUpdate, PurchaseOrderCreateFromCS, PurchaseOrderResponse, PurchaseOrderApproveRequest,
     GoodsReceiptCreate, GoodsReceiptUpdate, GoodsReceiptResponse, GoodsReceipt3WayMatchRequest,
     QualityInspectionCreate, QualityInspectionUpdate, QualityInspectionResponse,
@@ -35,6 +36,7 @@ from app.modules.procurement.schemas import (
     ValuationMethodComparison, StockAgingReportItem, PeriodEndReconciliation,
     StockLedgerResponse, StoreValuationResponse, StoreValuationItem,
     ProcurementMetrics, ReorderAlertItem,
+    RequisitionAvailabilityResponse,
     SupplierBillResponse, SupplierBillReconcileRequest, SupplierBillPaymentRequest, SupplierDebitNoteCreate,
     AuditTrailItem
 )
@@ -73,7 +75,7 @@ async def list_vendors(
 
 
 @router.post("/vendors", response_model=VendorResponse, status_code=status.HTTP_201_CREATED)
-async def create_vendor(payload: VendorCreate, db: AsyncSession = Depends(get_db)):
+async def create_vendor(payload: VendorCreate, db: AsyncSession = Depends(get_db), current_user: Optional[User] = Depends(get_current_user_optional)):
     """Register a new supplier / materials vendor."""
     count = (await db.execute(select(func.count(Vendor.id)))).scalar() or 0
     vendor_code = f"VND-{count + 1:04d}"
@@ -85,23 +87,45 @@ async def create_vendor(payload: VendorCreate, db: AsyncSession = Depends(get_db
         contact_person=payload.contact_person,
         phone_number=payload.phone_number,
         email=payload.email,
+        business_address=payload.business_address,
+        business_registration_number=payload.business_registration_number,
+        trade_license_number=payload.trade_license_number,
+        trade_license_expiry_date=payload.trade_license_expiry_date,
         tin_number=payload.tin_number,
         bin_number=payload.bin_number,
-        payment_terms_days=payload.payment_terms_days or 30
+        supplied_categories=payload.supplied_categories,
+        document_refs=payload.document_refs,
+        authorized_representatives=payload.authorized_representatives,
+        references=payload.references,
+        bank_name=payload.bank_name,
+        bank_account_name=payload.bank_account_name,
+        bank_account_number=payload.bank_account_number,
+        bank_branch=payload.bank_branch,
+        credit_limit_bdt=payload.credit_limit_bdt or 0,
+        currency=payload.currency or "BDT",
+        payment_terms_days=payload.payment_terms_days or 30,
+        approval_status="PENDING_PROCUREMENT_REVIEW",
+        is_active=False
     )
     db.add(v)
+    await db.flush()
+    db.add(VendorApprovalEvent(vendor_id=v.id, actor_user_id=current_user.id if current_user else None, action="SUBMIT", from_status=None, to_status=v.approval_status, notes="Vendor registration submitted"))
     await db.commit()
     await db.refresh(v)
     return v
 
 
 @router.put("/vendors/{vendor_id}", response_model=VendorResponse)
-async def update_vendor(vendor_id: int, payload: VendorUpdate, db: AsyncSession = Depends(get_db)):
+async def update_vendor(vendor_id: int, payload: VendorUpdate, db: AsyncSession = Depends(get_db), current_user: Optional[User] = Depends(get_current_user_optional)):
     """Update supplier profile."""
     v = await db.get(Vendor, vendor_id)
     if not v:
         raise HTTPException(status_code=404, detail="Vendor not found")
-    for field, val in payload.model_dump(exclude_unset=True).items():
+    updates = payload.model_dump(exclude_unset=True)
+    sensitive_fields = {"bank_name", "bank_account_name", "bank_account_number", "bank_branch"}
+    if sensitive_fields.intersection(updates) and (not current_user or not current_user.is_group_admin):
+        raise HTTPException(status_code=403, detail="Supplier payment details can only be changed by authorized finance administrators.")
+    for field, val in updates.items():
         setattr(v, field, val)
     await db.commit()
     await db.refresh(v)
@@ -109,14 +133,106 @@ async def update_vendor(vendor_id: int, payload: VendorUpdate, db: AsyncSession 
 
 
 @router.delete("/vendors/{vendor_id}")
-async def delete_vendor(vendor_id: int, db: AsyncSession = Depends(get_db)):
-    """Delete or deactivate vendor."""
+async def delete_vendor(vendor_id: int, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """Suspend vendor instead of deleting a referenced supplier master."""
     v = await db.get(Vendor, vendor_id)
     if not v:
         raise HTTPException(status_code=404, detail="Vendor not found")
-    await db.delete(v)
+    if not current_user.is_group_admin:
+        raise HTTPException(status_code=403, detail="Suspending a vendor requires group administrator approval.")
+    old_status = v.approval_status
+    if old_status in {"REJECTED", "BLACKLISTED"}:
+        raise HTTPException(status_code=400, detail=f"Vendor in {old_status} state cannot be suspended through this action.")
+    v.is_active = False
+    v.approval_status = "SUSPENDED"
+    v.suspension_reason = "Suspended from vendor register"
+    db.add(VendorApprovalEvent(vendor_id=v.id, actor_user_id=current_user.id, action="SUSPEND", from_status=old_status, to_status=v.approval_status, notes=v.suspension_reason))
     await db.commit()
-    return {"message": "Vendor deleted successfully"}
+    return {"message": "Vendor suspended successfully"}
+
+
+@router.post("/vendors/{vendor_id}/workflow", response_model=VendorResponse)
+async def vendor_workflow(vendor_id: int, payload: VendorWorkflowAction, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
+    vendor = await db.get(Vendor, vendor_id)
+    if not vendor:
+        raise HTTPException(status_code=404, detail="Vendor not found.")
+    action = payload.action.upper()
+    transitions = {
+        ("PENDING_PROCUREMENT_REVIEW", "PROCUREMENT_REVIEW"): "PENDING_FINANCE_VERIFICATION",
+        ("PENDING_FINANCE_VERIFICATION", "FINANCE_VERIFY"): "PENDING_TECHNICAL_REVIEW",
+        ("PENDING_TECHNICAL_REVIEW", "TECHNICAL_APPROVE"): "PENDING_MANAGEMENT_APPROVAL",
+        ("PENDING_MANAGEMENT_APPROVAL", "APPROVE"): "APPROVED",
+        ("PENDING_PROCUREMENT_REVIEW", "RETURN"): "RETURNED_FOR_REVISION",
+        ("PENDING_FINANCE_VERIFICATION", "RETURN"): "RETURNED_FOR_REVISION",
+        ("PENDING_TECHNICAL_REVIEW", "RETURN"): "RETURNED_FOR_REVISION",
+        ("RETURNED_FOR_REVISION", "RESUBMIT"): "PENDING_PROCUREMENT_REVIEW",
+        ("APPROVED", "SUSPEND"): "SUSPENDED",
+        ("SUSPENDED", "REACTIVATE"): "PENDING_MANAGEMENT_APPROVAL",
+        ("APPROVED", "BLACKLIST"): "BLACKLISTED",
+    }
+    target = transitions.get((vendor.approval_status, action))
+    if action == "REJECT" and vendor.approval_status.startswith("PENDING_"):
+        target = "REJECTED"
+    if not target:
+        raise HTTPException(status_code=400, detail=f"Action {action} is not allowed while vendor is {vendor.approval_status}.")
+    if (action in {"APPROVE", "BLACKLIST", "REACTIVATE", "SUSPEND"}
+            or (action == "REJECT" and vendor.approval_status == "PENDING_MANAGEMENT_APPROVAL")) and not current_user.is_group_admin:
+        raise HTTPException(status_code=403, detail="Management approval is restricted to authorized group administrators.")
+    previous = vendor.approval_status
+    vendor.approval_status = target
+    vendor.is_active = target == "APPROVED"
+    vendor.approval_notes = payload.notes or vendor.approval_notes
+    if target in {"SUSPENDED", "BLACKLISTED"}:
+        vendor.suspension_reason = payload.notes or target.title()
+    elif target == "APPROVED":
+        vendor.suspension_reason = None
+    db.add(VendorApprovalEvent(vendor_id=vendor.id, actor_user_id=current_user.id, action=action, from_status=previous, to_status=target, notes=payload.notes))
+    await db.commit()
+    await db.refresh(vendor)
+    return vendor
+
+
+@router.get("/vendors/{vendor_id}/history", response_model=List[VendorApprovalEventResponse])
+async def vendor_approval_history(vendor_id: int, db: AsyncSession = Depends(get_db)):
+    if not await db.get(Vendor, vendor_id):
+        raise HTTPException(status_code=404, detail="Vendor not found.")
+    result = await db.execute(select(VendorApprovalEvent).where(VendorApprovalEvent.vendor_id == vendor_id).order_by(VendorApprovalEvent.created_at, VendorApprovalEvent.id))
+    return result.scalars().all()
+
+
+@router.get("/vendors/{vendor_id}/payment-details", response_model=VendorPaymentDetailsResponse)
+async def vendor_payment_details(vendor_id: int, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
+    if not current_user.is_group_admin:
+        raise HTTPException(status_code=403, detail="Supplier bank details are restricted to authorized finance administrators.")
+    vendor = await db.get(Vendor, vendor_id)
+    if not vendor:
+        raise HTTPException(status_code=404, detail="Vendor not found.")
+    return VendorPaymentDetailsResponse(
+        bank_name=vendor.bank_name, bank_account_name=vendor.bank_account_name,
+        bank_account_number=vendor.bank_account_number, bank_branch=vendor.bank_branch
+    )
+
+
+@router.get("/vendors/expiry-alerts", response_model=List[VendorResponse])
+async def vendor_expiry_alerts(days: int = Query(60, ge=0, le=365), db: AsyncSession = Depends(get_db)):
+    cutoff = date.today() + timedelta(days=days)
+    result = await db.execute(select(Vendor).where(or_(
+        Vendor.trade_license_expiry_date <= cutoff,
+        Vendor.document_refs.is_not(None)
+    )).order_by(Vendor.trade_license_expiry_date))
+    alerts = []
+    for vendor in result.scalars().all():
+        expiring = bool(vendor.trade_license_expiry_date and vendor.trade_license_expiry_date <= cutoff)
+        for doc in vendor.document_refs or []:
+            if not isinstance(doc, dict) or not doc.get("expiry_date"):
+                continue
+            try:
+                expiring = expiring or date.fromisoformat(str(doc["expiry_date"])) <= cutoff
+            except ValueError:
+                continue
+        if expiring:
+            alerts.append(vendor)
+    return alerts
 
 
 # --------------------------------------------------------------------------
@@ -395,7 +511,7 @@ async def reserve_store_stock(
     stmt = select(StoreStock).options(selectinload(StoreStock.material)).where(
         StoreStock.store_id == payload.store_id,
         StoreStock.material_id == payload.material_id
-    )
+    ).with_for_update()
     res = await db.execute(stmt)
     stk = res.scalar_one_or_none()
     if not stk:
@@ -403,12 +519,17 @@ async def reserve_store_stock(
 
     curr_qty = float(stk.current_stock_quantity)
     req_qty = float(payload.reserved_quantity)
+    already_reserved = float(stk.reserved_quantity or 0)
+    available_qty = max(0.0, curr_qty - already_reserved)
 
-    if req_qty > curr_qty:
+    if req_qty <= 0:
+        raise HTTPException(status_code=400, detail="Reservation quantity must be greater than zero.")
+    if req_qty > available_qty:
         raise HTTPException(
             status_code=400,
-            detail=f"Insufficient available stock! Available: {curr_qty:,.2f}, Requested Reservation: {req_qty:,.2f}."
+            detail=f"Insufficient available stock! Available: {available_qty:,.2f}, Requested Reservation: {req_qty:,.2f}."
         )
+    stk.reserved_quantity = already_reserved + req_qty
 
     # Record in ledger for custody and tracking
     ledger_entry = StockLedger(
@@ -433,8 +554,8 @@ async def reserve_store_stock(
         resp.material_name = stk.material.material_name
         resp.material_code = stk.material.material_code
         resp.unit_of_measure = stk.material.unit_of_measure
-    resp.reserved_quantity = req_qty
-    resp.available_quantity = max(0.0, curr_qty - req_qty)
+    resp.reserved_quantity = float(stk.reserved_quantity)
+    resp.available_quantity = max(0.0, curr_qty - float(stk.reserved_quantity))
     return resp
 
 
@@ -554,6 +675,52 @@ async def get_store_stock_ledger(
 # --------------------------------------------------------------------------
 # 4. Purchase Requisitions (PR) with BOQ Hard Budget Lock Check
 # --------------------------------------------------------------------------
+@router.get("/requisitions/availability", response_model=RequisitionAvailabilityResponse)
+async def get_requisition_availability(
+    project_id: int = Query(...), material_id: int = Query(...), requested_quantity: float = Query(0, ge=0),
+    db: AsyncSession = Depends(get_db)
+):
+    """Show project stock, outstanding PRs and unreceived purchase quantities before requisition."""
+    if not await db.get(Project, project_id) or not await db.get(MaterialItem, material_id):
+        raise HTTPException(status_code=404, detail="Project or material not found.")
+    stock_query = await db.execute(
+        select(func.coalesce(func.sum(StoreStock.current_stock_quantity), 0),
+               func.coalesce(func.sum(StoreStock.reserved_quantity), 0))
+        .join(SiteStore, SiteStore.id == StoreStock.store_id)
+        .where(SiteStore.project_id == project_id, StoreStock.material_id == material_id)
+    )
+    on_hand, reserved = stock_query.one()
+    pr_qty = (await db.execute(select(func.coalesce(func.sum(PurchaseRequisition.requested_quantity), 0)).where(
+        PurchaseRequisition.project_id == project_id, PurchaseRequisition.material_id == material_id,
+        PurchaseRequisition.status.notin_(["REJECTED", "CANCELLED", "COMPLETED", "PO_ISSUED"])
+    ))).scalar_one()
+    po_rows = await db.execute(
+        select(PurchaseOrder.ordered_quantity, func.coalesce(func.sum(GoodsReceipt.accepted_quantity), 0))
+        .outerjoin(GoodsReceipt, GoodsReceipt.po_id == PurchaseOrder.id)
+        .where(PurchaseOrder.project_id == project_id, PurchaseOrder.material_id == material_id,
+               PurchaseOrder.status.notin_(["CANCELLED", "CLOSED"]))
+        .group_by(PurchaseOrder.id)
+    )
+    incoming = sum(max(0.0, float(ordered or 0) - float(received or 0)) for ordered, received in po_rows.all())
+    on_hand_f, reserved_f = float(on_hand or 0), float(reserved or 0)
+    project = await db.get(Project, project_id)
+    committed_value = float((await db.execute(select(func.coalesce(func.sum(PurchaseOrder.total_po_amount), 0)).where(
+        PurchaseOrder.project_id == project_id, PurchaseOrder.status.notin_(["CANCELLED", "REJECTED"])
+    ))).scalar_one() or 0)
+    material = await db.get(MaterialItem, material_id)
+    approved_budget = float(project.approved_budget_bdt or 0)
+    estimated_value = requested_quantity * float(material.standard_unit_cost or 0)
+    return RequisitionAvailabilityResponse(
+        project_id=project_id, material_id=material_id, requested_quantity=requested_quantity,
+        on_hand_quantity=on_hand_f, reserved_quantity=reserved_f,
+        available_quantity=max(0.0, on_hand_f - reserved_f),
+        open_requisition_quantity=float(pr_qty or 0), incoming_po_quantity=incoming,
+        approved_project_budget_bdt=approved_budget, committed_purchase_order_bdt=committed_value,
+        estimated_request_value_bdt=estimated_value,
+        budget_available_bdt=max(0.0, approved_budget - committed_value) if approved_budget > 0 else 0.0
+    )
+
+
 @router.get("/requisitions", response_model=List[PurchaseRequisitionResponse])
 async def list_purchase_requisitions(
     project_id: Optional[int] = Query(None),
@@ -631,8 +798,10 @@ async def update_purchase_requisition(
         pr.floor_number = payload.floor_number
     if payload.purpose_notes is not None:
         pr.purpose_notes = payload.purpose_notes
-    if payload.status is not None:
-        pr.status = payload.status
+    for field in ("priority", "department", "destination_store_id", "delivery_location", "attachment_refs"):
+        value = getattr(payload, field)
+        if value is not None:
+            setattr(pr, field, value)
 
     await db.commit()
     await db.refresh(pr)
@@ -674,14 +843,46 @@ async def execute_pr_workflow(
     
     action_map = {
         "SUBMIT": "SUBMITTED",
+        "DEPARTMENT_APPROVE": "UNDER_REVIEW",
+        "PROJECT_APPROVE": "UNDER_REVIEW",
+        "VERIFY_BUDGET": "UNDER_REVIEW",
+        "PROCUREMENT_REVIEW": "UNDER_REVIEW",
+        "APPROVE_PURCHASE": "APPROVED",
+        "PARTIAL_APPROVE": "PARTIALLY_APPROVED",
+        "RETURN_FOR_REVISION": "RETURNED_FOR_REVISION",
+        # Backward compatibility with older workflow buttons/statuses.
         "SITE_APPROVE": "SITE_APPROVED",
-        "VERIFY_BUDGET": "BUDGET_VERIFIED",
-        "PROCUREMENT_REVIEW": "PROCUREMENT_REVIEWED",
-        "APPROVE_PURCHASE": "APPROVED_FOR_PURCHASE",
         "REJECT": "REJECTED"
     }
-    new_status = action_map.get(payload.action.upper(), payload.action.upper())
+    action = payload.action.upper()
+    new_status = action_map.get(action)
+    allowed = {
+        "DRAFT": {"SUBMIT"}, "PENDING_CS": {"SUBMIT", "SITE_APPROVE", "REJECT"},
+        "SUBMITTED": {"DEPARTMENT_APPROVE", "SITE_APPROVE", "RETURN_FOR_REVISION", "REJECT"},
+        "UNDER_REVIEW": {"PROJECT_APPROVE", "VERIFY_BUDGET", "PROCUREMENT_REVIEW", "APPROVE_PURCHASE", "PARTIAL_APPROVE", "RETURN_FOR_REVISION", "REJECT"},
+        "SITE_APPROVED": {"VERIFY_BUDGET", "REJECT"}, "BUDGET_VERIFIED": {"PROCUREMENT_REVIEW", "REJECT"},
+        "PROCUREMENT_REVIEWED": {"APPROVE_PURCHASE", "REJECT"},
+        "RETURNED_FOR_REVISION": {"SUBMIT"}, "REJECTED": set()
+    }
+    if not new_status or action not in allowed.get(pr.status, set()):
+        raise HTTPException(status_code=400, detail=f"Action {action} is not allowed while requisition is {pr.status}.")
+    if pr.status == "UNDER_REVIEW":
+        last_action = (await db.execute(select(PRWorkflowEvent.action).where(PRWorkflowEvent.pr_id == pr.id).order_by(PRWorkflowEvent.id.desc()).limit(1))).scalar_one_or_none()
+        required_previous = {"PROJECT_APPROVE": "DEPARTMENT_APPROVE", "VERIFY_BUDGET": "PROJECT_APPROVE", "PROCUREMENT_REVIEW": "VERIFY_BUDGET", "APPROVE_PURCHASE": "PROCUREMENT_REVIEW", "PARTIAL_APPROVE": "PROCUREMENT_REVIEW"}
+        if action in required_previous and last_action != required_previous[action]:
+            raise HTTPException(status_code=400, detail=f"Complete {required_previous[action].replace('_', ' ').lower()} before {action.replace('_', ' ').lower()}.")
+    if action == "PARTIAL_APPROVE":
+        if payload.approved_quantity is None or payload.approved_quantity <= 0 or payload.approved_quantity >= float(pr.requested_quantity):
+            raise HTTPException(status_code=400, detail="Partial approval quantity must be positive and less than the requested quantity.")
+        pr.approved_quantity = payload.approved_quantity
+    elif action == "APPROVE_PURCHASE":
+        pr.approved_quantity = pr.requested_quantity
+    prior_status = pr.status
     pr.status = new_status
+    event_notes = payload.notes
+    if action == "PARTIAL_APPROVE":
+        event_notes = f"Approved quantity: {payload.approved_quantity}. {event_notes or ''}".strip()
+    db.add(PRWorkflowEvent(pr_id=pr.id, action=action, from_status=prior_status, to_status=new_status, notes=event_notes))
     if payload.notes:
         pr.purpose_notes = f"{pr.purpose_notes or ''} | [{payload.action}]: {payload.notes}".strip(" |")
 
@@ -709,18 +910,34 @@ async def execute_pr_workflow(
     return resp
 
 
+@router.get("/requisitions/{pr_id}/history", response_model=List[PRWorkflowEventResponse])
+async def get_purchase_requisition_history(pr_id: int, db: AsyncSession = Depends(get_db)):
+    if not await db.get(PurchaseRequisition, pr_id):
+        raise HTTPException(status_code=404, detail="Purchase Requisition not found.")
+    result = await db.execute(select(PRWorkflowEvent).where(PRWorkflowEvent.pr_id == pr_id).order_by(PRWorkflowEvent.created_at, PRWorkflowEvent.id))
+    return result.scalars().all()
+
+
 @router.delete("/requisitions/{pr_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_purchase_requisition(
     pr_id: int,
     db: AsyncSession = Depends(get_db)
 ):
-    """Delete or cancel draft purchase requisition."""
+    """Cancel an editable requisition while preserving its audit trail."""
     pr = await db.get(PurchaseRequisition, pr_id)
     if not pr:
         raise HTTPException(status_code=404, detail="Purchase Requisition not found.")
-    if pr.status in ["PO_ISSUED", "APPROVED_FOR_PURCHASE"]:
-        raise HTTPException(status_code=400, detail="Cannot delete an approved or ordered requisition.")
-    await db.delete(pr)
+    if pr.status not in ["DRAFT", "PENDING_CS", "SUBMITTED", "RETURNED_FOR_REVISION"]:
+        raise HTTPException(status_code=400, detail="Only draft or pre-approval requisitions can be cancelled.")
+    old_status = pr.status
+    pr.status = "CANCELLED"
+    if pr.boq_item_id:
+        boq = await db.get(BOQItem, pr.boq_item_id)
+        if boq:
+            boq.requisitioned_quantity = max(0, float(boq.requisitioned_quantity or 0) - float(pr.requested_quantity))
+            if boq.is_locked and boq.requisitioned_quantity < float(boq.estimated_quantity or 0):
+                boq.is_locked = False
+    db.add(PRWorkflowEvent(pr_id=pr.id, action="CANCEL", from_status=old_status, to_status="CANCELLED", notes="Cancelled by user"))
     await db.commit()
 
 
@@ -737,6 +954,17 @@ async def create_purchase_requisition(
     proj = await db.get(Project, payload.project_id)
     if not proj:
         raise HTTPException(status_code=404, detail="Project not found.")
+    if payload.requested_quantity <= 0:
+        raise HTTPException(status_code=400, detail="Requested quantity must be greater than zero.")
+    material = await db.get(MaterialItem, payload.material_id)
+    if not material or not material.is_active:
+        raise HTTPException(status_code=404, detail="Active material item not found.")
+    if payload.priority.upper() not in {"NORMAL", "URGENT", "EMERGENCY"}:
+        raise HTTPException(status_code=400, detail="Priority must be NORMAL, URGENT, or EMERGENCY.")
+    if payload.destination_store_id:
+        store = await db.get(SiteStore, payload.destination_store_id)
+        if not store or store.project_id != payload.project_id:
+            raise HTTPException(status_code=400, detail="Destination store must belong to the selected project.")
 
     user_res = await db.execute(select(User).limit(1))
     user = user_res.scalar_one_or_none()
@@ -773,6 +1001,7 @@ async def create_purchase_requisition(
     pr = PurchaseRequisition(
         project_id=payload.project_id,
         pr_number=pr_no,
+        batch_reference=payload.batch_reference,
         requested_by_user_id=user_id,
         requisition_date=date.today(),
         required_by_date=payload.required_by_date,
@@ -783,9 +1012,16 @@ async def create_purchase_requisition(
         tower_name=payload.tower_name,
         floor_number=payload.floor_number,
         purpose_notes=payload.purpose_notes,
-        status="PENDING_CS"
+        priority=payload.priority.upper(),
+        department=payload.department,
+        destination_store_id=payload.destination_store_id,
+        delivery_location=payload.delivery_location,
+        attachment_refs=payload.attachment_refs,
+        status="DRAFT"
     )
     db.add(pr)
+    await db.flush()
+    db.add(PRWorkflowEvent(pr_id=pr.id, action="CREATE", from_status=None, to_status=pr.status, notes="Requisition created"))
     await db.commit()
     await db.refresh(pr)
 
@@ -849,7 +1085,7 @@ async def list_rfqs(
             resp.pr_number = rfq.requisition.pr_number
             resp.project_name = rfq.requisition.project.project_name if rfq.requisition.project else None
             resp.material_name = rfq.requisition.material.material_name if rfq.requisition.material else None
-            resp.requested_quantity = float(rfq.requisition.requested_quantity)
+            resp.requested_quantity = float(rfq.requisition.approved_quantity or rfq.requisition.requested_quantity)
             resp.unit_of_measure = rfq.requisition.material.unit_of_measure if rfq.requisition.material else None
         
         resp.invited_vendors = [
@@ -872,8 +1108,13 @@ async def create_rfq(payload: RFQCreate, db: AsyncSession = Depends(get_db)):
     pr = await db.get(PurchaseRequisition, payload.pr_id)
     if not pr:
         raise HTTPException(status_code=404, detail="Purchase Requisition not found.")
+    if pr.status not in {"APPROVED", "PARTIALLY_APPROVED", "APPROVED_FOR_PURCHASE", "RFQ_ISSUED"}:
+        raise HTTPException(status_code=400, detail="Requisition must complete Department, Project, budget and procurement approvals before supplier sourcing.")
     if not payload.vendor_ids:
         raise HTTPException(status_code=400, detail="At least one vendor must be selected for RFQ.")
+    selected_vendors = (await db.execute(select(Vendor).where(Vendor.id.in_(payload.vendor_ids)))).scalars().all()
+    if len(selected_vendors) != len(set(payload.vendor_ids)) or any(not v.is_active or v.approval_status != "APPROVED" for v in selected_vendors):
+        raise HTTPException(status_code=400, detail="RFQs can only be sent to approved, active vendors.")
 
     count = (await db.execute(select(func.count(RFQ.id)))).scalar() or 0
     rfq_no = f"RFQ-{date.today().year}-{count + 1:04d}"
@@ -899,7 +1140,6 @@ async def create_rfq(payload: RFQCreate, db: AsyncSession = Depends(get_db)):
         )
         db.add(inv)
 
-    pr.status = "RFQ_ISSUED"
     await db.commit()
 
     stmt = (
@@ -919,7 +1159,7 @@ async def create_rfq(payload: RFQCreate, db: AsyncSession = Depends(get_db)):
         resp.pr_number = rfq.requisition.pr_number
         resp.project_name = rfq.requisition.project.project_name if rfq.requisition.project else None
         resp.material_name = rfq.requisition.material.material_name if rfq.requisition.material else None
-        resp.requested_quantity = float(rfq.requisition.requested_quantity)
+        resp.requested_quantity = float(rfq.requisition.approved_quantity or rfq.requisition.requested_quantity)
         resp.unit_of_measure = rfq.requisition.material.unit_of_measure if rfq.requisition.material else None
     resp.invited_vendors = [
         RFQVendorResponse(
@@ -964,7 +1204,7 @@ async def list_comparative_statements(
         resp = ComparativeStatementResponse.model_validate(cs)
         if cs.requisition:
             resp.pr_number = cs.requisition.pr_number
-            resp.requested_quantity = float(cs.requisition.requested_quantity)
+            resp.requested_quantity = float(cs.requisition.approved_quantity or cs.requisition.requested_quantity)
             resp.project_name = cs.requisition.project.project_name if cs.requisition.project else None
             resp.material_name = cs.requisition.material.material_name if cs.requisition.material else None
             resp.unit_of_measure = cs.requisition.material.unit_of_measure if cs.requisition.material else None
@@ -974,12 +1214,14 @@ async def list_comparative_statements(
         lowest_rate = float('inf')
         lowest_v_id = None
         for q in cs.quotations:
+            if not q.is_current:
+                continue
             q_resp = CSQuotationResponse.model_validate(q)
             q_resp.vendor_name = q.vendor.vendor_name if q.vendor else None
             q_resp.vendor_code = q.vendor.vendor_code if q.vendor else None
             quote_responses.append(q_resp)
-            if float(q.quoted_unit_rate) < lowest_rate:
-                lowest_rate = float(q.quoted_unit_rate)
+            if (q.technical_compliance or "COMPLIANT").upper() != "NON_COMPLIANT" and float(q.total_quoted_amount) < lowest_rate:
+                lowest_rate = float(q.total_quoted_amount)
                 lowest_v_id = q.vendor_id
 
         resp.lowest_bidder_vendor_id = lowest_v_id
@@ -988,6 +1230,56 @@ async def list_comparative_statements(
         resp_list.append(resp)
 
     return resp_list
+
+
+@router.post("/comparative-statements/{cs_id}/committee-decision", response_model=ComparativeStatementResponse)
+async def decide_comparative_statement(cs_id: int, payload: CSCommitteeDecision, db: AsyncSession = Depends(get_db)):
+    """Record committee approval/rejection and optional split supplier awards."""
+    cs = await db.get(ComparativeStatement, cs_id)
+    if not cs:
+        raise HTTPException(status_code=404, detail="Comparative Statement not found.")
+    if cs.status != "PENDING_COMMITTEE":
+        raise HTTPException(status_code=400, detail=f"CS is already {cs.status}.")
+    quotes = (await db.execute(select(CSQuotation).where(CSQuotation.cs_id == cs_id, CSQuotation.is_current.is_(True)))).scalars().all()
+    pr = await db.get(PurchaseRequisition, cs.pr_id)
+    if not payload.approved:
+        cs.status = "REJECTED"
+        cs.committee_decision_notes = payload.decision_notes
+        cs.committee_decided_at = func.now()
+    else:
+        if not payload.awards:
+            raise HTTPException(status_code=400, detail="At least one supplier award allocation is required.")
+        if any(float(a.get("quantity", 0)) <= 0 for a in payload.awards):
+            raise HTTPException(status_code=400, detail="Award quantities must be greater than zero.")
+        total_awarded = sum(float(a["quantity"]) for a in payload.awards)
+        sourcing_quantity = float(pr.approved_quantity or pr.requested_quantity)
+        if abs(total_awarded - sourcing_quantity) > 0.0001:
+            raise HTTPException(status_code=400, detail="Award allocations must cover the quantity approved for supplier sourcing.")
+        allocations = []
+        for award in payload.awards:
+            vendor_id = int(award["vendor_id"])
+            quote = next((q for q in quotes if q.vendor_id == vendor_id and (q.technical_compliance or "COMPLIANT").upper() != "NON_COMPLIANT"), None)
+            if not quote:
+                raise HTTPException(status_code=400, detail=f"Vendor {vendor_id} has no technically compliant quotation.")
+            vendor = await db.get(Vendor, vendor_id)
+            if not vendor or not vendor.is_active or vendor.approval_status != "APPROVED":
+                raise HTTPException(status_code=400, detail=f"Vendor {vendor_id} is inactive or not approved.")
+            if (quote.commercial_evaluation or "PENDING").upper() == "REJECTED":
+                raise HTTPException(status_code=400, detail=f"Vendor {vendor_id} failed commercial evaluation.")
+            if float(award["quantity"]) > float(quote.quoted_quantity):
+                raise HTTPException(status_code=400, detail=f"Award quantity exceeds Vendor {vendor_id}'s quoted quantity.")
+            if any(a["vendor_id"] == vendor_id for a in allocations):
+                raise HTTPException(status_code=400, detail="Use one allocation row per supplier; combine that supplier's quantity.")
+            allocations.append({"vendor_id": vendor_id, "quantity": float(award["quantity"]), "quotation_id": quote.id, "rationale": award.get("rationale")})
+        cs.award_allocations = allocations
+        cs.recommended_vendor_id = allocations[0]["vendor_id"] if len(allocations) == 1 else None
+        cs.status = "APPROVED"
+        cs.committee_decision_notes = payload.decision_notes
+        cs.committee_decided_at = func.now()
+    await db.commit()
+    await db.refresh(cs)
+    items = await list_comparative_statements(pr_id=cs.pr_id, db=db)
+    return next(item for item in items if item.id == cs.id)
 
 
 @router.post("/comparative-statements", response_model=ComparativeStatementResponse, status_code=status.HTTP_201_CREATED)
@@ -1001,10 +1293,14 @@ async def create_comparative_statement(
     """
     if len(payload.quotations) < 2:
         raise HTTPException(status_code=400, detail="A Comparative Statement requires at least 2 vendor quotations for commercial audit rigor.")
+    if len({q.vendor_id for q in payload.quotations}) != len(payload.quotations):
+        raise HTTPException(status_code=400, detail="Only one current quotation per supplier is allowed; use the revision endpoint for negotiations.")
 
     pr = await db.get(PurchaseRequisition, payload.pr_id)
     if not pr:
         raise HTTPException(status_code=404, detail="Purchase Requisition not found.")
+    if pr.status not in {"APPROVED", "PARTIALLY_APPROVED", "APPROVED_FOR_PURCHASE", "RFQ_ISSUED", "PENDING_CS"}:
+        raise HTTPException(status_code=400, detail="Complete Department, Project, budget and procurement approvals before preparing a quotation comparison.")
 
     existing_res = await db.execute(select(ComparativeStatement.cs_number))
     existing_numbers = set(existing_res.scalars().all())
@@ -1014,35 +1310,63 @@ async def create_comparative_statement(
     cs_no = f"CS-{date.today().year}-{candidate_idx:04d}"
 
     # Determine lowest bidder
-    sorted_quotes = sorted(payload.quotations, key=lambda x: x.quoted_unit_rate)
-    lowest_vendor_id = sorted_quotes[0].vendor_id
-    rec_vendor_id = payload.recommended_vendor_id or lowest_vendor_id
+    compliant_quotes = [q for q in payload.quotations if (q.technical_compliance or "COMPLIANT").upper() != "NON_COMPLIANT"]
+    if not compliant_quotes:
+        raise HTTPException(status_code=400, detail="No technically compliant quotations are available for evaluation.")
+    vendors = (await db.execute(select(Vendor).where(Vendor.id.in_([q.vendor_id for q in payload.quotations])))).scalars().all()
+    active_vendor_ids = {v.id for v in vendors if v.is_active and v.approval_status == "APPROVED"}
+    if len(active_vendor_ids) != len({q.vendor_id for q in payload.quotations}):
+        raise HTTPException(status_code=400, detail="All quotation vendors must be active and approved for sourcing.")
+    sourcing_qty = float(pr.approved_quantity or pr.requested_quantity)
+    lowest_compliant = min(compliant_quotes, key=lambda q: q.quoted_unit_rate * float(q.quoted_quantity or sourcing_qty) + q.delivery_charge_bdt - q.discount_amount_bdt + q.vat_amount_bdt + q.other_tax_amount_bdt)
+    # Price ranking is advisory only. The committee must explicitly approve an award.
+    rec_vendor_id = payload.recommended_vendor_id
+    recommended_quote = next((q for q in payload.quotations if q.vendor_id == rec_vendor_id), None)
+    if rec_vendor_id and (not recommended_quote or (recommended_quote.technical_compliance or "COMPLIANT").upper() == "NON_COMPLIANT"):
+        raise HTTPException(status_code=400, detail="Recommended supplier must have a technically compliant quotation.")
 
     cs = ComparativeStatement(
         pr_id=payload.pr_id,
         cs_number=cs_no,
         cs_date=date.today(),
         recommended_vendor_id=rec_vendor_id,
-        status="APPROVED",
-        justification_summary=payload.justification_summary or f"Lowest responsive quote recommended (Vendor ID: {rec_vendor_id})."
+        status="PENDING_COMMITTEE",
+        justification_summary=payload.justification_summary,
+        committee_recommendation=payload.committee_recommendation
     )
     db.add(cs)
     await db.commit()
     await db.refresh(cs)
 
-    req_qty = float(pr.requested_quantity)
+    req_qty = float(pr.approved_quantity or pr.requested_quantity)
     for q_input in payload.quotations:
-        total_amt = round(float(q_input.quoted_unit_rate) * req_qty, 2)
+        quote_qty = float(q_input.quoted_quantity or req_qty)
+        if quote_qty <= 0:
+            raise HTTPException(status_code=400, detail="Quoted quantities must be greater than zero.")
+        subtotal = float(q_input.quoted_unit_rate) * quote_qty
+        total_amt = round(subtotal + q_input.delivery_charge_bdt - q_input.discount_amount_bdt + q_input.vat_amount_bdt + q_input.other_tax_amount_bdt, 2)
+        if any(value < 0 for value in (q_input.quoted_unit_rate, q_input.delivery_charge_bdt, q_input.discount_amount_bdt, q_input.vat_amount_bdt, q_input.other_tax_amount_bdt)) or total_amt < 0:
+            raise HTTPException(status_code=400, detail="Evaluated quotation total cannot be negative.")
         is_rec = (q_input.vendor_id == rec_vendor_id)
         quotation = CSQuotation(
             cs_id=cs.id,
             vendor_id=q_input.vendor_id,
             brand_grade=q_input.brand_grade,
+            technical_specification=q_input.technical_specification,
+            country_of_origin=q_input.country_of_origin,
+            warranty_months=q_input.warranty_months,
+            quotation_valid_until=q_input.quotation_valid_until,
             payment_terms=q_input.payment_terms or "30 Days Credit",
             technical_compliance=q_input.technical_compliance or "COMPLIANT",
             quoted_unit_rate=q_input.quoted_unit_rate,
-            quoted_quantity=req_qty,
+            quoted_quantity=quote_qty,
             total_quoted_amount=total_amt,
+            delivery_charge_bdt=q_input.delivery_charge_bdt,
+            discount_amount_bdt=q_input.discount_amount_bdt,
+            vat_amount_bdt=q_input.vat_amount_bdt,
+            other_tax_amount_bdt=q_input.other_tax_amount_bdt,
+            commercial_evaluation=q_input.commercial_evaluation,
+            negotiation_history=q_input.negotiation_history,
             credit_days_offered=q_input.credit_days_offered or 30,
             lead_time_days=q_input.lead_time_days or 3,
             is_recommended=is_rec,
@@ -1050,7 +1374,6 @@ async def create_comparative_statement(
         )
         db.add(quotation)
 
-    pr.status = "CS_PREPARED"
     await db.commit()
 
     stmt = (
@@ -1068,13 +1391,13 @@ async def create_comparative_statement(
 
     resp = ComparativeStatementResponse.model_validate(cs)
     resp.pr_number = cs.requisition.pr_number
-    resp.requested_quantity = float(cs.requisition.requested_quantity)
+    resp.requested_quantity = float(cs.requisition.approved_quantity or cs.requisition.requested_quantity)
     resp.project_name = cs.requisition.project.project_name if cs.requisition.project else None
     resp.material_name = cs.requisition.material.material_name if cs.requisition.material else None
     resp.unit_of_measure = cs.requisition.material.unit_of_measure if cs.requisition.material else None
     resp.recommended_vendor_name = cs.recommended_vendor.vendor_name if cs.recommended_vendor else None
-    resp.lowest_bidder_vendor_id = lowest_vendor_id
-    resp.lowest_unit_rate = sorted_quotes[0].quoted_unit_rate
+    resp.lowest_bidder_vendor_id = lowest_compliant.vendor_id
+    resp.lowest_unit_rate = float(lowest_compliant.quoted_unit_rate)
     resp.quotations = [
         CSQuotationResponse(
             id=q.id,
@@ -1082,11 +1405,22 @@ async def create_comparative_statement(
             vendor_name=q.vendor.vendor_name if q.vendor else None,
             vendor_code=q.vendor.vendor_code if q.vendor else None,
             brand_grade=q.brand_grade,
+            technical_specification=q.technical_specification,
+            country_of_origin=q.country_of_origin,
+            warranty_months=q.warranty_months,
+            quotation_valid_until=q.quotation_valid_until,
             payment_terms=q.payment_terms,
             technical_compliance=q.technical_compliance,
             quoted_unit_rate=float(q.quoted_unit_rate),
             quoted_quantity=float(q.quoted_quantity),
             total_quoted_amount=float(q.total_quoted_amount),
+            delivery_charge_bdt=float(q.delivery_charge_bdt or 0),
+            discount_amount_bdt=float(q.discount_amount_bdt or 0),
+            vat_amount_bdt=float(q.vat_amount_bdt or 0),
+            other_tax_amount_bdt=float(q.other_tax_amount_bdt or 0),
+            commercial_evaluation=q.commercial_evaluation,
+            revision_number=q.revision_number,
+            negotiation_history=q.negotiation_history,
             credit_days_offered=q.credit_days_offered,
             lead_time_days=q.lead_time_days,
             is_recommended=q.is_recommended,
@@ -1094,6 +1428,47 @@ async def create_comparative_statement(
         ) for q in cs.quotations
     ]
     return resp
+
+
+@router.post("/comparative-statements/{cs_id}/quotations/{quotation_id}/revisions", response_model=CSQuotationResponse, status_code=status.HTTP_201_CREATED)
+async def revise_cs_quotation(cs_id: int, quotation_id: int, payload: CSQuotationInput, db: AsyncSession = Depends(get_db)):
+    """Keep the old quote and add a numbered revised quotation for negotiation traceability."""
+    cs = await db.get(ComparativeStatement, cs_id)
+    old = await db.get(CSQuotation, quotation_id)
+    if not cs or not old or old.cs_id != cs_id:
+        raise HTTPException(status_code=404, detail="Comparative statement or quotation not found.")
+    if cs.status in {"APPROVED", "PO_GENERATED", "REJECTED"}:
+        raise HTTPException(status_code=400, detail="A finalized comparative statement cannot accept quote revisions.")
+    if payload.vendor_id != old.vendor_id:
+        raise HTTPException(status_code=400, detail="A quotation revision must remain under the original supplier.")
+    pr = await db.get(PurchaseRequisition, cs.pr_id)
+    qty = float(payload.quoted_quantity or pr.requested_quantity)
+    if qty <= 0:
+        raise HTTPException(status_code=400, detail="Quoted quantity must be greater than zero.")
+    total = round(float(payload.quoted_unit_rate) * qty + payload.delivery_charge_bdt - payload.discount_amount_bdt + payload.vat_amount_bdt + payload.other_tax_amount_bdt, 2)
+    if total < 0:
+        raise HTTPException(status_code=400, detail="Evaluated quotation total cannot be negative.")
+    old.is_current = False
+    revised = CSQuotation(
+        cs_id=cs_id, vendor_id=old.vendor_id, brand_grade=payload.brand_grade, technical_specification=payload.technical_specification,
+        country_of_origin=payload.country_of_origin, warranty_months=payload.warranty_months, quotation_valid_until=payload.quotation_valid_until,
+        payment_terms=payload.payment_terms, technical_compliance=payload.technical_compliance or "COMPLIANT", quoted_unit_rate=payload.quoted_unit_rate,
+        quoted_quantity=qty, total_quoted_amount=total, delivery_charge_bdt=payload.delivery_charge_bdt, discount_amount_bdt=payload.discount_amount_bdt,
+        vat_amount_bdt=payload.vat_amount_bdt, other_tax_amount_bdt=payload.other_tax_amount_bdt, commercial_evaluation=payload.commercial_evaluation,
+        negotiation_history=payload.negotiation_history, credit_days_offered=payload.credit_days_offered or 30, lead_time_days=payload.lead_time_days or 3,
+        is_recommended=False, remarks=payload.remarks, revision_number=(old.revision_number or 1) + 1, previous_quotation_id=old.id, is_current=True
+    )
+    db.add(revised)
+    cs.status = "PENDING_COMMITTEE"
+    cs.recommended_vendor_id = None
+    await db.commit()
+    await db.refresh(revised)
+    result = await db.execute(select(CSQuotation).options(selectinload(CSQuotation.vendor)).where(CSQuotation.id == revised.id))
+    revised = result.scalar_one()
+    response = CSQuotationResponse.model_validate(revised)
+    response.vendor_name = revised.vendor.vendor_name if revised.vendor else None
+    response.vendor_code = revised.vendor.vendor_code if revised.vendor else None
+    return response
 
 
 # --------------------------------------------------------------------------
@@ -1176,16 +1551,47 @@ async def generate_po_from_cs(
     cs = res.scalar_one_or_none()
     if not cs:
         raise HTTPException(status_code=404, detail="Comparative Statement not found.")
-    if not cs.recommended_vendor_id:
-        raise HTTPException(status_code=400, detail="CS does not have a recommended vendor selected.")
-
-    winning_quote = next((q for q in cs.quotations if q.vendor_id == cs.recommended_vendor_id), None)
+    if cs.status != "APPROVED":
+        raise HTTPException(status_code=400, detail="The committee must approve the CS and supplier award before PO generation.")
+    allocation = None
+    if cs.award_allocations:
+        vendor_id = payload.vendor_id or (cs.award_allocations[0]["vendor_id"] if len(cs.award_allocations) == 1 else None)
+        allocation = next((a for a in cs.award_allocations if a["vendor_id"] == vendor_id), None)
+        if not allocation:
+            raise HTTPException(status_code=400, detail="Select a supplier from the approved committee award allocations.")
+        if abs(float(payload.ordered_quantity or allocation["quantity"]) - float(allocation["quantity"])) > 0.0001:
+            raise HTTPException(status_code=400, detail="PO quantity must match the approved award allocation.")
+        vendor_id = allocation["vendor_id"]
+        winning_quote = next((q for q in cs.quotations if q.id == allocation["quotation_id"]), None)
+        po_quantity = float(allocation["quantity"])
+        if (await db.execute(select(PurchaseOrder.id).where(PurchaseOrder.cs_id == cs.id, PurchaseOrder.vendor_id == vendor_id))).scalar_one_or_none():
+            raise HTTPException(status_code=409, detail="A purchase order already exists for this award allocation.")
+    else:
+        vendor_id = cs.recommended_vendor_id
+        if not vendor_id:
+            raise HTTPException(status_code=400, detail="CS does not have an approved supplier award.")
+        winning_quote = next((q for q in cs.quotations if q.vendor_id == vendor_id), None)
+        po_quantity = float(payload.ordered_quantity or cs.requisition.approved_quantity or cs.requisition.requested_quantity)
     if not winning_quote:
         raise HTTPException(status_code=400, detail="Winning vendor quotation details missing.")
+    if (winning_quote.technical_compliance or "COMPLIANT").upper() == "NON_COMPLIANT":
+        raise HTTPException(status_code=400, detail="A technically non-compliant quotation cannot be converted to a purchase order.")
+    winning_vendor = await db.get(Vendor, vendor_id)
+    if not winning_vendor or not winning_vendor.is_active or winning_vendor.approval_status != "APPROVED":
+        raise HTTPException(status_code=400, detail="Recommended supplier is inactive or suspended.")
 
     store = await db.get(SiteStore, payload.destination_store_id)
     if not store:
         raise HTTPException(status_code=404, detail="Destination store not found.")
+
+    project = await db.get(Project, cs.requisition.project_id)
+    approved_budget = float(project.approved_budget_bdt or 0) if project else 0
+    committed = float((await db.execute(select(func.coalesce(func.sum(PurchaseOrder.total_po_amount), 0)).where(
+        PurchaseOrder.project_id == cs.requisition.project_id, PurchaseOrder.status.notin_(["CANCELLED", "REJECTED"])
+    ))).scalar_one() or 0)
+    quote_amount = round(float(winning_quote.total_quoted_amount) * po_quantity / float(winning_quote.quoted_quantity), 2)
+    if approved_budget > 0 and committed + quote_amount > approved_budget:
+        raise HTTPException(status_code=400, detail=f"Purchase order exceeds approved project budget. Available: BDT {max(0, approved_budget - committed):,.2f}.")
 
     user_res = await db.execute(select(User).limit(1))
     user = user_res.scalar_one_or_none()
@@ -1204,25 +1610,33 @@ async def generate_po_from_cs(
         po_number=po_no,
         cs_id=cs.id,
         project_id=cs.requisition.project_id,
-        vendor_id=cs.recommended_vendor_id,
+        vendor_id=vendor_id,
         material_id=cs.requisition.material_id,
-        ordered_quantity=cs.requisition.requested_quantity,
+        ordered_quantity=po_quantity,
         unit_price=winning_quote.quoted_unit_rate,
-        total_po_amount=winning_quote.total_quoted_amount,
+        total_po_amount=quote_amount,
         po_date=date.today(),
         delivery_deadline=payload.delivery_deadline,
         destination_store_id=payload.destination_store_id,
-        approval_status="APPROVED",
-        approved_by_user_id=user_id,
-        approval_date=date.today(),
+        approval_status="PENDING_APPROVAL",
+        approved_by_user_id=None,
+        approval_date=None,
         delivery_schedule_notes=payload.delivery_schedule_notes or f"Delivery to {store.store_name} by {payload.delivery_deadline}",
-        status="ISSUED",
+        status="PENDING_APPROVAL",
         terms_and_conditions=payload.terms_and_conditions or "Payment within 30 days after 3-Way Match GRN verification."
     )
     db.add(po)
 
-    cs.status = "PO_GENERATED"
-    cs.requisition.status = "PO_ISSUED"
+    if not cs.award_allocations or len(cs.award_allocations) == 1:
+        cs.status = "PO_GENERATED"
+        cs.requisition.status = "PARTIALLY_ORDERED" if float(cs.requisition.approved_quantity or cs.requisition.requested_quantity) < float(cs.requisition.requested_quantity) else "CONVERTED_TO_PO"
+    else:
+        existing_awards = (await db.execute(select(func.count(PurchaseOrder.id)).where(PurchaseOrder.cs_id == cs.id))).scalar_one() or 0
+        if existing_awards >= len(cs.award_allocations):
+            cs.status = "PO_GENERATED"
+            cs.requisition.status = "PARTIALLY_ORDERED" if float(cs.requisition.approved_quantity or cs.requisition.requested_quantity) < float(cs.requisition.requested_quantity) else "CONVERTED_TO_PO"
+        else:
+            cs.requisition.status = "PARTIALLY_ORDERED"
     await db.commit()
     await db.refresh(po)
 
@@ -1262,6 +1676,8 @@ async def approve_purchase_order(
     po = await db.get(PurchaseOrder, id)
     if not po:
         raise HTTPException(status_code=404, detail="Purchase Order not found.")
+    if po.approval_status != "PENDING_APPROVAL":
+        raise HTTPException(status_code=400, detail=f"Purchase order is already {po.approval_status.lower()}.")
 
     user_res = await db.execute(select(User).limit(1))
     user = user_res.scalar_one_or_none()
@@ -1270,9 +1686,17 @@ async def approve_purchase_order(
         po.approval_status = "APPROVED"
         po.approved_by_user_id = user.id if user else 1
         po.approval_date = date.today()
+        po.status = "ISSUED"
     else:
         po.approval_status = "REJECTED"
         po.status = "CANCELLED"
+
+    if po.cs_id:
+        cs = await db.get(ComparativeStatement, po.cs_id)
+        if cs:
+            pr = await db.get(PurchaseRequisition, cs.pr_id)
+            if pr:
+                pr.status = "CONVERTED_TO_PO" if payload.approved else "APPROVED"
 
     if payload.delivery_schedule_notes:
         po.delivery_schedule_notes = payload.delivery_schedule_notes
@@ -1318,6 +1742,8 @@ async def create_direct_purchase_order(
     vendor = await db.get(Vendor, payload.vendor_id)
     if not vendor:
         raise HTTPException(status_code=404, detail="Vendor not found.")
+    if not vendor.is_active or vendor.approval_status != "APPROVED":
+        raise HTTPException(status_code=400, detail="Purchase orders cannot be issued to an inactive or suspended vendor.")
 
     material = await db.get(MaterialItem, payload.material_id)
     if not material:
@@ -1326,6 +1752,13 @@ async def create_direct_purchase_order(
     store = await db.get(SiteStore, payload.destination_store_id)
     if not store:
         raise HTTPException(status_code=404, detail="Destination Store not found.")
+
+    approved_budget = float(proj.approved_budget_bdt or 0)
+    committed = float((await db.execute(select(func.coalesce(func.sum(PurchaseOrder.total_po_amount), 0)).where(
+        PurchaseOrder.project_id == proj.id, PurchaseOrder.status.notin_(["CANCELLED", "REJECTED"])
+    ))).scalar_one() or 0)
+    if approved_budget > 0 and committed + float(payload.ordered_quantity) * float(payload.unit_price) > approved_budget:
+        raise HTTPException(status_code=400, detail=f"Purchase order exceeds approved project budget. Available: BDT {max(0, approved_budget - committed):,.2f}.")
 
     user_res = await db.execute(select(User).limit(1))
     user = user_res.scalar_one_or_none()
@@ -1353,11 +1786,11 @@ async def create_direct_purchase_order(
         po_date=date.today(),
         delivery_deadline=payload.delivery_deadline,
         destination_store_id=payload.destination_store_id,
-        approval_status="APPROVED",
-        approved_by_user_id=user_id,
-        approval_date=date.today(),
+        approval_status="PENDING_APPROVAL",
+        approved_by_user_id=None,
+        approval_date=None,
         delivery_schedule_notes=payload.delivery_schedule_notes or f"Direct supply to {store.store_name}",
-        status="ISSUED",
+        status="PENDING_APPROVAL",
         terms_and_conditions=payload.terms_and_conditions or "Standard Developer Contract Terms apply."
     )
     db.add(po)
@@ -1736,6 +2169,11 @@ async def create_goods_receipt(
         inspection_remarks=payload.inspection_remarks
     )
     db.add(grn)
+    if po.vendor:
+        if rej_qty > 0:
+            po.vendor.rejected_delivery_count = int(po.vendor.rejected_delivery_count or 0) + 1
+        if po.delivery_deadline and date.today() > po.delivery_deadline:
+            po.vendor.late_delivery_count = int(po.vendor.late_delivery_count or 0) + 1
 
     # Automatically track PO received status
     tot_prev = (await db.execute(select(func.sum(GoodsReceipt.accepted_quantity)).where(GoodsReceipt.po_id == po.id))).scalar() or 0.0
@@ -1985,7 +2423,8 @@ async def create_quality_inspection(
         select(GoodsReceipt)
         .options(
             selectinload(GoodsReceipt.purchase_order).selectinload(PurchaseOrder.store),
-            selectinload(GoodsReceipt.purchase_order).selectinload(PurchaseOrder.material)
+            selectinload(GoodsReceipt.purchase_order).selectinload(PurchaseOrder.material),
+            selectinload(GoodsReceipt.purchase_order).selectinload(PurchaseOrder.vendor)
         )
         .where(GoodsReceipt.id == payload.grn_id)
     )
@@ -2017,6 +2456,9 @@ async def create_quality_inspection(
     db.add(qc)
 
     grn.qc_status = payload.test_result
+    if po.vendor and payload.test_result in {"FAILED", "REJECTED", "NON_COMPLIANT"}:
+        po.vendor.quality_complaint_count = int(po.vendor.quality_complaint_count or 0) + 1
+        po.vendor.non_conformance_count = int(po.vendor.non_conformance_count or 0) + 1
 
     # If PASSED, credit store stock & recalculate Weighted Average Rate
     if payload.test_result == "PASSED":
@@ -2082,6 +2524,14 @@ async def create_quality_inspection(
             po.status = "FULLY_RECEIVED"
         else:
             po.status = "PARTIALLY_RECEIVED"
+        if po.status == "FULLY_RECEIVED" and po.cs_id:
+            cs = await db.get(ComparativeStatement, po.cs_id)
+            if cs:
+                pr = await db.get(PurchaseRequisition, cs.pr_id)
+                cs_ids = (await db.execute(select(ComparativeStatement.id).where(ComparativeStatement.pr_id == cs.pr_id))).scalars().all()
+                related_pos = (await db.execute(select(PurchaseOrder).where(PurchaseOrder.cs_id.in_(cs_ids)))).scalars().all()
+                if pr and related_pos and all(order.status == "FULLY_RECEIVED" for order in related_pos):
+                    pr.status = "COMPLETED"
 
     elif payload.test_result == "FAILED":
         grn.status = "REJECTED_QC"
@@ -2798,7 +3248,7 @@ async def get_procurement_metrics(db: AsyncSession = Depends(get_db)):
     stores_count = (await db.execute(select(func.count(SiteStore.id)).where(SiteStore.is_active == True))).scalar() or 0
     c_warehouses = (await db.execute(select(func.count(SiteStore.id)).where(SiteStore.is_central_warehouse == True))).scalar() or 0
     low_stock = (await db.execute(select(func.count(StoreStock.id)).where(StoreStock.current_stock_quantity <= StoreStock.reorder_level))).scalar() or 0
-    pending_pr = (await db.execute(select(func.count(PurchaseRequisition.id)).where(PurchaseRequisition.status.in_(["PENDING_CS", "RFQ_ISSUED"])))).scalar() or 0
+    pending_pr = (await db.execute(select(func.count(PurchaseRequisition.id)).where(PurchaseRequisition.status.in_(["DRAFT", "SUBMITTED", "UNDER_REVIEW", "RETURNED_FOR_REVISION", "PENDING_CS"])))).scalar() or 0
     active_po = (await db.execute(select(func.count(PurchaseOrder.id)).where(PurchaseOrder.status.in_(["ISSUED", "PARTIALLY_RECEIVED"])))).scalar() or 0
     po_val = (await db.execute(select(func.sum(PurchaseOrder.total_po_amount)))).scalar() or 0.0
     var_flags = (await db.execute(select(func.count(GoodsReceipt.id)).where(GoodsReceipt.three_way_match_status == "VARIANCE_FLAGGED"))).scalar() or 0

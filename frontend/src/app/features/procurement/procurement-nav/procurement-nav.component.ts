@@ -46,29 +46,32 @@ export interface ProcurementTabItem {
         </div>
       </div>
 
-      <!-- 15 Unified SCM Sub-module Navigation Pills -->
-      <div class="flex items-center gap-1.5 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-700">
-        @for (tab of tabs; track tab.id) {
-          <a
-            [routerLink]="tab.route"
-            routerLinkActive="bg-amber-500 text-slate-950 font-bold shadow-xs border-amber-500"
-            [routerLinkActiveOptions]="{ exact: tab.route === '/procurement/dashboard' }"
-            class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-700 transition-all shrink-0 select-none cursor-pointer"
-          >
-            <span class="text-xs">{{ tab.icon }}</span>
-            <span>{{ tab.label }}</span>
-            @if (tab.badge) {
-              <span [class]="'px-1.5 py-0.2 rounded text-[9px] font-bold ' + (tab.badgeColor || 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-300')">
-                {{ tab.badge }}
-              </span>
-            }
-          </a>
-        }
-      </div>
+      @if (showTabs) {
+        <!-- 15 Unified SCM Sub-module Navigation Pills -->
+        <div class="flex items-center gap-1.5 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-700">
+          @for (tab of tabs; track tab.id) {
+            <a
+              [routerLink]="tab.route"
+              routerLinkActive="bg-amber-500 text-slate-950 font-bold shadow-xs border-amber-500"
+              [routerLinkActiveOptions]="{ exact: tab.route === '/procurement/dashboard' }"
+              class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-700 transition-all shrink-0 select-none cursor-pointer"
+            >
+              <span class="text-xs">{{ tab.icon }}</span>
+              <span>{{ tab.label }}</span>
+              @if (tab.badge) {
+                <span [class]="'px-1.5 py-0.2 rounded text-[9px] font-bold ' + (tab.badgeColor || 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-300')">
+                  {{ tab.badge }}
+                </span>
+              }
+            </a>
+          }
+        </div>
+      }
     </div>
   `
 })
 export class ProcurementNavComponent {
+  @Input() showTabs = false;
   @Input() title: string = 'Procurement & Inventory Management';
   @Input() subtitle: string = 'Bangladesh Real Estate Developer ERP — Full SCM Lifecycle';
 
@@ -87,6 +90,6 @@ export class ProcurementNavComponent {
     { id: 'planning', label: '9.12 Reorder Planning', route: '/procurement/material-planning', icon: '⚠️', badge: 'Low Stock' },
     { id: 'ledger', label: '9.13 Stock Ledger', route: '/procurement/inventory-ledger', icon: '📖', badge: 'Weighted' },
     { id: 'bills', label: '9.14 3-Way Match Bills', route: '/procurement/supplier-bills', icon: '🧾', badge: '3-Way' },
-    { id: 'audit', label: '9.15 Audit Trail', route: '/procurement/reports-audit', icon: '🛡️', badge: 'Audit' }
+    { id: 'audit', label: '9.15 Reports & Audit', route: '/procurement/reports-audit', icon: '📊', badge: 'Reports' }
   ];
 }

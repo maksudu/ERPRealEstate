@@ -171,6 +171,7 @@ class AssetDisposalCreate(BaseModel):
     approved_by: Optional[str] = "Managing Director"
 
 class AssetDisposalUpdate(BaseModel):
+    asset_id: Optional[int] = None
     disposal_date: Optional[date] = None
     disposal_type: Optional[str] = None
     sale_proceeds_bdt: Optional[Decimal] = None

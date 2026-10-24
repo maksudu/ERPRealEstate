@@ -620,7 +620,52 @@ export class SidebarComponent implements OnInit {
         { id: 'proc-planning', label: 'Material Planning', route: '/procurement/material-planning' },
         { id: 'proc-ledger', label: 'Inventory Ledger', route: '/procurement/inventory-ledger' },
         { id: 'proc-bills', label: 'Supplier Bills', route: '/procurement/supplier-bills' },
-        { id: 'proc-audit', label: 'Audit Trail & Reports', route: '/procurement/reports-audit' }
+        {
+          id: 'proc-reports-suite',
+          label: 'Procurement Reports',
+          children: [
+            { id: 'rep-pr-1', label: 'PR Register & Approval', route: '/procurement/reports-audit', queryParams: { report: 'pr_register' } },
+            { id: 'rep-pr-2', label: 'PR Approval Aging', route: '/procurement/reports-audit', queryParams: { report: 'approval_aging' } },
+            { id: 'rep-pr-3', label: 'RFQ & Quotation Comparison', route: '/procurement/reports-audit', queryParams: { report: 'rfq_comparison' } },
+            { id: 'rep-pr-4', label: 'Approved Supplier & Vendor', route: '/procurement/reports-audit', queryParams: { report: 'vendor_performance' } },
+            { id: 'rep-pr-5', label: 'Purchase Order Register', route: '/procurement/reports-audit', queryParams: { report: 'po_register' } },
+            { id: 'rep-pr-6', label: 'Outstanding Order Quantities', route: '/procurement/reports-audit', queryParams: { report: 'outstanding_orders' } },
+            { id: 'rep-pr-7', label: 'Delayed Deliveries & Lead Time', route: '/procurement/reports-audit', queryParams: { report: 'delayed_deliveries' } },
+            { id: 'rep-pr-8', label: 'Price Variance & Savings', route: '/procurement/reports-audit', queryParams: { report: 'price_variance' } },
+            { id: 'rep-pr-9', label: 'Budget vs Commitments', route: '/procurement/reports-audit', queryParams: { report: 'budget_commitments' } },
+            { id: 'rep-pr-10', label: 'Emergency Purchases', route: '/procurement/reports-audit', queryParams: { report: 'emergency_purchases' } }
+          ]
+        },
+        {
+          id: 'inv-reports-suite',
+          label: 'Inventory Reports',
+          children: [
+            { id: 'rep-inv-1', label: 'Stock by Warehouse & Item', route: '/procurement/reports-audit', queryParams: { report: 'stock_by_location' } },
+            { id: 'rep-inv-2', label: 'Stock Ledger & Movement', route: '/procurement/reports-audit', queryParams: { report: 'stock_ledger' } },
+            { id: 'rep-inv-3', label: 'GRN & Material Issue Register', route: '/procurement/reports-audit', queryParams: { report: 'grn_issue_register' } },
+            { id: 'rep-inv-4', label: 'Material Transfer & In-Transit', route: '/procurement/reports-audit', queryParams: { report: 'transfer_transit' } },
+            { id: 'rep-inv-5', label: 'Stock Valuation & Reconciliation', route: '/procurement/reports-audit', queryParams: { report: 'stock_valuation' } },
+            { id: 'rep-inv-6', label: 'Reorder Alerts & Stockout Risk', route: '/procurement/reports-audit', queryParams: { report: 'reorder_risk' } },
+            { id: 'rep-inv-7', label: 'Slow-Moving & Obsolete Stock', route: '/procurement/reports-audit', queryParams: { report: 'slow_obsolete' } },
+            { id: 'rep-inv-8', label: 'Physical Count Variance', route: '/procurement/reports-audit', queryParams: { report: 'physical_variance' } },
+            { id: 'rep-inv-9', label: 'Material Consumption vs BOQ', route: '/procurement/reports-audit', queryParams: { report: 'consumption_boq' } },
+            { id: 'rep-inv-10', label: 'Project Wastage & Loss', route: '/procurement/reports-audit', queryParams: { report: 'project_wastage' } }
+          ]
+        },
+        {
+          id: 'ap-reports-suite',
+          label: 'Accounts Payable & Audit',
+          children: [
+            { id: 'rep-ap-1', label: 'Supplier Invoice Register', route: '/procurement/reports-audit', queryParams: { report: 'invoice_register' } },
+            { id: 'rep-ap-2', label: 'Unpaid & Overdue Bills', route: '/procurement/reports-audit', queryParams: { report: 'unpaid_overdue' } },
+            { id: 'rep-ap-3', label: 'Supplier Balances & Aging', route: '/procurement/reports-audit', queryParams: { report: 'supplier_balances' } },
+            { id: 'rep-ap-4', label: 'Payment History & Disbursements', route: '/procurement/reports-audit', queryParams: { report: 'payment_history' } },
+            { id: 'rep-ap-5', label: 'Purchase Returns & Debit Notes', route: '/procurement/reports-audit', queryParams: { report: 'returns_credit_notes' } },
+            { id: 'rep-ap-6', label: 'Tax & VAT Deduction Summary', route: '/procurement/reports-audit', queryParams: { report: 'tax_summary' } },
+            { id: 'rep-ap-7', label: 'GRN vs Invoice Discrepancies', route: '/procurement/reports-audit', queryParams: { report: 'grn_discrepancies' } },
+            { id: 'rep-ap-8', label: 'System Audit Trail', route: '/procurement/reports-audit', queryParams: { report: 'audit_trail' } }
+          ]
+        }
       ]
     },
     {

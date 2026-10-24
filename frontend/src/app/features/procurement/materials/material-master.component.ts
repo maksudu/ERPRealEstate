@@ -2,13 +2,13 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ProcurementService } from '../../../core/services/procurement.service';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MaterialItem } from '../../../core/models/procurement.model';
 import { ProcurementNavComponent } from '../procurement-nav/procurement-nav.component';
 import {
   CardContainerComponent,
   CustomButtonComponent,
   CustomInputComponent,
-  ModalComponent,
   SearchableSelectComponent
 } from '../../../shared/components';
 
@@ -23,13 +23,13 @@ import {
     CardContainerComponent,
     CustomButtonComponent,
     CustomInputComponent,
-    ModalComponent,
     SearchableSelectComponent
   ],
   template: `
+    @if (!isFormPage) {
     <app-procurement-nav
-      title="9.3 Material & Item Master"
-      subtitle="Standardized Real Estate Developer Materials Catalog, Units of Measure & Valuation Rates"
+      title="Material & Item Master"
+      
     >
       <div actions>
         <button
@@ -43,6 +43,8 @@ import {
       </div>
     </app-procurement-nav>
 
+    @if (successMessage) { <div class="mb-4 rounded-lg bg-emerald-50 text-emerald-700 p-3 text-sm">{{ successMessage }}</div> }
+    @if (errorMessage) { <div class="mb-4 rounded-lg bg-rose-50 text-rose-700 p-3 text-sm">{{ errorMessage }}</div> }
     <!-- 4 Material Categories Quick Filter Cards -->
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
       <button
@@ -220,14 +222,11 @@ import {
       </div>
     </app-card-container>
 
-    <!-- Dedicated Add / Edit Material Modal (NOT showing under table) -->
-    <app-modal
-      [isOpen]="isModalOpen"
-      [title]="editingMaterialId ? 'Edit Material Catalog Item' : 'Add New Material Catalog Item'"
-      [subtitle]="'Standardized item specifications with dynamic categories and explicit unit conversions'"
-      [maxWidth]="'max-w-xl'"
-      (closeModal)="closeModal()"
-    >
+    }
+    @if (isFormPage) {
+    <section class="max-w-4xl mx-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-7 shadow-sm">
+      <div class="mb-5"><h2 class="text-lg font-bold">{{ editingMaterialId ? 'Edit Material Catalog Item' : 'Add New Material Catalog Item' }}</h2><p class="text-xs text-slate-500 mt-1">Maintain the material code, category, unit and standard rate.</p></div>
+      @if (errorMessage) { <div class="mb-4 rounded-lg bg-rose-50 text-rose-700 p-3 text-sm">{{ errorMessage }}</div> }
       <form [formGroup]="materialForm" (ngSubmit)="saveMaterial()" class="space-y-4">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <!-- Item Code -->
@@ -316,17 +315,23 @@ import {
           ></app-custom-button>
         </div>
       </form>
-    </app-modal>
+    </section>
+    }
   `
 })
 export class MaterialMasterComponent implements OnInit {
   private procurementService = inject(ProcurementService);
   private fb = inject(FormBuilder);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   materials = signal<MaterialItem[]>([]);
   isModalOpen = false;
   editingMaterialId: number | null = null;
   isSaving = signal<boolean>(false);
+  isFormPage = false;
+  errorMessage = '';
+  successMessage = '';
 
   searchQuery = '';
   selectedCategory = '';
@@ -343,12 +348,24 @@ export class MaterialMasterComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.isFormPage = this.router.url.includes('/new') || this.router.url.includes('/edit');
+    const routeId = Number(this.route.snapshot.paramMap.get('id'));
+    if (this.isFormPage && !routeId) this.prepareAddForm();
+    this.successMessage = history.state?.procurementNotice || '';
     this.loadMaterials();
   }
 
   loadMaterials(): void {
-    this.procurementService.getMaterials().subscribe({
-      next: (data) => {
+    const routeId = Number(this.route.snapshot.paramMap.get('id'));
+    this.procurementService.getMaterials(this.searchQuery, undefined, routeId ? 500 : this.limit, routeId ? 0 : this.offset).subscribe({
+      next: (response: any) => {
+        this.errorMessage = '';
+        const data: MaterialItem[] = Array.isArray(response) ? response : response?.items ?? response?.results ?? [];
+        if (this.isFormPage && routeId) {
+          const item = data.find((row: MaterialItem) => row.id === routeId);
+          if (item) this.patchMaterialForm(item);
+          else this.errorMessage = 'Material record could not be loaded.';
+        }
         let filtered = data;
         if (this.searchQuery) {
           const q = this.searchQuery.toLowerCase();
@@ -363,7 +380,7 @@ export class MaterialMasterComponent implements OnInit {
         }
         this.materials.set(filtered);
       },
-      error: () => {}
+      error: (err) => this.errorMessage = err.error?.detail || 'Unable to load materials.'
     });
   }
 
@@ -391,6 +408,10 @@ export class MaterialMasterComponent implements OnInit {
   }
 
   openAddModal(): void {
+    this.router.navigate(['/procurement/materials/new']);
+  }
+
+  private prepareAddForm(): void {
     this.editingMaterialId = null;
     const count = this.materials().length + 1;
     this.materialForm.reset({
@@ -401,10 +422,14 @@ export class MaterialMasterComponent implements OnInit {
       standard_unit_cost: 0.00,
       is_active: true
     });
-    this.isModalOpen = true;
+    this.isModalOpen = false;
   }
 
   openEditModal(mat: MaterialItem): void {
+    this.router.navigate(['/procurement/materials', mat.id, 'edit']);
+  }
+
+  private patchMaterialForm(mat: MaterialItem): void {
     this.editingMaterialId = mat.id;
     this.materialForm.patchValue({
       material_code: mat.material_code,
@@ -414,16 +439,16 @@ export class MaterialMasterComponent implements OnInit {
       standard_unit_cost: mat.standard_unit_cost,
       is_active: mat.is_active
     });
-    this.isModalOpen = true;
+    this.isModalOpen = false;
   }
 
   closeModal(): void {
-    this.isModalOpen = false;
-    this.editingMaterialId = null;
+    this.router.navigate(['/procurement/materials']);
   }
 
   saveMaterial(): void {
     if (this.materialForm.invalid) return;
+    this.errorMessage = '';
 
     this.isSaving.set(true);
     const val = this.materialForm.value;
@@ -432,19 +457,17 @@ export class MaterialMasterComponent implements OnInit {
       this.procurementService.updateMaterial(this.editingMaterialId, val).subscribe({
         next: () => {
           this.isSaving.set(false);
-          this.closeModal();
-          this.loadMaterials();
+          this.router.navigate(['/procurement/materials'], { state: { procurementNotice: 'Material updated successfully.' } });
         },
-        error: () => this.isSaving.set(false)
+        error: (err) => { this.isSaving.set(false); this.errorMessage = err.error?.detail || 'Failed to update material.'; }
       });
     } else {
       this.procurementService.createMaterial(val).subscribe({
         next: () => {
           this.isSaving.set(false);
-          this.closeModal();
-          this.loadMaterials();
+          this.router.navigate(['/procurement/materials'], { state: { procurementNotice: 'Material saved successfully.' } });
         },
-        error: () => this.isSaving.set(false)
+        error: (err) => { this.isSaving.set(false); this.errorMessage = err.error?.detail || 'Failed to save material.'; }
       });
     }
   }

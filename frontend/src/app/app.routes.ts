@@ -906,77 +906,112 @@ export const routes: Routes = [
       {
         path: 'procurement/dashboard',
         loadComponent: () => import('./features/procurement/dashboard/procurement-dashboard.component').then(m => m.ProcurementDashboardComponent),
-        title: '9.1 Procurement & Inventory Dashboard '
+        title: 'Procurement & Inventory Dashboard '
+      },
+      {
+        path: 'procurement/vendors/new',
+        loadComponent: () => import('./features/procurement/vendors/vendor-management.component').then(m => m.VendorManagementComponent),
+        title: 'Register Supplier'
+      },
+      {
+        path: 'procurement/vendors/:id/edit',
+        loadComponent: () => import('./features/procurement/vendors/vendor-management.component').then(m => m.VendorManagementComponent),
+        title: 'Edit Supplier'
       },
       {
         path: 'procurement/vendors',
         loadComponent: () => import('./features/procurement/vendors/vendor-management.component').then(m => m.VendorManagementComponent),
-        title: '9.2 Supplier & Vendor Management '
+        title: 'Supplier & Vendor Management '
+      },
+      {
+        path: 'procurement/materials/new',
+        loadComponent: () => import('./features/procurement/materials/material-master.component').then(m => m.MaterialMasterComponent),
+        title: 'Add Material'
+      },
+      {
+        path: 'procurement/materials/:id/edit',
+        loadComponent: () => import('./features/procurement/materials/material-master.component').then(m => m.MaterialMasterComponent),
+        title: 'Edit Material'
       },
       {
         path: 'procurement/materials',
         loadComponent: () => import('./features/procurement/materials/material-master.component').then(m => m.MaterialMasterComponent),
-        title: '9.3 Material & Item Master '
+        title: 'Material & Item Master '
+      },
+      {
+        path: 'procurement/requisitions/new',
+        loadComponent: () => import('./features/procurement/requisitions/purchase-requisitions.component').then(m => m.PurchaseRequisitionsComponent),
+        title: 'Raise Purchase Requisition'
+      },
+      {
+        path: 'procurement/requisitions/:id/edit',
+        loadComponent: () => import('./features/procurement/requisitions/purchase-requisitions.component').then(m => m.PurchaseRequisitionsComponent),
+        title: 'Edit Purchase Requisition'
       },
       {
         path: 'procurement/requisitions',
         loadComponent: () => import('./features/procurement/requisitions/purchase-requisitions.component').then(m => m.PurchaseRequisitionsComponent),
-        title: '9.4 Purchase Requisition (PR) '
+        title: 'Purchase Requisition (PR) '
+      },
+      {
+        path: 'procurement/rfq-comparison/new',
+        loadComponent: () => import('./features/procurement/rfq-comparison/rfq-comparison.component').then(m => m.RfqComparisonComponent),
+        title: 'New RFQ / Supplier Quotation Comparison'
       },
       {
         path: 'procurement/rfq-comparison',
         loadComponent: () => import('./features/procurement/rfq-comparison/rfq-comparison.component').then(m => m.RfqComparisonComponent),
-        title: '9.5 RFQ & Supplier Quotation Comparison '
+        title: 'RFQ & Supplier Quotation Comparison '
       },
       {
         path: 'procurement/purchase-orders',
         loadComponent: () => import('./features/procurement/purchase-orders/purchase-orders.component').then(m => m.PurchaseOrdersComponent),
-        title: '9.6 Purchase Order (PO) Management '
+        title: 'Purchase Order (PO) Management '
       },
       {
         path: 'procurement/grn',
         loadComponent: () => import('./features/procurement/grn/goods-receipts.component').then(m => m.GoodsReceiptsComponent),
-        title: '9.7 Goods Receipt Note (GRN) '
+        title: 'Goods Receipt Note (GRN) '
       },
       {
         path: 'procurement/inspections',
         loadComponent: () => import('./features/procurement/inspections/quality-inspections.component').then(m => m.QualityInspectionsComponent),
-        title: '9.8 Quality Inspection & Rejection '
+        title: 'Quality Inspection & Rejection '
       },
       {
         path: 'procurement/warehouse-stock',
         loadComponent: () => import('./features/procurement/warehouse-stock/warehouse-stock.component').then(m => m.WarehouseStockComponent),
-        title: '9.9 Warehouse & Project-Site Stock '
+        title: 'Warehouse & Project-Site Stock '
       },
       {
         path: 'procurement/material-issues',
         loadComponent: () => import('./features/procurement/material-issues/material-issues.component').then(m => m.MaterialIssuesComponent),
-        title: '9.10 Material Issue & Consumption '
+        title: 'Material Issue & Consumption '
       },
       {
         path: 'procurement/stock-transfers',
         loadComponent: () => import('./features/procurement/stock-transfers/stock-transfers.component').then(m => m.StockTransfersComponent),
-        title: '9.11 Stock Transfer & Adjustment '
+        title: 'Stock Transfer & Adjustment '
       },
       {
         path: 'procurement/material-planning',
         loadComponent: () => import('./features/procurement/material-planning/material-planning.component').then(m => m.MaterialPlanningComponent),
-        title: '9.12 Reorder Levels & Material Planning '
+        title: 'Reorder Levels & Material Planning '
       },
       {
         path: 'procurement/inventory-ledger',
         loadComponent: () => import('./features/procurement/inventory-ledger/inventory-ledger.component').then(m => m.InventoryLedgerComponent),
-        title: '9.13 Stock Valuation & Inventory Ledger '
+        title: 'Stock Valuation & Inventory Ledger '
       },
       {
         path: 'procurement/supplier-bills',
         loadComponent: () => import('./features/procurement/supplier-bills/supplier-bills.component').then(m => m.SupplierBillsComponent),
-        title: '9.14 Supplier Bills & Payment Reconciliation '
+        title: 'Supplier Bills & Payment Reconciliation '
       },
       {
         path: 'procurement/reports-audit',
         loadComponent: () => import('./features/procurement/reports-audit/reports-audit.component').then(m => m.ReportsAuditComponent),
-        title: '9.15 Procurement Reports & Audit Trail '
+        title: 'Procurement Reports & Audit Trail '
       },
       {
         path: 'procurement/cockpit',

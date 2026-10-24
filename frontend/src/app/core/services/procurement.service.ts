@@ -35,10 +35,11 @@ export class ProcurementService {
   private baseUrl = `${environment.apiUrl}/procurement`;
 
   // 1. Vendors Master
-  getVendors(search?: string, tradeCategory?: string): Observable<Vendor[]> {
+  getVendors(search?: string, tradeCategory?: string, limit = 50, offset = 0): Observable<Vendor[]> {
     let params = new HttpParams();
     if (search) params = params.set('search', search);
     if (tradeCategory) params = params.set('trade_category', tradeCategory);
+    params = params.set('limit', limit).set('offset', offset);
     return this.http.get<Vendor[]>(`${this.baseUrl}/vendors`, { params });
   }
 
@@ -54,9 +55,24 @@ export class ProcurementService {
     return this.http.delete(`${this.baseUrl}/vendors/${id}`);
   }
 
+  vendorWorkflow(id: number, payload: { action: string; notes?: string }): Observable<Vendor> {
+    return this.http.post<Vendor>(`${this.baseUrl}/vendors/${id}/workflow`, payload);
+  }
+
+  getVendorApprovalHistory(id: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/vendors/${id}/history`);
+  }
+
+  getVendorExpiryAlerts(days = 60): Observable<Vendor[]> {
+    return this.http.get<Vendor[]>(`${this.baseUrl}/vendors/expiry-alerts`, { params: new HttpParams().set('days', days) });
+  }
+
   // 2. Materials Master
-  getMaterials(): Observable<MaterialItem[]> {
-    return this.http.get<MaterialItem[]>(`${this.baseUrl}/materials`);
+  getMaterials(search?: string, category?: string, limit = 50, offset = 0): Observable<MaterialItem[]> {
+    let params = new HttpParams().set('limit', limit).set('offset', offset);
+    if (search) params = params.set('search', search);
+    if (category) params = params.set('category', category);
+    return this.http.get<MaterialItem[]>(`${this.baseUrl}/materials`, { params });
   }
 
   createMaterial(payload: any): Observable<MaterialItem> {
@@ -140,12 +156,24 @@ export class ProcurementService {
     return this.http.post<PurchaseRequisition>(`${this.baseUrl}/requisitions`, payload);
   }
 
+  getRequisitionAvailability(projectId: number, materialId: number, requestedQuantity: number): Observable<any> {
+    const params = new HttpParams()
+      .set('project_id', projectId)
+      .set('material_id', materialId)
+      .set('requested_quantity', requestedQuantity);
+    return this.http.get<any>(`${this.baseUrl}/requisitions/availability`, { params });
+  }
+
   updateRequisition(id: number, payload: any): Observable<PurchaseRequisition> {
     return this.http.put<PurchaseRequisition>(`${this.baseUrl}/requisitions/${id}`, payload);
   }
 
-  executePRWorkflow(id: number, payload: { action: string; notes?: string }): Observable<PurchaseRequisition> {
+  executePRWorkflow(id: number, payload: { action: string; notes?: string; approved_quantity?: number }): Observable<PurchaseRequisition> {
     return this.http.post<PurchaseRequisition>(`${this.baseUrl}/requisitions/${id}/workflow`, payload);
+  }
+
+  getPRWorkflowHistory(id: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/requisitions/${id}/history`);
   }
 
   deleteRequisition(id: number): Observable<any> {
@@ -172,6 +200,10 @@ export class ProcurementService {
 
   createComparativeStatement(payload: any): Observable<ComparativeStatement> {
     return this.http.post<ComparativeStatement>(`${this.baseUrl}/comparative-statements`, payload);
+  }
+
+  decideComparativeStatement(id: number, payload: { approved: boolean; decision_notes: string; awards: { vendor_id: number; quantity: number; rationale?: string }[] }): Observable<ComparativeStatement> {
+    return this.http.post<ComparativeStatement>(`${this.baseUrl}/comparative-statements/${id}/committee-decision`, payload);
   }
 
   // 7. Purchase Orders (PO)

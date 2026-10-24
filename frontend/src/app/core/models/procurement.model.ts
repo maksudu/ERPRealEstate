@@ -6,10 +6,28 @@ export interface Vendor {
   contact_person: string;
   phone_number: string;
   email?: string | null;
+  business_address?: string | null;
+  business_registration_number?: string | null;
+  trade_license_number?: string | null;
+  trade_license_expiry_date?: string | null;
+  supplied_categories?: string[] | null;
+  document_refs?: { name?: string; url: string; expiry_date?: string }[] | null;
+  authorized_representatives?: string[] | null;
+  references?: string[] | null;
+  credit_limit_bdt?: number;
+  currency?: string;
   tin_number?: string | null;
   bin_number?: string | null;
   payment_terms_days: number;
   is_active: boolean;
+  approval_status: string;
+  approval_notes?: string | null;
+  performance_score?: number | null;
+  late_delivery_count?: number;
+  rejected_delivery_count?: number;
+  quality_complaint_count?: number;
+  non_conformance_count?: number;
+  suspension_reason?: string | null;
   created_at?: string;
 }
 
@@ -71,6 +89,7 @@ export interface PurchaseRequisition {
   project_id: number;
   project_name?: string | null;
   pr_number: string;
+  batch_reference?: string | null;
   requested_by_user_id: number;
   requester_name?: string | null;
   department_name?: string | null;
@@ -82,6 +101,7 @@ export interface PurchaseRequisition {
   material_specification?: string | null;
   unit_of_measure?: string | null;
   requested_quantity: number;
+  approved_quantity?: number | null;
   current_stock_quantity?: number | null;
   reserved_quantity?: number | null;
   estimated_unit_rate?: number | null;
@@ -96,8 +116,12 @@ export interface PurchaseRequisition {
   wbs_node_name?: string | null;
   tower_name?: string | null;
   floor_number?: string | null;
+  department?: string | null;
+  destination_store_id?: number | null;
+  delivery_location?: string | null;
+  attachment_refs?: string[] | null;
   purpose_notes?: string | null;
-  status: 'DRAFT' | 'SUBMITTED' | 'SITE_APPROVED' | 'BUDGET_VERIFIED' | 'PROCUREMENT_REVIEWED' | 'APPROVED_FOR_PURCHASE' | 'PENDING_CS' | 'RFQ_ISSUED' | 'CS_PREPARED' | 'PARTIALLY_ORDERED' | 'FULLY_ORDERED' | 'PO_ISSUED' | 'REJECTED' | 'CLOSED' | string;
+  status: 'DRAFT' | 'SUBMITTED' | 'UNDER_REVIEW' | 'RETURNED_FOR_REVISION' | 'APPROVED' | 'PARTIALLY_APPROVED' | 'REJECTED' | 'CONVERTED_TO_PO' | 'PARTIALLY_ORDERED' | 'COMPLETED' | 'CANCELLED' | 'SITE_APPROVED' | 'BUDGET_VERIFIED' | 'PROCUREMENT_REVIEWED' | 'APPROVED_FOR_PURCHASE' | 'PENDING_CS' | 'RFQ_ISSUED' | 'CS_PREPARED' | 'FULLY_ORDERED' | 'PO_ISSUED' | 'CLOSED' | string;
   created_at?: string;
 }
 
@@ -133,12 +157,23 @@ export interface CSQuotation {
   vendor_name?: string | null;
   vendor_code?: string | null;
   brand_grade?: string | null;
+  technical_specification?: string | null;
+  country_of_origin?: string | null;
+  warranty_months?: number | null;
+  quotation_valid_until?: string | null;
   payment_terms?: string | null;
   technical_compliance?: string;
   quality_compliance?: 'Pass' | 'Pending' | 'Failed' | string;
   quoted_unit_rate: number;
   transport_cost?: number;
   discount_amount?: number;
+  delivery_charge_bdt?: number;
+  discount_amount_bdt?: number;
+  vat_amount_bdt?: number;
+  other_tax_amount_bdt?: number;
+  commercial_evaluation?: string;
+  revision_number?: number;
+  negotiation_history?: string | null;
   tax_amount?: number;
   total_delivered_cost?: number;
   quoted_quantity: number;
@@ -164,7 +199,10 @@ export interface ComparativeStatement {
   recommended_vendor_name?: string | null;
   lowest_bidder_vendor_id?: number | null;
   lowest_unit_rate?: number | null;
-  status: 'DRAFT' | 'APPROVED' | 'REJECTED' | 'PO_GENERATED';
+  status: 'DRAFT' | 'PENDING_COMMITTEE' | 'APPROVED' | 'REJECTED' | 'PO_GENERATED';
+  committee_recommendation?: string | null;
+  committee_decision_notes?: string | null;
+  award_allocations?: { vendor_id: number; quantity: number; quotation_id: number; rationale?: string }[] | null;
   justification_summary?: string | null;
   quotations: CSQuotation[];
   created_at?: string;

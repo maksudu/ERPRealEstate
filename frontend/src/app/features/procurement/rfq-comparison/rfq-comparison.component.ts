@@ -1,7 +1,10 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
-import { Router } from '@angular/router';
+import * as XLSX from 'xlsx';
+import { from } from 'rxjs';
+import { concatMap, toArray } from 'rxjs/operators';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ProcurementService } from '../../../core/services/procurement.service';
 import {
   ComparativeStatement,
@@ -17,7 +20,6 @@ import {
   CustomButtonComponent,
   CustomInputComponent,
   CustomTextareaComponent,
-  ModalComponent,
   SearchableSelectComponent
 } from '../../../shared/components';
 
@@ -33,13 +35,16 @@ import {
     CustomButtonComponent,
     CustomInputComponent,
     CustomTextareaComponent,
-    ModalComponent,
     SearchableSelectComponent
   ],
   template: `
+    <div *ngIf="dataError()" class="fixed top-3 right-3 z-[60] max-w-xl p-3 rounded-lg bg-rose-50 text-rose-700 text-sm shadow-lg flex justify-between gap-4"><span>{{ dataError() }}</span><button type="button" (click)="loadData()" class="font-semibold underline">Retry</button></div>
+    <div *ngIf="!isIssueRFQModalOpen() && !isAddCSModalOpen() && !isGeneratePOModalOpen()">
+    <div *ngIf="feedback()" class="mx-4 mt-3 p-3 rounded-lg text-sm" [ngClass]="feedbackType() === 'error' ? 'bg-rose-50 text-rose-700' : 'bg-emerald-50 text-emerald-700'">{{ feedback() }}</div>
+    <div *ngIf="dataError()" class="mx-4 mt-3 p-3 rounded-lg bg-rose-50 text-rose-700 text-sm flex justify-between"><span>{{ dataError() }}</span><button type="button" (click)="loadData()" class="font-semibold underline">Retry</button></div>
     <app-procurement-nav
-      title="9.5 RFQ & Supplier Quotation Comparison"
-      subtitle="Request for Quotations, Multi-Vendor Evaluation Matrix, Total Landed Cost & L1 Supplier Recommendation"
+      title="RFQ & Supplier Quotation Comparison"
+      
     >
       <div actions class="flex items-center gap-2">
         <button
@@ -164,11 +169,11 @@ import {
             </span>
             <button
               type="button"
-              *ngIf="cs.status !== 'PO_GENERATED'"
+              *ngIf="cs.status === 'PENDING_COMMITTEE' || cs.status === 'APPROVED'"
               (click)="openGeneratePOModal(cs)"
               class="px-2.5 py-1 text-[11px] font-bold rounded bg-emerald-600 hover:bg-emerald-700 text-white transition-colors"
             >
-              Award & Generate PO
+              {{ cs.status === 'PENDING_COMMITTEE' ? 'Committee Award & Generate PO' : 'Generate PO' }}
             </button>
           </div>
 
@@ -200,16 +205,17 @@ import {
                   </td>
                   <td class="p-3 font-mono text-[11px]">
                     {{ q.brand_grade || 'Standard Mill Certificate' }}
+                    <div class="text-[10px] text-slate-500">{{ q.technical_specification }} · {{ q.country_of_origin }} · Warranty {{ q.warranty_months || 0 }} mo.</div>
                   </td>
                   <td class="p-3 text-right font-mono font-bold text-slate-900 dark:text-slate-100">
                     ৳{{ q.quoted_unit_rate | number:'1.2-2' }}
                   </td>
                   <td class="p-3 text-right font-mono">
-                    <span *ngIf="q.transport_cost">৳{{ q.transport_cost | number:'1.0-0' }}</span>
-                    <span *ngIf="!q.transport_cost" class="text-emerald-700 dark:text-emerald-400 font-semibold">Included</span>
+                    ৳{{ q.delivery_charge_bdt || 0 | number:'1.0-0' }}
                   </td>
                   <td class="p-3 text-center">
                     {{ q.lead_time_days }} days
+                    <div class="text-[10px] text-slate-500">Valid to {{ q.quotation_valid_until || '—' }}</div>
                   </td>
                   <td class="p-3 text-center">
                     <span
@@ -226,19 +232,20 @@ import {
                   </td>
                   <td class="p-3 text-right font-mono font-black text-slate-900 dark:text-slate-100">
                     ৳{{ q.total_quoted_amount | number:'1.2-2' }}
+                    <div class="text-[10px] font-normal text-slate-500">Discount ৳{{ q.discount_amount_bdt || 0 }} · VAT ৳{{ q.vat_amount_bdt || 0 }} · Tax ৳{{ q.other_tax_amount_bdt || 0 }}</div>
                   </td>
                   <td class="p-3 text-center">
                     <span
-                      *ngIf="q.is_recommended"
+                      *ngIf="q.is_recommended && cs.status === 'APPROVED'"
                       class="px-2 py-0.5 text-[10px] font-black rounded-full bg-amber-500 text-slate-950 shadow-xs"
                     >
                       ⭐ RECOMMENDED L1
                     </span>
                     <span
-                      *ngIf="!q.is_recommended"
+                      *ngIf="!q.is_recommended || cs.status !== 'APPROVED'"
                       class="text-[10px] text-slate-600 dark:text-slate-400"
                     >
-                      Higher Landed Cost
+                      {{ q.commercial_evaluation || 'Commercial review pending' }}
                     </span>
                   </td>
                 </tr>
@@ -332,12 +339,14 @@ import {
       </app-card-container>
     </div>
 
-    <!-- Modal 1: Issue New Request for Quotation (RFQ) -->
-    <app-modal
-      [isOpen]="isIssueRFQModalOpen()"
-      title="Issue Request for Quotation (RFQ) to Suppliers"
-      (close)="isIssueRFQModalOpen.set(false)"
-    >
+    </div>
+
+    <!-- Full-page RFQ creation editor -->
+    <section *ngIf="isIssueRFQModalOpen()" class="fixed inset-0 z-50 overflow-y-auto bg-slate-50 dark:bg-slate-950 p-4 md:p-8">
+      <div class="max-w-5xl mx-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl">
+        <header class="flex items-center justify-between p-5 border-b border-slate-200 dark:border-slate-800"><div><h1 class="text-lg font-bold">Issue Request for Quotation</h1><p class="text-xs text-slate-500">Invite approved suppliers to quote against an approved requisition.</p></div><button type="button" (click)="closeEditor()" class="text-slate-500">✕</button></header>
+        <div *ngIf="feedback()" class="m-5 p-3 rounded-lg text-sm" [ngClass]="feedbackType() === 'error' ? 'bg-rose-50 text-rose-700' : 'bg-emerald-50 text-emerald-700'">{{ feedback() }}</div>
+        <div class="p-5">
       <form [formGroup]="rfqForm" (ngSubmit)="submitRFQ()" class="space-y-4">
         <div>
           <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Target Purchase Requisition (PR) *</label>
@@ -387,7 +396,7 @@ import {
         <div class="flex justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-700">
           <app-custom-button
             variant="outline"
-            (click)="isIssueRFQModalOpen.set(false)"
+            (click)="closeEditor()"
             label="Cancel"
           ></app-custom-button>
           <app-custom-button
@@ -398,14 +407,16 @@ import {
           ></app-custom-button>
         </div>
       </form>
-    </app-modal>
+        </div>
+      </div>
+    </section>
 
-    <!-- Modal 2: Prepare Comparative Statement (CS) -->
-    <app-modal
-      [isOpen]="isAddCSModalOpen()"
-      title="Prepare Vendor Quotation Comparative Statement (CS)"
-      (close)="isAddCSModalOpen.set(false)"
-    >
+    <!-- Full-page comparative statement editor -->
+    <section *ngIf="isAddCSModalOpen()" class="fixed inset-0 z-50 overflow-y-auto bg-slate-50 dark:bg-slate-950 p-4 md:p-8">
+      <div class="max-w-6xl mx-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl">
+        <header class="flex items-center justify-between p-5 border-b border-slate-200 dark:border-slate-800"><div><h1 class="text-lg font-bold">Prepare Supplier Quotation Comparison</h1><p class="text-xs text-slate-500">Enter quotes, compare landed cost and submit for committee decision.</p></div><button type="button" (click)="closeEditor()" class="text-slate-500">✕</button></header>
+        <div *ngIf="feedback()" class="m-5 p-3 rounded-lg text-sm" [ngClass]="feedbackType() === 'error' ? 'bg-rose-50 text-rose-700' : 'bg-emerald-50 text-emerald-700'">{{ feedback() }}</div>
+        <div class="p-5">
       <form [formGroup]="csForm" (ngSubmit)="submitCS()" class="space-y-4">
         <div>
           <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Select Purchase Requisition (PR) *</label>
@@ -424,6 +435,7 @@ import {
         <div class="space-y-3">
           <div class="flex items-center justify-between">
             <span class="text-xs font-bold text-slate-800 dark:text-slate-200">Competitive Supplier Bids (Min. 2 Required)</span>
+            <label class="text-xs text-sky-700 font-semibold cursor-pointer">Import Excel<input type="file" accept=".xlsx,.xls,.csv" class="hidden" (change)="importQuotationExcel($event)"></label>
             <button
               type="button"
               (click)="addQuotationRow()"
@@ -451,7 +463,7 @@ import {
                 </button>
               </div>
 
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+              <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
                 <div>
                   <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-0.5">Supplier / Vendor *</label>
                   <select
@@ -480,6 +492,27 @@ import {
                     placeholder="e.g. 3"
                   ></app-custom-input>
                 </div>
+                <div>
+                  <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-0.5">Quoted Quantity *</label>
+                  <app-custom-input formControlName="quoted_quantity" type="number" placeholder="Required quantity"></app-custom-input>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                <label class="text-[11px] font-semibold text-slate-600">Delivery charge (৳)<app-custom-input formControlName="delivery_charge_bdt" type="number"></app-custom-input></label>
+                <label class="text-[11px] font-semibold text-slate-600">Discount (৳)<app-custom-input formControlName="discount_amount_bdt" type="number"></app-custom-input></label>
+                <label class="text-[11px] font-semibold text-slate-600">VAT amount (৳)<app-custom-input formControlName="vat_amount_bdt" type="number"></app-custom-input></label>
+                <label class="text-[11px] font-semibold text-slate-600">Other tax (৳)<app-custom-input formControlName="other_tax_amount_bdt" type="number"></app-custom-input></label>
+              </div>
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                <label class="text-[11px] font-semibold text-slate-600">Specification<app-custom-input formControlName="technical_specification" placeholder="Technical spec"></app-custom-input></label>
+                <label class="text-[11px] font-semibold text-slate-600">Country of origin<app-custom-input formControlName="country_of_origin"></app-custom-input></label>
+                <label class="text-[11px] font-semibold text-slate-600">Warranty (months)<app-custom-input formControlName="warranty_months" type="number"></app-custom-input></label>
+                <label class="text-[11px] font-semibold text-slate-600">Quote valid until<input formControlName="quotation_valid_until" type="date" class="w-full h-9 px-2 rounded-lg border border-slate-200 text-xs"></label>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <label class="text-[11px] font-semibold text-slate-600">Commercial evaluation<select formControlName="commercial_evaluation" class="w-full h-9 px-2 rounded-lg border border-slate-200 text-xs"><option value="PENDING">Pending</option><option value="PASS">Pass</option><option value="CONDITIONAL">Conditional</option><option value="REJECTED">Rejected</option></select></label>
+                <label class="text-[11px] font-semibold text-slate-600">Negotiation / revision history<app-custom-input formControlName="negotiation_history" placeholder="Negotiated change or revision note"></app-custom-input></label>
               </div>
 
               <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
@@ -525,11 +558,15 @@ import {
             rows="2"
           ></app-custom-textarea>
         </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Committee recommendation</label>
+          <app-custom-textarea formControlName="committee_recommendation" placeholder="Recommendation for committee review; final award requires approval." rows="2"></app-custom-textarea>
+        </div>
 
         <div class="flex justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-700">
           <app-custom-button
             variant="outline"
-            (click)="isAddCSModalOpen.set(false)"
+            (click)="closeEditor()"
             label="Cancel"
           ></app-custom-button>
           <app-custom-button
@@ -540,15 +577,27 @@ import {
           ></app-custom-button>
         </div>
       </form>
-    </app-modal>
+        </div>
+      </div>
+    </section>
 
-    <!-- Modal 3: Award & Generate Purchase Order (PO) -->
-    <app-modal
-      [isOpen]="isGeneratePOModalOpen()"
-      [title]="selectedCS ? 'Award & Generate Purchase Order: ' + selectedCS.cs_number : 'Generate PO'"
-      (close)="isGeneratePOModalOpen.set(false)"
-    >
+    <!-- Full-page committee award and PO editor -->
+    <section *ngIf="isGeneratePOModalOpen()" class="fixed inset-0 z-50 overflow-y-auto bg-slate-50 dark:bg-slate-950 p-4 md:p-8">
+      <div class="max-w-4xl mx-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl">
+        <header class="flex items-center justify-between p-5 border-b border-slate-200 dark:border-slate-800"><div><h1 class="text-lg font-bold">{{ selectedCS ? 'Committee Award & Purchase Order: ' + selectedCS.cs_number : 'Generate PO' }}</h1><p class="text-xs text-slate-500">Review supplier allocation and delivery details.</p></div><button type="button" (click)="closeEditor()" class="text-slate-500">✕</button></header>
+        <div *ngIf="feedback()" class="m-5 p-3 rounded-lg text-sm" [ngClass]="feedbackType() === 'error' ? 'bg-rose-50 text-rose-700' : 'bg-emerald-50 text-emerald-700'">{{ feedback() }}</div>
+        <div class="p-5">
       <form [formGroup]="poGenForm" (ngSubmit)="submitGeneratePO()" class="space-y-4">
+        <div *ngIf="selectedCS?.status === 'PENDING_COMMITTEE'" class="space-y-2">
+          <div class="flex justify-between"><label class="block text-xs font-semibold">Committee award allocations</label><button type="button" (click)="addAwardAllocation()" class="text-xs text-sky-700">+ Split award</button></div>
+          <div formArrayName="awards" class="space-y-2">
+            <div *ngFor="let award of awardAllocationsFormArray.controls; let i = index" [formGroupName]="i" class="grid grid-cols-2 gap-2">
+              <select formControlName="vendor_id" class="h-9 px-2 rounded-lg border border-slate-200 text-xs"><option [ngValue]="null">Select compliant supplier</option><option *ngFor="let quote of selectedCS?.quotations" [ngValue]="quote.vendor_id" [disabled]="quote.technical_compliance === 'NON_COMPLIANT'">{{ quote.vendor_name }}</option></select>
+              <input formControlName="quantity" type="number" min="0.01" class="h-9 px-2 rounded-lg border border-slate-200 text-xs" placeholder="Award quantity">
+            </div>
+          </div>
+          <p class="text-[11px] text-slate-500 mt-1">Select using compliance, delivery, quality and commercial review; price ranking alone does not approve a supplier.</p>
+        </div>
         <div *ngIf="selectedCS" class="p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/50 rounded-lg text-xs space-y-1">
           <div class="flex justify-between font-bold">
             <span class="text-slate-700 dark:text-slate-300">Recommended Winner:</span>
@@ -595,7 +644,7 @@ import {
         <div class="flex justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-700">
           <app-custom-button
             variant="outline"
-            (click)="isGeneratePOModalOpen.set(false)"
+            (click)="closeEditor()"
             label="Cancel"
           ></app-custom-button>
           <app-custom-button
@@ -606,13 +655,16 @@ import {
           ></app-custom-button>
         </div>
       </form>
-    </app-modal>
+        </div>
+      </div>
+    </section>
   `
 })
 export class RfqComparisonComponent implements OnInit {
   private procurementService = inject(ProcurementService);
   private fb = inject(FormBuilder);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   activeTab = signal<'CS' | 'RFQ'>('CS');
 
@@ -632,6 +684,9 @@ export class RfqComparisonComponent implements OnInit {
 
   selectedCS: ComparativeStatement | null = null;
   selectedVendorIds: number[] = [];
+  feedback = signal('');
+  feedbackType = signal<'success' | 'error'>('success');
+  dataError = signal('');
 
   rfqForm: FormGroup = this.fb.group({
     pr_id: [null, [Validators.required]],
@@ -643,14 +698,22 @@ export class RfqComparisonComponent implements OnInit {
     pr_id: [null, [Validators.required]],
     recommended_vendor_id: [null],
     justification_summary: [''],
+    committee_recommendation: [''],
     quotations: this.fb.array([])
   });
 
   poGenForm: FormGroup = this.fb.group({
     destination_store_id: [null, [Validators.required]],
     delivery_deadline: [new Date(Date.now() + 7 * 86400000).toISOString().substring(0, 10), [Validators.required]],
-    delivery_schedule_notes: ['']
+    delivery_schedule_notes: [''],
+    awards: this.fb.array([])
   });
+
+  get awardAllocationsFormArray(): FormArray { return this.poGenForm.get('awards') as FormArray; }
+
+  addAwardAllocation(vendorId: number | null = null, quantity: number | null = null): void {
+    this.awardAllocationsFormArray.push(this.fb.group({ vendor_id: [vendorId, Validators.required], quantity: [quantity, [Validators.required, Validators.min(0.01)]] }));
+  }
 
   get quotationsFormArray(): FormArray {
     return this.csForm.get('quotations') as FormArray;
@@ -677,10 +740,37 @@ export class RfqComparisonComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.route.queryParamMap.subscribe(params => {
+      const saved = params.get('saved');
+      if (saved) { this.feedbackType.set('success'); this.feedback.set(saved); }
+      const editor = params.get('editor') || (this.router.url.includes('/rfq-comparison/new') ? 'rfq' : null);
+      this.isIssueRFQModalOpen.set(editor === 'rfq');
+      this.isAddCSModalOpen.set(editor === 'cs');
+      if (editor === 'cs' && this.quotationsFormArray.length === 0) {
+        this.addQuotationRow();
+        this.addQuotationRow();
+      }
+    });
     this.loadData();
   }
 
+  private navigateToEditor(editor: 'rfq' | 'cs' | 'award'): void {
+    this.feedback.set('');
+    if (editor === 'rfq') this.isIssueRFQModalOpen.set(true);
+    if (editor === 'cs') this.isAddCSModalOpen.set(true);
+    if (editor === 'award') this.isGeneratePOModalOpen.set(true);
+    this.router.navigate(['/procurement/rfq-comparison/new'], { queryParams: { editor } });
+  }
+
+  closeEditor(successMessage?: string): void {
+    this.isIssueRFQModalOpen.set(false);
+    this.isAddCSModalOpen.set(false);
+    this.isGeneratePOModalOpen.set(false);
+    this.router.navigate(['/procurement/rfq-comparison'], { queryParams: successMessage ? { saved: successMessage } : {} });
+  }
+
   loadData(): void {
+    this.dataError.set('');
     this.loadCS();
     this.loadRFQs();
     this.loadRequisitions();
@@ -691,35 +781,40 @@ export class RfqComparisonComponent implements OnInit {
   loadCS(): void {
     this.procurementService.getComparativeStatements().subscribe({
       next: (data) => this.comparativeStatements.set(data || []),
-      error: (err) => console.error('Failed to load CS:', err)
+      error: (err) => { this.dataError.set(err.error?.detail || 'Could not load quotation comparison data. Apply the procurement quote evaluation migration and retry.'); }
     });
   }
 
   loadRFQs(): void {
     this.procurementService.getRFQs().subscribe({
       next: (data) => this.rfqs.set(data || []),
-      error: (err) => console.error('Failed to load RFQs:', err)
+      error: (err) => { this.dataError.set(err.error?.detail || 'Could not load RFQ table data. Check the server connection and retry.'); }
     });
   }
 
   loadRequisitions(): void {
     this.procurementService.getRequisitions().subscribe({
-      next: (data) => this.requisitions.set(data || []),
-      error: (err) => console.error('Failed to load requisitions:', err)
+      next: (data) => {
+        this.requisitions.set(data || []);
+        const firstId = data?.[0]?.id || null;
+        if (!this.rfqForm.value.pr_id) this.rfqForm.patchValue({ pr_id: firstId });
+        if (!this.csForm.value.pr_id) this.csForm.patchValue({ pr_id: firstId });
+      },
+      error: (err) => this.dataError.set(err.error?.detail || 'Could not load purchase requisitions for RFQ/CS forms.')
     });
   }
 
   loadVendors(): void {
     this.procurementService.getVendors().subscribe({
       next: (data) => this.vendors.set(data || []),
-      error: (err) => console.error('Failed to load vendors:', err)
+      error: (err) => this.dataError.set(err.error?.detail || 'Could not load approved supplier list.')
     });
   }
 
   loadStores(): void {
     this.procurementService.getSiteStores().subscribe({
       next: (data) => this.stores.set(data || []),
-      error: (err) => console.error('Failed to load stores:', err)
+      error: (err) => this.dataError.set(err.error?.detail || 'Could not load delivery stores.')
     });
   }
 
@@ -731,7 +826,7 @@ export class RfqComparisonComponent implements OnInit {
       submission_deadline: new Date(Date.now() + 5 * 86400000).toISOString().substring(0, 10),
       notes: ''
     });
-    this.isIssueRFQModalOpen.set(true);
+    this.navigateToEditor('rfq');
   }
 
   onVendorCheck(e: Event, vendorId: number): void {
@@ -753,12 +848,13 @@ export class RfqComparisonComponent implements OnInit {
     };
     this.procurementService.createRFQ(payload).subscribe({
       next: () => {
-        alert('RFQ successfully issued to selected suppliers!');
-        this.isIssueRFQModalOpen.set(false);
+        this.feedbackType.set('success');
+        this.feedback.set('RFQ invitations saved successfully.');
+        this.closeEditor('RFQ invitations saved successfully.');
         this.loadRFQs();
         this.loadRequisitions();
       },
-      error: (err) => alert(err.error?.detail || 'Failed to issue RFQ.')
+      error: (err) => { this.feedbackType.set('error'); this.feedback.set(err.error?.detail || 'Failed to issue RFQ.'); }
     });
   }
 
@@ -772,22 +868,68 @@ export class RfqComparisonComponent implements OnInit {
     this.csForm.reset({
       pr_id: this.requisitions().length > 0 ? this.requisitions()[0].id : null,
       recommended_vendor_id: null,
-      justification_summary: ''
+      justification_summary: '',
+      committee_recommendation: ''
     });
-    this.isAddCSModalOpen.set(true);
+    this.navigateToEditor('cs');
   }
 
   addQuotationRow(): void {
     const row = this.fb.group({
       vendor_id: [null, [Validators.required]],
+      quoted_quantity: [null, [Validators.required, Validators.min(0.01)]],
       quoted_unit_rate: [null, [Validators.required, Validators.min(0.01)]],
       lead_time_days: [3, [Validators.required, Validators.min(1)]],
       brand_grade: ['BSRM 500W Grade 72.5'],
       payment_terms: ['30 Days Credit'],
       technical_compliance: ['COMPLIANT'],
+      delivery_charge_bdt: [0, [Validators.min(0)]],
+      discount_amount_bdt: [0, [Validators.min(0)]],
+      vat_amount_bdt: [0, [Validators.min(0)]],
+      other_tax_amount_bdt: [0, [Validators.min(0)]],
+      technical_specification: [''],
+      country_of_origin: [''],
+      warranty_months: [null],
+      quotation_valid_until: [null],
+      commercial_evaluation: ['PENDING'],
+      negotiation_history: [''],
       remarks: ['']
     });
     this.quotationsFormArray.push(row);
+  }
+
+  importQuotationExcel(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const workbook = XLSX.read(reader.result, { type: 'array', cellDates: true });
+        const rows = XLSX.utils.sheet_to_json<Record<string, any>>(workbook.Sheets[workbook.SheetNames[0]]);
+        if (!rows.length) throw new Error('The spreadsheet has no quotation rows.');
+        const mapped = rows.map(row => {
+          const vendor = this.vendors().find(v => String(v.id) === String(row['vendor_id'] ?? row['VendorId']) || v.vendor_code === String(row['vendor_code'] ?? row['VendorCode']));
+          if (!vendor) throw new Error(`Vendor not found in row for ${row['vendor_code'] ?? row['vendor_id'] ?? 'unknown supplier'}.`);
+          return {
+            vendor_id: [vendor.id, Validators.required], quoted_quantity: [Number(row['quoted_quantity'] ?? row['quantity']), [Validators.required, Validators.min(0.01)]], quoted_unit_rate: [Number(row['quoted_unit_rate'] ?? row['unit_price']), [Validators.required, Validators.min(0.01)]],
+            lead_time_days: [Number(row['lead_time_days'] ?? 3), Validators.required], brand_grade: [row['brand_grade'] ?? ''], payment_terms: [row['payment_terms'] ?? ''],
+            technical_compliance: [row['technical_compliance'] ?? 'COMPLIANT'], delivery_charge_bdt: [Number(row['delivery_charge_bdt'] ?? row['delivery_charge'] ?? 0)],
+            discount_amount_bdt: [Number(row['discount_amount_bdt'] ?? row['discount'] ?? 0)], vat_amount_bdt: [Number(row['vat_amount_bdt'] ?? row['vat'] ?? 0)],
+            other_tax_amount_bdt: [Number(row['other_tax_amount_bdt'] ?? row['other_tax'] ?? 0)], technical_specification: [row['technical_specification'] ?? ''],
+            country_of_origin: [row['country_of_origin'] ?? ''], warranty_months: [row['warranty_months'] ?? null], quotation_valid_until: [row['quotation_valid_until'] ?? null],
+            commercial_evaluation: [row['commercial_evaluation'] ?? 'PENDING'], negotiation_history: [row['negotiation_history'] ?? ''], remarks: [row['remarks'] ?? '']
+          };
+        });
+        this.quotationsFormArray.clear();
+        mapped.forEach(row => this.quotationsFormArray.push(this.fb.group(row)));
+      } catch (error) {
+        this.feedbackType.set('error');
+        this.feedback.set(error instanceof Error ? error.message : 'Could not import quotation spreadsheet.');
+      }
+    };
+    reader.readAsArrayBuffer(file);
+    input.value = '';
   }
 
   removeQuotationRow(idx: number): void {
@@ -800,41 +942,57 @@ export class RfqComparisonComponent implements OnInit {
     if (this.csForm.invalid) return;
     this.procurementService.createComparativeStatement(this.csForm.value).subscribe({
       next: () => {
-        alert('Comparative Statement (CS) prepared and evaluated successfully!');
-        this.isAddCSModalOpen.set(false);
+        this.feedbackType.set('success');
+        this.feedback.set('Quotation comparison saved and sent for committee review.');
+        this.closeEditor('Quotation comparison saved and sent for committee review.');
         this.loadCS();
         this.loadRequisitions();
       },
-      error: (err) => alert(err.error?.detail || 'Failed to create Comparative Statement.')
+      error: (err) => { this.feedbackType.set('error'); this.feedback.set(err.error?.detail || 'Failed to save quotation comparison.'); }
     });
   }
 
   // Award PO
   openGeneratePOModal(cs: ComparativeStatement): void {
     this.selectedCS = cs;
+    this.awardAllocationsFormArray.clear();
+    if (cs.status === 'PENDING_COMMITTEE') {
+      const defaultVendor = cs.quotations.find(q => q.technical_compliance !== 'NON_COMPLIANT')?.vendor_id || null;
+      this.addAwardAllocation(defaultVendor, cs.requested_quantity || null);
+    } else {
+      (cs.award_allocations || []).forEach(a => this.addAwardAllocation(a.vendor_id, a.quantity));
+    }
     this.poGenForm.patchValue({
       destination_store_id: this.stores().length > 0 ? this.stores()[0].id : null,
       delivery_deadline: new Date(Date.now() + 7 * 86400000).toISOString().substring(0, 10),
       delivery_schedule_notes: 'Delivery per approved CS quote.'
     });
-    this.isGeneratePOModalOpen.set(true);
+    this.navigateToEditor('award');
   }
 
   submitGeneratePO(): void {
     if (!this.selectedCS || this.poGenForm.invalid) return;
-    const payload = {
-      cs_id: this.selectedCS.id,
+    const awards = this.awardAllocationsFormArray.getRawValue() as { vendor_id: number; quantity: number }[];
+    if (!awards.length || Math.abs(awards.reduce((sum, award) => sum + Number(award.quantity), 0) - Number(this.selectedCS.requested_quantity)) > 0.0001) {
+      this.feedbackType.set('error'); this.feedback.set('Award quantities must add up to the full requested quantity.'); return;
+    }
+    const createPOs = () => from(awards).pipe(concatMap(award => this.procurementService.generatePOFromCS({
+      cs_id: this.selectedCS!.id, vendor_id: award.vendor_id, ordered_quantity: award.quantity,
       destination_store_id: this.poGenForm.value.destination_store_id,
       delivery_deadline: this.poGenForm.value.delivery_deadline,
       delivery_schedule_notes: this.poGenForm.value.delivery_schedule_notes
-    };
-    this.procurementService.generatePOFromCS(payload).subscribe({
-      next: (po) => {
-        alert(`Purchase Order ${po.po_number} generated successfully and awarded to winning supplier!`);
-        this.isGeneratePOModalOpen.set(false);
-        this.loadCS();
-      },
-      error: (err) => alert(err.error?.detail || 'Failed to generate PO.')
+    })), toArray()).subscribe({
+      next: (orders) => { const message = `${orders.length} purchase order(s) generated successfully from the approved committee award.`; this.feedbackType.set('success'); this.feedback.set(message); this.closeEditor(message); this.loadCS(); },
+      error: (err) => { this.feedbackType.set('error'); this.feedback.set(err.error?.detail || 'Failed to generate purchase order(s).'); }
     });
+    if (this.selectedCS.status === 'PENDING_COMMITTEE') {
+      this.procurementService.decideComparativeStatement(this.selectedCS.id, {
+        approved: true,
+        decision_notes: 'Committee reviewed technical compliance, evaluated cost, delivery, warranty and payment terms.',
+        awards: awards.map(award => ({ ...award, rationale: 'Committee selected after technical and commercial evaluation.' }))
+      }).subscribe({ next: () => createPOs(), error: (err) => { this.feedbackType.set('error'); this.feedback.set(err.error?.detail || 'Committee approval failed.'); } });
+    } else {
+      createPOs();
+    }
   }
 }

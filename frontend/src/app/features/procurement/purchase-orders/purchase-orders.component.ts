@@ -39,8 +39,7 @@ import {
   ],
   template: `
     <app-procurement-nav
-      title="9.6 Purchase Order (PO) Management"
-      subtitle="Authorized Multi-Tier Approved Purchase Orders, Delivery Tolerances, Partial Shipments & Budget Control"
+      title=" Purchase Orders Register "
     >
       <div actions class="flex items-center gap-2">
         <button

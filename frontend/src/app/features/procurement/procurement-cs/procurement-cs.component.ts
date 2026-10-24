@@ -111,7 +111,7 @@ export class ProcurementCsComponent implements OnInit {
 
   pendingPrOptions = computed(() =>
     this.requisitions()
-      .filter(pr => pr.status === 'PENDING_CS')
+      .filter(pr => ['PENDING_CS', 'APPROVED', 'PARTIALLY_APPROVED'].includes(pr.status))
       .map(pr => ({
         value: pr.id,
         label: `${pr.pr_number} - ${pr.material_name} (${pr.requested_quantity} ${pr.unit_of_measure})`
@@ -211,7 +211,7 @@ export class ProcurementCsComponent implements OnInit {
   // --- Comparative Statement (CS) Workflow ---
   openCreateCsModal(): void {
     this.quotationsArray.clear();
-    const pending = this.requisitions().filter(r => r.status === 'PENDING_CS');
+    const pending = this.requisitions().filter(r => ['PENDING_CS', 'APPROVED', 'PARTIALLY_APPROVED'].includes(r.status));
     const firstPrId = pending.length ? pending[0].id : null;
 
     this.createCsForm.reset({

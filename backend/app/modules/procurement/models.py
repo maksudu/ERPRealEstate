@@ -20,14 +20,49 @@ class Vendor(Base):
     contact_person = Column(String(128), nullable=False)
     phone_number = Column(String(32), nullable=False)
     email = Column(String(128), nullable=True)
+    business_address = Column(Text, nullable=True)
+    business_registration_number = Column(String(64), nullable=True)
+    trade_license_number = Column(String(64), nullable=True)
+    trade_license_expiry_date = Column(Date, nullable=True, index=True)
     tin_number = Column(String(64), nullable=True)
     bin_number = Column(String(64), nullable=True)
+    supplied_categories = Column(JSON, nullable=True)
+    document_refs = Column(JSON, nullable=True)
+    authorized_representatives = Column(JSON, nullable=True)
+    references = Column(JSON, nullable=True)
+    bank_name = Column(String(128), nullable=True)
+    bank_account_name = Column(String(128), nullable=True)
+    bank_account_number = Column(String(128), nullable=True)
+    bank_branch = Column(String(128), nullable=True)
+    credit_limit_bdt = Column(Numeric(16, 2), nullable=False, default=0.00)
+    currency = Column(String(8), nullable=False, default="BDT")
     payment_terms_days = Column(Integer, nullable=False, default=30)
+    approval_status = Column(String(40), nullable=False, default="APPROVED", index=True)
+    approval_notes = Column(Text, nullable=True)
+    performance_score = Column(Numeric(5, 2), nullable=True)
+    late_delivery_count = Column(Integer, nullable=False, default=0)
+    rejected_delivery_count = Column(Integer, nullable=False, default=0)
+    quality_complaint_count = Column(Integer, nullable=False, default=0)
+    non_conformance_count = Column(Integer, nullable=False, default=0)
+    suspension_reason = Column(Text, nullable=True)
     is_active = Column(Boolean, nullable=False, default=True)
 
     created_at = Column(TIMESTAMP, server_default=func.now())
     
     purchase_orders = relationship("PurchaseOrder", back_populates="vendor")
+
+
+class VendorApprovalEvent(Base):
+    __tablename__ = "scm_vendor_approval_events"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    vendor_id = Column(BigInteger, ForeignKey("scm_vendors.id", ondelete="CASCADE"), nullable=False, index=True)
+    actor_user_id = Column(BigInteger, ForeignKey("sys_users.id", ondelete="SET NULL"), nullable=True)
+    action = Column(String(40), nullable=False)
+    from_status = Column(String(40), nullable=True)
+    to_status = Column(String(40), nullable=False)
+    notes = Column(Text, nullable=True)
+    created_at = Column(TIMESTAMP, server_default=func.now(), nullable=False)
 
 
 class MaterialItem(Base):
@@ -81,6 +116,7 @@ class StoreStock(Base):
     store_id = Column(BigInteger, ForeignKey("scm_site_stores.id", ondelete="CASCADE"), nullable=False, index=True)
     material_id = Column(BigInteger, ForeignKey("scm_materials.id", ondelete="RESTRICT"), nullable=False, index=True)
     current_stock_quantity = Column(Numeric(14, 4), nullable=False, default=0.00)
+    reserved_quantity = Column(Numeric(14, 4), nullable=False, default=0.00)
     weighted_avg_rate = Column(Numeric(14, 2), nullable=False, default=0.00)
     total_stock_value = Column(Numeric(16, 2), nullable=False, default=0.00)
     reorder_level = Column(Numeric(14, 4), nullable=False, default=100.00)
@@ -100,21 +136,29 @@ class PurchaseRequisition(Base):
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     project_id = Column(BigInteger, ForeignKey("prj_projects.id", ondelete="RESTRICT"), nullable=False, index=True)
     pr_number = Column(String(64), unique=True, nullable=False, index=True)
+    batch_reference = Column(String(64), nullable=True, index=True)
     requested_by_user_id = Column(BigInteger, ForeignKey("sys_users.id", ondelete="RESTRICT"), nullable=False, index=True)
     requisition_date = Column(Date, nullable=False, default=func.current_date())
     required_by_date = Column(Date, nullable=True)
     material_id = Column(BigInteger, ForeignKey("scm_materials.id", ondelete="RESTRICT"), nullable=False, index=True)
     requested_quantity = Column(Numeric(14, 4), nullable=False)
+    approved_quantity = Column(Numeric(14, 4), nullable=True)
     
     # BOQ Hard Budget Lock link & WBS Activity mapping
     boq_item_id = Column(BigInteger, ForeignKey("prj_boq_items.id", ondelete="SET NULL"), nullable=True, index=True)
     wbs_node_id = Column(BigInteger, ForeignKey("con_wbs_nodes.id", ondelete="SET NULL"), nullable=True, index=True)
     tower_name = Column(String(64), nullable=True)
     floor_number = Column(String(32), nullable=True)
+    priority = Column(String(16), nullable=False, default="NORMAL")
+    department = Column(String(128), nullable=True)
+    destination_store_id = Column(BigInteger, ForeignKey("scm_site_stores.id", ondelete="SET NULL"), nullable=True, index=True)
+    delivery_location = Column(String(191), nullable=True)
+    attachment_refs = Column(JSON, nullable=True)
 
     purpose_notes = Column(Text, nullable=True)
-    # Status: PENDING_CS, RFQ_ISSUED, CS_PREPARED, PO_ISSUED, REJECTED
-    status = Column(String(32), nullable=False, default="PENDING_CS", index=True)
+    # PR lifecycle: DRAFT, SUBMITTED, UNDER_REVIEW, RETURNED_FOR_REVISION, APPROVED,
+    # PARTIALLY_APPROVED, REJECTED, CONVERTED_TO_PO, PARTIALLY_ORDERED, COMPLETED, CANCELLED.
+    status = Column(String(32), nullable=False, default="DRAFT", index=True)
 
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
@@ -126,6 +170,18 @@ class PurchaseRequisition(Base):
     wbs_node = relationship("WBSNode")
     comparative_statements = relationship("ComparativeStatement", back_populates="requisition")
     rfqs = relationship("RFQ", back_populates="requisition")
+
+
+class PRWorkflowEvent(Base):
+    __tablename__ = "scm_pr_workflow_events"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    pr_id = Column(BigInteger, ForeignKey("scm_purchase_requisitions.id", ondelete="CASCADE"), nullable=False, index=True)
+    action = Column(String(32), nullable=False)
+    from_status = Column(String(32), nullable=True)
+    to_status = Column(String(32), nullable=False)
+    notes = Column(Text, nullable=True)
+    created_at = Column(TIMESTAMP, server_default=func.now(), nullable=False)
 
 
 class RFQ(Base):
@@ -182,6 +238,10 @@ class ComparativeStatement(Base):
     # Status: DRAFT, APPROVED, REJECTED, PO_GENERATED
     status = Column(String(32), nullable=False, default="DRAFT", index=True)
     justification_summary = Column(Text, nullable=True)
+    committee_recommendation = Column(Text, nullable=True)
+    committee_decision_notes = Column(Text, nullable=True)
+    committee_decided_at = Column(TIMESTAMP, nullable=True)
+    award_allocations = Column(JSON, nullable=True)
 
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
@@ -202,11 +262,24 @@ class CSQuotation(Base):
     cs_id = Column(BigInteger, ForeignKey("scm_comparative_statements.id", ondelete="CASCADE"), nullable=False, index=True)
     vendor_id = Column(BigInteger, ForeignKey("scm_vendors.id", ondelete="RESTRICT"), nullable=False, index=True)
     brand_grade = Column(String(128), nullable=True) # e.g. BSRM 500W Grade 72.5, Bashundhara CEM-I 52.5N
+    technical_specification = Column(Text, nullable=True)
+    country_of_origin = Column(String(100), nullable=True)
+    warranty_months = Column(Integer, nullable=True)
+    quotation_valid_until = Column(Date, nullable=True)
     payment_terms = Column(String(128), nullable=True) # e.g. 30 Days Credit, 10% Advance + 90% at Site Delivery
     technical_compliance = Column(String(64), nullable=False, default="COMPLIANT") # COMPLIANT, DEVIATION_NOTED, NON_COMPLIANT
     quoted_unit_rate = Column(Numeric(14, 2), nullable=False)
     quoted_quantity = Column(Numeric(14, 4), nullable=False)
     total_quoted_amount = Column(Numeric(16, 2), nullable=False)
+    delivery_charge_bdt = Column(Numeric(14, 2), nullable=False, default=0)
+    discount_amount_bdt = Column(Numeric(14, 2), nullable=False, default=0)
+    vat_amount_bdt = Column(Numeric(14, 2), nullable=False, default=0)
+    other_tax_amount_bdt = Column(Numeric(14, 2), nullable=False, default=0)
+    commercial_evaluation = Column(String(32), nullable=False, default="PENDING")
+    revision_number = Column(Integer, nullable=False, default=1)
+    previous_quotation_id = Column(BigInteger, ForeignKey("scm_cs_quotations.id", ondelete="SET NULL"), nullable=True)
+    is_current = Column(Boolean, nullable=False, default=True, index=True)
+    negotiation_history = Column(Text, nullable=True)
     credit_days_offered = Column(Integer, nullable=False, default=30)
     lead_time_days = Column(Integer, nullable=False, default=3)
     is_recommended = Column(Boolean, nullable=False, default=False)

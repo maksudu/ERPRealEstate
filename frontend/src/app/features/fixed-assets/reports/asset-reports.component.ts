@@ -5,6 +5,7 @@ import { ActivatedRoute } from '@angular/router';
 import { FixedAssetsService } from '../../../core/services/fixed-assets.service';
 import { CardContainerComponent } from '../../../shared/components/card-container/card-container.component';
 import { SearchableSelectComponent, SelectOption } from '../../../shared/components/searchable-select/searchable-select.component';
+import * as XLSX from 'xlsx';
 
 @Component({
   selector: 'app-asset-reports',
@@ -34,13 +35,14 @@ import { SearchableSelectComponent, SelectOption } from '../../../shared/compone
 
       <!-- Main Reports Container -->
       <app-card title="Key Reports & Analytics Suite" subtitle="Executive reports for acquisition, depreciation, downtime, warranties, audit discrepancies and GL reconciliation">
-        <div card-actions class="flex items-center gap-2">
+        <div card-actions class="flex items-center gap-2 report-actions">
+          <button type="button" (click)="downloadExcel()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-emerald-200 text-emerald-700 hover:bg-emerald-50 shadow-2xs transition">Download Excel</button>
           <button
             type="button"
             (click)="printReport()"
             class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 shadow-2xs transition"
           >
-            <span>🖨️</span> Print / Export PDF
+            <span>🖨️</span> Print / Save as PDF
           </button>
         </div>
 
@@ -52,7 +54,7 @@ import { SearchableSelectComponent, SelectOption } from '../../../shared/compone
               label="Asset Category Filter"
               placeholder="All Categories"
               [(ngModel)]="selectedCategory"
-              (ngModelChange)="loadReportData()"
+              (ngModelChange)="onFilterChange()"
               [options]="categoryOptions"
               [allowCreateNew]="false"
             />
@@ -63,7 +65,7 @@ import { SearchableSelectComponent, SelectOption } from '../../../shared/compone
               label="Project Filter"
               placeholder="All Projects"
               [(ngModel)]="selectedProject"
-              (ngModelChange)="loadReportData()"
+              (ngModelChange)="onFilterChange()"
               [options]="projectOptions"
               [allowCreateNew]="false"
             />
@@ -91,7 +93,7 @@ import { SearchableSelectComponent, SelectOption } from '../../../shared/compone
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                  @for (item of reportData?.items; track item.id) {
+                  @for (item of pagedRows; track item.id) {
                     <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
                       <td class="p-3 font-mono font-bold text-indigo-600">{{ item.asset_tag }}</td>
                       <td class="p-3 font-medium">{{ item.asset_name }}</td>
@@ -128,7 +130,7 @@ import { SearchableSelectComponent, SelectOption } from '../../../shared/compone
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                  @for (item of reportData?.items; track item.asset_tag) {
+                  @for (item of pagedRows; track item.asset_tag) {
                     <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
                       <td class="p-3 font-mono font-bold text-indigo-600">{{ item.asset_tag }}</td>
                       <td class="p-3 font-medium">{{ item.asset_name }}</td>
@@ -160,7 +162,7 @@ import { SearchableSelectComponent, SelectOption } from '../../../shared/compone
                     </tr>
                   </thead>
                   <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                    @for (item of reportData?.additions; track item.id) {
+                    @for (item of pagedRows; track item.id) {
                       <tr class="hover:bg-slate-50/50">
                         <td class="p-3 font-mono font-bold text-indigo-600">{{ item.asset_tag }}</td>
                         <td class="p-3 font-medium">{{ item.asset_name }}</td>
@@ -193,7 +195,7 @@ import { SearchableSelectComponent, SelectOption } from '../../../shared/compone
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                  @for (item of reportData; track item.asset_id) {
+                  @for (item of pagedRows; track item.asset_id) {
                     <tr class="hover:bg-slate-50/50">
                       <td class="p-3 font-mono font-bold text-indigo-600">{{ item.asset_tag }}</td>
                       <td class="p-3 font-medium">{{ item.asset_name }}</td>
@@ -225,7 +227,7 @@ import { SearchableSelectComponent, SelectOption } from '../../../shared/compone
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                  @for (item of reportData?.items; track item.id) {
+                  @for (item of pagedRows; track item.id) {
                     <tr class="hover:bg-slate-50/50">
                       <td class="p-3 font-mono font-bold text-indigo-600">{{ item.maintenance_code }}</td>
                       <td class="p-3 font-semibold">{{ item.service_type }}</td>
@@ -257,7 +259,7 @@ import { SearchableSelectComponent, SelectOption } from '../../../shared/compone
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                  @for (item of reportData?.items; track item.asset_tag) {
+                  @for (item of pagedRows; track item.asset_tag) {
                     <tr class="hover:bg-slate-50/50">
                       <td class="p-3 font-mono font-bold text-indigo-600">{{ item.asset_tag }}</td>
                       <td class="p-3 font-medium">{{ item.asset_name }}</td>
@@ -297,7 +299,7 @@ import { SearchableSelectComponent, SelectOption } from '../../../shared/compone
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                  @for (item of reportData?.items; track item.id) {
+                  @for (item of pagedRows; track item.id) {
                     <tr class="hover:bg-slate-50/50">
                       <td class="p-3 font-mono font-bold text-indigo-600">{{ item.audit_code }}</td>
                       <td class="p-3 font-medium">{{ item.project_name || 'Central Facility' }}</td>
@@ -330,7 +332,7 @@ import { SearchableSelectComponent, SelectOption } from '../../../shared/compone
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                  @for (item of reportData?.items; track item.id) {
+                  @for (item of pagedRows; track item.id) {
                     <tr class="hover:bg-slate-50/50">
                       <td class="p-3 font-mono font-bold text-indigo-600">{{ item.transfer_ref }}</td>
                       <td class="p-3 font-mono text-[11px]">AST-{{ item.asset_id }}</td>
@@ -361,7 +363,7 @@ import { SearchableSelectComponent, SelectOption } from '../../../shared/compone
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                  @for (item of reportData?.items; track item.id) {
+                  @for (item of pagedRows; track item.id) {
                     <tr class="hover:bg-slate-50/50">
                       <td class="p-3 font-mono font-bold text-indigo-600">{{ item.disposal_ref }}</td>
                       <td class="p-3 font-mono text-[11px]">AST-{{ item.asset_id }}</td>
@@ -392,7 +394,7 @@ import { SearchableSelectComponent, SelectOption } from '../../../shared/compone
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                  @for (item of reportData?.accounts; track item.gl_account_code) {
+                  @for (item of pagedRows; track item.gl_account_code) {
                     <tr class="hover:bg-slate-50/50">
                       <td class="p-3 font-mono font-bold text-indigo-600">{{ item.gl_account_code }}</td>
                       <td class="p-3 font-medium">{{ item.gl_account_name }}</td>
@@ -411,9 +413,30 @@ import { SearchableSelectComponent, SelectOption } from '../../../shared/compone
             </div>
           }
         }
+        @if (activeRows.length > 0) {
+          <div class="report-pagination mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-3 text-xs text-slate-600">
+            <span>Showing {{ pageStart + 1 }}–{{ pageEnd }} of {{ activeRows.length }}</span>
+            <div class="flex items-center gap-2">
+              <span>Rows:</span>
+              @for (size of pageSizes; track size) {
+                <button type="button" (click)="setPageSize(size)" [class.font-bold]="pageSize === size" [class.text-indigo-700]="pageSize === size" class="rounded px-2 py-1 hover:bg-slate-100">{{ size }}</button>
+              }
+              <button type="button" (click)="changePage(page - 1)" [disabled]="page <= 1" class="rounded border px-2 py-1 disabled:opacity-40">Previous</button>
+              <span>{{ page }} / {{ totalPages }}</span>
+              <button type="button" (click)="changePage(page + 1)" [disabled]="page >= totalPages" class="rounded border px-2 py-1 disabled:opacity-40">Next</button>
+            </div>
+          </div>
+        }
       </app-card>
     </div>
-  `
+  `,
+  styles: [`
+    @media print {
+      .report-actions, .report-pagination, :host > div > div:first-child { display: none !important; }
+      :host { color: #000; }
+      app-card { box-shadow: none !important; }
+    }
+  `]
 })
 export class AssetReportsComponent implements OnInit {
   private service = inject(FixedAssetsService);
@@ -424,6 +447,25 @@ export class AssetReportsComponent implements OnInit {
   selectedProject = '';
   reportData: any = null;
   loading = false;
+  page = 1;
+  pageSize = 10;
+  readonly pageSizes = [10, 25, 50];
+
+  get activeRows(): any[] {
+    if (this.activeTab === 'depreciation_schedule') return Array.isArray(this.reportData) ? this.reportData : this.reportData?.items ?? [];
+    if (this.activeTab === 'additions_disposals') return this.reportData?.additions ?? [];
+    if (this.activeTab === 'gl_reconciliation') return this.reportData?.accounts ?? [];
+    return this.reportData?.items ?? [];
+  }
+
+  get pagedRows(): any[] {
+    const start = (this.page - 1) * this.pageSize;
+    return this.activeRows.slice(start, start + this.pageSize);
+  }
+
+  get totalPages(): number { return Math.max(1, Math.ceil(this.activeRows.length / this.pageSize)); }
+  get pageStart(): number { return (this.page - 1) * this.pageSize; }
+  get pageEnd(): number { return Math.min(this.page * this.pageSize, this.activeRows.length); }
 
   categoryOptions: SelectOption[] = [
     { value: 'Heavy Plant & Construction Machinery', label: 'Heavy Plant & Construction Machinery' },
@@ -448,6 +490,7 @@ export class AssetReportsComponent implements OnInit {
   }
 
   loadReportData(): void {
+    this.page = 1;
     this.loading = true;
     this.service.getReports(this.activeTab, this.selectedCategory).subscribe({
       next: (data) => {
@@ -462,6 +505,40 @@ export class AssetReportsComponent implements OnInit {
   }
 
   printReport(): void {
-    window.print();
+    const previousPageSize = this.pageSize;
+    this.pageSize = Math.max(this.activeRows.length, 1);
+    this.page = 1;
+    setTimeout(() => {
+      window.print();
+      this.pageSize = previousPageSize;
+      this.page = 1;
+    });
+  }
+
+  onFilterChange(): void {
+    this.page = 1;
+    this.loadReportData();
+  }
+
+  setPageSize(size: number): void { this.pageSize = size; this.page = 1; }
+  changePage(page: number): void { if (page >= 1 && page <= this.totalPages) this.page = page; }
+
+  downloadExcel(): void {
+    const workbook = XLSX.utils.book_new();
+    for (const sheet of this.getExportSheets()) {
+      const rows = sheet.rows.length ? sheet.rows : [{ message: 'No data available' }];
+      XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(rows), sheet.name.slice(0, 31));
+    }
+    XLSX.writeFile(workbook, `fixed-assets-${this.activeTab}.xlsx`);
+  }
+
+  private getExportSheets(): Array<{ name: string; rows: any[] }> {
+    if (this.activeTab === 'depreciation_schedule') return [{ name: 'Depreciation Schedule', rows: this.activeRows }];
+    if (this.activeTab === 'additions_disposals') return [
+      { name: 'Additions', rows: this.reportData?.additions ?? [] },
+      { name: 'Disposals', rows: this.reportData?.disposals ?? [] }
+    ];
+    if (this.activeTab === 'gl_reconciliation') return [{ name: 'GL Reconciliation', rows: this.activeRows }];
+    return [{ name: this.activeTab, rows: this.activeRows }];
   }
 }

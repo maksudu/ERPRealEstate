@@ -42,11 +42,27 @@ export const FIXED_ASSETS_ROUTES: Routes = [
       )
   },
   {
+    path: 'transfers/new',
+    loadComponent: () => import('./transfers/asset-transfers.component').then(m => m.AssetTransfersComponent)
+  },
+  {
+    path: 'transfers/:id/edit',
+    loadComponent: () => import('./transfers/asset-transfers.component').then(m => m.AssetTransfersComponent)
+  },
+  {
     path: 'transfers',
     loadComponent: () =>
       import('./transfers/asset-transfers.component').then(
         (m) => m.AssetTransfersComponent
       )
+  },
+  {
+    path: 'maintenance/new',
+    loadComponent: () => import('./maintenance/asset-maintenance.component').then(m => m.AssetMaintenanceComponent)
+  },
+  {
+    path: 'maintenance/:id/edit',
+    loadComponent: () => import('./maintenance/asset-maintenance.component').then(m => m.AssetMaintenanceComponent)
   },
   {
     path: 'maintenance',
@@ -56,11 +72,27 @@ export const FIXED_ASSETS_ROUTES: Routes = [
       )
   },
   {
+    path: 'disposals/new',
+    loadComponent: () => import('./disposals/asset-disposals.component').then(m => m.AssetDisposalsComponent)
+  },
+  {
+    path: 'disposals/:id/edit',
+    loadComponent: () => import('./disposals/asset-disposals.component').then(m => m.AssetDisposalsComponent)
+  },
+  {
     path: 'disposals',
     loadComponent: () =>
       import('./disposals/asset-disposals.component').then(
         (m) => m.AssetDisposalsComponent
       )
+  },
+  {
+    path: 'verification/new',
+    loadComponent: () => import('./verification/asset-verification.component').then(m => m.AssetVerificationComponent)
+  },
+  {
+    path: 'verification/:id/edit',
+    loadComponent: () => import('./verification/asset-verification.component').then(m => m.AssetVerificationComponent)
   },
   {
     path: 'verification',

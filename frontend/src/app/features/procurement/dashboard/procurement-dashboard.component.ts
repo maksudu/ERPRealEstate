@@ -23,8 +23,8 @@ import { CardContainerComponent, StatusBadgeComponent } from '../../../shared/co
   ],
   template: `
     <app-procurement-nav
-      title="9.1 Procurement & Inventory Dashboard"
-      subtitle="Executive C-Suite, Project Director & Site Storekeeper Consolidated Cockpit"
+      title="Procurement & Inventory Dashboard"
+      [showTabs]="false"
     >
       <div actions class="flex items-center gap-2">
         <a

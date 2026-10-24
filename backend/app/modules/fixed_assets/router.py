@@ -443,6 +443,19 @@ async def update_asset_disposal(disposal_id: int, payload: AssetDisposalUpdate, 
     if not disposal:
         raise HTTPException(status_code=404, detail="Asset disposal not found")
     data = payload.model_dump(exclude_unset=True)
+    old_asset = await db.get(FixedAsset, disposal.asset_id)
+    if "asset_id" in data:
+        new_asset = await db.get(FixedAsset, data["asset_id"])
+        if not new_asset:
+            raise HTTPException(status_code=404, detail="Asset not found")
+        if old_asset and old_asset.id != new_asset.id:
+            old_asset.status = "ACTIVE"
+        disposal.asset_id = new_asset.id
+        disposal.original_cost_bdt = new_asset.acquisition_cost_bdt
+        disposal.accumulated_depreciation_bdt = new_asset.accumulated_depreciation_bdt
+        disposal.nbv_at_disposal_bdt = new_asset.net_book_value_bdt
+        new_asset.status = "DISPOSED"
+        data.pop("asset_id")
     for key, value in data.items():
         setattr(disposal, key, value)
     disposal.gain_loss_amount_bdt = disposal.sale_proceeds_bdt - disposal.nbv_at_disposal_bdt

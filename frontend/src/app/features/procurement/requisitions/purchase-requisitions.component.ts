@@ -1,10 +1,14 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
+import { from } from 'rxjs';
+import { concatMap, toArray } from 'rxjs/operators';
 import { ProcurementService } from '../../../core/services/procurement.service';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ProjectService } from '../../../core/services/project.service';
 import { PurchaseRequisition, MaterialItem, SiteStore, Vendor } from '../../../core/models/procurement.model';
 import { Project } from '../../../core/models/project.model';
+import { BOQItem } from '../../../core/models/project.model';
 import { ProcurementNavComponent } from '../procurement-nav/procurement-nav.component';
 import {
   CardContainerComponent,
@@ -33,9 +37,9 @@ import {
     StatusBadgeComponent
   ],
   template: `
+    @if (!isFormPage) {
     <app-procurement-nav
-      title="9.4 Purchase Requisition (PR)"
-      subtitle="Site Material Indents, Multi-Tier Approval Chain, BOQ Budget Verification & Headroom Enforcement"
+      title="Purchase Requisition (PR)"
     >
       <div actions class="flex items-center gap-2">
         <button
@@ -57,6 +61,8 @@ import {
       </div>
     </app-procurement-nav>
 
+    @if (errorMessage) { <div class="mb-4 rounded-lg bg-rose-50 text-rose-700 p-3 text-sm">{{ errorMessage }}</div> }
+    @if (successMessage) { <div class="mb-4 rounded-lg bg-emerald-50 text-emerald-700 p-3 text-sm">{{ successMessage }}</div> }
     <!-- Top KPI Row -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
       <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-xl shadow-xs">
@@ -132,10 +138,18 @@ import {
               <option value="">All Statuses</option>
               <option value="DRAFT">Draft</option>
               <option value="SUBMITTED">Submitted</option>
-              <option value="SITE_APPROVED">Site Approved</option>
-              <option value="BUDGET_VERIFIED">Budget Verified</option>
-              <option value="PROCUREMENT_REVIEWED">Procurement Reviewed</option>
-              <option value="APPROVED_FOR_PURCHASE">Approved for Purchase</option>
+              <option value="UNDER_REVIEW">Under Review</option>
+              <option value="RETURNED_FOR_REVISION">Returned for Revision</option>
+              <option value="APPROVED">Approved for Supplier Sourcing</option>
+              <option value="PARTIALLY_APPROVED">Partially Approved</option>
+              <option value="CONVERTED_TO_PO">Converted to PO</option>
+              <option value="PARTIALLY_ORDERED">Partially Ordered</option>
+              <option value="COMPLETED">Completed</option>
+              <option value="CANCELLED">Cancelled</option>
+              <option value="SITE_APPROVED">Site Approved (legacy)</option>
+              <option value="BUDGET_VERIFIED">Budget Verified (legacy)</option>
+              <option value="PROCUREMENT_REVIEWED">Procurement Reviewed (legacy)</option>
+              <option value="APPROVED_FOR_PURCHASE">Approved for Purchase (legacy)</option>
               <option value="RFQ_ISSUED">RFQ Issued</option>
               <option value="PO_ISSUED">PO Issued</option>
               <option value="REJECTED">Rejected</option>
@@ -193,6 +207,7 @@ import {
               <td class="p-3">
                 <div class="font-mono font-bold text-amber-700 dark:text-amber-400">{{ pr.pr_number }}</div>
                 <div class="text-[10px] text-slate-600 dark:text-slate-400">{{ pr.requisition_date | date:'dd MMM yyyy' }}</div>
+                <div *ngIf="pr.batch_reference" class="text-[10px] text-indigo-600">Batch {{ pr.batch_reference }}</div>
               </td>
               <td class="p-3">
                 <div class="font-bold text-slate-900 dark:text-slate-100">{{ pr.project_name || ('Project #' + pr.project_id) }}</div>
@@ -333,47 +348,35 @@ import {
       </div>
     </app-card-container>
 
-    <!-- Modal: Raise New Purchase Requisition (PR) -->
-    <app-modal
-      [isOpen]="isAddModalOpen()"
-      title="Raise Site Purchase Requisition (PR Indent)"
-      (close)="isAddModalOpen.set(false)"
-    >
+    }
+    @if (isFormPage && formMode === 'new') {
+    <section class="max-w-5xl mx-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-7 shadow-sm">
+      <div class="mb-5"><h2 class="text-lg font-bold">Raise Site Purchase Requisition</h2><p class="text-xs text-slate-500 mt-1">Create a material request for a project site.</p></div>
+      @if (errorMessage) { <div class="mb-4 rounded-lg bg-rose-50 text-rose-700 p-3 text-sm">{{ errorMessage }}</div> }
       <form [formGroup]="prForm" (ngSubmit)="submitPR()" class="space-y-4">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
             <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Target Project Site *</label>
-            <select
+            <app-searchable-select
               formControlName="project_id"
-              class="w-full h-10 px-3 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-amber-500"
-            >
-              <option [ngValue]="null">Select Project Site...</option>
-              <option *ngFor="let p of projects()" [ngValue]="p.id">#{{ p.id }} - {{ p.project_name }}</option>
-            </select>
+              placeholder="Select Project Site..."
+              [options]="projectOptions()"
+            ></app-searchable-select>
           </div>
 
-          <div>
-            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Material Catalog Item *</label>
-            <select
-              formControlName="material_id"
-              class="w-full h-10 px-3 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-amber-500"
-            >
-              <option [ngValue]="null">Select Material Item...</option>
-              <option *ngFor="let m of materials()" [ngValue]="m.id">{{ m.material_code }} - {{ m.material_name }} ({{ m.unit_of_measure }})</option>
-            </select>
+        </div>
+
+        <div formArrayName="items" class="space-y-3">
+          <div class="flex justify-between items-center"><h3 class="text-sm font-bold">Requested items</h3><button type="button" (click)="addPRItem()" class="text-xs font-semibold text-sky-700">+ Add item</button></div>
+          <div *ngFor="let item of prItems.controls; let i = index" [formGroupName]="i" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-[1.2fr_1fr_1fr_auto] gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700">
+            <div><label class="block text-xs font-semibold mb-1">Material Catalog Item *</label><app-searchable-select formControlName="material_id" placeholder="Select material..." [options]="materialOptions()"></app-searchable-select></div>
+            <div><label class="block text-xs font-semibold mb-1">Approved BOQ Item (optional)</label><app-searchable-select formControlName="boq_item_id" placeholder="Link BOQ item..." [options]="boqOptions()"></app-searchable-select></div>
+            <div><label class="block text-xs font-semibold mb-1">Requested Quantity *</label><app-custom-input formControlName="requested_quantity" type="number" placeholder="Quantity"></app-custom-input><button *ngIf="item.get('boq_item_id')?.value" type="button" (click)="useBOQQuantity(i)" class="text-[10px] text-sky-700">Use BOQ remaining estimate</button></div>
+            <button *ngIf="prItems.length > 1" type="button" (click)="removePRItem(i)" class="self-end px-3 py-2 text-xs text-rose-700">Remove</button>
           </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div>
-            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Requested Quantity *</label>
-            <app-custom-input
-              formControlName="requested_quantity"
-              type="number"
-              placeholder="e.g. 500 Bags / 20 Tons"
-            ></app-custom-input>
-          </div>
-
           <div>
             <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Required Delivery Date *</label>
             <app-custom-input
@@ -393,7 +396,26 @@ import {
           </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div *ngIf="availability() as stock" class="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-900">
+          Stock check: {{ stock.available_quantity | number:'1.0-2' }} available,
+          {{ stock.incoming_po_quantity | number:'1.0-2' }} incoming on open POs,
+          {{ stock.open_requisition_quantity | number:'1.0-2' }} in other open PRs.
+          <span *ngIf="stock.approved_project_budget_bdt > 0">
+            Budget available: BDT {{ stock.budget_available_bdt | number:'1.2-2' }};
+            estimated request: BDT {{ stock.estimated_request_value_bdt | number:'1.2-2' }}.
+          </span>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Destination Site Store</label>
+          <app-searchable-select formControlName="destination_store_id" placeholder="Select a project site store..." [options]="storeOptions()"></app-searchable-select>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Department</label>
+            <app-custom-input formControlName="department" placeholder="e.g. Civil Construction"></app-custom-input>
+          </div>
           <div>
             <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Building / Tower</label>
             <app-custom-input
@@ -423,25 +445,24 @@ import {
         <div class="flex justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-700">
           <app-custom-button
             variant="outline"
-            (click)="isAddModalOpen.set(false)"
+            (click)="cancelForm()"
             label="Cancel"
           ></app-custom-button>
           <app-custom-button
             variant="primary"
             type="submit"
             [disabled]="prForm.invalid"
-            label="Raise Requisition"
+            label="Submit Requisitions for Approval"
           ></app-custom-button>
         </div>
       </form>
-    </app-modal>
+    </section>
+    }
 
-    <!-- Modal: Edit Purchase Requisition (PR) -->
-    <app-modal
-      [isOpen]="isEditModalOpen()"
-      [title]="selectedPR ? 'Edit Requisition: ' + selectedPR.pr_number : 'Edit Requisition'"
-      (close)="isEditModalOpen.set(false)"
-    >
+    @if (isFormPage && formMode === 'edit') {
+    <section class="max-w-5xl mx-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-7 shadow-sm">
+      <div class="mb-5"><h2 class="text-lg font-bold">{{ selectedPR ? 'Edit Requisition: ' + selectedPR.pr_number : 'Edit Requisition' }}</h2></div>
+      @if (errorMessage) { <div class="mb-4 rounded-lg bg-rose-50 text-rose-700 p-3 text-sm">{{ errorMessage }}</div> }
       <form [formGroup]="editForm" (ngSubmit)="submitEdit()" class="space-y-4">
         <div *ngIf="selectedPR" class="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg text-xs space-y-1">
           <div class="flex justify-between font-bold">
@@ -503,7 +524,7 @@ import {
         <div class="flex justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-700">
           <app-custom-button
             variant="outline"
-            (click)="isEditModalOpen.set(false)"
+            (click)="cancelForm()"
             label="Cancel"
           ></app-custom-button>
           <app-custom-button
@@ -514,7 +535,8 @@ import {
           ></app-custom-button>
         </div>
       </form>
-    </app-modal>
+    </section>
+    }
 
     <!-- Modal: Workflow State Progression -->
     <app-modal
@@ -532,6 +554,7 @@ import {
             <span class="text-slate-600 dark:text-slate-400">Material & Qty:</span>
             <span class="font-bold text-slate-900 dark:text-slate-100">{{ selectedPR.requested_quantity }} {{ selectedPR.unit_of_measure }} ({{ selectedPR.material_name }})</span>
           </div>
+          <div *ngIf="selectedPR.approved_quantity != null" class="flex justify-between"><span>Approved sourcing quantity:</span><b>{{ selectedPR.approved_quantity }} {{ selectedPR.unit_of_measure }}</b></div>
           <div class="flex justify-between">
             <span class="text-slate-600 dark:text-slate-400">BOQ Budget Headroom:</span>
             <span class="font-bold text-emerald-700 dark:text-emerald-400">Verified Safe (within allowance)</span>
@@ -547,16 +570,16 @@ import {
               <span class="font-semibold text-slate-800 dark:text-slate-200">Draft Indent Raised by Site Engineer</span>
             </div>
             <div class="flex items-center gap-2">
-              <span class="w-5 h-5 rounded-full flex items-center justify-center font-bold text-slate-900" [ngClass]="selectedPR.status !== 'DRAFT' && selectedPR.status !== 'SUBMITTED' ? 'bg-emerald-400' : 'bg-slate-300'">2</span>
-              <span class="font-semibold text-slate-800 dark:text-slate-200">Site / Project Manager Endorsement</span>
+              <span class="w-5 h-5 rounded-full flex items-center justify-center font-bold text-slate-900" [ngClass]="['UNDER_REVIEW','APPROVED','PARTIALLY_APPROVED','CONVERTED_TO_PO','PARTIALLY_ORDERED','COMPLETED'].includes(selectedPR.status) ? 'bg-emerald-400' : 'bg-slate-300'">2</span>
+              <span class="font-semibold text-slate-800 dark:text-slate-200">Department approval → Project approval</span>
             </div>
             <div class="flex items-center gap-2">
-              <span class="w-5 h-5 rounded-full flex items-center justify-center font-bold text-slate-900" [ngClass]="['BUDGET_VERIFIED', 'PROCUREMENT_REVIEWED', 'APPROVED_FOR_PURCHASE', 'RFQ_ISSUED', 'PO_ISSUED'].includes(selectedPR.status) ? 'bg-emerald-400' : 'bg-slate-300'">3</span>
-              <span class="font-semibold text-slate-800 dark:text-slate-200">Cost & Budget Headroom Verification (BOQ Lock)</span>
+              <span class="w-5 h-5 rounded-full flex items-center justify-center font-bold text-slate-900" [ngClass]="['APPROVED','PARTIALLY_APPROVED','CONVERTED_TO_PO','PARTIALLY_ORDERED','COMPLETED'].includes(selectedPR.status) ? 'bg-emerald-400' : 'bg-slate-300'">3</span>
+              <span class="font-semibold text-slate-800 dark:text-slate-200">Budget verification & procurement review</span>
             </div>
             <div class="flex items-center gap-2">
-              <span class="w-5 h-5 rounded-full flex items-center justify-center font-bold text-slate-900" [ngClass]="['APPROVED_FOR_PURCHASE', 'RFQ_ISSUED', 'PO_ISSUED'].includes(selectedPR.status) ? 'bg-emerald-400' : 'bg-slate-300'">4</span>
-              <span class="font-semibold text-slate-800 dark:text-slate-200">Procurement Department Approval for Purchase</span>
+              <span class="w-5 h-5 rounded-full flex items-center justify-center font-bold text-slate-900" [ngClass]="['APPROVED','PARTIALLY_APPROVED','RFQ_ISSUED','CONVERTED_TO_PO','PARTIALLY_ORDERED','COMPLETED'].includes(selectedPR.status) ? 'bg-emerald-400' : 'bg-slate-300'">4</span>
+              <span class="font-semibold text-slate-800 dark:text-slate-200">Approved for Supplier Sourcing</span>
             </div>
           </div>
         </div>
@@ -569,6 +592,10 @@ import {
             rows="2"
           ></app-custom-textarea>
         </div>
+        <div *ngIf="selectedPR.status === 'UNDER_REVIEW' && workflowLastAction === 'PROCUREMENT_REVIEW'">
+          <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Partial approval quantity</label>
+          <app-custom-input [(ngModel)]="workflowApprovedQuantity" type="number" placeholder="Less than requested quantity"></app-custom-input>
+        </div>
 
         <div class="flex flex-wrap justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-700">
           <app-custom-button
@@ -579,38 +606,57 @@ import {
           <button
             type="button"
             (click)="executeWorkflowAction('SUBMIT')"
-            *ngIf="selectedPR.status === 'DRAFT'"
+            *ngIf="selectedPR.status === 'DRAFT' || selectedPR.status === 'RETURNED_FOR_REVISION'"
             class="px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white"
           >
             Submit for Approval
           </button>
           <button
             type="button"
-            (click)="executeWorkflowAction('SITE_APPROVE')"
+            (click)="executeWorkflowAction('DEPARTMENT_APPROVE')"
             *ngIf="selectedPR.status === 'SUBMITTED'"
             class="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-600 text-slate-950"
           >
-            Site Endorsement
+            Department Approval
+          </button>
+          <button
+            type="button"
+            (click)="executeWorkflowAction('PROJECT_APPROVE')"
+            *ngIf="selectedPR.status === 'UNDER_REVIEW' && workflowLastAction === 'DEPARTMENT_APPROVE'"
+            class="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-600 text-slate-950"
+          >
+            Project Approval
           </button>
           <button
             type="button"
             (click)="executeWorkflowAction('VERIFY_BUDGET')"
-            *ngIf="selectedPR.status === 'SITE_APPROVED'"
+            *ngIf="(selectedPR.status === 'UNDER_REVIEW' && workflowLastAction === 'PROJECT_APPROVE') || selectedPR.status === 'SITE_APPROVED'"
             class="px-3 py-1.5 rounded-lg text-xs font-bold bg-purple-600 hover:bg-purple-700 text-white"
           >
             Verify BOQ Budget
           </button>
+          <button type="button" (click)="executeWorkflowAction('PROCUREMENT_REVIEW')" *ngIf="(selectedPR.status === 'UNDER_REVIEW' && workflowLastAction === 'VERIFY_BUDGET') || selectedPR.status === 'BUDGET_VERIFIED'" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white">Procurement Review</button>
           <button
             type="button"
             (click)="executeWorkflowAction('APPROVE_PURCHASE')"
-            *ngIf="selectedPR.status === 'BUDGET_VERIFIED' || selectedPR.status === 'PENDING_CS'"
+            *ngIf="(selectedPR.status === 'UNDER_REVIEW' && workflowLastAction === 'PROCUREMENT_REVIEW') || selectedPR.status === 'PROCUREMENT_REVIEWED' || selectedPR.status === 'BUDGET_VERIFIED'"
             class="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white"
           >
-            Approve for Purchase
+            Approve for Supplier Sourcing
+          </button>
+          <button type="button" (click)="executeWorkflowAction('PARTIAL_APPROVE')" *ngIf="selectedPR.status === 'UNDER_REVIEW' && workflowLastAction === 'PROCUREMENT_REVIEW'" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500 text-slate-950">Partially Approve for Sourcing</button>
+          <button
+            type="button"
+            (click)="executeWorkflowAction('RETURN_FOR_REVISION')"
+            *ngIf="selectedPR.status === 'SUBMITTED' || selectedPR.status === 'UNDER_REVIEW'"
+            class="px-3 py-1.5 rounded-lg text-xs font-bold bg-orange-100 text-orange-800"
+          >
+            Return for Revision
           </button>
           <button
             type="button"
             (click)="executeWorkflowAction('REJECT')"
+            *ngIf="selectedPR.status === 'SUBMITTED' || selectedPR.status === 'UNDER_REVIEW' || selectedPR.status === 'SITE_APPROVED' || selectedPR.status === 'BUDGET_VERIFIED'"
             class="px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white"
           >
             Reject / Return
@@ -684,11 +730,20 @@ import {
 export class PurchaseRequisitionsComponent implements OnInit {
   private procurementService = inject(ProcurementService);
   private projectService = inject(ProjectService);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private fb = inject(FormBuilder);
 
   requisitions = signal<PurchaseRequisition[]>([]);
   projects = signal<Project[]>([]);
   materials = signal<MaterialItem[]>([]);
+  stores = signal<SiteStore[]>([]);
+  boqItems = signal<BOQItem[]>([]);
+  projectOptions = computed(() => this.projects().map(p => ({ label: `#${p.id} - ${p.project_name}`, value: p.id })));
+  materialOptions = computed(() => this.materials().map(m => ({ label: `${m.material_code} - ${m.material_name} (${m.unit_of_measure})`, value: m.id })));
+  storeOptions = computed(() => this.stores().filter(s => s.is_active).map(s => ({ label: `${s.store_name}${s.location_details ? ' — ' + s.location_details : ''}`, value: s.id })));
+  boqOptions = computed(() => this.boqItems().map(b => ({ label: `${b.item_description} (${b.estimated_quantity - b.actual_consumed_quantity} ${b.unit_of_measure_id} available estimate)`, value: b.id })));
+  availability = signal<any | null>(null);
 
   // Filter state
   searchQuery = '';
@@ -705,18 +760,25 @@ export class PurchaseRequisitionsComponent implements OnInit {
   isEditModalOpen = signal(false);
   isWorkflowModalOpen = signal(false);
   isDetailModalOpen = signal(false);
+  isFormPage = false;
+  formMode: 'new' | 'edit' | '' = '';
+  errorMessage = '';
+  successMessage = '';
 
   selectedPR: PurchaseRequisition | null = null;
   workflowNotes = '';
+  workflowLastAction = '';
+  workflowApprovedQuantity: number | null = null;
 
   prForm: FormGroup = this.fb.group({
     project_id: [null, [Validators.required]],
-    material_id: [null, [Validators.required]],
-    requested_quantity: [null, [Validators.required, Validators.min(0.01)]],
+    items: this.fb.array([]),
     required_by_date: [new Date(Date.now() + 7 * 86400000).toISOString().substring(0, 10), [Validators.required]],
     priority: ['NORMAL', [Validators.required]],
     tower_name: ['Tower 1'],
     floor_number: ['04'],
+    department: [''],
+    destination_store_id: [null],
     purpose_notes: ['']
   });
 
@@ -730,10 +792,10 @@ export class PurchaseRequisitionsComponent implements OnInit {
 
   // KPIs
   pendingApprovalsCount = computed(() =>
-    this.requisitions().filter(pr => ['DRAFT', 'SUBMITTED', 'SITE_APPROVED', 'PENDING_CS'].includes(pr.status)).length
+    this.requisitions().filter(pr => ['DRAFT', 'SUBMITTED', 'UNDER_REVIEW', 'RETURNED_FOR_REVISION', 'PENDING_CS', 'SITE_APPROVED'].includes(pr.status)).length
   );
   approvedCount = computed(() =>
-    this.requisitions().filter(pr => ['APPROVED_FOR_PURCHASE', 'RFQ_ISSUED', 'PO_ISSUED'].includes(pr.status)).length
+    this.requisitions().filter(pr => ['APPROVED', 'PARTIALLY_APPROVED', 'RFQ_ISSUED', 'CONVERTED_TO_PO', 'PARTIALLY_ORDERED', 'COMPLETED', 'APPROVED_FOR_PURCHASE', 'PO_ISSUED'].includes(pr.status)).length
   );
   urgentCount = computed(() =>
     this.requisitions().filter(pr => pr.priority === 'URGENT' || pr.priority === 'EMERGENCY').length
@@ -771,18 +833,35 @@ export class PurchaseRequisitionsComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.formMode = this.router.url.endsWith('/new') ? 'new' : this.router.url.includes('/edit') ? 'edit' : '';
+    this.isFormPage = !!this.formMode;
+    this.successMessage = history.state?.procurementNotice || '';
+    if (this.formMode === 'new') this.openAddModal();
     this.loadRequisitions();
     this.loadProjects();
     this.loadMaterials();
+    this.loadStores();
+    this.prForm.get('project_id')?.valueChanges.subscribe(projectId => {
+      this.loadStores(Number(projectId) || undefined);
+      this.loadBOQItems(Number(projectId) || undefined);
+    });
+    this.prItems.valueChanges.subscribe(() => this.refreshAvailability());
   }
 
   loadRequisitions(): void {
-    this.procurementService.getRequisitions().subscribe({
-      next: (data) => {
-        this.requisitions.set(data || []);
+    this.procurementService.getRequisitions({ limit: 500 }).subscribe({
+      next: (response: any) => {
+        const data = Array.isArray(response) ? response : response?.items ?? response?.results ?? [];
+        this.requisitions.set(data);
         this.currentPage.set(1);
+        const id = Number(this.route.snapshot.paramMap.get('id'));
+        if (this.formMode === 'edit' && id) {
+          const pr = data.find((row: PurchaseRequisition) => row.id === id);
+          if (pr) this.prepareEditForm(pr);
+          else this.errorMessage = 'Purchase requisition could not be loaded.';
+        }
       },
-      error: (err) => console.error('Failed to load requisitions:', err)
+      error: (err) => { this.errorMessage = err.error?.detail || 'Unable to load purchase requisitions.'; console.error('Failed to load requisitions:', err); }
     });
   }
 
@@ -798,6 +877,36 @@ export class PurchaseRequisitionsComponent implements OnInit {
       next: (data) => this.materials.set(data || []),
       error: (err) => console.error('Failed to load materials:', err)
     });
+  }
+
+  loadStores(projectId?: number): void {
+    this.procurementService.getSiteStores(projectId ? { project_id: projectId } : undefined).subscribe({ next: rows => this.stores.set(rows || []), error: () => this.stores.set([]) });
+  }
+
+  loadBOQItems(projectId?: number): void {
+    if (!projectId) { this.boqItems.set([]); return; }
+    this.projectService.getBOQItems({ project_id: projectId }).subscribe({ next: rows => this.boqItems.set(rows || []), error: () => this.boqItems.set([]) });
+  }
+
+  get prItems(): FormArray { return this.prForm.get('items') as FormArray; }
+
+  addPRItem(materialId: number | null = null, quantity: number | null = null): void {
+    this.prItems.push(this.fb.group({ material_id: [materialId, Validators.required], boq_item_id: [null], requested_quantity: [quantity, [Validators.required, Validators.min(0.01)]] }));
+  }
+
+  removePRItem(index: number): void { if (this.prItems.length > 1) this.prItems.removeAt(index); }
+
+  useBOQQuantity(index: number): void {
+    const selected = this.boqItems().find(item => item.id === Number(this.prItems.at(index).get('boq_item_id')?.value));
+    if (selected) this.prItems.at(index).get('requested_quantity')?.setValue(Math.max(0, selected.estimated_quantity - selected.actual_consumed_quantity));
+  }
+
+  private refreshAvailability(): void {
+    const { project_id } = this.prForm.getRawValue();
+    const { material_id, requested_quantity } = this.prItems.at(0)?.getRawValue() || {};
+    if (!project_id || !material_id) { this.availability.set(null); return; }
+    this.procurementService.getRequisitionAvailability(Number(project_id), Number(material_id), Number(requested_quantity || 0))
+      .subscribe({ next: data => this.availability.set(data), error: () => this.availability.set(null) });
   }
 
   onSearchChange(): void {
@@ -833,32 +942,50 @@ export class PurchaseRequisitionsComponent implements OnInit {
   }
 
   openAddModal(): void {
+    if (!this.isFormPage) {
+      this.router.navigate(['/procurement/requisitions/new']);
+      return;
+    }
     this.prForm.reset({
       project_id: this.projects().length > 0 ? this.projects()[0].id : null,
-      material_id: this.materials().length > 0 ? this.materials()[0].id : null,
-      requested_quantity: 100,
+      items: [],
       required_by_date: new Date(Date.now() + 7 * 86400000).toISOString().substring(0, 10),
       priority: 'NORMAL',
       tower_name: 'Tower 1',
       floor_number: '04',
+      department: '',
+      destination_store_id: null,
       purpose_notes: ''
     });
-    this.isAddModalOpen.set(true);
+    this.prItems.clear();
+    this.addPRItem(this.materials().length > 0 ? this.materials()[0].id : null, 100);
+    this.loadStores(Number(this.prForm.value.project_id) || undefined);
+    this.loadBOQItems(Number(this.prForm.value.project_id) || undefined);
+    this.isAddModalOpen.set(false);
   }
 
   submitPR(): void {
     if (this.prForm.invalid) return;
-    this.procurementService.createRequisition(this.prForm.value).subscribe({
-      next: () => {
-        alert('Site Purchase Requisition created successfully!');
-        this.isAddModalOpen.set(false);
-        this.loadRequisitions();
-      },
-      error: (err) => alert(err.error?.detail || 'Failed to create requisition.')
+    this.errorMessage = '';
+    const { items, ...common } = this.prForm.getRawValue();
+    const lines = (items || []).filter((item: any) => item.material_id && Number(item.requested_quantity) > 0);
+    if (!lines.length) { this.errorMessage = 'Add at least one material and quantity.'; return; }
+    const batchReference = `PRB-${Number(common.project_id)}-${Date.now().toString(36).toUpperCase()}`;
+    from(lines).pipe(
+      concatMap((item: any) => this.procurementService.createRequisition({ ...common, batch_reference: batchReference, material_id: item.material_id, boq_item_id: item.boq_item_id || null, requested_quantity: item.requested_quantity })
+        .pipe(concatMap(created => this.procurementService.executePRWorkflow(created.id, { action: 'SUBMIT' })))),
+      toArray()
+    ).subscribe({
+      next: created => this.router.navigate(['/procurement/requisitions'], { state: { procurementNotice: `${created.length} requisition item(s) submitted for approval.` } }),
+      error: err => this.errorMessage = err.error?.detail || 'Some items could not be submitted. Check the requisition register for items already created.'
     });
   }
 
   openEditModal(pr: PurchaseRequisition): void {
+    this.router.navigate(['/procurement/requisitions', pr.id, 'edit']);
+  }
+
+  private prepareEditForm(pr: PurchaseRequisition): void {
     this.selectedPR = pr;
     this.editForm.patchValue({
       requested_quantity: pr.requested_quantity,
@@ -867,24 +994,28 @@ export class PurchaseRequisitionsComponent implements OnInit {
       floor_number: pr.floor_number || '',
       purpose_notes: pr.purpose_notes || ''
     });
-    this.isEditModalOpen.set(true);
+    this.isEditModalOpen.set(false);
   }
 
   submitEdit(): void {
     if (!this.selectedPR || this.editForm.invalid) return;
+    this.errorMessage = '';
     this.procurementService.updateRequisition(this.selectedPR.id, this.editForm.value).subscribe({
       next: () => {
-        alert('Purchase Requisition updated successfully!');
-        this.isEditModalOpen.set(false);
-        this.loadRequisitions();
+        this.router.navigate(['/procurement/requisitions'], { state: { procurementNotice: 'Purchase requisition updated successfully.' } });
       },
-      error: (err) => alert(err.error?.detail || 'Failed to update requisition.')
+      error: (err) => this.errorMessage = err.error?.detail || 'Failed to update requisition.'
     });
   }
+
+  cancelForm(): void { this.router.navigate(['/procurement/requisitions']); }
 
   openWorkflowModal(pr: PurchaseRequisition): void {
     this.selectedPR = pr;
     this.workflowNotes = '';
+    this.workflowLastAction = '';
+    this.workflowApprovedQuantity = null;
+    this.procurementService.getPRWorkflowHistory(pr.id).subscribe({ next: events => this.workflowLastAction = events.length ? events[events.length - 1].action : '' });
     this.isWorkflowModalOpen.set(true);
   }
 
@@ -892,7 +1023,8 @@ export class PurchaseRequisitionsComponent implements OnInit {
     if (!this.selectedPR) return;
     this.procurementService.executePRWorkflow(this.selectedPR.id, {
       action,
-      notes: this.workflowNotes
+      notes: this.workflowNotes,
+      approved_quantity: action === 'PARTIAL_APPROVE' ? Number(this.workflowApprovedQuantity) : undefined
     }).subscribe({
       next: (res) => {
         alert(`Requisition status updated to: ${res.status}`);
@@ -927,6 +1059,11 @@ export class PurchaseRequisitionsComponent implements OnInit {
   getPRStatusBadgeClass(status: string): string {
     switch (status) {
       case 'APPROVED_FOR_PURCHASE':
+      case 'APPROVED':
+      case 'PARTIALLY_APPROVED':
+      case 'CONVERTED_TO_PO':
+      case 'PARTIALLY_ORDERED':
+      case 'COMPLETED':
       case 'PO_ISSUED':
         return 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800';
       case 'RFQ_ISSUED':
@@ -934,11 +1071,15 @@ export class PurchaseRequisitionsComponent implements OnInit {
         return 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-800';
       case 'BUDGET_VERIFIED':
       case 'SITE_APPROVED':
+      case 'UNDER_REVIEW':
         return 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-800';
       case 'SUBMITTED':
+      case 'DRAFT':
+      case 'RETURNED_FOR_REVISION':
       case 'PENDING_CS':
         return 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-800';
       case 'REJECTED':
+      case 'CANCELLED':
         return 'bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-800';
       default:
         return 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700';

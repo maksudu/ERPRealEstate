@@ -184,10 +184,20 @@ import { SearchableSelectComponent, SelectOption } from '../../../shared/compone
 })
 export class AssetTransfersComponent implements OnInit {
   private service = inject(FixedAssetsService);
+  private route = inject(ActivatedRoute);
+  router = inject(Router);
 
+  Math = Math;
   transfers: AssetTransfer[] = [];
   loading = false;
-  isModalOpen = false;
+  isFormPage = false;
+  editingId: number | null = null;
+  saving = false;
+  notice: { type: 'success' | 'error'; text: string } | null = null;
+  search = '';
+  limit = 20;
+  offset = 0;
+  totalRecords = 0;
 
   assetOptions: SelectOption[] = [];
   projectOptions: SelectOption[] = [
@@ -208,19 +218,27 @@ export class AssetTransfersComponent implements OnInit {
   };
 
   ngOnInit(): void {
-    this.loadTransfers();
+    const path = this.route.snapshot.routeConfig?.path || '';
+    this.isFormPage = path.endsWith('/new') || path.includes(':id/edit');
+    this.editingId = path.includes(':id/edit') ? Number(this.route.snapshot.paramMap.get('id')) : null;
+    if (this.editingId && history.state?.transfer) this.formData = { ...this.formData, ...history.state.transfer, to_project_id: history.state.transfer.to_project_id ?? this.formData.to_project_id };
+    this.notice = history.state?.assetMessage ? { type: 'success', text: history.state.assetMessage } : null;
+    if (!this.isFormPage) this.loadTransfers();
     this.loadAssetOptions();
   }
 
   loadTransfers(): void {
     this.loading = true;
-    this.service.getTransfers().subscribe({
+    this.service.getTransfers({ search: this.search, limit: this.limit, offset: this.offset }).subscribe({
       next: (res) => {
-        this.transfers = res.items;
+        const payload = (res as any)?.data?.data ?? (res as any)?.data ?? res;
+        this.transfers = payload?.items || (Array.isArray(payload) ? payload : []);
+        this.totalRecords = payload?.total ?? this.transfers.length;
         this.loading = false;
       },
       error: (err) => {
         console.error('Failed to load transfers', err);
+        this.notice = { type: 'error', text: err?.error?.detail || 'Could not load transfer records.' };
         this.loading = false;
       }
     });
@@ -238,29 +256,35 @@ export class AssetTransfersComponent implements OnInit {
     });
   }
 
-  openModal(): void {
-    this.isModalOpen = true;
+  get currentPage(): number { return Math.floor(this.offset / this.limit) + 1; }
+  get totalPages(): number { return Math.ceil(this.totalRecords / this.limit); }
+
+  openNewPage(): void {
+    this.formData = { ...this.formData, asset_id: null, transfer_date: new Date().toISOString().substring(0, 10) };
+    this.router.navigate(['/fixed-assets/transfers/new']);
   }
 
-  closeModal(): void {
-    this.isModalOpen = false;
+  openEditPage(item: AssetTransfer): void {
+    this.formData = { ...this.formData, ...item, to_project_id: item.to_project_id ?? this.formData.to_project_id };
+    this.editingId = item.id;
+    this.router.navigate(['/fixed-assets/transfers', item.id, 'edit'], { state: { transfer: item } });
   }
 
   saveTransfer(): void {
-    this.service.createTransfer({
-      asset_id: Number(this.formData.asset_id),
-      to_project_id: 2,
-      to_project_name: this.formData.to_project_name,
-      to_location: this.formData.to_location,
-      transfer_date: this.formData.transfer_date,
-      transferred_by: this.formData.transferred_by,
-      reason: this.formData.reason
-    }).subscribe({
+    this.saving = true;
+    const payload = { ...this.formData, asset_id: Number(this.formData.asset_id), to_project_id: this.formData.to_project_id ? Number(this.formData.to_project_id) : undefined };
+    const request = this.editingId ? this.service.updateTransfer(this.editingId, payload) : this.service.createTransfer(payload);
+    request.subscribe({
       next: () => {
-        this.closeModal();
-        this.loadTransfers();
+        this.saving = false;
+        this.router.navigate(['/fixed-assets/transfers'], { state: { assetMessage: this.editingId ? 'Transfer updated successfully.' : 'Transfer saved successfully.' } });
       },
-      error: (err) => console.error('Failed to create transfer', err)
+      error: (err) => { this.saving = false; this.notice = { type: 'error', text: err?.error?.detail || 'Could not save transfer.' }; }
     });
+  }
+
+  deleteTransfer(id: number): void {
+    if (!confirm('Delete this transfer record?')) return;
+    this.service.deleteTransfer(id).subscribe({ next: () => { this.notice = { type: 'success', text: 'Transfer deleted.' }; this.loadTransfers(); }, error: (err) => this.notice = { type: 'error', text: err?.error?.detail || 'Could not delete transfer.' } });
   }
 }

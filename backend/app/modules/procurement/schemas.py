@@ -14,10 +14,28 @@ class VendorBase(BaseModel):
     contact_person: str
     phone_number: str
     email: Optional[str] = None
+    business_address: Optional[str] = None
+    business_registration_number: Optional[str] = None
+    trade_license_number: Optional[str] = None
+    trade_license_expiry_date: Optional[date] = None
     tin_number: Optional[str] = None
     bin_number: Optional[str] = None
+    supplied_categories: Optional[List[str]] = None
+    document_refs: Optional[List[dict]] = None
+    authorized_representatives: Optional[List[str]] = None
+    references: Optional[List[str]] = None
+    credit_limit_bdt: float = 0.00
+    currency: str = "BDT"
     payment_terms_days: int = 30
     is_active: bool = True
+    approval_status: str = "APPROVED"
+    approval_notes: Optional[str] = None
+    performance_score: Optional[float] = None
+    late_delivery_count: int = 0
+    rejected_delivery_count: int = 0
+    quality_complaint_count: int = 0
+    non_conformance_count: int = 0
+    suspension_reason: Optional[str] = None
 
 class VendorCreate(BaseModel):
     vendor_name: str
@@ -25,8 +43,22 @@ class VendorCreate(BaseModel):
     contact_person: str
     phone_number: str
     email: Optional[str] = None
+    business_address: Optional[str] = None
+    business_registration_number: Optional[str] = None
+    trade_license_number: Optional[str] = None
+    trade_license_expiry_date: Optional[date] = None
     tin_number: Optional[str] = None
     bin_number: Optional[str] = None
+    supplied_categories: Optional[List[str]] = None
+    document_refs: Optional[List[dict]] = None
+    authorized_representatives: Optional[List[str]] = None
+    references: Optional[List[str]] = None
+    bank_name: Optional[str] = None
+    bank_account_name: Optional[str] = None
+    bank_account_number: Optional[str] = None
+    bank_branch: Optional[str] = None
+    credit_limit_bdt: Optional[float] = 0.00
+    currency: Optional[str] = "BDT"
     payment_terms_days: Optional[int] = 30
 
 class VendorUpdate(BaseModel):
@@ -35,10 +67,44 @@ class VendorUpdate(BaseModel):
     contact_person: Optional[str] = None
     phone_number: Optional[str] = None
     email: Optional[str] = None
+    business_address: Optional[str] = None
+    business_registration_number: Optional[str] = None
+    trade_license_number: Optional[str] = None
+    trade_license_expiry_date: Optional[date] = None
     tin_number: Optional[str] = None
     bin_number: Optional[str] = None
+    supplied_categories: Optional[List[str]] = None
+    document_refs: Optional[List[dict]] = None
+    authorized_representatives: Optional[List[str]] = None
+    references: Optional[List[str]] = None
+    bank_name: Optional[str] = None
+    bank_account_name: Optional[str] = None
+    bank_account_number: Optional[str] = None
+    bank_branch: Optional[str] = None
+    credit_limit_bdt: Optional[float] = None
+    currency: Optional[str] = None
     payment_terms_days: Optional[int] = None
-    is_active: Optional[bool] = None
+
+class VendorWorkflowAction(BaseModel):
+    action: str
+    notes: Optional[str] = None
+
+class VendorPaymentDetailsResponse(BaseModel):
+    bank_name: Optional[str] = None
+    bank_account_name: Optional[str] = None
+    bank_account_number: Optional[str] = None
+    bank_branch: Optional[str] = None
+
+class VendorApprovalEventResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    vendor_id: int
+    actor_user_id: Optional[int] = None
+    action: str
+    from_status: Optional[str] = None
+    to_status: str
+    notes: Optional[str] = None
+    created_at: Optional[datetime] = None
 
 class VendorResponse(VendorBase):
     id: int
@@ -83,6 +149,7 @@ class StoreStockBase(BaseModel):
     store_id: int
     material_id: int
     current_stock_quantity: float
+    reserved_quantity: float = 0.00
     weighted_avg_rate: float = 0.00
     total_stock_value: float = 0.00
     reorder_level: float = 100.00
@@ -184,20 +251,28 @@ class PurchaseRequisitionBase(BaseModel):
 
     project_id: int
     pr_number: str
+    batch_reference: Optional[str] = None
     requested_by_user_id: int
     requisition_date: date
     required_by_date: Optional[date] = None
     material_id: int
     requested_quantity: float
+    approved_quantity: Optional[float] = None
     boq_item_id: Optional[int] = None
     wbs_node_id: Optional[int] = None
     tower_name: Optional[str] = None
     floor_number: Optional[str] = None
+    priority: str = "NORMAL"
+    department: Optional[str] = None
+    destination_store_id: Optional[int] = None
+    delivery_location: Optional[str] = None
+    attachment_refs: Optional[list[str]] = None
     purpose_notes: Optional[str] = None
-    status: str = "PENDING_CS"
+    status: str = "DRAFT"
 
 class PurchaseRequisitionCreate(BaseModel):
     project_id: int
+    batch_reference: Optional[str] = None
     material_id: int
     requested_quantity: float
     boq_item_id: Optional[int] = None
@@ -206,6 +281,11 @@ class PurchaseRequisitionCreate(BaseModel):
     floor_number: Optional[str] = None
     required_by_date: Optional[date] = None
     purpose_notes: Optional[str] = None
+    priority: str = "NORMAL"
+    department: Optional[str] = None
+    destination_store_id: Optional[int] = None
+    delivery_location: Optional[str] = None
+    attachment_refs: Optional[list[str]] = None
 
 class PurchaseRequisitionUpdate(BaseModel):
     requested_quantity: Optional[float] = None
@@ -213,11 +293,40 @@ class PurchaseRequisitionUpdate(BaseModel):
     tower_name: Optional[str] = None
     floor_number: Optional[str] = None
     purpose_notes: Optional[str] = None
-    status: Optional[str] = None
+    priority: Optional[str] = None
+    department: Optional[str] = None
+    destination_store_id: Optional[int] = None
+    delivery_location: Optional[str] = None
+    attachment_refs: Optional[list[str]] = None
+
+class RequisitionAvailabilityResponse(BaseModel):
+    project_id: int
+    material_id: int
+    requested_quantity: float
+    on_hand_quantity: float
+    reserved_quantity: float
+    available_quantity: float
+    open_requisition_quantity: float
+    incoming_po_quantity: float
+    approved_project_budget_bdt: float
+    committed_purchase_order_bdt: float
+    estimated_request_value_bdt: float
+    budget_available_bdt: float
 
 class PRWorkflowAction(BaseModel):
-    action: str # 'SUBMIT', 'SITE_APPROVE', 'VERIFY_BUDGET', 'PROCUREMENT_REVIEW', 'APPROVE_PURCHASE', 'REJECT'
+    action: str # 'SUBMIT', 'DEPARTMENT_APPROVE', 'PROJECT_APPROVE', 'VERIFY_BUDGET', 'PROCUREMENT_REVIEW', 'APPROVE_PURCHASE', 'RETURN_FOR_REVISION', 'REJECT'
     notes: Optional[str] = None
+    approved_quantity: Optional[float] = None
+
+class PRWorkflowEventResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    pr_id: int
+    action: str
+    from_status: Optional[str] = None
+    to_status: str
+    notes: Optional[str] = None
+    created_at: Optional[datetime] = None
 
 class PurchaseRequisitionResponse(PurchaseRequisitionBase):
     id: int
@@ -278,11 +387,24 @@ class CSQuotationBase(BaseModel):
 
     vendor_id: int
     brand_grade: Optional[str] = None
+    technical_specification: Optional[str] = None
+    country_of_origin: Optional[str] = None
+    warranty_months: Optional[int] = None
+    quotation_valid_until: Optional[date] = None
     payment_terms: Optional[str] = None
     technical_compliance: str = "COMPLIANT"
     quoted_unit_rate: float
     quoted_quantity: float
     total_quoted_amount: float
+    delivery_charge_bdt: float = 0
+    discount_amount_bdt: float = 0
+    vat_amount_bdt: float = 0
+    other_tax_amount_bdt: float = 0
+    commercial_evaluation: str = "PENDING"
+    revision_number: int = 1
+    previous_quotation_id: Optional[int] = None
+    is_current: bool = True
+    negotiation_history: Optional[str] = None
     credit_days_offered: int = 30
     lead_time_days: int = 3
     is_recommended: bool = False
@@ -290,10 +412,21 @@ class CSQuotationBase(BaseModel):
 
 class CSQuotationInput(BaseModel):
     vendor_id: int
+    quoted_quantity: Optional[float] = None
     brand_grade: Optional[str] = None
+    technical_specification: Optional[str] = None
+    country_of_origin: Optional[str] = None
+    warranty_months: Optional[int] = None
+    quotation_valid_until: Optional[date] = None
     payment_terms: Optional[str] = None
     technical_compliance: Optional[str] = "COMPLIANT"
     quoted_unit_rate: float
+    delivery_charge_bdt: float = 0
+    discount_amount_bdt: float = 0
+    vat_amount_bdt: float = 0
+    other_tax_amount_bdt: float = 0
+    commercial_evaluation: str = "PENDING"
+    negotiation_history: Optional[str] = None
     credit_days_offered: Optional[int] = 30
     lead_time_days: Optional[int] = 3
     remarks: Optional[str] = None
@@ -317,6 +450,7 @@ class ComparativeStatementCreate(BaseModel):
     pr_id: int
     recommended_vendor_id: Optional[int] = None
     justification_summary: Optional[str] = None
+    committee_recommendation: Optional[str] = None
     quotations: List[CSQuotationInput]
 
 class ComparativeStatementResponse(ComparativeStatementBase):
@@ -329,8 +463,16 @@ class ComparativeStatementResponse(ComparativeStatementBase):
     recommended_vendor_name: Optional[str] = None
     lowest_bidder_vendor_id: Optional[int] = None
     lowest_unit_rate: Optional[float] = None
+    committee_recommendation: Optional[str] = None
+    committee_decision_notes: Optional[str] = None
+    award_allocations: Optional[List[dict]] = None
     quotations: List[CSQuotationResponse] = []
     created_at: Optional[datetime] = None
+
+class CSCommitteeDecision(BaseModel):
+    approved: bool
+    decision_notes: str
+    awards: List[dict] = []
 
 
 # --------------------------------------------------------------------------
@@ -359,6 +501,8 @@ class PurchaseOrderBase(BaseModel):
 
 class PurchaseOrderCreateFromCS(BaseModel):
     cs_id: int
+    vendor_id: Optional[int] = None
+    ordered_quantity: Optional[float] = None
     destination_store_id: int
     delivery_deadline: date
     delivery_schedule_notes: Optional[str] = None
