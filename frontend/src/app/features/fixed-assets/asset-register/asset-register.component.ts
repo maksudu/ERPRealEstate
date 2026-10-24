@@ -1,10 +1,9 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FixedAssetsService, FixedAsset } from '../../../core/services/fixed-assets.service';
-import { FixedAssetsNavComponent } from '../fixed-assets-nav/fixed-assets-nav.component';
 import { CardContainerComponent } from '../../../shared/components/card-container/card-container.component';
-import { ModalComponent } from '../../../shared/components/modal/modal.component';
 import { SearchableSelectComponent, SelectOption } from '../../../shared/components/searchable-select/searchable-select.component';
 
 @Component({
@@ -13,21 +12,25 @@ import { SearchableSelectComponent, SelectOption } from '../../../shared/compone
   imports: [
     CommonModule,
     FormsModule,
-    FixedAssetsNavComponent,
     CardContainerComponent,
-    ModalComponent,
     SearchableSelectComponent
   ],
   template: `
     <div class="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
-      <app-fixed-assets-nav />
+      @if (notice) {
+        <div class="rounded-lg border px-4 py-3 text-sm"
+          [ngClass]="notice.type === 'success' ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-rose-200 bg-rose-50 text-rose-800'">
+          {{ notice.text }}
+        </div>
+      }
 
+      @if (!isFormPage) {
       <!-- Top Filter & Search Bar -->
       <app-card title="Fixed Asset Register & Inventory" subtitle="Complete capital asset directory with valuation, depreciation, custodian and project tracking">
         <div card-actions>
           <button
             type="button"
-            (click)="openAddModal()"
+            (click)="openAddPage()"
             class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 shadow-2xs transition"
           >
             <span>+</span> Register New Asset
@@ -153,7 +156,7 @@ import { SearchableSelectComponent, SelectOption } from '../../../shared/compone
                       <div class="flex items-center justify-center gap-1.5">
                         <button
                           type="button"
-                          (click)="openEditModal(item)"
+                          (click)="openEditPage(item)"
                           class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-indigo-600"
                           title="Edit Asset"
                         >
@@ -200,16 +203,12 @@ import { SearchableSelectComponent, SelectOption } from '../../../shared/compone
           </div>
         </div>
       </app-card>
+      }
 
-      <!-- Reusable Modal for Add / Edit Asset -->
-      <app-modal
-        [isOpen]="isModalOpen"
+      @if (isFormPage) {
+      <app-card
         [title]="isEditMode ? 'Edit Fixed Asset Record' : 'Register New Fixed Asset'"
-        [subtitle]="'Asset will be categorized and mapped to General Ledger code with auto-depreciation'"
-        badge="Fixed Asset Management"
-        size="2xl"
-        (close)="closeModal()"
-      >
+        subtitle="Asset will be categorized and mapped to General Ledger code with auto-depreciation">
         <div class="space-y-4 p-4 text-xs">
           <!-- Row 1: Name & Category -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -340,10 +339,10 @@ import { SearchableSelectComponent, SelectOption } from '../../../shared/compone
           </div>
         </div>
 
-        <div modal-actions class="flex items-center justify-end gap-2 px-4 py-3 bg-slate-50 dark:bg-slate-850/80 border-t border-slate-200 dark:border-slate-800">
+        <div card-actions class="flex items-center justify-end gap-2">
           <button
             type="button"
-            (click)="closeModal()"
+            (click)="router.navigate(['/fixed-assets/asset-register'])"
             class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs"
           >
             Cancel
@@ -351,18 +350,21 @@ import { SearchableSelectComponent, SelectOption } from '../../../shared/compone
           <button
             type="button"
             (click)="saveAsset()"
-            [disabled]="!formData.asset_name || !formData.acquisition_cost_bdt"
+            [disabled]="saving || !formData.asset_name || !formData.acquisition_cost_bdt"
             class="px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 disabled:opacity-40 text-xs shadow-2xs"
           >
-            {{ isEditMode ? 'Update Asset' : 'Save Asset' }}
+            {{ saving ? 'Saving...' : isEditMode ? 'Update Asset' : 'Save Asset' }}
           </button>
         </div>
-      </app-modal>
+      </app-card>
+      }
     </div>
   `
 })
 export class AssetRegisterComponent implements OnInit {
   private service = inject(FixedAssetsService);
+  private route = inject(ActivatedRoute);
+  router = inject(Router);
 
   Math = Math;
   assets: FixedAsset[] = [];
@@ -377,10 +379,11 @@ export class AssetRegisterComponent implements OnInit {
   selectedProject = '';
   selectedStatus = '';
 
-  // Modal State
-  isModalOpen = false;
+  isFormPage = false;
   isEditMode = false;
   editingId: number | null = null;
+  saving = false;
+  notice: { type: 'success' | 'error'; text: string } | null = null;
   formData: any = this.initFormData();
 
   // Searchable Select Options
@@ -426,7 +429,20 @@ export class AssetRegisterComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.loadAssets();
+    const routePath = this.route.snapshot.routeConfig?.path || '';
+    this.isFormPage = routePath.endsWith('/new') || routePath.includes(':id/edit');
+    this.isEditMode = routePath.includes(':id/edit');
+    this.editingId = this.isEditMode ? Number(this.route.snapshot.paramMap.get('id')) : null;
+    this.notice = history.state?.assetRegisterMessage
+      ? { type: 'success', text: history.state.assetRegisterMessage }
+      : null;
+
+    if (this.isEditMode) {
+      const asset = history.state?.asset as FixedAsset | undefined;
+      if (asset) this.formData = { ...asset };
+      else this.notice = { type: 'error', text: 'Asset details were not available. Return to the register and open Edit again.' };
+    }
+    if (!this.isFormPage) this.loadAssets();
   }
 
   loadAssets(): void {
@@ -439,12 +455,15 @@ export class AssetRegisterComponent implements OnInit {
       offset: this.offset
     }).subscribe({
       next: (res) => {
-        this.assets = res.items;
-        this.totalRecords = res.total;
+        const response = res as any;
+        const payload = response?.data?.data ?? response?.data ?? response;
+        this.assets = Array.isArray(payload) ? payload : payload?.items || [];
+        this.totalRecords = payload?.total ?? this.assets.length;
         this.loading = false;
       },
       error: (err) => {
         console.error('Failed to load assets', err);
+        this.notice = { type: 'error', text: this.errorMessage(err, 'Could not load the fixed asset register.') };
         this.loading = false;
       }
     });
@@ -483,49 +502,58 @@ export class AssetRegisterComponent implements OnInit {
     };
   }
 
-  openAddModal(): void {
+  openAddPage(): void {
     this.isEditMode = false;
     this.editingId = null;
     this.formData = this.initFormData();
-    this.isModalOpen = true;
+    this.notice = null;
+    this.router.navigate(['/fixed-assets/asset-register/new']);
   }
 
-  openEditModal(item: FixedAsset): void {
+  openEditPage(item: FixedAsset): void {
     this.isEditMode = true;
     this.editingId = item.id;
     this.formData = { ...item };
-    this.isModalOpen = true;
-  }
-
-  closeModal(): void {
-    this.isModalOpen = false;
+    this.notice = null;
+    this.router.navigate(['/fixed-assets/asset-register', item.id, 'edit'], { state: { asset: item } });
   }
 
   saveAsset(): void {
-    if (this.isEditMode && this.editingId) {
-      this.service.updateAsset(this.editingId, this.formData).subscribe({
-        next: () => {
-          this.closeModal();
-          this.loadAssets();
-        },
-        error: (err) => console.error('Failed to update asset', err)
-      });
-    } else {
-      this.service.createAsset(this.formData).subscribe({
-        next: () => {
-          this.closeModal();
-          this.loadAssets();
-        },
-        error: (err) => console.error('Failed to create asset', err)
-      });
-    }
+    this.saving = true;
+    this.notice = null;
+    const save$ = this.isEditMode && this.editingId
+      ? this.service.updateAsset(this.editingId, this.formData)
+      : this.service.createAsset(this.formData);
+    save$.subscribe({
+      next: () => {
+        this.saving = false;
+        this.router.navigate(['/fixed-assets/asset-register'], {
+          state: { assetRegisterMessage: this.isEditMode ? 'Asset updated successfully.' : 'Asset registered successfully.' }
+        });
+      },
+      error: (err) => {
+        this.saving = false;
+        this.notice = { type: 'error', text: this.errorMessage(err, 'Could not save the asset.') };
+      }
+    });
+  }
+
+  private errorMessage(err: any, fallback: string): string {
+    const detail = err?.error?.detail || err?.error?.message || err?.message;
+    if (Array.isArray(detail)) return detail.map(item => item.msg || String(item)).join('; ');
+    return typeof detail === 'string' ? detail : fallback;
   }
 
   deleteAsset(id: number): void {
     if (confirm('Are you sure you want to delete this asset from the register?')) {
       this.service.deleteAsset(id).subscribe({
-        next: () => this.loadAssets(),
-        error: (err) => console.error('Failed to delete asset', err)
+        next: () => {
+          this.notice = { type: 'success', text: 'Asset deleted successfully.' };
+          this.loadAssets();
+        },
+        error: (err) => {
+          this.notice = { type: 'error', text: this.errorMessage(err, 'Could not delete the asset.') };
+        }
       });
     }
   }

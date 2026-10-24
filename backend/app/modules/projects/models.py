@@ -3,6 +3,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 from app.core.database import Base
+from app.modules.land.models import LandParcel
 
 class Project(Base):
     """
@@ -813,7 +814,7 @@ class ProjectFinancialPerformance(Base):
     project_id = Column(BigInteger, ForeignKey("prj_projects.id", ondelete="CASCADE"), nullable=False, index=True)
     cost_center_code = Column(String(64), nullable=False, index=True)
     fiscal_year = Column(String(16), nullable=False, default="2025-26", index=True)
-    period_type = Column(String(16), nullable=False, default="CUMULATIVE_TO_DATE", index=True) # MONTHLY, QUARTERLY, ANNUAL, CUMULATIVE_TO_DATE
+    period_type = Column(String(32), nullable=False, default="CUMULATIVE_TO_DATE", index=True) # MONTHLY, QUARTERLY, ANNUAL, CUMULATIVE_TO_DATE
     period_name = Column(String(64), nullable=False, default="Lifecycle to Date")
 
     # 1. Revenue Recognition vs Collections

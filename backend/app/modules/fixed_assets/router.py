@@ -13,10 +13,10 @@ from app.modules.fixed_assets.models import (
 )
 from app.modules.fixed_assets.schemas import (
     FixedAssetCreate, FixedAssetUpdate, FixedAssetResponse,
-    AssetDepreciationResponse, AssetTransferCreate, AssetTransferResponse,
-    AssetMaintenanceCreate, AssetMaintenanceResponse,
-    AssetDisposalCreate, AssetDisposalResponse,
-    AssetPhysicalVerificationCreate, AssetPhysicalVerificationResponse,
+    AssetDepreciationResponse, AssetTransferCreate, AssetTransferUpdate, AssetTransferResponse,
+    AssetMaintenanceCreate, AssetMaintenanceUpdate, AssetMaintenanceResponse,
+    AssetDisposalCreate, AssetDisposalUpdate, AssetDisposalResponse,
+    AssetPhysicalVerificationCreate, AssetPhysicalVerificationUpdate, AssetPhysicalVerificationResponse,
     AssetDashboardSummary
 )
 from app.modules.fixed_assets.services import get_or_create_asset_seed
@@ -231,6 +231,7 @@ async def get_depreciation_schedule(
 @router.get("/transfers")
 async def list_asset_transfers(
     asset_id: Optional[int] = None,
+    search: Optional[str] = None,
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db)
@@ -239,11 +240,14 @@ async def list_asset_transfers(
     q = select(AssetTransfer)
     if asset_id:
         q = q.where(AssetTransfer.asset_id == asset_id)
+    if search:
+        q = q.where(or_(AssetTransfer.transfer_ref.ilike(f"%{search}%"), AssetTransfer.to_project_name.ilike(f"%{search}%"), AssetTransfer.to_location.ilike(f"%{search}%")))
+    total = (await db.execute(select(func.count()).select_from(q.subquery()))).scalar() or 0
     q = q.order_by(desc(AssetTransfer.id)).limit(limit).offset(offset)
     res = await db.execute(q)
     items = res.scalars().all()
     results = [AssetTransferResponse.model_validate(i).model_dump() for i in items]
-    return {"items": results, "total": len(results), "limit": limit, "offset": offset}
+    return {"items": results, "total": total, "limit": limit, "offset": offset}
 
 
 @router.post("/transfers", response_model=AssetTransferResponse, status_code=status.HTTP_201_CREATED)
@@ -281,6 +285,38 @@ async def create_asset_transfer(payload: AssetTransferCreate, db: AsyncSession =
     await db.refresh(transfer)
     return transfer
 
+@router.put("/transfers/{transfer_id}", response_model=AssetTransferResponse)
+async def update_asset_transfer(transfer_id: int, payload: AssetTransferUpdate, db: AsyncSession = Depends(get_db)):
+    transfer = await db.get(AssetTransfer, transfer_id)
+    if not transfer:
+        raise HTTPException(status_code=404, detail="Asset transfer not found")
+    for key, value in payload.model_dump(exclude_unset=True).items():
+        setattr(transfer, key, value)
+    if transfer.status == "COMPLETED":
+        asset = await db.get(FixedAsset, transfer.asset_id)
+        if asset:
+            asset.project_id = transfer.to_project_id
+            asset.project_name = transfer.to_project_name
+            asset.location = transfer.to_location
+    await db.commit()
+    await db.refresh(transfer)
+    return transfer
+
+@router.delete("/transfers/{transfer_id}")
+async def delete_asset_transfer(transfer_id: int, db: AsyncSession = Depends(get_db)):
+    transfer = await db.get(AssetTransfer, transfer_id)
+    if not transfer:
+        raise HTTPException(status_code=404, detail="Asset transfer not found")
+    if transfer.status == "COMPLETED":
+        asset = await db.get(FixedAsset, transfer.asset_id)
+        if asset:
+            asset.project_id = transfer.from_project_id
+            asset.project_name = transfer.from_project_name
+            asset.location = transfer.from_location
+    await db.delete(transfer)
+    await db.commit()
+    return {"message": "Asset transfer deleted", "id": transfer_id}
+
 
 # =========================================================================
 # 5. Maintenance Expenses & Equipment Downtime
@@ -288,6 +324,7 @@ async def create_asset_transfer(payload: AssetTransferCreate, db: AsyncSession =
 @router.get("/maintenances")
 async def list_asset_maintenances(
     asset_id: Optional[int] = None,
+    search: Optional[str] = None,
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db)
@@ -296,11 +333,14 @@ async def list_asset_maintenances(
     q = select(AssetMaintenance)
     if asset_id:
         q = q.where(AssetMaintenance.asset_id == asset_id)
+    if search:
+        q = q.where(or_(AssetMaintenance.maintenance_code.ilike(f"%{search}%"), AssetMaintenance.vendor_name.ilike(f"%{search}%"), AssetMaintenance.description.ilike(f"%{search}%")))
+    total = (await db.execute(select(func.count()).select_from(q.subquery()))).scalar() or 0
     q = q.order_by(desc(AssetMaintenance.id)).limit(limit).offset(offset)
     res = await db.execute(q)
     items = res.scalars().all()
     results = [AssetMaintenanceResponse.model_validate(i).model_dump() for i in items]
-    return {"items": results, "total": len(results), "limit": limit, "offset": offset}
+    return {"items": results, "total": total, "limit": limit, "offset": offset}
 
 
 @router.post("/maintenances", response_model=AssetMaintenanceResponse, status_code=status.HTTP_201_CREATED)
@@ -318,16 +358,48 @@ async def create_asset_maintenance(payload: AssetMaintenanceCreate, db: AsyncSes
     await db.refresh(maint)
     return maint
 
+@router.put("/maintenances/{maintenance_id}", response_model=AssetMaintenanceResponse)
+async def update_asset_maintenance(maintenance_id: int, payload: AssetMaintenanceUpdate, db: AsyncSession = Depends(get_db)):
+    maint = await db.get(AssetMaintenance, maintenance_id)
+    if not maint:
+        raise HTTPException(status_code=404, detail="Maintenance record not found")
+    data = payload.model_dump(exclude_unset=True)
+    if "asset_id" in data and not await db.get(FixedAsset, data["asset_id"]):
+        raise HTTPException(status_code=404, detail="Asset not found")
+    for key, value in data.items():
+        setattr(maint, key, value)
+    await db.commit()
+    await db.refresh(maint)
+    return maint
+
+@router.delete("/maintenances/{maintenance_id}")
+async def delete_asset_maintenance(maintenance_id: int, db: AsyncSession = Depends(get_db)):
+    maint = await db.get(AssetMaintenance, maintenance_id)
+    if not maint:
+        raise HTTPException(status_code=404, detail="Maintenance record not found")
+    await db.delete(maint)
+    await db.commit()
+    return {"message": "Maintenance record deleted", "id": maintenance_id}
+
 
 # =========================================================================
 # 6. Disposals & Gain/Loss Calculation
 # =========================================================================
 @router.get("/disposals")
-async def list_asset_disposals(db: AsyncSession = Depends(get_db)):
+async def list_asset_disposals(
+    search: Optional[str] = None,
+    limit: int = Query(50, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_db)
+):
     await get_or_create_asset_seed(db)
-    res = await db.execute(select(AssetDisposal).order_by(desc(AssetDisposal.id)))
+    q = select(AssetDisposal)
+    if search:
+        q = q.where(or_(AssetDisposal.disposal_ref.ilike(f"%{search}%"), AssetDisposal.buyer_name.ilike(f"%{search}%"), AssetDisposal.reason.ilike(f"%{search}%")))
+    total = (await db.execute(select(func.count()).select_from(q.subquery()))).scalar() or 0
+    res = await db.execute(q.order_by(desc(AssetDisposal.id)).limit(limit).offset(offset))
     items = res.scalars().all()
-    return [AssetDisposalResponse.model_validate(i).model_dump() for i in items]
+    return {"items": [AssetDisposalResponse.model_validate(i).model_dump() for i in items], "total": total, "limit": limit, "offset": offset}
 
 
 @router.post("/disposals", response_model=AssetDisposalResponse, status_code=status.HTTP_201_CREATED)
@@ -365,16 +437,50 @@ async def create_asset_disposal(payload: AssetDisposalCreate, db: AsyncSession =
     await db.refresh(disposal)
     return disposal
 
+@router.put("/disposals/{disposal_id}", response_model=AssetDisposalResponse)
+async def update_asset_disposal(disposal_id: int, payload: AssetDisposalUpdate, db: AsyncSession = Depends(get_db)):
+    disposal = await db.get(AssetDisposal, disposal_id)
+    if not disposal:
+        raise HTTPException(status_code=404, detail="Asset disposal not found")
+    data = payload.model_dump(exclude_unset=True)
+    for key, value in data.items():
+        setattr(disposal, key, value)
+    disposal.gain_loss_amount_bdt = disposal.sale_proceeds_bdt - disposal.nbv_at_disposal_bdt
+    await db.commit()
+    await db.refresh(disposal)
+    return disposal
+
+@router.delete("/disposals/{disposal_id}")
+async def delete_asset_disposal(disposal_id: int, db: AsyncSession = Depends(get_db)):
+    disposal = await db.get(AssetDisposal, disposal_id)
+    if not disposal:
+        raise HTTPException(status_code=404, detail="Asset disposal not found")
+    asset = await db.get(FixedAsset, disposal.asset_id)
+    if asset:
+        asset.status = "ACTIVE"
+    await db.delete(disposal)
+    await db.commit()
+    return {"message": "Asset disposal deleted", "id": disposal_id}
+
 
 # =========================================================================
 # 7. Physical Verification Discrepancies
 # =========================================================================
 @router.get("/verifications")
-async def list_physical_verifications(db: AsyncSession = Depends(get_db)):
+async def list_physical_verifications(
+    search: Optional[str] = None,
+    limit: int = Query(50, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_db)
+):
     await get_or_create_asset_seed(db)
-    res = await db.execute(select(AssetPhysicalVerification).order_by(desc(AssetPhysicalVerification.id)))
+    q = select(AssetPhysicalVerification)
+    if search:
+        q = q.where(or_(AssetPhysicalVerification.audit_code.ilike(f"%{search}%"), AssetPhysicalVerification.project_name.ilike(f"%{search}%"), AssetPhysicalVerification.verified_by.ilike(f"%{search}%")))
+    total = (await db.execute(select(func.count()).select_from(q.subquery()))).scalar() or 0
+    res = await db.execute(q.order_by(desc(AssetPhysicalVerification.id)).limit(limit).offset(offset))
     items = res.scalars().all()
-    return [AssetPhysicalVerificationResponse.model_validate(i).model_dump() for i in items]
+    return {"items": [AssetPhysicalVerificationResponse.model_validate(i).model_dump() for i in items], "total": total, "limit": limit, "offset": offset}
 
 
 @router.post("/verifications", response_model=AssetPhysicalVerificationResponse, status_code=status.HTTP_201_CREATED)
@@ -393,6 +499,28 @@ async def create_physical_verification(payload: AssetPhysicalVerificationCreate,
     await db.commit()
     await db.refresh(verif)
     return verif
+
+@router.put("/verifications/{verification_id}", response_model=AssetPhysicalVerificationResponse)
+async def update_physical_verification(verification_id: int, payload: AssetPhysicalVerificationUpdate, db: AsyncSession = Depends(get_db)):
+    verification = await db.get(AssetPhysicalVerification, verification_id)
+    if not verification:
+        raise HTTPException(status_code=404, detail="Physical verification not found")
+    data = payload.model_dump(exclude_unset=True)
+    for key, value in data.items():
+        setattr(verification, key, value)
+    verification.discrepancy_qty = verification.total_assets_registered - verification.total_assets_found
+    await db.commit()
+    await db.refresh(verification)
+    return verification
+
+@router.delete("/verifications/{verification_id}")
+async def delete_physical_verification(verification_id: int, db: AsyncSession = Depends(get_db)):
+    verification = await db.get(AssetPhysicalVerification, verification_id)
+    if not verification:
+        raise HTTPException(status_code=404, detail="Physical verification not found")
+    await db.delete(verification)
+    await db.commit()
+    return {"message": "Physical verification deleted", "id": verification_id}
 
 
 # =========================================================================

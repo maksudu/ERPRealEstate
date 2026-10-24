@@ -84,6 +84,16 @@ class AssetTransferCreate(BaseModel):
     transferred_by: Optional[str] = "Site Logistics Officer"
     received_by: Optional[str] = None
 
+class AssetTransferUpdate(BaseModel):
+    to_project_id: Optional[int] = None
+    to_project_name: Optional[str] = None
+    to_location: Optional[str] = None
+    transfer_date: Optional[date] = None
+    reason: Optional[str] = None
+    transferred_by: Optional[str] = None
+    received_by: Optional[str] = None
+    status: Optional[str] = None
+
 class AssetTransferResponse(BaseModel):
     id: int
     transfer_ref: str
@@ -115,6 +125,21 @@ class AssetMaintenanceCreate(BaseModel):
     is_scheduled: bool = True
     parts_replaced: Optional[str] = None
     technician_name: Optional[str] = None
+    voucher_ref: Optional[str] = None
+
+class AssetMaintenanceUpdate(BaseModel):
+    asset_id: Optional[int] = None
+    service_date: Optional[date] = None
+    service_type: Optional[str] = None
+    vendor_name: Optional[str] = None
+    description: Optional[str] = None
+    maintenance_cost_bdt: Optional[Decimal] = None
+    downtime_hours: Optional[Decimal] = None
+    meter_reading: Optional[Decimal] = None
+    is_scheduled: Optional[bool] = None
+    parts_replaced: Optional[str] = None
+    technician_name: Optional[str] = None
+    voucher_ref: Optional[str] = None
 
 class AssetMaintenanceResponse(BaseModel):
     id: int
@@ -129,6 +154,7 @@ class AssetMaintenanceResponse(BaseModel):
     downtime_hours: Decimal
     meter_reading: Optional[Decimal] = None
     is_scheduled: bool
+    voucher_ref: Optional[str] = None
     created_at: Optional[datetime] = None
 
     class Config:
@@ -143,6 +169,14 @@ class AssetDisposalCreate(BaseModel):
     buyer_name: Optional[str] = None
     reason: Optional[str] = None
     approved_by: Optional[str] = "Managing Director"
+
+class AssetDisposalUpdate(BaseModel):
+    disposal_date: Optional[date] = None
+    disposal_type: Optional[str] = None
+    sale_proceeds_bdt: Optional[Decimal] = None
+    buyer_name: Optional[str] = None
+    reason: Optional[str] = None
+    approved_by: Optional[str] = None
 
 class AssetDisposalResponse(BaseModel):
     id: int
@@ -177,6 +211,18 @@ class AssetPhysicalVerificationCreate(BaseModel):
     discrepancy_notes: Optional[str] = None
     action_taken: Optional[str] = None
 
+class AssetPhysicalVerificationUpdate(BaseModel):
+    verification_date: Optional[date] = None
+    project_id: Optional[int] = None
+    project_name: Optional[str] = None
+    location: Optional[str] = None
+    verified_by: Optional[str] = None
+    total_assets_registered: Optional[int] = None
+    total_assets_found: Optional[int] = None
+    condition_status: Optional[str] = None
+    discrepancy_notes: Optional[str] = None
+    action_taken: Optional[str] = None
+
 class AssetPhysicalVerificationResponse(BaseModel):
     id: int
     audit_code: str
@@ -189,6 +235,7 @@ class AssetPhysicalVerificationResponse(BaseModel):
     discrepancy_qty: int
     condition_status: str
     discrepancy_notes: Optional[str] = None
+    action_taken: Optional[str] = None
     created_at: Optional[datetime] = None
 
     class Config:

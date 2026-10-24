@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import * as XLSX from 'xlsx';
 import { ConstructionService } from '../../../core/services/construction.service';
 import { ProjectService } from '../../../core/services/project.service';
 import { LookupService } from '../../../core/services/lookup.service';
@@ -60,10 +61,59 @@ export class DprFormComponent implements OnInit {
   wbsNodes = signal<WBSNode[]>([]);
   wbsOptions: { value: any; label: string }[] = [];
   contractors = signal<Subcontractor[]>([]);
-  contractorOptions: { value: any; label: string }[] = [];
+  contractorOptions: { value: any; label: string }[] = [
+    { value: null, label: 'Direct / Departmental Labor' }
+  ];
+
+  // Searchable select options for Labor & Equipment
+  tradeCategoryOptions: { value: any; label: string }[] = [
+    { value: 'CIVIL_MASONRY', label: 'Civil Masonry / Brickwork' },
+    { value: 'REBAR_FITTER', label: 'Rebar Fitter / Rod Binder' },
+    { value: 'SHUTTERING_CARPENTER', label: 'Shuttering Carpenter' },
+    { value: 'CONCRETE_LABOR', label: 'Concrete Pouring Labor' },
+    { value: 'PLUMBING_MEP', label: 'Plumbing & Sanitary MEP' },
+    { value: 'ELECTRICAL', label: 'Electrical Works' },
+    { value: 'TILE_MARBLE', label: 'Tile & Marble Mason' },
+    { value: 'PAINTING', label: 'Painting & Finishing' },
+    { value: 'HEAVY_EQUIP_OPERATOR', label: 'Equipment Operator' }
+  ];
+
+  equipmentStatusOptions: { value: any; label: string }[] = [
+    { value: 'OPERATIONAL', label: 'Operational' },
+    { value: 'STANDBY', label: 'Standby' },
+    { value: 'BREAKDOWN', label: 'Breakdown' }
+  ];
 
   // Active form section tab for clean mobile/desktop navigation
-  activeSection = signal<'GENERAL' | 'ACTIVITIES_BOQ' | 'LABOR_EQUIPMENT' | 'MATERIALS' | 'QUALITY_SAFETY' | 'PHOTOS_GPS' | 'AUDIT'>('GENERAL');
+  activeTab = signal<string>('context');
+
+  tabs = [
+    { id: 'context', label: '1. Project & Location', icon: 'M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z' },
+    { id: 'activities_boq', label: '2. Activities & BOQ Log', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01' },
+    { id: 'labor_equipment', label: '3. Workforce & Machinery', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z' },
+    { id: 'materials', label: '4. Materials & Wastage', icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4' },
+    { id: 'quality_delays', label: '5. Quality, Safety & Delays', icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z' },
+    { id: 'photos_approval', label: '6. Photos & Sign-off', icon: 'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z' },
+    { id: 'all', label: 'All Sections (Continuous View)', icon: 'M4 6h16M4 10h16M4 14h16M4 18h16' }
+  ];
+
+  tabOrder = ['context', 'activities_boq', 'labor_equipment', 'materials', 'quality_delays', 'photos_approval'];
+
+  nextTab(): void {
+    const currentIndex = this.tabOrder.indexOf(this.activeTab());
+    if (currentIndex >= 0 && currentIndex < this.tabOrder.length - 1) {
+      this.activeTab.set(this.tabOrder[currentIndex + 1]);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }
+
+  prevTab(): void {
+    const currentIndex = this.tabOrder.indexOf(this.activeTab());
+    if (currentIndex > 0) {
+      this.activeTab.set(this.tabOrder[currentIndex - 1]);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }
 
   ngOnInit(): void {
     this.initForm();
@@ -200,7 +250,142 @@ export class DprFormComponent implements OnInit {
     return this.dprForm.get('materials_summary') as FormArray;
   }
 
-  // --- Dynamic Repeaters ---
+  // --- Dynamic Repeaters & BOQ Excel Upload/Template ---
+  downloadBoqSampleTemplate(): void {
+    const sampleRows = [
+      {
+        'Item Code': 'BOQ-CIV-001',
+        'Item Description': '1st Floor Slab Concreting C-25 (M-25 Ready-Mix)',
+        'Unit': 'CFT',
+        'Completed Quantity': 250,
+        'Contract Rate (BDT)': 420
+      },
+      {
+        'Item Code': 'BOQ-CIV-002',
+        'Item Description': '125mm Thick First Class Brick Masonry in Cement Sand Mortar (1:4)',
+        'Unit': 'SQFT',
+        'Completed Quantity': 520,
+        'Contract Rate (BDT)': 85
+      },
+      {
+        'Item Code': 'BOQ-PLAS-003',
+        'Item Description': '12mm Thick Internal Cement Sand Plaster (1:4) on Brick Walls',
+        'Unit': 'SQFT',
+        'Completed Quantity': 380,
+        'Contract Rate (BDT)': 45
+      },
+      {
+        'Item Code': 'BOQ-REBAR-004',
+        'Item Description': 'Fabrication, Bending, Binding & Placing 500W Deformed Rebar',
+        'Unit': 'KG',
+        'Completed Quantity': 1850,
+        'Contract Rate (BDT)': 118
+      },
+      {
+        'Item Code': 'BOQ-PUMP-005',
+        'Item Description': 'Boom Placer Concrete Pumping Operations at Height',
+        'Unit': 'CFT',
+        'Completed Quantity': 250,
+        'Contract Rate (BDT)': 25
+      }
+    ];
+
+    const worksheet = XLSX.utils.json_to_sheet(sampleRows);
+    worksheet['!cols'] = [
+      { wch: 18 },
+      { wch: 55 },
+      { wch: 12 },
+      { wch: 22 },
+      { wch: 22 }
+    ];
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'BOQ Quantities Log');
+    XLSX.writeFile(workbook, 'DPR_BOQ_Quantities_Progress_Template.xlsx');
+  }
+
+  onBoqExcelUpload(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        const rows: any[] = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+
+        if (!rows || rows.length === 0) {
+          alert('The uploaded Excel/CSV file does not contain any data rows.');
+          return;
+        }
+
+        const importedItems: any[] = [];
+        for (const row of rows) {
+          const findVal = (keywords: string[]) => {
+            for (const k of Object.keys(row)) {
+              const clean = k.toLowerCase().replace(/[^a-z0-9]/g, '');
+              if (keywords.some(kw => clean.includes(kw))) {
+                return row[k];
+              }
+            }
+            return '';
+          };
+
+          const itemCode = String(findVal(['itemcode', 'code', 'boqcode']) || '').trim();
+          const itemDesc = String(findVal(['description', 'itemdesc', 'workdescription', 'itemname', 'name']) || '').trim();
+          const unit = String(findVal(['unit', 'uom']) || 'CFT').trim().toUpperCase();
+          const qtyNum = parseFloat(findVal(['completedquantity', 'completedqty', 'quantity', 'qty']) || '0');
+          const rateNum = parseFloat(findVal(['contractrate', 'unitrate', 'rate', 'price', 'bdt']) || '0');
+
+          if (itemCode || itemDesc) {
+            importedItems.push({
+              item_code: itemCode || 'BOQ-ITEM-' + (importedItems.length + 1),
+              item_description: itemDesc || itemCode,
+              unit: unit || 'CFT',
+              completed_quantity: isNaN(qtyNum) ? 0 : qtyNum,
+              unit_rate: isNaN(rateNum) ? 0 : rateNum
+            });
+          }
+        }
+
+        if (importedItems.length === 0) {
+          alert('Could not find recognizable BOQ columns. Please ensure headers include: Item Code, Item Description, Unit, Completed Quantity, and Contract Rate.');
+          return;
+        }
+
+        // Ask user if they wish to append or replace
+        const shouldAppend = this.boqArray.length > 0 && confirm(
+          `Found ${importedItems.length} BOQ items in "${file.name}".\n\nClick OK to APPEND to existing rows.\nClick CANCEL to REPLACE current rows.`
+        );
+
+        if (!shouldAppend) {
+          this.boqArray.clear();
+        }
+
+        for (const item of importedItems) {
+          this.boqArray.push(this.fb.group({
+            item_code: [item.item_code, Validators.required],
+            item_description: [item.item_description, Validators.required],
+            unit: [item.unit, Validators.required],
+            completed_quantity: [item.completed_quantity, [Validators.required, Validators.min(0)]],
+            unit_rate: [item.unit_rate, [Validators.min(0)]]
+          }));
+        }
+
+        alert(`Successfully imported ${importedItems.length} BOQ progress log items from "${file.name}"!`);
+      } catch (err: any) {
+        alert('Failed to parse Excel/CSV file: ' + (err?.message || err));
+      } finally {
+        input.value = '';
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
   addBoqRow(): void {
     this.boqArray.push(this.fb.group({
       item_code: ['BOQ-CIV-001', Validators.required],
@@ -354,10 +539,13 @@ export class DprFormComponent implements OnInit {
     this.constructionService.getContractors().subscribe({
       next: (list) => {
         this.contractors.set(list);
-        this.contractorOptions = list.map(c => ({
-          value: c.id,
-          label: `${c.company_name || c.contractor_name} (${c.contractor_code || 'CON-' + c.id})`
-        }));
+        this.contractorOptions = [
+          { value: null, label: 'Direct / Departmental Labor' },
+          ...list.map(c => ({
+            value: c.id,
+            label: `${c.company_name || c.contractor_name} (${c.contractor_code || 'CON-' + c.id})`
+          }))
+        ];
       }
     });
   }
@@ -581,7 +769,34 @@ export class DprFormComponent implements OnInit {
   saveDPR(): void {
     if (this.dprForm.invalid) {
       this.dprForm.markAllAsTouched();
-      alert('Please fill in all mandatory fields before saving.');
+
+      // Check which tab has the invalid field and switch to it
+      const tabFieldMap: Record<string, string[]> = {
+        context: ['project_id', 'report_date', 'floor_unit_location', 'weather_condition_id'],
+        activities_boq: ['structural_activity_summary', 'activities_completed', 'boq_quantities_completed'],
+        labor_equipment: ['labor_entries', 'equipment_records'],
+        materials: ['materials_summary'],
+        quality_delays: ['inspection_status', 'delay_root_cause_id'],
+        photos_approval: ['supervisor_approval_status']
+      };
+
+      let firstInvalidTab: string | null = null;
+      for (const [tabKey, fields] of Object.entries(tabFieldMap)) {
+        for (const f of fields) {
+          const ctrl = this.dprForm.get(f);
+          if (ctrl && ctrl.invalid) {
+            firstInvalidTab = tabKey;
+            break;
+          }
+        }
+        if (firstInvalidTab) break;
+      }
+
+      if (firstInvalidTab && this.activeTab() !== 'all') {
+        this.activeTab.set(firstInvalidTab);
+      }
+
+      alert('Please fill in all mandatory fields before saving. Switched to section with missing or invalid inputs.');
       return;
     }
 

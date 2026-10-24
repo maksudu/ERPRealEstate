@@ -54,6 +54,15 @@ import {
         </div>
 
         <div class="flex items-center gap-3">
+          <button
+            type="button"
+            (click)="fillExampleData()"
+            class="px-3.5 py-2 text-xs font-semibold rounded-xl border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-all flex items-center gap-1.5 shadow-xs"
+            title="Populate compliant example contractor master profile"
+          >
+            <i class="ri-magic-line text-sm"></i>
+            <span>Example Data</span>
+          </button>
           <app-custom-button
             variant="outline"
             label="Cancel"
@@ -69,10 +78,32 @@ import {
         </div>
       </div>
 
+      <!-- Tab Navigation -->
+      <div class="flex items-center gap-1.5 overflow-x-auto pb-2 border-b border-border text-sm">
+        @for (t of tabs; track t.id) {
+          <button
+            type="button"
+            (click)="setActiveTab(t.id)"
+            [class.bg-primary]="activeTab() === t.id"
+            [class.text-primary-foreground]="activeTab() === t.id"
+            [class.shadow-sm]="activeTab() === t.id"
+            [class.bg-card]="activeTab() !== t.id"
+            [class.text-muted-foreground]="activeTab() !== t.id"
+            [class.hover:bg-secondary]="activeTab() !== t.id"
+            [class.hover:text-foreground]="activeTab() !== t.id"
+            class="px-3.5 py-2 rounded-xl border border-border font-medium flex items-center gap-2 whitespace-nowrap transition-all text-xs sm:text-sm"
+          >
+            <i [class]="t.icon + ' text-base'"></i>
+            <span>{{ t.label }}</span>
+          </button>
+        }
+      </div>
+
       <!-- Main Form Container -->
       <app-card-container [hasHeader]="false">
         <form [formGroup]="contractorForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-8 p-1">
 
+          @if (activeTab() === 'entity' || activeTab() === 'all') {
           <!-- Section 1: Business Identification & Classification -->
           <div>
             <div class="flex items-center gap-2 mb-4 pb-2 border-b border-border/60">
@@ -156,7 +187,9 @@ import {
               </div>
             </div>
           </div>
+          }
 
+          @if (activeTab() === 'contacts' || activeTab() === 'all') {
           <!-- Section 2: Authorized Representative & Official Contacts -->
           <div>
             <div class="flex items-center gap-2 mb-4 pb-2 border-b border-border/60">
@@ -233,7 +266,9 @@ import {
               </div>
             </div>
           </div>
+          }
 
+          @if (activeTab() === 'tax_bank' || activeTab() === 'all') {
           <!-- Section 3: Statutory Tax, VAT & Banking Details -->
           <div>
             <div class="flex items-center gap-2 mb-4 pb-2 border-b border-border/60">
@@ -334,7 +369,9 @@ import {
               </div>
             </div>
           </div>
+          }
 
+          @if (activeTab() === 'qualifications' || activeTab() === 'all') {
           <!-- Section 4: Technical Qualifications, Insurance & Safety -->
           <div>
             <div class="flex items-center gap-2 mb-4 pb-2 border-b border-border/60">
@@ -424,7 +461,9 @@ import {
               </div>
             </div>
           </div>
+          }
 
+          @if (activeTab() === 'capacity' || activeTab() === 'all') {
           <!-- Section 5: Capacity, Site Supervisors & Scope Boundaries -->
           <div>
             <div class="flex items-center gap-2 mb-4 pb-2 border-b border-border/60">
@@ -483,7 +522,9 @@ import {
               </div>
             </div>
           </div>
+          }
 
+          @if (activeTab() === 'status' || activeTab() === 'all') {
           <!-- Section 6: Contract Timeline, Onboarding Review & Remarks -->
           <div>
             <div class="flex items-center gap-2 mb-4 pb-2 border-b border-border/60">
@@ -540,21 +581,47 @@ import {
               ></app-custom-textarea>
             </div>
           </div>
+          }
 
-          <!-- Bottom Action Buttons -->
-          <div class="flex items-center justify-end gap-3 pt-6 border-t border-border mt-4">
-            <app-custom-button
-              variant="outline"
-              label="Cancel & Discard"
-              routerLink="/construction/contractors"
-            ></app-custom-button>
-            <app-custom-button
-              variant="primary"
-              (btnClick)="onSubmit()"
-              [loading]="isSubmitting()"
-              [label]="isEditMode() ? 'Update Contractor Profile' : 'Complete Onboarding & Enlist'"
-              icon="ri-check-line"
-            ></app-custom-button>
+          <!-- Bottom Action Buttons & Step Navigation -->
+          <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-border mt-4">
+            <div class="flex items-center gap-2">
+              @if (activeTab() !== 'entity' && activeTab() !== 'all') {
+                <button
+                  type="button"
+                  (click)="prevTab()"
+                  class="px-4 py-2 rounded-xl border border-border bg-card text-foreground hover:bg-secondary text-sm font-medium transition-colors flex items-center gap-1.5 shadow-xs"
+                >
+                  <i class="ri-arrow-left-s-line"></i>
+                  Previous Tab
+                </button>
+              }
+              @if (activeTab() !== 'status' && activeTab() !== 'all') {
+                <button
+                  type="button"
+                  (click)="nextTab()"
+                  class="px-4 py-2 rounded-xl border border-border bg-card text-foreground hover:bg-secondary text-sm font-medium transition-colors flex items-center gap-1.5 shadow-xs"
+                >
+                  Next Tab
+                  <i class="ri-arrow-right-s-line"></i>
+                </button>
+              }
+            </div>
+
+            <div class="flex items-center gap-3">
+              <app-custom-button
+                variant="outline"
+                label="Cancel & Discard"
+                routerLink="/construction/contractors"
+              ></app-custom-button>
+              <app-custom-button
+                variant="primary"
+                (btnClick)="onSubmit()"
+                [loading]="isSubmitting()"
+                [label]="isEditMode() ? 'Update Contractor Profile' : 'Complete Onboarding & Enlist'"
+                icon="ri-check-line"
+              ></app-custom-button>
+            </div>
           </div>
 
         </form>
@@ -572,6 +639,38 @@ export class ContractorFormComponent implements OnInit {
   contractorId = signal<number | null>(null);
   isSubmitting = signal<boolean>(false);
   mainContractorOptions = signal<{ label: string; value: any }[]>([]);
+
+  // Tab State & Step Navigation
+  activeTab = signal<'entity' | 'contacts' | 'tax_bank' | 'qualifications' | 'capacity' | 'status' | 'all'>('entity');
+  tabs = [
+    { id: 'entity' as const, label: '1. Legal Entity & Classification', icon: 'ri-building-line' },
+    { id: 'contacts' as const, label: '2. Contacts & Authorized Rep', icon: 'ri-user-star-line' },
+    { id: 'tax_bank' as const, label: '3. Tax, VAT & Bank Details', icon: 'ri-bank-card-line' },
+    { id: 'qualifications' as const, label: '4. Qualifications & Safety', icon: 'ri-award-line' },
+    { id: 'capacity' as const, label: '5. Capacity & Scope Boundaries', icon: 'ri-tools-line' },
+    { id: 'status' as const, label: '6. Agreement & Status', icon: 'ri-shield-check-line' },
+    { id: 'all' as const, label: 'All Sections', icon: 'ri-layout-grid-line' }
+  ];
+
+  setActiveTab(tab: 'entity' | 'contacts' | 'tax_bank' | 'qualifications' | 'capacity' | 'status' | 'all'): void {
+    this.activeTab.set(tab);
+  }
+
+  nextTab(): void {
+    const tabOrder = ['entity', 'contacts', 'tax_bank', 'qualifications', 'capacity', 'status'] as const;
+    const curIdx = tabOrder.indexOf(this.activeTab() as any);
+    if (curIdx >= 0 && curIdx < tabOrder.length - 1) {
+      this.activeTab.set(tabOrder[curIdx + 1]);
+    }
+  }
+
+  prevTab(): void {
+    const tabOrder = ['entity', 'contacts', 'tax_bank', 'qualifications', 'capacity', 'status'] as const;
+    const curIdx = tabOrder.indexOf(this.activeTab() as any);
+    if (curIdx > 0) {
+      this.activeTab.set(tabOrder[curIdx - 1]);
+    }
+  }
 
   contractorForm: FormGroup = this.fb.group({
     company_name: ['', Validators.required],
@@ -764,5 +863,71 @@ export class ContractorFormComponent implements OnInit {
         }
       });
     }
+  }
+
+  fillExampleData(): void {
+    const yr = new Date().getFullYear();
+
+    this.contractorForm.patchValue({
+      company_name: 'Bengal Structural Engineers Ltd.',
+      legal_business_name: 'Bengal Structural Engineering & Construction Co. Ltd.',
+      trade_specialization: 'High-Rise RCC Superstructure, Post-Tensioned Slabs & Heavy Deep Foundation Works',
+      trade_category: 'CIVIL_STRUCTURE',
+      contractor_type: 'MAIN_CONTRACTOR',
+      parent_contractor_id: null,
+
+      contact_person: 'Engr. Md. Rafiqul Islam, PEng',
+      primary_phone: '+880 1711-892341',
+      secondary_phone: '+880 2-9883421',
+      email: 'contracts@bengalstructural.com.bd',
+      office_address: 'Suite 9B, Tower 71, 24 Gulshan South Avenue, Gulshan-1, Dhaka-1212',
+      city: 'Dhaka',
+      authorized_rep_name: 'Engr. Mahbubur Rahman',
+      authorized_rep_designation: 'Managing Director & Chief Technical Officer',
+      authorized_rep_phone: '+880 1819-234567',
+      authorized_rep_nid: '19782692015000214',
+
+      tin_number: '624189304128',
+      bin_number: '001298453-0101',
+      trade_license_number: 'TRAD/DNCC/019284/2026',
+      trade_license_expiry: `${yr + 1}-06-30`,
+      tax_circle: 'Taxes Circle-14 (Companies), Taxes Zone-02, Dhaka',
+
+      bank_name: 'BRAC Bank PLC',
+      bank_branch: 'Gulshan Corporate Branch, Dhaka',
+      bank_account_name: 'Bengal Structural Engineering & Construction Co. Ltd.',
+      bank_account_number: '1501204892847001',
+      bank_routing_number: '060261329',
+      payment_terms_days: 15,
+
+      iso_certification: 'ISO 9001:2015 (QMS), ISO 45001:2018 (Occupational Health & Safety)',
+      license_grade: 'GRADE_A',
+      enlistment_category: 'CATEGORY_1',
+      insurance_policy_number: 'NIC/DH-GUL/CAR/2026/0042',
+      insurance_expiry_date: `${yr + 1}-12-31`,
+      insurance_coverage_amount: 150000000.0,
+
+      safety_compliant: true,
+      safety_officer_name: 'Khandaker Tanvir Ahmed, CSP',
+      safety_incident_count: 0,
+
+      performance_rating: 4.85,
+      past_projects_count: 14,
+      experience_years: 18,
+
+      manpower_capacity: 180,
+      equipment_inventory: '2x Zoomlion Concrete Boom Pumps (42m), 4x Stationary Batching Mixers, 14x High-Frequency Poker Vibrators, 40,000 SFT Steel Acrow Formwork Plates & Props',
+      site_supervisor_name: 'Engr. Kamrul Hasan',
+      site_supervisor_phone: '+880 1912-345678',
+      scope_boundaries: 'All civil superstructure works from pile cap to rooftop parapet. Excludes electrical substation, plumbing fixtures, and elevator installation.',
+      duplicate_billing_protection: true,
+
+      contract_start_date: `${yr}-01-01`,
+      contract_expiry_date: `${yr + 2}-12-31`,
+      onboarding_status: 'APPROVED',
+      completion_status: 'ACTIVE',
+      remarks: 'Developer pre-qualification audit successfully completed. Verified TIN/BIN with NBR, Trade License with DNCC, and satisfactory past performance track record verified from 3 tier-1 developers in Dhaka.',
+      is_active: true
+    });
   }
 }

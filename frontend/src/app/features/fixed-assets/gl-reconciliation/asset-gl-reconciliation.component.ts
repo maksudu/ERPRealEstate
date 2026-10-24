@@ -1,17 +1,14 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FixedAssetsService, GlReconciliationResult } from '../../../core/services/fixed-assets.service';
-import { FixedAssetsNavComponent } from '../fixed-assets-nav/fixed-assets-nav.component';
 import { CardContainerComponent } from '../../../shared/components/card-container/card-container.component';
 
 @Component({
   selector: 'app-asset-gl-reconciliation',
   standalone: true,
-  imports: [CommonModule, FixedAssetsNavComponent, CardContainerComponent],
+  imports: [CommonModule, CardContainerComponent],
   template: `
     <div class="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
-      <app-fixed-assets-nav />
-
       <!-- Top Balanced Banner -->
       <div class="p-4 rounded-xl border border-emerald-200 bg-emerald-50/70 dark:bg-emerald-950/40 dark:border-emerald-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div class="flex items-center gap-3">

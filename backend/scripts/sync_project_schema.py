@@ -120,7 +120,16 @@ async def migrate():
             except Exception as e:
                 pass
 
+        try:
+            await conn.execute(text(
+                "ALTER TABLE prj_financial_performances MODIFY COLUMN period_type VARCHAR(32) NOT NULL DEFAULT 'CUMULATIVE_TO_DATE'"
+            ))
+            print("Resized prj_financial_performances.period_type to VARCHAR(32)")
+        except Exception:
+            pass
+
         print("Migration & schema sync finished successfully!")
+
 
 if __name__ == "__main__":
     asyncio.run(migrate())

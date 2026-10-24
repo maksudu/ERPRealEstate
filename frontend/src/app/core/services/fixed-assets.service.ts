@@ -73,11 +73,12 @@ export interface AssetMaintenance {
   service_date: string;
   maintenance_cost_bdt: number;
   downtime_hours: number;
-  work_description?: string;
+  description: string;
   parts_replaced?: string;
-  invoice_ref?: string;
-  payment_status: string;
-  performed_by?: string;
+  voucher_ref?: string;
+  technician_name?: string;
+  meter_reading?: number;
+  is_scheduled: boolean;
   created_at?: string;
 }
 
@@ -102,16 +103,17 @@ export interface AssetDisposal {
 export interface AssetPhysicalVerification {
   id: number;
   audit_code: string;
-  audit_date: string;
+  verification_date: string;
+  location: string;
   project_id?: number;
   project_name?: string;
   total_assets_registered: number;
   total_assets_found: number;
   discrepancy_qty: number;
-  condition_summary?: string;
-  verified_by?: string;
-  remarks?: string;
-  status: string;
+  condition_status: string;
+  discrepancy_notes?: string;
+  action_taken?: string;
+  verified_by: string;
   created_at?: string;
 }
 
@@ -211,9 +213,10 @@ export class FixedAssetsService {
   }
 
   // 4. Transfers
-  getTransfers(filter?: { asset_id?: number; limit?: number; offset?: number }): Observable<{ items: AssetTransfer[]; total: number; limit: number; offset: number }> {
+  getTransfers(filter?: { asset_id?: number; search?: string; limit?: number; offset?: number }): Observable<{ items: AssetTransfer[]; total: number; limit: number; offset: number }> {
     let params = new HttpParams();
     if (filter?.asset_id) params = params.set('asset_id', filter.asset_id);
+    if (filter?.search) params = params.set('search', filter.search);
     if (filter?.limit) params = params.set('limit', filter.limit);
     if (filter?.offset) params = params.set('offset', filter.offset);
     return this.http.get<{ items: AssetTransfer[]; total: number; limit: number; offset: number }>(`${this.apiUrl}/transfers`, { params });
@@ -223,10 +226,19 @@ export class FixedAssetsService {
     return this.http.post<AssetTransfer>(`${this.apiUrl}/transfers`, data);
   }
 
+  updateTransfer(id: number, data: Partial<AssetTransfer>): Observable<AssetTransfer> {
+    return this.http.put<AssetTransfer>(`${this.apiUrl}/transfers/${id}`, data);
+  }
+
+  deleteTransfer(id: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/transfers/${id}`);
+  }
+
   // 5. Maintenances
-  getMaintenances(filter?: { asset_id?: number; limit?: number; offset?: number }): Observable<{ items: AssetMaintenance[]; total: number; limit: number; offset: number }> {
+  getMaintenances(filter?: { asset_id?: number; search?: string; limit?: number; offset?: number }): Observable<{ items: AssetMaintenance[]; total: number; limit: number; offset: number }> {
     let params = new HttpParams();
     if (filter?.asset_id) params = params.set('asset_id', filter.asset_id);
+    if (filter?.search) params = params.set('search', filter.search);
     if (filter?.limit) params = params.set('limit', filter.limit);
     if (filter?.offset) params = params.set('offset', filter.offset);
     return this.http.get<{ items: AssetMaintenance[]; total: number; limit: number; offset: number }>(`${this.apiUrl}/maintenances`, { params });
@@ -236,22 +248,54 @@ export class FixedAssetsService {
     return this.http.post<AssetMaintenance>(`${this.apiUrl}/maintenances`, data);
   }
 
+  updateMaintenance(id: number, data: Partial<AssetMaintenance>): Observable<AssetMaintenance> {
+    return this.http.put<AssetMaintenance>(`${this.apiUrl}/maintenances/${id}`, data);
+  }
+
+  deleteMaintenance(id: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/maintenances/${id}`);
+  }
+
   // 6. Disposals
-  getDisposals(): Observable<AssetDisposal[]> {
-    return this.http.get<AssetDisposal[]>(`${this.apiUrl}/disposals`);
+  getDisposals(filter?: { search?: string; limit?: number; offset?: number }): Observable<{ items: AssetDisposal[]; total: number; limit: number; offset: number }> {
+    let params = new HttpParams();
+    if (filter?.search) params = params.set('search', filter.search);
+    if (filter?.limit) params = params.set('limit', filter.limit);
+    if (filter?.offset) params = params.set('offset', filter.offset);
+    return this.http.get<{ items: AssetDisposal[]; total: number; limit: number; offset: number }>(`${this.apiUrl}/disposals`, { params });
   }
 
   createDisposal(data: Partial<AssetDisposal>): Observable<AssetDisposal> {
     return this.http.post<AssetDisposal>(`${this.apiUrl}/disposals`, data);
   }
 
+  updateDisposal(id: number, data: Partial<AssetDisposal>): Observable<AssetDisposal> {
+    return this.http.put<AssetDisposal>(`${this.apiUrl}/disposals/${id}`, data);
+  }
+
+  deleteDisposal(id: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/disposals/${id}`);
+  }
+
   // 7. Physical Verifications
-  getVerifications(): Observable<AssetPhysicalVerification[]> {
-    return this.http.get<AssetPhysicalVerification[]>(`${this.apiUrl}/verifications`);
+  getVerifications(filter?: { search?: string; limit?: number; offset?: number }): Observable<{ items: AssetPhysicalVerification[]; total: number; limit: number; offset: number }> {
+    let params = new HttpParams();
+    if (filter?.search) params = params.set('search', filter.search);
+    if (filter?.limit) params = params.set('limit', filter.limit);
+    if (filter?.offset) params = params.set('offset', filter.offset);
+    return this.http.get<{ items: AssetPhysicalVerification[]; total: number; limit: number; offset: number }>(`${this.apiUrl}/verifications`, { params });
   }
 
   createVerification(data: Partial<AssetPhysicalVerification>): Observable<AssetPhysicalVerification> {
     return this.http.post<AssetPhysicalVerification>(`${this.apiUrl}/verifications`, data);
+  }
+
+  updateVerification(id: number, data: Partial<AssetPhysicalVerification>): Observable<AssetPhysicalVerification> {
+    return this.http.put<AssetPhysicalVerification>(`${this.apiUrl}/verifications/${id}`, data);
+  }
+
+  deleteVerification(id: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/verifications/${id}`);
   }
 
   // 8. GL Reconciliation

@@ -689,9 +689,9 @@ class ProjectBase(BaseModel):
     project_category: str = "APARTMENT"
     project_ownership: str = "OWNED"
     
-    division: str = "Dhaka"
-    district: str = "Dhaka"
-    thana_upazila: str = "Gulshan"
+    division: Optional[str] = "Dhaka"
+    district: Optional[str] = "Dhaka"
+    thana_upazila: Optional[str] = "Gulshan"
     locality: Optional[str] = None
     site_address: Optional[str] = None
     latitude: Optional[float] = None

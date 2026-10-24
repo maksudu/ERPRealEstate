@@ -1,29 +1,38 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FixedAssetsService, AssetTransfer, FixedAsset } from '../../../core/services/fixed-assets.service';
-import { FixedAssetsNavComponent } from '../fixed-assets-nav/fixed-assets-nav.component';
 import { CardContainerComponent } from '../../../shared/components/card-container/card-container.component';
-import { ModalComponent } from '../../../shared/components/modal/modal.component';
 import { SearchableSelectComponent, SelectOption } from '../../../shared/components/searchable-select/searchable-select.component';
 
 @Component({
   selector: 'app-asset-transfers',
   standalone: true,
-  imports: [CommonModule, FormsModule, FixedAssetsNavComponent, CardContainerComponent, ModalComponent, SearchableSelectComponent],
+  imports: [CommonModule, FormsModule, CardContainerComponent, SearchableSelectComponent],
   template: `
     <div class="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
-      <app-fixed-assets-nav />
-
+      @if (notice) { <div class="rounded-lg border px-4 py-3 text-sm" [ngClass]="notice.type === 'success' ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-rose-200 bg-rose-50 text-rose-800'">{{ notice.text }}</div> }
+      @if (!isFormPage) {
       <app-card title="Inter-Site Asset Transfer History" subtitle="Track real estate equipment, plant, and machinery movement across project sites">
         <div card-actions>
           <button
             type="button"
-            (click)="openModal()"
+            (click)="openNewPage()"
             class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 shadow-2xs transition"
           >
             <span>+</span> Initiate Asset Transfer
           </button>
+        </div>
+
+        <div class="mb-3 flex flex-wrap items-end gap-3">
+          <label class="text-xs">Search transfers
+            <input [(ngModel)]="search" (keyup.enter)="offset = 0; loadTransfers()" class="ml-2 rounded-lg border px-3 py-1.5" placeholder="Reference, site, location" />
+          </label>
+          <label class="text-xs">Rows
+            <select [(ngModel)]="limit" (ngModelChange)="offset = 0; loadTransfers()" class="ml-2 rounded-lg border px-2 py-1.5"><option [ngValue]="10">10</option><option [ngValue]="20">20</option><option [ngValue]="50">50</option></select>
+          </label>
+          <button type="button" (click)="offset = 0; loadTransfers()" class="px-3 py-1.5 rounded-lg border text-xs">Search</button>
         </div>
 
         <!-- Table Listing -->
@@ -38,17 +47,17 @@ import { SearchableSelectComponent, SelectOption } from '../../../shared/compone
                 <th class="p-3">Transfer Date</th>
                 <th class="p-3">Reason</th>
                 <th class="p-3">Authorizer</th>
-                <th class="p-3 text-center">Status</th>
+                <th class="p-3 text-center">Status</th><th class="p-3 text-center">Actions</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-200">
               @if (loading) {
                 <tr>
-                  <td colspan="8" class="p-6 text-center text-slate-400">Loading transfer history...</td>
+                  <td colspan="9" class="p-6 text-center text-slate-400">Loading transfer history...</td>
                 </tr>
               } @else if (transfers.length === 0) {
                 <tr>
-                  <td colspan="8" class="p-6 text-center text-slate-400">No asset transfer records found.</td>
+                  <td colspan="9" class="p-6 text-center text-slate-400">No asset transfer records found.</td>
                 </tr>
               } @else {
                 @for (item of transfers; track item.id) {
@@ -75,23 +84,18 @@ import { SearchableSelectComponent, SelectOption } from '../../../shared/compone
                         {{ item.status }}
                       </span>
                     </td>
+                    <td class="p-3 text-center whitespace-nowrap"><button type="button" (click)="openEditPage(item)" class="text-indigo-600 mr-2">Edit</button><button type="button" (click)="deleteTransfer(item.id)" class="text-rose-600">Delete</button></td>
                   </tr>
                 }
               }
             </tbody>
           </table>
         </div>
+        <div class="mt-3 flex items-center justify-between text-xs text-slate-500"><span>{{ totalRecords }} transfers · page {{ currentPage }} of {{ totalPages || 1 }}</span><div class="flex gap-2"><button type="button" [disabled]="offset === 0" (click)="offset = Math.max(0, offset - limit); loadTransfers()" class="rounded border px-3 py-1 disabled:opacity-40">Previous</button><button type="button" [disabled]="offset + limit >= totalRecords" (click)="offset = offset + limit; loadTransfers()" class="rounded border px-3 py-1 disabled:opacity-40">Next</button></div></div>
       </app-card>
+      }
 
-      <!-- Initiate Transfer Modal -->
-      <app-modal
-        [isOpen]="isModalOpen"
-        title="Initiate Inter-Project Asset Transfer"
-        subtitle="Relocate heavy machinery, vehicles, or equipment to another construction site"
-        badge="Asset Logistics"
-        size="lg"
-        (close)="closeModal()"
-      >
+      @if (isFormPage) { <app-card [title]="editingId ? 'Edit Asset Transfer' : 'Initiate Inter-Project Asset Transfer'" subtitle="Relocate equipment to another construction site">
         <div class="space-y-4 p-4 text-xs">
           <div>
             <app-searchable-select
@@ -157,10 +161,10 @@ import { SearchableSelectComponent, SelectOption } from '../../../shared/compone
           </div>
         </div>
 
-        <div modal-actions class="flex items-center justify-end gap-2 px-4 py-3 bg-slate-50 dark:bg-slate-850/80 border-t border-slate-200 dark:border-slate-800">
+        <div card-actions class="flex items-center justify-end gap-2">
           <button
             type="button"
-            (click)="closeModal()"
+            (click)="router.navigate(['/fixed-assets/transfers'])"
             class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs"
           >
             Cancel
@@ -168,13 +172,13 @@ import { SearchableSelectComponent, SelectOption } from '../../../shared/compone
           <button
             type="button"
             (click)="saveTransfer()"
-            [disabled]="!formData.asset_id || !formData.to_location"
+            [disabled]="saving || !formData.asset_id || !formData.to_location"
             class="px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 disabled:opacity-40 text-xs shadow-2xs"
           >
-            Confirm Transfer
+            {{ saving ? 'Saving...' : editingId ? 'Update Transfer' : 'Confirm Transfer' }}
           </button>
         </div>
-      </app-modal>
+      </app-card> }
     </div>
   `
 })

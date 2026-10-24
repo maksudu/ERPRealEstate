@@ -1,10 +1,9 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink, ActivatedRoute } from '@angular/router';
+import { RouterLink, ActivatedRoute } from '@angular/router';
 import { ConstructionService } from '../../../core/services/construction.service';
 import { ProjectService } from '../../../core/services/project.service';
-import { LookupService } from '../../../core/services/lookup.service';
 import {
   ConstructionReportMeta,
   ConstructionReportSummaryKPIs,
@@ -34,13 +33,10 @@ import {
 export class ConstructionReportsComponent implements OnInit {
   private constructionService = inject(ConstructionService);
   private projectService = inject(ProjectService);
-  private lookupService = inject(LookupService);
   private route = inject(ActivatedRoute);
-  private router = inject(Router);
 
   // Active Report Code
   selectedReportCode = signal<string>('PROJECT_PROGRESS');
-  selectedCategory = signal<string>('ALL');
 
   // Metadata & KPIs
   reportTypes = signal<ConstructionReportMeta[]>([]);
@@ -62,21 +58,10 @@ export class ConstructionReportsComponent implements OnInit {
 
   projectOptions: { value: any; label: string }[] = [];
   contractorOptions: { value: any; label: string }[] = [];
-  reportDropdownOptions: { value: any; label: string }[] = [];
-  dynamicCategories = signal<{ id: string; label: string }[]>([
-    { id: 'ALL', label: 'All 14 Reports' }
-  ]);
 
   // Active report metadata
   activeReportMeta = computed(() => {
     return this.reportTypes().find(r => r.code === this.selectedReportCode()) || null;
-  });
-
-  // Filtered reports list by category
-  filteredReportTypes = computed(() => {
-    const cat = this.selectedCategory();
-    if (cat === 'ALL') return this.reportTypes();
-    return this.reportTypes().filter(r => r.category === cat);
   });
 
   totalPages = computed(() => {
@@ -89,11 +74,12 @@ export class ConstructionReportsComponent implements OnInit {
       if (params['type']) {
         this.selectedReportCode.set(String(params['type']).toUpperCase());
       }
+      this.page.set(1);
+      this.loadReportData();
     });
 
     this.loadDropdowns();
     this.loadMetaAndKPIs();
-    this.loadReportData();
   }
 
   loadDropdowns(): void {
@@ -124,66 +110,15 @@ export class ConstructionReportsComponent implements OnInit {
   }
 
   loadMetaAndKPIs(): void {
-    // Load dynamic categories from LookupService (Spec requirement 1)
-    this.lookupService.getItems('CONSTRUCTION_REPORT_CATEGORY').subscribe({
-      next: (items) => {
-        if (items && items.length > 0) {
-          this.dynamicCategories.set(items.map(i => ({
-            id: i.item_code,
-            label: i.item_name_en
-          })));
-        } else {
-          this.fallbackCategoriesFromTypes();
-        }
-      },
-      error: () => this.fallbackCategoriesFromTypes()
-    });
-
     this.constructionService.getConstructionReportTypes().subscribe({
       next: (types) => {
         this.reportTypes.set(types);
-        this.reportDropdownOptions = types.map(t => ({
-          value: t.code,
-          label: t.name
-        }));
-        if (this.dynamicCategories().length <= 1) {
-          this.fallbackCategoriesFromTypes();
-        }
       }
     });
 
     this.constructionService.getConstructionReportSummaryKPIs().subscribe({
       next: (k) => this.kpis.set(k)
     });
-  }
-
-  private fallbackCategoriesFromTypes(): void {
-    const cats = Array.from(new Set(this.reportTypes().map(r => r.category))).filter(Boolean);
-    if (cats.length > 0) {
-      this.dynamicCategories.set([
-        { id: 'ALL', label: 'All 14 Reports' },
-        ...cats.map(c => ({ id: c, label: c }))
-      ]);
-    }
-  }
-
-  selectReport(code: string): void {
-    this.selectedReportCode.set(code);
-    this.page.set(1);
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { type: code },
-      queryParamsHandling: 'merge'
-    });
-    this.loadReportData();
-  }
-
-  selectCategory(cat: string): void {
-    this.selectedCategory.set(cat);
-    const filtered = this.filteredReportTypes();
-    if (filtered.length > 0 && !filtered.some(r => r.code === this.selectedReportCode())) {
-      this.selectReport(filtered[0].code);
-    }
   }
 
   loadReportData(): void {

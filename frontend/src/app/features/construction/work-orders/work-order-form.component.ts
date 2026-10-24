@@ -58,6 +58,15 @@ import {
         </div>
 
         <div class="flex items-center gap-3">
+          <button
+            type="button"
+            (click)="fillExampleData()"
+            class="px-3.5 py-2 text-xs font-semibold rounded-xl border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-all flex items-center gap-1.5 shadow-xs"
+            title="Populate compliant example work order data"
+          >
+            <i class="ri-magic-line text-sm"></i>
+            <span>Example Data</span>
+          </button>
           <app-custom-button
             variant="outline"
             label="Cancel"
@@ -91,9 +100,41 @@ import {
         </div>
       </div>
 
+      <!-- Tab Navigation -->
+      <div class="flex items-center gap-1.5 overflow-x-auto pb-2 border-b border-border text-sm">
+        @for (t of tabs; track t.id) {
+          <button
+            type="button"
+            (click)="setActiveTab(t.id)"
+            [class.bg-primary]="activeTab() === t.id"
+            [class.text-primary-foreground]="activeTab() === t.id"
+            [class.shadow-sm]="activeTab() === t.id"
+            [class.bg-card]="activeTab() !== t.id"
+            [class.text-muted-foreground]="activeTab() !== t.id"
+            [class.hover:bg-secondary]="activeTab() !== t.id"
+            [class.hover:text-foreground]="activeTab() !== t.id"
+            class="px-3.5 py-2 rounded-xl border border-border font-medium flex items-center gap-2 whitespace-nowrap transition-all text-xs sm:text-sm"
+          >
+            <i [class]="t.icon + ' text-base'"></i>
+            <span>{{ t.label }}</span>
+            @if (t.id === 'boq_items' && itemsArray.length > 0) {
+              <span class="px-1.5 py-0.5 rounded-full text-[10px] bg-primary-foreground/20 text-current font-mono">
+                {{ itemsArray.length }}
+              </span>
+            }
+            @if (t.id === 'milestones' && milestonesArray.length > 0) {
+              <span class="px-1.5 py-0.5 rounded-full text-[10px] bg-primary-foreground/20 text-current font-mono">
+                {{ milestonesArray.length }}
+              </span>
+            }
+          </button>
+        }
+      </div>
+
       <!-- Main Form with Tabs / Sections -->
       <form [formGroup]="workOrderForm" class="flex flex-col gap-8">
         
+        @if (activeTab() === 'identity' || activeTab() === 'all') {
         <!-- SECTION 1: Contract Identity & Governance -->
         <app-card-container class="w-full">
           <div class="p-6">
@@ -215,7 +256,9 @@ import {
             </div>
           </div>
         </app-card-container>
+        }
 
+        @if (activeTab() === 'scope' || activeTab() === 'all') {
         <!-- SECTION 3: Contract Type, Model & Scope of Work -->
         <app-card-container class="w-full">
           <div class="p-6">
@@ -277,7 +320,9 @@ import {
             </div>
           </div>
         </app-card-container>
+        }
 
+        @if (activeTab() === 'boq_items' || activeTab() === 'all') {
         <!-- SECTION 4: Approved BOQ Line Items & Rates -->
         <app-card-container class="w-full">
           <div class="p-6">
@@ -406,7 +451,9 @@ import {
             </div>
           </div>
         </app-card-container>
+        }
 
+        @if (activeTab() === 'milestones' || activeTab() === 'all') {
         <!-- SECTION 5: Start Date, Completion & Milestones -->
         <app-card-container class="w-full">
           <div class="p-6">
@@ -557,7 +604,9 @@ import {
             </div>
           </div>
         </app-card-container>
+        }
 
+        @if (activeTab() === 'commercial' || activeTab() === 'all') {
         <!-- SECTION 6: Advance Payment, Retention & Performance Security -->
         <app-card-container class="w-full">
           <div class="p-6">
@@ -666,7 +715,9 @@ import {
             </div>
           </div>
         </app-card-container>
+        }
 
+        @if (activeTab() === 'governance' || activeTab() === 'all') {
         <!-- SECTION 7: Statutory Taxes, Approvals & Governance -->
         <app-card-container class="w-full">
           <div class="p-6">
@@ -771,22 +822,48 @@ import {
             </div>
           </div>
         </app-card-container>
+        }
 
-        <!-- Bottom Action Bar -->
-        <div class="flex items-center justify-end gap-4 py-4">
-          <app-custom-button
-            variant="outline"
-            label="Cancel"
-            routerLink="/construction/work-orders"
-          ></app-custom-button>
-          <app-custom-button
-            variant="primary"
-            size="lg"
-            [label]="isSaving() ? 'Saving...' : (isEditMode() ? 'Save Changes' : 'Confirm & Approve Work Order')"
-            [icon]="isSaving() ? 'ri-loader-4-line ri-spin' : 'ri-check-line'"
-            [disabled]="isSaving() || workOrderForm.invalid"
-            (click)="submitForm()"
-          ></app-custom-button>
+        <!-- Bottom Action Bar & Step Navigation -->
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4 py-4 border-t border-border mt-2">
+          <div class="flex items-center gap-2">
+            @if (activeTab() !== 'identity' && activeTab() !== 'all') {
+              <button
+                type="button"
+                (click)="prevTab()"
+                class="px-4 py-2 rounded-xl border border-border bg-card text-foreground hover:bg-secondary text-sm font-medium transition-colors flex items-center gap-1.5 shadow-xs"
+              >
+                <i class="ri-arrow-left-s-line"></i>
+                Previous Tab
+              </button>
+            }
+            @if (activeTab() !== 'governance' && activeTab() !== 'all') {
+              <button
+                type="button"
+                (click)="nextTab()"
+                class="px-4 py-2 rounded-xl border border-border bg-card text-foreground hover:bg-secondary text-sm font-medium transition-colors flex items-center gap-1.5 shadow-xs"
+              >
+                Next Tab
+                <i class="ri-arrow-right-s-line"></i>
+              </button>
+            }
+          </div>
+
+          <div class="flex items-center gap-3">
+            <app-custom-button
+              variant="outline"
+              label="Cancel"
+              routerLink="/construction/work-orders"
+            ></app-custom-button>
+            <app-custom-button
+              variant="primary"
+              size="lg"
+              [label]="isSaving() ? 'Saving...' : (isEditMode() ? 'Save Changes' : 'Confirm & Approve Work Order')"
+              [icon]="isSaving() ? 'ri-loader-4-line ri-spin' : 'ri-check-line'"
+              [disabled]="isSaving() || workOrderForm.invalid"
+              (click)="submitForm()"
+            ></app-custom-button>
+          </div>
         </div>
       </form>
     </div>
@@ -804,6 +881,38 @@ export class WorkOrderFormComponent implements OnInit {
   workOrderId = signal<number | null>(null);
   isLoading = signal<boolean>(false);
   isSaving = signal<boolean>(false);
+
+  // Tab State & Step Navigation
+  activeTab = signal<'identity' | 'scope' | 'boq_items' | 'milestones' | 'commercial' | 'governance' | 'all'>('identity');
+  tabs = [
+    { id: 'identity' as const, label: '1. Identity & Parties', icon: 'ri-building-line' },
+    { id: 'scope' as const, label: '2. Contract Model & Scope', icon: 'ri-file-list-3-line' },
+    { id: 'boq_items' as const, label: '3. BOQ Items & Value', icon: 'ri-calculator-line' },
+    { id: 'milestones' as const, label: '4. Schedule & Milestones', icon: 'ri-calendar-event-line' },
+    { id: 'commercial' as const, label: '5. Commercial & Retention', icon: 'ri-money-dollar-circle-line' },
+    { id: 'governance' as const, label: '6. Tax & Approvals', icon: 'ri-shield-check-line' },
+    { id: 'all' as const, label: 'All Sections', icon: 'ri-layout-grid-line' }
+  ];
+
+  setActiveTab(tab: 'identity' | 'scope' | 'boq_items' | 'milestones' | 'commercial' | 'governance' | 'all'): void {
+    this.activeTab.set(tab);
+  }
+
+  nextTab(): void {
+    const tabOrder = ['identity', 'scope', 'boq_items', 'milestones', 'commercial', 'governance'] as const;
+    const curIdx = tabOrder.indexOf(this.activeTab() as any);
+    if (curIdx >= 0 && curIdx < tabOrder.length - 1) {
+      this.activeTab.set(tabOrder[curIdx + 1]);
+    }
+  }
+
+  prevTab(): void {
+    const tabOrder = ['identity', 'scope', 'boq_items', 'milestones', 'commercial', 'governance'] as const;
+    const curIdx = tabOrder.indexOf(this.activeTab() as any);
+    if (curIdx > 0) {
+      this.activeTab.set(tabOrder[curIdx - 1]);
+    }
+  }
 
   // Dropdown options
   projectOptions = signal<SelectOption[]>([]);
@@ -943,6 +1052,12 @@ export class WorkOrderFormComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadDropdownData();
+
+    this.workOrderForm.get('project_id')?.valueChanges.subscribe(projId => {
+      if (projId) {
+        this.onProjectSelected(projId);
+      }
+    });
 
     this.route.params.subscribe(params => {
       if (params['id']) {
@@ -1221,6 +1336,200 @@ export class WorkOrderFormComponent implements OnInit {
           this.isSaving.set(false);
         }
       });
+    }
+  }
+
+  fillExampleData(): void {
+    const firstProj = this.projectOptions().length > 0 ? this.projectOptions()[0].value : 1;
+    const firstContractor = this.contractorOptions().length > 0 ? this.contractorOptions()[0].value : 1;
+
+    const yr = new Date().getFullYear();
+    const randNum = Math.floor(1000 + Math.random() * 9000);
+
+    this.workOrderForm.patchValue({
+      work_order_no: `WO-${yr}-${randNum}`,
+      contract_reference: `CNT-${yr}-STR-${randNum}`,
+      tender_reference: `TND-${yr}-RCC-004`,
+      contract_title: 'Substructure & RCC Superstructure Construction Package (Tower A)',
+      project_id: firstProj,
+      tower_id: 1,
+      wbs_package_name: 'Civil & Structural Works - Substructure to 14th Floor',
+      contractor_id: firstContractor,
+
+      contract_model: 'ITEM_RATE',
+      contract_type: 'CIVIL_SUPERSTRUCTURE',
+      scope_of_work: 'Execution of complete RCC cast-in-situ foundation raft, grade beams, columns, shear walls, floor slabs, and overhead water tank adhering to BNBC 2020 code, including formwork, rebar cutting/bending/binding, and ready-mix concrete pouring.',
+      technical_specifications: 'Concrete strength: fc = 35 MPa (5,000 psi) cylinder strength at 28 days. Rebar: 500W Deformed TMT Bars (BSRM/AKS) tested as per BDS ISO 6935-2. Admixture: Sika ViscoCrete high-range water reducer.',
+
+      start_date: `${yr}-11-01`,
+      target_completion_date: `${yr + 1}-08-31`,
+      actual_completion_date: '',
+      delay_days: 0,
+
+      advance_payment_percent: 10.0,
+      advance_payment_amount: 853250,
+      advance_recovery_rule: 'RECOVER_ACROSS_RUNNING_BILLS',
+
+      retention_money_percent: 5.0,
+      defect_liability_months: 12,
+      retention_release_conditions: '50% upon Substantial Completion Handover Certificate, 50% after 12 months DLP inspection clearance.',
+
+      performance_security_type: 'BANK_GUARANTEE',
+      performance_security_amount: 426625,
+      performance_security_expiry: `${yr + 1}-10-31`,
+
+      tds_section: 'SECTION_52',
+      tds_rate: 5.0,
+      vds_rate: 7.5,
+      delegated_approval_limit: 50000000.0,
+      budget_headroom_alert_percent: 95.0,
+
+      approval_level: 'PROJECT_DIRECTOR',
+      approval_status: 'APPROVED',
+      status: 'ACTIVE',
+      signed_contract_doc_url: `https://storage.blueoceans.com/contracts/wo-${yr}-${randNum}.pdf`,
+      amendment_notes: 'Initial approved baseline contract awarded following competitive tender evaluation.'
+    });
+
+    // Populate realistic sample BOQ items
+    this.itemsArray.clear();
+    const sampleItems = [
+      {
+        item_code: 'BOQ-STR-01',
+        item_description: 'M-35 (5000 psi) Ready-Mix Concrete for Columns & Shear Walls',
+        specification: 'Cylinder strength 35 MPa with micro-silica, including placement by boom pump, compaction with poker vibrators & water curing.',
+        unit_of_measure: 'CFT',
+        boq_quantity: 12500,
+        contract_quantity: 12500,
+        approved_unit_rate: 340.00,
+        total_amount: 4250000,
+        executed_quantity: 0,
+        remaining_quantity: 12500,
+        remarks: 'Rate inclusive of pumping and vibration labour'
+      },
+      {
+        item_code: 'BOQ-STR-02',
+        item_description: '500W High-Yield Deformed TMT Rebar Supply & Fabrication',
+        specification: 'Straightening, cutting, bending, hook fabrication and binding in position with 20-gauge annealed wire with cement mortar cover blocks.',
+        unit_of_measure: 'KG',
+        boq_quantity: 25000,
+        contract_quantity: 25000,
+        approved_unit_rate: 115.00,
+        total_amount: 2875000,
+        executed_quantity: 0,
+        remaining_quantity: 25000,
+        remarks: 'Testing at BUET/CUET laboratory before incorporation'
+      },
+      {
+        item_code: 'BOQ-STR-03',
+        item_description: 'Heavy-Duty Steel & Film-Faced Plywood Shuttering / Formwork',
+        specification: 'Supply, erection and dismantling of shuttering using steel props, acrow jacks and 18mm waterproof marine plywood ensuring line, level and plumb.',
+        unit_of_measure: 'SFT',
+        boq_quantity: 18500,
+        contract_quantity: 18500,
+        approved_unit_rate: 60.00,
+        total_amount: 1110000,
+        executed_quantity: 0,
+        remaining_quantity: 18500,
+        remarks: 'Minimum 5 repetitions allowed with shuttering oil'
+      },
+      {
+        item_code: 'BOQ-STR-04',
+        item_description: 'Substructure Waterproofing & Bituminous Membrane Barrier',
+        specification: '4mm APP modified bituminous waterproofing membrane laid over primer-sealed raft foundation surface with 100mm overlaps.',
+        unit_of_measure: 'SFT',
+        boq_quantity: 3500,
+        contract_quantity: 3500,
+        approved_unit_rate: 85.00,
+        total_amount: 297500,
+        executed_quantity: 0,
+        remaining_quantity: 3500,
+        remarks: 'Protected with 50mm M-15 screed'
+      }
+    ];
+
+    for (const item of sampleItems) {
+      this.itemsArray.push(this.fb.group({
+        item_code: [item.item_code, Validators.required],
+        item_description: [item.item_description, Validators.required],
+        specification: [item.specification],
+        unit_of_measure: [item.unit_of_measure],
+        boq_quantity: [item.boq_quantity],
+        contract_quantity: [item.contract_quantity, Validators.required],
+        approved_unit_rate: [item.approved_unit_rate, Validators.required],
+        total_amount: [item.total_amount],
+        executed_quantity: [item.executed_quantity],
+        remaining_quantity: [item.remaining_quantity],
+        remarks: [item.remarks]
+      }));
+    }
+
+    // Populate realistic sample milestones
+    this.milestonesArray.clear();
+    const sampleMilestones = [
+      {
+        milestone_code: 'MS-01',
+        milestone_title: 'Substructure & Raft Foundation Casting to Plinth Level',
+        target_date: `${yr}-12-15`,
+        actual_date: '',
+        weightage_percent: 25.0,
+        milestone_amount: 2133125,
+        is_critical: true,
+        status: 'PENDING',
+        verification_notes: 'Includes soil compaction, waterproofing membrane and raft concrete testing.'
+      },
+      {
+        milestone_code: 'MS-02',
+        milestone_title: 'Tower A Ground to 7th Floor RCC Frame Completion',
+        target_date: `${yr + 1}-03-31`,
+        actual_date: '',
+        weightage_percent: 35.0,
+        milestone_amount: 2986375,
+        is_critical: true,
+        status: 'PENDING',
+        verification_notes: 'All 7 intermediate slab cube crushing tests must exceed 35 MPa.'
+      },
+      {
+        milestone_code: 'MS-03',
+        milestone_title: 'Tower A 8th to 14th Floor & Roof Slab Casting',
+        target_date: `${yr + 1}-06-30`,
+        actual_date: '',
+        weightage_percent: 30.0,
+        milestone_amount: 2559750,
+        is_critical: true,
+        status: 'PENDING',
+        verification_notes: 'Includes lift machine room, stair cover and overhead water tank.'
+      },
+      {
+        milestone_code: 'MS-04',
+        milestone_title: 'Final De-shuttering, Snagging & Structural Handover Certificate',
+        target_date: `${yr + 1}-08-31`,
+        actual_date: '',
+        weightage_percent: 10.0,
+        milestone_amount: 853250,
+        is_critical: false,
+        status: 'PENDING',
+        verification_notes: 'Joint inspection by Project Director, Chief Structural Engineer and Consultant.'
+      }
+    ];
+
+    for (const ms of sampleMilestones) {
+      this.milestonesArray.push(this.fb.group({
+        milestone_code: [ms.milestone_code],
+        milestone_title: [ms.milestone_title, Validators.required],
+        target_date: [ms.target_date, Validators.required],
+        actual_date: [ms.actual_date],
+        weightage_percent: [ms.weightage_percent],
+        milestone_amount: [ms.milestone_amount],
+        is_critical: [ms.is_critical],
+        status: [ms.status],
+        verification_notes: [ms.verification_notes]
+      }));
+    }
+
+    this.syncTotalValues();
+    if (firstProj) {
+      this.onProjectSelected(firstProj);
     }
   }
 }

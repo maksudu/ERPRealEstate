@@ -62,58 +62,6 @@
     </div>
   </div>
 
-  <!-- Functional Category Filter Pills & Dynamic Settings Link -->
-  <div class="flex items-center justify-between gap-3 p-1.5 bg-secondary/50 rounded-2xl border border-border mb-4">
-    <div class="flex items-center gap-1.5 overflow-x-auto">
-      <button
-        *ngFor="let cat of dynamicCategories()"
-        type="button"
-        (click)="selectCategory(cat.id)"
-        class="px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap"
-        [ngClass]="selectedCategory() === cat.id ? 'bg-card text-foreground shadow-xs border border-border' : 'text-muted-foreground hover:text-foreground'"
-      >
-        {{ cat.label }}
-      </button>
-    </div>
-
-    <!-- Direct Quick-Link to Master Settings Lookups (Requirement 1) -->
-    <a
-      routerLink="/settings/lookups"
-      class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold text-primary hover:text-primary/80 bg-card rounded-xl border border-border shrink-0 shadow-xs transition-colors"
-      title="Dynamic Dropdown Creation & Customization Settings"
-    >
-      <i class="ri-settings-4-line"></i>
-      <span>Dropdown Settings</span>
-    </a>
-  </div>
-
-  <!-- 14 Standard Reports Selection Carousel / Grid -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 mb-6">
-    <button
-      *ngFor="let rep of filteredReportTypes()"
-      type="button"
-      (click)="selectReport(rep.code)"
-      class="p-3 rounded-2xl border text-left transition-all flex items-start gap-3 group relative overflow-hidden"
-      [ngClass]="selectedReportCode() === rep.code ? 'bg-primary/10 border-primary shadow-xs ring-1 ring-primary' : 'bg-card border-border hover:bg-secondary/40'"
-    >
-      <div class="p-2 rounded-xl text-base shrink-0 transition-colors"
-        [ngClass]="selectedReportCode() === rep.code ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground group-hover:text-foreground'">
-        <i [class]="rep.icon"></i>
-      </div>
-      <div class="min-w-0">
-        <span class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block line-clamp-1">
-          {{ rep.category }}
-        </span>
-        <h4 class="text-xs font-bold text-foreground mt-0.5 line-clamp-1" [title]="rep.name">
-          {{ rep.name }}
-        </h4>
-        <p class="text-[11px] text-muted-foreground mt-0.5 line-clamp-1" [title]="rep.description">
-          {{ rep.description }}
-        </p>
-      </div>
-    </button>
-  </div>
-
   <!-- Report Title Header & Action Bar -->
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border mb-6">
     <div>

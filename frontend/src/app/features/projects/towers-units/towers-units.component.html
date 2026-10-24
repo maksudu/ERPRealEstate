@@ -281,8 +281,7 @@
                 <!-- Tower Header Card -->
                 <div
                   (click)="selectTreeTower(tower)"
-                  [class.bg-emerald-50]="selectedTowerId() === tower.id"
-                  [class.dark:bg-emerald-950/40]="selectedTowerId() === tower.id"
+                  [ngClass]="selectedTowerId() === tower.id ? 'bg-emerald-50 dark:bg-emerald-950/40' : ''"
                   class="p-3.5 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors flex items-center justify-between"
                 >
                   <div class="space-y-0.5">
@@ -331,8 +330,7 @@
                     @for (flr of towerFloors(tower.id); track flr.id) {
                       <div
                         (click)="selectTreeFloor(flr)"
-                        [class.bg-emerald-50]="selectedFloorId() === flr.id"
-                        [class.dark:bg-emerald-950/30]="selectedFloorId() === flr.id"
+                        [ngClass]="selectedFloorId() === flr.id ? 'bg-emerald-50 dark:bg-emerald-950/30' : ''"
                         class="px-4 py-2 text-xs flex items-center justify-between cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
                       >
                         <div class="flex items-center gap-2.5">

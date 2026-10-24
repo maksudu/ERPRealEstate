@@ -1383,7 +1383,9 @@ async def list_work_orders(
         select(WorkOrder)
         .options(
             selectinload(WorkOrder.project),
-            selectinload(WorkOrder.contractor)
+            selectinload(WorkOrder.contractor),
+            selectinload(WorkOrder.items),
+            selectinload(WorkOrder.milestones)
         )
         .order_by(WorkOrder.id.desc())
     )
@@ -1402,42 +1404,6 @@ async def list_work_orders(
     return responses
 
 
-@router.post("/work-orders", response_model=WorkOrderResponse, status_code=status.HTTP_201_CREATED)
-async def create_work_order(
-    payload: WorkOrderCreate,
-    db: AsyncSession = Depends(get_db)
-):
-    """
-    Creates a new formal Subcontractor Work Order / Service Contract.
-    """
-    count_res = await db.execute(select(func.count(WorkOrder.id)))
-    next_num = (count_res.scalar() or 0) + 1
-    wo_no = f"WO-2026-{next_num:04d}"
-
-    wo = WorkOrder(
-        project_id=payload.project_id,
-        contractor_id=payload.contractor_id,
-        work_order_no=wo_no,
-        contract_type=payload.contract_type,
-        total_contract_value=payload.total_contract_value,
-        retention_money_percent=payload.retention_money_percent or 5.00,
-        defect_liability_months=payload.defect_liability_months or 12,
-        status="ACTIVE",
-        scope_of_work=payload.scope_of_work
-    )
-    db.add(wo)
-    await db.commit()
-
-    result = await db.execute(
-        select(WorkOrder)
-        .options(selectinload(WorkOrder.project), selectinload(WorkOrder.contractor))
-        .where(WorkOrder.id == wo.id)
-    )
-    saved = result.scalars().first()
-    resp = WorkOrderResponse.model_validate(saved)
-    resp.project_name = saved.project.project_name if saved.project else None
-    resp.contractor_name = saved.contractor.company_name if saved.contractor else None
-    return resp
 
 
 # --------------------------------------------------------------------------
@@ -2943,6 +2909,219 @@ async def get_boq_metrics(
     )
 
 
+
+@router.get("/boq/budget-locks", response_model=List[BOQItemResponse])
+async def list_boq_budget_locks(
+    project_id: Optional[int] = Query(None),
+    tower_id: Optional[int] = Query(None),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Lists BOQ items with Hard Budget Lock threshold (105%), requisitioned vs allowable quantities, and lock flags.
+    """
+    stmt = select(BOQItem).options(
+        selectinload(BOQItem.project),
+        selectinload(BOQItem.tower),
+        selectinload(BOQItem.wbs_node)
+    ).order_by(BOQItem.id.asc())
+    if project_id:
+        stmt = stmt.where(BOQItem.project_id == project_id)
+    if tower_id:
+        stmt = stmt.where(BOQItem.tower_id == tower_id)
+
+    res = await db.execute(stmt)
+    items = res.scalars().all()
+    return [_to_boq_response(item) for item in items]
+
+
+
+@router.post("/boq/check-budget-lock", response_model=BOQRequisitionCheckResponse)
+async def check_boq_budget_lock(
+    payload: BOQRequisitionCheckRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Pre-flight budget lock validation: determines whether a material requisition exceeds 105% of BOQ.
+    """
+    res = await db.execute(select(BOQItem).where(BOQItem.id == payload.boq_item_id))
+    item = res.scalar_one_or_none()
+    if not item:
+        raise HTTPException(status_code=404, detail="BOQ Item not found")
+
+    est = float(item.estimated_quantity or 0.0)
+    vo_qty = float(item.variation_order_quantity or 0.0)
+    lock_pct = float(item.hard_lock_percentage or 105.0)
+    allowable = round((est * (lock_pct / 100.0)) + vo_qty, 4)
+    already_req = float(item.requisitioned_quantity or 0.0)
+    remaining = max(0.0, round(allowable - already_req, 4))
+    requested = float(payload.requested_quantity)
+
+    lock_triggered = (already_req + requested) > allowable
+
+    if lock_triggered:
+        excess = round((already_req + requested) - allowable, 4)
+        msg = (
+            f"HARD BUDGET LOCK TRIGGERED: Requisition of {requested:,.2f} {item.unit_of_measure_id} "
+            f"exceeds 105% ceiling by {excess:,.2f} {item.unit_of_measure_id}. "
+            f"Requires an approved Variation Order (VO)."
+        )
+    else:
+        msg = f"Requisition within 105% budget limit. Remaining headroom: {remaining - requested:,.2f} {item.unit_of_measure_id}."
+
+    return BOQRequisitionCheckResponse(
+        boq_item_id=item.id,
+        item_description=item.item_description,
+        estimated_quantity=est,
+        variation_order_quantity=vo_qty,
+        allowable_ceiling_105=allowable,
+        already_requisitioned_quantity=already_req,
+        remaining_allowable_quantity=remaining,
+        requested_quantity=requested,
+        is_hard_locked=item.is_locked,
+        budget_lock_triggered=lock_triggered,
+        message=msg
+    )
+
+
+@router.post("/boq/requisition", response_model=BOQItemResponse)
+async def process_boq_requisition(
+    payload: BOQRequisitionCheckRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Processes site material requisition enforcing Hard Budget Lock rule.
+    If requisition exceeds 105% of BOQ quantity without approved Variation Order (VO), it is rejected with HTTP 400.
+    """
+    res = await db.execute(select(BOQItem).where(BOQItem.id == payload.boq_item_id))
+    item = res.scalar_one_or_none()
+    if not item:
+        raise HTTPException(status_code=404, detail="BOQ Item not found")
+
+    est = float(item.estimated_quantity or 0.0)
+    vo_qty = float(item.variation_order_quantity or 0.0)
+    lock_pct = float(item.hard_lock_percentage or 105.0)
+    allowable = round((est * (lock_pct / 100.0)) + vo_qty, 4)
+    already_req = float(item.requisitioned_quantity or 0.0)
+    requested = float(payload.requested_quantity)
+
+    if (already_req + requested) > allowable or item.is_locked:
+        excess = round((already_req + requested) - allowable, 4)
+        item.is_locked = True
+        await db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                f"HARD BUDGET LOCK ENFORCED: Site cannot requisition material exceeding 105% of BOQ quantity. "
+                f"Requested: {requested:,.2f}, Ceiling: {allowable:,.2f}, Excess: {excess:,.2f} {item.unit_of_measure_id}. "
+                f"Please obtain an approved Variation Order (VO) to unlock headroom."
+            )
+        )
+
+    # Allow requisition
+    item.requisitioned_quantity = round(already_req + requested, 4)
+    if item.requisitioned_quantity >= allowable:
+        item.is_locked = True
+    await db.commit()
+    await db.refresh(item)
+
+    resp = BOQItemResponse.model_validate(item)
+    resp.allowable_quantity = allowable
+    resp.variance_percentage = round(((float(item.requisitioned_quantity) - est) / est * 100.0), 2) if est > 0 else 0.0
+    return resp
+
+
+@router.get("/boq/variation-orders", response_model=List[VariationOrderResponse])
+async def list_variation_orders(
+    project_id: Optional[int] = Query(None),
+    boq_item_id: Optional[int] = Query(None),
+    status: Optional[str] = Query(None),
+    db: AsyncSession = Depends(get_db)
+):
+    stmt = select(VariationOrder).order_by(VariationOrder.id.desc())
+    if project_id:
+        stmt = stmt.where(VariationOrder.project_id == project_id)
+    if boq_item_id:
+        stmt = stmt.where(VariationOrder.boq_item_id == boq_item_id)
+    if status:
+        stmt = stmt.where(VariationOrder.status == status.upper())
+
+    res = await db.execute(stmt)
+    return res.scalars().all()
+
+
+@router.post("/boq/variation-orders", response_model=VariationOrderResponse, status_code=status.HTTP_201_CREATED)
+async def create_variation_order(
+    payload: VariationOrderCreate,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Submits a Variation Order (VO) to release additional budget/quantity for a locked BOQ item.
+    """
+    res = await db.execute(select(BOQItem).where(BOQItem.id == payload.boq_item_id))
+    item = res.scalar_one_or_none()
+    if not item:
+        raise HTTPException(status_code=404, detail="BOQ Item not found")
+
+    count_res = await db.execute(select(func.count(VariationOrder.id)))
+    next_num = (count_res.scalar() or 0) + 1
+    vo_number = f"VO-PRJ{payload.project_id:02d}-{datetime.now().year}-{next_num:03d}"
+
+    rate = float(payload.revised_rate if payload.revised_rate is not None else item.estimated_unit_rate)
+    budget = round(float(payload.additional_quantity) * rate, 2)
+
+    vo = VariationOrder(
+        project_id=payload.project_id,
+        boq_item_id=payload.boq_item_id,
+        vo_number=vo_number,
+        additional_quantity=payload.additional_quantity,
+        revised_rate=rate,
+        additional_budget=budget,
+        reason=payload.reason,
+        status="PENDING"
+    )
+    db.add(vo)
+    await db.commit()
+    await db.refresh(vo)
+    return vo
+
+
+@router.put("/boq/variation-orders/{vo_id}/approve", response_model=VariationOrderResponse)
+async def approve_variation_order(
+    vo_id: int,
+    payload: VariationOrderApprove,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Approves or rejects a Variation Order.
+    When APPROVED, automatically increments the BOQ item's variation_order_quantity and unlocks the hard lock.
+    """
+    res = await db.execute(
+        select(VariationOrder)
+        .options(selectinload(VariationOrder.boq_item))
+        .where(VariationOrder.id == vo_id)
+    )
+    vo = res.scalar_one_or_none()
+    if not vo:
+        raise HTTPException(status_code=404, detail="Variation Order not found")
+
+    action = payload.status.upper()
+    if action == "APPROVED":
+        vo.status = "APPROVED"
+        vo.approved_by_pm = payload.approved_by_pm
+        vo.approval_date = date.today()
+        # Unlock BOQ headroom!
+        if vo.boq_item:
+            vo.boq_item.variation_order_quantity = round(
+                float(vo.boq_item.variation_order_quantity or 0.0) + float(vo.additional_quantity), 4
+            )
+            vo.boq_item.is_locked = False
+    else:
+        vo.status = "REJECTED"
+
+    await db.commit()
+    await db.refresh(vo)
+    return vo
+
 @router.get("/boq/{boq_id}", response_model=BOQItemResponse)
 async def get_boq_item(
     boq_id: int,
@@ -3173,219 +3352,6 @@ async def delete_boq_item(
     await db.delete(item)
     await db.commit()
     return None
-
-
-@router.get("/boq/budget-locks", response_model=List[BOQItemResponse])
-async def list_boq_budget_locks(
-    project_id: Optional[int] = Query(None),
-    tower_id: Optional[int] = Query(None),
-    db: AsyncSession = Depends(get_db)
-):
-    """
-    Lists BOQ items with Hard Budget Lock threshold (105%), requisitioned vs allowable quantities, and lock flags.
-    """
-    stmt = select(BOQItem).options(
-        selectinload(BOQItem.project),
-        selectinload(BOQItem.tower),
-        selectinload(BOQItem.wbs_node)
-    ).order_by(BOQItem.id.asc())
-    if project_id:
-        stmt = stmt.where(BOQItem.project_id == project_id)
-    if tower_id:
-        stmt = stmt.where(BOQItem.tower_id == tower_id)
-
-    res = await db.execute(stmt)
-    items = res.scalars().all()
-    return [_to_boq_response(item) for item in items]
-
-
-
-@router.post("/boq/check-budget-lock", response_model=BOQRequisitionCheckResponse)
-async def check_boq_budget_lock(
-    payload: BOQRequisitionCheckRequest,
-    db: AsyncSession = Depends(get_db)
-):
-    """
-    Pre-flight budget lock validation: determines whether a material requisition exceeds 105% of BOQ.
-    """
-    res = await db.execute(select(BOQItem).where(BOQItem.id == payload.boq_item_id))
-    item = res.scalar_one_or_none()
-    if not item:
-        raise HTTPException(status_code=404, detail="BOQ Item not found")
-
-    est = float(item.estimated_quantity or 0.0)
-    vo_qty = float(item.variation_order_quantity or 0.0)
-    lock_pct = float(item.hard_lock_percentage or 105.0)
-    allowable = round((est * (lock_pct / 100.0)) + vo_qty, 4)
-    already_req = float(item.requisitioned_quantity or 0.0)
-    remaining = max(0.0, round(allowable - already_req, 4))
-    requested = float(payload.requested_quantity)
-
-    lock_triggered = (already_req + requested) > allowable
-
-    if lock_triggered:
-        excess = round((already_req + requested) - allowable, 4)
-        msg = (
-            f"HARD BUDGET LOCK TRIGGERED: Requisition of {requested:,.2f} {item.unit_of_measure_id} "
-            f"exceeds 105% ceiling by {excess:,.2f} {item.unit_of_measure_id}. "
-            f"Requires an approved Variation Order (VO)."
-        )
-    else:
-        msg = f"Requisition within 105% budget limit. Remaining headroom: {remaining - requested:,.2f} {item.unit_of_measure_id}."
-
-    return BOQRequisitionCheckResponse(
-        boq_item_id=item.id,
-        item_description=item.item_description,
-        estimated_quantity=est,
-        variation_order_quantity=vo_qty,
-        allowable_ceiling_105=allowable,
-        already_requisitioned_quantity=already_req,
-        remaining_allowable_quantity=remaining,
-        requested_quantity=requested,
-        is_hard_locked=item.is_locked,
-        budget_lock_triggered=lock_triggered,
-        message=msg
-    )
-
-
-@router.post("/boq/requisition", response_model=BOQItemResponse)
-async def process_boq_requisition(
-    payload: BOQRequisitionCheckRequest,
-    db: AsyncSession = Depends(get_db)
-):
-    """
-    Processes site material requisition enforcing Hard Budget Lock rule.
-    If requisition exceeds 105% of BOQ quantity without approved Variation Order (VO), it is rejected with HTTP 400.
-    """
-    res = await db.execute(select(BOQItem).where(BOQItem.id == payload.boq_item_id))
-    item = res.scalar_one_or_none()
-    if not item:
-        raise HTTPException(status_code=404, detail="BOQ Item not found")
-
-    est = float(item.estimated_quantity or 0.0)
-    vo_qty = float(item.variation_order_quantity or 0.0)
-    lock_pct = float(item.hard_lock_percentage or 105.0)
-    allowable = round((est * (lock_pct / 100.0)) + vo_qty, 4)
-    already_req = float(item.requisitioned_quantity or 0.0)
-    requested = float(payload.requested_quantity)
-
-    if (already_req + requested) > allowable or item.is_locked:
-        excess = round((already_req + requested) - allowable, 4)
-        item.is_locked = True
-        await db.commit()
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=(
-                f"HARD BUDGET LOCK ENFORCED: Site cannot requisition material exceeding 105% of BOQ quantity. "
-                f"Requested: {requested:,.2f}, Ceiling: {allowable:,.2f}, Excess: {excess:,.2f} {item.unit_of_measure_id}. "
-                f"Please obtain an approved Variation Order (VO) to unlock headroom."
-            )
-        )
-
-    # Allow requisition
-    item.requisitioned_quantity = round(already_req + requested, 4)
-    if item.requisitioned_quantity >= allowable:
-        item.is_locked = True
-    await db.commit()
-    await db.refresh(item)
-
-    resp = BOQItemResponse.model_validate(item)
-    resp.allowable_quantity = allowable
-    resp.variance_percentage = round(((float(item.requisitioned_quantity) - est) / est * 100.0), 2) if est > 0 else 0.0
-    return resp
-
-
-@router.get("/boq/variation-orders", response_model=List[VariationOrderResponse])
-async def list_variation_orders(
-    project_id: Optional[int] = Query(None),
-    boq_item_id: Optional[int] = Query(None),
-    status: Optional[str] = Query(None),
-    db: AsyncSession = Depends(get_db)
-):
-    stmt = select(VariationOrder).order_by(VariationOrder.id.desc())
-    if project_id:
-        stmt = stmt.where(VariationOrder.project_id == project_id)
-    if boq_item_id:
-        stmt = stmt.where(VariationOrder.boq_item_id == boq_item_id)
-    if status:
-        stmt = stmt.where(VariationOrder.status == status.upper())
-
-    res = await db.execute(stmt)
-    return res.scalars().all()
-
-
-@router.post("/boq/variation-orders", response_model=VariationOrderResponse, status_code=status.HTTP_201_CREATED)
-async def create_variation_order(
-    payload: VariationOrderCreate,
-    db: AsyncSession = Depends(get_db)
-):
-    """
-    Submits a Variation Order (VO) to release additional budget/quantity for a locked BOQ item.
-    """
-    res = await db.execute(select(BOQItem).where(BOQItem.id == payload.boq_item_id))
-    item = res.scalar_one_or_none()
-    if not item:
-        raise HTTPException(status_code=404, detail="BOQ Item not found")
-
-    count_res = await db.execute(select(func.count(VariationOrder.id)))
-    next_num = (count_res.scalar() or 0) + 1
-    vo_number = f"VO-PRJ{payload.project_id:02d}-{datetime.now().year}-{next_num:03d}"
-
-    rate = float(payload.revised_rate if payload.revised_rate is not None else item.estimated_unit_rate)
-    budget = round(float(payload.additional_quantity) * rate, 2)
-
-    vo = VariationOrder(
-        project_id=payload.project_id,
-        boq_item_id=payload.boq_item_id,
-        vo_number=vo_number,
-        additional_quantity=payload.additional_quantity,
-        revised_rate=rate,
-        additional_budget=budget,
-        reason=payload.reason,
-        status="PENDING"
-    )
-    db.add(vo)
-    await db.commit()
-    await db.refresh(vo)
-    return vo
-
-
-@router.put("/boq/variation-orders/{vo_id}/approve", response_model=VariationOrderResponse)
-async def approve_variation_order(
-    vo_id: int,
-    payload: VariationOrderApprove,
-    db: AsyncSession = Depends(get_db)
-):
-    """
-    Approves or rejects a Variation Order.
-    When APPROVED, automatically increments the BOQ item's variation_order_quantity and unlocks the hard lock.
-    """
-    res = await db.execute(
-        select(VariationOrder)
-        .options(selectinload(VariationOrder.boq_item))
-        .where(VariationOrder.id == vo_id)
-    )
-    vo = res.scalar_one_or_none()
-    if not vo:
-        raise HTTPException(status_code=404, detail="Variation Order not found")
-
-    action = payload.status.upper()
-    if action == "APPROVED":
-        vo.status = "APPROVED"
-        vo.approved_by_pm = payload.approved_by_pm
-        vo.approval_date = date.today()
-        # Unlock BOQ headroom!
-        if vo.boq_item:
-            vo.boq_item.variation_order_quantity = round(
-                float(vo.boq_item.variation_order_quantity or 0.0) + float(vo.additional_quantity), 4
-            )
-            vo.boq_item.is_locked = False
-    else:
-        vo.status = "REJECTED"
-
-    await db.commit()
-    await db.refresh(vo)
-    return vo
 
 
 # --------------------------------------------------------------------------

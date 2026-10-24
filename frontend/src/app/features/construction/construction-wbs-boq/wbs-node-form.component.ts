@@ -57,7 +57,19 @@ import {
           </div>
         </div>
 
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
+          <button
+            type="button"
+            (click)="fillExampleData()"
+            class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30 hover:bg-amber-500/20 transition-all cursor-pointer shadow-2xs"
+            title="Load realistic Bangladesh construction demo data"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
+            <span>Example Data</span>
+          </button>
+
           <a
             routerLink="/construction/wbs-boq"
             class="px-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground bg-secondary hover:bg-secondary/80 rounded-lg border border-border transition-colors"
@@ -83,86 +95,124 @@ import {
         </div>
       </div>
 
+      <!-- Feedback Notifications -->
+      @if (feedbackMsg()) {
+        <div role="status" class="rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-3.5 text-xs font-medium text-emerald-600 dark:text-emerald-400 flex items-center justify-between shadow-xs">
+          <span class="flex items-center gap-2">
+            <span>✨</span>
+            <span>{{ feedbackMsg() }}</span>
+          </span>
+          <button type="button" (click)="feedbackMsg.set('')" class="text-emerald-500 hover:text-emerald-700">✕</button>
+        </div>
+      }
+
+      @if (errorMsg()) {
+        <div role="alert" class="rounded-xl bg-rose-500/10 border border-rose-500/20 p-3.5 text-xs font-medium text-rose-600 dark:text-rose-400 flex items-center justify-between shadow-xs">
+          <span>{{ errorMsg() }}</span>
+          <button type="button" (click)="errorMsg.set('')" class="text-rose-500 hover:text-rose-700">✕</button>
+        </div>
+      }
+
+      <!-- Form Tabs Strip -->
+      <div class="flex items-center gap-1.5 p-1.5 rounded-2xl bg-secondary/60 border border-border overflow-x-auto scrollbar-none">
+        @for (tab of formTabs; track tab.id) {
+          <button
+            type="button"
+            (click)="activeTab.set(tab.id)"
+            [class]="activeTab() === tab.id
+              ? 'bg-card text-foreground font-bold shadow-xs border border-border'
+              : 'text-muted-foreground hover:text-foreground font-medium hover:bg-card/50'"
+            class="px-3.5 py-2 rounded-xl text-xs whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer"
+          >
+            <span>{{ tab.icon }}</span>
+            <span>{{ tab.label }}</span>
+          </button>
+        }
+      </div>
+
       <!-- Main Standalone Form Card -->
       <form [formGroup]="wbsForm" (ngSubmit)="saveWBSNode()" class="flex flex-col gap-6">
 
         <!-- Section 1: Hierarchy & Identification -->
-        <app-card-container
-          title="1. Hierarchy, Classification & Identity"
-          subtitle="Define project tier, parent node, dynamic phase category, and activity code"
-        >
-          <div class="flex flex-col gap-5">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <app-searchable-select
-                label="Construction Project *"
-                [options]="projectOptions"
-                formControlName="project_id"
-                [allowCreateNew]="false"
-                placeholder="Select project..."
-              >
-              </app-searchable-select>
+        @if (activeTab() === 'hierarchy' || activeTab() === 'all') {
+          <app-card-container
+            title="1. Hierarchy, Classification & Identity"
+            subtitle="Define project tier, parent node, dynamic phase category, and activity code"
+          >
+            <div class="flex flex-col gap-5">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <app-searchable-select
+                  label="Construction Project *"
+                  [options]="projectOptions"
+                  formControlName="project_id"
+                  [allowCreateNew]="false"
+                  placeholder="Select project..."
+                >
+                </app-searchable-select>
 
-              <app-searchable-select
-                label="Parent WBS Node (Hierarchical)"
-                [options]="parentOptions"
-                formControlName="parent_id"
-                [allowCreateNew]="false"
-                placeholder="Select parent package/phase (optional)..."
-              >
-              </app-searchable-select>
+                <app-searchable-select
+                  label="Parent WBS Node (Hierarchical)"
+                  [options]="parentOptions"
+                  formControlName="parent_id"
+                  [allowCreateNew]="false"
+                  placeholder="Select parent package/phase (optional)..."
+                >
+                </app-searchable-select>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <app-custom-input
+                  label="Activity / Node Code *"
+                  placeholder="e.g. WBS-SITE-01.02"
+                  formControlName="node_code"
+                >
+                </app-custom-input>
+
+                <app-searchable-select
+                  label="WBS Hierarchy Tier *"
+                  categoryCode="WBS_TIER"
+                  [allowCreateNew]="true"
+                  formControlName="wbs_tier"
+                  placeholder="Select or add tier..."
+                >
+                </app-searchable-select>
+
+                <app-searchable-select
+                  label="Phase Category *"
+                  categoryCode="CONSTRUCTION_PHASE"
+                  [allowCreateNew]="true"
+                  formControlName="phase_category"
+                  placeholder="Select or add phase..."
+                >
+                </app-searchable-select>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <app-custom-input
+                  label="Activity / Deliverable Name *"
+                  placeholder="e.g. Excavation and Soil Disposal"
+                  formControlName="node_name"
+                >
+                </app-custom-input>
+
+                <app-custom-input
+                  label="Activity Specific Type"
+                  placeholder="e.g. Bulk Excavation / Deep Piling"
+                  formControlName="activity_type"
+                >
+                </app-custom-input>
+              </div>
             </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <app-custom-input
-                label="Activity / Node Code *"
-                placeholder="e.g. WBS-SITE-01.02"
-                formControlName="node_code"
-              >
-              </app-custom-input>
-
-              <app-searchable-select
-                label="WBS Hierarchy Tier *"
-                categoryCode="WBS_TIER"
-                [allowCreateNew]="true"
-                formControlName="wbs_tier"
-                placeholder="Select or add tier..."
-              >
-              </app-searchable-select>
-
-              <app-searchable-select
-                label="Phase Category *"
-                categoryCode="CONSTRUCTION_PHASE"
-                [allowCreateNew]="true"
-                formControlName="phase_category"
-                placeholder="Select or add phase..."
-              >
-              </app-searchable-select>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <app-custom-input
-                label="Activity / Deliverable Name *"
-                placeholder="e.g. Excavation and Soil Disposal"
-                formControlName="node_name"
-              >
-              </app-custom-input>
-
-              <app-custom-input
-                label="Activity Specific Type"
-                placeholder="e.g. Bulk Excavation / Deep Piling"
-                formControlName="activity_type"
-              >
-              </app-custom-input>
-            </div>
-          </div>
-        </app-card-container>
+          </app-card-container>
+        }
 
         <!-- Section 2: Timeline, Duration & Baseline Schedule -->
-        <app-card-container
-          title="2. Planned Timeline, Duration & Baseline Revision"
-          subtitle="Schedule planned dates, task duration, critical-path status, and milestone flags"
-        >
-          <div class="flex flex-col gap-5">
+        @if (activeTab() === 'schedule' || activeTab() === 'all') {
+          <app-card-container
+            title="2. Planned Timeline, Duration & Baseline Revision"
+            subtitle="Schedule planned dates, task duration, critical-path status, and milestone flags"
+          >
+            <div class="flex flex-col gap-5">
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <app-custom-input
                 label="Planned Start Date *"
@@ -238,261 +288,298 @@ import {
                 </div>
               </label>
             </div>
-          </div>
-        </app-card-container>
+            </div>
+          </app-card-container>
+        }
 
         <!-- Section 3: Quantity-Based Progress & Earned Value (EVM) -->
-        <app-card-container
-          title="3. Quantity-Driven Progress & Earned Value (EVM)"
-          subtitle="Configure unit of measure, planned/verified quantities, activity weightage, and status"
-        >
-          <div class="flex flex-col gap-5">
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <app-searchable-select
-                label="Progress Measurement Method *"
-                categoryCode="PROGRESS_MEASURE_METHOD"
-                [allowCreateNew]="true"
-                formControlName="progress_measurement_method"
-                placeholder="Select method..."
-              >
-              </app-searchable-select>
-
-              <app-searchable-select
-                label="Unit of Measure (UOM) *"
-                categoryCode="UNIT_OF_MEASURE"
-                [allowCreateNew]="true"
-                formControlName="unit_of_measure"
-                placeholder="Select or add UOM..."
-              >
-              </app-searchable-select>
-
-              <app-searchable-select
-                label="Current Activity Status *"
-                categoryCode="WBS_ACTIVITY_STATUS"
-                [allowCreateNew]="true"
-                formControlName="status"
-                placeholder="Select status..."
-              >
-              </app-searchable-select>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <app-custom-input
-                label="Planned Quantity"
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="1000.00"
-                formControlName="planned_quantity"
-              >
-              </app-custom-input>
-
-              <app-custom-input
-                label="Approved Total Quantity *"
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="1000.00"
-                formControlName="approved_total_quantity"
-              >
-              </app-custom-input>
-
-              <app-custom-input
-                label="Verified Completed Quantity"
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="0.00"
-                formControlName="verified_completed_quantity"
-              >
-              </app-custom-input>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <app-custom-input
-                label="Progress Percentage (%)"
-                type="number"
-                min="0"
-                max="100"
-                step="0.1"
-                placeholder="0.0"
-                formControlName="progress_percentage"
-              >
-              </app-custom-input>
-
-              <app-custom-input
-                label="Weightage in Project (%) *"
-                type="number"
-                min="0"
-                max="100"
-                step="0.1"
-                placeholder="5.0"
-                formControlName="weightage_percentage"
-              >
-              </app-custom-input>
-
-              <app-custom-input
-                label="Schedule Revision No."
-                type="number"
-                min="0"
-                placeholder="0"
-                formControlName="schedule_revision_no"
-              >
-              </app-custom-input>
-            </div>
-          </div>
-        </app-card-container>
-
-        <!-- Section 4: Activity Dependencies & CPM Relationships -->
-        <app-card-container
-          title="4. Activity Dependencies & Network Predecessors"
-          subtitle="Link preceding activities with Finish-to-Start (FS), Start-to-Start (SS), and Lag Days"
-        >
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <app-searchable-select
-              label="Predecessor Activity Node"
-              [options]="predecessorOptions"
-              formControlName="predecessor_node_id"
-              [allowCreateNew]="false"
-              placeholder="Select preceding task..."
-            >
-            </app-searchable-select>
-
-            <app-searchable-select
-              label="Dependency Relationship *"
-              categoryCode="DEPENDENCY_TYPE"
-              [allowCreateNew]="true"
-              formControlName="dependency_type"
-              placeholder="Select dependency type..."
-            >
-            </app-searchable-select>
-
-            <app-custom-input
-              label="Lag / Lead Time (Days)"
-              type="number"
-              placeholder="0"
-              formControlName="lag_days"
-            >
-            </app-custom-input>
-          </div>
-        </app-card-container>
-
-        <!-- Section 5: Resource Allocation & Responsible Team -->
-        <app-card-container
-          title="5. Contractor, Engineer & Team Allocation"
-          subtitle="Assign trade subcontractor, site resident engineer, and responsible execution unit"
-        >
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <app-searchable-select
-              label="Assigned Trade Subcontractor"
-              [options]="contractorOptions"
-              formControlName="contractor_id"
-              [allowCreateNew]="false"
-              placeholder="Select subcontractor..."
-            >
-            </app-searchable-select>
-
-            <app-custom-input
-              label="Responsible Project Engineer"
-              placeholder="e.g. Engr. Tanvir Ahmed, RE"
-              formControlName="responsible_engineer"
-            >
-            </app-custom-input>
-
-            <app-custom-input
-              label="Responsible Team / Work Crew"
-              placeholder="e.g. Structural Steel Crew B"
-              formControlName="responsible_team"
-            >
-            </app-custom-input>
-          </div>
-        </app-card-container>
-
-        <!-- Section 6: Delay Tracking & Site Constraints -->
-        <app-card-container
-          title="6. Delay Tracking, Weather & Site Constraints"
-          subtitle="Log delay days, dynamic delay reason, site constraints, and corrective action plans"
-        >
-          <div class="flex flex-col gap-5">
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <app-custom-input
-                label="Delay Days"
-                type="number"
-                min="0"
-                placeholder="0"
-                formControlName="delay_days"
-              >
-              </app-custom-input>
-
-              <app-searchable-select
-                label="Delay Reason Category"
-                categoryCode="DELAY_REASON"
-                [allowCreateNew]="true"
-                formControlName="delay_reason"
-                placeholder="Select or add delay reason..."
-              >
-              </app-searchable-select>
-
-              <app-custom-input
-                label="Forecasted Completion Date"
-                type="date"
-                formControlName="forecasted_end_date"
-              >
-              </app-custom-input>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <app-custom-textarea
-                label="Weather & Site Constraints"
-                placeholder="e.g. Heavy monsoon downpour, low water level, groundwater pump maintenance..."
-                formControlName="weather_constraints"
-                [rows]="2"
-              >
-              </app-custom-textarea>
-
-              <app-custom-textarea
-                label="Corrective Action Plan"
-                placeholder="e.g. Deployed 2 additional dewatering pumps, added night shift for reinforcement..."
-                formControlName="corrective_action"
-                [rows]="2"
-              >
-              </app-custom-textarea>
-            </div>
-
-            <app-custom-textarea
-              label="Engineering Remarks & Quality Checkpoints"
-              placeholder="Drawing references, test certificates, cube strength milestones, structural inspector sign-offs..."
-              formControlName="remarks"
-              [rows]="2"
-            >
-            </app-custom-textarea>
-          </div>
-        </app-card-container>
-
-        <!-- Bottom Action Bar -->
-        <div class="flex items-center justify-end gap-3 pt-4 border-t border-border">
-          <a
-            routerLink="/construction/wbs-boq"
-            class="px-5 py-2.5 text-xs font-semibold text-muted-foreground hover:text-foreground bg-secondary hover:bg-secondary/80 rounded-xl border border-border transition-colors"
+        @if (activeTab() === 'quantities' || activeTab() === 'all') {
+          <app-card-container
+            title="3. Quantity-Driven Progress & Earned Value (EVM)"
+            subtitle="Configure unit of measure, planned/verified quantities, activity weightage, and status"
           >
-            Cancel
-          </a>
-          <app-custom-button
-            variant="primary"
-            [disabled]="wbsForm.invalid || isSaving()"
-            (clicked)="saveWBSNode()"
-          >
-            <span class="flex items-center gap-2">
-              @if (isSaving()) {
-                Saving...
-              } @else {
+            <div class="flex flex-col gap-5">
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <app-searchable-select
+                  label="Progress Measurement Method *"
+                  categoryCode="PROGRESS_MEASURE_METHOD"
+                  [allowCreateNew]="true"
+                  formControlName="progress_measurement_method"
+                  placeholder="Select method..."
+                >
+                </app-searchable-select>
+
+                <app-searchable-select
+                  label="Unit of Measure (UOM) *"
+                  categoryCode="UNIT_OF_MEASURE"
+                  [allowCreateNew]="true"
+                  formControlName="unit_of_measure"
+                  placeholder="Select or add UOM..."
+                >
+                </app-searchable-select>
+
+                <app-searchable-select
+                  label="Current Activity Status *"
+                  categoryCode="WBS_ACTIVITY_STATUS"
+                  [allowCreateNew]="true"
+                  formControlName="status"
+                  placeholder="Select status..."
+                >
+                </app-searchable-select>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <app-custom-input
+                  label="Planned Quantity"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="1000.00"
+                  formControlName="planned_quantity"
+                >
+                </app-custom-input>
+
+                <app-custom-input
+                  label="Approved Total Quantity *"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="1000.00"
+                  formControlName="approved_total_quantity"
+                >
+                </app-custom-input>
+
+                <app-custom-input
+                  label="Verified Completed Quantity"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                  formControlName="verified_completed_quantity"
+                >
+                </app-custom-input>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <app-custom-input
+                  label="Progress Percentage (%)"
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                  placeholder="0.0"
+                  formControlName="progress_percentage"
+                >
+                </app-custom-input>
+
+                <app-custom-input
+                  label="Weightage in Project (%) *"
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                  placeholder="5.0"
+                  formControlName="weightage_percentage"
+                >
+                </app-custom-input>
+
+                <app-custom-input
+                  label="Schedule Revision No."
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                  formControlName="schedule_revision_no"
+                >
+                </app-custom-input>
+              </div>
+            </div>
+          </app-card-container>
+        }
+
+        <!-- Section 4, 5 & 6: Dependencies, Resources, Delays -->
+        @if (activeTab() === 'dependencies' || activeTab() === 'all') {
+          <div class="flex flex-col gap-6">
+            <!-- Section 4: Activity Dependencies & CPM Relationships -->
+            <app-card-container
+              title="4. Activity Dependencies & Network Predecessors"
+              subtitle="Link preceding activities with Finish-to-Start (FS), Start-to-Start (SS), and Lag Days"
+            >
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <app-searchable-select
+                  label="Predecessor Activity Node"
+                  [options]="predecessorOptions"
+                  formControlName="predecessor_node_id"
+                  [allowCreateNew]="false"
+                  placeholder="Select preceding task..."
+                >
+                </app-searchable-select>
+
+                <app-searchable-select
+                  label="Dependency Relationship *"
+                  categoryCode="DEPENDENCY_TYPE"
+                  [allowCreateNew]="true"
+                  formControlName="dependency_type"
+                  placeholder="Select dependency type..."
+                >
+                </app-searchable-select>
+
+                <app-custom-input
+                  label="Lag / Lead Time (Days)"
+                  type="number"
+                  placeholder="0"
+                  formControlName="lag_days"
+                >
+                </app-custom-input>
+              </div>
+            </app-card-container>
+
+            <!-- Section 5: Resource Allocation & Responsible Team -->
+            <app-card-container
+              title="5. Contractor, Engineer & Team Allocation"
+              subtitle="Assign trade subcontractor, site resident engineer, and responsible execution unit"
+            >
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <app-searchable-select
+                  label="Assigned Trade Subcontractor"
+                  [options]="contractorOptions"
+                  formControlName="contractor_id"
+                  [allowCreateNew]="false"
+                  placeholder="Select subcontractor..."
+                >
+                </app-searchable-select>
+
+                <app-custom-input
+                  label="Responsible Project Engineer"
+                  placeholder="e.g. Engr. Tanvir Ahmed, RE"
+                  formControlName="responsible_engineer"
+                >
+                </app-custom-input>
+
+                <app-custom-input
+                  label="Responsible Team / Work Crew"
+                  placeholder="e.g. Structural Steel Crew B"
+                  formControlName="responsible_team"
+                >
+                </app-custom-input>
+              </div>
+            </app-card-container>
+
+            <!-- Section 6: Delay Tracking & Site Constraints -->
+            <app-card-container
+              title="6. Delay Tracking, Weather & Site Constraints"
+              subtitle="Log delay days, dynamic delay reason, site constraints, and corrective action plans"
+            >
+              <div class="flex flex-col gap-5">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <app-custom-input
+                    label="Delay Days"
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    formControlName="delay_days"
+                  >
+                  </app-custom-input>
+
+                  <app-searchable-select
+                    label="Delay Reason Category"
+                    categoryCode="DELAY_REASON"
+                    [allowCreateNew]="true"
+                    formControlName="delay_reason"
+                    placeholder="Select or add delay reason..."
+                  >
+                  </app-searchable-select>
+
+                  <app-custom-input
+                    label="Forecasted Completion Date"
+                    type="date"
+                    formControlName="forecasted_end_date"
+                  >
+                  </app-custom-input>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <app-custom-textarea
+                    label="Weather & Site Constraints"
+                    placeholder="e.g. Heavy monsoon downpour, low water level, groundwater pump maintenance..."
+                    formControlName="weather_constraints"
+                    [rows]="2"
+                  >
+                  </app-custom-textarea>
+
+                  <app-custom-textarea
+                    label="Corrective Action Plan"
+                    placeholder="e.g. Deployed 2 additional dewatering pumps, added night shift for reinforcement..."
+                    formControlName="corrective_action"
+                    [rows]="2"
+                  >
+                  </app-custom-textarea>
+                </div>
+
+                <app-custom-textarea
+                  label="Engineering Remarks & Quality Checkpoints"
+                  placeholder="Drawing references, test certificates, cube strength milestones, structural inspector sign-offs..."
+                  formControlName="remarks"
+                  [rows]="2"
+                >
+                </app-custom-textarea>
+              </div>
+            </app-card-container>
+          </div>
+        }
+
+        <!-- Bottom Step Navigation & Action Bar -->
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-border">
+          <div class="flex items-center gap-2">
+            @if (activeTab() !== 'all' && activeTab() !== 'hierarchy') {
+              <button
+                type="button"
+                (click)="goToPrevTab()"
+                class="px-4 py-2 text-xs font-semibold rounded-xl bg-secondary hover:bg-secondary/80 border border-border text-foreground transition-colors inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
+              >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                 </svg>
-                {{ isEditMode() ? 'Save Changes' : 'Create WBS Activity Node' }}
-              }
-            </span>
-          </app-custom-button>
+                <span>Previous Step</span>
+              </button>
+            }
+            @if (activeTab() !== 'all' && activeTab() !== 'dependencies') {
+              <button
+                type="button"
+                (click)="goToNextTab()"
+                class="px-4 py-2 text-xs font-semibold rounded-xl bg-secondary hover:bg-secondary/80 border border-border text-foreground transition-colors inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
+              >
+                <span>Next Step</span>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+              </button>
+            }
+          </div>
+
+          <div class="flex items-center gap-3">
+            <a
+              routerLink="/construction/wbs-boq"
+              class="px-5 py-2.5 text-xs font-semibold text-muted-foreground hover:text-foreground bg-secondary hover:bg-secondary/80 rounded-xl border border-border transition-colors"
+            >
+              Cancel
+            </a>
+            <app-custom-button
+              variant="primary"
+              [disabled]="wbsForm.invalid || isSaving()"
+              (clicked)="saveWBSNode()"
+            >
+              <span class="flex items-center gap-2">
+                @if (isSaving()) {
+                  Saving...
+                } @else {
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                  </svg>
+                  {{ isEditMode() ? 'Save Changes' : 'Create WBS Activity Node' }}
+                }
+              </span>
+            </app-custom-button>
+          </div>
         </div>
       </form>
     </div>
@@ -508,6 +595,93 @@ export class WbsNodeFormComponent implements OnInit {
   isSaving = signal<boolean>(false);
   isEditMode = signal<boolean>(false);
   nodeId = signal<number | null>(null);
+
+  activeTab = signal<string>('hierarchy');
+  feedbackMsg = signal<string>('');
+  errorMsg = signal<string>('');
+
+  readonly formTabs = [
+    { id: 'hierarchy', label: '1. Hierarchy & Identity', icon: '🏛️' },
+    { id: 'schedule', label: '2. Timeline & Schedule', icon: '📅' },
+    { id: 'quantities', label: '3. Scope & Quantities', icon: '📊' },
+    { id: 'dependencies', label: '4. Dependencies & Site Logs', icon: '🔗' },
+    { id: 'all', label: 'All Sections', icon: '📋' }
+  ];
+
+  private readonly tabOrder = ['hierarchy', 'schedule', 'quantities', 'dependencies'];
+
+  goToNextTab(): void {
+    const currentIndex = this.tabOrder.indexOf(this.activeTab());
+    if (currentIndex >= 0 && currentIndex < this.tabOrder.length - 1) {
+      this.activeTab.set(this.tabOrder[currentIndex + 1]);
+    }
+  }
+
+  goToPrevTab(): void {
+    const currentIndex = this.tabOrder.indexOf(this.activeTab());
+    if (currentIndex > 0) {
+      this.activeTab.set(this.tabOrder[currentIndex - 1]);
+    }
+  }
+
+  fillExampleData(): void {
+    const today = new Date();
+    const startDate = today.toISOString().split('T')[0];
+    const endDate = new Date(today.getTime() + 21 * 86400000).toISOString().split('T')[0];
+
+    const currentProjectId = this.wbsForm.get('project_id')?.value || (this.projectOptions.length > 0 ? this.projectOptions[0].value : null);
+    const contractorId = this.contractorOptions.length > 1 ? this.contractorOptions[1].value : null;
+    const parentId = this.parentOptions.length > 1 ? this.parentOptions[1].value : null;
+
+    this.wbsForm.patchValue({
+      project_id: currentProjectId,
+      parent_id: parentId,
+      node_code: 'WBS-STR-02.01',
+      node_name: 'Column Casting & Reinforcement (2nd Floor)',
+      wbs_tier: 'ACTIVITY',
+      phase_category: 'SUPERSTRUCTURE',
+      activity_type: 'RCC Framing & Concrete Placement',
+
+      planned_start_date: startDate,
+      planned_end_date: endDate,
+      duration_days: 21,
+
+      baseline_start_date: startDate,
+      baseline_end_date: endDate,
+      baseline_duration_days: 21,
+      is_critical_path: true,
+      is_milestone: false,
+
+      unit_of_measure: 'CFT',
+      planned_quantity: 1800.0,
+      approved_total_quantity: 1800.0,
+      verified_completed_quantity: 450.0,
+      progress_measurement_method: 'QUANTITY_DRIVEN',
+      progress_percentage: 25.0,
+      weightage_percentage: 7.5,
+      status: 'IN_PROGRESS',
+      schedule_revision_no: 1,
+
+      dependency_type: 'FS',
+      lag_days: 2,
+
+      contractor_id: contractorId,
+      responsible_engineer: 'Engr. Tanvir Ahmed, RE (Structural)',
+      responsible_team: 'Civil Structural Crew B',
+
+      delay_days: 0,
+      delay_reason: null,
+      forecasted_end_date: endDate,
+      weather_constraints: 'Normal dry-weather construction window.',
+      corrective_action: 'Concrete batch plant calibrated and backup vibrators staged.',
+      remarks: 'Conforming to BNBC 2020 standards and BDS 500W rebar placement criteria.'
+    });
+
+    this.recalcDuration();
+    this.recalcQuantityProgress();
+    this.feedbackMsg.set('✨ Example WBS activity data loaded for Superstructure RCC column casting.');
+    setTimeout(() => this.feedbackMsg.set(''), 5000);
+  }
 
   projectOptions: { value: any; label: string }[] = [];
   parentOptions: { value: any; label: string }[] = [];
@@ -782,7 +956,10 @@ export class WbsNodeFormComponent implements OnInit {
           this.isSaving.set(false);
           this.router.navigate(['/construction/wbs-boq']);
         },
-        error: () => this.isSaving.set(false)
+        error: (err) => {
+          this.isSaving.set(false);
+          this.errorMsg.set(err?.error?.detail || 'Failed to update WBS node.');
+        }
       });
     } else {
       this.constructionService.createWBSNode(payload).subscribe({
@@ -790,7 +967,10 @@ export class WbsNodeFormComponent implements OnInit {
           this.isSaving.set(false);
           this.router.navigate(['/construction/wbs-boq']);
         },
-        error: () => this.isSaving.set(false)
+        error: (err) => {
+          this.isSaving.set(false);
+          this.errorMsg.set(err?.error?.detail || 'Failed to create WBS node.');
+        }
       });
     }
   }

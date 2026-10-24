@@ -2,18 +2,15 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FixedAssetsService, AssetDepreciationScheduleItem } from '../../../core/services/fixed-assets.service';
-import { FixedAssetsNavComponent } from '../fixed-assets-nav/fixed-assets-nav.component';
 import { CardContainerComponent } from '../../../shared/components/card-container/card-container.component';
 import { SearchableSelectComponent, SelectOption } from '../../../shared/components/searchable-select/searchable-select.component';
 
 @Component({
   selector: 'app-depreciation-schedule',
   standalone: true,
-  imports: [CommonModule, FormsModule, FixedAssetsNavComponent, CardContainerComponent, SearchableSelectComponent],
+  imports: [CommonModule, FormsModule, CardContainerComponent, SearchableSelectComponent],
   template: `
     <div class="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
-      <app-fixed-assets-nav />
-
       <!-- Top Summary Cards -->
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-2xs">

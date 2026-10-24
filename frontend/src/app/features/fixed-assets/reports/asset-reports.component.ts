@@ -3,24 +3,15 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { FixedAssetsService } from '../../../core/services/fixed-assets.service';
-import { FixedAssetsNavComponent } from '../fixed-assets-nav/fixed-assets-nav.component';
 import { CardContainerComponent } from '../../../shared/components/card-container/card-container.component';
 import { SearchableSelectComponent, SelectOption } from '../../../shared/components/searchable-select/searchable-select.component';
-
-export interface ReportTab {
-  id: string;
-  name: string;
-  tag: string;
-}
 
 @Component({
   selector: 'app-asset-reports',
   standalone: true,
-  imports: [CommonModule, FormsModule, FixedAssetsNavComponent, CardContainerComponent, SearchableSelectComponent],
+  imports: [CommonModule, FormsModule, CardContainerComponent, SearchableSelectComponent],
   template: `
     <div class="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
-      <app-fixed-assets-nav />
-
       <!-- Recommended Implementation Rule Banner -->
       <div class="bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 rounded-xl p-4 flex items-start gap-3 shadow-2xs">
         <div class="p-1.5 rounded-lg bg-indigo-600 text-white shrink-0">
@@ -51,23 +42,6 @@ export interface ReportTab {
           >
             <span>🖨️</span> Print / Export PDF
           </button>
-        </div>
-
-        <!-- Report Tabs Strip -->
-        <div class="flex items-center gap-1.5 overflow-x-auto pb-2 border-b border-slate-200 dark:border-slate-800 mb-4 scrollbar-thin">
-          @for (tab of reportTabs; track tab.id) {
-            <button
-              type="button"
-              (click)="selectReport(tab.id)"
-              [ngClass]="activeTab === tab.id
-                ? 'bg-indigo-600 text-white font-semibold shadow-2xs'
-                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80'"
-              class="px-2.5 py-1.5 rounded-lg text-xs whitespace-nowrap transition-colors flex items-center gap-1.5"
-            >
-              <span class="text-[10px] opacity-75 font-mono">{{ tab.tag }}</span>
-              <span>{{ tab.name }}</span>
-            </button>
-          }
         </div>
 
         <!-- Filter Controls -->
@@ -451,19 +425,6 @@ export class AssetReportsComponent implements OnInit {
   reportData: any = null;
   loading = false;
 
-  reportTabs: ReportTab[] = [
-    { id: 'asset_register', name: 'Asset Register & Acquisition', tag: 'REP-01' },
-    { id: 'accumulated_depreciation', name: 'Accumulated Depreciation & NBV', tag: 'REP-02' },
-    { id: 'additions_disposals', name: 'Additions & Disposals Audit', tag: 'REP-03' },
-    { id: 'depreciation_schedule', name: 'Depreciation by Month & Year', tag: 'REP-04' },
-    { id: 'maintenance_downtime', name: 'Maintenance & Downtime', tag: 'REP-05' },
-    { id: 'warranty_insurance', name: 'Warranty & Insurance Expiry', tag: 'REP-06' },
-    { id: 'physical_verification', name: 'Physical Count Discrepancies', tag: 'REP-07' },
-    { id: 'transfer_history', name: 'Asset Transfer History', tag: 'REP-08' },
-    { id: 'gain_loss_disposal', name: 'Gain/Loss on Disposal', tag: 'REP-09' },
-    { id: 'gl_reconciliation', name: 'GL Reconciliation Statement', tag: 'REP-10' }
-  ];
-
   categoryOptions: SelectOption[] = [
     { value: 'Heavy Plant & Construction Machinery', label: 'Heavy Plant & Construction Machinery' },
     { value: 'Commercial Vehicles & Transit Mixers', label: 'Commercial Vehicles & Transit Mixers' },
@@ -484,11 +445,6 @@ export class AssetReportsComponent implements OnInit {
       }
       this.loadReportData();
     });
-  }
-
-  selectReport(tabId: string): void {
-    this.activeTab = tabId;
-    this.loadReportData();
   }
 
   loadReportData(): void {

@@ -7,7 +7,70 @@ import { ModalComponent } from '../../../shared/components';
 import { Tower, ProjectFloor, ProjectUnit, ProjectDesignRevision } from '../../../core/models/project.model';
 
 type Entity = 'towers' | 'floors' | 'units' | 'revisions';
-type Row = Record<string, any> & { id: number };
+type Row = {
+  id: number;
+  // towers
+  tower_id?: number;
+  tower_code?: string;
+  tower_name?: string;
+  building_name?: string;
+  building_code?: string;
+  building_type?: string;
+  configuration_stage?: string;
+  construction_status?: string;
+  land_parcel_id?: number;
+  total_floors?: number;
+  total_lifts?: number;
+  staircase_count?: number;
+  approved_floor_area_sqft?: number;
+  approved_height_m?: number;
+  approved_architectural_plan_ref?: string;
+  structural_drawing_ref?: string;
+  fire_safety_drawing_ref?: string;
+  // floors
+  floor_number: number;   // non-optional: used in arithmetic comparisons
+  floor_code?: string;
+  display_name?: string;
+  floor_type?: string;
+  floor_area_sqft?: number;
+  common_area_sqft?: number;
+  lobby_area_sqft?: number;
+  lift_count?: number;
+  approved_plan_ref?: string;
+  // units
+  unit_code?: string;
+  unit_name?: string;
+  unit_type?: string;
+  space_type?: string;
+  saleable_area_sqft?: number;
+  usable_carpet_area_sqft?: number;
+  balcony_area_sqft?: number;
+  bedroom_count?: number;
+  bathroom_count?: number;
+  balcony_count?: number;
+  parking_bay_count?: number;
+  parking_bay_number?: string;
+  planned_price_bdt?: number;
+  unit_status?: string;
+  // revisions
+  revision_code?: string;
+  revision_date?: string;
+  revision_type?: string;
+  revision_title?: string;
+  revision_status?: string;
+  target_level?: string;
+  description?: string;
+  requires_regulatory_approval?: boolean;
+  regulatory_authority?: string;
+  approval_memo_number?: string;
+  cost_impact_bdt: number;    // non-optional: used in arithmetic comparisons
+  area_impact_sqft: number;   // non-optional: used in arithmetic comparisons
+  drawing_reference_new?: string;
+  drawing_reference_old?: string;
+  // allow remaining dynamic fields
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [key: string]: any;
+};
 
 @Component({
   selector: 'app-project-towers-units',

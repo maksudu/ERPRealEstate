@@ -514,7 +514,26 @@ export class SidebarComponent implements OnInit {
         { id: 'safety-ncr', label: 'Health, Safety & NCR', route: '/construction/safety-ncr' },
         { id: 'mat-requisitions', label: 'Material Requisition', route: '/construction/material-requisitions' },
         { id: 'project-completion', label: 'Project Completion', route: '/construction/project-completion' },
-        { id: 'construction-reports', label: 'Reports', route: '/construction/reports' }
+        {
+          id: 'construction-reports',
+          label: 'Reports',
+          children: [
+            { id: 'construction-report-progress', label: 'Progress & Schedule · Project Progress', route: '/construction/reports', queryParams: { type: 'PROJECT_PROGRESS' } },
+            { id: 'construction-report-wbs-delay', label: 'Progress & Schedule · WBS Delay', route: '/construction/reports', queryParams: { type: 'WBS_DELAY' } },
+            { id: 'construction-report-boq-actual', label: 'Cost & Budget · BOQ vs Actual', route: '/construction/reports', queryParams: { type: 'BOQ_VS_ACTUAL' } },
+            { id: 'construction-report-budget-actual', label: 'Cost & Budget · Budget vs Actual', route: '/construction/reports', queryParams: { type: 'BUDGET_COMMITTED_ACTUAL' } },
+            { id: 'construction-report-material', label: 'Materials & Store · Consumption & Wastage', route: '/construction/reports', queryParams: { type: 'MATERIAL_CONSUMPTION' } },
+            { id: 'construction-report-work-order', label: 'Contractor & Contracts · Work Orders', route: '/construction/reports', queryParams: { type: 'CONTRACTOR_WORK_ORDER' } },
+            { id: 'construction-report-bill-ageing', label: 'Billing & Payments · Bill Ageing', route: '/construction/reports', queryParams: { type: 'BILL_CERTIFICATION_AGEING' } },
+            { id: 'construction-report-retention', label: 'Billing & Payments · Advance & Retention', route: '/construction/reports', queryParams: { type: 'ADVANCE_RETENTION_LIABILITY' } },
+            { id: 'construction-report-labour', label: 'Workforce & Site Ops · Labour Productivity', route: '/construction/reports', queryParams: { type: 'LABOUR_PRODUCTIVITY' } },
+            { id: 'construction-report-quality', label: 'Quality & Safety · NCR & Defect Closure', route: '/construction/reports', queryParams: { type: 'QUALITY_NCR_CLOSURE' } },
+            { id: 'construction-report-safety', label: 'Quality & Safety · Safety Incidents', route: '/construction/reports', queryParams: { type: 'SAFETY_INCIDENTS_CAPA' } },
+            { id: 'construction-report-completion', label: 'Closeout & Handover · Completion Checklist', route: '/construction/reports', queryParams: { type: 'COMPLETION_CHECKLIST' } },
+            { id: 'construction-report-eac', label: 'Cost & Budget · EAC & Cost Variance', route: '/construction/reports', queryParams: { type: 'EAC_COST_VARIANCE' } },
+            { id: 'construction-report-wip', label: 'Cost & Budget · Construction WIP', route: '/construction/reports', queryParams: { type: 'CONSTRUCTION_WIP_ALLOCATION' } }
+          ]
+        }
       ]
     },
     {

@@ -2,17 +2,14 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FixedAssetsService, AssetDashboardSummary } from '../../../core/services/fixed-assets.service';
-import { FixedAssetsNavComponent } from '../fixed-assets-nav/fixed-assets-nav.component';
 import { CardContainerComponent } from '../../../shared/components/card-container/card-container.component';
 
 @Component({
   selector: 'app-fixed-assets-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, FixedAssetsNavComponent, CardContainerComponent],
+  imports: [CommonModule, RouterLink, CardContainerComponent],
   template: `
     <div class="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
-      <app-fixed-assets-nav />
-
       <!-- Top Executive Metrics Cockpit -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <!-- Metric 1: Acquisition Cost -->

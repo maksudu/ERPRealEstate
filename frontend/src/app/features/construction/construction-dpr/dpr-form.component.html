@@ -86,6 +86,25 @@
     </div>
   </div>
 
+  <!-- Tab Navigation Bar -->
+  <div class="flex items-center gap-1.5 overflow-x-auto pb-1 border-b border-border scrollbar-none">
+    @for (tab of tabs; track tab.id) {
+      <button
+        type="button"
+        (click)="activeTab.set(tab.id)"
+        class="flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-150 cursor-pointer"
+        [class]="activeTab() === tab.id
+          ? 'bg-primary text-primary-foreground shadow-sm shadow-primary/20'
+          : 'bg-card border border-border text-muted-foreground hover:text-foreground hover:bg-secondary/70'"
+      >
+        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" [attr.d]="tab.icon" />
+        </svg>
+        <span>{{ tab.label }}</span>
+      </button>
+    }
+  </div>
+
   <!-- Main Unified Card Container -->
   <app-card-container
     [title]="'Site Activity, Quantities & Progress Log'"
@@ -93,7 +112,9 @@
   >
     <form [formGroup]="dprForm" class="flex flex-col gap-8">
 
-      <!-- SECTION 1: PROJECT & LOCATION CONTEXT -->
+      <!-- TAB 1: CONTEXT & LOCATION -->
+      <div [class.hidden]="activeTab() !== 'context' && activeTab() !== 'all'" class="flex flex-col gap-8">
+        <!-- SECTION 1: PROJECT & LOCATION CONTEXT -->
       <div class="space-y-4">
         <div class="flex items-center justify-between pb-2 border-b border-border">
           <h3 class="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
@@ -261,8 +282,12 @@
           placeholder="e.g. Plot 14, Road 11, Gulshan-2, Dhaka"
         ></app-custom-input>
       </div>
+      </div>
+      <!-- END TAB 1: CONTEXT & LOCATION -->
 
-      <!-- SECTION 3: ACTIVITIES PLANNED AND COMPLETED -->
+      <!-- TAB 2: ACTIVITIES & BOQ LOG -->
+      <div [class.hidden]="activeTab() !== 'activities_boq' && activeTab() !== 'all'" class="flex flex-col gap-8">
+        <!-- SECTION 3: ACTIVITIES PLANNED AND COMPLETED -->
       <div class="space-y-4">
         <h3 class="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-border">
           <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
@@ -296,25 +321,58 @@
 
       <!-- SECTION 4: QUANTITIES COMPLETED AGAINST THE BOQ -->
       <div class="space-y-4">
-        <div class="flex items-center justify-between pb-2 border-b border-border">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-border">
           <div>
             <h3 class="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
               <span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span>
-              4. Quantities Completed Against the BOQ
+              4. Quantities Completed Against the BOQ & Progress Log
             </h3>
             <p class="text-xs text-muted-foreground mt-0.5">Physical progress measurements for daily quantity surveyor verification</p>
           </div>
           @if (!isViewMode()) {
-            <button
-              type="button"
-              (click)="addBoqRow()"
-              class="px-3 py-1.5 text-xs font-medium text-primary bg-primary/10 hover:bg-primary/20 border border-primary/20 rounded-lg transition-colors flex items-center gap-1 shadow-xs"
-            >
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-              </svg>
-              + Add BOQ Measurement
-            </button>
+            <div class="flex items-center flex-wrap gap-2">
+              <!-- Download Sample Template Button -->
+              <button
+                type="button"
+                (click)="downloadBoqSampleTemplate()"
+                class="px-2.5 py-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 rounded-lg transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
+                title="Download Excel (.xlsx) sample template with pre-filled format"
+              >
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                </svg>
+                Download Sample Excel
+              </button>
+
+              <!-- Upload Excel/CSV Log Button -->
+              <label
+                class="px-2.5 py-1.5 text-xs font-medium text-purple-600 dark:text-purple-400 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 rounded-lg transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
+                title="Upload Excel (.xlsx, .xls) or CSV progress measurement records"
+              >
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l4-4m0 0l4 4m-4-4v12"/>
+                </svg>
+                Upload Excel / CSV Log
+                <input
+                  type="file"
+                  accept=".xlsx, .xls, .csv"
+                  (change)="onBoqExcelUpload($event)"
+                  class="hidden"
+                />
+              </label>
+
+              <!-- Add Manual Row -->
+              <button
+                type="button"
+                (click)="addBoqRow()"
+                class="px-3 py-1.5 text-xs font-medium text-primary bg-primary/10 hover:bg-primary/20 border border-primary/20 rounded-lg transition-colors flex items-center gap-1 shadow-xs cursor-pointer"
+              >
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                + Add BOQ Measurement
+              </button>
+            </div>
           }
         </div>
 
@@ -411,76 +469,69 @@
           </table>
         </div>
       </div>
+      </div>
+      <!-- END TAB 2: ACTIVITIES & BOQ LOG -->
 
-      <!-- SECTION 5: LABOUR & CONTRACTOR WORKFORCE PRESENT -->
-      <div class="space-y-4">
-        <div class="flex items-center justify-between pb-2 border-b border-border">
-          <div>
-            <h3 class="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-              <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-              5. Labour & Contractor Workforce Present
-            </h3>
-            <p class="text-xs text-muted-foreground mt-0.5">Headcount by trade category and contractor for productivity metrics</p>
+      <!-- TAB 3: WORKFORCE & MACHINERY -->
+      <div [class.hidden]="activeTab() !== 'labor_equipment' && activeTab() !== 'all'" class="flex flex-col gap-8">
+        <!-- SECTION 5: LABOUR & CONTRACTOR WORKFORCE PRESENT -->
+        <div class="space-y-4">
+          <div class="flex items-center justify-between pb-2 border-b border-border">
+            <div>
+              <h3 class="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                5. Labour & Contractor Workforce Present
+              </h3>
+              <p class="text-xs text-muted-foreground mt-0.5">Headcount by trade category and contractor for productivity metrics</p>
+            </div>
+            @if (!isViewMode()) {
+              <button
+                type="button"
+                (click)="addLaborRow()"
+                class="px-3 py-1.5 text-xs font-medium text-amber-600 dark:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 rounded-lg transition-colors flex items-center gap-1 shadow-xs"
+              >
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                + Add Trade / Workforce Row
+              </button>
+            }
           </div>
-          @if (!isViewMode()) {
-            <button
-              type="button"
-              (click)="addLaborRow()"
-              class="px-3 py-1.5 text-xs font-medium text-amber-600 dark:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 rounded-lg transition-colors flex items-center gap-1 shadow-xs"
-            >
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-              </svg>
-              + Add Trade / Workforce Row
-            </button>
-          }
-        </div>
 
-        <!-- Labor Muster Repeater -->
-        <div class="overflow-x-auto rounded-xl border border-border bg-card">
-          <table class="w-full text-left text-xs">
-            <thead class="bg-secondary text-muted-foreground font-semibold border-b border-border uppercase tracking-wider">
-              <tr>
-                <th class="p-3 w-1/3">Contractor / Agency</th>
-                <th class="p-3 w-1/4">Trade Category</th>
-                <th class="p-3 w-28 text-center">Workers</th>
-                <th class="p-3 w-32 text-right">Daily Wage (৳)</th>
-                <th class="p-3 w-36 text-right">Subtotal (৳)</th>
-                @if (!isViewMode()) {
-                  <th class="p-3 w-12 text-center">Action</th>
-                }
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-border">
-              @for (ctrl of laborArray.controls; track $index) {
-                <tr [formGroup]="$any(ctrl)" class="hover:bg-muted/30 transition-colors">
-                  <td class="p-2">
-                    <select
-                      formControlName="contractor_id"
-                      class="w-full px-2.5 py-1.5 text-xs bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                    >
-                      <option [ngValue]="null">Direct / Departmental Labor</option>
-                      @for (c of contractors(); track c.id) {
-                        <option [ngValue]="c.id">{{ c.company_name || c.contractor_name }} ({{ c.trade_category }})</option>
-                      }
-                    </select>
-                  </td>
-                  <td class="p-2">
-                    <select
-                      formControlName="trade_category"
-                      class="w-full px-2.5 py-1.5 text-xs bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                    >
-                      <option value="CIVIL_MASONRY">Civil Masonry / Brickwork</option>
-                      <option value="REBAR_FITTER">Rebar Fitter / Rod Binder</option>
-                      <option value="SHUTTERING_CARPENTER">Shuttering Carpenter</option>
-                      <option value="CONCRETE_LABOR">Concrete Pouring Labor</option>
-                      <option value="PLUMBING_MEP">Plumbing & Sanitary MEP</option>
-                      <option value="ELECTRICAL">Electrical Works</option>
-                      <option value="TILE_MARBLE">Tile & Marble Mason</option>
-                      <option value="PAINTING">Painting & Finishing</option>
-                      <option value="HEAVY_EQUIP_OPERATOR">Equipment Operator</option>
-                    </select>
-                  </td>
+          <!-- Labor Muster Repeater -->
+          <div class="overflow-x-auto rounded-xl border border-border bg-card">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-secondary text-muted-foreground font-semibold border-b border-border uppercase tracking-wider">
+                <tr>
+                  <th class="p-3 w-1/3">Contractor / Agency</th>
+                  <th class="p-3 w-1/4">Trade Category</th>
+                  <th class="p-3 w-28 text-center">Workers</th>
+                  <th class="p-3 w-32 text-right">Daily Wage (৳)</th>
+                  <th class="p-3 w-36 text-right">Subtotal (৳)</th>
+                  @if (!isViewMode()) {
+                    <th class="p-3 w-12 text-center">Action</th>
+                  }
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-border">
+                @for (ctrl of laborArray.controls; track $index) {
+                  <tr [formGroup]="$any(ctrl)" class="hover:bg-muted/30 transition-colors">
+                    <td class="p-2 min-w-[200px]">
+                      <app-searchable-select
+                        [options]="contractorOptions"
+                        formControlName="contractor_id"
+                        placeholder="Direct / Subcontractor..."
+                        [allowCreateNew]="false"
+                      ></app-searchable-select>
+                    </td>
+                    <td class="p-2 min-w-[180px]">
+                      <app-searchable-select
+                        [options]="tradeCategoryOptions"
+                        formControlName="trade_category"
+                        placeholder="Select Trade..."
+                        [allowCreateNew]="false"
+                      ></app-searchable-select>
+                    </td>
                   <td class="p-2">
                     <input
                       type="number"
@@ -619,15 +670,13 @@
                       class="w-full px-2.5 py-1.5 text-xs bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
                     />
                   </td>
-                  <td class="p-2">
-                    <select
+                  <td class="p-2 min-w-[140px]">
+                    <app-searchable-select
+                      [options]="equipmentStatusOptions"
                       formControlName="status"
-                      class="w-full px-2.5 py-1.5 text-xs bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                    >
-                      <option value="OPERATIONAL">Operational</option>
-                      <option value="STANDBY">Standby</option>
-                      <option value="BREAKDOWN">Breakdown</option>
-                    </select>
+                      placeholder="Select Status..."
+                      [allowCreateNew]="false"
+                    ></app-searchable-select>
                   </td>
                   @if (!isViewMode()) {
                     <td class="p-2 text-center">
@@ -661,8 +710,12 @@
           </table>
         </div>
       </div>
+      </div>
+      <!-- END TAB 3: WORKFORCE & MACHINERY -->
 
-      <!-- SECTION 7: MATERIALS RECEIVED, ISSUED, CONSUMED & WASTAGE -->
+      <!-- TAB 4: MATERIALS & WASTAGE -->
+      <div [class.hidden]="activeTab() !== 'materials' && activeTab() !== 'all'" class="flex flex-col gap-8">
+        <!-- SECTION 7: MATERIALS RECEIVED, ISSUED, CONSUMED & WASTAGE -->
       <div class="space-y-4">
         <div class="flex items-center justify-between pb-2 border-b border-border">
           <div>
@@ -804,8 +857,12 @@
           [rows]="2"
         ></app-custom-textarea>
       </div>
+      </div>
+      <!-- END TAB 4: MATERIALS & WASTAGE -->
 
-      <!-- SECTION 8: INSPECTION REQUESTS & QUALITY OBSERVATIONS -->
+      <!-- TAB 5: QUALITY, SAFETY & DELAYS -->
+      <div [class.hidden]="activeTab() !== 'quality_delays' && activeTab() !== 'all'" class="flex flex-col gap-8">
+        <!-- SECTION 8: INSPECTION REQUESTS & QUALITY OBSERVATIONS -->
       <div class="space-y-4">
         <h3 class="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-border">
           <span class="w-2.5 h-2.5 rounded-full bg-teal-500"></span>
@@ -913,8 +970,12 @@
           ></app-custom-textarea>
         </div>
       </div>
+      </div>
+      <!-- END TAB 5: QUALITY, SAFETY & DELAYS -->
 
-      <!-- SECTION 10: SITE PHOTOGRAPHS WITH LOCATION & TIMESTAMPS -->
+      <!-- TAB 6: PHOTOS & SIGN-OFF -->
+      <div [class.hidden]="activeTab() !== 'photos_approval' && activeTab() !== 'all'" class="flex flex-col gap-8">
+        <!-- SECTION 10: SITE PHOTOGRAPHS WITH LOCATION & TIMESTAMPS -->
       <div class="space-y-4">
         <h3 class="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-border">
           <span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
@@ -1050,28 +1111,60 @@
           }
         </div>
       }
+      </div>
+      <!-- END TAB 6: PHOTOS & SIGN-OFF -->
 
-      <!-- Bottom Floating Form Action Bar -->
-      @if (!isViewMode()) {
-        <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-border">
-          <div class="text-xs text-muted-foreground flex items-center gap-2">
+      <!-- Bottom Floating Form Action Bar with Tab Navigation -->
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-border">
+        <!-- Left: Previous Section button or audit note -->
+        <div class="flex items-center gap-3">
+          @if (activeTab() !== 'all' && activeTab() !== 'context') {
+            <button
+              type="button"
+              (click)="prevTab()"
+              class="px-4 py-2 text-xs font-semibold text-foreground bg-secondary hover:bg-secondary/80 rounded-xl border border-border transition-colors flex items-center gap-1.5 cursor-pointer"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+              </svg>
+              Previous Section
+            </button>
+          }
+          <div class="text-xs text-muted-foreground hidden md:flex items-center gap-2">
             <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
             </svg>
             <span>Auto conflict detection and revision audit history active</span>
           </div>
+        </div>
 
-          <div class="flex items-center gap-3">
-            <a
-              routerLink="/construction/dpr"
-              class="px-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground bg-secondary hover:bg-secondary/80 rounded-xl border border-border transition-colors"
+        <!-- Right: Next Section, Save Offline, Submit -->
+        <div class="flex items-center flex-wrap gap-2 sm:gap-3">
+          @if (activeTab() !== 'all' && activeTab() !== 'photos_approval') {
+            <button
+              type="button"
+              (click)="nextTab()"
+              class="px-4 py-2 text-xs font-semibold text-primary bg-primary/10 hover:bg-primary/20 rounded-xl border border-primary/20 transition-colors flex items-center gap-1.5 cursor-pointer"
             >
-              Cancel
-            </a>
+              Next Section
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+              </svg>
+            </button>
+          }
+
+          <a
+            routerLink="/construction/dpr"
+            class="px-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground bg-secondary hover:bg-secondary/80 rounded-xl border border-border transition-colors"
+          >
+            Cancel
+          </a>
+
+          @if (!isViewMode()) {
             <button
               type="button"
               (click)="saveOfflineDraft()"
-              class="px-4 py-2 text-xs font-medium text-amber-600 dark:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded-xl transition-colors flex items-center gap-1.5"
+              class="px-4 py-2 text-xs font-medium text-amber-600 dark:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>
@@ -1098,9 +1191,9 @@
                 }
               </span>
             </app-custom-button>
-          </div>
+          }
         </div>
-      }
+      </div>
     </form>
   </app-card-container>
 </div>

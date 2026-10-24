@@ -14,6 +14,20 @@ export const FIXED_ASSETS_ROUTES: Routes = [
       )
   },
   {
+    path: 'asset-register/new',
+    loadComponent: () =>
+      import('./asset-register/asset-register.component').then(
+        (m) => m.AssetRegisterComponent
+      )
+  },
+  {
+    path: 'asset-register/:id/edit',
+    loadComponent: () =>
+      import('./asset-register/asset-register.component').then(
+        (m) => m.AssetRegisterComponent
+      )
+  },
+  {
     path: 'asset-register',
     loadComponent: () =>
       import('./asset-register/asset-register.component').then(

@@ -5,12 +5,6 @@ import { ActivatedRoute } from '@angular/router';
 import { BudgetingService } from '../../../core/services/budgeting.service';
 import { CardContainerComponent, SearchableSelectComponent } from '../../../shared/components';
 
-export interface ReportTabItem {
-  id: string;
-  name: string;
-  tag: string;
-}
-
 @Component({
   selector: 'app-budget-reports',
   standalone: true,
@@ -68,22 +62,6 @@ export interface ReportTabItem {
             </svg>
             <span>Export to Excel</span>
           </button>
-        </div>
-
-        <!-- 10 Key Reports Pill Selector -->
-        <div class="mb-5 overflow-x-auto pb-2 border-b border-slate-200 dark:border-slate-800">
-          <div class="flex items-center gap-1.5 whitespace-nowrap">
-            @for (r of reportList; track r.id) {
-              <button
-                (click)="selectReport(r.id)"
-                class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
-                [ngClass]="activeReportId === r.id ? 'bg-slate-900 text-white dark:bg-emerald-600 dark:text-white shadow-2xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'"
-              >
-                <span class="text-[10px] opacity-70 mr-1">#{{ r.tag }}</span>
-                <span>{{ r.name }}</span>
-              </button>
-            }
-          </div>
         </div>
 
         <!-- Filter Bar -->
@@ -554,19 +532,6 @@ export class BudgetReportsComponent implements OnInit {
   selectedProjectId?: number;
   selectedTower?: string;
 
-  reportList: ReportTabItem[] = [
-    { id: 'project_expenditure', name: 'Project Approved vs Spent', tag: '01' },
-    { id: 'boq_vs_actual', name: 'BOQ Budget vs Actual Cost', tag: '02' },
-    { id: 'tower_floor_cost', name: 'Tower & Floor Cost Analysis', tag: '03' },
-    { id: 'material_consumption', name: 'Material & Rebar Wastage', tag: '04' },
-    { id: 'purchase_commitments', name: 'Purchase Commitments & Remaining', tag: '05' },
-    { id: 'contractor_retention', name: 'Contractor Bill & Retention', tag: '06' },
-    { id: 'variation_history', name: 'Budget Variation & Revisions', tag: '07' },
-    { id: 'overrun_alerts', name: 'Cost Overrun Alerts', tag: '08' },
-    { id: 'cost_to_complete', name: 'Estimated Cost to Complete', tag: '09' },
-    { id: 'profitability_sqft', name: 'Project Profitability & Cost/SqFt', tag: '10' }
-  ];
-
   ngOnInit() {
     this.route.queryParams.subscribe(params => {
       if (params['type']) {
@@ -574,11 +539,6 @@ export class BudgetReportsComponent implements OnInit {
       }
       this.loadActiveReport();
     });
-  }
-
-  selectReport(reportId: string) {
-    this.activeReportId = reportId;
-    this.loadActiveReport();
   }
 
   loadActiveReport() {
