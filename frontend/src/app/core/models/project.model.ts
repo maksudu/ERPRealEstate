@@ -74,6 +74,12 @@ export interface BOQItem {
   id: number;
   project_id: number;
   tower_id?: number;
+  tower_name?: string | null;
+  wbs_node_id?: number | null;
+  item_code?: string | null;
+  stage?: string;
+  approved_by?: string | null;
+  approval_date?: string | null;
   wbs_phase_id: string; // SUB_STRUCTURE, PILING, SUPER_STRUCTURE, BRICK_WORK, FINISHING, MEP
   material_category_id: string; // REBAR_500W, CEMENT_OPC, SAND_FM_2_5, STONE_CHIPS, BRICKS_AUTO, CERAMIC_TILES
   item_description: string;
@@ -82,6 +88,7 @@ export interface BOQItem {
   estimated_unit_rate: number;
   total_estimated_cost: number;
   actual_consumed_quantity: number;
+  requisitioned_quantity?: number;
   created_at?: string;
 }
 

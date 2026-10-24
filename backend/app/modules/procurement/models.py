@@ -308,6 +308,18 @@ class PurchaseOrder(Base):
     po_date = Column(Date, nullable=False, default=func.current_date())
     delivery_deadline = Column(Date, nullable=False)
     destination_store_id = Column(BigInteger, ForeignKey("scm_site_stores.id", ondelete="RESTRICT"), nullable=False, index=True)
+    boq_item_id = Column(BigInteger, ForeignKey("prj_boq_items.id", ondelete="SET NULL"), nullable=True, index=True)
+    wbs_node_id = Column(BigInteger, ForeignKey("con_wbs_nodes.id", ondelete="SET NULL"), nullable=True, index=True)
+    order_type = Column(String(32), nullable=False, default="LOCAL")
+    item_specification = Column(Text, nullable=True)
+    discount_amount_bdt = Column(Numeric(14, 2), nullable=False, default=0)
+    tax_amount_bdt = Column(Numeric(14, 2), nullable=False, default=0)
+    payment_terms_days = Column(Integer, nullable=False, default=30)
+    advance_payment_amount_bdt = Column(Numeric(14, 2), nullable=False, default=0)
+    revision_number = Column(Integer, nullable=False, default=1)
+    revision_history = Column(JSON, nullable=True)
+    line_items = Column(JSON, nullable=True)
+    payment_terms = Column(String(255), nullable=True)
     
     # Multi-tier approval & delivery schedule
     approval_status = Column(String(32), nullable=False, default="APPROVED", index=True) # DRAFT, PENDING_APPROVAL, APPROVED, REJECTED

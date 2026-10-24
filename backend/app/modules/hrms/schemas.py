@@ -1284,6 +1284,7 @@ class SalaryGradeBase(BaseModel):
     default_house_rent_pct: Decimal = Decimal("50.00")
     default_medical_allowance: Decimal = Decimal("2500.00")
     default_conveyance: Decimal = Decimal("3000.00")
+    allowance_package: Optional[List[Dict[str, Any]]] = None
     description: Optional[str] = None
     is_active: bool = True
 
@@ -1299,6 +1300,7 @@ class SalaryGradeUpdate(BaseModel):
     default_house_rent_pct: Optional[Decimal] = None
     default_medical_allowance: Optional[Decimal] = None
     default_conveyance: Optional[Decimal] = None
+    allowance_package: Optional[List[Dict[str, Any]]] = None
     description: Optional[str] = None
     is_active: Optional[bool] = None
 

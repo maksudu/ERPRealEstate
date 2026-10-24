@@ -234,14 +234,23 @@ export class ProcurementService {
     return this.http.put<PurchaseOrder>(`${this.baseUrl}/purchase-orders/${poId}/approve`, payload);
   }
 
+  sendPurchaseOrderToSupplier(poId: number): Observable<PurchaseOrder> {
+    return this.http.post<PurchaseOrder>(`${this.baseUrl}/purchase-orders/${poId}/send`, {});
+  }
+
+  submitDraftPurchaseOrder(poId: number): Observable<PurchaseOrder> {
+    return this.http.post<PurchaseOrder>(`${this.baseUrl}/purchase-orders/${poId}/submit`, {});
+  }
+
   deletePurchaseOrder(poId: number): Observable<any> {
     return this.http.delete(`${this.baseUrl}/purchase-orders/${poId}`);
   }
 
   // 8. Goods Receipt Notes (GRN) & Gate Entry
-  getGoodsReceipts(filters?: { po_id?: number; match_status?: string; qc_status?: string; search?: string; limit?: number; offset?: number }): Observable<GoodsReceipt[]> {
+  getGoodsReceipts(filters?: { po_id?: number; pr_id?: number; match_status?: string; qc_status?: string; search?: string; limit?: number; offset?: number }): Observable<GoodsReceipt[]> {
     let params = new HttpParams();
     if (filters?.po_id) params = params.set('po_id', filters.po_id);
+    if (filters?.pr_id) params = params.set('pr_id', filters.pr_id);
     if (filters?.match_status) params = params.set('match_status', filters.match_status);
     if (filters?.qc_status) params = params.set('qc_status', filters.qc_status);
     if (filters?.search) params = params.set('search', filters.search);

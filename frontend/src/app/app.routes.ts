@@ -964,6 +964,11 @@ export const routes: Routes = [
         title: 'RFQ & Supplier Quotation Comparison '
       },
       {
+        path: 'procurement/purchase-orders/new',
+        loadComponent: () => import('./features/procurement/purchase-orders/purchase-orders.component').then(m => m.PurchaseOrdersComponent),
+        title: 'Create Purchase Order'
+      },
+      {
         path: 'procurement/purchase-orders',
         loadComponent: () => import('./features/procurement/purchase-orders/purchase-orders.component').then(m => m.PurchaseOrdersComponent),
         title: 'Purchase Order (PO) Management '
@@ -1546,6 +1551,28 @@ export const routes: Routes = [
 
       // 2. Organization Setup Routes
       {
+        path: 'hrms/org/:entity/new',
+        loadComponent: () => import('./features/hrms/org-structure/org-master-form.component').then(m => m.OrgMasterFormComponent),
+        title: 'Create Organization Master'
+      },
+      {
+        path: 'hrms/org/:entity/:id/edit',
+        loadComponent: () => import('./features/hrms/org-structure/org-master-form.component').then(m => m.OrgMasterFormComponent),
+        title: 'Edit Organization Master'
+      },
+      {
+        path: 'hrms/departments/new',
+        loadComponent: () => import('./features/hrms/org-structure/org-master-form.component').then(m => m.OrgMasterFormComponent),
+        data: { entity: 'departments' },
+        title: 'Create Department'
+      },
+      {
+        path: 'hrms/departments/:id/edit',
+        loadComponent: () => import('./features/hrms/org-structure/org-master-form.component').then(m => m.OrgMasterFormComponent),
+        data: { entity: 'departments' },
+        title: 'Edit Department'
+      },
+      {
         path: 'hrms/org-structure',
         loadComponent: () => import('./features/hrms/org-structure/org-structure.component').then(m => m.OrgStructureComponent),
         title: 'Company Master & Org Structure '
@@ -1579,6 +1606,48 @@ export const routes: Routes = [
         path: 'hrms/departments',
         loadComponent: () => import('./features/hrms/departments/departments.component').then(m => m.DepartmentsComponent),
         title: 'Department Master '
+      },
+      {
+        path: 'hrms/departments/heads/new',
+        loadComponent: () => import('./features/hrms/hrms-master-form.component').then(m => m.HrmsMasterFormComponent),
+        data: { formKind: 'head' },
+        title: 'Assign Department Head'
+      },
+      {
+        path: 'hrms/departments/hierarchy/:id/edit',
+        loadComponent: () => import('./features/hrms/hrms-master-form.component').then(m => m.HrmsMasterFormComponent),
+        data: { formKind: 'hierarchy' },
+        title: 'Change Department Hierarchy'
+      },
+      {
+        path: 'hrms/departments/heads/:id/edit',
+        loadComponent: () => import('./features/hrms/hrms-master-form.component').then(m => m.HrmsMasterFormComponent),
+        data: { formKind: 'head' },
+        title: 'Assign Department Head'
+      },
+      {
+        path: 'hrms/designations/grades/new',
+        loadComponent: () => import('./features/hrms/hrms-master-form.component').then(m => m.HrmsMasterFormComponent),
+        data: { formKind: 'grade' },
+        title: 'Create Salary Grade'
+      },
+      {
+        path: 'hrms/designations/grades/:id/edit',
+        loadComponent: () => import('./features/hrms/hrms-master-form.component').then(m => m.HrmsMasterFormComponent),
+        data: { formKind: 'grade' },
+        title: 'Edit Salary Grade'
+      },
+      {
+        path: 'hrms/designations/new',
+        loadComponent: () => import('./features/hrms/hrms-master-form.component').then(m => m.HrmsMasterFormComponent),
+        data: { formKind: 'designation' },
+        title: 'Create Designation'
+      },
+      {
+        path: 'hrms/designations/:id/edit',
+        loadComponent: () => import('./features/hrms/hrms-master-form.component').then(m => m.HrmsMasterFormComponent),
+        data: { formKind: 'designation' },
+        title: 'Edit Designation'
       },
       {
         path: 'hrms/departments/hierarchy',
@@ -1648,8 +1717,18 @@ export const routes: Routes = [
         title: 'Documents Vault '
       },
       {
+        path: 'hrms/employees/emergency-contacts/new',
+        loadComponent: () => import('./features/hrms/employees/employee-emergency-contacts.component').then(m => m.EmployeeEmergencyContactsComponent),
+        title: 'Add Emergency Contact'
+      },
+      {
+        path: 'hrms/employees/emergency-contacts/:id/edit',
+        loadComponent: () => import('./features/hrms/employees/employee-emergency-contacts.component').then(m => m.EmployeeEmergencyContactsComponent),
+        title: 'Edit Emergency Contact'
+      },
+      {
         path: 'hrms/employees/emergency-contacts',
-        loadComponent: () => import('./features/hrms/employees/employee-list.component').then(m => m.EmployeeListComponent),
+        loadComponent: () => import('./features/hrms/employees/employee-emergency-contacts.component').then(m => m.EmployeeEmergencyContactsComponent),
         title: 'Emergency Contacts '
       },
       {

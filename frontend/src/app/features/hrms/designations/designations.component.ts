@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HrmsPositionService } from '../../../core/services/hrms-position.service';
 import { HrmsDepartmentService } from '../../../core/services/hrms-department.service';
 import { HrmsOrgService } from '../../../core/services/hrms-org.service';
@@ -47,6 +47,7 @@ import {
 })
 export class DesignationsComponent implements OnInit {
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   posService = inject(HrmsPositionService);
   deptService = inject(HrmsDepartmentService);
   orgService = inject(HrmsOrgService);
@@ -278,6 +279,7 @@ export class DesignationsComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.successMessage.set(history.state?.hrmsNotice || null);
     this.route.url.subscribe(segments => {
       const last = segments[segments.length - 1]?.path;
       if (last === 'grades') {
@@ -331,27 +333,11 @@ export class DesignationsComponent implements OnInit {
   }
 
   openCreateDesigModal(): void {
-    this.editingDesigId.set(null);
-    this.desigForm = this.getEmptyDesigForm();
-    this.isDesigModalOpen.set(true);
+    this.router.navigate(['/hrms/designations/new']);
   }
 
   openEditDesigModal(d: Designation): void {
-    this.editingDesigId.set(d.id);
-    this.desigForm = {
-      department_id: d.department_id,
-      designation_code: d.designation_code,
-      title_en: d.title_en,
-      title_bn: d.title_bn,
-      salary_grade_id: d.salary_grade_id || null,
-      grade_level: d.grade_level,
-      employee_level: d.employee_level,
-      min_salary: d.min_salary,
-      max_salary: d.max_salary,
-      description: d.description,
-      is_active: d.is_active
-    };
-    this.isDesigModalOpen.set(true);
+    this.router.navigate(['/hrms/designations', d.id, 'edit']);
   }
 
   saveDesignation(): void {
@@ -403,26 +389,11 @@ export class DesignationsComponent implements OnInit {
   }
 
   openCreateGradeModal(): void {
-    this.editingGradeId.set(null);
-    this.gradeForm = this.getEmptyGradeForm();
-    this.isGradeModalOpen.set(true);
+    this.router.navigate(['/hrms/designations/grades/new']);
   }
 
   openEditGradeModal(g: SalaryGrade): void {
-    this.editingGradeId.set(g.id);
-    this.gradeForm = {
-      grade_code: g.grade_code,
-      grade_name: g.grade_name,
-      employee_level: g.employee_level,
-      min_salary: g.min_salary,
-      max_salary: g.max_salary,
-      default_house_rent_pct: g.default_house_rent_pct,
-      default_medical_allowance: g.default_medical_allowance,
-      default_conveyance: g.default_conveyance,
-      description: g.description,
-      is_active: g.is_active
-    };
-    this.isGradeModalOpen.set(true);
+    this.router.navigate(['/hrms/designations/grades', g.id, 'edit']);
   }
 
   saveSalaryGrade(): void {

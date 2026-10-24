@@ -315,7 +315,7 @@ export class EmployeeListComponent implements OnInit {
   ngOnInit(): void {
     this.route.url.subscribe(segments => {
       const last = segments[segments.length - 1]?.path;
-      if (last === 'add') {
+      if (last === 'new' || last === 'add') {
         setTimeout(() => this.openCreateModal(), 200);
       } else if (last === 'documents') {
         this.activeMainTab.set('documents');
@@ -326,6 +326,7 @@ export class EmployeeListComponent implements OnInit {
           if (emps.length > 0) this.openDrawer(emps[0]);
         }, 500);
       } else {
+        this.successMessage.set(history.state?.hrmsNotice || null);
         this.activeMainTab.set('directory');
       }
     });
@@ -414,6 +415,11 @@ export class EmployeeListComponent implements OnInit {
 
   // --- Add / Edit Modal Controls ---
   openCreateModal(): void {
+    this.prepareCreateForm();
+    this.isModalOpen.set(true);
+  }
+
+  private prepareCreateForm(): void {
     this.modalMode.set('create');
     this.modalActiveTab.set('registration');
     this.editingId.set(null);
@@ -428,7 +434,6 @@ export class EmployeeListComponent implements OnInit {
     initial.designation_id = defaultDesig;
     this.formData.set(initial);
 
-    this.isModalOpen.set(true);
   }
 
   openEditModal(emp: Employee): void {
@@ -485,7 +490,6 @@ export class EmployeeListComponent implements OnInit {
       user_id: emp.user_id,
       system_role: emp.system_role || 'EMPLOYEE'
     });
-
     this.isModalOpen.set(true);
   }
 

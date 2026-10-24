@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HrmsOrgService } from '../../../core/services/hrms-org.service';
 import { ProjectService } from '../../../core/services/project.service';
 import { HrmsService } from '../hrms.service';
@@ -45,6 +45,7 @@ import {
 })
 export class OrgStructureComponent implements OnInit {
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   orgService = inject(HrmsOrgService);
   projectService = inject(ProjectService);
   hrmsService = inject(HrmsService);
@@ -145,6 +146,7 @@ export class OrgStructureComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.successMessage.set(history.state?.hrmsNotice || null);
     this.route.url.subscribe(segments => {
       const last = segments[segments.length - 1]?.path;
       if (last === 'companies') this.activeTab.set('companies');
@@ -195,37 +197,11 @@ export class OrgStructureComponent implements OnInit {
   // COMPANY OPERATIONS
   // ==========================================
   openCreateCompanyModal(): void {
-    this.editingCompanyId.set(null);
-    this.companyForm = this.getEmptyCompanyForm();
-    this.clearAlerts();
-    this.isCompanyModalOpen.set(true);
+    this.router.navigate(['/hrms/org/companies/new']);
   }
 
   openEditCompanyModal(comp: Company): void {
-    this.editingCompanyId.set(comp.id);
-    this.companyForm = {
-      company_code: comp.company_code,
-      company_name: comp.company_name,
-      short_name: comp.short_name,
-      company_type: comp.company_type,
-      parent_company_id: comp.parent_company_id,
-      country: comp.country,
-      currency: comp.currency,
-      time_zone: comp.time_zone,
-      logo: comp.logo,
-      status: comp.status,
-      default_language: comp.default_language,
-      financial_year_start_month: comp.financial_year_start_month,
-      date_format: comp.date_format,
-      number_format: comp.number_format,
-      employee_code_prefix: comp.employee_code_prefix,
-      approval_policies: comp.approval_policies || {},
-      payroll_config: comp.payroll_config || {},
-      report_access: comp.report_access || {},
-      is_active: comp.is_active
-    };
-    this.clearAlerts();
-    this.isCompanyModalOpen.set(true);
+    this.router.navigate(['/hrms/org/companies', comp.id, 'edit']);
   }
 
   saveCompany(): void {
@@ -363,38 +339,11 @@ export class OrgStructureComponent implements OnInit {
   // BRANCH OPERATIONS
   // ==========================================
   openCreateBranchModal(): void {
-    this.editingBranchId.set(null);
-    this.branchForm = this.getEmptyBranchForm();
-    if (this.orgService.companies().length > 0) {
-      this.branchForm.company_id = this.orgService.companies()[0].id;
-    }
-    this.clearAlerts();
-    this.isBranchModalOpen.set(true);
+    this.router.navigate(['/hrms/org/branches/new']);
   }
 
   openEditBranchModal(branch: Branch): void {
-    this.editingBranchId.set(branch.id);
-    this.branchForm = {
-      company_id: branch.company_id,
-      branch_code: branch.branch_code,
-      branch_name: branch.branch_name,
-      branch_type: branch.branch_type,
-      legal_entity_id: branch.legal_entity_id,
-      manager_employee_id: branch.manager_employee_id,
-      phone: branch.phone,
-      email: branch.email,
-      division: branch.division,
-      district: branch.district,
-      upazila_thana: branch.upazila_thana,
-      address: branch.address,
-      is_head_office: branch.is_head_office,
-      opening_date: branch.opening_date,
-      closing_date: branch.closing_date,
-      default_cost_center: branch.default_cost_center,
-      status: branch.status
-    };
-    this.clearAlerts();
-    this.isBranchModalOpen.set(true);
+    this.router.navigate(['/hrms/org/branches', branch.id, 'edit']);
   }
 
   saveBranch(): void {
@@ -453,42 +402,11 @@ export class OrgStructureComponent implements OnInit {
   // PROJECT OFFICE OPERATIONS
   // ==========================================
   openCreateProjectOfficeModal(): void {
-    this.editingProjectOfficeId.set(null);
-    this.projectOfficeForm = this.getEmptyProjectOfficeForm();
-    if (this.orgService.companies().length > 0) {
-      this.projectOfficeForm.company_id = this.orgService.companies()[0].id;
-    }
-    if (this.projects().length > 0) {
-      this.projectOfficeForm.project_id = this.projects()[0].id;
-    }
-    this.clearAlerts();
-    this.isProjectOfficeModalOpen.set(true);
+    this.router.navigate(['/hrms/org/project-offices/new']);
   }
 
   openEditProjectOfficeModal(po: ProjectOffice): void {
-    this.editingProjectOfficeId.set(po.id);
-    this.projectOfficeForm = {
-      office_code: po.office_code,
-      office_name: po.office_name,
-      company_id: po.company_id,
-      legal_entity_id: po.legal_entity_id,
-      project_id: po.project_id,
-      office_type: po.office_type,
-      site_in_charge_employee_id: po.site_in_charge_employee_id,
-      phone: po.phone,
-      email: po.email,
-      division: po.division,
-      district: po.district,
-      upazila_thana: po.upazila_thana,
-      address: po.address,
-      opening_date: po.opening_date,
-      expected_closing_date: po.expected_closing_date,
-      operational_status: po.operational_status,
-      default_cost_center: po.default_cost_center,
-      supporting_documents: po.supporting_documents || []
-    };
-    this.clearAlerts();
-    this.isProjectOfficeModalOpen.set(true);
+    this.router.navigate(['/hrms/org/project-offices', po.id, 'edit']);
   }
 
   saveProjectOffice(): void {

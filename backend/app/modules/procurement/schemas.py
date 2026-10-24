@@ -492,6 +492,18 @@ class PurchaseOrderBase(BaseModel):
     po_date: date
     delivery_deadline: date
     destination_store_id: int
+    boq_item_id: Optional[int] = None
+    wbs_node_id: Optional[int] = None
+    order_type: str = "LOCAL"
+    item_specification: Optional[str] = None
+    discount_amount_bdt: float = 0
+    tax_amount_bdt: float = 0
+    payment_terms_days: int = 30
+    advance_payment_amount_bdt: float = 0
+    revision_number: int = 1
+    revision_history: Optional[list[dict]] = None
+    line_items: Optional[List[dict]] = None
+    payment_terms: Optional[str] = None
     approval_status: str = "APPROVED"
     approved_by_user_id: Optional[int] = None
     approval_date: Optional[date] = None
@@ -516,6 +528,17 @@ class PurchaseOrderDirectCreate(BaseModel):
     unit_price: float
     destination_store_id: int
     delivery_deadline: date
+    boq_item_id: Optional[int] = None
+    wbs_node_id: Optional[int] = None
+    order_type: str = "LOCAL"
+    item_specification: Optional[str] = None
+    discount_amount_bdt: float = 0
+    tax_amount_bdt: float = 0
+    payment_terms_days: int = 30
+    advance_payment_amount_bdt: float = 0
+    save_as_draft: bool = False
+    line_items: Optional[List[dict]] = None
+    payment_terms: Optional[str] = None
     delivery_schedule_notes: Optional[str] = None
     terms_and_conditions: Optional[str] = None
 
@@ -524,10 +547,16 @@ class PurchaseOrderUpdate(BaseModel):
     unit_price: Optional[float] = None
     delivery_deadline: Optional[date] = None
     destination_store_id: Optional[int] = None
+    boq_item_id: Optional[int] = None
+    wbs_node_id: Optional[int] = None
+    item_specification: Optional[str] = None
+    discount_amount_bdt: Optional[float] = None
+    tax_amount_bdt: Optional[float] = None
+    payment_terms_days: Optional[int] = None
+    advance_payment_amount_bdt: Optional[float] = None
     delivery_schedule_notes: Optional[str] = None
     terms_and_conditions: Optional[str] = None
     status: Optional[str] = None
-    approval_status: Optional[str] = None
 
 class PurchaseOrderResponse(PurchaseOrderBase):
     id: int

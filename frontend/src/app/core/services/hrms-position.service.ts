@@ -65,6 +65,10 @@ export class HrmsPositionService {
     );
   }
 
+  getSalaryGrade(id: number): Observable<SalaryGrade> {
+    return this.http.get<SalaryGrade>(`${this.apiUrl}/salary-grades/${id}`);
+  }
+
   createSalaryGrade(payload: SalaryGradeCreatePayload): Observable<SalaryGrade> {
     return this.http.post<SalaryGrade>(`${this.apiUrl}/salary-grades`, payload).pipe(
       tap(() => this.loadSalaryGrades().subscribe())

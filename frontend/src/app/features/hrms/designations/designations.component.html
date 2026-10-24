@@ -310,8 +310,14 @@
                     ৳{{ g.min_salary | number:'1.0-0' }} - ৳{{ g.max_salary | number:'1.0-0' }}
                   </td>
                   <td class="py-3 px-4 text-[11px] text-slate-600 dark:text-slate-400 space-y-0.5">
-                    <div>House Rent: <span class="font-bold text-slate-800 dark:text-slate-200">{{ g.default_house_rent_pct }}%</span></div>
-                    <div>Medical: <span class="font-bold text-slate-800 dark:text-slate-200">৳{{ g.default_medical_allowance | number:'1.0-0' }}</span> • Conv: <span class="font-bold text-slate-800 dark:text-slate-200">৳{{ g.default_conveyance | number:'1.0-0' }}</span></div>
+                    @if (g.allowance_package?.length) {
+                      @for (allowance of g.allowance_package; track allowance.name) {
+                        <div>{{ allowance.name }}: <span class="font-bold text-slate-800 dark:text-slate-200">{{ allowance.calculation_type === 'PERCENT' ? (allowance.amount + '%') : ('৳' + (allowance.amount | number:'1.0-0')) }}</span></div>
+                      }
+                    } @else {
+                      <div>House Rent: <span class="font-bold text-slate-800 dark:text-slate-200">{{ g.default_house_rent_pct }}%</span></div>
+                      <div>Medical: <span class="font-bold text-slate-800 dark:text-slate-200">৳{{ g.default_medical_allowance | number:'1.0-0' }}</span> • Conv: <span class="font-bold text-slate-800 dark:text-slate-200">৳{{ g.default_conveyance | number:'1.0-0' }}</span></div>
+                    }
                   </td>
                   <td class="py-3 px-4 text-center font-bold text-blue-600 dark:text-blue-400">
                     {{ g.designations_count || 0 }}

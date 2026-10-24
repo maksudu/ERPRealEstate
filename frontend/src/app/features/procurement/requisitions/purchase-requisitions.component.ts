@@ -7,8 +7,8 @@ import { ProcurementService } from '../../../core/services/procurement.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ProjectService } from '../../../core/services/project.service';
 import { PurchaseRequisition, MaterialItem, SiteStore, Vendor } from '../../../core/models/procurement.model';
-import { Project } from '../../../core/models/project.model';
-import { BOQItem } from '../../../core/models/project.model';
+import { BOQItem, Project, ProjectFloor, Tower } from '../../../core/models/project.model';
+import { HrmsDepartmentService } from '../../../core/services/hrms-department.service';
 import { ProcurementNavComponent } from '../procurement-nav/procurement-nav.component';
 import {
   CardContainerComponent,
@@ -105,7 +105,7 @@ import {
     <!-- Main Card Container: PR Register -->
     <app-card-container
       title="Purchase Requisition & Indent Register"
-      subtitle="Track material requisitions, BOQ budget headroom, and approval state (Draft → Submitted → Site Approved → Budget Verified → Approved for Purchase)"
+      subtitle="Track requisitions through Draft → Submitted → Site Approved → Budget Verified → Approved for Purchase."
     >
       <!-- Filters and Search Toolbar -->
       <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 mb-4">
@@ -140,16 +140,16 @@ import {
               <option value="SUBMITTED">Submitted</option>
               <option value="UNDER_REVIEW">Under Review</option>
               <option value="RETURNED_FOR_REVISION">Returned for Revision</option>
-              <option value="APPROVED">Approved for Supplier Sourcing</option>
+              <option value="APPROVED">Approved (legacy)</option>
+              <option value="APPROVED_FOR_PURCHASE">Approved for Purchase</option>
               <option value="PARTIALLY_APPROVED">Partially Approved</option>
               <option value="CONVERTED_TO_PO">Converted to PO</option>
               <option value="PARTIALLY_ORDERED">Partially Ordered</option>
               <option value="COMPLETED">Completed</option>
               <option value="CANCELLED">Cancelled</option>
-              <option value="SITE_APPROVED">Site Approved (legacy)</option>
-              <option value="BUDGET_VERIFIED">Budget Verified (legacy)</option>
+              <option value="SITE_APPROVED">Site Approved</option>
+              <option value="BUDGET_VERIFIED">Budget Verified</option>
               <option value="PROCUREMENT_REVIEWED">Procurement Reviewed (legacy)</option>
-              <option value="APPROVED_FOR_PURCHASE">Approved for Purchase (legacy)</option>
               <option value="RFQ_ISSUED">RFQ Issued</option>
               <option value="PO_ISSUED">PO Issued</option>
               <option value="REJECTED">Rejected</option>
@@ -370,7 +370,7 @@ import {
           <div class="flex justify-between items-center"><h3 class="text-sm font-bold">Requested items</h3><button type="button" (click)="addPRItem()" class="text-xs font-semibold text-sky-700">+ Add item</button></div>
           <div *ngFor="let item of prItems.controls; let i = index" [formGroupName]="i" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-[1.2fr_1fr_1fr_auto] gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700">
             <div><label class="block text-xs font-semibold mb-1">Material Catalog Item *</label><app-searchable-select formControlName="material_id" placeholder="Select material..." [options]="materialOptions()"></app-searchable-select></div>
-            <div><label class="block text-xs font-semibold mb-1">Approved BOQ Item (optional)</label><app-searchable-select formControlName="boq_item_id" placeholder="Link BOQ item..." [options]="boqOptions()"></app-searchable-select></div>
+            <div><label class="block text-xs font-semibold mb-1">Approved BOQ Item (optional)</label><app-searchable-select formControlName="boq_item_id" placeholder="Select approved BOQ item..." [options]="boqOptions()"></app-searchable-select></div>
             <div><label class="block text-xs font-semibold mb-1">Requested Quantity *</label><app-custom-input formControlName="requested_quantity" type="number" placeholder="Quantity"></app-custom-input><button *ngIf="item.get('boq_item_id')?.value" type="button" (click)="useBOQQuantity(i)" class="text-[10px] text-sky-700">Use BOQ remaining estimate</button></div>
             <button *ngIf="prItems.length > 1" type="button" (click)="removePRItem(i)" class="self-end px-3 py-2 text-xs text-rose-700">Remove</button>
           </div>
@@ -414,22 +414,22 @@ import {
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div>
             <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Department</label>
-            <app-custom-input formControlName="department" placeholder="e.g. Civil Construction"></app-custom-input>
+            <app-searchable-select formControlName="department" placeholder="Select department..." [options]="departmentOptions()"></app-searchable-select>
           </div>
           <div>
             <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Building / Tower</label>
-            <app-custom-input
-              formControlName="tower_name"
-              placeholder="e.g. Tower 1 / West Wing"
-            ></app-custom-input>
+            <app-searchable-select formControlName="tower_name" placeholder="Select project tower..." [options]="towerOptions()" [disabled]="!prForm.get('project_id')?.value || towerLoading"></app-searchable-select>
+            <p *ngIf="towerLoading" class="mt-1 text-[11px] text-slate-500">Loading towers for selected project...</p>
+            <p *ngIf="towerLoadFailed" class="mt-1 text-[11px] text-rose-700">Could not load project towers. Please retry by selecting the project again.</p>
+            <p *ngIf="prForm.get('project_id')?.value && !towerLoading && !towerLoadFailed && !towerOptions().length" class="mt-1 text-[11px] text-amber-700">No tower records found for this project.</p>
           </div>
 
           <div>
             <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Floor / Spatial Level</label>
-            <app-custom-input
-              formControlName="floor_number"
-              placeholder="e.g. Level 07 / Basement B2"
-            ></app-custom-input>
+            <app-searchable-select formControlName="floor_number" placeholder="Select floor / spatial level..." [options]="floorOptions()" [disabled]="!prForm.get('tower_name')?.value || floorLoading"></app-searchable-select>
+            <p *ngIf="floorLoading" class="mt-1 text-[11px] text-slate-500">Loading floors for selected tower...</p>
+            <p *ngIf="floorLoadFailed" class="mt-1 text-[11px] text-rose-700">Could not load floors. Please select the tower again.</p>
+            <p *ngIf="prForm.get('tower_name')?.value && !floorLoading && !floorLoadFailed && !floorOptions().length" class="mt-1 text-[11px] text-amber-700">No floor records found for this tower.</p>
           </div>
         </div>
 
@@ -570,15 +570,15 @@ import {
               <span class="font-semibold text-slate-800 dark:text-slate-200">Draft Indent Raised by Site Engineer</span>
             </div>
             <div class="flex items-center gap-2">
-              <span class="w-5 h-5 rounded-full flex items-center justify-center font-bold text-slate-900" [ngClass]="['UNDER_REVIEW','APPROVED','PARTIALLY_APPROVED','CONVERTED_TO_PO','PARTIALLY_ORDERED','COMPLETED'].includes(selectedPR.status) ? 'bg-emerald-400' : 'bg-slate-300'">2</span>
+              <span class="w-5 h-5 rounded-full flex items-center justify-center font-bold text-slate-900" [ngClass]="['UNDER_REVIEW','SITE_APPROVED','BUDGET_VERIFIED','PROCUREMENT_REVIEWED','APPROVED_FOR_PURCHASE','APPROVED','PARTIALLY_APPROVED','CONVERTED_TO_PO','PARTIALLY_ORDERED','COMPLETED'].includes(selectedPR.status) ? 'bg-emerald-400' : 'bg-slate-300'">2</span>
               <span class="font-semibold text-slate-800 dark:text-slate-200">Department approval → Project approval</span>
             </div>
             <div class="flex items-center gap-2">
-              <span class="w-5 h-5 rounded-full flex items-center justify-center font-bold text-slate-900" [ngClass]="['APPROVED','PARTIALLY_APPROVED','CONVERTED_TO_PO','PARTIALLY_ORDERED','COMPLETED'].includes(selectedPR.status) ? 'bg-emerald-400' : 'bg-slate-300'">3</span>
+              <span class="w-5 h-5 rounded-full flex items-center justify-center font-bold text-slate-900" [ngClass]="['BUDGET_VERIFIED','PROCUREMENT_REVIEWED','APPROVED_FOR_PURCHASE','APPROVED','PARTIALLY_APPROVED','CONVERTED_TO_PO','PARTIALLY_ORDERED','COMPLETED'].includes(selectedPR.status) ? 'bg-emerald-400' : 'bg-slate-300'">3</span>
               <span class="font-semibold text-slate-800 dark:text-slate-200">Budget verification & procurement review</span>
             </div>
             <div class="flex items-center gap-2">
-              <span class="w-5 h-5 rounded-full flex items-center justify-center font-bold text-slate-900" [ngClass]="['APPROVED','PARTIALLY_APPROVED','RFQ_ISSUED','CONVERTED_TO_PO','PARTIALLY_ORDERED','COMPLETED'].includes(selectedPR.status) ? 'bg-emerald-400' : 'bg-slate-300'">4</span>
+              <span class="w-5 h-5 rounded-full flex items-center justify-center font-bold text-slate-900" [ngClass]="['APPROVED','APPROVED_FOR_PURCHASE','PARTIALLY_APPROVED','RFQ_ISSUED','CONVERTED_TO_PO','PARTIALLY_ORDERED','COMPLETED'].includes(selectedPR.status) ? 'bg-emerald-400' : 'bg-slate-300'">4</span>
               <span class="font-semibold text-slate-800 dark:text-slate-200">Approved for Supplier Sourcing</span>
             </div>
           </div>
@@ -592,7 +592,7 @@ import {
             rows="2"
           ></app-custom-textarea>
         </div>
-        <div *ngIf="selectedPR.status === 'UNDER_REVIEW' && workflowLastAction === 'PROCUREMENT_REVIEW'">
+        <div *ngIf="selectedPR.status === 'BUDGET_VERIFIED' || (selectedPR.status === 'UNDER_REVIEW' && workflowLastAction === 'PROCUREMENT_REVIEW')">
           <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Partial approval quantity</label>
           <app-custom-input [(ngModel)]="workflowApprovedQuantity" type="number" placeholder="Less than requested quantity"></app-custom-input>
         </div>
@@ -630,7 +630,7 @@ import {
           <button
             type="button"
             (click)="executeWorkflowAction('VERIFY_BUDGET')"
-            *ngIf="(selectedPR.status === 'UNDER_REVIEW' && workflowLastAction === 'PROJECT_APPROVE') || selectedPR.status === 'SITE_APPROVED'"
+            *ngIf="selectedPR.status === 'SITE_APPROVED'"
             class="px-3 py-1.5 rounded-lg text-xs font-bold bg-purple-600 hover:bg-purple-700 text-white"
           >
             Verify BOQ Budget
@@ -644,7 +644,7 @@ import {
           >
             Approve for Supplier Sourcing
           </button>
-          <button type="button" (click)="executeWorkflowAction('PARTIAL_APPROVE')" *ngIf="selectedPR.status === 'UNDER_REVIEW' && workflowLastAction === 'PROCUREMENT_REVIEW'" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500 text-slate-950">Partially Approve for Sourcing</button>
+          <button type="button" (click)="executeWorkflowAction('PARTIAL_APPROVE')" *ngIf="selectedPR.status === 'BUDGET_VERIFIED' || (selectedPR.status === 'UNDER_REVIEW' && workflowLastAction === 'PROCUREMENT_REVIEW')" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500 text-slate-950">Partially Approve for Sourcing</button>
           <button
             type="button"
             (click)="executeWorkflowAction('RETURN_FOR_REVISION')"
@@ -717,11 +717,26 @@ import {
         </div>
 
         <div class="flex justify-end pt-3 border-t border-slate-200 dark:border-slate-700">
+          <button type="button" (click)="openInvoiceView(selectedPR)" class="mr-auto px-3 py-2 rounded-lg border border-indigo-200 text-indigo-700 hover:bg-indigo-50">View Supplier Invoices</button>
           <app-custom-button
             variant="outline"
             (click)="isDetailModalOpen.set(false)"
             label="Close"
           ></app-custom-button>
+        </div>
+      </div>
+    </app-modal>
+
+    <app-modal [isOpen]="isInvoiceModalOpen()" [title]="selectedPR ? 'Supplier Invoice View: ' + selectedPR.pr_number : 'Supplier Invoice View'" (close)="isInvoiceModalOpen.set(false)">
+      <div class="space-y-3 text-sm">
+        <p *ngIf="invoiceLoading" class="text-slate-500">Loading supplier invoices...</p>
+        <p *ngIf="invoiceError" class="rounded-lg bg-rose-50 p-3 text-rose-700">{{ invoiceError }}</p>
+        <p *ngIf="!invoiceLoading && !invoiceError && invoiceReceipts().length === 0" class="rounded-lg bg-slate-50 p-4 text-slate-600">No supplier invoices are linked yet. An invoice appears after a purchase order has a goods receipt.</p>
+        <div *ngFor="let receipt of invoiceReceipts()" class="rounded-lg border border-slate-200 p-3">
+          <div class="flex justify-between gap-3"><b>{{ receipt.supplier_invoice_number || 'Invoice not entered' }}</b><span class="text-xs text-slate-500">{{ receipt.receipt_date | date:'dd MMM yyyy' }}</span></div>
+          <div class="mt-1 text-xs text-slate-600">GRN {{ receipt.grn_number }} · PO {{ receipt.po_number }} · {{ receipt.vendor_name || 'Supplier' }}</div>
+          <div class="mt-2 flex justify-between text-xs"><span>Invoice amount</span><b *ngIf="receipt.supplier_invoice_amount != null">৳{{ receipt.supplier_invoice_amount | number:'1.2-2' }}</b><b *ngIf="receipt.supplier_invoice_amount == null">—</b></div>
+          <div class="text-xs text-slate-500">Match status: {{ receipt.three_way_match_status }}</div>
         </div>
       </div>
     </app-modal>
@@ -733,16 +748,32 @@ export class PurchaseRequisitionsComponent implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private fb = inject(FormBuilder);
+  private departmentService = inject(HrmsDepartmentService);
 
   requisitions = signal<PurchaseRequisition[]>([]);
   projects = signal<Project[]>([]);
   materials = signal<MaterialItem[]>([]);
   stores = signal<SiteStore[]>([]);
   boqItems = signal<BOQItem[]>([]);
+  towers = signal<Tower[]>([]);
+  floors = signal<ProjectFloor[]>([]);
+  towerLoading = false;
+  floorLoading = false;
+  towerLoadFailed = false;
+  floorLoadFailed = false;
+  private towerRequestId = 0;
+  private floorRequestId = 0;
+  departments = signal<{ value: string; label: string }[]>([]);
+  invoiceReceipts = signal<any[]>([]);
+  invoiceLoading = false;
+  invoiceError = '';
   projectOptions = computed(() => this.projects().map(p => ({ label: `#${p.id} - ${p.project_name}`, value: p.id })));
   materialOptions = computed(() => this.materials().map(m => ({ label: `${m.material_code} - ${m.material_name} (${m.unit_of_measure})`, value: m.id })));
   storeOptions = computed(() => this.stores().filter(s => s.is_active).map(s => ({ label: `${s.store_name}${s.location_details ? ' — ' + s.location_details : ''}`, value: s.id })));
-  boqOptions = computed(() => this.boqItems().map(b => ({ label: `${b.item_description} (${b.estimated_quantity - b.actual_consumed_quantity} ${b.unit_of_measure_id} available estimate)`, value: b.id })));
+  towerOptions = computed(() => this.towers().map(t => ({ label: `${t.tower_code} - ${t.tower_name}`, value: t.tower_name })));
+  floorOptions = computed(() => this.floors().map(f => ({ label: f.display_name || `Floor ${f.floor_number}`, value: f.display_name || String(f.floor_number) })));
+  departmentOptions = computed(() => this.departments());
+  boqOptions = computed(() => this.boqItems().filter(b => ['APPROVED_CONTRACT_BOQ', 'APPROVED', 'CONTRACT_APPROVED'].includes((b.stage || '').toUpperCase())).map(b => ({ label: `${b.item_code ? b.item_code + ' · ' : ''}${b.item_description} (${this.getBOQRemaining(b)} ${b.unit_of_measure_id} remaining)`, value: b.id })));
   availability = signal<any | null>(null);
 
   // Filter state
@@ -760,6 +791,7 @@ export class PurchaseRequisitionsComponent implements OnInit {
   isEditModalOpen = signal(false);
   isWorkflowModalOpen = signal(false);
   isDetailModalOpen = signal(false);
+  isInvoiceModalOpen = signal(false);
   isFormPage = false;
   formMode: 'new' | 'edit' | '' = '';
   errorMessage = '';
@@ -775,8 +807,8 @@ export class PurchaseRequisitionsComponent implements OnInit {
     items: this.fb.array([]),
     required_by_date: [new Date(Date.now() + 7 * 86400000).toISOString().substring(0, 10), [Validators.required]],
     priority: ['NORMAL', [Validators.required]],
-    tower_name: ['Tower 1'],
-    floor_number: ['04'],
+    tower_name: [''],
+    floor_number: [''],
     department: [''],
     destination_store_id: [null],
     purpose_notes: ['']
@@ -792,7 +824,7 @@ export class PurchaseRequisitionsComponent implements OnInit {
 
   // KPIs
   pendingApprovalsCount = computed(() =>
-    this.requisitions().filter(pr => ['DRAFT', 'SUBMITTED', 'UNDER_REVIEW', 'RETURNED_FOR_REVISION', 'PENDING_CS', 'SITE_APPROVED'].includes(pr.status)).length
+    this.requisitions().filter(pr => ['DRAFT', 'SUBMITTED', 'UNDER_REVIEW', 'RETURNED_FOR_REVISION', 'PENDING_CS', 'SITE_APPROVED', 'BUDGET_VERIFIED'].includes(pr.status)).length
   );
   approvedCount = computed(() =>
     this.requisitions().filter(pr => ['APPROVED', 'PARTIALLY_APPROVED', 'RFQ_ISSUED', 'CONVERTED_TO_PO', 'PARTIALLY_ORDERED', 'COMPLETED', 'APPROVED_FOR_PURCHASE', 'PO_ISSUED'].includes(pr.status)).length
@@ -841,9 +873,20 @@ export class PurchaseRequisitionsComponent implements OnInit {
     this.loadProjects();
     this.loadMaterials();
     this.loadStores();
+    this.departmentService.loadDepartments({ status: 'ACTIVE' }).subscribe({
+      next: rows => this.departments.set((rows || []).filter(d => d.is_active).map(d => ({ value: d.name_en, label: `${d.department_code} · ${d.name_en}` }))),
+      error: () => this.departments.set([])
+    });
     this.prForm.get('project_id')?.valueChanges.subscribe(projectId => {
       this.loadStores(Number(projectId) || undefined);
       this.loadBOQItems(Number(projectId) || undefined);
+      this.loadProjectTowers(Number(projectId) || undefined);
+      this.prForm.patchValue({ tower_name: '', floor_number: '' }, { emitEvent: false });
+      this.floors.set([]);
+    });
+    this.prForm.get('tower_name')?.valueChanges.subscribe(towerName => {
+      this.prForm.patchValue({ floor_number: '' }, { emitEvent: false });
+      this.loadProjectFloors(towerName);
     });
     this.prItems.valueChanges.subscribe(() => this.refreshAvailability());
   }
@@ -888,6 +931,44 @@ export class PurchaseRequisitionsComponent implements OnInit {
     this.projectService.getBOQItems({ project_id: projectId }).subscribe({ next: rows => this.boqItems.set(rows || []), error: () => this.boqItems.set([]) });
   }
 
+  loadProjectTowers(projectId?: number): void {
+    const requestId = ++this.towerRequestId;
+    ++this.floorRequestId;
+    this.towers.set([]);
+    this.floors.set([]);
+    this.floorLoading = false;
+    this.floorLoadFailed = false;
+    this.towerLoadFailed = false;
+    if (!projectId) { this.towerLoading = false; return; }
+    this.towerLoading = true;
+    this.projectService.getTowers(projectId).subscribe({
+      next: response => {
+        if (requestId !== this.towerRequestId) return;
+        const rows = Array.isArray(response) ? response : (response as any)?.items || (response as any)?.results || [];
+        this.towers.set(rows);
+        this.towerLoading = false;
+      },
+      error: () => { if (requestId === this.towerRequestId) { this.towers.set([]); this.towerLoading = false; this.towerLoadFailed = true; } }
+    });
+  }
+
+  loadProjectFloors(towerName?: string | null): void {
+    const requestId = ++this.floorRequestId;
+    this.floors.set([]);
+    this.floorLoadFailed = false;
+    const tower = this.towers().find(item => item.tower_name === towerName);
+    if (!tower) { this.floorLoading = false; return; }
+    this.floorLoading = true;
+    this.projectService.getFloors({ project_id: tower.project_id, tower_id: tower.id, limit: 500 }).subscribe({
+      next: response => {
+        if (requestId !== this.floorRequestId) return;
+        this.floors.set(Array.isArray(response) ? response : response?.items || response?.results || []);
+        this.floorLoading = false;
+      },
+      error: () => { if (requestId === this.floorRequestId) { this.floors.set([]); this.floorLoading = false; this.floorLoadFailed = true; } }
+    });
+  }
+
   get prItems(): FormArray { return this.prForm.get('items') as FormArray; }
 
   addPRItem(materialId: number | null = null, quantity: number | null = null): void {
@@ -898,7 +979,11 @@ export class PurchaseRequisitionsComponent implements OnInit {
 
   useBOQQuantity(index: number): void {
     const selected = this.boqItems().find(item => item.id === Number(this.prItems.at(index).get('boq_item_id')?.value));
-    if (selected) this.prItems.at(index).get('requested_quantity')?.setValue(Math.max(0, selected.estimated_quantity - selected.actual_consumed_quantity));
+    if (selected) this.prItems.at(index).get('requested_quantity')?.setValue(this.getBOQRemaining(selected));
+  }
+
+  private getBOQRemaining(item: BOQItem): number {
+    return Math.max(0, item.estimated_quantity - item.actual_consumed_quantity - (item.requisitioned_quantity || 0));
   }
 
   private refreshAvailability(): void {
@@ -951,8 +1036,8 @@ export class PurchaseRequisitionsComponent implements OnInit {
       items: [],
       required_by_date: new Date(Date.now() + 7 * 86400000).toISOString().substring(0, 10),
       priority: 'NORMAL',
-      tower_name: 'Tower 1',
-      floor_number: '04',
+      tower_name: '',
+      floor_number: '',
       department: '',
       destination_store_id: null,
       purpose_notes: ''
@@ -961,6 +1046,7 @@ export class PurchaseRequisitionsComponent implements OnInit {
     this.addPRItem(this.materials().length > 0 ? this.materials()[0].id : null, 100);
     this.loadStores(Number(this.prForm.value.project_id) || undefined);
     this.loadBOQItems(Number(this.prForm.value.project_id) || undefined);
+    this.loadProjectTowers(Number(this.prForm.value.project_id) || undefined);
     this.isAddModalOpen.set(false);
   }
 
@@ -1038,6 +1124,18 @@ export class PurchaseRequisitionsComponent implements OnInit {
   openDetailModal(pr: PurchaseRequisition): void {
     this.selectedPR = pr;
     this.isDetailModalOpen.set(true);
+  }
+
+  openInvoiceView(pr: PurchaseRequisition): void {
+    this.selectedPR = pr;
+    this.invoiceReceipts.set([]);
+    this.invoiceError = '';
+    this.invoiceLoading = true;
+    this.isInvoiceModalOpen.set(true);
+    this.procurementService.getGoodsReceipts({ pr_id: pr.id, limit: 200 }).subscribe({
+      next: receipts => { this.invoiceReceipts.set(receipts || []); this.invoiceLoading = false; },
+      error: err => { this.invoiceError = err.error?.detail || 'Unable to load supplier invoices.'; this.invoiceLoading = false; }
+    });
   }
 
   confirmDelete(pr: PurchaseRequisition): void {

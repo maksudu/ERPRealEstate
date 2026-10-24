@@ -3,13 +3,15 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ProcurementService } from '../../../core/services/procurement.service';
 import { ProjectService } from '../../../core/services/project.service';
+import { Router } from '@angular/router';
 import {
   PurchaseOrder,
   Vendor,
   MaterialItem,
-  SiteStore
+  SiteStore,
+  ComparativeStatement
 } from '../../../core/models/procurement.model';
-import { Project } from '../../../core/models/project.model';
+import { BOQItem, Project } from '../../../core/models/project.model';
 import { ProcurementNavComponent } from '../procurement-nav/procurement-nav.component';
 import {
   CardContainerComponent,
@@ -20,6 +22,17 @@ import {
   SearchableSelectComponent,
   StatusBadgeComponent
 } from '../../../shared/components';
+
+interface PurchaseOrderLineDraft {
+  material_id: number | null;
+  boq_item_id: number | null;
+  wbs_node_id: number | null;
+  item_specification: string;
+  ordered_quantity: number | null;
+  unit_price: number | null;
+  discount_amount_bdt: number;
+  tax_amount_bdt: number;
+}
 
 @Component({
   selector: 'app-purchase-orders',
@@ -38,6 +51,69 @@ import {
     StatusBadgeComponent
   ],
   template: `
+    @if (isFormPage) {
+    <main class="max-w-6xl mx-auto p-4 sm:p-6 space-y-5">
+      <div class="flex flex-wrap items-start justify-between gap-3">
+        <div><p class="text-xs font-bold uppercase tracking-wider text-amber-700">Procurement · Purchase Orders</p><h1 class="mt-1 text-2xl font-black text-slate-900 dark:text-white">Create Purchase Order</h1><p class="mt-1 text-sm text-slate-500">Direct orders are saved as Pending Approval. Approved quotations can generate POs from the RFQ & CS page.</p></div>
+        <button type="button" (click)="router.navigate(['/procurement/rfq-comparison'])" class="px-3 py-2 rounded-lg border border-indigo-200 text-indigo-700 hover:bg-indigo-50 text-sm font-semibold">Create from Approved Quotation</button>
+      </div>
+      <div *ngIf="formError" class="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{{ formError }}</div>
+      <form [formGroup]="poForm" (ngSubmit)="submitDirectPO()" class="rounded-xl border border-slate-200 bg-white p-5 sm:p-7 shadow-sm dark:border-slate-800 dark:bg-slate-900 space-y-6">
+        <section>
+          <h2 class="text-sm font-bold">Project, Supplier & Delivery</h2>
+          <div class="mt-3 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            <div><label class="block text-xs font-semibold mb-1">Project / Site *</label><app-searchable-select formControlName="project_id" placeholder="Select project..." [options]="projectOptions()"></app-searchable-select></div>
+            <div><label class="block text-xs font-semibold mb-1">Approved Supplier *</label><app-searchable-select formControlName="vendor_id" placeholder="Select approved supplier..." [options]="vendorOptions()"></app-searchable-select></div>
+            <div><label class="block text-xs font-semibold mb-1">Destination Store *</label><app-searchable-select formControlName="destination_store_id" placeholder="Select project store..." [options]="storeOptions()"></app-searchable-select></div>
+          </div>
+        </section>
+        <section class="border-t border-slate-100 pt-5 dark:border-slate-800">
+          <h2 class="text-sm font-bold">Order Type & Item</h2>
+          <div class="mt-3 flex flex-wrap gap-2">
+            <button *ngFor="let type of orderTypes" type="button" (click)="setOrderType(type.value)" [class.bg-slate-900]="poForm.get('order_type')?.value === type.value" [class.text-white]="poForm.get('order_type')?.value === type.value" class="px-3 py-1.5 rounded-full border border-slate-200 text-xs font-semibold">{{ type.label }}</button>
+          </div>
+          <div class="mt-4 space-y-4">
+            <div *ngFor="let line of poLines; let i = index" class="rounded-lg border border-slate-200 p-4 dark:border-slate-700">
+              <div class="mb-3 flex items-center justify-between"><span class="text-xs font-bold">Item {{ i + 1 }}</span><button *ngIf="poLines.length > 1" type="button" (click)="removePOLine(i)" class="text-xs font-semibold text-rose-600">Remove</button></div>
+              <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                <div><label class="block text-xs font-semibold mb-1">Material / Service Catalog Item *</label><app-searchable-select [ngModel]="line.material_id" [ngModelOptions]="{standalone:true}" (ngModelChange)="line.material_id=$event" placeholder="Select item..." [options]="materialOptions()"></app-searchable-select></div>
+                <div><label class="block text-xs font-semibold mb-1">Approved BOQ Item</label><app-searchable-select [ngModel]="line.boq_item_id" [ngModelOptions]="{standalone:true}" (ngModelChange)="setLineBOQ(line, $event)" placeholder="Select approved BOQ..." [options]="boqOptions()"></app-searchable-select></div>
+                <div><label class="block text-xs font-semibold mb-1">Specification / Grade</label><input [(ngModel)]="line.item_specification" [ngModelOptions]="{standalone:true}" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Brand, grade or scope"></div>
+                <div><label class="block text-xs font-semibold mb-1">Quantity *</label><input [(ngModel)]="line.ordered_quantity" [ngModelOptions]="{standalone:true}" type="number" min="0.01" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"></div>
+                <div><label class="block text-xs font-semibold mb-1">Unit Price (BDT) *</label><input [(ngModel)]="line.unit_price" [ngModelOptions]="{standalone:true}" type="number" min="0.01" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"></div>
+                <div><label class="block text-xs font-semibold mb-1">Discount (BDT)</label><input [(ngModel)]="line.discount_amount_bdt" [ngModelOptions]="{standalone:true}" type="number" min="0" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"></div>
+                <div><label class="block text-xs font-semibold mb-1">Tax / VAT (BDT)</label><input [(ngModel)]="line.tax_amount_bdt" [ngModelOptions]="{standalone:true}" type="number" min="0" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"></div>
+                <div class="flex items-end justify-end text-sm font-semibold">Line total: ৳{{ lineTotal(line) | number:'1.2-2' }}</div>
+              </div>
+            </div>
+            <button type="button" (click)="addPOLine()" class="rounded-lg border border-dashed border-indigo-300 px-3 py-2 text-sm font-semibold text-indigo-700">+ Add another item</button>
+          </div>
+        </section>
+        <section class="border-t border-slate-100 pt-5 dark:border-slate-800">
+          <h2 class="text-sm font-bold">Commercial Terms</h2>
+          <div class="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div><label class="block text-xs font-semibold mb-1">Credit Days</label><app-custom-input formControlName="payment_terms_days" type="number"></app-custom-input></div>
+            <div><label class="block text-xs font-semibold mb-1">Advance (BDT)</label><app-custom-input formControlName="advance_payment_amount_bdt" type="number"></app-custom-input></div>
+          </div>
+          <div class="mt-3 flex justify-end rounded-lg bg-slate-50 px-4 py-3 text-sm dark:bg-slate-800">Estimated PO total: <b class="ml-2">৳{{ directPOTotal() | number:'1.2-2' }}</b></div>
+        </section>
+        <section class="border-t border-slate-100 pt-5 dark:border-slate-800">
+          <h2 class="text-sm font-bold">Schedule & Payment Terms</h2>
+          <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div><label class="block text-xs font-semibold mb-1">Required Delivery Date *</label><app-custom-input formControlName="delivery_deadline" type="date"></app-custom-input></div>
+            <div><label class="block text-xs font-semibold mb-1">Existing Payment Terms</label><app-searchable-select formControlName="payment_terms" placeholder="Select quotation payment terms..." [options]="paymentTermOptions()"></app-searchable-select></div>
+            <div><label class="block text-xs font-semibold mb-1">Contract Terms</label><app-custom-input formControlName="terms_and_conditions" placeholder="Invoice and delivery conditions"></app-custom-input></div>
+            <div class="md:col-span-2"><label class="block text-xs font-semibold mb-1">Delivery Schedule / Notes</label><app-custom-textarea formControlName="delivery_schedule_notes" rows="2"></app-custom-textarea></div>
+          </div>
+        </section>
+        <div class="flex justify-end gap-2 border-t border-slate-100 pt-4 dark:border-slate-800">
+          <button type="button" (click)="cancelNewPO()" class="px-4 py-2 rounded-lg border border-slate-200 text-slate-700">Cancel</button>
+          <button type="button" (click)="submitDirectPO(true)" [disabled]="poForm.invalid || !validPOLines() || savingPO" class="px-4 py-2 rounded-lg border border-slate-300 font-semibold text-slate-700 disabled:opacity-50">Save Draft</button>
+          <button type="submit" [disabled]="poForm.invalid || !validPOLines() || savingPO" class="px-4 py-2 rounded-lg bg-amber-500 font-bold text-slate-950 disabled:opacity-50">{{ savingPO ? 'Submitting…' : 'Submit PO for Approval' }}</button>
+        </div>
+      </form>
+    </main>
+    } @else {
     <app-procurement-nav
       title=" Purchase Orders Register "
     >
@@ -56,10 +132,12 @@ import {
           class="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 shadow-xs transition-colors"
         >
           <span>+</span>
-          <span>Create Direct Purchase Order</span>
+          <span>New Purchase Order</span>
         </button>
       </div>
     </app-procurement-nav>
+
+    <div *ngIf="successMessage" class="mx-4 mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{{ successMessage }}</div>
 
     <!-- Top KPI Row -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
@@ -145,9 +223,17 @@ import {
               class="w-full h-10 px-3 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-amber-500"
             >
               <option value="">All PO Statuses</option>
-              <option value="ISSUED">Issued / Pending Delivery</option>
+      <option value="DRAFT">Draft</option>
+      <option value="PENDING_APPROVAL">Pending Approval</option>
+      <option value="APPROVED">Approved</option>
+      <option value="SENT_TO_SUPPLIER">Sent to Supplier</option>
+      <option value="ISSUED">Issued (legacy)</option>
               <option value="PARTIALLY_RECEIVED">Partially Received</option>
               <option value="FULLY_RECEIVED">Fully Received</option>
+      <option value="CLOSED">Closed</option>
+      <option value="ON_HOLD">On Hold</option>
+      <option value="OVERDUE">Overdue</option>
+      <option value="REJECTED">Rejected</option>
               <option value="CANCELLED">Cancelled</option>
             </select>
           </div>
@@ -194,7 +280,7 @@ import {
               </td>
               <td class="p-3">
                 <div class="font-bold text-slate-900 dark:text-slate-100">{{ po.vendor_name || ('Vendor #' + po.vendor_id) }}</div>
-                <div class="text-[10px] text-slate-600 dark:text-slate-400 truncate max-w-xs">{{ po.terms_and_conditions || '30 Days Credit' }}</div>
+                <div class="text-[10px] text-slate-600 dark:text-slate-400 truncate max-w-xs">{{ po.payment_terms || po.terms_and_conditions || '30 Days Credit' }}</div>
               </td>
               <td class="p-3">
                 <div class="font-semibold text-slate-800 dark:text-slate-200">{{ po.project_name || ('Project #' + po.project_id) }}</div>
@@ -205,6 +291,9 @@ import {
                 <div class="font-mono text-slate-700 dark:text-slate-300 text-[11px]">
                   {{ po.ordered_quantity | number:'1.2-2' }} {{ po.unit_of_measure }}
                 </div>
+                <div *ngIf="(po.line_items?.length || 0) > 1" class="text-[10px] text-indigo-600">+{{ (po.line_items?.length || 1) - 1 }} more items</div>
+                <div class="text-[10px] text-slate-500">{{ po.order_type || 'LOCAL' }}<span *ngIf="po.revision_number && po.revision_number > 1"> · Rev {{ po.revision_number }}</span></div>
+                <div *ngIf="po.item_specification" class="text-[10px] text-slate-500 truncate max-w-48">{{ po.item_specification }}</div>
               </td>
               <td class="p-3 text-right font-mono font-medium">
                 ৳{{ po.unit_price | number:'1.2-2' }}
@@ -240,12 +329,7 @@ import {
               </td>
               <td class="p-3 text-center">
                 <span
-                  [ngClass]="{
-                    'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800': po.status === 'FULLY_RECEIVED',
-                    'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-800': po.status === 'PARTIALLY_RECEIVED',
-                    'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-800': po.status === 'ISSUED',
-                    'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700': po.status === 'CANCELLED'
-                  }"
+                  [ngClass]="getPOStatusClass(po.status)"
                   class="px-2 py-0.5 text-[10px] font-bold rounded-full border"
                 >
                   {{ formatStatus(po.status) }}
@@ -263,13 +347,17 @@ import {
                   </button>
                   <button
                     type="button"
-                    *ngIf="po.approval_status !== 'APPROVED'"
+                    *ngIf="po.approval_status === 'PENDING_APPROVAL'"
                     (click)="openApproveModal(po)"
                     class="px-2 py-1 text-[11px] font-bold rounded bg-emerald-600 hover:bg-emerald-700 text-white transition-colors"
                     title="Approve / Reject PO"
                   >
                     Authorize
                   </button>
+                  <button *ngIf="po.status === 'DRAFT'" type="button" (click)="submitDraftPO(po)" class="px-2 py-1 text-[10px] font-bold rounded bg-amber-500 text-slate-950">Submit</button>
+                  <button *ngIf="po.approval_status === 'APPROVED' && ['APPROVED','ISSUED','ON_HOLD'].includes(po.status)" type="button" (click)="sendToSupplier(po)" class="px-2 py-1 text-[10px] font-bold rounded bg-indigo-600 text-white">Send</button>
+                  <button *ngIf="['SENT_TO_SUPPLIER','ISSUED','PARTIALLY_RECEIVED','OVERDUE'].includes(po.status)" type="button" (click)="updatePOStatus(po, 'ON_HOLD')" class="px-2 py-1 text-[10px] font-bold rounded bg-amber-100 text-amber-800">Hold</button>
+                  <button *ngIf="po.status === 'FULLY_RECEIVED'" type="button" (click)="updatePOStatus(po, 'CLOSED')" class="px-2 py-1 text-[10px] font-bold rounded bg-emerald-100 text-emerald-800">Close</button>
                   <button
                     type="button"
                     (click)="openEditModal(po)"
@@ -281,7 +369,7 @@ import {
                   <button
                     type="button"
                     (click)="confirmDelete(po)"
-                    [disabled]="(po.total_received_quantity || 0) > 0"
+                    [disabled]="(po.total_received_quantity || 0) > 0 || ['CLOSED','FULLY_RECEIVED','REJECTED','CANCELLED'].includes(po.status)"
                     class="px-2 py-1 text-[11px] font-semibold rounded bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/40 text-rose-700 dark:text-rose-400 disabled:opacity-30 transition-colors"
                     title="Cancel PO"
                   >
@@ -502,6 +590,10 @@ import {
               type="date"
             ></app-custom-input>
           </div>
+          <div><label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Discount (BDT)</label><app-custom-input formControlName="discount_amount_bdt" type="number"></app-custom-input></div>
+          <div><label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Tax / VAT (BDT)</label><app-custom-input formControlName="tax_amount_bdt" type="number"></app-custom-input></div>
+          <div><label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Payment Credit Days</label><app-custom-input formControlName="payment_terms_days" type="number"></app-custom-input></div>
+          <div><label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Advance Payment (BDT)</label><app-custom-input formControlName="advance_payment_amount_bdt" type="number"></app-custom-input></div>
         </div>
 
         <div>
@@ -624,6 +716,12 @@ import {
           </div>
 
           <div class="border-t border-slate-200 dark:border-slate-700 pt-3">
+            <div *ngIf="selectedPO.line_items?.length" class="mb-3 overflow-x-auto">
+              <table class="w-full text-left text-[11px]">
+                <thead><tr class="border-b text-slate-500"><th class="py-1">Item</th><th class="py-1">Qty</th><th class="py-1">Rate</th><th class="py-1 text-right">Total</th></tr></thead>
+                <tbody><tr *ngFor="let line of selectedPO.line_items" class="border-b border-slate-100"><td class="py-1">{{ line['material_name'] }}<div class="text-slate-500">{{ line['item_specification'] }}</div></td><td class="py-1">{{ line['ordered_quantity'] }}</td><td class="py-1">৳{{ line['unit_price'] | number:'1.2-2' }}</td><td class="py-1 text-right">৳{{ line['line_total_bdt'] | number:'1.2-2' }}</td></tr></tbody>
+              </table>
+            </div>
             <div class="flex justify-between py-1">
               <span class="text-slate-600 dark:text-slate-400">Material Item:</span>
               <span class="font-bold text-slate-900 dark:text-slate-100">{{ selectedPO.material_name }}</span>
@@ -646,6 +744,11 @@ import {
             <div><span class="font-semibold text-slate-700 dark:text-slate-300">Delivery Deadline:</span> {{ selectedPO.delivery_deadline | date:'dd MMMM yyyy' }}</div>
             <div><span class="font-semibold text-slate-700 dark:text-slate-300">Authorized Officer:</span> {{ selectedPO.approved_by_name || 'Procurement Head' }}</div>
             <div><span class="font-semibold text-slate-700 dark:text-slate-300">Terms & Conditions:</span> {{ selectedPO.terms_and_conditions || 'Standard contract terms' }}</div>
+            <div><span class="font-semibold text-slate-700 dark:text-slate-300">Order Type / Revision:</span> {{ selectedPO.order_type || 'LOCAL' }} · Rev {{ selectedPO.revision_number || 1 }}</div>
+            <div *ngIf="selectedPO.item_specification"><span class="font-semibold text-slate-700 dark:text-slate-300">Specification:</span> {{ selectedPO.item_specification }}</div>
+            <div><span class="font-semibold text-slate-700 dark:text-slate-300">Discount / Tax / Advance:</span> ৳{{ selectedPO.discount_amount_bdt || 0 | number:'1.2-2' }} / ৳{{ selectedPO.tax_amount_bdt || 0 | number:'1.2-2' }} / ৳{{ selectedPO.advance_payment_amount_bdt || 0 | number:'1.2-2' }}</div>
+            <div><span class="font-semibold text-slate-700 dark:text-slate-300">Payment Terms:</span> {{ selectedPO.payment_terms || ((selectedPO.payment_terms_days || 30) + ' days') }}</div>
+            <div *ngIf="selectedPO.boq_item_id"><span class="font-semibold text-slate-700 dark:text-slate-300">BOQ / WBS Link:</span> {{ selectedPO.boq_item_id }} / {{ selectedPO.wbs_node_id || '—' }}</div>
           </div>
         </div>
 
@@ -665,11 +768,13 @@ import {
         </div>
       </div>
     </app-modal>
+    }
   `
 })
 export class PurchaseOrdersComponent implements OnInit {
   private procurementService = inject(ProcurementService);
   private projectService = inject(ProjectService);
+  readonly router = inject(Router);
   private fb = inject(FormBuilder);
 
   purchaseOrders = signal<PurchaseOrder[]>([]);
@@ -677,6 +782,25 @@ export class PurchaseOrdersComponent implements OnInit {
   vendors = signal<Vendor[]>([]);
   materials = signal<MaterialItem[]>([]);
   stores = signal<SiteStore[]>([]);
+  boqItems = signal<BOQItem[]>([]);
+  comparativeStatements = signal<ComparativeStatement[]>([]);
+  poLines: PurchaseOrderLineDraft[] = [this.blankPOLine()];
+  isFormPage = false;
+  formError = '';
+  successMessage = '';
+  savingPO = false;
+  orderTypes = [
+    { value: 'LOCAL', label: 'Local Purchase' },
+    { value: 'IMPORTED', label: 'Imported' },
+    { value: 'EQUIPMENT', label: 'Equipment' },
+    { value: 'SERVICE', label: 'Service Order' }
+  ];
+  projectOptions = computed(() => this.projects().map(p => ({ value: p.id, label: `#${p.id} · ${p.project_name}` })));
+  vendorOptions = computed(() => this.vendors().filter(v => v.is_active && v.approval_status === 'APPROVED').map(v => ({ value: v.id, label: `${v.vendor_code} · ${v.vendor_name}` })));
+  materialOptions = computed(() => this.materials().filter(m => m.is_active).map(m => ({ value: m.id, label: `${m.material_code} · ${m.material_name} (${m.unit_of_measure})` })));
+  storeOptions = computed(() => this.stores().filter(s => s.is_active && (!this.poForm.get('project_id')?.value || s.project_id === Number(this.poForm.get('project_id')?.value))).map(s => ({ value: s.id, label: `${s.store_name}${s.project_name ? ' · ' + s.project_name : ''}` })));
+  boqOptions = computed(() => this.boqItems().filter(b => ['APPROVED_CONTRACT_BOQ', 'APPROVED', 'CONTRACT_APPROVED'].includes((b.stage || '').toUpperCase())).map(b => ({ value: b.id, label: `${b.item_code ? b.item_code + ' · ' : ''}${b.item_description}` })));
+  paymentTermOptions = computed(() => [...new Set(this.comparativeStatements().flatMap(cs => cs.quotations || []).map(q => q.payment_terms?.trim() || `${q.credit_days_offered} Days Credit`).filter(Boolean))].map(term => ({ value: term, label: term })));
 
   // Filter state
   searchQuery = '';
@@ -700,10 +824,19 @@ export class PurchaseOrdersComponent implements OnInit {
   poForm: FormGroup = this.fb.group({
     project_id: [null, [Validators.required]],
     vendor_id: [null, [Validators.required]],
-    material_id: [null, [Validators.required]],
+    material_id: [null],
     destination_store_id: [null, [Validators.required]],
-    ordered_quantity: [null, [Validators.required, Validators.min(0.01)]],
-    unit_price: [null, [Validators.required, Validators.min(0.01)]],
+    boq_item_id: [null],
+    wbs_node_id: [null],
+    order_type: ['LOCAL', [Validators.required]],
+    item_specification: [''],
+    ordered_quantity: [null],
+    unit_price: [null],
+    discount_amount_bdt: [0],
+    tax_amount_bdt: [0],
+    payment_terms: [''],
+    payment_terms_days: [30, [Validators.min(0)]],
+    advance_payment_amount_bdt: [0, [Validators.min(0)]],
     delivery_deadline: [new Date(Date.now() + 7 * 86400000).toISOString().substring(0, 10), [Validators.required]],
     delivery_schedule_notes: [''],
     terms_and_conditions: ['Payment 30 days after GRN physical verification and VAT Mushak 6.3 submission.']
@@ -712,6 +845,11 @@ export class PurchaseOrdersComponent implements OnInit {
   editForm: FormGroup = this.fb.group({
     ordered_quantity: [null, [Validators.required, Validators.min(0.01)]],
     unit_price: [null, [Validators.required, Validators.min(0.01)]],
+    discount_amount_bdt: [0, [Validators.min(0)]],
+    tax_amount_bdt: [0, [Validators.min(0)]],
+    payment_terms_days: [30, [Validators.min(0)]],
+    advance_payment_amount_bdt: [0, [Validators.min(0)]],
+    item_specification: [''],
     delivery_deadline: [null, [Validators.required]],
     delivery_schedule_notes: [''],
     terms_and_conditions: ['']
@@ -722,10 +860,10 @@ export class PurchaseOrdersComponent implements OnInit {
     this.purchaseOrders().reduce((sum, po) => sum + (po.total_po_amount || 0), 0)
   );
   pendingReceiptCount = computed(() =>
-    this.purchaseOrders().filter(po => po.status === 'ISSUED' || po.status === 'PARTIALLY_RECEIVED').length
+    this.purchaseOrders().filter(po => ['ISSUED', 'SENT_TO_SUPPLIER', 'PARTIALLY_RECEIVED', 'OVERDUE'].includes(po.status)).length
   );
   pendingApprovalCount = computed(() =>
-    this.purchaseOrders().filter(po => po.approval_status !== 'APPROVED' && po.approval_status !== 'REJECTED').length
+    this.purchaseOrders().filter(po => !['APPROVED', 'REJECTED', 'DRAFT'].includes(po.approval_status)).length
   );
 
   // Filtered
@@ -760,11 +898,27 @@ export class PurchaseOrdersComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.isFormPage = this.router.url.endsWith('/purchase-orders/new');
+    this.successMessage = history.state?.procurementNotice || '';
     this.loadPurchaseOrders();
     this.loadProjects();
     this.loadVendors();
     this.loadMaterials();
     this.loadStores();
+    this.procurementService.getComparativeStatements().subscribe({
+      next: rows => this.comparativeStatements.set(rows || []),
+      error: () => this.comparativeStatements.set([])
+    });
+    this.poForm.get('payment_terms')?.valueChanges.subscribe(term => {
+      const quote = this.comparativeStatements().flatMap(cs => cs.quotations || []).find(q => (q.payment_terms?.trim() || `${q.credit_days_offered} Days Credit`) === term);
+      if (quote) this.poForm.patchValue({ payment_terms_days: quote.credit_days_offered }, { emitEvent: false });
+    });
+    this.poForm.get('project_id')?.valueChanges.subscribe(projectId => {
+      this.poForm.patchValue({ destination_store_id: null }, { emitEvent: false });
+      this.poLines = this.poLines.map(line => ({ ...line, boq_item_id: null, wbs_node_id: null }));
+      this.loadStores(Number(projectId) || undefined);
+      this.loadBOQItems(Number(projectId) || undefined);
+    });
   }
 
   loadPurchaseOrders(): void {
@@ -798,12 +952,48 @@ export class PurchaseOrdersComponent implements OnInit {
     });
   }
 
-  loadStores(): void {
-    this.procurementService.getSiteStores().subscribe({
+  loadStores(projectId?: number): void {
+    this.procurementService.getSiteStores(projectId ? { project_id: projectId } : undefined).subscribe({
       next: (data) => this.stores.set(data || []),
       error: (err) => console.error('Failed to load stores:', err)
     });
   }
+
+  loadBOQItems(projectId?: number): void {
+    if (!projectId) { this.boqItems.set([]); return; }
+    this.projectService.getBOQItems({ project_id: projectId }).subscribe({ next: rows => this.boqItems.set(rows || []), error: () => this.boqItems.set([]) });
+  }
+
+  setOrderType(type: string): void { this.poForm.patchValue({ order_type: type }); }
+
+  private blankPOLine(): PurchaseOrderLineDraft {
+    return { material_id: null, boq_item_id: null, wbs_node_id: null, item_specification: '', ordered_quantity: null, unit_price: null, discount_amount_bdt: 0, tax_amount_bdt: 0 };
+  }
+
+  addPOLine(): void { this.poLines = [...this.poLines, this.blankPOLine()]; }
+
+  removePOLine(index: number): void {
+    if (this.poLines.length > 1) this.poLines = this.poLines.filter((_, i) => i !== index);
+  }
+
+  setLineBOQ(line: PurchaseOrderLineDraft, boqId: number | null): void {
+    line.boq_item_id = boqId ? Number(boqId) : null;
+    line.wbs_node_id = this.boqItems().find(item => item.id === line.boq_item_id)?.wbs_node_id || null;
+  }
+
+  lineTotal(line: PurchaseOrderLineDraft): number {
+    return Math.max(0, Number(line.ordered_quantity || 0) * Number(line.unit_price || 0) - Number(line.discount_amount_bdt || 0) + Number(line.tax_amount_bdt || 0));
+  }
+
+  validPOLines(): boolean {
+    return this.poLines.length > 0 && this.poLines.every(line => !!line.material_id && Number(line.ordered_quantity) > 0 && Number(line.unit_price) > 0 && this.lineTotal(line) > 0);
+  }
+
+  directPOTotal(): number {
+    return this.poLines.reduce((sum, line) => sum + this.lineTotal(line), 0);
+  }
+
+  cancelNewPO(): void { this.router.navigate(['/procurement/purchase-orders']); }
 
   onSearchChange(): void {
     this.currentPage.set(1);
@@ -844,37 +1034,47 @@ export class PurchaseOrdersComponent implements OnInit {
   }
 
   openAddPOModal(): void {
-    this.poForm.reset({
-      project_id: this.projects().length > 0 ? this.projects()[0].id : null,
-      vendor_id: this.vendors().length > 0 ? this.vendors()[0].id : null,
-      material_id: this.materials().length > 0 ? this.materials()[0].id : null,
-      destination_store_id: this.stores().length > 0 ? this.stores()[0].id : null,
-      ordered_quantity: 500,
-      unit_price: 750,
-      delivery_deadline: new Date(Date.now() + 7 * 86400000).toISOString().substring(0, 10),
-      delivery_schedule_notes: 'Supply per agreed batch specifications.',
-      terms_and_conditions: 'Payment 30 days after GRN physical verification and VAT Mushak 6.3 submission.'
-    });
-    this.isAddModalOpen.set(true);
+    this.router.navigate(['/procurement/purchase-orders/new']);
   }
 
-  submitDirectPO(): void {
-    if (this.poForm.invalid) return;
-    this.procurementService.createDirectPurchaseOrder(this.poForm.value).subscribe({
+  submitDirectPO(saveAsDraft = false): void {
+    if (this.poForm.invalid || !this.validPOLines()) return;
+    this.formError = '';
+    this.savingPO = true;
+    const first = this.poLines[0];
+    const payload = {
+      ...this.poForm.value,
+      material_id: first.material_id,
+      boq_item_id: first.boq_item_id,
+      wbs_node_id: first.wbs_node_id,
+      item_specification: first.item_specification,
+      ordered_quantity: first.ordered_quantity,
+      unit_price: first.unit_price,
+      discount_amount_bdt: first.discount_amount_bdt,
+      tax_amount_bdt: first.tax_amount_bdt,
+      line_items: this.poLines,
+      save_as_draft: saveAsDraft
+    };
+    this.procurementService.createDirectPurchaseOrder(payload).subscribe({
       next: (res) => {
-        alert(`Direct Purchase Order ${res.po_number} issued successfully!`);
-        this.isAddModalOpen.set(false);
-        this.loadPurchaseOrders();
+        this.savingPO = false;
+        this.router.navigate(['/procurement/purchase-orders'], { state: { procurementNotice: saveAsDraft ? `Purchase Order ${res.po_number} saved as draft.` : `Purchase Order ${res.po_number} submitted for approval.` } });
       },
-      error: (err) => alert(err.error?.detail || 'Failed to issue Purchase Order.')
+      error: (err) => { this.savingPO = false; this.formError = err.error?.detail || 'Failed to submit Purchase Order for approval.'; }
     });
   }
 
   openEditModal(po: PurchaseOrder): void {
+    if (['CANCELLED', 'REJECTED', 'CLOSED', 'FULLY_RECEIVED'].includes(po.status)) return;
     this.selectedPO = po;
     this.editForm.patchValue({
       ordered_quantity: po.ordered_quantity,
       unit_price: po.unit_price,
+      discount_amount_bdt: po.discount_amount_bdt || 0,
+      tax_amount_bdt: po.tax_amount_bdt || 0,
+      payment_terms_days: po.payment_terms_days || 30,
+      advance_payment_amount_bdt: po.advance_payment_amount_bdt || 0,
+      item_specification: po.item_specification || '',
       delivery_deadline: po.delivery_deadline ? po.delivery_deadline.substring(0, 10) : '',
       delivery_schedule_notes: po.delivery_schedule_notes || '',
       terms_and_conditions: po.terms_and_conditions || ''
@@ -900,6 +1100,37 @@ export class PurchaseOrdersComponent implements OnInit {
     this.isApproveModalOpen.set(true);
   }
 
+  sendToSupplier(po: PurchaseOrder): void {
+    this.procurementService.sendPurchaseOrderToSupplier(po.id).subscribe({
+      next: () => this.loadPurchaseOrders(),
+      error: err => alert(err.error?.detail || 'Could not send purchase order to supplier.')
+    });
+  }
+
+  submitDraftPO(po: PurchaseOrder): void {
+    this.procurementService.submitDraftPurchaseOrder(po.id).subscribe({
+      next: () => this.loadPurchaseOrders(),
+      error: err => alert(err.error?.detail || 'Could not submit draft purchase order.')
+    });
+  }
+
+  updatePOStatus(po: PurchaseOrder, status: string): void {
+    this.procurementService.updatePurchaseOrder(po.id, { status }).subscribe({
+      next: () => this.loadPurchaseOrders(),
+      error: err => alert(err.error?.detail || `Could not update PO status to ${status}.`)
+    });
+  }
+
+  getPOStatusClass(status: string): string {
+    switch (status) {
+      case 'FULLY_RECEIVED': case 'CLOSED': return 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800';
+      case 'PARTIALLY_RECEIVED': case 'SENT_TO_SUPPLIER': case 'ISSUED': return 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-800';
+      case 'OVERDUE': case 'ON_HOLD': case 'PENDING_APPROVAL': case 'APPROVED': return 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800';
+      case 'REJECTED': case 'CANCELLED': return 'bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-800';
+      default: return 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700';
+    }
+  }
+
   submitApproval(approved: boolean): void {
     if (!this.selectedPO) return;
     this.procurementService.approvePurchaseOrder(this.selectedPO.id, {
@@ -907,8 +1138,8 @@ export class PurchaseOrdersComponent implements OnInit {
       notes: this.approvalNotes
     }).subscribe({
       next: (res) => {
-        alert(`Purchase Order ${res.po_number} ${approved ? 'Approved' : 'Rejected'}!`);
         this.isApproveModalOpen.set(false);
+        alert(`Purchase Order ${res.po_number} ${approved ? 'approved. Send it to the supplier when ready.' : 'rejected.'}`);
         this.loadPurchaseOrders();
       },
       error: (err) => alert(err.error?.detail || 'Approval failed.')

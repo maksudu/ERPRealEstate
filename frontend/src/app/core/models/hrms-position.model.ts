@@ -9,6 +9,7 @@ export interface SalaryGrade {
   default_house_rent_pct: number;
   default_medical_allowance: number;
   default_conveyance: number;
+  allowance_package?: SalaryAllowance[];
   description?: string;
   is_active: boolean;
   designations_count?: number;
@@ -25,8 +26,15 @@ export interface SalaryGradeCreatePayload {
   default_house_rent_pct: number;
   default_medical_allowance: number;
   default_conveyance: number;
+  allowance_package?: SalaryAllowance[];
   description?: string;
   is_active: boolean;
+}
+
+export interface SalaryAllowance {
+  name: string;
+  amount: number;
+  calculation_type: 'FIXED' | 'PERCENT';
 }
 
 export interface SalaryGradePaginatedResponse {

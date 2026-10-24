@@ -71,7 +71,7 @@ export interface DashboardSummaryResponse {
 })
 export class DashboardService {
   private http = inject(HttpClient);
-  private baseUrl = environment.apiUrl ? `${environment.apiUrl}/api/v1/dashboard` : '/api/v1/dashboard';
+  private baseUrl = environment.apiUrl ? `${environment.apiUrl}/dashboard` : '/api/v1/dashboard';
 
   getSummary(): Observable<DashboardSummaryResponse> {
     return this.http.get<DashboardSummaryResponse>(`${this.baseUrl}/summary`);

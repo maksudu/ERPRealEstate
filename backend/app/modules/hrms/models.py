@@ -276,6 +276,7 @@ class SalaryGrade(Base):
     default_house_rent_pct = Column(Numeric(5, 2), nullable=False, default=50.00)
     default_medical_allowance = Column(Numeric(10, 2), nullable=False, default=2500.00)
     default_conveyance = Column(Numeric(10, 2), nullable=False, default=3000.00)
+    allowance_package = Column(JSON, nullable=True)
     description = Column(Text, nullable=True)
     is_active = Column(Boolean, nullable=False, default=True)
 

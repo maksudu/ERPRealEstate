@@ -844,10 +844,10 @@ async def execute_pr_workflow(
     action_map = {
         "SUBMIT": "SUBMITTED",
         "DEPARTMENT_APPROVE": "UNDER_REVIEW",
-        "PROJECT_APPROVE": "UNDER_REVIEW",
-        "VERIFY_BUDGET": "UNDER_REVIEW",
+        "PROJECT_APPROVE": "SITE_APPROVED",
+        "VERIFY_BUDGET": "BUDGET_VERIFIED",
         "PROCUREMENT_REVIEW": "UNDER_REVIEW",
-        "APPROVE_PURCHASE": "APPROVED",
+        "APPROVE_PURCHASE": "APPROVED_FOR_PURCHASE",
         "PARTIAL_APPROVE": "PARTIALLY_APPROVED",
         "RETURN_FOR_REVISION": "RETURNED_FOR_REVISION",
         # Backward compatibility with older workflow buttons/statuses.
@@ -859,8 +859,8 @@ async def execute_pr_workflow(
     allowed = {
         "DRAFT": {"SUBMIT"}, "PENDING_CS": {"SUBMIT", "SITE_APPROVE", "REJECT"},
         "SUBMITTED": {"DEPARTMENT_APPROVE", "SITE_APPROVE", "RETURN_FOR_REVISION", "REJECT"},
-        "UNDER_REVIEW": {"PROJECT_APPROVE", "VERIFY_BUDGET", "PROCUREMENT_REVIEW", "APPROVE_PURCHASE", "PARTIAL_APPROVE", "RETURN_FOR_REVISION", "REJECT"},
-        "SITE_APPROVED": {"VERIFY_BUDGET", "REJECT"}, "BUDGET_VERIFIED": {"PROCUREMENT_REVIEW", "REJECT"},
+        "UNDER_REVIEW": {"PROJECT_APPROVE", "APPROVE_PURCHASE", "PARTIAL_APPROVE", "RETURN_FOR_REVISION", "REJECT"},
+        "SITE_APPROVED": {"VERIFY_BUDGET", "REJECT"}, "BUDGET_VERIFIED": {"PROCUREMENT_REVIEW", "APPROVE_PURCHASE", "PARTIAL_APPROVE", "REJECT"},
         "PROCUREMENT_REVIEWED": {"APPROVE_PURCHASE", "REJECT"},
         "RETURNED_FOR_REVISION": {"SUBMIT"}, "REJECTED": set()
     }
@@ -876,6 +876,8 @@ async def execute_pr_workflow(
             raise HTTPException(status_code=400, detail="Partial approval quantity must be positive and less than the requested quantity.")
         pr.approved_quantity = payload.approved_quantity
     elif action == "APPROVE_PURCHASE":
+        if pr.status == "UNDER_REVIEW" and last_action != "PROCUREMENT_REVIEW":
+            raise HTTPException(status_code=400, detail="Complete procurement review before approval for supplier sourcing.")
         pr.approved_quantity = pr.requested_quantity
     prior_status = pr.status
     pr.status = new_status
@@ -1501,7 +1503,12 @@ async def list_purchase_orders(
         stmt = stmt.where(PurchaseOrder.project_id == project_id)
     if vendor_id:
         stmt = stmt.where(PurchaseOrder.vendor_id == vendor_id)
-    if status_filter:
+    if status_filter == "OVERDUE":
+        stmt = stmt.where(
+            PurchaseOrder.status.in_(["SENT_TO_SUPPLIER", "ISSUED", "PARTIALLY_RECEIVED"]),
+            PurchaseOrder.delivery_deadline < date.today()
+        )
+    elif status_filter:
         stmt = stmt.where(PurchaseOrder.status == status_filter)
     if search:
         s = f"%{search}%"
@@ -1527,6 +1534,8 @@ async def list_purchase_orders(
 
         tot_rcvd = sum(float(gr.accepted_quantity) for gr in po.goods_receipts)
         resp.total_received_quantity = tot_rcvd
+        if po.status in {"SENT_TO_SUPPLIER", "ISSUED", "PARTIALLY_RECEIVED"} and po.delivery_deadline < date.today() and tot_rcvd < float(po.ordered_quantity):
+            resp.status = "OVERDUE"
         resp_list.append(resp)
 
     return resp_list
@@ -1597,10 +1606,11 @@ async def generate_po_from_cs(
     user = user_res.scalar_one_or_none()
     user_id = user.id if user else 1
 
-    count = (await db.execute(select(func.count(PurchaseOrder.id)))).scalar() or 0
+    prefix = f"PO-{project.project_code or project.id}-{date.today().year}"
+    count = (await db.execute(select(func.count(PurchaseOrder.id)).where(PurchaseOrder.project_id == project.id))).scalar() or 0
     idx = count + 1
     while True:
-        po_no = f"PO-{date.today().year}-{idx:04d}"
+        po_no = f"{prefix}-{idx:04d}"
         existing_po = (await db.execute(select(PurchaseOrder.id).where(PurchaseOrder.po_number == po_no))).scalar_one_or_none()
         if not existing_po:
             break
@@ -1618,6 +1628,10 @@ async def generate_po_from_cs(
         po_date=date.today(),
         delivery_deadline=payload.delivery_deadline,
         destination_store_id=payload.destination_store_id,
+        boq_item_id=cs.requisition.boq_item_id,
+        wbs_node_id=cs.requisition.wbs_node_id,
+        item_specification=winning_quote.technical_specification,
+        payment_terms_days=winning_quote.credit_days_offered or 30,
         approval_status="PENDING_APPROVAL",
         approved_by_user_id=None,
         approval_date=None,
@@ -1686,10 +1700,10 @@ async def approve_purchase_order(
         po.approval_status = "APPROVED"
         po.approved_by_user_id = user.id if user else 1
         po.approval_date = date.today()
-        po.status = "ISSUED"
+        po.status = "APPROVED"
     else:
         po.approval_status = "REJECTED"
-        po.status = "CANCELLED"
+        po.status = "REJECTED"
 
     if po.cs_id:
         cs = await db.get(ComparativeStatement, po.cs_id)
@@ -1729,6 +1743,59 @@ async def approve_purchase_order(
     return resp
 
 
+@router.post("/purchase-orders/{id}/send", response_model=PurchaseOrderResponse)
+async def send_purchase_order_to_supplier(id: int, db: AsyncSession = Depends(get_db)):
+    po = await db.get(PurchaseOrder, id)
+    if not po:
+        raise HTTPException(status_code=404, detail="Purchase Order not found.")
+    if po.approval_status != "APPROVED" or po.status not in {"APPROVED", "ISSUED", "ON_HOLD"}:
+        raise HTTPException(status_code=400, detail="Only approved purchase orders can be sent to the supplier.")
+    po.status = "SENT_TO_SUPPLIER"
+    await db.commit()
+    result = await db.execute(select(PurchaseOrder).options(
+        selectinload(PurchaseOrder.project), selectinload(PurchaseOrder.vendor),
+        selectinload(PurchaseOrder.material), selectinload(PurchaseOrder.store),
+        selectinload(PurchaseOrder.approved_by), selectinload(PurchaseOrder.goods_receipts)
+    ).where(PurchaseOrder.id == id))
+    po = result.scalar_one()
+    response = PurchaseOrderResponse.model_validate(po)
+    response.project_name = po.project.project_name if po.project else None
+    response.vendor_name = po.vendor.vendor_name if po.vendor else None
+    response.material_name = po.material.material_name if po.material else None
+    response.unit_of_measure = po.material.unit_of_measure if po.material else None
+    response.store_name = po.store.store_name if po.store else None
+    response.approved_by_name = po.approved_by.full_name_en if po.approved_by else None
+    response.total_received_quantity = sum(float(gr.accepted_quantity or 0) for gr in po.goods_receipts)
+    return response
+
+
+@router.post("/purchase-orders/{id}/submit", response_model=PurchaseOrderResponse)
+async def submit_draft_purchase_order(id: int, db: AsyncSession = Depends(get_db)):
+    po = await db.get(PurchaseOrder, id)
+    if not po:
+        raise HTTPException(status_code=404, detail="Purchase Order not found.")
+    if po.status != "DRAFT" or po.approval_status != "DRAFT":
+        raise HTTPException(status_code=400, detail="Only draft purchase orders can be submitted for approval.")
+    po.status = "PENDING_APPROVAL"
+    po.approval_status = "PENDING_APPROVAL"
+    await db.commit()
+    result = await db.execute(select(PurchaseOrder).options(
+        selectinload(PurchaseOrder.project), selectinload(PurchaseOrder.vendor),
+        selectinload(PurchaseOrder.material), selectinload(PurchaseOrder.store),
+        selectinload(PurchaseOrder.approved_by), selectinload(PurchaseOrder.goods_receipts)
+    ).where(PurchaseOrder.id == id))
+    po = result.scalar_one()
+    response = PurchaseOrderResponse.model_validate(po)
+    response.project_name = po.project.project_name if po.project else None
+    response.vendor_name = po.vendor.vendor_name if po.vendor else None
+    response.material_name = po.material.material_name if po.material else None
+    response.unit_of_measure = po.material.unit_of_measure if po.material else None
+    response.store_name = po.store.store_name if po.store else None
+    response.approved_by_name = po.approved_by.full_name_en if po.approved_by else None
+    response.total_received_quantity = 0
+    return response
+
+
 @router.post("/purchase-orders/direct", response_model=PurchaseOrderResponse, status_code=status.HTTP_201_CREATED)
 async def create_direct_purchase_order(
     payload: PurchaseOrderDirectCreate,
@@ -1744,8 +1811,49 @@ async def create_direct_purchase_order(
         raise HTTPException(status_code=404, detail="Vendor not found.")
     if not vendor.is_active or vendor.approval_status != "APPROVED":
         raise HTTPException(status_code=400, detail="Purchase orders cannot be issued to an inactive or suspended vendor.")
+    if payload.order_type.upper() not in {"LOCAL", "IMPORTED", "EQUIPMENT", "SERVICE"}:
+        raise HTTPException(status_code=400, detail="Order type must be LOCAL, IMPORTED, EQUIPMENT, or SERVICE.")
 
-    material = await db.get(MaterialItem, payload.material_id)
+    line_items = payload.line_items or [{
+        "material_id": payload.material_id, "boq_item_id": payload.boq_item_id,
+        "wbs_node_id": payload.wbs_node_id, "item_specification": payload.item_specification,
+        "ordered_quantity": payload.ordered_quantity, "unit_price": payload.unit_price,
+        "discount_amount_bdt": payload.discount_amount_bdt, "tax_amount_bdt": payload.tax_amount_bdt
+    }]
+    if not line_items:
+        raise HTTPException(status_code=400, detail="Add at least one PO item.")
+    normalized_lines = []
+    for line in line_items:
+        line_material_id = int(line.get("material_id") or 0)
+        line_material = await db.get(MaterialItem, line_material_id)
+        if not line_material or not line_material.is_active:
+            raise HTTPException(status_code=400, detail=f"Active material item {line_material_id} was not found.")
+        quantity = float(line.get("ordered_quantity") or 0)
+        rate = float(line.get("unit_price") or 0)
+        discount = float(line.get("discount_amount_bdt") or 0)
+        tax = float(line.get("tax_amount_bdt") or 0)
+        if quantity <= 0 or rate <= 0 or discount < 0 or tax < 0 or quantity * rate - discount + tax <= 0:
+            raise HTTPException(status_code=400, detail="Each PO item needs a positive quantity and rate with valid discount and tax.")
+        line_boq_id = line.get("boq_item_id")
+        line_wbs_id = line.get("wbs_node_id")
+        if line_boq_id:
+            line_boq = await db.get(BOQItem, int(line_boq_id))
+            if not line_boq or line_boq.project_id != proj.id:
+                raise HTTPException(status_code=400, detail="Every BOQ item must belong to the selected project.")
+            if line_wbs_id and line_boq.wbs_node_id and int(line_wbs_id) != line_boq.wbs_node_id:
+                raise HTTPException(status_code=400, detail="A selected WBS node does not match its BOQ item.")
+            line_wbs_id = line_wbs_id or line_boq.wbs_node_id
+        normalized_lines.append({
+            "material_id": line_material_id, "material_name": line_material.material_name,
+            "boq_item_id": int(line_boq_id) if line_boq_id else None,
+            "wbs_node_id": int(line_wbs_id) if line_wbs_id else None,
+            "item_specification": line.get("item_specification") or "",
+            "ordered_quantity": quantity, "unit_price": rate,
+            "discount_amount_bdt": discount, "tax_amount_bdt": tax,
+            "line_total_bdt": round(quantity * rate - discount + tax, 2)
+        })
+    first_line = normalized_lines[0]
+    material = await db.get(MaterialItem, first_line["material_id"])
     if not material:
         raise HTTPException(status_code=404, detail="Material Item not found.")
 
@@ -1757,40 +1865,57 @@ async def create_direct_purchase_order(
     committed = float((await db.execute(select(func.coalesce(func.sum(PurchaseOrder.total_po_amount), 0)).where(
         PurchaseOrder.project_id == proj.id, PurchaseOrder.status.notin_(["CANCELLED", "REJECTED"])
     ))).scalar_one() or 0)
-    if approved_budget > 0 and committed + float(payload.ordered_quantity) * float(payload.unit_price) > approved_budget:
+    if payload.discount_amount_bdt < 0 or payload.tax_amount_bdt < 0 or payload.advance_payment_amount_bdt < 0 or payload.payment_terms_days < 0:
+        raise HTTPException(status_code=400, detail="Discount, tax, advance payment, and payment terms must be non-negative.")
+    total_amount = round(sum(line["line_total_bdt"] for line in normalized_lines), 2)
+    total_discount = round(sum(line["discount_amount_bdt"] for line in normalized_lines), 2)
+    total_tax = round(sum(line["tax_amount_bdt"] for line in normalized_lines), 2)
+    if total_amount < 0 or payload.advance_payment_amount_bdt > total_amount:
+        raise HTTPException(status_code=400, detail="PO total must be positive and advance payment cannot exceed the PO total.")
+    if approved_budget > 0 and committed + total_amount > approved_budget:
         raise HTTPException(status_code=400, detail=f"Purchase order exceeds approved project budget. Available: BDT {max(0, approved_budget - committed):,.2f}.")
 
     user_res = await db.execute(select(User).limit(1))
     user = user_res.scalar_one_or_none()
     user_id = user.id if user else 1
 
-    count = (await db.execute(select(func.count(PurchaseOrder.id)))).scalar() or 0
+    prefix = f"PO-{proj.project_code or proj.id}-{date.today().year}"
+    count = (await db.execute(select(func.count(PurchaseOrder.id)).where(PurchaseOrder.project_id == proj.id))).scalar() or 0
     idx = count + 1
     while True:
-        po_no = f"PO-{date.today().year}-{idx:04d}"
+        po_no = f"{prefix}-{idx:04d}"
         existing_po = (await db.execute(select(PurchaseOrder.id).where(PurchaseOrder.po_number == po_no))).scalar_one_or_none()
         if not existing_po:
             break
         idx += 1
 
-    total_amount = round(payload.ordered_quantity * payload.unit_price, 2)
     po = PurchaseOrder(
         po_number=po_no,
         cs_id=None,
         project_id=payload.project_id,
         vendor_id=payload.vendor_id,
-        material_id=payload.material_id,
-        ordered_quantity=payload.ordered_quantity,
-        unit_price=payload.unit_price,
+        material_id=first_line["material_id"],
+        ordered_quantity=first_line["ordered_quantity"],
+        unit_price=first_line["unit_price"],
         total_po_amount=total_amount,
         po_date=date.today(),
         delivery_deadline=payload.delivery_deadline,
         destination_store_id=payload.destination_store_id,
-        approval_status="PENDING_APPROVAL",
+        boq_item_id=first_line["boq_item_id"],
+        wbs_node_id=first_line["wbs_node_id"],
+        order_type=payload.order_type.upper(),
+        item_specification=first_line["item_specification"],
+        discount_amount_bdt=total_discount,
+        tax_amount_bdt=total_tax,
+        payment_terms_days=payload.payment_terms_days,
+        advance_payment_amount_bdt=payload.advance_payment_amount_bdt,
+        payment_terms=payload.payment_terms,
+        line_items=normalized_lines,
+        approval_status="DRAFT" if payload.save_as_draft else "PENDING_APPROVAL",
         approved_by_user_id=None,
         approval_date=None,
         delivery_schedule_notes=payload.delivery_schedule_notes or f"Direct supply to {store.store_name}",
-        status="PENDING_APPROVAL",
+        status="DRAFT" if payload.save_as_draft else "PENDING_APPROVAL",
         terms_and_conditions=payload.terms_and_conditions or "Standard Developer Contract Terms apply."
     )
     db.add(po)
@@ -1834,24 +1959,82 @@ async def update_purchase_order(
     if not po:
         raise HTTPException(status_code=404, detail="Purchase Order not found.")
 
+    if po.status in {"CANCELLED", "REJECTED", "CLOSED", "FULLY_RECEIVED"} and any(
+        getattr(payload, field) is not None for field in ("ordered_quantity", "unit_price", "delivery_deadline", "destination_store_id", "item_specification", "discount_amount_bdt", "tax_amount_bdt", "payment_terms_days", "advance_payment_amount_bdt", "delivery_schedule_notes", "terms_and_conditions")
+    ):
+        raise HTTPException(status_code=400, detail="Closed or terminal purchase orders cannot be amended.")
+
+    current_received = float((await db.execute(select(func.coalesce(func.sum(GoodsReceipt.accepted_quantity), 0)).where(GoodsReceipt.po_id == po.id))).scalar_one() or 0)
+    new_quantity = float(payload.ordered_quantity if payload.ordered_quantity is not None else po.ordered_quantity)
+    new_price = float(payload.unit_price if payload.unit_price is not None else po.unit_price)
+    new_discount = float(payload.discount_amount_bdt if payload.discount_amount_bdt is not None else po.discount_amount_bdt or 0)
+    new_tax = float(payload.tax_amount_bdt if payload.tax_amount_bdt is not None else po.tax_amount_bdt or 0)
+    new_advance = float(payload.advance_payment_amount_bdt if payload.advance_payment_amount_bdt is not None else po.advance_payment_amount_bdt or 0)
+    new_payment_days = payload.payment_terms_days if payload.payment_terms_days is not None else po.payment_terms_days
+    new_total = round(new_quantity * new_price - new_discount + new_tax, 2)
+    if new_quantity <= 0 or new_discount < 0 or new_tax < 0 or new_advance < 0 or new_payment_days < 0 or new_total <= 0 or new_advance > new_total:
+        raise HTTPException(status_code=400, detail="Invalid PO quantity, commercial adjustments, advance, or payment terms.")
+    if new_quantity < current_received:
+        raise HTTPException(status_code=400, detail="Ordered quantity cannot be lower than quantities already received.")
+    project = await db.get(Project, po.project_id)
+    committed_elsewhere = float((await db.execute(select(func.coalesce(func.sum(PurchaseOrder.total_po_amount), 0)).where(
+        PurchaseOrder.project_id == po.project_id, PurchaseOrder.id != po.id, PurchaseOrder.status.notin_(["CANCELLED", "REJECTED"])
+    ))).scalar_one() or 0)
+    if project and project.approved_budget_bdt and committed_elsewhere + new_total > float(project.approved_budget_bdt):
+        raise HTTPException(status_code=400, detail="PO amendment exceeds the remaining approved project budget.")
+
+    if payload.status is not None:
+        allowed_statuses = {
+            "APPROVED": {"SENT_TO_SUPPLIER", "ON_HOLD"}, "ISSUED": {"SENT_TO_SUPPLIER", "ON_HOLD"},
+            "SENT_TO_SUPPLIER": {"ON_HOLD"}, "PARTIALLY_RECEIVED": {"ON_HOLD"},
+            "ON_HOLD": {"SENT_TO_SUPPLIER", "APPROVED"}, "FULLY_RECEIVED": {"CLOSED"}
+        }
+        if payload.status not in allowed_statuses.get(po.status, set()):
+            raise HTTPException(status_code=400, detail=f"PO status cannot move from {po.status} to {payload.status}.")
+
+    has_amendment = any(getattr(payload, field) is not None for field in (
+        "ordered_quantity", "unit_price", "delivery_deadline", "destination_store_id", "item_specification",
+        "discount_amount_bdt", "tax_amount_bdt", "payment_terms_days", "advance_payment_amount_bdt",
+        "delivery_schedule_notes", "terms_and_conditions"
+    ))
+    if has_amendment:
+        po.revision_history = list(po.revision_history or []) + [{
+            "revision_number": int(po.revision_number or 1),
+            "recorded_at": datetime.now().isoformat(),
+            "ordered_quantity": float(po.ordered_quantity), "unit_price": float(po.unit_price),
+            "total_po_amount": float(po.total_po_amount), "delivery_deadline": str(po.delivery_deadline),
+            "discount_amount_bdt": float(po.discount_amount_bdt or 0), "tax_amount_bdt": float(po.tax_amount_bdt or 0),
+            "terms_and_conditions": po.terms_and_conditions
+        }]
+        po.revision_number = int(po.revision_number or 1) + 1
+        po.approval_status = "PENDING_APPROVAL"
+        po.approved_by_user_id = None
+        po.approval_date = None
+        po.status = "PENDING_APPROVAL"
+
     if payload.ordered_quantity is not None:
         po.ordered_quantity = payload.ordered_quantity
-        po.total_po_amount = round(float(po.ordered_quantity) * float(po.unit_price), 2)
     if payload.unit_price is not None:
         po.unit_price = payload.unit_price
-        po.total_po_amount = round(float(po.ordered_quantity) * float(po.unit_price), 2)
+    po.discount_amount_bdt = new_discount
+    po.tax_amount_bdt = new_tax
+    po.advance_payment_amount_bdt = new_advance
+    po.payment_terms_days = new_payment_days
+    po.total_po_amount = new_total
     if payload.delivery_deadline is not None:
         po.delivery_deadline = payload.delivery_deadline
     if payload.destination_store_id is not None:
         po.destination_store_id = payload.destination_store_id
     if payload.delivery_schedule_notes is not None:
         po.delivery_schedule_notes = payload.delivery_schedule_notes
+    if payload.item_specification is not None:
+        po.item_specification = payload.item_specification
     if payload.terms_and_conditions is not None:
         po.terms_and_conditions = payload.terms_and_conditions
     if payload.status is not None:
         po.status = payload.status
-    if payload.approval_status is not None:
-        po.approval_status = payload.approval_status
+    if payload.status is not None:
+        po.status = payload.status
 
     await db.commit()
     await db.refresh(po)
@@ -1888,7 +2071,7 @@ async def delete_purchase_order(
     id: int,
     db: AsyncSession = Depends(get_db)
 ):
-    """Cancel or delete Purchase Order (only allowed if no goods receipts exist)."""
+    """Cancel a purchase order while keeping its audit record."""
     po = await db.get(PurchaseOrder, id)
     if not po:
         raise HTTPException(status_code=404, detail="Purchase Order not found.")
@@ -1896,9 +2079,11 @@ async def delete_purchase_order(
     # Check for GRN
     grn_count = (await db.execute(select(func.count(GoodsReceipt.id)).where(GoodsReceipt.po_id == id))).scalar() or 0
     if grn_count > 0:
-        raise HTTPException(status_code=400, detail="Cannot delete PO because deliveries/GRNs have already been recorded against it.")
-
-    await db.delete(po)
+        raise HTTPException(status_code=400, detail="Cannot cancel a purchase order after goods receipts have been recorded.")
+    if po.status in {"CLOSED", "FULLY_RECEIVED", "REJECTED"}:
+        raise HTTPException(status_code=400, detail=f"A {po.status.lower()} purchase order cannot be cancelled.")
+    po.revision_history = list(po.revision_history or []) + [{"action": "CANCELLED", "recorded_at": datetime.now().isoformat(), "previous_status": po.status}]
+    po.status = "CANCELLED"
     await db.commit()
 
 
@@ -1908,6 +2093,7 @@ async def delete_purchase_order(
 @router.get("/goods-receipts", response_model=List[GoodsReceiptResponse])
 async def list_goods_receipts(
     po_id: Optional[int] = Query(None),
+    pr_id: Optional[int] = Query(None),
     match_status: Optional[str] = Query(None),
     qc_status: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
@@ -1929,6 +2115,10 @@ async def list_goods_receipts(
     )
     if po_id:
         stmt = stmt.where(GoodsReceipt.po_id == po_id)
+    if pr_id:
+        stmt = stmt.join(PurchaseOrder, GoodsReceipt.po_id == PurchaseOrder.id).join(
+            ComparativeStatement, PurchaseOrder.cs_id == ComparativeStatement.id
+        ).where(ComparativeStatement.pr_id == pr_id)
     if match_status:
         stmt = stmt.where(GoodsReceipt.three_way_match_status == match_status)
     if qc_status:
@@ -2122,6 +2312,8 @@ async def create_goods_receipt(
     po = res.scalar_one_or_none()
     if not po:
         raise HTTPException(status_code=404, detail="Purchase Order not found.")
+    if po.status not in {"SENT_TO_SUPPLIER", "ISSUED", "PARTIALLY_RECEIVED"}:
+        raise HTTPException(status_code=400, detail="Goods can only be received against a purchase order sent to the supplier.")
 
     user_res = await db.execute(select(User).limit(1))
     user = user_res.scalar_one_or_none()

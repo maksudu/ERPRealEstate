@@ -5123,6 +5123,7 @@ async def list_salary_grades(
             default_house_rent_pct=grade.default_house_rent_pct,
             default_medical_allowance=grade.default_medical_allowance,
             default_conveyance=grade.default_conveyance,
+            allowance_package=grade.allowance_package,
             description=grade.description,
             is_active=grade.is_active,
             designations_count=des_cnt or 0,
@@ -5169,6 +5170,7 @@ async def create_salary_grade(
         default_house_rent_pct=new_grade.default_house_rent_pct,
         default_medical_allowance=new_grade.default_medical_allowance,
         default_conveyance=new_grade.default_conveyance,
+        allowance_package=new_grade.allowance_package,
         description=new_grade.description,
         is_active=new_grade.is_active,
         designations_count=0,
@@ -5202,6 +5204,7 @@ async def get_salary_grade_detail(
         default_house_rent_pct=grade.default_house_rent_pct,
         default_medical_allowance=grade.default_medical_allowance,
         default_conveyance=grade.default_conveyance,
+        allowance_package=grade.allowance_package,
         description=grade.description,
         is_active=grade.is_active,
         designations_count=des_cnt,
@@ -5252,6 +5255,7 @@ async def update_salary_grade(
         default_house_rent_pct=grade.default_house_rent_pct,
         default_medical_allowance=grade.default_medical_allowance,
         default_conveyance=grade.default_conveyance,
+        allowance_package=grade.allowance_package,
         description=grade.description,
         is_active=grade.is_active,
         designations_count=des_cnt,
@@ -5326,7 +5330,7 @@ async def list_designations(
     stmt = (
         select(
             Designation,
-            Department.department_name.label("department_name"),
+            Department.name_en.label("department_name"),
             SalaryGrade.grade_name.label("salary_grade_name"),
             func.count(func.distinct(Employee.id)).label("employees_count"),
             func.count(func.distinct(Position.id)).label("positions_count")
@@ -5336,7 +5340,7 @@ async def list_designations(
         .outerjoin(Employee, Employee.designation_id == Designation.id)
         .outerjoin(Position, Position.designation_id == Designation.id)
         .where(and_(*filters))
-        .group_by(Designation.id, Department.department_name, SalaryGrade.grade_name)
+        .group_by(Designation.id, Department.name_en, SalaryGrade.grade_name)
         .order_by(Designation.title_en.asc())
         .limit(limit)
         .offset(offset)
@@ -5623,7 +5627,7 @@ async def list_positions(
     stmt = (
         select(
             Position,
-            Department.department_name.label("department_name"),
+            Department.name_en.label("department_name"),
             Designation.title_en.label("designation_title"),
             SalaryGrade.grade_name.label("salary_grade_name"),
             Branch.branch_name.label("branch_name"),

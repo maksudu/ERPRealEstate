@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HrmsDepartmentService } from '../../../core/services/hrms-department.service';
 import { HrmsOrgService } from '../../../core/services/hrms-org.service';
 import { HrmsService, Employee } from '../hrms.service';
@@ -50,6 +50,7 @@ import {
 })
 export class DepartmentsComponent implements OnInit {
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   deptService = inject(HrmsDepartmentService);
   orgService = inject(HrmsOrgService);
   hrmsService = inject(HrmsService);
@@ -221,6 +222,7 @@ export class DepartmentsComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.successMessage.set(history.state?.hrmsNotice || null);
     this.route.url.subscribe(segments => {
       const last = segments[segments.length - 1]?.path;
       if (last === 'hierarchy') {
@@ -329,30 +331,11 @@ export class DepartmentsComponent implements OnInit {
 
   // --- Department CRUD Modal Actions ---
   openCreateDeptModal(): void {
-    this.editingDeptId.set(null);
-    this.deptForm = this.getEmptyDeptForm();
-    this.isDepartmentModalOpen.set(true);
+    this.router.navigate(['/hrms/departments/new']);
   }
 
   openEditDeptModal(dept: Department): void {
-    this.editingDeptId.set(dept.id);
-    this.deptForm = {
-      company_id: dept.company_id || 1,
-      department_code: dept.department_code,
-      name_en: dept.name_en,
-      name_bn: dept.name_bn || '',
-      parent_department_id: dept.parent_department_id || null,
-      head_of_dept_id: dept.head_of_dept_id || null,
-      branch_id: dept.branch_id || null,
-      cost_center_id: dept.cost_center_id || '',
-      description: dept.description || '',
-      effective_from: dept.effective_from || new Date().toISOString().substring(0, 10),
-      effective_to: dept.effective_to || null,
-      status: dept.status,
-      approval_policies: dept.approval_policies || {},
-      is_active: dept.is_active
-    };
-    this.isDepartmentModalOpen.set(true);
+    this.router.navigate(['/hrms/departments', dept.id, 'edit']);
   }
 
   saveDepartment(): void {
@@ -459,13 +442,7 @@ export class DepartmentsComponent implements OnInit {
 
   // Move Parent Department Modal (Rule 3, 4, 5)
   openMoveParentModal(dept: Department | DepartmentTreeNode): void {
-    this.editingDeptId.set(dept.id);
-    this.moveParentForm = {
-      parent_department_id: dept.parent_department_id || null,
-      effective_date: new Date().toISOString().substring(0, 10),
-      remarks: ''
-    };
-    this.isMoveParentModalOpen.set(true);
+    this.router.navigate(['/hrms/departments/hierarchy', dept.id, 'edit']);
   }
 
   saveMoveParent(): void {
@@ -487,19 +464,7 @@ export class DepartmentsComponent implements OnInit {
 
   // --- Head Assignment Actions (Section 5) ---
   openAssignHeadModal(dept: Department | DepartmentTreeNode): void {
-    const currentDept = this.deptService.departments().find(d => d.id === dept.id) || null;
-    this.selectedDeptForDetails.set(currentDept);
-    this.editingDeptId.set(dept.id);
-    const existingHeadId = ('head_of_dept_id' in dept ? (dept as Department).head_of_dept_id : (dept as DepartmentTreeNode).head_id) || 0;
-    this.assignHeadForm = {
-      employee_id: existingHeadId,
-      assignment_type: 'PERMANENT',
-      effective_from: new Date().toISOString().substring(0, 10),
-      permissions_json: this.headPermissions,
-      remarks: ''
-    };
-    this.deptService.loadHeadHistory(dept.id).subscribe();
-    this.isAssignHeadModalOpen.set(true);
+    this.router.navigate(['/hrms/departments/heads', dept.id, 'edit']);
   }
 
   saveHeadAssignment(): void {
