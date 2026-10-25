@@ -30,10 +30,7 @@
 
   <!-- Unified Top Card Container (Consistent Spacing & Radius) -->
   <app-card-container
-    title="Employee Master Registry & Profile 360°"
-    subtitle="Enterprise Workforce Administration: KYC, Service Records, Station & Project Allocation, Bangladesh Labour Compliance, Compensation & Document Vault"
-    badge="HRMS Core"
-    paddingClass="p-0"
+    title="Employee Master Registry & Profile"
   >
     <!-- Top Action Toolbar -->
     <div card-actions class="flex flex-wrap items-center gap-2">
@@ -279,14 +276,49 @@
                         ৳{{ emp.gross_salary | number:'1.2-2' }}
                       </td>
 
-                      <!-- Status -->
+                      <!-- Status with Quick Change Option -->
                       <td class="py-3 px-4 text-center">
-                        <app-status-badge [status]="emp.status"></app-status-badge>
+                        <div class="inline-flex items-center relative">
+                          <select
+                            [ngModel]="emp.status"
+                            (ngModelChange)="changeEmployeeStatus(emp, $event)"
+                            class="text-[11px] font-bold rounded-lg px-2 py-0.5 appearance-none pr-5 cursor-pointer border transition-all focus:outline-none focus:ring-1 focus:ring-emerald-500 shadow-2xs"
+                            [ngClass]="{
+                              'bg-emerald-50 text-emerald-800 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-700': emp.status === 'ACTIVE' || emp.status === 'CONFIRMED',
+                              'bg-amber-50 text-amber-800 border-amber-300 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-700': emp.status === 'PROBATION',
+                              'bg-blue-50 text-blue-800 border-blue-300 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-700': emp.status === 'ON_LEAVE',
+                              'bg-slate-100 text-slate-800 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600': emp.status === 'RESIGNED',
+                              'bg-rose-50 text-rose-800 border-rose-300 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-700': emp.status === 'TERMINATED' || emp.status === 'SUSPENDED'
+                            }"
+                            title="Click to change employee status"
+                          >
+                            <option value="ACTIVE">ACTIVE</option>
+                            <option value="PROBATION">PROBATION</option>
+                            <option value="CONFIRMED">CONFIRMED</option>
+                            <option value="ON_LEAVE">ON LEAVE</option>
+                            <option value="RESIGNED">RESIGNED</option>
+                            <option value="TERMINATED">TERMINATED</option>
+                            <option value="SUSPENDED">SUSPENDED</option>
+                          </select>
+                          <svg class="w-3 h-3 text-slate-400 absolute right-1 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                          </svg>
+                        </div>
                       </td>
 
                       <!-- Action Buttons -->
                       <td class="py-3 px-4 text-right">
                         <div class="flex items-center justify-end gap-1">
+                          <button
+                            type="button"
+                            (click)="openAppointmentLetter(emp)"
+                            class="p-1.5 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-slate-500 hover:text-emerald-600 transition-colors"
+                            title="Generate Appointment Letter"
+                          >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                          </button>
                           <button
                             type="button"
                             (click)="openDrawer(emp)"
@@ -544,681 +576,6 @@
     }
   </app-card-container>
 
-  <!-- ===================================================================== -->
-  <!-- MODAL: ADD / EDIT EMPLOYEE MASTER (Multi-Tab Sections 1.5 - 1.10) -->
-  <!-- ===================================================================== -->
-  <app-modal
-    [isOpen]="isModalOpen()"
-    [title]="modalMode() === 'create' ? 'Register New Employee' : 'Edit Employee: ' + formData().employee_code"
-    [subtitle]="'Comprehensive Enterprise HR Profile • ' + (formData().first_name ? formData().first_name + ' ' + formData().last_name : 'New Onboarding')"
-    badge="Sections 1.5 - 1.10"
-    size="2xl"
-    [showFooter]="true"
-    (closeModal)="closeModal()"
-  >
-    <div class="space-y-5">
-      <!-- Internal Modal Tabs -->
-      <div class="flex flex-wrap items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl border border-slate-200/60 dark:border-slate-800">
-        @for (mt of modalTabs; track mt.id) {
-          <button
-            type="button"
-            (click)="modalActiveTab.set(mt.id)"
-            class="px-3 py-1.5 text-xs font-semibold rounded-lg transition-all"
-            [ngClass]="modalActiveTab() === mt.id 
-              ? 'bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-400 shadow-2xs font-bold' 
-              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'"
-          >
-            {{ mt.label }}
-          </button>
-        }
-      </div>
-
-      <!-- TAB 1: REGISTRATION (Section 1.5) -->
-      @if (modalActiveTab() === 'registration') {
-        <div class="space-y-4">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <app-custom-input
-              label="First Name *"
-              placeholder="e.g. Engr. Tanvir"
-              [(ngModel)]="formData().first_name"
-              [required]="true"
-            ></app-custom-input>
-
-            <app-custom-input
-              label="Last Name *"
-              placeholder="e.g. Ahmed"
-              [(ngModel)]="formData().last_name"
-              [required]="true"
-            ></app-custom-input>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <app-custom-input
-              label="Employee Code / ID"
-              placeholder="Auto-generated if blank (e.g. EMP-1011)"
-              [(ngModel)]="formData().employee_code"
-            ></app-custom-input>
-
-            <app-custom-input
-              label="Official Email"
-              type="email"
-              placeholder="e.g. tanvir@bengalre.com"
-              [(ngModel)]="formData().official_email"
-            ></app-custom-input>
-
-            <app-custom-input
-              label="Primary Phone *"
-              type="tel"
-              placeholder="e.g. +88017XXXXXXXX"
-              [(ngModel)]="formData().phone"
-              [required]="true"
-            ></app-custom-input>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <app-custom-input
-              label="Joining Date *"
-              type="date"
-              [(ngModel)]="formData().joining_date"
-              [required]="true"
-            ></app-custom-input>
-
-            <app-searchable-select
-              categoryCode="HR_EMPLOYMENT_TYPE"
-              label="Employment Type *"
-              [(ngModel)]="formData().employment_type"
-              placeholder="Select Type..."
-              [allowCreateNew]="true"
-            ></app-searchable-select>
-
-            <app-custom-input
-              label="Probation Period (Months)"
-              type="number"
-              placeholder="6"
-              [(ngModel)]="formData().probation_months"
-            ></app-custom-input>
-          </div>
-        </div>
-      }
-
-      <!-- TAB 2: PROFILE & EMERGENCY (Section 1.6) -->
-      @if (modalActiveTab() === 'profile') {
-        <div class="space-y-5">
-          <!-- Personal KYC -->
-          <div class="text-xs font-bold text-slate-800 dark:text-slate-200 border-b border-slate-100 dark:border-slate-800 pb-1">
-            Personal Information & Statutory Identifiers
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <app-custom-input
-              label="Date of Birth"
-              type="date"
-              [(ngModel)]="formData().date_of_birth"
-            ></app-custom-input>
-
-            <app-searchable-select
-              categoryCode="HR_GENDER"
-              label="Gender"
-              [(ngModel)]="formData().gender"
-              [allowCreateNew]="true"
-            ></app-searchable-select>
-
-            <app-searchable-select
-              categoryCode="HR_MARITAL_STATUS"
-              label="Marital Status"
-              [(ngModel)]="formData().marital_status"
-              [allowCreateNew]="true"
-            ></app-searchable-select>
-
-            <app-searchable-select
-              categoryCode="HR_BLOOD_GROUP"
-              label="Blood Group"
-              [(ngModel)]="formData().blood_group"
-              [allowCreateNew]="true"
-            ></app-searchable-select>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <app-custom-input
-              label="Bangladesh National ID (NID)"
-              placeholder="10 or 17 digit Smart NID"
-              [(ngModel)]="formData().nid_number"
-            ></app-custom-input>
-
-            <app-custom-input
-              label="E-TIN Number"
-              placeholder="12-digit Tax Identification No"
-              [(ngModel)]="formData().tin_number"
-            ></app-custom-input>
-
-            <app-custom-input
-              label="Personal Phone (Alternate)"
-              placeholder="+88018XXXXXXXX"
-              [(ngModel)]="formData().personal_phone"
-            ></app-custom-input>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <app-custom-textarea
-              label="Present Address"
-              placeholder="House, Road, Area, Thana, District"
-              rows="2"
-              [(ngModel)]="formData().present_address"
-            ></app-custom-textarea>
-
-            <app-custom-textarea
-              label="Permanent Address"
-              placeholder="Village/Road, Post Office, Thana, District"
-              rows="2"
-              [(ngModel)]="formData().permanent_address"
-            ></app-custom-textarea>
-          </div>
-
-          <!-- Emergency Contact -->
-          <div class="text-xs font-bold text-slate-800 dark:text-slate-200 border-b border-slate-100 dark:border-slate-800 pb-1 pt-2">
-            Emergency Contact Person
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <app-custom-input
-              label="Contact Person Name"
-              placeholder="e.g. Mrs. Shamima Begum"
-              [(ngModel)]="formData().emergency_contact_name"
-            ></app-custom-input>
-
-            <app-searchable-select
-              categoryCode="HR_EMERGENCY_RELATION"
-              label="Relationship"
-              [(ngModel)]="formData().emergency_contact_relation"
-              [allowCreateNew]="true"
-            ></app-searchable-select>
-
-            <app-custom-input
-              label="Emergency Phone"
-              placeholder="+8801XXXXXXXXX"
-              [(ngModel)]="formData().emergency_contact_phone"
-            ></app-custom-input>
-          </div>
-
-          <!-- Education Records Table -->
-          <div class="text-xs font-bold text-slate-800 dark:text-slate-200 border-b border-slate-100 dark:border-slate-800 pb-1 pt-2 flex items-center justify-between">
-            <span>Academic Qualifications</span>
-          </div>
-
-          <div class="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200/60 dark:border-slate-800 space-y-3">
-            <div class="grid grid-cols-1 sm:grid-cols-5 gap-2">
-              <input
-                type="text"
-                placeholder="Degree (e.g. B.Sc in Civil)"
-                [(ngModel)]="newEducation().degree"
-                class="erp-input text-xs"
-              />
-              <input
-                type="text"
-                placeholder="Institution (e.g. BUET)"
-                [(ngModel)]="newEducation().institution"
-                class="erp-input text-xs"
-              />
-              <input
-                type="text"
-                placeholder="Major / Dept"
-                [(ngModel)]="newEducation().major"
-                class="erp-input text-xs"
-              />
-              <input
-                type="text"
-                placeholder="Passing Year"
-                [(ngModel)]="newEducation().passing_year"
-                class="erp-input text-xs"
-              />
-              <div class="flex items-center gap-1">
-                <input
-                  type="text"
-                  placeholder="Result / CGPA"
-                  [(ngModel)]="newEducation().result"
-                  class="erp-input text-xs flex-1"
-                />
-                <button
-                  type="button"
-                  (click)="addEducationRecord()"
-                  class="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs"
-                  title="Add Degree"
-                >
-                  + Add
-                </button>
-              </div>
-            </div>
-
-            @if (formData().education && formData().education!.length > 0) {
-              <div class="space-y-1.5 mt-2">
-                @for (edu of formData().education; track $index) {
-                  <div class="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 text-xs">
-                    <div>
-                      <span class="font-bold text-slate-800 dark:text-slate-200">{{ edu.degree }}</span>
-                      <span class="text-slate-500"> - {{ edu.institution }} ({{ edu.passing_year }})</span>
-                      @if (edu.result) {
-                        <span class="ml-2 px-1.5 py-0.5 rounded text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold">{{ edu.result }}</span>
-                      }
-                    </div>
-                    <button type="button" (click)="removeEducationRecord($index)" class="text-rose-500 hover:text-rose-700 text-xs font-bold">✕</button>
-                  </div>
-                }
-              </div>
-            }
-          </div>
-
-          <!-- Experience Records Table -->
-          <div class="text-xs font-bold text-slate-800 dark:text-slate-200 border-b border-slate-100 dark:border-slate-800 pb-1 pt-2">
-            Professional Experience History
-          </div>
-
-          <div class="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200/60 dark:border-slate-800 space-y-3">
-            <div class="grid grid-cols-1 sm:grid-cols-5 gap-2">
-              <input
-                type="text"
-                placeholder="Company / Employer"
-                [(ngModel)]="newExperience().company"
-                class="erp-input text-xs"
-              />
-              <input
-                type="text"
-                placeholder="Designation"
-                [(ngModel)]="newExperience().designation"
-                class="erp-input text-xs"
-              />
-              <input
-                type="text"
-                placeholder="From Date"
-                [(ngModel)]="newExperience().from_date"
-                class="erp-input text-xs"
-              />
-              <input
-                type="text"
-                placeholder="To Date"
-                [(ngModel)]="newExperience().to_date"
-                class="erp-input text-xs"
-              />
-              <div class="flex items-center gap-1">
-                <input
-                  type="text"
-                  placeholder="Key Responsibilities"
-                  [(ngModel)]="newExperience().responsibility"
-                  class="erp-input text-xs flex-1"
-                />
-                <button
-                  type="button"
-                  (click)="addExperienceRecord()"
-                  class="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs"
-                  title="Add Experience"
-                >
-                  + Add
-                </button>
-              </div>
-            </div>
-
-            @if (formData().experience && formData().experience!.length > 0) {
-              <div class="space-y-1.5 mt-2">
-                @for (exp of formData().experience; track $index) {
-                  <div class="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 text-xs">
-                    <div>
-                      <span class="font-bold text-slate-800 dark:text-slate-200">{{ exp.designation }}</span>
-                      <span class="text-slate-500"> at {{ exp.company }} ({{ exp.from_date }} - {{ exp.to_date }})</span>
-                    </div>
-                    <button type="button" (click)="removeExperienceRecord($index)" class="text-rose-500 hover:text-rose-700 text-xs font-bold">✕</button>
-                  </div>
-                }
-              </div>
-            }
-          </div>
-        </div>
-      }
-
-      <!-- TAB 3: EMPLOYMENT DETAILS (Section 1.7) -->
-      @if (modalActiveTab() === 'employment') {
-        <div class="space-y-4">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <app-searchable-select
-              [options]="departmentOptions()"
-              label="Department *"
-              placeholder="Select Department..."
-              [(ngModel)]="formData().department_id"
-              [required]="true"
-              [allowCreateNew]="false"
-            ></app-searchable-select>
-
-            <app-searchable-select
-              [options]="designationOptions()"
-              label="Designation *"
-              placeholder="Select Designation..."
-              [(ngModel)]="formData().designation_id"
-              [required]="true"
-              [allowCreateNew]="false"
-            ></app-searchable-select>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <app-searchable-select
-              [options]="managerOptions()"
-              label="Reporting Manager (Supervisor)"
-              placeholder="Select Manager..."
-              [(ngModel)]="formData().reporting_to_id"
-              [allowCreateNew]="false"
-            ></app-searchable-select>
-
-            <app-searchable-select
-              categoryCode="HR_WORKFORCE_CATEGORY"
-              label="Workforce Category *"
-              [(ngModel)]="formData().workforce_category"
-              [allowCreateNew]="true"
-            ></app-searchable-select>
-          </div>
-
-          <div class="text-xs font-bold text-slate-800 dark:text-slate-200 border-b border-slate-100 dark:border-slate-800 pb-1 pt-2">
-            Location, Branch & Project Site Allocation
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <app-searchable-select
-              [options]="companyOptions()"
-              label="Operating Company"
-              placeholder="Select Company..."
-              [(ngModel)]="formData().company_id"
-              [allowCreateNew]="false"
-            ></app-searchable-select>
-
-            <app-searchable-select
-              [options]="branchOptions()"
-              label="Branch Office"
-              placeholder="Select Branch..."
-              [(ngModel)]="formData().branch_id"
-              [allowCreateNew]="false"
-            ></app-searchable-select>
-
-            <app-searchable-select
-              [options]="projectOptions()"
-              label="Assigned Project Site"
-              placeholder="Select Construction Project..."
-              [(ngModel)]="formData().assigned_project_id"
-              [allowCreateNew]="false"
-            ></app-searchable-select>
-          </div>
-        </div>
-      }
-
-      <!-- TAB 4: COMPENSATION & BANKING -->
-      @if (modalActiveTab() === 'compensation') {
-        <div class="space-y-5">
-          <!-- Live Calculated Gross Card -->
-          <div class="p-4 rounded-xl bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800 flex items-center justify-between">
-            <div>
-              <div class="text-[11px] font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-wider">Total Monthly Gross Salary</div>
-              <div class="text-2xl font-black font-mono text-emerald-900 dark:text-emerald-200 mt-0.5">
-                ৳{{ calculatedGrossSalary() | number:'1.2-2' }}
-              </div>
-            </div>
-            <div class="text-right text-xs text-slate-500">
-              Bangladesh Labour Act Compliant<br>
-              <span class="font-semibold text-emerald-700 dark:text-emerald-400">House Rent (50%) + Medical (10%) Auto-Applied</span>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <app-custom-input
-              label="Basic Salary (BDT) *"
-              type="number"
-              placeholder="50000"
-              [(ngModel)]="formData().basic_salary"
-              (ngModelChange)="onBasicSalaryChange($event)"
-              [required]="true"
-            ></app-custom-input>
-
-            <app-custom-input
-              label="House Rent Allowance (50%)"
-              type="number"
-              placeholder="25000"
-              [(ngModel)]="formData().house_rent_allowance"
-            ></app-custom-input>
-
-            <app-custom-input
-              label="Medical Allowance (10%)"
-              type="number"
-              placeholder="5000"
-              [(ngModel)]="formData().medical_allowance"
-            ></app-custom-input>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <app-custom-input
-              label="Conveyance Allowance"
-              type="number"
-              placeholder="4000"
-              [(ngModel)]="formData().conveyance_allowance"
-            ></app-custom-input>
-
-            <app-custom-input
-              label="Site Hazard Allowance"
-              type="number"
-              placeholder="0 (Construction Site Engg)"
-              [(ngModel)]="formData().site_hazard_allowance"
-            ></app-custom-input>
-
-            <app-custom-input
-              label="Mobile & Communication Allowance"
-              type="number"
-              placeholder="2000"
-              [(ngModel)]="formData().mobile_allowance"
-            ></app-custom-input>
-          </div>
-
-          <div class="text-xs font-bold text-slate-800 dark:text-slate-200 border-b border-slate-100 dark:border-slate-800 pb-1 pt-2">
-            Disbursal Bank Details & Statutory Deductions
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <app-custom-input
-              label="Bank Name"
-              placeholder="e.g. City Bank PLC"
-              [(ngModel)]="formData().bank_name"
-            ></app-custom-input>
-
-            <app-custom-input
-              label="Branch Name"
-              placeholder="e.g. Gulshan Branch"
-              [(ngModel)]="formData().bank_branch"
-            ></app-custom-input>
-
-            <app-custom-input
-              label="Bank Account Number"
-              placeholder="13-16 digit account no"
-              [(ngModel)]="formData().bank_account_no"
-            ></app-custom-input>
-
-            <app-custom-input
-              label="Routing Number"
-              placeholder="9-digit routing no"
-              [(ngModel)]="formData().routing_no"
-            ></app-custom-input>
-          </div>
-
-          <div class="flex items-center gap-6 pt-2">
-            <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-800 dark:text-slate-200">
-              <input
-                type="checkbox"
-                [(ngModel)]="formData().is_pf_eligible"
-                class="rounded text-emerald-600 focus:ring-emerald-500 h-4 w-4"
-              />
-              <span>Provident Fund (PF) Eligible (8.33% deduction)</span>
-            </label>
-
-            <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-800 dark:text-slate-200">
-              <input
-                type="checkbox"
-                [(ngModel)]="formData().is_tax_eligible"
-                class="rounded text-emerald-600 focus:ring-emerald-500 h-4 w-4"
-              />
-              <span>Income Tax TDS Eligible (NBR Payroll Withholding)</span>
-            </label>
-          </div>
-        </div>
-      }
-
-      <!-- TAB 5: DOCUMENTS (Section 1.8) -->
-      @if (modalActiveTab() === 'documents') {
-        <div class="space-y-4">
-          <div class="text-xs text-slate-500">
-            Attach onboarding documentation: Appointment Letter, NID Copy, Academic Certificates, Contracts, and Photos.
-          </div>
-
-          <div class="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200/60 dark:border-slate-800 space-y-3">
-            <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
-              <app-searchable-select
-                categoryCode="HR_DOCUMENT_TYPE"
-                label="Document Type"
-                [(ngModel)]="newDocument().document_type"
-                [allowCreateNew]="true"
-              ></app-searchable-select>
-
-              <app-custom-input
-                label="Document Title *"
-                placeholder="e.g. Signed Appointment Letter"
-                [(ngModel)]="newDocument().title"
-              ></app-custom-input>
-
-              <app-custom-input
-                label="File URL / Path *"
-                placeholder="e.g. /uploads/docs/appt_tanvir.pdf"
-                [(ngModel)]="newDocument().file_url"
-              ></app-custom-input>
-
-              <div class="flex items-end">
-                <button
-                  type="button"
-                  (click)="addDocumentRecord()"
-                  class="w-full h-[38px] rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1 transition-colors"
-                >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                  <span>Attach Document</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Document List -->
-          <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-white dark:bg-slate-900 shadow-2xs">
-            <table class="w-full text-left text-xs text-slate-600 dark:text-slate-300">
-              <thead class="bg-slate-50/80 dark:bg-slate-800/80 text-[11px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
-                <tr>
-                  <th scope="col" class="py-2.5 px-3">Type</th>
-                  <th scope="col" class="py-2.5 px-3">Title</th>
-                  <th scope="col" class="py-2.5 px-3">File Reference</th>
-                  <th scope="col" class="py-2.5 px-3">Attached Date</th>
-                  <th scope="col" class="py-2.5 px-3 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80">
-                @if (!formData().documents || formData().documents!.length === 0) {
-                  <tr>
-                    <td colspan="5" class="py-6 text-center text-slate-400 text-xs">
-                      No documents attached for this employee yet.
-                    </td>
-                  </tr>
-                } @else {
-                  @for (doc of formData().documents; track $index) {
-                    <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
-                      <td class="py-2.5 px-3 font-semibold text-emerald-700 dark:text-emerald-400">
-                        {{ doc.document_type }}
-                      </td>
-                      <td class="py-2.5 px-3 font-bold text-slate-800 dark:text-slate-200">
-                        {{ doc.title }}
-                      </td>
-                      <td class="py-2.5 px-3 font-mono text-[11px] text-slate-500">
-                        {{ doc.file_url }}
-                      </td>
-                      <td class="py-2.5 px-3 text-slate-500">
-                        {{ doc.uploaded_at | date:'dd MMM yyyy' }}
-                      </td>
-                      <td class="py-2.5 px-3 text-right">
-                        <button
-                          type="button"
-                          (click)="removeDocumentRecord($index)"
-                          class="text-rose-500 hover:text-rose-700 font-bold text-xs"
-                        >
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
-                  }
-                }
-              </tbody>
-            </table>
-          </div>
-        </div>
-      }
-
-      <!-- TAB 6: SYSTEM USER & STATUS (Section 1.9 & 1.10) -->
-      @if (modalActiveTab() === 'system') {
-        <div class="space-y-4">
-          <div class="text-xs font-bold text-slate-800 dark:text-slate-200 border-b border-slate-100 dark:border-slate-800 pb-1">
-            Section 1.9: User & Role Management
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <app-searchable-select
-              categoryCode="HR_SYSTEM_ROLE"
-              label="ERP System Role *"
-              [(ngModel)]="formData().system_role"
-              [allowCreateNew]="true"
-            ></app-searchable-select>
-
-            <app-custom-input
-              label="Linked User Account ID"
-              type="number"
-              placeholder="e.g. 5 (Leave blank if not registered user)"
-              [(ngModel)]="formData().user_id"
-            ></app-custom-input>
-          </div>
-
-          <div class="text-xs font-bold text-slate-800 dark:text-slate-200 border-b border-slate-100 dark:border-slate-800 pb-1 pt-2">
-            Section 1.10: Employee Lifecycle Status
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <app-searchable-select
-              categoryCode="HR_EMPLOYEE_STATUS"
-              label="Employee Status *"
-              [(ngModel)]="formData().status"
-              [allowCreateNew]="true"
-            ></app-searchable-select>
-
-            <app-custom-input
-              label="Confirmation Date"
-              type="date"
-              [(ngModel)]="formData().confirmation_date"
-              hint="Set when employee successfully completes probation"
-            ></app-custom-input>
-          </div>
-        </div>
-      }
-    </div>
-
-    <!-- Modal Footer -->
-    <div modal-footer class="flex items-center gap-2">
-      <app-custom-button
-        variant="outline"
-        size="sm"
-        label="Cancel"
-        (btnClick)="closeModal()"
-      ></app-custom-button>
-
-      <app-custom-button
-        variant="primary"
-        size="sm"
-        [label]="isSaving() ? 'Saving...' : (modalMode() === 'create' ? 'Register Employee' : 'Update Profile')"
-        [disabled]="isSaving()"
-        (btnClick)="saveEmployee()"
-      ></app-custom-button>
-    </div>
-  </app-modal>
 
   <!-- ===================================================================== -->
   <!-- DRAWER: EMPLOYEE 360° PROFILE VIEW -->
@@ -1551,6 +908,220 @@
         label="Save Lookup Item"
         (btnClick)="saveQuickLookupItem()"
       ></app-custom-button>
+    </div>
+  </app-modal>
+
+  <!-- ===================================================================== -->
+  <!-- APPOINTMENT LETTER GENERATOR MODAL -->
+  <!-- ===================================================================== -->
+  <app-modal
+    [isOpen]="showAppointmentLetterModal()"
+    (closeModal)="closeAppointmentLetter()"
+    title="Official Appointment Letter"
+    subtitle="Generated under Bangladesh Labour Act 2006 & Company Service Rules"
+    size="2xl"
+    [showFooter]="true"
+  >
+    @if (selectedLetterEmployee(); as emp) {
+      <!-- Printable Document Container -->
+      <div id="appointment-letter-print-area" class="bg-white text-slate-900 p-8 sm:p-12 rounded-lg border border-slate-200 shadow-xs max-h-[70vh] overflow-y-auto font-serif leading-relaxed text-sm">
+
+        <!-- Company Letterhead Header -->
+        <div class="text-center border-b-2 border-slate-900 pb-4 mb-6">
+          <h2 class="text-xl font-black tracking-wider uppercase text-slate-950 font-sans">
+            {{ emp.company_name || 'BlueOceans Real Estate & Infrastructure PLC' }}
+          </h2>
+          <p class="text-xs text-slate-600 font-sans mt-0.5">
+            Registered Head Office: Level-11, Gulshan Avenue, Gulshan-2, Dhaka-1212, Bangladesh
+          </p>
+          <p class="text-[11px] text-slate-500 font-sans">
+            Phone: +880 2 988-1234 • Email: hr&#64;blueoceansbd.com • Web: www.blueoceansbd.com
+          </p>
+        </div>
+
+        <!-- Date & Recipient Details -->
+        <div class="space-y-1 mb-6 text-sm">
+          <div class="font-bold font-sans text-xs text-slate-500 mb-2">
+            Ref: BOR/HRD/AL/{{ emp.employee_code || ('EMP-' + emp.id) }}/{{ currentYear }}
+          </div>
+          <div><strong>Date:</strong> {{ todayFormatted }}</div>
+          <div class="pt-2"><strong>To:</strong></div>
+          <div class="font-bold text-base text-slate-950">{{ emp.first_name }} {{ emp.last_name }} @if (emp.full_name_bn) { <span class="font-normal font-bengali">({{ emp.full_name_bn }})</span> }</div>
+          <div>{{ emp.present_address || emp.permanent_address || 'Address on file, Dhaka, Bangladesh' }}</div>
+          <div><strong>National ID:</strong> {{ emp.nid_number || 'N/A' }}</div>
+          <div><strong>Contact Number:</strong> {{ emp.phone }}</div>
+        </div>
+
+        <!-- Subject Line -->
+        <div class="font-bold text-base underline uppercase text-slate-950 mb-4 tracking-wide">
+          Subject: Appointment Letter for the position of {{ emp.designation_title || 'Executive' }}
+        </div>
+
+        <!-- Opening Salutation -->
+        <p class="mb-4 text-justify">
+          Dear <strong>{{ emp.first_name }} {{ emp.last_name }}</strong>,
+        </p>
+        <p class="mb-4 text-justify">
+          We are pleased to offer you the position of <strong>{{ emp.designation_title || 'Executive' }}</strong> in our organization, with effect from <strong>{{ (emp.joining_date | date:'dd MMMM yyyy') || todayFormatted }}</strong>, subject to your accepting the terms below:
+        </p>
+
+        <!-- Clause 1 -->
+        <div class="mb-4 text-justify">
+          <strong class="text-slate-950">1. Designation & Place of Posting:</strong><br />
+          You shall serve as <strong>{{ emp.designation_title || 'Executive' }}</strong> and report to <strong>{{ emp.reporting_to_name || 'Department Head / Reporting Manager' }}</strong>. Your place of work shall be <strong>{{ emp.work_location || emp.branch_name || 'Corporate Head Office, Dhaka' }}</strong>, and you may be required to travel or be posted to other offices/units or site projects if necessary.
+        </div>
+
+        <!-- Clause 2 -->
+        <div class="mb-4 text-justify">
+          <strong class="text-slate-950">2. Class of Employment & Probation:</strong><br />
+          The role is of <strong>{{ emp.employment_type || 'Probationer' }}</strong> nature. Your probation period will be <strong>{{ emp.probation_months ? (emp.probation_months + ' months') : '06 months' }}</strong>, and during this period, either party may terminate employment with one month’s notice (or pay in lieu thereof). Upon satisfactory completion of probation, you will be confirmed as a permanent employee under company policy.
+        </div>
+
+        <!-- Clause 3 -->
+        <div class="mb-4 text-justify">
+          <strong class="text-slate-950">3. Remuneration & Benefits:</strong><br />
+          Your gross monthly salary will be <strong>BDT ৳{{ (emp.gross_salary || 0) | number:'1.2-2' }}</strong>. The breakdown is:
+          <table class="w-full my-2 border border-slate-400 border-collapse text-xs font-sans">
+            <thead class="bg-slate-100 font-bold">
+              <tr>
+                <th class="border border-slate-300 p-2 text-left">Salary Component</th>
+                <th class="border border-slate-300 p-2 text-right">Monthly Amount (BDT)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="border border-slate-300 p-2">Basic Salary</td>
+                <td class="border border-slate-300 p-2 text-right font-mono font-semibold">৳{{ getBasicSalary(emp) | number:'1.2-2' }}</td>
+              </tr>
+              <tr>
+                <td class="border border-slate-300 p-2">House Rent Allowance</td>
+                <td class="border border-slate-300 p-2 text-right font-mono">৳{{ getHouseRentAllowance(emp) | number:'1.2-2' }}</td>
+              </tr>
+              <tr>
+                <td class="border border-slate-300 p-2">Medical Allowance</td>
+                <td class="border border-slate-300 p-2 text-right font-mono">৳{{ getMedicalAllowance(emp) | number:'1.2-2' }}</td>
+              </tr>
+              <tr>
+                <td class="border border-slate-300 p-2">Conveyance Allowance</td>
+                <td class="border border-slate-300 p-2 text-right font-mono">৳{{ getConveyanceAllowance(emp) | number:'1.2-2' }}</td>
+              </tr>
+              <tr>
+                <td class="border border-slate-300 p-2">Other Statutory & Site Allowances</td>
+                <td class="border border-slate-300 p-2 text-right font-mono">৳{{ getOtherAllowances(emp) | number:'1.2-2' }}</td>
+              </tr>
+              <tr class="bg-slate-50 font-bold">
+                <td class="border border-slate-300 p-2">Total Gross Monthly Compensation</td>
+                <td class="border border-slate-300 p-2 text-right font-mono text-emerald-800">৳{{ (emp.gross_salary || 0) | number:'1.2-2' }}</td>
+              </tr>
+            </tbody>
+          </table>
+          Any applicable bonuses, festival gratuities, increments, and provident fund benefits will be governed by the company’s policies and subject to performance and eligibility criteria.
+        </div>
+
+        <!-- Clause 4 -->
+        <div class="mb-4 text-justify">
+          <strong class="text-slate-950">4. Working Hours, Overtime & Weekly Holiday:</strong><br />
+          Your working hours are nominally 8 hours per day, 6 days per week. Overtime, if applicable and approved by department authority, will be paid at the rate of twice the ordinary rate, in accordance with Section 108 of the Bangladesh Labour Act. The weekly holiday will be as per company schedule and statutory requirements.
+        </div>
+
+        <!-- Clause 5 -->
+        <div class="mb-4 text-justify">
+          <strong class="text-slate-950">5. Leave & Holidays:</strong><br />
+          You are entitled to casual leave of 10 days per calendar year and sick leave of 14 days per calendar year after joining. Earned/annual leave shall be provided as per the Labour Act (1 day for every 18 days worked) and company policy after completion of one year of continuous service. Festival and government public holidays will follow the company holiday calendar.
+        </div>
+
+        <!-- Clause 6 -->
+        <div class="mb-4 text-justify">
+          <strong class="text-slate-950">6. Service Rules & Policies:</strong><br />
+          You will at all times abide by the company’s Service Rules, HR policies, security/confidentiality requirements, code of conduct, as well as all applicable statutory laws, including the Labour Act, 2006, and Labor Rules, 2015.
+        </div>
+
+        <!-- Clause 7 -->
+        <div class="mb-4 text-justify">
+          <strong class="text-slate-950">7. ID Card & Service Book:</strong><br />
+          In compliance with Section 5 and Section 6 of the Labour Act, you will be issued a photo identity card at the employer’s cost; a Service Book will be maintained in the employer’s custody along with this appointment letter.
+        </div>
+
+        <!-- Clause 8 -->
+        <div class="mb-4 text-justify">
+          <strong class="text-slate-950">8. Termination or Separation:</strong><br />
+          Either the employer or employee may terminate the employment with one month’s notice, or pay in lieu thereof. The employer may terminate or dismiss the employee due to grounds of misconduct, if found guilty under due process.
+        </div>
+
+        <!-- Clause 9 -->
+        <div class="mb-4 text-justify">
+          <strong class="text-slate-950">9. Confidentiality & Intellectual Property (if applicable):</strong><br />
+          You shall not, during or after your employment, disclose any confidential information of the company, nor misuse any company property, architectural drawings, software systems, trade secrets or intellectual property.
+        </div>
+
+        <!-- Clause 10 -->
+        <div class="mb-6 text-justify">
+          <strong class="text-slate-950">10. General Terms:</strong><br />
+          This letter sets out the principal terms of your employment. Other detailed terms and conditions are contained in the company’s Service Rules/Job Description.
+          Please sign and return the duplicate copy of this letter as a token of your acceptance of the terms of employment on or before <strong>{{ todayFormatted }}</strong>.
+        </div>
+
+        <!-- Signatures -->
+        <div class="pt-8 border-t border-slate-300 flex items-end justify-between font-sans">
+          <div>
+            <p class="font-bold text-slate-800">Yours sincerely,</p>
+            <div class="h-14"></div>
+            <p class="font-bold text-slate-950 border-t border-slate-400 pt-1">Engr. Maksudur Rahman</p>
+            <p class="text-xs text-slate-600">Managing Director / Head of HR</p>
+            <p class="text-[11px] text-slate-500">{{ emp.company_name || 'BlueOceans Real Estate PLC' }}</p>
+          </div>
+
+          <div class="text-right">
+            <p class="font-bold text-slate-800 text-left">Acceptance by Employee:</p>
+            <p class="text-[11px] text-slate-600 italic text-left max-w-xs mt-1">
+              I, <strong>{{ emp.first_name }} {{ emp.last_name }}</strong>, hereby accept the appointment on the terms and conditions stated above.
+            </p>
+            <div class="h-10"></div>
+            <div class="border-t border-slate-400 pt-1 text-left">
+              <p class="text-xs"><strong>Signature:</strong> ________________________________</p>
+              <p class="text-xs mt-1"><strong>Date:</strong> _____________________________________</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    }
+
+    <!-- Modal Footer Actions -->
+    <div modal-footer class="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div class="min-w-0 text-xs text-slate-500">
+        <div>
+          Prepared for: <span class="font-bold text-slate-700 dark:text-slate-300">{{ selectedLetterEmployee()?.first_name }} {{ selectedLetterEmployee()?.last_name }}</span>
+        </div>
+        @if (appointmentLetterPdfError()) {
+          <p class="mt-1 text-rose-600 dark:text-rose-400" role="alert" aria-live="polite">
+            {{ appointmentLetterPdfError() }}
+          </p>
+        }
+      </div>
+      <div class="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto">
+        <app-custom-button
+          variant="outline"
+          size="sm"
+          label="Close"
+          (btnClick)="closeAppointmentLetter()"
+        ></app-custom-button>
+
+        <app-custom-button
+          variant="secondary"
+          size="sm"
+          label="Download A4 PDF"
+          [loading]="isGeneratingAppointmentPdf()"
+          (btnClick)="downloadAppointmentLetterPdf()"
+        ></app-custom-button>
+
+        <app-custom-button
+          variant="primary"
+          size="sm"
+          label="🖨️ Print / Save as PDF"
+          (btnClick)="printAppointmentLetter()"
+        ></app-custom-button>
+      </div>
     </div>
   </app-modal>
 </div>

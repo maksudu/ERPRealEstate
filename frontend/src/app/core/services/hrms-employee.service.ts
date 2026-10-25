@@ -131,4 +131,33 @@ export class HrmsEmployeeService {
   deleteEmployee(id: number): Observable<{ message: string; id: number }> {
     return this.http.delete<{ message: string; id: number }>(`${this.apiUrl}/${id}`);
   }
+
+  /**
+   * Quick status change (ACTIVE, PROBATION, CONFIRMED, RESIGNED, TERMINATED, ON_LEAVE)
+   */
+  updateEmployeeStatus(id: number, status: string): Observable<Employee> {
+    return this.http.patch<Employee>(`${this.apiUrl}/${id}/status`, { status }).pipe(
+      tap((updated) => {
+        const current = this.employees();
+        const index = current.findIndex(e => e.id === id);
+        if (index !== -1) {
+          const next = [...current];
+          next[index] = updated;
+          this.employees.set(next);
+        }
+      })
+    );
+  }
+
+  /**
+   * Upload photograph / avatar
+   */
+  uploadPhoto(file: File): Observable<{ status: string; photo_url: string; filename: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<{ status: string; photo_url: string; filename: string }>(
+      `${this.apiUrl}/upload-photo`,
+      formData
+    );
+  }
 }

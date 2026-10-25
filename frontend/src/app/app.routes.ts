@@ -1692,9 +1692,24 @@ export const routes: Routes = [
         title: 'Employee List '
       },
       {
+        path: 'hrms/employees/new',
+        loadComponent: () => import('./features/hrms/employees/employee-form.component').then(m => m.EmployeeFormComponent),
+        title: 'Register New Employee '
+      },
+      {
+        path: 'hrms/employees/create',
+        loadComponent: () => import('./features/hrms/employees/employee-form.component').then(m => m.EmployeeFormComponent),
+        title: 'Register New Employee '
+      },
+      {
         path: 'hrms/employees/add',
-        loadComponent: () => import('./features/hrms/employees/employee-list.component').then(m => m.EmployeeListComponent),
-        title: 'Add Employee '
+        loadComponent: () => import('./features/hrms/employees/employee-form.component').then(m => m.EmployeeFormComponent),
+        title: 'Register New Employee '
+      },
+      {
+        path: 'hrms/employees/:id/edit',
+        loadComponent: () => import('./features/hrms/employees/employee-form.component').then(m => m.EmployeeFormComponent),
+        title: 'Edit Employee Profile '
       },
       {
         path: 'hrms/employees/profile',
@@ -1770,52 +1785,52 @@ export const routes: Routes = [
       },
       {
         path: 'hrms/recruitment/requisitions',
-        loadComponent: () => import('./features/hrms/recruitment/recruitment-onboarding.component').then(m => m.RecruitmentOnboardingComponent),
+        loadComponent: () => import('./features/hrms/recruitment/recruitment-pages').then(m => m.RecruitmentRequisitionsPageComponent),
         title: 'Manpower Requisition '
       },
       {
         path: 'hrms/recruitment/vacancies',
-        loadComponent: () => import('./features/hrms/recruitment/recruitment-onboarding.component').then(m => m.RecruitmentOnboardingComponent),
+        loadComponent: () => import('./features/hrms/recruitment/recruitment-pages').then(m => m.RecruitmentVacanciesPageComponent),
         title: 'Job Vacancy '
       },
       {
         path: 'hrms/recruitment/applicants',
-        loadComponent: () => import('./features/hrms/recruitment/recruitment-onboarding.component').then(m => m.RecruitmentOnboardingComponent),
+        loadComponent: () => import('./features/hrms/recruitment/recruitment-pages').then(m => m.RecruitmentApplicantsPageComponent),
         title: 'Applicant Database '
       },
       {
         path: 'hrms/recruitment/interviews',
-        loadComponent: () => import('./features/hrms/recruitment/recruitment-onboarding.component').then(m => m.RecruitmentOnboardingComponent),
+        loadComponent: () => import('./features/hrms/recruitment/recruitment-pages').then(m => m.RecruitmentInterviewsPageComponent),
         title: 'Interview Schedule '
       },
       {
         path: 'hrms/recruitment/evaluations',
-        loadComponent: () => import('./features/hrms/recruitment/recruitment-onboarding.component').then(m => m.RecruitmentOnboardingComponent),
+        loadComponent: () => import('./features/hrms/recruitment/recruitment-pages').then(m => m.RecruitmentEvaluationsPageComponent),
         title: 'Interview Evaluation '
       },
       {
         path: 'hrms/recruitment/selection',
-        loadComponent: () => import('./features/hrms/recruitment/recruitment-onboarding.component').then(m => m.RecruitmentOnboardingComponent),
+        loadComponent: () => import('./features/hrms/recruitment/recruitment-pages').then(m => m.RecruitmentSelectionPageComponent),
         title: 'Selection '
       },
       {
         path: 'hrms/recruitment/offer-letters',
-        loadComponent: () => import('./features/hrms/recruitment/recruitment-onboarding.component').then(m => m.RecruitmentOnboardingComponent),
+        loadComponent: () => import('./features/hrms/recruitment/recruitment-pages').then(m => m.RecruitmentOfferLettersPageComponent),
         title: 'Offer Letter '
       },
       {
         path: 'hrms/recruitment/appointment-letters',
-        loadComponent: () => import('./features/hrms/recruitment/recruitment-onboarding.component').then(m => m.RecruitmentOnboardingComponent),
+        loadComponent: () => import('./features/hrms/recruitment/recruitment-pages').then(m => m.RecruitmentAppointmentLettersPageComponent),
         title: 'Appointment Letter '
       },
       {
         path: 'hrms/recruitment/joining-checklist',
-        loadComponent: () => import('./features/hrms/recruitment/recruitment-onboarding.component').then(m => m.RecruitmentOnboardingComponent),
+        loadComponent: () => import('./features/hrms/recruitment/recruitment-pages').then(m => m.RecruitmentJoiningChecklistPageComponent),
         title: 'Joining Checklist '
       },
       {
         path: 'hrms/recruitment/onboarding',
-        loadComponent: () => import('./features/hrms/recruitment/recruitment-onboarding.component').then(m => m.RecruitmentOnboardingComponent),
+        loadComponent: () => import('./features/hrms/recruitment/recruitment-pages').then(m => m.RecruitmentOnboardingPageComponent),
         title: 'Employee Onboarding '
       },
 
@@ -1827,8 +1842,28 @@ export const routes: Routes = [
       },
       {
         path: 'hrms/attendance/shifts',
-        loadComponent: () => import('./features/hrms/attendance/attendance-management.component').then(m => m.AttendanceManagementComponent),
-        title: 'Shift Master '
+        loadComponent: () => import('./features/hrms/attendance/shifts/shift-management.component').then(m => m.ShiftManagementComponent),
+        title: 'Shift Definitions & Schedule Assignments'
+      },
+      {
+        path: 'hrms/attendance/shifts/new',
+        loadComponent: () => import('./features/hrms/attendance/shifts/shift-form.component').then(m => m.ShiftFormComponent),
+        title: 'Create Shift Definition'
+      },
+      {
+        path: 'hrms/attendance/shifts/:id/edit',
+        loadComponent: () => import('./features/hrms/attendance/shifts/shift-form.component').then(m => m.ShiftFormComponent),
+        title: 'Edit Shift Definition'
+      },
+      {
+        path: 'hrms/attendance/shifts/assignments/new',
+        loadComponent: () => import('./features/hrms/attendance/shifts/shift-assignment-form.component').then(m => m.ShiftAssignmentFormComponent),
+        title: 'Assign Shift Schedule'
+      },
+      {
+        path: 'hrms/attendance/shifts/assignments/:id/edit',
+        loadComponent: () => import('./features/hrms/attendance/shifts/shift-assignment-form.component').then(m => m.ShiftAssignmentFormComponent),
+        title: 'Edit Shift Schedule'
       },
       {
         path: 'hrms/attendance/rosters',
@@ -1903,54 +1938,177 @@ export const routes: Routes = [
         title: 'Leave & Overtime Management Engine '
       },
       {
+        path: 'hrms/leave/types/new',
+        loadComponent: () => import('./features/hrms/leave/leave-management-page.component').then(m => m.LeaveManagementPageComponent),
+        data: { leaveSection: 'types', leaveMode: 'new' },
+        title: 'Create Leave Type'
+      },
+      {
+        path: 'hrms/leave/types/:id/edit',
+        loadComponent: () => import('./features/hrms/leave/leave-management-page.component').then(m => m.LeaveManagementPageComponent),
+        data: { leaveSection: 'types', leaveMode: 'edit' },
+        title: 'Edit Leave Type'
+      },
+      {
+        path: 'hrms/leave/types/:id',
+        loadComponent: () => import('./features/hrms/leave/leave-management-page.component').then(m => m.LeaveManagementPageComponent),
+        data: { leaveSection: 'types', leaveMode: 'detail' },
+        title: 'Leave Type Details'
+      },
+      {
         path: 'hrms/leave/types',
-        loadComponent: () => import('./features/hrms/leave/leave-overtime.component').then(m => m.LeaveOvertimeComponent),
-        title: 'Leave Type '
+        loadComponent: () => import('./features/hrms/leave/leave-management-page.component').then(m => m.LeaveManagementPageComponent),
+        data: { leaveSection: 'types', leaveMode: 'list' },
+        title: 'Leave Types'
+      },
+      {
+        path: 'hrms/leave/policies/new',
+        loadComponent: () => import('./features/hrms/leave/leave-management-page.component').then(m => m.LeaveManagementPageComponent),
+        data: { leaveSection: 'policies', leaveMode: 'new' },
+        title: 'Create Leave Policy'
+      },
+      {
+        path: 'hrms/leave/policies/:id/edit',
+        loadComponent: () => import('./features/hrms/leave/leave-management-page.component').then(m => m.LeaveManagementPageComponent),
+        data: { leaveSection: 'policies', leaveMode: 'edit' },
+        title: 'Edit Leave Policy'
+      },
+      {
+        path: 'hrms/leave/policies/:id',
+        loadComponent: () => import('./features/hrms/leave/leave-management-page.component').then(m => m.LeaveManagementPageComponent),
+        data: { leaveSection: 'policies', leaveMode: 'detail' },
+        title: 'Leave Policy Details'
       },
       {
         path: 'hrms/leave/policies',
-        loadComponent: () => import('./features/hrms/leave/leave-overtime.component').then(m => m.LeaveOvertimeComponent),
-        title: 'Leave Policy '
+        loadComponent: () => import('./features/hrms/leave/leave-management-page.component').then(m => m.LeaveManagementPageComponent),
+        data: { leaveSection: 'policies', leaveMode: 'list' },
+        title: 'Leave Policies'
+      },
+      {
+        path: 'hrms/leave/entitlements/new',
+        loadComponent: () => import('./features/hrms/leave/leave-management-page.component').then(m => m.LeaveManagementPageComponent),
+        data: { leaveSection: 'entitlements', leaveMode: 'new' },
+        title: 'Create Leave Entitlement'
+      },
+      {
+        path: 'hrms/leave/entitlements/:id/edit',
+        loadComponent: () => import('./features/hrms/leave/leave-management-page.component').then(m => m.LeaveManagementPageComponent),
+        data: { leaveSection: 'entitlements', leaveMode: 'edit' },
+        title: 'Edit Leave Entitlement'
+      },
+      {
+        path: 'hrms/leave/entitlements/:id',
+        loadComponent: () => import('./features/hrms/leave/leave-management-page.component').then(m => m.LeaveManagementPageComponent),
+        data: { leaveSection: 'entitlements', leaveMode: 'detail' },
+        title: 'Leave Entitlement Details'
       },
       {
         path: 'hrms/leave/entitlements',
-        loadComponent: () => import('./features/hrms/leave/leave-overtime.component').then(m => m.LeaveOvertimeComponent),
-        title: 'Leave Entitlement '
+        loadComponent: () => import('./features/hrms/leave/leave-management-page.component').then(m => m.LeaveManagementPageComponent),
+        data: { leaveSection: 'entitlements', leaveMode: 'list' },
+        title: 'Leave Entitlements'
+      },
+      {
+        path: 'hrms/leave/applications/new',
+        loadComponent: () => import('./features/hrms/leave/leave-management-page.component').then(m => m.LeaveManagementPageComponent),
+        data: { leaveSection: 'applications', leaveMode: 'new' },
+        title: 'Apply for Leave'
+      },
+      {
+        path: 'hrms/leave/applications/:id/edit',
+        loadComponent: () => import('./features/hrms/leave/leave-management-page.component').then(m => m.LeaveManagementPageComponent),
+        data: { leaveSection: 'applications', leaveMode: 'edit' },
+        title: 'Edit Leave Application'
+      },
+      {
+        path: 'hrms/leave/applications/:id',
+        loadComponent: () => import('./features/hrms/leave/leave-management-page.component').then(m => m.LeaveManagementPageComponent),
+        data: { leaveSection: 'applications', leaveMode: 'detail' },
+        title: 'Leave Application Details'
       },
       {
         path: 'hrms/leave/applications',
-        loadComponent: () => import('./features/hrms/leave/leave-overtime.component').then(m => m.LeaveOvertimeComponent),
-        title: 'Leave Application '
+        loadComponent: () => import('./features/hrms/leave/leave-management-page.component').then(m => m.LeaveManagementPageComponent),
+        data: { leaveSection: 'applications', leaveMode: 'list' },
+        title: 'Leave Applications'
       },
       {
         path: 'hrms/leave/approvals',
-        loadComponent: () => import('./features/hrms/leave/leave-overtime.component').then(m => m.LeaveOvertimeComponent),
-        title: 'Leave Approval '
+        loadComponent: () => import('./features/hrms/leave/leave-management-page.component').then(m => m.LeaveManagementPageComponent),
+        data: { leaveSection: 'approvals', leaveMode: 'list' },
+        title: 'Leave Approvals'
       },
       {
         path: 'hrms/leave/balances',
-        loadComponent: () => import('./features/hrms/leave/leave-overtime.component').then(m => m.LeaveOvertimeComponent),
-        title: 'Leave Balance '
+        redirectTo: 'hrms/leave/entitlements',
+        pathMatch: 'full'
       },
       {
         path: 'hrms/leave/encashment',
-        loadComponent: () => import('./features/hrms/leave/leave-overtime.component').then(m => m.LeaveOvertimeComponent),
-        title: 'Leave Encashment '
+        loadComponent: () => import('./features/hrms/leave/leave-workflow-pages').then(m => m.LeaveEncashmentPageComponent),
+        data: { workflowMode: 'list' },
+        title: 'Leave Encashment'
+      },
+      {
+        path: 'hrms/leave/encashment/new',
+        loadComponent: () => import('./features/hrms/leave/leave-workflow-pages').then(m => m.LeaveEncashmentPageComponent),
+        data: { workflowMode: 'new' },
+        title: 'New Leave Encashment'
+      },
+      {
+        path: 'hrms/leave/encashment/:id/edit',
+        loadComponent: () => import('./features/hrms/leave/leave-workflow-pages').then(m => m.LeaveEncashmentPageComponent),
+        data: { workflowMode: 'edit' },
+        title: 'Edit Leave Encashment'
+      },
+      {
+        path: 'hrms/leave/encashment/:id',
+        loadComponent: () => import('./features/hrms/leave/leave-workflow-pages').then(m => m.LeaveEncashmentPageComponent),
+        data: { workflowMode: 'detail' },
+        title: 'Leave Encashment Details'
       },
       {
         path: 'hrms/leave/calendar',
-        loadComponent: () => import('./features/hrms/leave/leave-overtime.component').then(m => m.LeaveOvertimeComponent),
-        title: 'Leave Calendar '
+        loadComponent: () => import('./features/hrms/leave/leave-workflow-pages').then(m => m.LeaveCalendarPageComponent),
+        data: { workflowMode: 'list' },
+        title: 'Leave Calendar'
       },
       {
         path: 'hrms/leave/history',
-        loadComponent: () => import('./features/hrms/leave/leave-overtime.component').then(m => m.LeaveOvertimeComponent),
-        title: 'Leave History '
+        loadComponent: () => import('./features/hrms/leave/leave-workflow-pages').then(m => m.LeaveHistoryPageComponent),
+        data: { workflowMode: 'list' },
+        title: 'Leave History'
+      },
+      {
+        path: 'hrms/leave/history/:id',
+        loadComponent: () => import('./features/hrms/leave/leave-workflow-pages').then(m => m.LeaveHistoryPageComponent),
+        data: { workflowMode: 'detail' },
+        title: 'Leave History Details'
       },
       {
         path: 'hrms/leave/holidays',
-        loadComponent: () => import('./features/hrms/leave/leave-overtime.component').then(m => m.LeaveOvertimeComponent),
-        title: 'Holiday Management '
+        loadComponent: () => import('./features/hrms/leave/leave-workflow-pages').then(m => m.LeaveHolidaysPageComponent),
+        data: { workflowMode: 'list' },
+        title: 'Holiday Calendar'
+      },
+      {
+        path: 'hrms/leave/holidays/new',
+        loadComponent: () => import('./features/hrms/leave/leave-workflow-pages').then(m => m.LeaveHolidaysPageComponent),
+        data: { workflowMode: 'new' },
+        title: 'Create Holiday'
+      },
+      {
+        path: 'hrms/leave/holidays/:id/edit',
+        loadComponent: () => import('./features/hrms/leave/leave-workflow-pages').then(m => m.LeaveHolidaysPageComponent),
+        data: { workflowMode: 'edit' },
+        title: 'Edit Holiday'
+      },
+      {
+        path: 'hrms/leave/holidays/:id',
+        loadComponent: () => import('./features/hrms/leave/leave-workflow-pages').then(m => m.LeaveHolidaysPageComponent),
+        data: { workflowMode: 'detail' },
+        title: 'Holiday Details'
       },
 
       // 7. Payroll Management Routes

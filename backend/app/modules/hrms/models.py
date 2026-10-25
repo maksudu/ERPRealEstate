@@ -1,5 +1,5 @@
 from sqlalchemy import (
-    Column, BigInteger, String, Numeric, Boolean, Integer, Date, Time, ForeignKey, TIMESTAMP, Text, JSON, func
+    Column, BigInteger, String, Numeric, Boolean, Integer, Date, Time, ForeignKey, TIMESTAMP, Text, JSON, Index, func
 )
 from sqlalchemy.orm import relationship
 from app.core.database import Base
@@ -366,6 +366,8 @@ class Employee(Base):
     employee_code = Column(String(32), unique=True, nullable=False, index=True) # e.g. EMP-1001
     first_name = Column(String(64), nullable=False)
     last_name = Column(String(64), nullable=False)
+    full_name_bn = Column(String(128), nullable=True) # Full Name in Bengali
+    photo_url = Column(String(255), nullable=True) # Profile photograph URL
     official_email = Column(String(128), unique=True, nullable=True, index=True)
     phone = Column(String(32), nullable=False, index=True)
     personal_phone = Column(String(32), nullable=True)
@@ -373,18 +375,30 @@ class Employee(Base):
     date_of_birth = Column(Date, nullable=True)
     nid_number = Column(String(32), nullable=True, index=True) # Bangladesh NID
     tin_number = Column(String(32), nullable=True) # Bangladesh E-TIN for TDS
+    passport_number = Column(String(64), nullable=True)
+    passport_expiry_date = Column(Date, nullable=True)
     blood_group = Column(String(8), nullable=True)
     marital_status = Column(String(20), nullable=True, default="SINGLE") # SINGLE, MARRIED, DIVORCED, WIDOWED
+    father_name = Column(String(128), nullable=True)
+    mother_name = Column(String(128), nullable=True)
+    spouse_name = Column(String(128), nullable=True)
     
     emergency_contact_name = Column(String(128), nullable=True)
     emergency_contact_relation = Column(String(50), nullable=True) # SPOUSE, PARENT, SIBLING, OTHER
     emergency_contact_phone = Column(String(32), nullable=True)
 
+    nominee_name = Column(String(128), nullable=True)
+    nominee_relation = Column(String(50), nullable=True)
+    nominee_phone = Column(String(32), nullable=True)
+    nominee_nid = Column(String(32), nullable=True)
+
     present_address = Column(Text, nullable=True)
     permanent_address = Column(Text, nullable=True)
     education = Column(JSON, nullable=True) # [{"degree": "...", "institution": "...", "year": "...", "result": "..."}]
     experience = Column(JSON, nullable=True) # [{"company": "...", "title": "...", "duration": "..."}]
-    documents = Column(JSON, nullable=True) # [{"document_type": "...", "name": "...", "url": "...", "uploaded_at": "..."}]
+    certifications = Column(JSON, nullable=True) # [{"name": "...", "issuer": "...", "issue_date": "...", "license_no": "..."}]
+    skills = Column(JSON, nullable=True) # ["AutoCAD", "Primavera P6", "Structural Design", ...]
+    documents = Column(JSON, nullable=True) # [{"document_type": "...", "name": "...", "url": "...", "uploaded_at": "...", "expiry_date": "...", "is_confidential": bool}]
     system_role = Column(String(50), nullable=True, default="EMPLOYEE") # HR_ADMIN, HR_EXECUTIVE, EMPLOYEE, MANAGER, AUDITOR
     
     joining_date = Column(Date, nullable=False, default=func.current_date())
@@ -400,22 +414,29 @@ class Employee(Base):
     
     department_id = Column(BigInteger, ForeignKey("hr_departments.id", ondelete="RESTRICT"), nullable=False, index=True)
     designation_id = Column(BigInteger, ForeignKey("hr_designations.id", ondelete="RESTRICT"), nullable=False, index=True)
+    salary_grade_id = Column(BigInteger, ForeignKey("hr_salary_grades.id", ondelete="SET NULL"), nullable=True, index=True)
     reporting_to_id = Column(BigInteger, ForeignKey("hr_employees.id", ondelete="SET NULL"), nullable=True)
     assigned_project_id = Column(BigInteger, ForeignKey("prj_projects.id", ondelete="SET NULL"), nullable=True, index=True) # Site assignment
+    work_location = Column(String(128), nullable=True)
+    cost_center = Column(String(64), nullable=True)
     
-    # Banking Info for Salary Disbursal
+    # Banking Info & MFS for Salary Disbursal
+    payment_method = Column(String(32), nullable=False, default="BANK") # BANK, MFS_BKASH, MFS_NAGAD, MFS_ROCKET, CASH
     bank_account_no = Column(String(64), nullable=True)
     bank_name = Column(String(128), nullable=True)
     bank_branch = Column(String(128), nullable=True)
     routing_no = Column(String(32), nullable=True)
+    mfs_provider = Column(String(32), nullable=True)
+    mfs_number = Column(String(32), nullable=True)
     
-    # Bangladesh Labour Act Compliant Salary Breakdown
+    # Bangladesh Labour Act Compliant Salary Breakdown & Dynamic Allowances
     basic_salary = Column(Numeric(12, 2), nullable=False, default=0.00)
     house_rent_allowance = Column(Numeric(12, 2), nullable=False, default=0.00) # Typically 50% of basic
     medical_allowance = Column(Numeric(12, 2), nullable=False, default=0.00)    # Typically 10% of basic
     conveyance_allowance = Column(Numeric(12, 2), nullable=False, default=0.00)
     site_hazard_allowance = Column(Numeric(12, 2), nullable=False, default=0.00) # For site construction engineers
     mobile_allowance = Column(Numeric(12, 2), nullable=False, default=0.00)
+    custom_allowances = Column(JSON, nullable=True) # [{"name": "...", "amount": 0, "calculation_type": "FIXED"|"PERCENT"}]
     
     is_pf_eligible = Column(Boolean, nullable=False, default=True) # 8.33% PF
     is_tax_eligible = Column(Boolean, nullable=False, default=True) # Income Tax TDS
@@ -425,6 +446,7 @@ class Employee(Base):
 
     department = relationship("Department", foreign_keys=[department_id], back_populates="employees")
     designation = relationship("Designation", foreign_keys=[designation_id], back_populates="employees")
+    salary_grade = relationship("SalaryGrade")
     assigned_project = relationship("Project")
     reporting_to = relationship("Employee", remote_side=[id])
     user = relationship("User")
@@ -520,6 +542,9 @@ class Shift(Base):
     half_day_minimum_minutes = Column(Integer, nullable=False, default=240)
     full_day_minimum_minutes = Column(Integer, nullable=False, default=480)
     is_night_shift = Column(Boolean, nullable=False, default=False)
+    shift_type = Column(String(32), nullable=False, default="FIXED") # FIXED, ROTATING, FLEXIBLE, DAY, EVENING, NIGHT
+    is_overtime_eligible = Column(Boolean, nullable=False, default=True)
+    weekly_off_days = Column(String(128), nullable=True, default="FRIDAY")
     is_active = Column(Boolean, nullable=False, default=True)
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
@@ -549,6 +574,38 @@ class ShiftAssignment(Base):
     employee = relationship("Employee")
     department = relationship("Department")
     project = relationship("Project")
+
+
+class ShiftSwapRequest(Base):
+    """
+    2.2.1 Shift Swap & Schedule-Change Approvals.
+    """
+    __tablename__ = "hr_shift_swap_requests"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    organization_id = Column(BigInteger, ForeignKey("sys_organizations.id", ondelete="RESTRICT"), nullable=False, default=1, index=True)
+    requester_employee_id = Column(BigInteger, ForeignKey("hr_employees.id", ondelete="CASCADE"), nullable=False, index=True)
+    target_employee_id = Column(BigInteger, ForeignKey("hr_employees.id", ondelete="CASCADE"), nullable=False, index=True)
+    swap_date = Column(Date, nullable=False, index=True)
+    requester_shift_id = Column(BigInteger, ForeignKey("hr_shifts.id", ondelete="RESTRICT"), nullable=False)
+    target_shift_id = Column(BigInteger, ForeignKey("hr_shifts.id", ondelete="RESTRICT"), nullable=False)
+    reason = Column(Text, nullable=False)
+
+    # Status: PENDING_SUPERVISOR, APPROVED, REJECTED, CANCELLED
+    status = Column(String(32), nullable=False, default="PENDING_SUPERVISOR", index=True)
+    supervisor_approver_id = Column(BigInteger, ForeignKey("sys_users.id", ondelete="SET NULL"), nullable=True)
+    supervisor_remarks = Column(String(255), nullable=True)
+    supervisor_action_at = Column(TIMESTAMP, nullable=True)
+
+    created_at = Column(TIMESTAMP, server_default=func.now())
+    updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
+
+    requester_employee = relationship("Employee", foreign_keys=[requester_employee_id])
+    target_employee = relationship("Employee", foreign_keys=[target_employee_id])
+    requester_shift = relationship("Shift", foreign_keys=[requester_shift_id])
+    target_shift = relationship("Shift", foreign_keys=[target_shift_id])
+    supervisor_approver = relationship("User", foreign_keys=[supervisor_approver_id])
+
 
 
 class BiometricDevice(Base):
@@ -778,7 +835,9 @@ class LeaveApplication(Base):
     
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=False)
-    total_days = Column(Integer, nullable=False, default=1)
+    total_days = Column(Numeric(5, 2), nullable=False, default=1.00)
+    is_half_day = Column(Boolean, nullable=False, default=False)
+    half_day_session = Column(String(16), nullable=True) # FIRST_HALF, SECOND_HALF
     reason = Column(Text, nullable=False)
     emergency_contact = Column(String(64), nullable=True)
     document_url = Column(String(255), nullable=True)
@@ -808,6 +867,29 @@ class LeaveApplication(Base):
     manager_approver = relationship("User", foreign_keys=[manager_approver_id])
     hr_approver = relationship("User", foreign_keys=[hr_approver_id])
     approved_by = relationship("User", foreign_keys=[approved_by_id])
+
+
+class LeaveEncashment(Base):
+    """Auditable employee leave encashment request and settlement record."""
+    __tablename__ = "hr_leave_encashments"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    organization_id = Column(BigInteger, ForeignKey("sys_organizations.id", ondelete="RESTRICT"), nullable=False, index=True)
+    employee_id = Column(BigInteger, ForeignKey("hr_employees.id", ondelete="RESTRICT"), nullable=False, index=True)
+    leave_type_id = Column(BigInteger, ForeignKey("hr_leave_types.id", ondelete="RESTRICT"), nullable=False, index=True)
+    balance_id = Column(BigInteger, ForeignKey("hr_leave_balances.id", ondelete="RESTRICT"), nullable=False, index=True)
+    year = Column(Integer, nullable=False, index=True)
+    days = Column(Numeric(5, 2), nullable=False)
+    reason = Column(String(500), nullable=False)
+    status = Column(String(24), nullable=False, default="DRAFT", index=True)
+    approved_at = Column(TIMESTAMP, nullable=True)
+    archived_at = Column(TIMESTAMP, nullable=True)
+    created_at = Column(TIMESTAMP, server_default=func.now())
+    updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
+
+    employee = relationship("Employee")
+    leave_type = relationship("LeaveType")
+    balance = relationship("LeaveBalance")
 
 
 class OvertimeRequest(Base):
@@ -1261,5 +1343,25 @@ class BenefitPolicy(Base):
     is_active = Column(Boolean, nullable=False, default=True)
     description = Column(Text, nullable=True)
 
+    created_at = Column(TIMESTAMP, server_default=func.now())
+    updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
+
+
+class RecruitmentRecord(Base):
+    """Organization-scoped records for the recruitment pipeline workspaces."""
+    __tablename__ = "hr_recruitment_records"
+    __table_args__ = (
+        Index("ix_hr_recruitment_org_type_code", "organization_id", "record_type", "code", unique=True),
+        Index("ix_hr_recruitment_org_type_status", "organization_id", "record_type", "status"),
+    )
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    organization_id = Column(BigInteger, ForeignKey("sys_organizations.id", ondelete="RESTRICT"), nullable=False, default=1)
+    record_type = Column(String(24), nullable=False)
+    code = Column(String(40), nullable=False)
+    title = Column(String(200), nullable=False)
+    department = Column(String(120), nullable=True)
+    status = Column(String(32), nullable=False, default="DRAFT")
+    details = Column(JSON, nullable=False, default=dict)
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())

@@ -85,14 +85,6 @@ export class SidebarComponent implements OnInit {
       iconSvg: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z',
       items: [
         { id: 'emp-list', label: 'Employee List', route: '/hrms/employees/list' },
-        { id: 'emp-documents', label: 'Documents', route: '/hrms/employees/documents' },
-        { id: 'emp-emergency', label: 'Emergency Contacts', route: '/hrms/employees/emergency-contacts' },
-        { id: 'emp-bank', label: 'Bank Details', route: '/hrms/employees/bank-details' },
-        { id: 'emp-transfer', label: 'Employee Transfer', route: '/hrms/employees/transfer' },
-        { id: 'emp-promotion', label: 'Promotion', route: '/hrms/employees/promotion' },
-        { id: 'emp-salary-rev', label: 'Salary Revision', route: '/hrms/employees/salary-revision' },
-        { id: 'emp-renewal', label: 'Contract Renewal', route: '/hrms/employees/contract-renewal' },
-        { id: 'emp-history', label: 'Employee History', route: '/hrms/employees/history' }
       ]
     },
     {
@@ -118,17 +110,11 @@ export class SidebarComponent implements OnInit {
       iconSvg: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z',
       items: [
         { id: 'att-shift-master', label: 'Shift Master', route: '/hrms/attendance/shifts' },
-        { id: 'att-shift-roster', label: 'Shift Roster', route: '/hrms/attendance/rosters' },
         { id: 'att-logs', label: 'Attendance Logs', route: '/hrms/attendance/logs' },
         { id: 'att-biometric', label: 'Biometric Integration', route: '/hrms/attendance/biometric' },
         { id: 'att-mobile', label: 'Mobile Check-in', route: '/hrms/attendance/mobile-checkin' },
-        { id: 'att-site', label: 'Site Attendance', route: '/hrms/attendance/site-attendance' },
-        { id: 'att-late-early', label: 'Late/Early Report', route: '/hrms/attendance/late-early' },
         { id: 'att-missing-punch', label: 'Missing Punch', route: '/hrms/attendance/missing-punches' },
-        { id: 'att-correction', label: 'Attendance Correction', route: '/hrms/attendance/corrections' },
-        { id: 'att-overtime', label: 'Overtime', route: '/hrms/attendance/overtime' },
         { id: 'att-calendar', label: 'Holiday Calendar', route: '/hrms/attendance/holiday-calendar' },
-        { id: 'att-monthly-closing', label: 'Monthly Attendance Closing', route: '/hrms/attendance/monthly-closing' }
       ]
     },
     {

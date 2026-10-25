@@ -1,0 +1,347 @@
+<div class="w-full space-y-6">
+
+  <!-- ===================================================================== -->
+  <!-- PAGE HEADER & ACTION CONTROLS -->
+  <!-- ===================================================================== -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-200/60 dark:border-slate-800">
+    <div>
+      <div class="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
+        <a routerLink="/hrms/attendance/shifts" [queryParams]="{ tab: 'assignments' }" class="hover:text-emerald-600 flex items-center gap-1 transition-colors">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+          Shift Master & Schedules
+        </a>
+        <span>/</span>
+        <span class="text-slate-700 dark:text-slate-300 font-bold">
+          {{ mode() === 'create' ? 'Assign Shift Schedule (2.2)' : 'Edit Shift Schedule' }}
+        </span>
+      </div>
+
+      <h1 class="text-2xl font-black tracking-tight text-slate-900 dark:text-slate-100 mt-1">
+        {{ mode() === 'create' ? 'Assign Shift Schedule (2.2)' : 'Edit Shift Schedule Assignment' }}
+      </h1>
+      <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+        Allocate duty schedules across individual employees (multi-select), departments, or project site operations.
+      </p>
+    </div>
+
+    <div class="flex items-center gap-2.5">
+      <app-custom-button
+        variant="outline"
+        size="sm"
+        label="Cancel"
+        (btnClick)="cancel()"
+      ></app-custom-button>
+
+      <app-custom-button
+        variant="primary"
+        size="sm"
+        [label]="isSaving() ? 'Assigning...' : (mode() === 'create' ? 'Confirm Schedule' : 'Update Schedule')"
+        [disabled]="isSaving()"
+        (btnClick)="submitAssignment()"
+      ></app-custom-button>
+    </div>
+  </div>
+
+  <!-- Error Alert -->
+  @if (errorMessage()) {
+    <div class="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 flex items-center justify-between text-rose-800 dark:text-rose-300 text-xs font-semibold shadow-2xs">
+      <div class="flex items-center gap-2">
+        <svg class="w-4 h-4 text-rose-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        <span>{{ errorMessage() }}</span>
+      </div>
+      <button type="button" (click)="errorMessage.set(null)" class="text-rose-600 hover:text-rose-800">✕</button>
+    </div>
+  }
+
+  <!-- Loading State -->
+  @if (isLoading()) {
+    <div class="p-12 text-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800">
+      <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-emerald-500 border-t-transparent"></div>
+      <p class="mt-3 text-xs font-semibold text-slate-500">Loading schedule assignment details...</p>
+    </div>
+  } @else {
+    <!-- Form Card (Matching Screenshot Structure) -->
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800 p-6 shadow-2xs space-y-6">
+
+      <!-- 1. Select Shift -->
+      <div>
+        <label class="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5">
+          Select Shift *
+        </label>
+        <select
+          [(ngModel)]="assignForm().shift_id"
+          class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          required
+        >
+          <option [ngValue]="0" disabled>-- Choose a defined shift --</option>
+          @for (s of attendanceService.shifts(); track s.id) {
+            <option [ngValue]="s.id">
+              {{ s.shift_name }} ({{ s.shift_code }} • {{ s.start_time }} - {{ s.end_time }}{{ s.is_night_shift ? ' • Night' : '' }})
+            </option>
+          }
+        </select>
+        <p class="text-[11px] text-slate-400 mt-1">Select the shift schedule to apply to workforce targets.</p>
+      </div>
+
+      <!-- 2. Assignment Scope -->
+      <div>
+        <label class="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5">
+          Assignment Scope *
+        </label>
+        <select
+          [(ngModel)]="assignForm().assignment_type"
+          class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          required
+        >
+          <option value="EMPLOYEE">🟢 Individual Employee (নির্দিষ্ট কর্মী - Multi-Select)</option>
+          <option value="DEPARTMENT">🏢 Department-wide (বিভাগীয়)</option>
+          <option value="PROJECT_SITE">🏗️ Project Site-wide (প্রকল্প সাইট)</option>
+        </select>
+      </div>
+
+      <!-- 3. Target Scope Selection -->
+      <!-- Case A: EMPLOYEE with Multi-Select and Photos -->
+      @if (assignForm().assignment_type === 'EMPLOYEE') {
+        <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-850 border border-slate-200/80 dark:border-slate-750 space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-200/60 dark:border-slate-700 pb-3">
+            <div>
+              <label class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                <span>Target Employees (কর্মী নির্বাচন) *</span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-bold font-mono">
+                  {{ selectedEmployeeIds().length }} Selected
+                </span>
+              </label>
+              <p class="text-[11px] text-slate-500">You can select one or multiple employees simultaneously.</p>
+            </div>
+
+            <!-- Select All / Clear Controls -->
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                (click)="selectAllFiltered()"
+                class="px-2.5 py-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 rounded-lg border border-emerald-200 dark:border-emerald-800 transition-colors"
+              >
+                Select All Filtered
+              </button>
+              <button
+                type="button"
+                (click)="clearAllSelected()"
+                class="px-2.5 py-1 text-[11px] font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-200/60 rounded-lg transition-colors"
+              >
+                Clear Selection
+              </button>
+            </div>
+          </div>
+
+          <!-- Selected Employees Chip Badges -->
+          @if (selectedEmployeesList().length > 0) {
+            <div class="flex flex-wrap gap-2 max-h-36 overflow-y-auto p-2 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/60 dark:border-slate-800">
+              @for (emp of selectedEmployeesList(); track emp.id) {
+                <span class="inline-flex items-center gap-2 px-2.5 py-1 rounded-lg text-xs bg-emerald-50 dark:bg-emerald-950/60 text-emerald-900 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-800 shadow-2xs">
+                  @if (emp.photo_url) {
+                    <img [src]="emp.photo_url" alt="" class="w-5 h-5 rounded-full object-cover shrink-0" />
+                  } @else {
+                    <span class="w-5 h-5 rounded-full bg-emerald-200 dark:bg-emerald-800 text-emerald-900 dark:text-emerald-100 text-[10px] font-bold flex items-center justify-center shrink-0">
+                      {{ emp.first_name ? emp.first_name.substring(0, 1) : 'E' }}
+                    </span>
+                  }
+                  <span class="font-semibold">{{ emp.first_name }} {{ emp.last_name }}</span>
+                  <span class="text-[10px] font-mono text-emerald-600 dark:text-emerald-400">({{ emp.employee_code }})</span>
+                  <button
+                    type="button"
+                    (click)="removeSelectedEmployee(emp.id, $event)"
+                    class="text-emerald-600 hover:text-emerald-800 dark:hover:text-emerald-100 font-bold ml-1 text-sm leading-none"
+                    title="Remove"
+                  >
+                    ×
+                  </button>
+                </span>
+              }
+            </div>
+          }
+
+          <!-- Search Box -->
+          <div class="relative">
+            <input
+              type="text"
+              placeholder="Search employee by name, code, designation, department..."
+              [ngModel]="employeeSearchTerm()"
+              (ngModelChange)="employeeSearchTerm.set($event)"
+              class="w-full px-3.5 py-2 pl-9 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            />
+            <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          </div>
+
+          <!-- Employee Grid / List with Photos -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-72 overflow-y-auto p-1">
+            @for (emp of filteredEmployees(); track emp.id) {
+              <div
+                (click)="toggleEmployeeSelection(emp)"
+                class="flex items-center gap-3 p-2.5 rounded-xl border cursor-pointer transition-all select-none"
+                [ngClass]="isEmployeeSelected(emp.id)
+                  ? 'bg-emerald-50/80 dark:bg-emerald-950/40 border-emerald-500 shadow-xs'
+                  : 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50/50'"
+              >
+                <!-- Checkbox -->
+                <input
+                  type="checkbox"
+                  [checked]="isEmployeeSelected(emp.id)"
+                  (click)="$event.stopPropagation()"
+                  (change)="toggleEmployeeSelection(emp)"
+                  class="rounded text-emerald-600 focus:ring-emerald-500 h-4 w-4 cursor-pointer"
+                />
+
+                <!-- Photo / Avatar -->
+                @if (emp.photo_url) {
+                  <img [src]="emp.photo_url" alt="" class="w-9 h-9 rounded-full object-cover border border-slate-200 dark:border-slate-700 shrink-0" />
+                } @else {
+                  <div class="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold flex items-center justify-center text-xs shrink-0">
+                    {{ emp.first_name ? emp.first_name.substring(0, 2).toUpperCase() : 'EM' }}
+                  </div>
+                }
+
+                <!-- Employee Info -->
+                <div class="min-w-0 flex-1">
+                  <div class="font-bold text-xs text-slate-900 dark:text-slate-100 truncate flex items-center gap-1.5">
+                    <span>{{ emp.first_name }} {{ emp.last_name }}</span>
+                    @if (emp.full_name_bn) {
+                      <span class="text-[10px] text-slate-400 font-normal truncate">({{ emp.full_name_bn }})</span>
+                    }
+                  </div>
+                  <div class="text-[11px] font-mono text-emerald-600 dark:text-emerald-400 font-semibold truncate">
+                    {{ emp.employee_code }} • {{ emp.designation_title || 'Staff' }}
+                  </div>
+                  <div class="text-[10px] text-slate-500 truncate">
+                    {{ emp.department_name || 'General' }}
+                  </div>
+                </div>
+              </div>
+            } @empty {
+              <div class="col-span-full py-8 text-center text-slate-400 text-xs">
+                No matching employees found for '{{ employeeSearchTerm() }}'.
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Case B: DEPARTMENT Scope -->
+      @if (assignForm().assignment_type === 'DEPARTMENT') {
+        <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-850 border border-slate-200/80 dark:border-slate-750 space-y-2">
+          <label class="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
+            Target Department *
+          </label>
+          <select
+            [(ngModel)]="assignForm().department_id"
+            class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            required
+          >
+            <option [ngValue]="undefined" disabled>-- Select department --</option>
+            @for (dept of deptService.departments(); track dept.id) {
+              <option [ngValue]="dept.id">
+                {{ dept.name_en }} ({{ dept.department_code }})
+              </option>
+            }
+          </select>
+          <p class="text-[11px] text-slate-500">Every active employee in this department will automatically follow this shift schedule.</p>
+        </div>
+      }
+
+      <!-- Case C: PROJECT_SITE Scope -->
+      @if (assignForm().assignment_type === 'PROJECT_SITE') {
+        <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-850 border border-slate-200/80 dark:border-slate-750 space-y-2">
+          <label class="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
+            Target Project Site *
+          </label>
+          <select
+            [(ngModel)]="assignForm().project_id"
+            class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            required
+          >
+            <option [ngValue]="undefined" disabled>-- Select project site --</option>
+            @for (p of projects(); track p.id) {
+              <option [ngValue]="p.id">
+                {{ p.project_name }} ({{ p.project_code }})
+              </option>
+            }
+          </select>
+          <p class="text-[11px] text-slate-500">All workforce stationed at this construction / development site will adhere to this shift.</p>
+        </div>
+      }
+
+      <!-- 4. Effective Date Range (Matching Screenshot) -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div>
+          <label class="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5">
+            Effective From *
+          </label>
+          <input
+            type="date"
+            [(ngModel)]="assignForm().effective_from"
+            class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            required
+          />
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5">
+            Effective To (Leave empty for ongoing)
+          </label>
+          <input
+            type="date"
+            [(ngModel)]="assignForm().effective_to"
+            class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          />
+        </div>
+      </div>
+
+      <!-- 5. Assignment Remarks (Matching Screenshot) -->
+      <div>
+        <label class="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5">
+          Assignment Remarks
+        </label>
+        <textarea
+          rows="3"
+          placeholder="e.g. Assigned for Q4 Project RAMP construction shift..."
+          [(ngModel)]="assignForm().remarks"
+          class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+        ></textarea>
+      </div>
+
+      <!-- 6. Active Toggle -->
+      <div class="pt-2">
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input
+            type="checkbox"
+            [(ngModel)]="assignForm().is_active"
+            class="sr-only peer"
+          />
+          <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-emerald-600"></div>
+          <span class="ml-3 text-xs font-bold text-slate-700 dark:text-slate-300">
+            Shift Assignment is Active
+          </span>
+        </label>
+      </div>
+
+      <!-- Bottom Confirm / Cancel Buttons (Matching Screenshot) -->
+      <div class="flex items-center justify-end gap-2.5 pt-6 border-t border-slate-100 dark:border-slate-800">
+        <app-custom-button
+          variant="outline"
+          size="sm"
+          label="Cancel"
+          (btnClick)="cancel()"
+        ></app-custom-button>
+
+        <app-custom-button
+          variant="primary"
+          size="sm"
+          [label]="isSaving() ? 'Assigning...' : (mode() === 'create' ? 'Confirm Schedule' : 'Update Schedule')"
+          [disabled]="isSaving()"
+          (btnClick)="submitAssignment()"
+        ></app-custom-button>
+      </div>
+
+    </div>
+  }
+
+</div>

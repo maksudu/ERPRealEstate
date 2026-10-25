@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
 from typing import Optional, List, Dict, Any
 from datetime import date, datetime, time
 from decimal import Decimal
@@ -159,6 +159,8 @@ class DesignationOut(DesignationBase):
 class EmployeeBase(BaseModel):
     first_name: str
     last_name: str
+    full_name_bn: Optional[str] = None
+    photo_url: Optional[str] = None
     official_email: Optional[str] = None
     phone: str
     personal_phone: Optional[str] = None
@@ -166,8 +168,13 @@ class EmployeeBase(BaseModel):
     date_of_birth: Optional[date] = None
     marital_status: Optional[str] = "SINGLE"
     blood_group: Optional[str] = None
+    father_name: Optional[str] = None
+    mother_name: Optional[str] = None
+    spouse_name: Optional[str] = None
     nid_number: Optional[str] = None
     tin_number: Optional[str] = None
+    passport_number: Optional[str] = None
+    passport_expiry_date: Optional[date] = None
 
     present_address: Optional[str] = None
     permanent_address: Optional[str] = None
@@ -175,6 +182,11 @@ class EmployeeBase(BaseModel):
     emergency_contact_name: Optional[str] = None
     emergency_contact_relation: Optional[str] = None
     emergency_contact_phone: Optional[str] = None
+
+    nominee_name: Optional[str] = None
+    nominee_relation: Optional[str] = None
+    nominee_phone: Optional[str] = None
+    nominee_nid: Optional[str] = None
 
     joining_date: date
     confirmation_date: Optional[date] = None
@@ -185,16 +197,22 @@ class EmployeeBase(BaseModel):
 
     department_id: int
     designation_id: int
+    salary_grade_id: Optional[int] = None
     reporting_to_id: Optional[int] = None
     assigned_project_id: Optional[int] = None
     company_id: Optional[int] = None
     branch_id: Optional[int] = None
     project_office_id: Optional[int] = None
+    work_location: Optional[str] = None
+    cost_center: Optional[str] = None
 
+    payment_method: str = "BANK" # BANK, MFS_BKASH, MFS_NAGAD, MFS_ROCKET, CASH
     bank_account_no: Optional[str] = None
     bank_name: Optional[str] = None
     bank_branch: Optional[str] = None
     routing_no: Optional[str] = None
+    mfs_provider: Optional[str] = None
+    mfs_number: Optional[str] = None
 
     basic_salary: Decimal = Decimal("0.00")
     house_rent_allowance: Decimal = Decimal("0.00")
@@ -202,11 +220,14 @@ class EmployeeBase(BaseModel):
     conveyance_allowance: Decimal = Decimal("0.00")
     site_hazard_allowance: Decimal = Decimal("0.00")
     mobile_allowance: Decimal = Decimal("0.00")
+    custom_allowances: Optional[List[Dict[str, Any]]] = None
     is_pf_eligible: bool = True
     is_tax_eligible: bool = True
 
     education: Optional[List[Dict[str, Any]]] = None
     experience: Optional[List[Dict[str, Any]]] = None
+    certifications: Optional[List[Dict[str, Any]]] = None
+    skills: Optional[List[str]] = None
     documents: Optional[List[Dict[str, Any]]] = None
 
     user_id: Optional[int] = None
@@ -218,6 +239,8 @@ class EmployeeCreate(EmployeeBase):
 class EmployeeUpdate(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
+    full_name_bn: Optional[str] = None
+    photo_url: Optional[str] = None
     official_email: Optional[str] = None
     phone: Optional[str] = None
     personal_phone: Optional[str] = None
@@ -225,8 +248,13 @@ class EmployeeUpdate(BaseModel):
     date_of_birth: Optional[date] = None
     marital_status: Optional[str] = None
     blood_group: Optional[str] = None
+    father_name: Optional[str] = None
+    mother_name: Optional[str] = None
+    spouse_name: Optional[str] = None
     nid_number: Optional[str] = None
     tin_number: Optional[str] = None
+    passport_number: Optional[str] = None
+    passport_expiry_date: Optional[date] = None
 
     present_address: Optional[str] = None
     permanent_address: Optional[str] = None
@@ -234,6 +262,11 @@ class EmployeeUpdate(BaseModel):
     emergency_contact_name: Optional[str] = None
     emergency_contact_relation: Optional[str] = None
     emergency_contact_phone: Optional[str] = None
+
+    nominee_name: Optional[str] = None
+    nominee_relation: Optional[str] = None
+    nominee_phone: Optional[str] = None
+    nominee_nid: Optional[str] = None
 
     joining_date: Optional[date] = None
     confirmation_date: Optional[date] = None
@@ -244,16 +277,22 @@ class EmployeeUpdate(BaseModel):
 
     department_id: Optional[int] = None
     designation_id: Optional[int] = None
+    salary_grade_id: Optional[int] = None
     reporting_to_id: Optional[int] = None
     assigned_project_id: Optional[int] = None
     company_id: Optional[int] = None
     branch_id: Optional[int] = None
     project_office_id: Optional[int] = None
+    work_location: Optional[str] = None
+    cost_center: Optional[str] = None
 
+    payment_method: Optional[str] = None
     bank_account_no: Optional[str] = None
     bank_name: Optional[str] = None
     bank_branch: Optional[str] = None
     routing_no: Optional[str] = None
+    mfs_provider: Optional[str] = None
+    mfs_number: Optional[str] = None
 
     basic_salary: Optional[Decimal] = None
     house_rent_allowance: Optional[Decimal] = None
@@ -261,11 +300,14 @@ class EmployeeUpdate(BaseModel):
     conveyance_allowance: Optional[Decimal] = None
     site_hazard_allowance: Optional[Decimal] = None
     mobile_allowance: Optional[Decimal] = None
+    custom_allowances: Optional[List[Dict[str, Any]]] = None
     is_pf_eligible: Optional[bool] = None
     is_tax_eligible: Optional[bool] = None
 
     education: Optional[List[Dict[str, Any]]] = None
     experience: Optional[List[Dict[str, Any]]] = None
+    certifications: Optional[List[Dict[str, Any]]] = None
+    skills: Optional[List[str]] = None
     documents: Optional[List[Dict[str, Any]]] = None
 
     user_id: Optional[int] = None
@@ -276,6 +318,7 @@ class EmployeeOut(EmployeeBase):
     employee_code: str
     department_name: Optional[str] = None
     designation_title: Optional[str] = None
+    salary_grade_name: Optional[str] = None
     assigned_project_name: Optional[str] = None
     company_name: Optional[str] = None
     branch_name: Optional[str] = None
@@ -350,6 +393,7 @@ class ShiftBase(BaseModel):
     shift_code: str
     start_time: time
     end_time: time
+    shift_type: str = "FIXED"
     break_start_time: Optional[time] = None
     break_end_time: Optional[time] = None
     break_duration_minutes: int = 60
@@ -357,6 +401,8 @@ class ShiftBase(BaseModel):
     half_day_minimum_minutes: int = 240
     full_day_minimum_minutes: int = 480
     is_night_shift: bool = False
+    is_overtime_eligible: bool = True
+    weekly_off_days: str = "FRIDAY"
     is_active: bool = True
 
 class ShiftCreate(ShiftBase):
@@ -367,6 +413,7 @@ class ShiftUpdate(BaseModel):
     shift_code: Optional[str] = None
     start_time: Optional[time] = None
     end_time: Optional[time] = None
+    shift_type: Optional[str] = None
     break_start_time: Optional[time] = None
     break_end_time: Optional[time] = None
     break_duration_minutes: Optional[int] = None
@@ -374,6 +421,8 @@ class ShiftUpdate(BaseModel):
     half_day_minimum_minutes: Optional[int] = None
     full_day_minimum_minutes: Optional[int] = None
     is_night_shift: Optional[bool] = None
+    is_overtime_eligible: Optional[bool] = None
+    weekly_off_days: Optional[str] = None
     is_active: Optional[bool] = None
 
 class ShiftOut(ShiftBase):
@@ -402,7 +451,7 @@ class ShiftAssignmentBase(BaseModel):
     remarks: Optional[str] = None
 
 class ShiftAssignmentCreate(ShiftAssignmentBase):
-    pass
+    employee_ids: Optional[List[int]] = None
 
 class ShiftAssignmentUpdate(BaseModel):
     shift_id: Optional[int] = None
@@ -421,11 +470,54 @@ class ShiftAssignmentOut(ShiftAssignmentBase):
     shift_code: Optional[str] = None
     target_name: Optional[str] = None
     target_code: Optional[str] = None
+    target_photo_url: Optional[str] = None
     created_at: Optional[datetime] = None
     model_config = ConfigDict(from_attributes=True)
 
 class ShiftAssignmentPaginatedOut(BaseModel):
     items: List[ShiftAssignmentOut]
+    total: int
+    limit: int
+    offset: int
+
+
+# --- 2.2.1 Shift Swap Request Schemas ---
+class ShiftSwapRequestCreate(BaseModel):
+    requester_id: int
+    target_employee_id: int
+    swap_date: date
+    requester_shift_id: Optional[int] = None
+    target_shift_id: Optional[int] = None
+    reason: str = Field(min_length=1, max_length=1000)
+
+class ShiftSwapRequestReview(BaseModel):
+    status: str = Field(pattern="^(APPROVED|REJECTED)$")
+    review_notes: Optional[str] = None
+
+class ShiftSwapRequestOut(BaseModel):
+    id: int
+    requester_id: int
+    requester_name: Optional[str] = None
+    requester_code: Optional[str] = None
+    target_employee_id: int
+    target_employee_name: Optional[str] = None
+    target_employee_code: Optional[str] = None
+    swap_date: date
+    requester_shift_id: Optional[int] = None
+    requester_shift_name: Optional[str] = None
+    target_shift_id: Optional[int] = None
+    target_shift_name: Optional[str] = None
+    reason: Optional[str] = None
+    status: str
+    reviewed_by_id: Optional[int] = None
+    reviewed_by_name: Optional[str] = None
+    review_notes: Optional[str] = None
+    reviewed_at: Optional[datetime] = None
+    created_at: Optional[datetime] = None
+    model_config = ConfigDict(from_attributes=True)
+
+class ShiftSwapRequestPaginatedOut(BaseModel):
+    items: List[ShiftSwapRequestOut]
     total: int
     limit: int
     offset: int
@@ -480,7 +572,7 @@ class BiometricSyncPayload(BaseModel):
 
 # --- 2.8 Holiday Calendar Schemas ---
 class HolidayCalendarBase(BaseModel):
-    holiday_name: str
+    holiday_name: str = Field(min_length=1, max_length=150)
     holiday_type: str = "PUBLIC_HOLIDAY"
     start_date: date
     end_date: date
@@ -491,11 +583,25 @@ class HolidayCalendarBase(BaseModel):
     description: Optional[str] = None
     is_active: bool = True
 
+    @field_validator("holiday_name", "holiday_type")
+    @classmethod
+    def trim_required_holiday_fields(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("Holiday name and category are required.")
+        return value
+
+    @model_validator(mode="after")
+    def validate_holiday_range(self):
+        if self.end_date < self.start_date:
+            raise ValueError("Holiday end date must be on or after its start date.")
+        return self
+
 class HolidayCalendarCreate(HolidayCalendarBase):
     pass
 
 class HolidayCalendarUpdate(BaseModel):
-    holiday_name: Optional[str] = None
+    holiday_name: Optional[str] = Field(default=None, min_length=1, max_length=150)
     holiday_type: Optional[str] = None
     start_date: Optional[date] = None
     end_date: Optional[date] = None
@@ -505,6 +611,21 @@ class HolidayCalendarUpdate(BaseModel):
     is_recurring_yearly: Optional[bool] = None
     description: Optional[str] = None
     is_active: Optional[bool] = None
+
+    @field_validator("holiday_name", "holiday_type")
+    @classmethod
+    def trim_optional_holiday_fields(cls, value: Optional[str]) -> Optional[str]:
+        if value is not None:
+            value = value.strip()
+            if not value:
+                raise ValueError("Holiday name and category are required.")
+        return value
+
+    @model_validator(mode="after")
+    def validate_holiday_range(self):
+        if self.start_date and self.end_date and self.end_date < self.start_date:
+            raise ValueError("Holiday end date must be on or after its start date.")
+        return self
 
 class HolidayCalendarOut(HolidayCalendarBase):
     id: int
@@ -605,9 +726,11 @@ class AttendanceCorrectionPaginatedOut(BaseModel):
 # --- 2.4, 2.5, 2.6 Attendance Capture & Processing Schemas ---
 class AttendancePunch(BaseModel):
     employee_id: int
-    punch_type: str = "IN" # IN, OUT, PUNCH
+    punch_type: str = "IN" # IN, OUT, PUNCH, IN_OUT, BOTH
     punch_date: Optional[date] = None
     punch_time: Optional[datetime] = None
+    in_time: Optional[datetime] = None
+    out_time: Optional[datetime] = None
     source: str = "WEB_PUNCH"
     geofence_lat: Optional[Decimal] = None
     geofence_lng: Optional[Decimal] = None
@@ -665,6 +788,45 @@ class AttendanceDailySummaryOut(BaseModel):
     on_leave: int
     missing_punches: int
     attendance_rate: float
+
+
+class AttendanceMonthlyClosingEmployeeItem(BaseModel):
+    employee_id: int
+    employee_name: str
+    employee_code: Optional[str] = None
+    department_name: Optional[str] = None
+    designation_title: Optional[str] = None
+    working_days: int = 0
+    present_days: float = 0.0
+    absent_days: float = 0.0
+    half_days: float = 0.0
+    late_count: int = 0
+    approved_ot_hours: float = 0.0
+    unpaid_leave_days: float = 0.0
+    payable_days: float = 0.0
+
+
+class AttendanceMonthlyClosingSummaryOut(BaseModel):
+    year: int
+    month: int
+    total_employees: int
+    total_working_days: int
+    total_present_man_days: float
+    total_absent_days: float
+    total_late_occurrences: int
+    total_unpaid_leave_days: float
+    total_approved_ot_hours: float
+    is_locked: bool
+    locked_at: Optional[datetime] = None
+    locked_by: Optional[str] = None
+    items: List[AttendanceMonthlyClosingEmployeeItem] = Field(default_factory=list)
+
+
+class AttendanceMonthlyClosingActionPayload(BaseModel):
+    year: int
+    month: int
+    action: str = "LOCK"  # LOCK, UNLOCK, SYNC
+
 
 
 # =====================================================================
@@ -772,10 +934,6 @@ class LeaveBalanceCreate(BaseModel):
 class LeaveBalanceUpdate(BaseModel):
     opening_balance: Optional[Decimal] = None
     carried_forward: Optional[Decimal] = None
-    accrued_days: Optional[Decimal] = None
-    used_days: Optional[Decimal] = None
-    pending_days: Optional[Decimal] = None
-    available_days: Optional[Decimal] = None
 
 class LeaveBalanceOut(LeaveBalanceBase):
     id: int
@@ -803,18 +961,113 @@ class LeaveApply(BaseModel):
     leave_type: str = "CASUAL"
     start_date: date
     end_date: date
-    reason: str
+    is_half_day: bool = False
+    half_day_session: Optional[str] = None  # FIRST_HALF, SECOND_HALF
+    reason: str = Field(min_length=1, max_length=2000)
     emergency_contact: Optional[str] = None
     document_url: Optional[str] = None
+
+    @field_validator("reason")
+    @classmethod
+    def trim_required_reason(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("Leave reason is required; enter a brief explanation.")
+        return value
+
+    @model_validator(mode="after")
+    def validate_leave_dates(self):
+        if self.end_date < self.start_date:
+            raise ValueError("End date must be on or after the start date.")
+        if self.start_date.year != self.end_date.year:
+            raise ValueError("Leave applications must be within a single leave year.")
+        if self.is_half_day and self.start_date != self.end_date:
+            raise ValueError("Half-day leave must be on a single date.")
+        return self
 
 class LeaveUpdate(BaseModel):
     leave_type_id: Optional[int] = None
     leave_type: Optional[str] = None
     start_date: Optional[date] = None
     end_date: Optional[date] = None
+    is_half_day: Optional[bool] = None
+    half_day_session: Optional[str] = None
     reason: Optional[str] = None
     emergency_contact: Optional[str] = None
     document_url: Optional[str] = None
+
+    @field_validator("reason")
+    @classmethod
+    def trim_optional_reason(cls, value: Optional[str]) -> Optional[str]:
+        if value is not None:
+            value = value.strip()
+            if not value:
+                raise ValueError("Leave reason is required; enter a brief explanation.")
+        return value
+
+    @model_validator(mode="after")
+    def validate_leave_dates(self):
+        if self.start_date and self.end_date:
+            if self.end_date < self.start_date:
+                raise ValueError("End date must be on or after the start date.")
+            if self.start_date.year != self.end_date.year:
+                raise ValueError("Leave applications must be within a single leave year.")
+        return self
+
+
+class LeaveEncashmentCreate(BaseModel):
+    employee_id: int
+    leave_type_id: int
+    year: int = Field(ge=2000, le=2200)
+    days: Decimal = Field(gt=0, max_digits=5, decimal_places=2)
+    reason: str = Field(min_length=1, max_length=500)
+
+    @field_validator("reason")
+    @classmethod
+    def trim_encashment_reason(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("Encashment reason is required.")
+        return value
+
+
+class LeaveEncashmentUpdate(BaseModel):
+    days: Optional[Decimal] = Field(default=None, gt=0, max_digits=5, decimal_places=2)
+    reason: Optional[str] = Field(default=None, min_length=1, max_length=500)
+
+    @field_validator("reason")
+    @classmethod
+    def trim_encashment_update_reason(cls, value: Optional[str]) -> Optional[str]:
+        if value is not None:
+            value = value.strip()
+            if not value:
+                raise ValueError("Encashment reason is required.")
+        return value
+
+
+class LeaveEncashmentOut(BaseModel):
+    id: int
+    employee_id: int
+    employee_name: Optional[str] = None
+    employee_code: Optional[str] = None
+    leave_type_id: int
+    leave_type_name: Optional[str] = None
+    year: int
+    days: Decimal
+    reason: str
+    status: str
+    created_at: Optional[datetime] = None
+    approved_at: Optional[datetime] = None
+    archived_at: Optional[datetime] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class LeaveEncashmentPaginatedOut(BaseModel):
+    items: List[LeaveEncashmentOut]
+    total: int
+    limit: int
+    offset: int
 
 class LeaveManagerReview(BaseModel):
     manager_remarks: str
@@ -841,7 +1094,9 @@ class LeaveOut(BaseModel):
     is_paid: bool = True
     start_date: date
     end_date: date
-    total_days: int
+    total_days: float
+    is_half_day: bool = False
+    half_day_session: Optional[str] = None
     reason: str
     emergency_contact: Optional[str] = None
     document_url: Optional[str] = None
@@ -866,6 +1121,35 @@ class LeavePaginatedOut(BaseModel):
     pending_hr_count: int = 0
     approved_count: int = 0
     rejected_count: int = 0
+
+class LeaveCalendarEventOut(BaseModel):
+    id: str
+    title: str
+    start: date
+    end: date
+    event_type: str  # LEAVE, HOLIDAY
+    employee_id: Optional[int] = None
+    employee_name: Optional[str] = None
+    department_name: Optional[str] = None
+    status: Optional[str] = None
+    color: Optional[str] = None
+    is_half_day: bool = False
+
+class TeamAvailabilityItem(BaseModel):
+    employee_id: int
+    employee_name: str
+    employee_code: Optional[str] = None
+    department_name: Optional[str] = None
+    status: str  # AVAILABLE, ON_LEAVE, HALF_DAY_LEAVE, WEEKLY_OFF
+    leave_type: Optional[str] = None
+    shift_name: Optional[str] = None
+
+class TeamAvailabilityOut(BaseModel):
+    date: date
+    total_employees: int
+    available_count: int
+    on_leave_count: int
+    items: List[TeamAvailabilityItem]
 
 
 # --- 2.17, 2.18, 2.19 Overtime Request Schemas ---
@@ -1314,6 +1598,43 @@ class SalaryGradeOut(SalaryGradeBase):
 
 class SalaryGradePaginatedOut(BaseModel):
     items: List[SalaryGradeOut]
+    total: int
+    limit: int
+    offset: int
+
+
+class RecruitmentRecordCreate(BaseModel):
+    code: Optional[str] = None
+    title: str
+    department: Optional[str] = None
+    status: str = "DRAFT"
+    details: Dict[str, Any] = Field(default_factory=dict)
+
+
+class RecruitmentRecordUpdate(BaseModel):
+    code: Optional[str] = None
+    title: Optional[str] = None
+    department: Optional[str] = None
+    status: Optional[str] = None
+    details: Optional[Dict[str, Any]] = None
+
+
+class RecruitmentRecordOut(BaseModel):
+    id: int
+    organization_id: int
+    record_type: str
+    code: str
+    title: str
+    department: Optional[str] = None
+    status: str
+    details: Dict[str, Any] = Field(default_factory=dict)
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    model_config = ConfigDict(from_attributes=True)
+
+
+class RecruitmentRecordPaginatedOut(BaseModel):
+    items: List[RecruitmentRecordOut]
     total: int
     limit: int
     offset: int
@@ -1872,6 +2193,3 @@ class PayrollValidationSummaryOut(BaseModel):
     error_count: int
     warning_count: int
     exceptions: List[PayrollValidationException]
-
-
-

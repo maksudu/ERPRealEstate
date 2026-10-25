@@ -30,10 +30,7 @@
 
   <!-- Unified Top Card Container (Consistent Spacing & Radius) -->
   <app-card-container
-    title="Enterprise Attendance & Shift Management"
-    subtitle="Live Biometric Sync, GPS Site Geofencing, Multi-Tier Shifts, Anomaly Detection & Correction Approval Workflow"
-    badge="Attendance Core"
-    paddingClass="p-0"
+    title="Attendance"
   >
     <!-- Top Action Toolbar -->
     <div card-actions class="flex flex-wrap items-center gap-2">
@@ -74,7 +71,15 @@
       </app-custom-button>
     </div>
 
-
+    <!-- Tabs Navigation Bar -->
+    <div class="px-6 pt-2 border-b border-slate-200 dark:border-slate-800">
+      <app-custom-tabs
+        [tabs]="tabs"
+        [activeTabId]="activeTab()"
+        variant="emerald"
+        (tabChange)="setActiveTab($event)"
+      ></app-custom-tabs>
+    </div>
 
     <!-- ===================================================================== -->
     <!-- TAB 1: ATTENDANCE REGISTER & LIVE PUNCHES (2.4, 2.5, 2.10) -->
@@ -265,15 +270,22 @@
                     <app-status-badge [status]="att.status" [labelEn]="att.status"></app-status-badge>
                   </td>
                   <td class="py-3 px-4 text-center">
-                    @if (att.is_geofence_verified) {
-                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                        Verified
-                      </span>
-                    } @else {
-                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
-                        Out of Bound
-                      </span>
-                    }
+                    <div class="flex flex-col items-center gap-0.5">
+                      @if (att.geofence_site_name) {
+                        <span class="text-[11px] font-semibold text-slate-800 dark:text-slate-200 truncate max-w-[140px]" [title]="att.geofence_site_name">
+                          {{ att.geofence_site_name }}
+                        </span>
+                      }
+                      @if (att.is_geofence_verified) {
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                          Verified
+                        </span>
+                      } @else {
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
+                          Out of Bound
+                        </span>
+                      }
+                    </div>
                   </td>
                   <td class="py-3 px-4 text-center">
                     <span class="text-[10px] uppercase font-mono text-slate-500">
@@ -351,8 +363,7 @@
         <div class="space-y-4">
           <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">2.1 Shift Definitions Master</h3>
-              <p class="text-xs text-slate-500">Configure shifts, work hours, lunch breaks, grace periods and day/night flags.</p>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Shift Definitions Master</h3>
             </div>
             <div class="flex items-center gap-2">
               <app-custom-input
@@ -360,6 +371,12 @@
                 [ngModel]="shiftSearch()"
                 (ngModelChange)="shiftSearch.set($event); refreshShifts()"
               ></app-custom-input>
+              <a
+                routerLink="/hrms/attendance/shifts"
+                class="px-3 py-1.5 rounded-xl border border-emerald-600 text-emerald-700 dark:text-emerald-400 text-xs font-bold hover:bg-emerald-50 dark:hover:bg-emerald-950/40 flex items-center gap-1.5 transition-colors shrink-0"
+              >
+                <span>Full-Screen Shift Manager ↗</span>
+              </a>
               <app-custom-button
                 variant="primary"
                 size="sm"
@@ -446,8 +463,7 @@
         <div class="space-y-4 pt-4 border-t border-slate-200 dark:border-slate-800">
           <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">2.2 Shift Schedule Assignments</h3>
-              <p class="text-xs text-slate-500">Assign schedules employee-wise, department-wise, or project-site-wise.</p>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Shift Schedule Assignments</h3>
             </div>
             <app-custom-button
               variant="primary"
@@ -949,7 +965,181 @@
     }
 
     <!-- ===================================================================== -->
-    <!-- TAB 7: DYNAMIC LOOKUPS & PAGE SETTINGS (Commandment 1 & 2) -->
+    <!-- TAB 7: MONTHLY CLOSING & PAYROLL LOCKING -->
+    <!-- ===================================================================== -->
+    @if (activeTab() === 'closing') {
+      <div class="p-6 space-y-6">
+        <!-- Filter and Lock Action Bar -->
+        <div class="flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800">
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="w-36">
+              <app-searchable-select
+                label="Year"
+                [options]="yearOptions"
+                [ngModel]="closingYear()"
+                (ngModelChange)="closingYear.set($event); refreshMonthlyClosing()"
+                [allowCreateNew]="false"
+              ></app-searchable-select>
+            </div>
+            <div class="w-44">
+              <app-searchable-select
+                label="Month"
+                [options]="monthOptions"
+                [ngModel]="closingMonth()"
+                (ngModelChange)="closingMonth.set($event); refreshMonthlyClosing()"
+                [allowCreateNew]="false"
+              ></app-searchable-select>
+            </div>
+            <div class="w-56">
+              <app-searchable-select
+                label="Department"
+                placeholder="All Departments"
+                [options]="departmentOptions()"
+                [ngModel]="closingDepartmentId()"
+                (ngModelChange)="closingDepartmentId.set($event); refreshMonthlyClosing()"
+                [allowCreateNew]="false"
+              ></app-searchable-select>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3">
+            @if (monthlyClosingSummary()?.is_locked) {
+              <div class="flex items-center gap-2">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-800 shadow-2xs">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                  LOCKED FOR PAYROLL
+                </span>
+                <app-custom-button
+                  variant="outline"
+                  size="sm"
+                  label="Unlock Attendance"
+                  (btnClick)="unlockAttendanceMonth()"
+                ></app-custom-button>
+              </div>
+            } @else {
+              <div class="flex items-center gap-2">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"/></svg>
+                  OPEN (UNLOCKED)
+                </span>
+                <app-custom-button
+                  variant="secondary"
+                  size="sm"
+                  label="Sync to Payroll"
+                  (btnClick)="syncAttendanceToPayroll()"
+                >
+                  <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                </app-custom-button>
+                <app-custom-button
+                  variant="primary"
+                  size="sm"
+                  label="Lock Month & Finalize"
+                  (btnClick)="lockAttendanceMonth()"
+                >
+                  <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                </app-custom-button>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Monthly Aggregate KPI Cards -->
+        @if (monthlyClosingSummary(); as summary) {
+          <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+            <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800">
+              <div class="text-[10px] font-semibold text-slate-500 uppercase">Total Staff</div>
+              <div class="text-xl font-bold text-slate-900 dark:text-white mt-1">{{ summary.total_employees }}</div>
+            </div>
+            <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800">
+              <div class="text-[10px] font-semibold text-slate-500 uppercase">Working Days</div>
+              <div class="text-xl font-bold text-slate-900 dark:text-white mt-1">{{ summary.total_working_days }}</div>
+            </div>
+            <div class="p-3.5 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-800/40">
+              <div class="text-[10px] font-semibold text-emerald-600 uppercase">Present Days</div>
+              <div class="text-xl font-bold text-emerald-700 dark:text-emerald-300 mt-1">{{ summary.total_present_man_days }}</div>
+            </div>
+            <div class="p-3.5 rounded-xl bg-rose-50/50 dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-800/40">
+              <div class="text-[10px] font-semibold text-rose-600 uppercase">Absent Days</div>
+              <div class="text-xl font-bold text-rose-700 dark:text-rose-300 mt-1">{{ summary.total_absent_days }}</div>
+            </div>
+            <div class="p-3.5 rounded-xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-800/40">
+              <div class="text-[10px] font-semibold text-amber-600 uppercase">Late Count</div>
+              <div class="text-xl font-bold text-amber-700 dark:text-amber-300 mt-1">{{ summary.total_late_occurrences }}</div>
+            </div>
+            <div class="p-3.5 rounded-xl bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-200/60 dark:border-indigo-800/40">
+              <div class="text-[10px] font-semibold text-indigo-600 uppercase">Overtime (Hrs)</div>
+              <div class="text-xl font-bold text-indigo-700 dark:text-indigo-300 mt-1">{{ summary.total_approved_ot_hours }}h</div>
+            </div>
+            <div class="p-3.5 rounded-xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+              <div class="text-[10px] font-semibold text-slate-500 uppercase">Unpaid Days</div>
+              <div class="text-xl font-bold text-rose-600 dark:text-rose-400 mt-1">{{ summary.total_unpaid_leave_days }}</div>
+            </div>
+          </div>
+
+          <!-- Monthly Employee Breakdown Ledger -->
+          <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-50 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-800 text-slate-500 font-semibold uppercase tracking-wider">
+                  <th class="py-3 px-4">Employee</th>
+                  <th class="py-3 px-4">Department</th>
+                  <th class="py-3 px-4 text-center">Working Days</th>
+                  <th class="py-3 px-4 text-center">Present</th>
+                  <th class="py-3 px-4 text-center">Absent</th>
+                  <th class="py-3 px-4 text-center">Half-Day</th>
+                  <th class="py-3 px-4 text-center">Late Count</th>
+                  <th class="py-3 px-4 text-center">OT (Hrs)</th>
+                  <th class="py-3 px-4 text-center">Unpaid Days</th>
+                  <th class="py-3 px-4 text-center">Payable Days</th>
+                  <th class="py-3 px-4 text-center">Payroll Status</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+                @for (item of summary.items; track item.employee_id) {
+                  <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors">
+                    <td class="py-3 px-4">
+                      <div class="font-semibold text-slate-900 dark:text-white">{{ item.employee_name }}</div>
+                      <div class="text-[10px] text-slate-400 font-mono">{{ item.employee_code }} • {{ item.designation_title || 'Staff' }}</div>
+                    </td>
+                    <td class="py-3 px-4 text-slate-700 dark:text-slate-300 font-medium">
+                      {{ item.department_name || '—' }}
+                    </td>
+                    <td class="py-3 px-4 text-center font-mono font-medium">{{ item.working_days }}</td>
+                    <td class="py-3 px-4 text-center font-mono font-bold text-emerald-600 dark:text-emerald-400">{{ item.present_days }}</td>
+                    <td class="py-3 px-4 text-center font-mono" [class.text-rose-500]="item.absent_days > 0" [class.font-bold]="item.absent_days > 0">{{ item.absent_days }}</td>
+                    <td class="py-3 px-4 text-center font-mono">{{ item.half_days }}</td>
+                    <td class="py-3 px-4 text-center font-mono" [class.text-amber-500]="item.late_count > 0">{{ item.late_count }}</td>
+                    <td class="py-3 px-4 text-center font-mono font-semibold text-indigo-600 dark:text-indigo-400">{{ item.approved_ot_hours }}h</td>
+                    <td class="py-3 px-4 text-center font-mono" [class.text-rose-600]="item.unpaid_leave_days > 0" [class.font-bold]="item.unpaid_leave_days > 0">{{ item.unpaid_leave_days }}</td>
+                    <td class="py-3 px-4 text-center font-mono font-bold text-slate-900 dark:text-white bg-slate-50/60 dark:bg-slate-900/40">{{ item.payable_days }}</td>
+                    <td class="py-3 px-4 text-center">
+                      @if (summary.is_locked) {
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
+                          Locked
+                        </span>
+                      } @else {
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300">
+                          Pending Lock
+                        </span>
+                      }
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="11" class="py-12 text-center text-slate-400">
+                      No employee attendance records found for {{ closingMonth() }}/{{ closingYear() }}.
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- ===================================================================== -->
+    <!-- TAB 8: DYNAMIC LOOKUPS & PAGE SETTINGS (Commandment 1 & 2) -->
     <!-- ===================================================================== -->
     @if (activeTab() === 'settings') {
       <div class="p-6 space-y-6">
@@ -1037,12 +1227,13 @@
         <div>
           <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Punch Action *</label>
           <select
-            class="w-full text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-2.5 focus:ring-2 focus:ring-indigo-500"
+            class="w-full text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-2.5 focus:ring-2 focus:ring-indigo-500 font-medium"
             [ngModel]="punchForm().punch_type"
             (ngModelChange)="updatePunchField('punch_type', $event)"
           >
-            <option value="IN">Clock IN</option>
-            <option value="OUT">Clock OUT</option>
+            <option value="IN_OUT">Both Clock IN & OUT (Complete Shift)</option>
+            <option value="IN">Clock IN Only</option>
+            <option value="OUT">Clock OUT Only</option>
             <option value="PUNCH">Automatic Toggle</option>
           </select>
         </div>
@@ -1058,7 +1249,7 @@
         </div>
       </div>
 
-      <div class="grid grid-cols-2 gap-4">
+      <div class="grid grid-cols-3 gap-4">
         <app-custom-input
           label="Punch Date *"
           type="date"
@@ -1067,16 +1258,25 @@
         ></app-custom-input>
 
         <app-custom-input
-          label="Timestamp *"
-          type="datetime-local"
-          [ngModel]="punchForm().punch_time"
-          (ngModelChange)="updatePunchField('punch_time', $event)"
+          label="In Time (Clock IN) *"
+          type="time"
+          [ngModel]="punchForm().in_time"
+          (ngModelChange)="updatePunchField('in_time', $event)"
+          hint="e.g. 09:00 AM"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Out Time (Clock OUT)"
+          type="time"
+          [ngModel]="punchForm().out_time"
+          (ngModelChange)="updatePunchField('out_time', $event)"
+          hint="e.g. 06:00 PM (Optional for IN only)"
         ></app-custom-input>
       </div>
 
       <app-searchable-select
         label="Site Geofence Location (Optional)"
-        placeholder="Select Project Site..."
+        placeholder="Select Project Site or Geofenced Location..."
         [options]="geofenceOptions()"
         [ngModel]="punchForm().site_id"
         (ngModelChange)="updatePunchField('site_id', $event)"

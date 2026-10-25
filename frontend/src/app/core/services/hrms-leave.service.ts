@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
+import { Observable, map, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   LeaveType,
@@ -12,6 +12,8 @@ import {
   LeaveApplication,
   LeaveApplicationCreate,
   LeaveApprovalAction,
+  LeaveCalendarEvent,
+  TeamAvailability,
   OvertimeRequest,
   OvertimeRequestCreate,
   OvertimeVerificationAction,
@@ -60,14 +62,16 @@ export class HrmsLeaveService {
   loadingPayroll = signal<boolean>(false);
 
   // --- 2.11 Leave Types API ---
-  loadLeaveTypes(filters: { is_active?: boolean; limit?: number; offset?: number } = {}): Observable<PaginatedResponse<LeaveType>> {
+  loadLeaveTypes(filters: { is_active?: boolean; search?: string; limit?: number; offset?: number } = {}): Observable<PaginatedResponse<LeaveType>> {
     this.loadingTypes.set(true);
     let params = new HttpParams();
     if (filters.is_active !== undefined) params = params.set('is_active', filters.is_active.toString());
+    if (filters.search) params = params.set('search', filters.search);
     if (filters.limit) params = params.set('limit', filters.limit.toString());
     if (filters.offset) params = params.set('offset', filters.offset.toString());
 
-    return this.http.get<PaginatedResponse<LeaveType>>(`${this.apiUrl}/leave-types`, { params }).pipe(
+    return this.http.get<PaginatedResponse<any>>(`${this.apiUrl}/leave-types`, { params }).pipe(
+      map(res => ({ ...res, items: res.items.map(item => this.toLegacyLeaveType(item)) })),
       tap({
         next: (res) => {
           this.leaveTypes.set(res.items);
@@ -80,13 +84,15 @@ export class HrmsLeaveService {
   }
 
   createLeaveType(payload: LeaveTypeCreate): Observable<LeaveType> {
-    return this.http.post<LeaveType>(`${this.apiUrl}/leave-types`, payload).pipe(
+    return this.http.post<any>(`${this.apiUrl}/leave-types`, this.leaveTypePayload(payload)).pipe(
+      map(item => this.toLegacyLeaveType(item)),
       tap(() => this.loadLeaveTypes().subscribe())
     );
   }
 
   updateLeaveType(id: number, payload: Partial<LeaveTypeCreate>): Observable<LeaveType> {
-    return this.http.put<LeaveType>(`${this.apiUrl}/leave-types/${id}`, payload).pipe(
+    return this.http.put<any>(`${this.apiUrl}/leave-types/${id}`, this.leaveTypePayload(payload)).pipe(
+      map(item => this.toLegacyLeaveType(item)),
       tap(() => this.loadLeaveTypes().subscribe())
     );
   }
@@ -98,15 +104,17 @@ export class HrmsLeaveService {
   }
 
   // --- 2.12 Leave Policy API ---
-  loadLeavePolicies(filters: { leave_type_id?: number; effective_year?: number; limit?: number; offset?: number } = {}): Observable<PaginatedResponse<LeavePolicy>> {
+  loadLeavePolicies(filters: { leave_type_id?: number; effective_year?: number; is_active?: boolean; search?: string; limit?: number; offset?: number } = {}): Observable<PaginatedResponse<LeavePolicy>> {
     this.loadingPolicies.set(true);
     let params = new HttpParams();
     if (filters.leave_type_id) params = params.set('leave_type_id', filters.leave_type_id.toString());
-    if (filters.effective_year) params = params.set('effective_year', filters.effective_year.toString());
+    if (filters.is_active !== undefined) params = params.set('is_active', filters.is_active.toString());
+    if (filters.search) params = params.set('search', filters.search);
     if (filters.limit) params = params.set('limit', filters.limit.toString());
     if (filters.offset) params = params.set('offset', filters.offset.toString());
 
-    return this.http.get<PaginatedResponse<LeavePolicy>>(`${this.apiUrl}/leave-policies`, { params }).pipe(
+    return this.http.get<PaginatedResponse<any>>(`${this.apiUrl}/leave-policies`, { params }).pipe(
+      map(res => ({ ...res, items: res.items.map(item => this.toLegacyLeavePolicy(item)) })),
       tap({
         next: (res) => {
           this.leavePolicies.set(res.items);
@@ -119,13 +127,15 @@ export class HrmsLeaveService {
   }
 
   createLeavePolicy(payload: LeavePolicyCreate): Observable<LeavePolicy> {
-    return this.http.post<LeavePolicy>(`${this.apiUrl}/leave-policies`, payload).pipe(
+    return this.http.post<any>(`${this.apiUrl}/leave-policies`, this.leavePolicyPayload(payload)).pipe(
+      map(item => this.toLegacyLeavePolicy(item)),
       tap(() => this.loadLeavePolicies().subscribe())
     );
   }
 
   updateLeavePolicy(id: number, payload: Partial<LeavePolicyCreate>): Observable<LeavePolicy> {
-    return this.http.put<LeavePolicy>(`${this.apiUrl}/leave-policies/${id}`, payload).pipe(
+    return this.http.put<any>(`${this.apiUrl}/leave-policies/${id}`, this.leavePolicyPayload(payload)).pipe(
+      map(item => this.toLegacyLeavePolicy(item)),
       tap(() => this.loadLeavePolicies().subscribe())
     );
   }
@@ -137,12 +147,13 @@ export class HrmsLeaveService {
   }
 
   // --- 2.13 & 2.16 Leave Balances API ---
-  loadLeaveBalances(filters: { employee_id?: number; leave_type_id?: number; year?: number; limit?: number; offset?: number } = {}): Observable<PaginatedResponse<LeaveBalance>> {
+  loadLeaveBalances(filters: { employee_id?: number; leave_type_id?: number; year?: number; search?: string; limit?: number; offset?: number } = {}): Observable<PaginatedResponse<LeaveBalance>> {
     this.loadingBalances.set(true);
     let params = new HttpParams();
     if (filters.employee_id) params = params.set('employee_id', filters.employee_id.toString());
     if (filters.leave_type_id) params = params.set('leave_type_id', filters.leave_type_id.toString());
     if (filters.year) params = params.set('year', filters.year.toString());
+    if (filters.search) params = params.set('search', filters.search);
     if (filters.limit) params = params.set('limit', filters.limit.toString());
     if (filters.offset) params = params.set('offset', filters.offset.toString());
 
@@ -159,7 +170,13 @@ export class HrmsLeaveService {
   }
 
   importLeaveBalance(payload: LeaveBalanceImport): Observable<LeaveBalance> {
-    return this.http.post<LeaveBalance>(`${this.apiUrl}/leave-balances/import`, payload).pipe(
+    return this.http.post<LeaveBalance>(`${this.apiUrl}/leave-balances`, {
+      employee_id: payload.employee_id,
+      leave_type_id: payload.leave_type_id,
+      year: payload.year,
+      opening_balance: payload.opening_balance,
+      carried_forward: payload.carried_forward
+    }).pipe(
       tap(() => this.loadLeaveBalances().subscribe())
     );
   }
@@ -197,12 +214,38 @@ export class HrmsLeaveService {
   }
 
   actionLeaveApplication(id: number, payload: LeaveApprovalAction): Observable<LeaveApplication> {
-    return this.http.post<LeaveApplication>(`${this.apiUrl}/leave-applications/${id}/action`, payload).pipe(
+    const application = this.leaveApplications().find(item => item.id === id);
+    const endpoint = payload.action === 'CANCEL'
+      ? 'cancel'
+      : payload.action === 'RECOMMEND'
+        ? 'manager-review'
+        : payload.action === 'APPROVE' || application?.status === 'PENDING_HR'
+          ? 'hr-review'
+          : 'manager-review';
+    const actionPayload = endpoint === 'manager-review'
+      ? { is_approved: payload.action === 'RECOMMEND', manager_remarks: payload.remarks || '' }
+      : endpoint === 'hr-review'
+        ? { is_approved: payload.action === 'APPROVE', hr_remarks: payload.remarks || '' }
+        : {};
+    return this.http.post<LeaveApplication>(`${this.apiUrl}/leave-applications/${id}/${endpoint}`, actionPayload).pipe(
       tap(() => {
         this.loadLeaveApplications().subscribe();
         this.loadLeaveBalances().subscribe();
       })
     );
+  }
+
+  loadLeaveCalendarEvents(month: number, year: number, departmentId?: number): Observable<LeaveCalendarEvent[]> {
+    let params = new HttpParams().set('month', month.toString()).set('year', year.toString());
+    if (departmentId) params = params.set('department_id', departmentId.toString());
+    return this.http.get<LeaveCalendarEvent[]>(`${this.apiUrl}/leave/calendar-events`, { params });
+  }
+
+  loadTeamAvailability(targetDate?: string, departmentId?: number): Observable<TeamAvailability> {
+    let params = new HttpParams();
+    if (targetDate) params = params.set('target_date', targetDate);
+    if (departmentId) params = params.set('department_id', departmentId.toString());
+    return this.http.get<TeamAvailability>(`${this.apiUrl}/leave/team-availability`, { params });
   }
 
   // --- 2.17 - 2.19 Overtime Requests API ---
@@ -270,5 +313,40 @@ export class HrmsLeaveService {
     return this.http.post<{ message: string; salary_month: string; employees_synced: number; total_ot_hours: number; total_ot_amount: number; total_unpaid_leave_days: number }>(`${this.apiUrl}/payroll-inputs/sync`, payload).pipe(
       tap(() => this.loadPayrollInputs({ salary_month: payload.salary_month }).subscribe())
     );
+  }
+
+  private toLegacyLeaveType(item: any): LeaveType {
+    return {
+      ...item,
+      type_code: item.leave_type_code,
+      type_name: item.name_en,
+      type_name_bn: item.name_bn,
+      requires_attachment: item.requires_attachment ?? false
+    } as LeaveType;
+  }
+
+  private leaveTypePayload(payload: Partial<LeaveTypeCreate>): Record<string, unknown> {
+    return {
+      leave_type_code: payload.type_code,
+      name_en: payload.type_name,
+      name_bn: payload.type_name_bn,
+      is_paid: payload.is_paid,
+      color_code: payload.color_code,
+      description: payload.description,
+      is_active: payload.is_active
+    };
+  }
+
+  private toLegacyLeavePolicy(item: any): LeavePolicy {
+    return {
+      ...item,
+      allow_encashment: item.encashment_allowed
+    } as LeavePolicy;
+  }
+
+  private leavePolicyPayload(payload: Partial<LeavePolicyCreate>): Record<string, unknown> {
+    const { allow_encashment, ...policy } = payload;
+    delete policy.effective_year;
+    return { ...policy, encashment_allowed: allow_encashment };
   }
 }

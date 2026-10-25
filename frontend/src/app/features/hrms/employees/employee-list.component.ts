@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HrmsEmployeeService } from '../../../core/services/hrms-employee.service';
 import { HrmsDepartmentService } from '../../../core/services/hrms-department.service';
 import { HrmsPositionService } from '../../../core/services/hrms-position.service';
@@ -50,6 +50,7 @@ import {
 })
 export class EmployeeListComponent implements OnInit {
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   employeeService = inject(HrmsEmployeeService);
   deptService = inject(HrmsDepartmentService);
   posService = inject(HrmsPositionService);
@@ -115,6 +116,14 @@ export class EmployeeListComponent implements OnInit {
   isDeleteModalOpen = signal<boolean>(false);
   employeeToDelete = signal<Employee | null>(null);
   isDeleting = signal<boolean>(false);
+
+  // Appointment Letter State
+  showAppointmentLetterModal = signal<boolean>(false);
+  selectedLetterEmployee = signal<Employee | null>(null);
+  isGeneratingAppointmentPdf = signal<boolean>(false);
+  appointmentLetterPdfError = signal<string | null>(null);
+  todayFormatted = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date());
+  currentYear = new Date().getFullYear();
 
   // Dynamic Settings Tab State
   activeSettingCategory = signal<string>('HR_EMPLOYMENT_TYPE');
@@ -413,84 +422,13 @@ export class EmployeeListComponent implements OnInit {
     }));
   }
 
-  // --- Add / Edit Modal Controls ---
+  // --- Add / Edit Page Navigation ---
   openCreateModal(): void {
-    this.prepareCreateForm();
-    this.isModalOpen.set(true);
-  }
-
-  private prepareCreateForm(): void {
-    this.modalMode.set('create');
-    this.modalActiveTab.set('registration');
-    this.editingId.set(null);
-
-    const depts = this.deptService.departments();
-    const desigs = this.posService.designations();
-    const defaultDept = depts.length > 0 ? depts[0].id : 0;
-    const defaultDesig = desigs.length > 0 ? desigs[0].id : 0;
-
-    const initial = this.getInitialFormData();
-    initial.department_id = defaultDept;
-    initial.designation_id = defaultDesig;
-    this.formData.set(initial);
-
+    this.router.navigate(['/hrms/employees/new']);
   }
 
   openEditModal(emp: Employee): void {
-    this.modalMode.set('edit');
-    this.modalActiveTab.set('registration');
-    this.editingId.set(emp.id);
-
-    this.formData.set({
-      employee_code: emp.employee_code,
-      first_name: emp.first_name,
-      last_name: emp.last_name,
-      official_email: emp.official_email || '',
-      phone: emp.phone,
-      personal_phone: emp.personal_phone || '',
-      gender: emp.gender || 'MALE',
-      date_of_birth: emp.date_of_birth || '',
-      marital_status: emp.marital_status || 'SINGLE',
-      blood_group: emp.blood_group || 'A+',
-      nid_number: emp.nid_number || '',
-      tin_number: emp.tin_number || '',
-      present_address: emp.present_address || '',
-      permanent_address: emp.permanent_address || '',
-      emergency_contact_name: emp.emergency_contact_name || '',
-      emergency_contact_relation: emp.emergency_contact_relation || 'SPOUSE',
-      emergency_contact_phone: emp.emergency_contact_phone || '',
-      joining_date: emp.joining_date || '',
-      confirmation_date: emp.confirmation_date || '',
-      probation_months: emp.probation_months || 6,
-      employment_type: emp.employment_type || 'PERMANENT',
-      workforce_category: emp.workforce_category || 'CORPORATE',
-      status: emp.status || 'ACTIVE',
-      department_id: emp.department_id,
-      designation_id: emp.designation_id,
-      reporting_to_id: emp.reporting_to_id,
-      assigned_project_id: emp.assigned_project_id,
-      company_id: emp.company_id,
-      branch_id: emp.branch_id,
-      project_office_id: emp.project_office_id,
-      bank_account_no: emp.bank_account_no || '',
-      bank_name: emp.bank_name || 'City Bank PLC',
-      bank_branch: emp.bank_branch || '',
-      routing_no: emp.routing_no || '',
-      basic_salary: Number(emp.basic_salary) || 0,
-      house_rent_allowance: Number(emp.house_rent_allowance) || 0,
-      medical_allowance: Number(emp.medical_allowance) || 0,
-      conveyance_allowance: Number(emp.conveyance_allowance) || 0,
-      site_hazard_allowance: Number(emp.site_hazard_allowance) || 0,
-      mobile_allowance: Number(emp.mobile_allowance) || 0,
-      is_pf_eligible: emp.is_pf_eligible ?? true,
-      is_tax_eligible: emp.is_tax_eligible ?? true,
-      education: emp.education ? [...emp.education] : [],
-      experience: emp.experience ? [...emp.experience] : [],
-      documents: emp.documents ? [...emp.documents] : [],
-      user_id: emp.user_id,
-      system_role: emp.system_role || 'EMPLOYEE'
-    });
-    this.isModalOpen.set(true);
+    this.router.navigate(['/hrms/employees', emp.id, 'edit']);
   }
 
   closeModal(): void {
@@ -729,5 +667,284 @@ export class EmployeeListComponent implements OnInit {
   clearAlerts(): void {
     this.successMessage.set(null);
     this.errorMessage.set(null);
+  }
+
+  // --- Appointment Letter Methods ---
+  openAppointmentLetter(emp: Employee): void {
+    this.selectedLetterEmployee.set(emp);
+    this.appointmentLetterPdfError.set(null);
+    this.showAppointmentLetterModal.set(true);
+  }
+
+  closeAppointmentLetter(): void {
+    this.showAppointmentLetterModal.set(false);
+    this.selectedLetterEmployee.set(null);
+    this.appointmentLetterPdfError.set(null);
+  }
+
+  printAppointmentLetter(): void {
+    const printArea = document.getElementById('appointment-letter-print-area');
+    if (!printArea) {
+      window.print();
+      return;
+    }
+
+    const printWindow = window.open('', '_blank', 'height=800,width=850');
+    if (!printWindow) {
+      window.print();
+      return;
+    }
+
+    const empName = this.selectedLetterEmployee() ? `${this.selectedLetterEmployee()?.first_name} ${this.selectedLetterEmployee()?.last_name}` : 'Employee';
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Appointment Letter - ${empName}</title>
+          <style>
+            @page { size: A4; margin: 20mm; }
+            body { font-family: 'Times New Roman', Times, serif; color: #111; line-height: 1.5; font-size: 13.5px; margin: 0; padding: 15px; }
+            h1, h2, h3, h4 { color: #000; margin-top: 0; }
+            .header-org { text-align: center; border-bottom: 2px solid #333; padding-bottom: 12px; margin-bottom: 20px; }
+            .header-org h2 { font-size: 20px; font-weight: bold; margin: 0; text-transform: uppercase; }
+            .header-org p { font-size: 11px; margin: 2px 0 0; color: #555; }
+            .meta-block { margin-bottom: 18px; line-height: 1.4; }
+            .subject { font-weight: bold; font-size: 15px; text-decoration: underline; margin: 16px 0 12px; }
+            .clause { margin-bottom: 14px; text-align: justify; }
+            .clause-num { font-weight: bold; }
+            .salary-table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 12.5px; }
+            .salary-table th, .salary-table td { border: 1px solid #777; padding: 5px 8px; text-align: left; }
+            .salary-table th { background: #f0f0f0; }
+            .signature-row { margin-top: 45px; display: flex; justify-content: space-between; align-items: flex-end; page-break-inside: avoid; }
+            .signature-box { width: 45%; }
+            .signature-line { border-top: 1px solid #333; margin-top: 50px; padding-top: 4px; font-size: 12px; }
+            @media print {
+              body { padding: 0; }
+            }
+          </style>
+        </head>
+        <body>
+          ${printArea.innerHTML}
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 400);
+  }
+
+  async downloadAppointmentLetterPdf(): Promise<void> {
+    const employee = this.selectedLetterEmployee();
+    const printArea = document.getElementById('appointment-letter-print-area');
+    if (!employee || !printArea || this.isGeneratingAppointmentPdf()) {
+      if (!employee || !printArea) {
+        this.appointmentLetterPdfError.set('The appointment letter is not available. Close and reopen it, then try again.');
+      }
+      return;
+    }
+
+    this.isGeneratingAppointmentPdf.set(true);
+    this.appointmentLetterPdfError.set(null);
+    let exportHost: HTMLDivElement | null = null;
+
+    try {
+      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+        import('html2canvas'),
+        import('jspdf')
+      ]);
+
+      if (document.fonts?.ready) {
+        await document.fonts.ready;
+      }
+
+      exportHost = document.createElement('div');
+      Object.assign(exportHost.style, {
+        position: 'fixed',
+        left: '-10000px',
+        top: '0',
+        width: '794px',
+        backgroundColor: '#ffffff',
+        pointerEvents: 'none',
+        zIndex: '-1'
+      });
+
+      const documentClone = printArea.cloneNode(true) as HTMLElement;
+      documentClone.id = 'appointment-letter-pdf-export-content';
+      Object.assign(documentClone.style, {
+        boxSizing: 'border-box',
+        width: '794px',
+        height: 'auto',
+        maxHeight: 'none',
+        overflow: 'visible',
+        margin: '0',
+        padding: '56px',
+        border: '0',
+        borderRadius: '0',
+        boxShadow: 'none',
+        backgroundColor: '#ffffff',
+        color: '#0f172a',
+        fontFamily: "'Times New Roman', Times, serif",
+        fontSize: '14px',
+        lineHeight: '1.55'
+      });
+      exportHost.appendChild(documentClone);
+      document.body.appendChild(exportHost);
+
+      const canvas = await html2canvas(documentClone, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        width: 794,
+        windowWidth: 794,
+        onclone: (clonedDocument) => {
+          const clonedLetter = clonedDocument.getElementById('appointment-letter-pdf-export-content');
+          if (clonedLetter) {
+            clonedLetter.style.maxHeight = 'none';
+            clonedLetter.style.height = 'auto';
+            clonedLetter.style.overflow = 'visible';
+          }
+        }
+      });
+
+      if (!canvas.width || !canvas.height) {
+        throw new Error('The appointment letter could not be rendered.');
+      }
+
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
+      const pageWidth = 210;
+      const pageHeight = 297;
+      const pageMargin = 15;
+      const printableHeight = pageHeight - pageMargin * 2;
+      const maxSliceHeight = Math.floor(canvas.width * printableHeight / pageWidth);
+      const context = canvas.getContext('2d', { willReadFrequently: true });
+      if (!context) {
+        throw new Error('Unable to prepare the appointment letter for PDF export.');
+      }
+
+      let pageStart = 0;
+      let pageIndex = 0;
+      while (pageStart < canvas.height) {
+        const targetEnd = Math.min(pageStart + maxSliceHeight, canvas.height);
+        const pageEnd = targetEnd < canvas.height
+          ? this.findAppointmentPdfPageBreak(context, canvas.width, pageStart, targetEnd)
+          : canvas.height;
+        const sliceHeight = pageEnd - pageStart;
+        if (sliceHeight <= 0) {
+          throw new Error('Unable to paginate the appointment letter.');
+        }
+
+        const pageCanvas = document.createElement('canvas');
+        pageCanvas.width = canvas.width;
+        pageCanvas.height = sliceHeight;
+        const pageContext = pageCanvas.getContext('2d');
+        if (!pageContext) {
+          throw new Error('Unable to prepare an appointment letter page.');
+        }
+        pageContext.fillStyle = '#ffffff';
+        pageContext.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+        pageContext.drawImage(canvas, 0, pageStart, canvas.width, sliceHeight, 0, 0, canvas.width, sliceHeight);
+
+        if (pageIndex > 0) {
+          pdf.addPage();
+        }
+        const renderedHeight = sliceHeight * pageWidth / canvas.width;
+        pdf.addImage(pageCanvas.toDataURL('image/png'), 'PNG', 0, pageMargin, pageWidth, renderedHeight);
+        pageStart = pageEnd;
+        pageIndex += 1;
+      }
+
+      pdf.save(this.getAppointmentLetterPdfFileName(employee));
+    } catch (error) {
+      console.error('Failed to generate the appointment letter PDF.', error);
+      this.appointmentLetterPdfError.set(
+        'Could not generate the A4 PDF. Please try again or use “Print / Save as PDF”.'
+      );
+    } finally {
+      exportHost?.remove();
+      this.isGeneratingAppointmentPdf.set(false);
+    }
+  }
+
+  private findAppointmentPdfPageBreak(
+    context: CanvasRenderingContext2D,
+    canvasWidth: number,
+    pageStart: number,
+    targetEnd: number
+  ): number {
+    const searchRadius = Math.min(160, Math.floor((targetEnd - pageStart) / 5));
+    const searchStart = Math.max(pageStart + 1, targetEnd - searchRadius);
+    const searchEnd = Math.min(context.canvas.height - 1, targetEnd - 1);
+    const image = context.getImageData(0, searchStart, canvasWidth, searchEnd - searchStart + 1);
+    let bestRow = targetEnd;
+    let fewestInkPixels = Number.POSITIVE_INFINITY;
+
+    for (let row = 0; row < image.height; row += 1) {
+      let inkPixels = 0;
+      for (let column = 0; column < image.width; column += 6) {
+        const pixel = (row * image.width + column) * 4;
+        if (image.data[pixel] < 245 || image.data[pixel + 1] < 245 || image.data[pixel + 2] < 245) {
+          inkPixels += 1;
+        }
+      }
+      const rowPosition = searchStart + row;
+      if (
+        inkPixels < fewestInkPixels ||
+        (inkPixels === fewestInkPixels && Math.abs(rowPosition - targetEnd) < Math.abs(bestRow - targetEnd))
+      ) {
+        fewestInkPixels = inkPixels;
+        bestRow = rowPosition;
+      }
+    }
+
+    return bestRow;
+  }
+
+  private getAppointmentLetterPdfFileName(employee: Employee): string {
+    const toSafePart = (value: string): string => value
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .toLowerCase();
+    const employeeName = toSafePart(`${employee.first_name} ${employee.last_name}`) || 'employee';
+    const employeeIdentifier = toSafePart(employee.employee_code || '') || `${employee.id}`;
+    return `appointment-letter-${employeeName}-${employeeIdentifier}.pdf`;
+  }
+
+  changeEmployeeStatus(emp: Employee, newStatus: string): void {
+    if (!emp || !newStatus || emp.status === newStatus) return;
+    this.employeeService.updateEmployeeStatus(emp.id, newStatus).subscribe({
+      next: (updated) => {
+        emp.status = updated.status;
+        this.successMessage.set(`Status of ${emp.first_name} ${emp.last_name} changed to "${newStatus}" successfully!`);
+      },
+      error: (err) => {
+        this.errorMessage.set(err?.error?.detail || 'Failed to update employee status.');
+      }
+    });
+  }
+
+  getBasicSalary(emp: Employee): number {
+    return Number(emp.basic_salary) || ((Number(emp.gross_salary) || 0) * 0.5);
+  }
+
+  getHouseRentAllowance(emp: Employee): number {
+    return Number(emp.house_rent_allowance) || ((Number(emp.gross_salary) || 0) * 0.25);
+  }
+
+  getMedicalAllowance(emp: Employee): number {
+    return Number(emp.medical_allowance) || ((Number(emp.gross_salary) || 0) * 0.10);
+  }
+
+  getConveyanceAllowance(emp: Employee): number {
+    return Number(emp.conveyance_allowance) || ((Number(emp.gross_salary) || 0) * 0.08);
+  }
+
+  getOtherAllowances(emp: Employee): number {
+    return (Number(emp.site_hazard_allowance) || 0) + (Number(emp.mobile_allowance) || 0);
   }
 }

@@ -9,6 +9,10 @@ import {
   ShiftAssignment,
   ShiftAssignmentCreatePayload,
   ShiftAssignmentPaginatedResponse,
+  ShiftSwapRequest,
+  ShiftSwapRequestCreatePayload,
+  ShiftSwapRequestReviewPayload,
+  ShiftSwapRequestPaginatedResponse,
   BiometricDevice,
   BiometricDeviceCreatePayload,
   BiometricDevicePaginatedResponse,
@@ -24,7 +28,8 @@ import {
   AttendanceRecord,
   AttendancePunchPayload,
   AttendancePaginatedResponse,
-  AttendanceDailySummary
+  AttendanceDailySummary,
+  AttendanceMonthlyClosingSummary
 } from '../models/hrms-attendance.model';
 
 @Injectable({
@@ -42,6 +47,10 @@ export class HrmsAttendanceService {
   // Shift Assignments
   shiftAssignments = signal<ShiftAssignment[]>([]);
   totalShiftAssignments = signal<number>(0);
+
+  // Shift Swaps
+  shiftSwaps = signal<ShiftSwapRequest[]>([]);
+  totalShiftSwaps = signal<number>(0);
 
   // Biometric Devices
   biometricDevices = signal<BiometricDevice[]>([]);
@@ -64,6 +73,7 @@ export class HrmsAttendanceService {
   totalAttendance = signal<number>(0);
   dailySummary = signal<AttendanceDailySummary | null>(null);
   missingPunches = signal<AttendanceRecord[]>([]);
+  monthlyClosingSummary = signal<AttendanceMonthlyClosingSummary | null>(null);
 
   // Stats Counters
   presentCount = signal<number>(0);
@@ -100,6 +110,10 @@ export class HrmsAttendanceService {
 
   createShift(payload: ShiftCreatePayload): Observable<Shift> {
     return this.http.post<Shift>(`${this.apiUrl}/shifts`, payload);
+  }
+
+  getShift(id: number): Observable<Shift> {
+    return this.http.get<Shift>(`${this.apiUrl}/shifts/${id}`);
   }
 
   updateShift(id: number, payload: Partial<ShiftCreatePayload>): Observable<Shift> {
@@ -142,12 +156,62 @@ export class HrmsAttendanceService {
     );
   }
 
+  getShiftAssignment(id: number): Observable<ShiftAssignment> {
+    return this.http.get<ShiftAssignment>(`${this.apiUrl}/shift-assignments/${id}`);
+  }
+
   createShiftAssignment(payload: ShiftAssignmentCreatePayload): Observable<ShiftAssignment> {
     return this.http.post<ShiftAssignment>(`${this.apiUrl}/shift-assignments`, payload);
   }
 
+  updateShiftAssignment(id: number, payload: Partial<ShiftAssignmentCreatePayload>): Observable<ShiftAssignment> {
+    return this.http.put<ShiftAssignment>(`${this.apiUrl}/shift-assignments/${id}`, payload);
+  }
+
   deleteShiftAssignment(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/shift-assignments/${id}`);
+  }
+
+  // =====================================================================
+  // --- 2.2.1 Shift Swap Management ---
+  // =====================================================================
+  loadShiftSwaps(params: {
+    status?: string;
+    swap_date?: string;
+    employee_id?: number;
+    limit?: number;
+    offset?: number;
+  } = {}): Observable<ShiftSwapRequestPaginatedResponse> {
+    this.isLoading.set(true);
+    let p = new HttpParams()
+      .set('limit', String(params.limit ?? 20))
+      .set('offset', String(params.offset ?? 0));
+    if (params.status) p = p.set('status', params.status);
+    if (params.swap_date) p = p.set('swap_date', params.swap_date);
+    if (params.employee_id) p = p.set('employee_id', String(params.employee_id));
+
+    return this.http.get<ShiftSwapRequestPaginatedResponse>(`${this.apiUrl}/shift-swaps`, { params: p }).pipe(
+      tap({
+        next: (res) => {
+          this.shiftSwaps.set(res.items);
+          this.totalShiftSwaps.set(res.total);
+          this.isLoading.set(false);
+        },
+        error: () => this.isLoading.set(false)
+      })
+    );
+  }
+
+  createShiftSwap(payload: ShiftSwapRequestCreatePayload): Observable<ShiftSwapRequest> {
+    return this.http.post<ShiftSwapRequest>(`${this.apiUrl}/shift-swaps`, payload);
+  }
+
+  reviewShiftSwap(id: number, payload: ShiftSwapRequestReviewPayload): Observable<ShiftSwapRequest> {
+    return this.http.post<ShiftSwapRequest>(`${this.apiUrl}/shift-swaps/${id}/review`, payload);
+  }
+
+  deleteShiftSwap(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/shift-swaps/${id}`);
   }
 
   // =====================================================================
@@ -379,4 +443,25 @@ export class HrmsAttendanceService {
       tap((summary) => this.dailySummary.set(summary))
     );
   }
+
+  loadMonthlyClosingSummary(year: number, month: number, departmentId?: number): Observable<AttendanceMonthlyClosingSummary> {
+    this.isLoading.set(true);
+    let p = new HttpParams().set('year', String(year)).set('month', String(month));
+    if (departmentId) p = p.set('department_id', String(departmentId));
+
+    return this.http.get<AttendanceMonthlyClosingSummary>(`${this.apiUrl}/attendance/monthly-closing-summary`, { params: p }).pipe(
+      tap({
+        next: (summary) => {
+          this.monthlyClosingSummary.set(summary);
+          this.isLoading.set(false);
+        },
+        error: () => this.isLoading.set(false)
+      })
+    );
+  }
+
+  executeMonthlyClosing(payload: { year: number; month: number; action: string }): Observable<any> {
+    return this.http.post(`${this.apiUrl}/attendance/monthly-closing`, payload);
+  }
 }
+

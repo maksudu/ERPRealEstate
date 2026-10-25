@@ -44,6 +44,7 @@ import { LookupItem } from '../../../core/models/lookup.model';
     CommonModule,
     FormsModule,
     CardContainerComponent,
+    CustomTabsComponent,
     CustomInputComponent,
     CustomTextareaComponent,
     CustomButtonComponent,
@@ -72,6 +73,7 @@ export class AttendanceManagementComponent implements OnInit {
     { id: 'corrections', label: 'Missing Punches & Corrections', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
     { id: 'holidays', label: 'Holiday Calendar', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' },
     { id: 'geofences', label: 'Site Geofencing', icon: 'M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z' },
+    { id: 'closing', label: 'Monthly Closing & Payroll Sync', icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z' },
     { id: 'settings', label: 'Dynamic Lookups', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z' }
   ];
 
@@ -124,9 +126,11 @@ export class AttendanceManagementComponent implements OnInit {
   isPunchModalOpen = signal<boolean>(false);
   punchForm = signal<AttendancePunchPayload>({
     employee_id: 0,
-    punch_type: 'IN',
+    punch_type: 'IN_OUT',
     punch_date: new Date().toISOString().split('T')[0],
     punch_time: new Date().toISOString().slice(0, 19),
+    in_time: '09:00',
+    out_time: '18:00',
     source: 'WEB_PUNCH',
     geofence_lat: undefined,
     geofence_lng: undefined,
@@ -248,6 +252,31 @@ export class AttendanceManagementComponent implements OnInit {
   quickLookupEnglishName = signal<string>('');
   quickLookupBanglaName = signal<string>('');
 
+  // 13. Monthly Closing & Payroll Locking State
+  closingYear = signal<number>(new Date().getFullYear());
+  closingMonth = signal<number>(new Date().getMonth() + 1);
+  closingDepartmentId = signal<number | null>(null);
+  monthlyClosingSummary = this.attendanceService.monthlyClosingSummary;
+  monthOptions = [
+    { value: 1, label: 'January' },
+    { value: 2, label: 'February' },
+    { value: 3, label: 'March' },
+    { value: 4, label: 'April' },
+    { value: 5, label: 'May' },
+    { value: 6, label: 'June' },
+    { value: 7, label: 'July' },
+    { value: 8, label: 'August' },
+    { value: 9, label: 'September' },
+    { value: 10, label: 'October' },
+    { value: 11, label: 'November' },
+    { value: 12, label: 'December' }
+  ];
+  yearOptions = [
+    { value: 2025, label: '2025' },
+    { value: 2026, label: '2026' },
+    { value: 2027, label: '2027' }
+  ];
+
   ngOnInit() {
     this.route.url.subscribe(segments => {
       const last = segments[segments.length - 1]?.path;
@@ -261,6 +290,8 @@ export class AttendanceManagementComponent implements OnInit {
         this.activeTab.set('holidays');
       } else if (last === 'mobile-checkin') {
         this.activeTab.set('geofences');
+      } else if (last === 'monthly-closing') {
+        this.activeTab.set('closing');
       } else if (last === 'logs' || last === 'site-attendance' || last === 'late-early') {
         this.activeTab.set('punches');
       }
@@ -294,10 +325,71 @@ export class AttendanceManagementComponent implements OnInit {
       this.refreshHolidays();
     } else if (tab === 'geofences') {
       this.refreshGeofences();
+    } else if (tab === 'closing') {
+      this.refreshMonthlyClosing();
     } else if (tab === 'settings') {
       this.refreshLookupCategoryItems();
     }
   }
+
+  refreshMonthlyClosing() {
+    this.attendanceService.loadMonthlyClosingSummary(
+      this.closingYear(),
+      this.closingMonth(),
+      this.closingDepartmentId() || undefined
+    ).subscribe({
+      error: () => this.errorMessage.set('Failed to load monthly attendance closing summary.')
+    });
+  }
+
+  lockAttendanceMonth() {
+    if (!confirm(`Are you sure you want to lock attendance records for ${this.closingMonth()}/${this.closingYear()}? Once locked, attendance becomes read-only and is locked for payroll calculation.`)) {
+      return;
+    }
+    this.attendanceService.executeMonthlyClosing({
+      year: this.closingYear(),
+      month: this.closingMonth(),
+      action: 'LOCK'
+    }).subscribe({
+      next: (res) => {
+        this.successMessage.set(res.message || 'Month locked successfully.');
+        this.refreshMonthlyClosing();
+      },
+      error: (err) => this.errorMessage.set(err.error?.detail || 'Failed to lock attendance month.')
+    });
+  }
+
+  unlockAttendanceMonth() {
+    if (!confirm(`Are you sure you want to unlock attendance for ${this.closingMonth()}/${this.closingYear()}?`)) {
+      return;
+    }
+    this.attendanceService.executeMonthlyClosing({
+      year: this.closingYear(),
+      month: this.closingMonth(),
+      action: 'UNLOCK'
+    }).subscribe({
+      next: (res) => {
+        this.successMessage.set(res.message || 'Month unlocked successfully.');
+        this.refreshMonthlyClosing();
+      },
+      error: (err) => this.errorMessage.set(err.error?.detail || 'Failed to unlock attendance month.')
+    });
+  }
+
+  syncAttendanceToPayroll() {
+    this.attendanceService.executeMonthlyClosing({
+      year: this.closingYear(),
+      month: this.closingMonth(),
+      action: 'SYNC'
+    }).subscribe({
+      next: (res) => {
+        this.successMessage.set(res.message || 'Attendance & OT synced to Payroll Inputs successfully.');
+        this.refreshMonthlyClosing();
+      },
+      error: (err) => this.errorMessage.set(err.error?.detail || 'Failed to sync to payroll.')
+    });
+  }
+
 
   // Load Dropdown Options dynamically
   loadAllDropdownOptions() {
@@ -366,14 +458,20 @@ export class AttendanceManagementComponent implements OnInit {
       }
     });
 
-    // 6. Geofences
+    // 6. Geofences & Project Sites
     this.attendanceService.loadSiteGeofences().subscribe({
       next: (res) => {
-        this.geofenceOptions.set((res.items || []).map(g => ({
-          value: g.id,
-          label: g.site_name,
-          subLabel: `Radius: ${g.radius_meters}m`
-        })));
+        const geos = (res.items || []).map(g => ({
+          value: g.project_id || g.id,
+          label: `${g.site_name} (Geofence Perimeter)`,
+          subLabel: `Radius: ${g.radius_meters}m • Project #${g.project_id}`
+        }));
+        const prjs = this.projectOptions().map(p => ({
+          value: p.value,
+          label: `${p.label} (Project Site)`,
+          subLabel: 'Active Construction Project'
+        })).filter(p => !geos.some(g => g.value === p.value));
+        this.geofenceOptions.set([...geos, ...prjs]);
       }
     });
   }
@@ -428,9 +526,11 @@ export class AttendanceManagementComponent implements OnInit {
     const now = new Date();
     this.punchForm.set({
       employee_id: presetEmployeeId || (this.employeeOptions()[0]?.value || 0),
-      punch_type: 'IN',
+      punch_type: 'IN_OUT',
       punch_date: this.selectedDate(),
       punch_time: now.toISOString().slice(0, 19),
+      in_time: '09:00',
+      out_time: '18:00',
       source: 'WEB_PUNCH',
       geofence_lat: undefined,
       geofence_lng: undefined,
@@ -445,10 +545,23 @@ export class AttendanceManagementComponent implements OnInit {
   }
 
   submitPunch() {
-    const data = this.punchForm();
-    if (!data.employee_id) {
+    const raw = this.punchForm();
+    if (!raw.employee_id) {
       this.errorMessage.set('Please select an employee.');
       return;
+    }
+
+    const dateStr = raw.punch_date || new Date().toISOString().split('T')[0];
+    const data: AttendancePunchPayload = { ...raw };
+
+    if (raw.in_time) {
+      data.in_time = raw.in_time.includes('T') ? raw.in_time : `${dateStr}T${raw.in_time.length === 5 ? raw.in_time + ':00' : raw.in_time}`;
+    }
+    if (raw.out_time) {
+      data.out_time = raw.out_time.includes('T') ? raw.out_time : `${dateStr}T${raw.out_time.length === 5 ? raw.out_time + ':00' : raw.out_time}`;
+    }
+    if (data.in_time && data.out_time && data.punch_type !== 'IN' && data.punch_type !== 'OUT') {
+      data.punch_type = 'IN_OUT';
     }
 
     this.attendanceService.punchAttendance(data).subscribe({

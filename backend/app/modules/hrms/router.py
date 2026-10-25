@@ -1,10 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_, or_, func, desc
+from sqlalchemy import select, and_, or_, func, desc, update
+from sqlalchemy.orm import joinedload, selectinload
+from sqlalchemy.exc import IntegrityError
 from typing import List, Optional, Dict, Any
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 import math
+import os
+import uuid
 
 from app.core.database import get_db
 from app.modules.auth.models import User
@@ -15,9 +19,9 @@ from app.modules.hrms.models import (
     Department, Designation, SalaryGrade, Position, Employee, SiteLabourContractor,
     LabourMusterRoll, Attendance, LeaveApplication, PayrollRun, Payslip,
     DepartmentHeadHistory, DepartmentProjectMapping, DepartmentAuditLog,
-    Shift, ShiftAssignment, BiometricDevice, SiteGeofence, HolidayCalendar, AttendanceCorrection,
-    LeaveType, LeavePolicy, LeaveBalance, OvertimeRequest, PayrollInput,
-    SalaryComponent, SalaryStructure, SalaryStructureItem, EmployeeSalary, SalaryRevision,
+    Shift, ShiftAssignment, ShiftSwapRequest, BiometricDevice, SiteGeofence, HolidayCalendar, AttendanceCorrection,
+    LeaveType, LeavePolicy, LeaveBalance, LeaveEncashment, OvertimeRequest, PayrollInput,
+    SalaryComponent, SalaryStructure, SalaryStructureItem, EmployeeSalary, SalaryRevision, RecruitmentRecord,
     PayrollPeriod, PayrollPayslip, StaffLoan, SalaryAdvance, BonusIncentive, TaxSlab, BenefitPolicy
 )
 from app.modules.hrms.schemas import (
@@ -37,15 +41,19 @@ from app.modules.hrms.schemas import (
     MusterRollBatchCreate, MusterRollOut,
     ShiftCreate, ShiftUpdate, ShiftOut, ShiftPaginatedOut,
     ShiftAssignmentCreate, ShiftAssignmentUpdate, ShiftAssignmentOut, ShiftAssignmentPaginatedOut,
+    ShiftSwapRequestCreate, ShiftSwapRequestReview, ShiftSwapRequestOut, ShiftSwapRequestPaginatedOut,
     BiometricDeviceCreate, BiometricDeviceUpdate, BiometricDeviceOut, BiometricDevicePaginatedOut, BiometricSyncPayload,
     HolidayCalendarCreate, HolidayCalendarUpdate, HolidayCalendarOut, HolidayCalendarPaginatedOut,
     SiteGeofenceCreate, SiteGeofenceUpdate, SiteGeofenceOut, SiteGeofencePaginatedOut,
     AttendanceCorrectionCreate, AttendanceCorrectionVerify, AttendanceCorrectionApprove, AttendanceCorrectionOut, AttendanceCorrectionPaginatedOut,
     AttendancePunch, AttendanceProcessRequest, AttendanceOut, AttendancePaginatedOut, AttendanceDailySummaryOut,
+    AttendanceMonthlyClosingSummaryOut, AttendanceMonthlyClosingActionPayload,
     LeaveTypeCreate, LeaveTypeUpdate, LeaveTypeOut, LeaveTypePaginatedOut,
     LeavePolicyCreate, LeavePolicyUpdate, LeavePolicyOut, LeavePolicyPaginatedOut,
     LeaveBalanceCreate, LeaveBalanceUpdate, LeaveBalanceOut, LeaveBalancePaginatedOut,
+    LeaveEncashmentCreate, LeaveEncashmentUpdate, LeaveEncashmentOut, LeaveEncashmentPaginatedOut,
     LeaveApply, LeaveUpdate, LeaveManagerReview, LeaveHRReview, LeaveApprove, LeaveOut, LeavePaginatedOut,
+    LeaveCalendarEventOut, TeamAvailabilityItem, TeamAvailabilityOut,
     OvertimeRequestCreate, OvertimeRequestUpdate, OvertimeVerify, OvertimeApprove, OvertimeRequestOut, OvertimeRequestPaginatedOut,
     PayrollInputOut, PayrollInputPaginatedOut, PayrollSyncLeaveOTRequest,
     PayrollGenerateRequest, PayrollRunOut, PayslipOut,
@@ -61,12 +69,147 @@ from app.modules.hrms.schemas import (
     TaxSlabCreate, TaxSlabOut, PayrollWorkflowActionPayload,
     BenefitPolicyCreate, BenefitPolicyUpdate, BenefitPolicyOut, BenefitPolicyPaginatedOut,
     PayrollValidationSummaryOut, PayrollValidationException,
-    HRCockpitStats
+    HRCockpitStats, RecruitmentRecordCreate, RecruitmentRecordUpdate, RecruitmentRecordOut, RecruitmentRecordPaginatedOut
 )
 from app.modules.hrms.services import HRMSService
 from app.modules.projects.models import Project
+from uuid import uuid4
 
 router = APIRouter(prefix="/hrms", tags=["Enterprise HRMS & Labour Management"])
+
+RECRUITMENT_RECORD_TYPES = {
+    "requisitions",
+    "vacancies",
+    "applicants",
+    "interviews",
+    "evaluations",
+    "selection",
+    "offer-letters",
+    "appointment-letters",
+    "joining-checklist",
+    "onboarding",
+}
+
+
+def _validate_recruitment_type(record_type: str) -> None:
+    if record_type not in RECRUITMENT_RECORD_TYPES:
+        raise HTTPException(status_code=404, detail="Recruitment workspace not found")
+
+
+@router.get("/recruitment/{record_type}", response_model=RecruitmentRecordPaginatedOut)
+async def list_recruitment_records(
+    record_type: str,
+    search: Optional[str] = Query(None, max_length=120),
+    status_value: Optional[str] = Query(None, alias="status"),
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    _validate_recruitment_type(record_type)
+    filters = [
+        RecruitmentRecord.organization_id == get_org_id(current_user),
+        RecruitmentRecord.record_type == record_type
+    ]
+    if status_value:
+        filters.append(RecruitmentRecord.status == status_value)
+    if search and search.strip():
+        term = f"%{search.strip()}%"
+        filters.append(or_(
+            RecruitmentRecord.code.ilike(term),
+            RecruitmentRecord.title.ilike(term),
+            RecruitmentRecord.department.ilike(term)
+        ))
+    query = select(RecruitmentRecord).where(and_(*filters))
+    total = await db.scalar(select(func.count()).select_from(query.subquery())) or 0
+    result = await db.execute(query.order_by(desc(RecruitmentRecord.updated_at), desc(RecruitmentRecord.id)).limit(limit).offset(offset))
+    return RecruitmentRecordPaginatedOut(items=result.scalars().all(), total=total, limit=limit, offset=offset)
+
+
+@router.post("/recruitment/{record_type}", response_model=RecruitmentRecordOut, status_code=status.HTTP_201_CREATED)
+async def create_recruitment_record(
+    record_type: str,
+    payload: RecruitmentRecordCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    _validate_recruitment_type(record_type)
+    record = RecruitmentRecord(
+        organization_id=get_org_id(current_user),
+        record_type=record_type,
+        code=(payload.code or f"{record_type[:3].upper()}-{uuid4().hex[:8].upper()}").strip(),
+        title=payload.title.strip(),
+        department=payload.department.strip() if payload.department else None,
+        status=payload.status.strip().upper(),
+        details=payload.details
+    )
+    if not record.title:
+        raise HTTPException(status_code=422, detail="Title is required")
+    db.add(record)
+    try:
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(status_code=409, detail="A recruitment record with this code already exists")
+    await db.refresh(record)
+    return record
+
+
+@router.put("/recruitment/{record_type}/{record_id}", response_model=RecruitmentRecordOut)
+async def update_recruitment_record(
+    record_type: str,
+    record_id: int,
+    payload: RecruitmentRecordUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    _validate_recruitment_type(record_type)
+    record = await db.scalar(select(RecruitmentRecord).where(
+        RecruitmentRecord.id == record_id,
+        RecruitmentRecord.organization_id == get_org_id(current_user),
+        RecruitmentRecord.record_type == record_type
+    ))
+    if not record:
+        raise HTTPException(status_code=404, detail="Recruitment record not found")
+    changes = payload.model_dump(exclude_unset=True)
+    for key, value in changes.items():
+        if key in {"code", "title", "department"} and isinstance(value, str):
+            value = value.strip()
+            if key == "code" and not value:
+                value = f"{record_type[:3].upper()}-{uuid4().hex[:8].upper()}"
+            elif key == "department" and not value:
+                value = None
+        if key == "status" and value:
+            value = value.strip().upper()
+        setattr(record, key, value)
+    if not record.title:
+        raise HTTPException(status_code=422, detail="Title is required")
+    try:
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(status_code=409, detail="A recruitment record with this code already exists")
+    await db.refresh(record)
+    return record
+
+
+@router.delete("/recruitment/{record_type}/{record_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_recruitment_record(
+    record_type: str,
+    record_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    _validate_recruitment_type(record_type)
+    record = await db.scalar(select(RecruitmentRecord).where(
+        RecruitmentRecord.id == record_id,
+        RecruitmentRecord.organization_id == get_org_id(current_user),
+        RecruitmentRecord.record_type == record_type
+    ))
+    if not record:
+        raise HTTPException(status_code=404, detail="Recruitment record not found")
+    await db.delete(record)
+    await db.commit()
 
 
 # --- Helper to get organization_id ---
@@ -977,6 +1120,12 @@ async def _enrich_employee_out(db: AsyncSession, emp: Employee) -> EmployeeOut:
         if rep:
             rep_name = f"{rep.first_name} {rep.last_name}".strip()
 
+    grade_name = None
+    if emp.salary_grade_id:
+        sg = await db.get(SalaryGrade, emp.salary_grade_id)
+        if sg:
+            grade_name = sg.grade_name
+
     gross = (emp.basic_salary or Decimal("0")) + \
             (emp.house_rent_allowance or Decimal("0")) + \
             (emp.medical_allowance or Decimal("0")) + \
@@ -989,6 +1138,8 @@ async def _enrich_employee_out(db: AsyncSession, emp: Employee) -> EmployeeOut:
         employee_code=emp.employee_code,
         first_name=emp.first_name,
         last_name=emp.last_name,
+        full_name_bn=emp.full_name_bn,
+        photo_url=emp.photo_url,
         official_email=emp.official_email,
         phone=emp.phone,
         personal_phone=emp.personal_phone,
@@ -996,13 +1147,22 @@ async def _enrich_employee_out(db: AsyncSession, emp: Employee) -> EmployeeOut:
         date_of_birth=emp.date_of_birth,
         marital_status=emp.marital_status or "SINGLE",
         blood_group=emp.blood_group,
+        father_name=emp.father_name,
+        mother_name=emp.mother_name,
+        spouse_name=emp.spouse_name,
         nid_number=emp.nid_number,
         tin_number=emp.tin_number,
+        passport_number=emp.passport_number,
+        passport_expiry_date=emp.passport_expiry_date,
         present_address=emp.present_address,
         permanent_address=emp.permanent_address,
         emergency_contact_name=emp.emergency_contact_name,
         emergency_contact_relation=emp.emergency_contact_relation,
         emergency_contact_phone=emp.emergency_contact_phone,
+        nominee_name=emp.nominee_name,
+        nominee_relation=emp.nominee_relation,
+        nominee_phone=emp.nominee_phone,
+        nominee_nid=emp.nominee_nid,
         joining_date=emp.joining_date,
         confirmation_date=emp.confirmation_date,
         probation_months=emp.probation_months or 6,
@@ -1011,25 +1171,35 @@ async def _enrich_employee_out(db: AsyncSession, emp: Employee) -> EmployeeOut:
         status=emp.status or "ACTIVE",
         department_id=emp.department_id,
         designation_id=emp.designation_id,
+        salary_grade_id=emp.salary_grade_id,
+        salary_grade_name=grade_name,
         reporting_to_id=emp.reporting_to_id,
         assigned_project_id=emp.assigned_project_id,
         company_id=emp.company_id,
         branch_id=emp.branch_id,
         project_office_id=emp.project_office_id,
+        work_location=emp.work_location,
+        cost_center=emp.cost_center,
+        payment_method=emp.payment_method or "BANK",
         bank_account_no=emp.bank_account_no,
         bank_name=emp.bank_name,
         bank_branch=emp.bank_branch,
         routing_no=emp.routing_no,
+        mfs_provider=emp.mfs_provider,
+        mfs_number=emp.mfs_number,
         basic_salary=emp.basic_salary or Decimal("0.00"),
         house_rent_allowance=emp.house_rent_allowance or Decimal("0.00"),
         medical_allowance=emp.medical_allowance or Decimal("0.00"),
         conveyance_allowance=emp.conveyance_allowance or Decimal("0.00"),
         site_hazard_allowance=emp.site_hazard_allowance or Decimal("0.00"),
         mobile_allowance=emp.mobile_allowance or Decimal("0.00"),
+        custom_allowances=emp.custom_allowances or [],
         is_pf_eligible=bool(emp.is_pf_eligible),
         is_tax_eligible=bool(emp.is_tax_eligible),
         education=emp.education or [],
         experience=emp.experience or [],
+        certifications=emp.certifications or [],
+        skills=emp.skills or [],
         documents=emp.documents or [],
         user_id=emp.user_id,
         system_role=emp.system_role or "EMPLOYEE",
@@ -1161,6 +1331,8 @@ async def create_employee(
         employee_code=code,
         first_name=payload.first_name.strip(),
         last_name=payload.last_name.strip(),
+        full_name_bn=payload.full_name_bn.strip() if payload.full_name_bn else None,
+        photo_url=payload.photo_url.strip() if payload.photo_url else None,
         official_email=payload.official_email.strip() if payload.official_email else None,
         phone=payload.phone.strip(),
         personal_phone=payload.personal_phone.strip() if payload.personal_phone else None,
@@ -1168,13 +1340,22 @@ async def create_employee(
         date_of_birth=payload.date_of_birth,
         marital_status=payload.marital_status or "SINGLE",
         blood_group=payload.blood_group,
+        father_name=payload.father_name.strip() if payload.father_name else None,
+        mother_name=payload.mother_name.strip() if payload.mother_name else None,
+        spouse_name=payload.spouse_name.strip() if payload.spouse_name else None,
         nid_number=payload.nid_number.strip() if payload.nid_number else None,
         tin_number=payload.tin_number.strip() if payload.tin_number else None,
+        passport_number=payload.passport_number.strip() if payload.passport_number else None,
+        passport_expiry_date=payload.passport_expiry_date,
         present_address=payload.present_address,
         permanent_address=payload.permanent_address,
         emergency_contact_name=payload.emergency_contact_name,
         emergency_contact_relation=payload.emergency_contact_relation,
         emergency_contact_phone=payload.emergency_contact_phone,
+        nominee_name=payload.nominee_name,
+        nominee_relation=payload.nominee_relation,
+        nominee_phone=payload.nominee_phone,
+        nominee_nid=payload.nominee_nid,
         joining_date=payload.joining_date or date.today(),
         confirmation_date=payload.confirmation_date,
         probation_months=payload.probation_months or 6,
@@ -1183,25 +1364,34 @@ async def create_employee(
         status=payload.status or "ACTIVE",
         department_id=payload.department_id,
         designation_id=payload.designation_id,
+        salary_grade_id=payload.salary_grade_id,
         reporting_to_id=payload.reporting_to_id,
         assigned_project_id=payload.assigned_project_id,
         company_id=payload.company_id,
         branch_id=payload.branch_id,
         project_office_id=payload.project_office_id,
+        work_location=payload.work_location,
+        cost_center=payload.cost_center,
+        payment_method=payload.payment_method or "BANK",
         bank_account_no=payload.bank_account_no,
         bank_name=payload.bank_name,
         bank_branch=payload.bank_branch,
         routing_no=payload.routing_no,
+        mfs_provider=payload.mfs_provider,
+        mfs_number=payload.mfs_number,
         basic_salary=payload.basic_salary or Decimal("0.00"),
         house_rent_allowance=payload.house_rent_allowance or Decimal("0.00"),
         medical_allowance=payload.medical_allowance or Decimal("0.00"),
         conveyance_allowance=payload.conveyance_allowance or Decimal("0.00"),
         site_hazard_allowance=payload.site_hazard_allowance or Decimal("0.00"),
         mobile_allowance=payload.mobile_allowance or Decimal("0.00"),
+        custom_allowances=payload.custom_allowances or [],
         is_pf_eligible=payload.is_pf_eligible,
         is_tax_eligible=payload.is_tax_eligible,
         education=payload.education or [],
         experience=payload.experience or [],
+        certifications=payload.certifications or [],
+        skills=payload.skills or [],
         documents=payload.documents or [],
         user_id=payload.user_id,
         system_role=payload.system_role or "EMPLOYEE"
@@ -1233,6 +1423,63 @@ async def update_employee(
     await db.commit()
     await db.refresh(emp)
     return await _enrich_employee_out(db, emp)
+
+
+@router.patch("/employees/{id}/status", response_model=EmployeeOut)
+async def patch_employee_status(
+    id: int,
+    payload: Dict[str, str],
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    """Quickly update employee lifecycle status (ACTIVE, PROBATION, CONFIRMED, RESIGNED, TERMINATED, ON_LEAVE)."""
+    org_id = get_org_id(current_user)
+    emp = await db.get(Employee, id)
+    if not emp or emp.organization_id != org_id:
+        raise HTTPException(status_code=404, detail="Employee not found")
+
+    new_status = payload.get("status")
+    if not new_status:
+        raise HTTPException(status_code=400, detail="Status is required")
+
+    emp.status = new_status.upper()
+    emp.updated_at = func.now()
+    await db.commit()
+    await db.refresh(emp)
+    return await _enrich_employee_out(db, emp)
+
+
+@router.post("/employees/upload-photo")
+async def upload_employee_photo(
+    file: UploadFile = File(...)
+):
+    """Upload employee avatar / photograph to static storage."""
+    allowed_exts = [".jpg", ".jpeg", ".png", ".webp", ".gif"]
+    filename = file.filename or "avatar.jpg"
+    ext = os.path.splitext(filename)[1].lower()
+    if ext not in allowed_exts:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid image format '{ext}'. Allowed: {', '.join(allowed_exts)}"
+        )
+
+    # Destination directory: backend/app/static/uploads/users/
+    target_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "static", "uploads", "users"))
+    os.makedirs(target_dir, exist_ok=True)
+
+    unique_filename = f"emp_{uuid.uuid4().hex[:12]}{ext}"
+    filepath = os.path.join(target_dir, unique_filename)
+
+    contents = await file.read()
+    with open(filepath, "wb") as f:
+        f.write(contents)
+
+    photo_url = f"/uploads/users/{unique_filename}"
+    return {
+        "status": "success",
+        "photo_url": photo_url,
+        "filename": unique_filename
+    }
 
 
 @router.delete("/employees/{id}")
@@ -1467,6 +1714,7 @@ async def create_shift(
         organization_id=org_id,
         shift_name=payload.shift_name.strip(),
         shift_code=payload.shift_code.strip().upper(),
+        shift_type=payload.shift_type,
         start_time=payload.start_time,
         end_time=payload.end_time,
         break_start_time=payload.break_start_time,
@@ -1476,6 +1724,8 @@ async def create_shift(
         half_day_minimum_minutes=payload.half_day_minimum_minutes,
         full_day_minimum_minutes=payload.full_day_minimum_minutes,
         is_night_shift=payload.is_night_shift,
+        is_overtime_eligible=payload.is_overtime_eligible,
+        weekly_off_days=payload.weekly_off_days,
         is_active=payload.is_active
     )
     db.add(shift)
@@ -1574,9 +1824,11 @@ async def list_shift_assignments(
     for sa in items:
         target_name = None
         target_code = None
+        target_photo = None
         if sa.assignment_type == "EMPLOYEE" and sa.employee:
             target_name = f"{sa.employee.first_name} {sa.employee.last_name}"
             target_code = sa.employee.employee_code
+            target_photo = sa.employee.photo_url
         elif sa.assignment_type == "DEPARTMENT" and sa.department:
             target_name = sa.department.name_en
             target_code = sa.department.department_code
@@ -1595,6 +1847,7 @@ async def list_shift_assignments(
             project_id=sa.project_id,
             target_name=target_name,
             target_code=target_code,
+            target_photo_url=target_photo,
             effective_from=sa.effective_from,
             effective_to=sa.effective_to,
             is_active=sa.is_active,
@@ -1616,30 +1869,120 @@ async def create_shift_assignment(
     current_user: Optional[User] = Depends(get_current_user_optional)
 ):
     org_id = get_org_id(current_user)
-    sa = ShiftAssignment(
-        organization_id=org_id,
-        shift_id=payload.shift_id,
-        assignment_type=payload.assignment_type,
-        employee_id=payload.employee_id if payload.assignment_type == "EMPLOYEE" else None,
-        department_id=payload.department_id if payload.assignment_type == "DEPARTMENT" else None,
-        project_id=payload.project_id if payload.assignment_type == "PROJECT_SITE" else None,
-        effective_from=payload.effective_from,
-        effective_to=payload.effective_to,
-        is_active=payload.is_active,
-        remarks=payload.remarks
-    )
-    db.add(sa)
-    await db.commit()
-    await db.refresh(sa)
+
+    # Multi-employee support
+    employee_ids = []
+    if payload.assignment_type == "EMPLOYEE":
+        if payload.employee_ids and len(payload.employee_ids) > 0:
+            employee_ids = payload.employee_ids
+        elif payload.employee_id:
+            employee_ids = [payload.employee_id]
+
+    primary_sa = None
+    if payload.assignment_type == "EMPLOYEE" and len(employee_ids) > 0:
+        for emp_id in employee_ids:
+            sa = ShiftAssignment(
+                organization_id=org_id,
+                shift_id=payload.shift_id,
+                assignment_type="EMPLOYEE",
+                employee_id=emp_id,
+                department_id=None,
+                project_id=None,
+                effective_from=payload.effective_from,
+                effective_to=payload.effective_to,
+                is_active=payload.is_active,
+                remarks=payload.remarks
+            )
+            db.add(sa)
+            if primary_sa is None:
+                primary_sa = sa
+        await db.commit()
+        await db.refresh(primary_sa)
+    else:
+        primary_sa = ShiftAssignment(
+            organization_id=org_id,
+            shift_id=payload.shift_id,
+            assignment_type=payload.assignment_type,
+            employee_id=payload.employee_id if payload.assignment_type == "EMPLOYEE" else None,
+            department_id=payload.department_id if payload.assignment_type == "DEPARTMENT" else None,
+            project_id=payload.project_id if payload.assignment_type == "PROJECT_SITE" else None,
+            effective_from=payload.effective_from,
+            effective_to=payload.effective_to,
+            is_active=payload.is_active,
+            remarks=payload.remarks
+        )
+        db.add(primary_sa)
+        await db.commit()
+        await db.refresh(primary_sa)
 
     target_name = None
     target_code = None
+    target_photo = None
+    if primary_sa.assignment_type == "EMPLOYEE" and primary_sa.employee_id:
+        emp_res = await db.execute(select(Employee).where(Employee.id == primary_sa.employee_id))
+        emp = emp_res.scalar_one_or_none()
+        if emp:
+            target_name = f"{emp.first_name} {emp.last_name}"
+            target_code = emp.employee_code
+            target_photo = emp.photo_url
+    elif primary_sa.assignment_type == "DEPARTMENT" and primary_sa.department_id:
+        dept_res = await db.execute(select(Department).where(Department.id == primary_sa.department_id))
+        dept = dept_res.scalar_one_or_none()
+        if dept:
+            target_name = dept.name_en
+            target_code = dept.department_code
+
+    shift_res = await db.execute(select(Shift).where(Shift.id == primary_sa.shift_id))
+    shift = shift_res.scalar_one_or_none()
+
+    return ShiftAssignmentOut(
+        id=primary_sa.id,
+        shift_id=primary_sa.shift_id,
+        shift_name=shift.shift_name if shift else None,
+        shift_code=shift.shift_code if shift else None,
+        assignment_type=primary_sa.assignment_type,
+        employee_id=primary_sa.employee_id,
+        department_id=primary_sa.department_id,
+        project_id=primary_sa.project_id,
+        target_name=target_name,
+        target_code=target_code,
+        target_photo_url=target_photo,
+        effective_from=primary_sa.effective_from,
+        effective_to=primary_sa.effective_to,
+        is_active=primary_sa.is_active,
+        remarks=primary_sa.remarks,
+        created_at=primary_sa.created_at
+    )
+
+@router.get("/shift-assignments/{assignment_id}", response_model=ShiftAssignmentOut)
+async def get_shift_assignment(
+    assignment_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    q = select(ShiftAssignment).where(and_(ShiftAssignment.id == assignment_id, ShiftAssignment.organization_id == org_id))
+    res = await db.execute(q)
+    sa = res.scalar_one_or_none()
+    if not sa:
+        raise HTTPException(status_code=404, detail="Shift assignment not found")
+
+    target_name = None
+    target_code = None
+    target_photo = None
     if sa.assignment_type == "EMPLOYEE" and sa.employee_id:
         emp_res = await db.execute(select(Employee).where(Employee.id == sa.employee_id))
         emp = emp_res.scalar_one_or_none()
         if emp:
             target_name = f"{emp.first_name} {emp.last_name}"
             target_code = emp.employee_code
+            target_photo = emp.photo_url
+    elif sa.assignment_type == "DEPARTMENT" and sa.department_id:
+        dept_res = await db.execute(select(Department).where(Department.id == sa.department_id))
+        dept = dept_res.scalar_one_or_none()
+        if dept:
+            target_name = dept.name_en
+            target_code = dept.department_code
 
     shift_res = await db.execute(select(Shift).where(Shift.id == sa.shift_id))
     shift = shift_res.scalar_one_or_none()
@@ -1655,6 +1998,61 @@ async def create_shift_assignment(
         project_id=sa.project_id,
         target_name=target_name,
         target_code=target_code,
+        target_photo_url=target_photo,
+        effective_from=sa.effective_from,
+        effective_to=sa.effective_to,
+        is_active=sa.is_active,
+        remarks=sa.remarks,
+        created_at=sa.created_at
+    )
+
+@router.put("/shift-assignments/{assignment_id}", response_model=ShiftAssignmentOut)
+async def update_shift_assignment(
+    assignment_id: int,
+    payload: ShiftAssignmentUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    q = select(ShiftAssignment).where(and_(ShiftAssignment.id == assignment_id, ShiftAssignment.organization_id == org_id))
+    res = await db.execute(q)
+    sa = res.scalar_one_or_none()
+    if not sa:
+        raise HTTPException(status_code=404, detail="Shift assignment not found")
+
+    data = payload.model_dump(exclude_unset=True)
+    for field, val in data.items():
+        setattr(sa, field, val)
+
+    await db.commit()
+    await db.refresh(sa)
+
+    target_name = None
+    target_code = None
+    target_photo = None
+    if sa.assignment_type == "EMPLOYEE" and sa.employee_id:
+        emp_res = await db.execute(select(Employee).where(Employee.id == sa.employee_id))
+        emp = emp_res.scalar_one_or_none()
+        if emp:
+            target_name = f"{emp.first_name} {emp.last_name}"
+            target_code = emp.employee_code
+            target_photo = emp.photo_url
+
+    shift_res = await db.execute(select(Shift).where(Shift.id == sa.shift_id))
+    shift = shift_res.scalar_one_or_none()
+
+    return ShiftAssignmentOut(
+        id=sa.id,
+        shift_id=sa.shift_id,
+        shift_name=shift.shift_name if shift else None,
+        shift_code=shift.shift_code if shift else None,
+        assignment_type=sa.assignment_type,
+        employee_id=sa.employee_id,
+        department_id=sa.department_id,
+        project_id=sa.project_id,
+        target_name=target_name,
+        target_code=target_code,
+        target_photo_url=target_photo,
         effective_from=sa.effective_from,
         effective_to=sa.effective_to,
         is_active=sa.is_active,
@@ -1675,6 +2073,286 @@ async def delete_shift_assignment(
     if not sa:
         raise HTTPException(status_code=404, detail="Shift assignment not found")
     await db.delete(sa)
+    await db.commit()
+    return None
+
+
+# --- 2.2.1 Shift Swap & Schedule Change Management ---
+@router.get("/shift-swaps", response_model=ShiftSwapRequestPaginatedOut)
+async def list_shift_swaps(
+    status_filter: Optional[str] = Query(None, alias="status"),
+    swap_date: Optional[date] = None,
+    employee_id: Optional[int] = None,
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    q = select(ShiftSwapRequest).where(ShiftSwapRequest.organization_id == org_id)
+
+    if status_filter:
+        q = q.where(ShiftSwapRequest.status == status_filter.upper())
+    if swap_date:
+        q = q.where(ShiftSwapRequest.swap_date == swap_date)
+    if employee_id:
+        q = q.where(or_(ShiftSwapRequest.requester_id == employee_id, ShiftSwapRequest.target_employee_id == employee_id))
+
+    cnt_q = select(func.count()).select_from(q.subquery())
+    total_res = await db.execute(cnt_q)
+    total = total_res.scalar_one() or 0
+
+    items_res = await db.execute(q.order_by(ShiftSwapRequest.swap_date.desc(), ShiftSwapRequest.id.desc()).limit(limit).offset(offset))
+    swaps = items_res.scalars().all()
+
+    # Pre-collect IDs for bulk hydration
+    emp_ids = set()
+    shift_ids = set()
+    user_ids = set()
+    for s in swaps:
+        emp_ids.add(s.requester_id)
+        emp_ids.add(s.target_employee_id)
+        if s.requester_shift_id:
+            shift_ids.add(s.requester_shift_id)
+        if s.target_shift_id:
+            shift_ids.add(s.target_shift_id)
+        if s.reviewed_by_id:
+            user_ids.add(s.reviewed_by_id)
+
+    emp_map = {}
+    if emp_ids:
+        e_res = await db.execute(select(Employee).where(Employee.id.in_(emp_ids)))
+        emp_map = {e.id: e for e in e_res.scalars().all()}
+
+    shift_map = {}
+    if shift_ids:
+        s_res = await db.execute(select(Shift).where(Shift.id.in_(shift_ids)))
+        shift_map = {sh.id: sh for sh in s_res.scalars().all()}
+
+    user_map = {}
+    if user_ids:
+        u_res = await db.execute(select(User).where(User.id.in_(user_ids)))
+        user_map = {u.id: (u.full_name or u.email) for u in u_res.scalars().all()}
+
+    results = []
+    for s in swaps:
+        req_emp = emp_map.get(s.requester_id)
+        tgt_emp = emp_map.get(s.target_employee_id)
+        req_sh = shift_map.get(s.requester_shift_id)
+        tgt_sh = shift_map.get(s.target_shift_id)
+        rev_name = user_map.get(s.reviewed_by_id)
+
+        results.append(ShiftSwapRequestOut(
+            id=s.id,
+            requester_id=s.requester_id,
+            requester_name=f"{req_emp.first_name} {req_emp.last_name}".strip() if req_emp else None,
+            requester_code=req_emp.employee_code if req_emp else None,
+            target_employee_id=s.target_employee_id,
+            target_employee_name=f"{tgt_emp.first_name} {tgt_emp.last_name}".strip() if tgt_emp else None,
+            target_employee_code=tgt_emp.employee_code if tgt_emp else None,
+            swap_date=s.swap_date,
+            requester_shift_id=s.requester_shift_id,
+            requester_shift_name=req_sh.shift_name if req_sh else None,
+            target_shift_id=s.target_shift_id,
+            target_shift_name=tgt_sh.shift_name if tgt_sh else None,
+            reason=s.reason,
+            status=s.status,
+            reviewed_by_id=s.reviewed_by_id,
+            reviewed_by_name=rev_name,
+            review_notes=s.review_notes,
+            reviewed_at=s.reviewed_at,
+            created_at=s.created_at
+        ))
+
+    return ShiftSwapRequestPaginatedOut(
+        items=results,
+        total=total,
+        limit=limit,
+        offset=offset
+    )
+
+@router.post("/shift-swaps", response_model=ShiftSwapRequestOut, status_code=status.HTTP_201_CREATED)
+async def create_shift_swap_request(
+    payload: ShiftSwapRequestCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+
+    if payload.requester_id == payload.target_employee_id:
+        raise HTTPException(status_code=400, detail="Cannot request shift swap with yourself")
+
+    # Verify employees belong to this organization
+    res = await db.execute(
+        select(Employee).where(
+            and_(Employee.organization_id == org_id, Employee.id.in_([payload.requester_id, payload.target_employee_id]))
+        )
+    )
+    emps = {e.id: e for e in res.scalars().all()}
+    if payload.requester_id not in emps:
+        raise HTTPException(status_code=404, detail="Requester employee not found")
+    if payload.target_employee_id not in emps:
+        raise HTTPException(status_code=404, detail="Target employee not found")
+
+    # Helper to resolve active shift for an employee on swap_date if not specified
+    async def resolve_emp_shift(emp_id: int, explicit_shift_id: Optional[int]) -> Optional[int]:
+        if explicit_shift_id:
+            return explicit_shift_id
+        # Check direct employee assignment
+        sa_res = await db.execute(
+            select(ShiftAssignment).where(
+                and_(
+                    ShiftAssignment.organization_id == org_id,
+                    ShiftAssignment.assignment_type == "EMPLOYEE",
+                    ShiftAssignment.target_id == emp_id,
+                    ShiftAssignment.start_date <= payload.swap_date,
+                    or_(ShiftAssignment.end_date.is_(None), ShiftAssignment.end_date >= payload.swap_date)
+                )
+            ).order_by(ShiftAssignment.id.desc())
+        )
+        sa = sa_res.scalar_one_or_none()
+        if sa:
+            return sa.shift_id
+        return None
+
+    requester_shift_id = await resolve_emp_shift(payload.requester_id, payload.requester_shift_id)
+    target_shift_id = await resolve_emp_shift(payload.target_employee_id, payload.target_shift_id)
+
+    swap = ShiftSwapRequest(
+        organization_id=org_id,
+        requester_id=payload.requester_id,
+        target_employee_id=payload.target_employee_id,
+        swap_date=payload.swap_date,
+        requester_shift_id=requester_shift_id,
+        target_shift_id=target_shift_id,
+        reason=payload.reason.strip(),
+        status="PENDING"
+    )
+    db.add(swap)
+    await db.commit()
+    await db.refresh(swap)
+
+    req_emp = emps[payload.requester_id]
+    tgt_emp = emps[payload.target_employee_id]
+
+    return ShiftSwapRequestOut(
+        id=swap.id,
+        requester_id=swap.requester_id,
+        requester_name=f"{req_emp.first_name} {req_emp.last_name}".strip(),
+        requester_code=req_emp.employee_code,
+        target_employee_id=swap.target_employee_id,
+        target_employee_name=f"{tgt_emp.first_name} {tgt_emp.last_name}".strip(),
+        target_employee_code=tgt_emp.employee_code,
+        swap_date=swap.swap_date,
+        requester_shift_id=swap.requester_shift_id,
+        target_shift_id=swap.target_shift_id,
+        reason=swap.reason,
+        status=swap.status,
+        created_at=swap.created_at
+    )
+
+@router.post("/shift-swaps/{swap_id}/review", response_model=ShiftSwapRequestOut)
+async def review_shift_swap_request(
+    swap_id: int,
+    payload: ShiftSwapRequestReview,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    res = await db.execute(
+        select(ShiftSwapRequest).where(
+            and_(ShiftSwapRequest.id == swap_id, ShiftSwapRequest.organization_id == org_id)
+        )
+    )
+    swap = res.scalar_one_or_none()
+    if not swap:
+        raise HTTPException(status_code=404, detail="Shift swap request not found")
+    if swap.status != "PENDING":
+        raise HTTPException(status_code=400, detail=f"Cannot review swap request in status '{swap.status}'")
+
+    swap.status = payload.status
+    swap.review_notes = payload.review_notes.strip() if payload.review_notes else None
+    swap.reviewed_by_id = current_user.id if current_user else None
+    swap.reviewed_at = datetime.now()
+
+    # If APPROVED and shifts were specified, create single-day shift assignments to reflect the swap
+    if payload.status == "APPROVED":
+        if swap.target_shift_id:
+            # Requester takes target's shift on swap_date
+            req_sa = ShiftAssignment(
+                organization_id=org_id,
+                shift_id=swap.target_shift_id,
+                assignment_type="EMPLOYEE",
+                target_id=swap.requester_id,
+                start_date=swap.swap_date,
+                end_date=swap.swap_date,
+                remarks=f"Shift Swap Approved (Ref #{swap.id})"
+            )
+            db.add(req_sa)
+
+        if swap.requester_shift_id:
+            # Target takes requester's shift on swap_date
+            tgt_sa = ShiftAssignment(
+                organization_id=org_id,
+                shift_id=swap.requester_shift_id,
+                assignment_type="EMPLOYEE",
+                target_id=swap.target_employee_id,
+                start_date=swap.swap_date,
+                end_date=swap.swap_date,
+                remarks=f"Shift Swap Approved (Ref #{swap.id})"
+            )
+            db.add(tgt_sa)
+
+    await db.commit()
+    await db.refresh(swap)
+
+    # Hydrate names
+    e_res = await db.execute(
+        select(Employee).where(Employee.id.in_([swap.requester_id, swap.target_employee_id]))
+    )
+    emps = {e.id: e for e in e_res.scalars().all()}
+    req_emp = emps.get(swap.requester_id)
+    tgt_emp = emps.get(swap.target_employee_id)
+
+    return ShiftSwapRequestOut(
+        id=swap.id,
+        requester_id=swap.requester_id,
+        requester_name=f"{req_emp.first_name} {req_emp.last_name}".strip() if req_emp else None,
+        requester_code=req_emp.employee_code if req_emp else None,
+        target_employee_id=swap.target_employee_id,
+        target_employee_name=f"{tgt_emp.first_name} {tgt_emp.last_name}".strip() if tgt_emp else None,
+        target_employee_code=tgt_emp.employee_code if tgt_emp else None,
+        swap_date=swap.swap_date,
+        requester_shift_id=swap.requester_shift_id,
+        target_shift_id=swap.target_shift_id,
+        reason=swap.reason,
+        status=swap.status,
+        reviewed_by_id=swap.reviewed_by_id,
+        reviewed_by_name=(current_user.full_name or current_user.email) if current_user else None,
+        review_notes=swap.review_notes,
+        reviewed_at=swap.reviewed_at,
+        created_at=swap.created_at
+    )
+
+@router.delete("/shift-swaps/{swap_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_shift_swap(
+    swap_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    res = await db.execute(
+        select(ShiftSwapRequest).where(
+            and_(ShiftSwapRequest.id == swap_id, ShiftSwapRequest.organization_id == org_id)
+        )
+    )
+    swap = res.scalar_one_or_none()
+    if not swap:
+        raise HTTPException(status_code=404, detail="Shift swap request not found")
+    if swap.status != "PENDING":
+        raise HTTPException(status_code=400, detail="Only pending shift swap requests can be deleted")
+
+    await db.delete(swap)
     await db.commit()
     return None
 
@@ -1946,6 +2624,9 @@ async def list_holidays(
     year: Optional[int] = None,
     holiday_type: Optional[str] = None,
     is_active: Optional[bool] = None,
+    search: Optional[str] = None,
+    from_date: Optional[date] = None,
+    through_date: Optional[date] = None,
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),
@@ -1960,6 +2641,13 @@ async def list_holidays(
         q = q.where(HolidayCalendar.holiday_type == holiday_type)
     if is_active is not None:
         q = q.where(HolidayCalendar.is_active == is_active)
+    if search and search.strip():
+        term = f"%{search.strip()}%"
+        q = q.where(or_(HolidayCalendar.holiday_name.ilike(term), HolidayCalendar.description.ilike(term)))
+    if from_date:
+        q = q.where(HolidayCalendar.end_date >= from_date)
+    if through_date:
+        q = q.where(HolidayCalendar.start_date <= through_date)
 
     cnt_q = select(func.count()).select_from(q.subquery())
     total_res = await db.execute(cnt_q)
@@ -1979,8 +2667,8 @@ async def list_holidays(
             total_days=h.total_days,
             applicable_branch_id=h.applicable_branch_id,
             applicable_project_id=h.applicable_project_id,
-            branch_name=h.branch.branch_name if h.branch else None,
-            project_name=h.project.name if h.project else None,
+            branch_name=getattr(h, "branch", None).branch_name if getattr(h, "branch", None) else None,
+            project_name=getattr(h, "project", None).project_name if getattr(h, "project", None) else None,
             is_recurring_yearly=h.is_recurring_yearly,
             description=h.description,
             is_active=h.is_active,
@@ -1994,6 +2682,21 @@ async def list_holidays(
         offset=offset
     )
 
+@router.get("/holidays/{holiday_id}", response_model=HolidayCalendarOut)
+async def get_holiday(
+    holiday_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    holiday = (await db.execute(select(HolidayCalendar).where(and_(
+        HolidayCalendar.id == holiday_id,
+        HolidayCalendar.organization_id == org_id
+    )))).scalar_one_or_none()
+    if not holiday:
+        raise HTTPException(status_code=404, detail="Holiday not found")
+    return HolidayCalendarOut.model_validate(holiday)
+
 @router.post("/holidays", response_model=HolidayCalendarOut, status_code=status.HTTP_201_CREATED)
 async def create_holiday(
     payload: HolidayCalendarCreate,
@@ -2002,6 +2705,8 @@ async def create_holiday(
 ):
     org_id = get_org_id(current_user)
     days = (payload.end_date - payload.start_date).days + 1
+    if days <= 0:
+        raise HTTPException(status_code=422, detail="Holiday end date must be on or after its start date.")
     hol = HolidayCalendar(
         organization_id=org_id,
         holiday_name=payload.holiday_name.strip(),
@@ -2034,12 +2739,17 @@ async def update_holiday(
     if not hol:
         raise HTTPException(status_code=404, detail="Holiday not found")
 
-    data = payload.model_dump(exclude_unset=True)
+    data = payload.model_dump(exclude_unset=True, exclude_none=True)
+    start_date = data.get("start_date", hol.start_date)
+    end_date = data.get("end_date", hol.end_date)
+    if start_date is None or end_date is None:
+        raise HTTPException(status_code=422, detail="Holiday start and end dates are required.")
+    if end_date < start_date:
+        raise HTTPException(status_code=422, detail="Holiday end date must be on or after its start date.")
     for field, val in data.items():
         setattr(hol, field, val)
 
-    if hol.start_date and hol.end_date:
-        hol.total_days = max(1, (hol.end_date - hol.start_date).days + 1)
+    hol.total_days = (hol.end_date - hol.start_date).days + 1
 
     await db.commit()
     await db.refresh(hol)
@@ -2072,24 +2782,30 @@ async def list_site_geofences(
     current_user: Optional[User] = Depends(get_current_user_optional)
 ):
     org_id = get_org_id(current_user)
-    q = select(SiteGeofence).where(SiteGeofence.organization_id == org_id)
+    q = (
+        select(SiteGeofence, Project.project_name.label("prj_name"))
+        .outerjoin(Project, SiteGeofence.project_id == Project.id)
+        .where(SiteGeofence.organization_id == org_id)
+    )
 
     if project_id:
         q = q.where(SiteGeofence.project_id == project_id)
 
-    cnt_q = select(func.count()).select_from(q.subquery())
+    cnt_q = select(func.count(SiteGeofence.id)).where(SiteGeofence.organization_id == org_id)
+    if project_id:
+        cnt_q = cnt_q.where(SiteGeofence.project_id == project_id)
     total_res = await db.execute(cnt_q)
-    total = total_res.scalar_one() or 0
+    total = total_res.scalar() or 0
 
     items_res = await db.execute(q.order_by(desc(SiteGeofence.id)).limit(limit).offset(offset))
-    items = items_res.scalars().all()
+    rows = items_res.all()
 
     out_items = []
-    for g in items:
+    for g, prj_name in rows:
         out_items.append(SiteGeofenceOut(
             id=g.id,
             project_id=g.project_id,
-            project_name=g.project.name if g.project else None,
+            project_name=prj_name,
             site_name=g.site_name,
             latitude=g.latitude,
             longitude=g.longitude,
@@ -2131,7 +2847,7 @@ async def create_site_geofence(
     return SiteGeofenceOut(
         id=geo.id,
         project_id=geo.project_id,
-        project_name=proj.name if proj else None,
+        project_name=proj.project_name if proj else None,
         site_name=geo.site_name,
         latitude=geo.latitude,
         longitude=geo.longitude,
@@ -2148,7 +2864,7 @@ async def update_site_geofence(
     current_user: Optional[User] = Depends(get_current_user_optional)
 ):
     org_id = get_org_id(current_user)
-    q = select(SiteGeofence).where(and_(SiteGeofence.id == geofence_id, SiteGeofence.organization_id == org_id))
+    q = select(SiteGeofence).options(joinedload(SiteGeofence.project)).where(and_(SiteGeofence.id == geofence_id, SiteGeofence.organization_id == org_id))
     res = await db.execute(q)
     geo = res.scalar_one_or_none()
     if not geo:
@@ -2159,12 +2875,17 @@ async def update_site_geofence(
         setattr(geo, field, val)
 
     await db.commit()
-    await db.refresh(geo)
+    
+    proj_name = None
+    if geo.project_id:
+        proj_res = await db.execute(select(Project).where(Project.id == geo.project_id))
+        proj = proj_res.scalar_one_or_none()
+        proj_name = proj.project_name if proj else None
 
     return SiteGeofenceOut(
         id=geo.id,
         project_id=geo.project_id,
-        project_name=geo.project.name if geo.project else None,
+        project_name=proj_name,
         site_name=geo.site_name,
         latitude=geo.latitude,
         longitude=geo.longitude,
@@ -2503,10 +3224,16 @@ async def punch_attendance(
     # 3. Geofence verification if coordinates provided
     is_geo_verified = True
     geofence_site_id = payload.site_id
+    if geofence_site_id:
+        geo_chk = await db.execute(select(SiteGeofence).where(SiteGeofence.id == geofence_site_id))
+        geo_obj = geo_chk.scalar_one_or_none()
+        if geo_obj:
+            geofence_site_id = geo_obj.project_id
+
     if payload.geofence_lat is not None and payload.geofence_lng is not None:
-        if geofence_site_id:
-            geo_res = await db.execute(select(SiteGeofence).where(SiteGeofence.id == geofence_site_id))
-            geo = geo_res.scalar_one_or_none()
+        if payload.site_id:
+            geo_res = await db.execute(select(SiteGeofence).where(or_(SiteGeofence.id == payload.site_id, SiteGeofence.project_id == payload.site_id)))
+            geo = geo_res.scalars().first()
             if geo:
                 dist = haversine_distance_meters(
                     float(payload.geofence_lat), float(payload.geofence_lng),
@@ -2528,7 +3255,7 @@ async def punch_attendance(
                     matched_geo = g
                     break
             if matched_geo:
-                geofence_site_id = matched_geo.id
+                geofence_site_id = matched_geo.project_id
                 is_geo_verified = True
             else:
                 is_geo_verified = False
@@ -2542,20 +3269,40 @@ async def punch_attendance(
     att_res = await db.execute(att_q)
     att = att_res.scalar_one_or_none()
 
-    # Decide Clock IN or Clock OUT based on payload.punch_type or existing state
-    is_clock_in = payload.punch_type == "IN" or (payload.punch_type == "PUNCH" and (not att or not att.clock_in))
+    # Determine In Time / Out Time / Punch Action
+    is_both = payload.punch_type in ("IN_OUT", "BOTH") or (payload.in_time is not None and payload.out_time is not None)
+    is_clock_in = not is_both and (payload.punch_type == "IN" or (payload.punch_type == "PUNCH" and (not att or not att.clock_in)))
 
-    if is_clock_in and (not att or not att.clock_in):
-        # Calculate late minutes against shift
-        late_min = 0
-        if shift and shift.start_time:
-            # Calculate shift start datetime for today
-            shift_start_dt = datetime.combine(punch_d, shift.start_time)
-            grace_dt = shift_start_dt + timedelta(minutes=shift.grace_period_minutes)
-            if punch_dt > grace_dt:
-                late_min = int((punch_dt - shift_start_dt).total_seconds() // 60)
+    # Compute late minutes if In Time is present or clocking in
+    late_min = 0
+    in_dt = payload.in_time or (punch_dt if is_clock_in or is_both else None)
+    if in_dt and shift and shift.start_time:
+        shift_start_dt = datetime.combine(punch_d, shift.start_time)
+        grace_dt = shift_start_dt + timedelta(minutes=shift.grace_period_minutes)
+        if in_dt > grace_dt:
+            late_min = int((in_dt - shift_start_dt).total_seconds() // 60)
 
-        status_val = "LATE" if late_min > 0 else "PRESENT"
+    status_val = "LATE" if late_min > 0 else "PRESENT"
+
+    if is_both:
+        # Both Clock IN and OUT recorded simultaneously
+        out_dt = payload.out_time or punch_dt
+        dur_secs = max(0.0, (out_dt - in_dt).total_seconds()) if (in_dt and out_dt) else 0.0
+        work_hrs = Decimal(str(round(dur_secs / 3600.0, 2)))
+        ot_hrs = Decimal(str(round(work_hrs - Decimal("8.00"), 2))) if work_hrs > Decimal("8.00") else Decimal("0.00")
+
+        early_min = 0
+        if shift and shift.end_time and out_dt:
+            shift_end_dt = datetime.combine(punch_d, shift.end_time)
+            if out_dt < shift_end_dt:
+                early_min = int((shift_end_dt - out_dt).total_seconds() // 60)
+
+        if shift:
+            work_mins = dur_secs / 60.0
+            if work_mins < shift.half_day_minimum_minutes:
+                status_val = "ABSENT"
+            elif work_mins < shift.full_day_minimum_minutes:
+                status_val = "HALF_DAY"
 
         if not att:
             att = Attendance(
@@ -2563,7 +3310,45 @@ async def punch_attendance(
                 employee_id=payload.employee_id,
                 shift_id=shift.id if shift else None,
                 punch_date=punch_d,
-                clock_in=punch_dt,
+                clock_in=in_dt,
+                clock_out=out_dt,
+                working_hours=work_hrs,
+                late_minutes=late_min,
+                early_leaving_minutes=early_min,
+                overtime_hours=ot_hrs,
+                status=status_val,
+                source=payload.source,
+                geofence_lat=payload.geofence_lat,
+                geofence_lng=payload.geofence_lng,
+                geofence_site_id=geofence_site_id,
+                is_geofence_verified=is_geo_verified,
+                is_missing_punch=False,
+                remarks=payload.remarks
+            )
+            db.add(att)
+        else:
+            att.clock_in = in_dt
+            att.clock_out = out_dt
+            att.working_hours = work_hrs
+            att.late_minutes = late_min
+            att.early_leaving_minutes = early_min
+            att.overtime_hours = ot_hrs
+            att.status = status_val
+            att.is_missing_punch = False
+            if geofence_site_id:
+                att.geofence_site_id = geofence_site_id
+            att.is_geofence_verified = is_geo_verified
+            if payload.remarks:
+                att.remarks = payload.remarks
+    elif is_clock_in:
+        in_punch = in_dt or punch_dt
+        if not att:
+            att = Attendance(
+                organization_id=org_id,
+                employee_id=payload.employee_id,
+                shift_id=shift.id if shift else None,
+                punch_date=punch_d,
+                clock_in=in_punch,
                 late_minutes=late_min,
                 status=status_val,
                 source=payload.source,
@@ -2576,23 +3361,25 @@ async def punch_attendance(
             )
             db.add(att)
         else:
-            att.clock_in = punch_dt
+            att.clock_in = in_punch
             att.late_minutes = late_min
             att.status = status_val
             att.shift_id = shift.id if shift else att.shift_id
-            att.is_missing_punch = True
+            att.is_missing_punch = (att.clock_out is None)
+            if geofence_site_id:
+                att.geofence_site_id = geofence_site_id
             if payload.remarks:
                 att.remarks = (att.remarks or "") + " | " + payload.remarks
     else:
         # Clock OUT
+        out_punch = payload.out_time or punch_dt
         if not att:
-            # Out punch without In punch -> Missing punch
             att = Attendance(
                 organization_id=org_id,
                 employee_id=payload.employee_id,
                 shift_id=shift.id if shift else None,
                 punch_date=punch_d,
-                clock_out=punch_dt,
+                clock_out=out_punch,
                 status="PRESENT",
                 source=payload.source,
                 geofence_lat=payload.geofence_lat,
@@ -2600,16 +3387,18 @@ async def punch_attendance(
                 geofence_site_id=geofence_site_id,
                 is_geofence_verified=is_geo_verified,
                 is_missing_punch=True,
-                remarks="Punch OUT without prior IN punch"
+                remarks=payload.remarks or "Punch OUT without prior IN punch"
             )
             db.add(att)
         else:
-            att.clock_out = punch_dt
+            att.clock_out = out_punch
             att.is_missing_punch = False
+            if geofence_site_id:
+                att.geofence_site_id = geofence_site_id
             # Calculate working hours and early leaving
             if att.clock_in:
-                dur_secs = (punch_dt - att.clock_in).total_seconds()
-                work_hrs = Decimal(str(round(max(0.0, dur_secs / 3600.0), 2)))
+                dur_secs = max(0.0, (out_punch - att.clock_in).total_seconds())
+                work_hrs = Decimal(str(round(dur_secs / 3600.0, 2)))
                 att.working_hours = work_hrs
 
                 # Overtime
@@ -2626,8 +3415,8 @@ async def punch_attendance(
 
                     # Early leaving minutes
                     shift_end_dt = datetime.combine(punch_d, shift.end_time)
-                    if punch_dt < shift_end_dt:
-                        att.early_leaving_minutes = int((shift_end_dt - punch_dt).total_seconds() // 60)
+                    if out_punch < shift_end_dt:
+                        att.early_leaving_minutes = int((shift_end_dt - out_punch).total_seconds() // 60)
 
             if payload.remarks:
                 att.remarks = (att.remarks or "") + " | " + payload.remarks
@@ -2656,7 +3445,7 @@ async def punch_attendance(
         source=att.source,
         is_missing_punch=att.is_missing_punch or False,
         is_anomaly=att.is_anomaly or False,
-        geofence_site_name=geo_site.site_name if geo_site else None,
+        geofence_site_name=(geo_site.project_name if hasattr(geo_site, "project_name") else getattr(geo_site, "site_name", None)) if geo_site else None,
         is_geofence_verified=att.is_geofence_verified if att.is_geofence_verified is not None else True,
         remarks=att.remarks
     )
@@ -2744,13 +3533,22 @@ async def list_missing_punches(
     current_user: Optional[User] = Depends(get_current_user_optional)
 ):
     org_id = get_org_id(current_user)
-    q = select(Attendance).where(and_(
-        Attendance.organization_id == org_id,
-        or_(
-            Attendance.is_missing_punch == True,
-            and_(Attendance.clock_in != None, Attendance.clock_out == None)
+    q = (
+        select(Attendance)
+        .options(
+            joinedload(Attendance.employee).joinedload(Employee.department),
+            joinedload(Attendance.employee).joinedload(Employee.designation),
+            joinedload(Attendance.shift),
+            joinedload(Attendance.geofence_site)
         )
-    ))
+        .where(and_(
+            Attendance.organization_id == org_id,
+            or_(
+                Attendance.is_missing_punch == True,
+                and_(Attendance.clock_in != None, Attendance.clock_out == None)
+            )
+        ))
+    )
 
     if date_from:
         q = q.where(Attendance.punch_date >= date_from)
@@ -2785,7 +3583,7 @@ async def list_missing_punches(
             source=att.source,
             is_missing_punch=True,
             is_anomaly=att.is_anomaly or False,
-            geofence_site_name=att.geofence_site.site_name if att.geofence_site else None,
+            geofence_site_name=(att.geofence_site.project_name if hasattr(att.geofence_site, "project_name") else getattr(att.geofence_site, "site_name", None)) if att.geofence_site else None,
             is_geofence_verified=att.is_geofence_verified if att.is_geofence_verified is not None else True,
             remarks=att.remarks
         ))
@@ -2807,34 +3605,47 @@ async def list_attendance(
     org_id = get_org_id(current_user)
     target_date = punch_date or date.today()
 
-    q = select(Attendance).join(Employee, Attendance.employee_id == Employee.id).where(
-        and_(
-            Attendance.organization_id == org_id,
-            Attendance.punch_date == target_date
-        )
-    )
+    conditions = [
+        Attendance.organization_id == org_id,
+        Attendance.punch_date == target_date
+    ]
 
     if employee_id:
-        q = q.where(Attendance.employee_id == employee_id)
+        conditions.append(Attendance.employee_id == employee_id)
     if department_id:
-        q = q.where(Employee.department_id == department_id)
+        conditions.append(Employee.department_id == department_id)
     if shift_id:
-        q = q.where(Attendance.shift_id == shift_id)
+        conditions.append(Attendance.shift_id == shift_id)
     if status_filter:
-        q = q.where(Attendance.status == status_filter)
+        conditions.append(Attendance.status == status_filter)
     if search:
         s = f"%{search.strip()}%"
-        q = q.where(or_(
+        conditions.append(or_(
             Employee.first_name.ilike(s),
             Employee.last_name.ilike(s),
             Employee.employee_code.ilike(s)
         ))
 
-    cnt_q = select(func.count()).select_from(q.subquery())
+    cnt_q = select(func.count(Attendance.id)).join(Employee, Attendance.employee_id == Employee.id).where(and_(*conditions))
     total_res = await db.execute(cnt_q)
     total = total_res.scalar_one() or 0
 
-    items_res = await db.execute(q.order_by(desc(Attendance.clock_in), desc(Attendance.id)).limit(limit).offset(offset))
+    q = (
+        select(Attendance)
+        .options(
+            joinedload(Attendance.employee).joinedload(Employee.department),
+            joinedload(Attendance.employee).joinedload(Employee.designation),
+            joinedload(Attendance.shift),
+            joinedload(Attendance.geofence_site)
+        )
+        .join(Employee, Attendance.employee_id == Employee.id)
+        .where(and_(*conditions))
+        .order_by(desc(Attendance.clock_in), desc(Attendance.id))
+        .limit(limit)
+        .offset(offset)
+    )
+
+    items_res = await db.execute(q)
     items = items_res.scalars().all()
 
     # Calculate status counts for target date
@@ -2878,8 +3689,7 @@ async def list_attendance(
             status=att.status,
             source=att.source,
             is_missing_punch=att.is_missing_punch or False,
-            is_anomaly=att.is_anomaly or False,
-            geofence_site_name=att.geofence_site.site_name if att.geofence_site else None,
+            geofence_site_name=(att.geofence_site.project_name if hasattr(att.geofence_site, "project_name") else getattr(att.geofence_site, "site_name", None)) if att.geofence_site else None,
             is_geofence_verified=att.is_geofence_verified if att.is_geofence_verified is not None else True,
             remarks=att.remarks
         ))
@@ -2950,6 +3760,242 @@ async def get_attendance_daily_summary(
     )
 
 
+# --- 2.10.1 Monthly Attendance Closing & Payroll Locking ---
+@router.get("/attendance/monthly-closing-summary", response_model=AttendanceMonthlyClosingSummaryOut)
+async def get_attendance_monthly_closing_summary(
+    year: int = Query(..., ge=2000, le=2100),
+    month: int = Query(..., ge=1, le=12),
+    department_id: Optional[int] = None,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    import calendar
+    org_id = get_org_id(current_user)
+
+    _, num_days = calendar.monthrange(year, month)
+    start_d = date(year, month, 1)
+    end_d = date(year, month, num_days)
+
+    emp_q = select(Employee).options(
+        joinedload(Employee.department),
+        joinedload(Employee.designation)
+    ).where(and_(
+        Employee.organization_id == org_id,
+        Employee.employment_status == "ACTIVE"
+    ))
+    if department_id:
+        emp_q = emp_q.where(Employee.department_id == department_id)
+    emp_res = await db.execute(emp_q)
+    employees = emp_res.scalars().all()
+    total_employees = len(employees)
+
+    holidays_res = await db.execute(select(func.count(HolidayCalendar.id)).where(and_(
+        HolidayCalendar.organization_id == org_id,
+        HolidayCalendar.start_date <= end_d,
+        HolidayCalendar.end_date >= start_d
+    )))
+    holiday_count = holidays_res.scalar_one() or 0
+    total_working_days = max(1, num_days - 4 - holiday_count)
+
+    period_res = await db.execute(select(PayrollPeriod).where(and_(
+        PayrollPeriod.organization_id == org_id,
+        PayrollPeriod.year == year,
+        PayrollPeriod.month == month
+    )))
+    period = period_res.scalar_one_or_none()
+    is_locked = period.is_locked if period else False
+    locked_at = period.updated_at if (period and period.is_locked) else None
+
+    if not is_locked:
+        pi_lock_res = await db.execute(select(PayrollInput.is_locked).where(and_(
+            PayrollInput.organization_id == org_id,
+            PayrollInput.year == year,
+            PayrollInput.month == month,
+            PayrollInput.is_locked == True
+        )).limit(1))
+        if pi_lock_res.scalar_one_or_none():
+            is_locked = True
+
+    att_q = select(
+        Attendance.employee_id,
+        Attendance.status,
+        func.count(Attendance.id),
+        func.sum(Attendance.working_hours),
+        func.sum(Attendance.overtime_hours),
+        func.sum(Attendance.late_minutes)
+    ).where(and_(
+        Attendance.organization_id == org_id,
+        Attendance.punch_date >= start_d,
+        Attendance.punch_date <= end_d
+    )).group_by(Attendance.employee_id, Attendance.status)
+    att_res = await db.execute(att_q)
+
+    emp_att: Dict[int, Dict[str, Any]] = {}
+    for row in att_res.all():
+        eid, stat, cnt, wrk_hrs, ot_hrs, late_mins = row
+        if eid not in emp_att:
+            emp_att[eid] = {
+                "PRESENT": 0, "LATE": 0, "HALF_DAY": 0, "ABSENT": 0, "ON_LEAVE": 0,
+                "ot_hours": Decimal("0.00"), "late_count": 0
+            }
+        emp_att[eid][stat] = cnt
+        if ot_hrs:
+            emp_att[eid]["ot_hours"] += ot_hrs
+        if late_mins and late_mins > 0:
+            emp_att[eid]["late_count"] += cnt
+
+    ot_q = select(
+        OvertimeRequest.employee_id,
+        func.sum(OvertimeRequest.approved_hours)
+    ).where(and_(
+        OvertimeRequest.organization_id == org_id,
+        OvertimeRequest.status == "APPROVED",
+        OvertimeRequest.ot_date >= start_d,
+        OvertimeRequest.ot_date <= end_d
+    )).group_by(OvertimeRequest.employee_id)
+    ot_res = await db.execute(ot_q)
+    ot_map = {row[0]: float(row[1] or 0.0) for row in ot_res.all()}
+
+    unpaid_q = select(
+        LeaveApplication.employee_id,
+        func.sum(LeaveApplication.total_days)
+    ).where(and_(
+        LeaveApplication.organization_id == org_id,
+        LeaveApplication.status == "APPROVED",
+        LeaveApplication.is_paid == False,
+        LeaveApplication.start_date <= end_d,
+        LeaveApplication.end_date >= start_d
+    )).group_by(LeaveApplication.employee_id)
+    unpaid_res = await db.execute(unpaid_q)
+    unpaid_map = {row[0]: float(row[1] or 0.0) for row in unpaid_res.all()}
+
+    items: List[AttendanceMonthlyClosingEmployeeItem] = []
+    tot_pres = 0.0
+    tot_abs = 0.0
+    tot_late = 0
+    tot_unpaid = 0.0
+    tot_ot = 0.0
+
+    for emp in employees:
+        att_data = emp_att.get(emp.id, {})
+        pres = float(att_data.get("PRESENT", 0))
+        late = float(att_data.get("LATE", 0))
+        half = float(att_data.get("HALF_DAY", 0))
+        absent = float(att_data.get("ABSENT", 0))
+        late_occurrences = int(att_data.get("late_count", 0))
+        approved_ot = ot_map.get(emp.id, float(att_data.get("ot_hours", 0.0)))
+        unpaid_days = unpaid_map.get(emp.id, 0.0)
+
+        pres_equiv = pres + late + (half * 0.5)
+        payable = max(0.0, float(total_working_days) - absent - unpaid_days)
+
+        tot_pres += pres_equiv
+        tot_abs += absent
+        tot_late += late_occurrences
+        tot_unpaid += unpaid_days
+        tot_ot += approved_ot
+
+        emp_name = f"{emp.first_name} {emp.last_name or ''}".strip()
+        dept_name = emp.department.name_en if emp.department else None
+        desig_title = emp.designation.title_en if emp.designation else None
+
+        items.append(AttendanceMonthlyClosingEmployeeItem(
+            employee_id=emp.id,
+            employee_name=emp_name,
+            employee_code=emp.employee_code,
+            department_name=dept_name,
+            designation_title=desig_title,
+            working_days=total_working_days,
+            present_days=round(pres_equiv, 1),
+            absent_days=round(absent, 1),
+            half_days=round(half, 1),
+            late_count=late_occurrences,
+            approved_ot_hours=round(approved_ot, 2),
+            unpaid_leave_days=round(unpaid_days, 1),
+            payable_days=round(payable, 1)
+        ))
+
+    return AttendanceMonthlyClosingSummaryOut(
+        year=year,
+        month=month,
+        total_employees=total_employees,
+        total_working_days=total_working_days,
+        total_present_man_days=round(tot_pres, 1),
+        total_absent_days=round(tot_abs, 1),
+        total_late_occurrences=tot_late,
+        total_unpaid_leave_days=round(tot_unpaid, 1),
+        total_approved_ot_hours=round(tot_ot, 2),
+        is_locked=is_locked,
+        locked_at=locked_at,
+        locked_by="HR Admin" if is_locked else None,
+        items=items
+    )
+
+
+@router.post("/attendance/monthly-closing")
+async def execute_attendance_monthly_closing(
+    payload: AttendanceMonthlyClosingActionPayload,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    action = payload.action.upper()
+
+    if action in ["LOCK", "SYNC"]:
+        sync_req = PayrollSyncLeaveOTRequest(month=payload.month, year=payload.year)
+        await sync_leave_and_overtime_to_payroll(sync_req, db, current_user)
+
+    if action == "LOCK":
+        await db.execute(
+            update(PayrollInput)
+            .where(and_(
+                PayrollInput.organization_id == org_id,
+                PayrollInput.year == payload.year,
+                PayrollInput.month == payload.month
+            ))
+            .values(is_locked=True)
+        )
+        period_res = await db.execute(select(PayrollPeriod).where(and_(
+            PayrollPeriod.organization_id == org_id,
+            PayrollPeriod.year == payload.year,
+            PayrollPeriod.month == payload.month
+        )))
+        period = period_res.scalar_one_or_none()
+        if period:
+            period.is_locked = True
+            period.status = "LOCKED"
+        await db.commit()
+        return {"success": True, "message": f"Attendance for {payload.month:02d}/{payload.year} locked and synced to payroll.", "is_locked": True}
+
+    elif action == "UNLOCK":
+        await db.execute(
+            update(PayrollInput)
+            .where(and_(
+                PayrollInput.organization_id == org_id,
+                PayrollInput.year == payload.year,
+                PayrollInput.month == payload.month
+            ))
+            .values(is_locked=False)
+        )
+        period_res = await db.execute(select(PayrollPeriod).where(and_(
+            PayrollPeriod.organization_id == org_id,
+            PayrollPeriod.year == payload.year,
+            PayrollPeriod.month == payload.month
+        )))
+        period = period_res.scalar_one_or_none()
+        if period:
+            period.is_locked = False
+            period.status = "DRAFT"
+        await db.commit()
+        return {"success": True, "message": f"Attendance for {payload.month:02d}/{payload.year} unlocked successfully.", "is_locked": False}
+
+    elif action == "SYNC":
+        return {"success": True, "message": f"Attendance and overtime for {payload.month:02d}/{payload.year} synced to payroll inputs.", "is_locked": False}
+
+    raise HTTPException(status_code=400, detail="Invalid action. Allowed: LOCK, UNLOCK, SYNC")
+
+
+
 
 # =====================================================================
 # --- Section 2.11 - 2.20: Enterprise Leave & Overtime Routes ---
@@ -2987,6 +4033,24 @@ async def list_leave_types(
         limit=limit,
         offset=offset
     )
+
+
+@router.get("/leave-types/{lt_id}", response_model=LeaveTypeOut)
+async def get_leave_type(
+    lt_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    result = await db.execute(select(LeaveType).where(and_(
+        LeaveType.id == lt_id,
+        LeaveType.organization_id == org_id
+    )))
+    leave_type = result.scalar_one_or_none()
+    if not leave_type:
+        raise HTTPException(status_code=404, detail="Leave type not found")
+    return LeaveTypeOut.model_validate(leave_type)
+
 
 @router.post("/leave-types", response_model=LeaveTypeOut, status_code=status.HTTP_201_CREATED)
 async def create_leave_type(
@@ -3033,6 +4097,13 @@ async def update_leave_type(
     data = payload.model_dump(exclude_unset=True)
     if "leave_type_code" in data and data["leave_type_code"]:
         data["leave_type_code"] = data["leave_type_code"].strip().upper()
+        duplicate = await db.execute(select(LeaveType.id).where(and_(
+            LeaveType.organization_id == org_id,
+            LeaveType.leave_type_code == data["leave_type_code"],
+            LeaveType.id != lt_id
+        )))
+        if duplicate.scalar_one_or_none() is not None:
+            raise HTTPException(status_code=400, detail="Leave type code already exists")
     for field, val in data.items():
         setattr(lt, field, val)
 
@@ -3053,6 +4124,25 @@ async def delete_leave_type(
     if not lt:
         raise HTTPException(status_code=404, detail="Leave type not found")
 
+    references = await db.execute(select(func.count()).select_from(LeaveBalance).where(
+        LeaveBalance.organization_id == org_id,
+        LeaveBalance.leave_type_id == lt_id
+    ))
+    if references.scalar_one():
+        raise HTTPException(status_code=409, detail="Leave types with entitlement history cannot be deleted; deactivate the type instead")
+    references = await db.execute(select(func.count()).select_from(LeavePolicy).where(
+        LeavePolicy.organization_id == org_id,
+        LeavePolicy.leave_type_id == lt_id
+    ))
+    if references.scalar_one():
+        raise HTTPException(status_code=409, detail="Leave types with policies cannot be deleted; deactivate the type instead")
+    references = await db.execute(select(func.count()).select_from(LeaveApplication).where(
+        LeaveApplication.organization_id == org_id,
+        LeaveApplication.leave_type_id == lt_id
+    ))
+    if references.scalar_one():
+        raise HTTPException(status_code=409, detail="Leave types with application history cannot be deleted; deactivate the type instead")
+
     await db.delete(lt)
     await db.commit()
     return None
@@ -3063,18 +4153,26 @@ async def delete_leave_type(
 async def list_leave_policies(
     leave_type_id: Optional[int] = None,
     is_active: Optional[bool] = None,
+    search: Optional[str] = None,
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),
     current_user: Optional[User] = Depends(get_current_user_optional)
 ):
     org_id = get_org_id(current_user)
-    q = select(LeavePolicy).where(LeavePolicy.organization_id == org_id)
+    q = select(LeavePolicy).options(joinedload(LeavePolicy.leave_type)).where(LeavePolicy.organization_id == org_id)
 
     if leave_type_id:
         q = q.where(LeavePolicy.leave_type_id == leave_type_id)
     if is_active is not None:
         q = q.where(LeavePolicy.is_active == is_active)
+    if search and search.strip():
+        term = f"%{search.strip()}%"
+        q = q.join(LeaveType, LeavePolicy.leave_type_id == LeaveType.id).where(or_(
+            LeavePolicy.policy_name.ilike(term),
+            LeaveType.name_en.ilike(term),
+            LeaveType.leave_type_code.ilike(term)
+        ))
 
     cnt_q = select(func.count()).select_from(q.subquery())
     total_res = await db.execute(cnt_q)
@@ -3110,6 +4208,40 @@ async def list_leave_policies(
         offset=offset
     )
 
+
+@router.get("/leave-policies/{lp_id}", response_model=LeavePolicyOut)
+async def get_leave_policy(
+    lp_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    result = await db.execute(select(LeavePolicy).options(
+        joinedload(LeavePolicy.leave_type)
+    ).where(and_(LeavePolicy.id == lp_id, LeavePolicy.organization_id == org_id)))
+    policy = result.unique().scalar_one_or_none()
+    if not policy:
+        raise HTTPException(status_code=404, detail="Leave policy not found")
+    leave_type = policy.leave_type
+    return LeavePolicyOut(
+        id=policy.id,
+        leave_type_id=policy.leave_type_id,
+        leave_type_code=leave_type.leave_type_code if leave_type else None,
+        leave_type_name=leave_type.name_en if leave_type else None,
+        policy_name=policy.policy_name,
+        annual_entitlement_days=policy.annual_entitlement_days,
+        accrual_frequency=policy.accrual_frequency,
+        max_carry_forward_days=policy.max_carry_forward_days,
+        carry_forward_expiry_months=policy.carry_forward_expiry_months,
+        encashment_allowed=policy.encashment_allowed,
+        max_encashment_days=policy.max_encashment_days,
+        min_service_days_required=policy.min_service_days_required,
+        gender_applicability=policy.gender_applicability,
+        is_active=policy.is_active,
+        created_at=policy.created_at
+    )
+
+
 @router.post("/leave-policies", response_model=LeavePolicyOut, status_code=status.HTTP_201_CREATED)
 async def create_leave_policy(
     payload: LeavePolicyCreate,
@@ -3117,6 +4249,22 @@ async def create_leave_policy(
     current_user: Optional[User] = Depends(get_current_user_optional)
 ):
     org_id = get_org_id(current_user)
+    if any(value < 0 for value in (
+        payload.annual_entitlement_days,
+        payload.max_carry_forward_days,
+        payload.carry_forward_expiry_months,
+        payload.max_encashment_days,
+        payload.min_service_days_required
+    )):
+        raise HTTPException(status_code=400, detail="Leave policy values cannot be negative")
+    leave_type_result = await db.execute(select(LeaveType).where(and_(
+        LeaveType.id == payload.leave_type_id,
+        LeaveType.organization_id == org_id,
+        LeaveType.is_active.is_(True)
+    )))
+    leave_type = leave_type_result.scalar_one_or_none()
+    if leave_type is None:
+        raise HTTPException(status_code=404, detail="Leave type not found")
     lp = LeavePolicy(
         organization_id=org_id,
         leave_type_id=payload.leave_type_id,
@@ -3131,6 +4279,7 @@ async def create_leave_policy(
         gender_applicability=payload.gender_applicability,
         is_active=payload.is_active
     )
+    lp.leave_type = leave_type
     db.add(lp)
     await db.commit()
     await db.refresh(lp)
@@ -3162,13 +4311,31 @@ async def update_leave_policy(
     current_user: Optional[User] = Depends(get_current_user_optional)
 ):
     org_id = get_org_id(current_user)
-    q = select(LeavePolicy).where(and_(LeavePolicy.id == lp_id, LeavePolicy.organization_id == org_id))
+    q = select(LeavePolicy).options(joinedload(LeavePolicy.leave_type)).where(and_(LeavePolicy.id == lp_id, LeavePolicy.organization_id == org_id))
     res = await db.execute(q)
     lp = res.scalar_one_or_none()
     if not lp:
         raise HTTPException(status_code=404, detail="Leave policy not found")
 
     data = payload.model_dump(exclude_unset=True)
+    if any(data[field] < 0 for field in (
+        "annual_entitlement_days",
+        "max_carry_forward_days",
+        "carry_forward_expiry_months",
+        "max_encashment_days",
+        "min_service_days_required"
+    ) if field in data):
+        raise HTTPException(status_code=400, detail="Leave policy values cannot be negative")
+    if "leave_type_id" in data:
+        leave_type_result = await db.execute(select(LeaveType).where(and_(
+            LeaveType.id == data["leave_type_id"],
+            LeaveType.organization_id == org_id,
+            LeaveType.is_active.is_(True)
+        )))
+        leave_type = leave_type_result.scalar_one_or_none()
+        if leave_type is None:
+            raise HTTPException(status_code=404, detail="Leave type not found")
+        lp.leave_type = leave_type
     for field, val in data.items():
         setattr(lp, field, val)
 
@@ -3217,6 +4384,7 @@ async def delete_leave_policy(
 async def list_leave_balances(
     employee_id: Optional[int] = None,
     leave_type_id: Optional[int] = None,
+    search: Optional[str] = None,
     year: int = Query(2026),
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
@@ -3224,12 +4392,26 @@ async def list_leave_balances(
     current_user: Optional[User] = Depends(get_current_user_optional)
 ):
     org_id = get_org_id(current_user)
-    q = select(LeaveBalance).where(and_(LeaveBalance.organization_id == org_id, LeaveBalance.year == year))
+    q = select(LeaveBalance).options(
+        joinedload(LeaveBalance.employee).joinedload(Employee.department),
+        joinedload(LeaveBalance.leave_type)
+    ).where(and_(LeaveBalance.organization_id == org_id, LeaveBalance.year == year))
 
     if employee_id:
         q = q.where(LeaveBalance.employee_id == employee_id)
     if leave_type_id:
         q = q.where(LeaveBalance.leave_type_id == leave_type_id)
+    if search and search.strip():
+        term = f"%{search.strip()}%"
+        q = q.join(Employee, LeaveBalance.employee_id == Employee.id).join(
+            LeaveType, LeaveBalance.leave_type_id == LeaveType.id
+        ).where(or_(
+            Employee.first_name.ilike(term),
+            Employee.last_name.ilike(term),
+            Employee.employee_code.ilike(term),
+            LeaveType.name_en.ilike(term),
+            LeaveType.leave_type_code.ilike(term)
+        ))
 
     cnt_q = select(func.count()).select_from(q.subquery())
     total_res = await db.execute(cnt_q)
@@ -3271,6 +4453,49 @@ async def list_leave_balances(
         offset=offset
     )
 
+
+@router.get("/leave-balances/{balance_id}", response_model=LeaveBalanceOut)
+async def get_leave_balance(
+    balance_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    result = await db.execute(select(LeaveBalance).options(
+        joinedload(LeaveBalance.employee).joinedload(Employee.department),
+        joinedload(LeaveBalance.leave_type)
+    ).where(and_(
+        LeaveBalance.id == balance_id,
+        LeaveBalance.organization_id == org_id
+    )))
+    balance = result.unique().scalar_one_or_none()
+    if not balance:
+        raise HTTPException(status_code=404, detail="Leave entitlement not found")
+    employee = balance.employee
+    leave_type = balance.leave_type
+    return LeaveBalanceOut(
+        id=balance.id,
+        employee_id=balance.employee_id,
+        employee_name=f"{employee.first_name} {employee.last_name}" if employee else None,
+        employee_code=employee.employee_code if employee else None,
+        department_name=employee.department.name_en if employee and employee.department else None,
+        leave_type_id=balance.leave_type_id,
+        leave_type_code=leave_type.leave_type_code if leave_type else None,
+        leave_type_name=leave_type.name_en if leave_type else None,
+        color_code=leave_type.color_code if leave_type else "#3b82f6",
+        is_paid=leave_type.is_paid if leave_type else True,
+        year=balance.year,
+        opening_balance=balance.opening_balance,
+        carried_forward=balance.carried_forward,
+        accrued_days=balance.accrued_days,
+        used_days=balance.used_days,
+        pending_days=balance.pending_days,
+        available_days=balance.available_days,
+        encashed_days=balance.encashed_days,
+        created_at=balance.created_at
+    )
+
+
 @router.post("/leave-balances", response_model=LeaveBalanceOut, status_code=status.HTTP_201_CREATED)
 async def create_opening_leave_balance(
     payload: LeaveBalanceCreate,
@@ -3278,6 +4503,26 @@ async def create_opening_leave_balance(
     current_user: Optional[User] = Depends(get_current_user_optional)
 ):
     org_id = get_org_id(current_user)
+
+    employee_res = await db.execute(select(Employee).options(
+        joinedload(Employee.department)
+    ).where(and_(
+        Employee.id == payload.employee_id,
+        Employee.organization_id == org_id
+    )))
+    employee = employee_res.unique().scalar_one_or_none()
+    if employee is None:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    leave_type_result = await db.execute(select(LeaveType).where(and_(
+        LeaveType.id == payload.leave_type_id,
+        LeaveType.organization_id == org_id,
+        LeaveType.is_active.is_(True)
+    )))
+    leave_type = leave_type_result.scalar_one_or_none()
+    if leave_type is None:
+        raise HTTPException(status_code=404, detail="Active leave type not found")
+    if payload.opening_balance < 0 or payload.carried_forward < 0:
+        raise HTTPException(status_code=400, detail="Leave balance days cannot be negative")
 
     exist_q = select(LeaveBalance).where(and_(
         LeaveBalance.organization_id == org_id,
@@ -3307,6 +4552,8 @@ async def create_opening_leave_balance(
         available_days=avail,
         encashed_days=Decimal("0.00")
     )
+    lb.employee = employee
+    lb.leave_type = leave_type
     db.add(lb)
     await db.commit()
     await db.refresh(lb)
@@ -3336,12 +4583,161 @@ async def create_opening_leave_balance(
     )
 
 
+@router.put("/leave-balances/{balance_id}", response_model=LeaveBalanceOut)
+async def update_leave_balance(
+    balance_id: int,
+    payload: LeaveBalanceUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    result = await db.execute(select(LeaveBalance).options(
+        joinedload(LeaveBalance.employee).joinedload(Employee.department),
+        joinedload(LeaveBalance.leave_type)
+    ).where(and_(
+        LeaveBalance.id == balance_id,
+        LeaveBalance.organization_id == org_id
+    )))
+    balance = result.scalar_one_or_none()
+    if not balance:
+        raise HTTPException(status_code=404, detail="Leave entitlement not found")
+
+    changes = payload.model_dump(exclude_unset=True)
+    if any(value < 0 for value in changes.values()):
+        raise HTTPException(status_code=400, detail="Leave balance days cannot be negative")
+    if "opening_balance" in changes:
+        balance.accrued_days += changes["opening_balance"] - balance.opening_balance
+    for field, value in changes.items():
+        setattr(balance, field, value)
+    balance.available_days = (
+        balance.accrued_days + balance.carried_forward
+        - balance.used_days - balance.pending_days - balance.encashed_days
+    )
+    if balance.available_days < 0:
+        raise HTTPException(status_code=400, detail="Updated entitlement is below leave already used or pending")
+    await db.commit()
+    await db.refresh(balance)
+    employee = balance.employee
+    leave_type = balance.leave_type
+    return LeaveBalanceOut(
+        id=balance.id,
+        employee_id=balance.employee_id,
+        employee_name=f"{employee.first_name} {employee.last_name}" if employee else None,
+        employee_code=employee.employee_code if employee else None,
+        department_name=employee.department.name_en if employee and employee.department else None,
+        leave_type_id=balance.leave_type_id,
+        leave_type_code=leave_type.leave_type_code if leave_type else None,
+        leave_type_name=leave_type.name_en if leave_type else None,
+        color_code=leave_type.color_code if leave_type else "#3b82f6",
+        is_paid=leave_type.is_paid if leave_type else True,
+        year=balance.year,
+        opening_balance=balance.opening_balance,
+        carried_forward=balance.carried_forward,
+        accrued_days=balance.accrued_days,
+        used_days=balance.used_days,
+        pending_days=balance.pending_days,
+        available_days=balance.available_days,
+        encashed_days=balance.encashed_days,
+        created_at=balance.created_at
+    )
+
+
+@router.delete("/leave-balances/{balance_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_leave_balance(
+    balance_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    result = await db.execute(select(LeaveBalance).where(and_(
+        LeaveBalance.id == balance_id,
+        LeaveBalance.organization_id == org_id
+    )))
+    balance = result.scalar_one_or_none()
+    if not balance:
+        raise HTTPException(status_code=404, detail="Leave entitlement not found")
+    if balance.used_days > 0 or balance.pending_days > 0:
+        raise HTTPException(status_code=409, detail="Entitlements with used or pending leave cannot be deleted")
+    await db.delete(balance)
+    await db.commit()
+    return None
+
+
 # --- 2.14 & 2.15 Leave Application & Multi-tier Approvals ---
+def _leave_application_out(leave: LeaveApplication) -> LeaveOut:
+    employee = leave.employee
+    leave_type = leave.leave_type_obj
+    manager = leave.manager_approver
+    hr = leave.hr_approver
+    return LeaveOut(
+        id=leave.id,
+        employee_id=leave.employee_id,
+        employee_name=f"{employee.first_name} {employee.last_name}" if employee else None,
+        employee_code=employee.employee_code if employee else None,
+        department_name=employee.department.name_en if employee and employee.department else None,
+        leave_type_id=leave.leave_type_id,
+        leave_type=leave.leave_type,
+        leave_type_name=leave_type.name_en if leave_type else leave.leave_type,
+        color_code=leave_type.color_code if leave_type else "#3b82f6",
+        is_paid=leave.is_paid,
+        start_date=leave.start_date,
+        end_date=leave.end_date,
+        total_days=float(leave.total_days or 0),
+        is_half_day=bool(getattr(leave, "is_half_day", False)),
+        half_day_session=getattr(leave, "half_day_session", None),
+        reason=leave.reason,
+        emergency_contact=leave.emergency_contact,
+        document_url=leave.document_url,
+        status=leave.status,
+        manager_approver_id=leave.manager_approver_id,
+        manager_approver_name=f"{manager.first_name} {manager.last_name}" if manager else None,
+        manager_remarks=leave.manager_remarks,
+        manager_action_at=leave.manager_action_at,
+        hr_approver_id=leave.hr_approver_id,
+        hr_approver_name=f"{hr.first_name} {hr.last_name}" if hr else None,
+        hr_remarks=leave.hr_remarks,
+        hr_action_at=leave.hr_action_at,
+        created_at=leave.created_at
+    )
+
+
+def _require_leave_status(leave: LeaveApplication, required_status: str) -> None:
+    if leave.status != required_status:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Application must be {required_status.lower().replace('_', ' ')} for this action"
+        )
+
+
+def _validate_encashment_terms(policy: LeavePolicy, balance: LeaveBalance, days: Decimal, already_encashed: Decimal) -> None:
+    if not policy.is_active or not policy.encashment_allowed:
+        raise HTTPException(status_code=400, detail="Encashment is not enabled for this active leave policy.")
+    if days <= 0:
+        raise HTTPException(status_code=422, detail="Encashment days must be greater than zero.")
+    if balance.available_days < days:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Insufficient available leave balance. Available: {balance.available_days} days; requested: {days} days."
+        )
+    cap = Decimal(str(policy.max_encashment_days or 0))
+    if cap <= 0 or already_encashed + days > cap:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Encashment exceeds the policy annual cap of {cap} days. Already encashed: {already_encashed} days."
+        )
+
+
 @router.get("/leave-applications", response_model=LeavePaginatedOut)
 async def list_leave_applications(
     status_filter: Optional[str] = Query(None, alias="status"),
     employee_id: Optional[int] = None,
     leave_type_id: Optional[int] = None,
+    year: Optional[int] = None,
+    closed_only: bool = False,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
+    from_date: Optional[date] = None,
+    through_date: Optional[date] = None,
     search: Optional[str] = None,
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
@@ -3349,7 +4745,12 @@ async def list_leave_applications(
     current_user: Optional[User] = Depends(get_current_user_optional)
 ):
     org_id = get_org_id(current_user)
-    q = select(LeaveApplication).join(Employee, LeaveApplication.employee_id == Employee.id).where(LeaveApplication.organization_id == org_id)
+    q = select(LeaveApplication).options(
+        joinedload(LeaveApplication.employee).joinedload(Employee.department),
+        joinedload(LeaveApplication.leave_type_obj),
+        joinedload(LeaveApplication.manager_approver),
+        joinedload(LeaveApplication.hr_approver)
+    ).join(Employee, LeaveApplication.employee_id == Employee.id).where(LeaveApplication.organization_id == org_id)
 
     if status_filter:
         q = q.where(LeaveApplication.status == status_filter)
@@ -3357,6 +4758,18 @@ async def list_leave_applications(
         q = q.where(LeaveApplication.employee_id == employee_id)
     if leave_type_id:
         q = q.where(LeaveApplication.leave_type_id == leave_type_id)
+    if year:
+        q = q.where(func.extract("year", LeaveApplication.start_date) == year)
+    if closed_only:
+        q = q.where(LeaveApplication.status.in_(["APPROVED", "REJECTED", "CANCELLED"]))
+    if start_date:
+        q = q.where(LeaveApplication.start_date >= start_date)
+    if end_date:
+        q = q.where(LeaveApplication.end_date <= end_date)
+    if from_date:
+        q = q.where(LeaveApplication.end_date >= from_date)
+    if through_date:
+        q = q.where(LeaveApplication.start_date <= through_date)
     if search:
         s = f"%{search.strip()}%"
         q = q.where(or_(
@@ -3381,40 +4794,7 @@ async def list_leave_applications(
     stats_res = await db.execute(stats_q)
     stats_map = {row[0]: row[1] for row in stats_res.all()}
 
-    out_items = []
-    for l in items:
-        emp = l.employee
-        lt = l.leave_type_obj
-        mgr = l.manager_approver
-        hr = l.hr_approver
-        out_items.append(LeaveOut(
-            id=l.id,
-            employee_id=l.employee_id,
-            employee_name=f"{emp.first_name} {emp.last_name}" if emp else None,
-            employee_code=emp.employee_code if emp else None,
-            department_name=emp.department.name_en if emp and emp.department else None,
-            leave_type_id=l.leave_type_id,
-            leave_type=l.leave_type,
-            leave_type_name=lt.name_en if lt else l.leave_type,
-            color_code=lt.color_code if lt else "#3b82f6",
-            is_paid=l.is_paid,
-            start_date=l.start_date,
-            end_date=l.end_date,
-            total_days=l.total_days,
-            reason=l.reason,
-            emergency_contact=l.emergency_contact,
-            document_url=l.document_url,
-            status=l.status,
-            manager_approver_id=l.manager_approver_id,
-            manager_approver_name=f"{mgr.first_name} {mgr.last_name}" if mgr else None,
-            manager_remarks=l.manager_remarks,
-            manager_action_at=l.manager_action_at,
-            hr_approver_id=l.hr_approver_id,
-            hr_approver_name=f"{hr.first_name} {hr.last_name}" if hr else None,
-            hr_remarks=l.hr_remarks,
-            hr_action_at=l.hr_action_at,
-            created_at=l.created_at
-        ))
+    out_items = [_leave_application_out(leave) for leave in items]
 
     return LeavePaginatedOut(
         items=out_items,
@@ -3427,6 +4807,26 @@ async def list_leave_applications(
         rejected_count=stats_map.get("REJECTED", 0)
     )
 
+
+@router.get("/leave-applications/{leave_id}", response_model=LeaveOut)
+async def get_leave_application(
+    leave_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    result = await db.execute(select(LeaveApplication).options(
+        joinedload(LeaveApplication.employee).joinedload(Employee.department),
+        joinedload(LeaveApplication.leave_type_obj),
+        joinedload(LeaveApplication.manager_approver),
+        joinedload(LeaveApplication.hr_approver)
+    ).where(and_(LeaveApplication.id == leave_id, LeaveApplication.organization_id == org_id)))
+    leave = result.unique().scalar_one_or_none()
+    if not leave:
+        raise HTTPException(status_code=404, detail="Leave application not found")
+    return _leave_application_out(leave)
+
+
 @router.post("/leave-applications", response_model=LeaveOut, status_code=status.HTTP_201_CREATED)
 async def apply_for_leave(
     payload: LeaveApply,
@@ -3434,20 +4834,43 @@ async def apply_for_leave(
     current_user: Optional[User] = Depends(get_current_user_optional)
 ):
     org_id = get_org_id(current_user)
-    days = (payload.end_date - payload.start_date).days + 1
-    if days <= 0:
+    if payload.is_half_day:
+        days = Decimal("0.5")
+    else:
+        days = Decimal(str((payload.end_date - payload.start_date).days + 1))
+
+    if days <= Decimal("0"):
         raise HTTPException(status_code=400, detail="End date must be after or equal to start date")
+    if payload.start_date.year != payload.end_date.year:
+        raise HTTPException(status_code=400, detail="Leave applications must be within a single leave year")
+    if not payload.reason.strip():
+        raise HTTPException(status_code=400, detail="Leave reason is required")
 
     # Match leave type
     lt = None
     if payload.leave_type_id:
-        lt_res = await db.execute(select(LeaveType).where(LeaveType.id == payload.leave_type_id))
+        lt_res = await db.execute(select(LeaveType).where(and_(
+            LeaveType.id == payload.leave_type_id,
+            LeaveType.organization_id == org_id,
+            LeaveType.is_active.is_(True)
+        )))
         lt = lt_res.scalar_one_or_none()
     elif payload.leave_type:
         lt_res = await db.execute(select(LeaveType).where(and_(LeaveType.organization_id == org_id, LeaveType.leave_type_code == payload.leave_type.upper())))
         lt = lt_res.scalar_one_or_none()
 
-    # Balance check if paid leave
+    employee_res = await db.execute(select(Employee).options(
+        joinedload(Employee.department)
+    ).where(and_(
+        Employee.id == payload.employee_id,
+        Employee.organization_id == org_id
+    )))
+    employee = employee_res.unique().scalar_one_or_none()
+    if employee is None:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    if not lt:
+        raise HTTPException(status_code=404, detail="Active leave type not found")
+
     yr = payload.start_date.year
     if lt and lt.is_paid:
         bal_res = await db.execute(select(LeaveBalance).where(and_(
@@ -3455,14 +4878,14 @@ async def apply_for_leave(
             LeaveBalance.employee_id == payload.employee_id,
             LeaveBalance.leave_type_id == lt.id,
             LeaveBalance.year == yr
-        )))
+        )).with_for_update())
         bal = bal_res.scalar_one_or_none()
-        if bal:
-            if bal.available_days < Decimal(str(days)):
-                raise HTTPException(status_code=400, detail=f"Insufficient leave balance. Available: {bal.available_days} days, Requested: {days} days")
-            # Update pending days
-            bal.pending_days += Decimal(str(days))
-            bal.available_days -= Decimal(str(days))
+        if not bal:
+            raise HTTPException(status_code=400, detail="No leave entitlement exists for the selected employee, type and year")
+        if bal.available_days < days:
+            raise HTTPException(status_code=400, detail=f"Insufficient leave balance. Available: {bal.available_days} days, Requested: {days} days")
+        bal.pending_days += days
+        bal.available_days -= days
 
     leave = LeaveApplication(
         organization_id=org_id,
@@ -3472,37 +4895,111 @@ async def apply_for_leave(
         start_date=payload.start_date,
         end_date=payload.end_date,
         total_days=days,
+        is_half_day=payload.is_half_day,
+        half_day_session=payload.half_day_session if payload.is_half_day else None,
         reason=payload.reason.strip(),
         emergency_contact=payload.emergency_contact,
         document_url=payload.document_url,
         is_paid=lt.is_paid if lt else True,
         status="PENDING_MANAGER"
     )
+    leave.employee = employee
+    leave.leave_type_obj = lt
     db.add(leave)
     await db.commit()
     await db.refresh(leave)
 
-    emp = leave.employee
-    return LeaveOut(
-        id=leave.id,
-        employee_id=leave.employee_id,
-        employee_name=f"{emp.first_name} {emp.last_name}" if emp else None,
-        employee_code=emp.employee_code if emp else None,
-        department_name=emp.department.name_en if emp and emp.department else None,
-        leave_type_id=leave.leave_type_id,
-        leave_type=leave.leave_type,
-        leave_type_name=lt.name_en if lt else leave.leave_type,
-        color_code=lt.color_code if lt else "#3b82f6",
-        is_paid=leave.is_paid,
-        start_date=leave.start_date,
-        end_date=leave.end_date,
-        total_days=leave.total_days,
-        reason=leave.reason,
-        emergency_contact=leave.emergency_contact,
-        document_url=leave.document_url,
-        status=leave.status,
-        created_at=leave.created_at
-    )
+    return _leave_application_out(leave)
+
+
+@router.put("/leave-applications/{leave_id}", response_model=LeaveOut)
+async def update_leave_application(
+    leave_id: int,
+    payload: LeaveUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    result = await db.execute(select(LeaveApplication).options(
+        joinedload(LeaveApplication.employee).joinedload(Employee.department),
+        joinedload(LeaveApplication.leave_type_obj),
+        joinedload(LeaveApplication.manager_approver),
+        joinedload(LeaveApplication.hr_approver)
+    ).where(and_(
+        LeaveApplication.id == leave_id,
+        LeaveApplication.organization_id == org_id
+    )).with_for_update())
+    leave = result.unique().scalar_one_or_none()
+    if not leave:
+        raise HTTPException(status_code=404, detail="Leave application not found")
+    if leave.status != "PENDING_MANAGER":
+        raise HTTPException(status_code=409, detail="Only applications pending manager review can be edited")
+
+    data = payload.model_dump(exclude_unset=True, exclude_none=True)
+    start_date = data.get("start_date", leave.start_date)
+    end_date = data.get("end_date", leave.end_date)
+    if start_date is None or end_date is None:
+        raise HTTPException(status_code=422, detail="Leave start and end dates are required.")
+    days = (end_date - start_date).days + 1
+    if days <= 0:
+        raise HTTPException(status_code=422, detail="End date must be on or after the start date.")
+    if start_date.year != end_date.year:
+        raise HTTPException(status_code=422, detail="Leave applications must be within a single leave year.")
+    if "reason" in data and not (data["reason"] or "").strip():
+        raise HTTPException(status_code=422, detail="Leave reason is required; enter a brief explanation.")
+
+    new_type = leave.leave_type_obj
+    if "leave_type_id" in data:
+        type_result = await db.execute(select(LeaveType).where(and_(
+            LeaveType.id == data["leave_type_id"],
+            LeaveType.organization_id == org_id,
+            LeaveType.is_active.is_(True)
+        )))
+        new_type = type_result.scalar_one_or_none()
+        if not new_type:
+            raise HTTPException(status_code=404, detail="Active leave type not found")
+
+    old_balance = None
+    if leave.leave_type_id and leave.is_paid:
+        old_result = await db.execute(select(LeaveBalance).where(and_(
+            LeaveBalance.organization_id == org_id,
+            LeaveBalance.employee_id == leave.employee_id,
+            LeaveBalance.leave_type_id == leave.leave_type_id,
+            LeaveBalance.year == leave.start_date.year
+        )).with_for_update())
+        old_balance = old_result.scalar_one_or_none()
+        if old_balance:
+            amount = Decimal(str(leave.total_days))
+            old_balance.pending_days = max(Decimal("0.00"), old_balance.pending_days - amount)
+            old_balance.available_days += amount
+
+    if new_type and new_type.is_paid:
+        balance_result = await db.execute(select(LeaveBalance).where(and_(
+            LeaveBalance.organization_id == org_id,
+            LeaveBalance.employee_id == leave.employee_id,
+            LeaveBalance.leave_type_id == new_type.id,
+            LeaveBalance.year == start_date.year
+        )).with_for_update())
+        balance = balance_result.scalar_one_or_none()
+        if not balance:
+            raise HTTPException(status_code=400, detail="No leave entitlement exists for the selected employee, type and year")
+        requested = Decimal(str(days))
+        if balance.available_days < requested:
+            raise HTTPException(status_code=400, detail=f"Insufficient leave balance. Available: {balance.available_days} days, Requested: {days} days")
+        balance.pending_days += requested
+        balance.available_days -= requested
+
+    for field in ("start_date", "end_date", "reason", "emergency_contact", "document_url"):
+        if field in data:
+            setattr(leave, field, data[field])
+    if "leave_type_id" in data:
+        leave.leave_type_id = new_type.id
+        leave.leave_type = new_type.leave_type_code
+        leave.leave_type_obj = new_type
+        leave.is_paid = new_type.is_paid
+    leave.total_days = days
+    await db.commit()
+    return _leave_application_out(leave)
 
 @router.post("/leave-applications/{leave_id}/manager-review", response_model=LeaveOut)
 async def manager_review_leave(
@@ -3512,11 +5009,17 @@ async def manager_review_leave(
     current_user: Optional[User] = Depends(get_current_user_optional)
 ):
     org_id = get_org_id(current_user)
-    q = select(LeaveApplication).where(and_(LeaveApplication.id == leave_id, LeaveApplication.organization_id == org_id))
+    q = select(LeaveApplication).options(
+        joinedload(LeaveApplication.employee).joinedload(Employee.department),
+        joinedload(LeaveApplication.leave_type_obj),
+        joinedload(LeaveApplication.manager_approver),
+        joinedload(LeaveApplication.hr_approver)
+    ).where(and_(LeaveApplication.id == leave_id, LeaveApplication.organization_id == org_id)).with_for_update()
     res = await db.execute(q)
-    leave = res.scalar_one_or_none()
+    leave = res.unique().scalar_one_or_none()
     if not leave:
         raise HTTPException(status_code=404, detail="Leave application not found")
+    _require_leave_status(leave, "PENDING_MANAGER")
 
     leave.manager_approver_id = current_user.id if current_user else None
     leave.manager_remarks = payload.manager_remarks
@@ -3578,11 +5081,17 @@ async def hr_review_leave(
     current_user: Optional[User] = Depends(get_current_user_optional)
 ):
     org_id = get_org_id(current_user)
-    q = select(LeaveApplication).where(and_(LeaveApplication.id == leave_id, LeaveApplication.organization_id == org_id))
+    q = select(LeaveApplication).options(
+        joinedload(LeaveApplication.employee).joinedload(Employee.department),
+        joinedload(LeaveApplication.leave_type_obj),
+        joinedload(LeaveApplication.manager_approver),
+        joinedload(LeaveApplication.hr_approver)
+    ).where(and_(LeaveApplication.id == leave_id, LeaveApplication.organization_id == org_id)).with_for_update()
     res = await db.execute(q)
-    leave = res.scalar_one_or_none()
+    leave = res.unique().scalar_one_or_none()
     if not leave:
         raise HTTPException(status_code=404, detail="Leave application not found")
+    _require_leave_status(leave, "PENDING_HR")
 
     leave.hr_approver_id = current_user.id if current_user else None
     leave.hr_remarks = payload.hr_remarks
@@ -3685,9 +5194,14 @@ async def cancel_leave_application(
     current_user: Optional[User] = Depends(get_current_user_optional)
 ):
     org_id = get_org_id(current_user)
-    q = select(LeaveApplication).where(and_(LeaveApplication.id == leave_id, LeaveApplication.organization_id == org_id))
+    q = select(LeaveApplication).options(
+        joinedload(LeaveApplication.employee).joinedload(Employee.department),
+        joinedload(LeaveApplication.leave_type_obj),
+        joinedload(LeaveApplication.manager_approver),
+        joinedload(LeaveApplication.hr_approver)
+    ).where(and_(LeaveApplication.id == leave_id, LeaveApplication.organization_id == org_id)).with_for_update()
     res = await db.execute(q)
-    leave = res.scalar_one_or_none()
+    leave = res.unique().scalar_one_or_none()
     if not leave:
         raise HTTPException(status_code=404, detail="Leave application not found")
 
@@ -3737,6 +5251,497 @@ async def cancel_leave_application(
         status=leave.status,
         created_at=leave.created_at
     )
+
+
+# --- 2.16 Leave Calendar & Team Availability ---
+@router.get("/leave/calendar-events", response_model=List[LeaveCalendarEventOut])
+async def get_leave_calendar_events(
+    month: int = Query(..., ge=1, le=12),
+    year: int = Query(..., ge=2020, le=2050),
+    department_id: Optional[int] = None,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    first_day = date(year, month, 1)
+    if month == 12:
+        last_day = date(year + 1, 1, 1) - timedelta(days=1)
+    else:
+        last_day = date(year, month + 1, 1) - timedelta(days=1)
+
+    # 1. Fetch Leaves overlapping the month
+    leave_q = (
+        select(LeaveApplication)
+        .options(
+            joinedload(LeaveApplication.employee).joinedload(Employee.department),
+            joinedload(LeaveApplication.leave_type_obj)
+        )
+        .join(Employee, LeaveApplication.employee_id == Employee.id)
+        .where(
+            and_(
+                LeaveApplication.organization_id == org_id,
+                LeaveApplication.status.in_(["APPROVED", "PENDING_HR", "PENDING_MANAGER"]),
+                LeaveApplication.start_date <= last_day,
+                LeaveApplication.end_date >= first_day
+            )
+        )
+    )
+    if department_id:
+        leave_q = leave_q.where(Employee.department_id == department_id)
+
+    l_res = await db.execute(leave_q)
+    leaves = l_res.unique().scalars().all()
+
+    events: List[LeaveCalendarEventOut] = []
+    for lv in leaves:
+        emp = lv.employee
+        lt = lv.leave_type_obj
+        emp_name = f"{emp.first_name} {emp.last_name}".strip() if emp else "Employee"
+        color = lt.color_code if lt and lt.color_code else "#3b82f6"
+        events.append(LeaveCalendarEventOut(
+            id=f"leave-{lv.id}",
+            title=f"{emp_name} ({lt.name_en if lt else lv.leave_type})",
+            start=max(lv.start_date, first_day),
+            end=min(lv.end_date, last_day),
+            event_type="LEAVE",
+            employee_id=lv.employee_id,
+            employee_name=emp_name,
+            department_name=emp.department.name_en if emp and emp.department else None,
+            status=lv.status,
+            color=color,
+            is_half_day=bool(getattr(lv, "is_half_day", False))
+        ))
+
+    # 2. Fetch Public & Company Holidays
+    hol_q = select(HolidayCalendar).where(
+        and_(
+            HolidayCalendar.organization_id == org_id,
+            HolidayCalendar.start_date <= last_day,
+            HolidayCalendar.end_date >= first_day
+        )
+    )
+    h_res = await db.execute(hol_q)
+    holidays = h_res.scalars().all()
+
+    for h in holidays:
+        events.append(LeaveCalendarEventOut(
+            id=f"holiday-{h.id}",
+            title=f"Holiday: {h.holiday_name}",
+            start=max(h.start_date, first_day),
+            end=min(h.end_date, last_day),
+            event_type="HOLIDAY",
+            employee_id=None,
+            employee_name=None,
+            department_name=None,
+            status="PUBLISHED",
+            color="#ef4444",
+            is_half_day=False
+        ))
+
+    return events
+
+
+@router.get("/leave/team-availability", response_model=TeamAvailabilityOut)
+async def get_team_availability(
+    target_date: Optional[date] = None,
+    department_id: Optional[int] = None,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    eff_date = target_date or date.today()
+
+    # Get active employees
+    emp_q = (
+        select(Employee)
+        .options(joinedload(Employee.department))
+        .where(and_(Employee.organization_id == org_id, Employee.is_active.is_(True)))
+    )
+    if department_id:
+        emp_q = emp_q.where(Employee.department_id == department_id)
+
+    emp_res = await db.execute(emp_q.order_by(Employee.first_name))
+    employees = emp_res.unique().scalars().all()
+    emp_ids = [e.id for e in employees]
+
+    if not emp_ids:
+        return TeamAvailabilityOut(
+            date=eff_date,
+            total_employees=0,
+            available_count=0,
+            on_leave_count=0,
+            items=[]
+        )
+
+    # Check leaves on eff_date
+    l_res = await db.execute(
+        select(LeaveApplication).where(
+            and_(
+                LeaveApplication.organization_id == org_id,
+                LeaveApplication.employee_id.in_(emp_ids),
+                LeaveApplication.status.in_(["APPROVED", "PENDING_HR"]),
+                LeaveApplication.start_date <= eff_date,
+                LeaveApplication.end_date >= eff_date
+            )
+        )
+    )
+    leaves_today = {l.employee_id: l for l in l_res.scalars().all()}
+
+    # Check shift assignments
+    sa_res = await db.execute(
+        select(ShiftAssignment)
+        .options(joinedload(ShiftAssignment.shift))
+        .where(
+            and_(
+                ShiftAssignment.organization_id == org_id,
+                ShiftAssignment.assignment_type == "EMPLOYEE",
+                ShiftAssignment.target_id.in_(emp_ids),
+                ShiftAssignment.start_date <= eff_date,
+                or_(ShiftAssignment.end_date.is_(None), ShiftAssignment.end_date >= eff_date)
+            )
+        )
+    )
+    shifts_today = {sa.target_id: sa.shift for sa in sa_res.scalars().all()}
+
+    weekday_name = eff_date.strftime("%A").upper()  # e.g., FRIDAY, SATURDAY
+
+    items: List[TeamAvailabilityItem] = []
+    available_count = 0
+    on_leave_count = 0
+
+    for emp in employees:
+        emp_name = f"{emp.first_name} {emp.last_name}".strip()
+        dept_name = emp.department.name_en if emp.department else None
+        sh = shifts_today.get(emp.id)
+        sh_name = sh.shift_name if sh else None
+
+        # Check if on leave
+        lv = leaves_today.get(emp.id)
+        if lv:
+            if getattr(lv, "is_half_day", False):
+                status_str = "HALF_DAY_LEAVE"
+            else:
+                status_str = "ON_LEAVE"
+            leave_tp = lv.leave_type
+            on_leave_count += 1
+        elif sh and sh.weekly_off_days and weekday_name in sh.weekly_off_days.upper():
+            status_str = "WEEKLY_OFF"
+            leave_tp = None
+        else:
+            status_str = "AVAILABLE"
+            leave_tp = None
+            available_count += 1
+
+        items.append(TeamAvailabilityItem(
+            employee_id=emp.id,
+            employee_name=emp_name,
+            employee_code=emp.employee_code,
+            department_name=dept_name,
+            status=status_str,
+            leave_type=leave_tp,
+            shift_name=sh_name
+        ))
+
+    return TeamAvailabilityOut(
+        date=eff_date,
+        total_employees=len(employees),
+        available_count=available_count,
+        on_leave_count=on_leave_count,
+        items=items
+    )
+
+
+# --- Leave Encashment Register ---
+def _leave_encashment_out(item: LeaveEncashment) -> LeaveEncashmentOut:
+    return LeaveEncashmentOut(
+        id=item.id,
+        employee_id=item.employee_id,
+        employee_name=f"{item.employee.first_name} {item.employee.last_name}" if item.employee else None,
+        employee_code=item.employee.employee_code if item.employee else None,
+        leave_type_id=item.leave_type_id,
+        leave_type_name=item.leave_type.name_en if item.leave_type else None,
+        year=item.year,
+        days=item.days,
+        reason=item.reason,
+        status=item.status,
+        created_at=item.created_at,
+        approved_at=item.approved_at,
+        archived_at=item.archived_at
+    )
+
+
+def _encashment_query():
+    return select(LeaveEncashment).options(
+        joinedload(LeaveEncashment.employee),
+        joinedload(LeaveEncashment.leave_type)
+    )
+
+
+@router.get("/leave-encashments", response_model=LeaveEncashmentPaginatedOut)
+async def list_leave_encashments(
+    employee_id: Optional[int] = None,
+    leave_type_id: Optional[int] = None,
+    year: Optional[int] = None,
+    status_filter: Optional[str] = Query(None, alias="status"),
+    search: Optional[str] = None,
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    q = _encashment_query().join(Employee, LeaveEncashment.employee_id == Employee.id).where(
+        LeaveEncashment.organization_id == org_id
+    )
+    if employee_id:
+        q = q.where(LeaveEncashment.employee_id == employee_id)
+    if leave_type_id:
+        q = q.where(LeaveEncashment.leave_type_id == leave_type_id)
+    if year:
+        q = q.where(LeaveEncashment.year == year)
+    if status_filter:
+        q = q.where(LeaveEncashment.status == status_filter)
+    if search and search.strip():
+        term = f"%{search.strip()}%"
+        q = q.where(or_(
+            Employee.first_name.ilike(term),
+            Employee.last_name.ilike(term),
+            Employee.employee_code.ilike(term),
+            LeaveEncashment.reason.ilike(term)
+        ))
+    total = (await db.execute(select(func.count()).select_from(q.subquery()))).scalar_one() or 0
+    results = await db.execute(q.order_by(desc(LeaveEncashment.id)).limit(limit).offset(offset))
+    return LeaveEncashmentPaginatedOut(
+        items=[_leave_encashment_out(item) for item in results.unique().scalars().all()],
+        total=total,
+        limit=limit,
+        offset=offset
+    )
+
+
+@router.get("/leave-encashments/{encashment_id}", response_model=LeaveEncashmentOut)
+async def get_leave_encashment(
+    encashment_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    result = await db.execute(_encashment_query().where(and_(
+        LeaveEncashment.id == encashment_id,
+        LeaveEncashment.organization_id == get_org_id(current_user)
+    )))
+    item = result.unique().scalar_one_or_none()
+    if not item:
+        raise HTTPException(status_code=404, detail="Leave encashment not found")
+    return _leave_encashment_out(item)
+
+
+@router.post("/leave-encashments", response_model=LeaveEncashmentOut, status_code=status.HTTP_201_CREATED)
+async def create_leave_encashment(
+    payload: LeaveEncashmentCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    employee = (await db.execute(select(Employee).where(and_(
+        Employee.id == payload.employee_id, Employee.organization_id == org_id
+    )))).scalar_one_or_none()
+    leave_type = (await db.execute(select(LeaveType).where(and_(
+        LeaveType.id == payload.leave_type_id,
+        LeaveType.organization_id == org_id,
+        LeaveType.is_active.is_(True)
+    )))).scalar_one_or_none()
+    balance = (await db.execute(select(LeaveBalance).where(and_(
+        LeaveBalance.organization_id == org_id,
+        LeaveBalance.employee_id == payload.employee_id,
+        LeaveBalance.leave_type_id == payload.leave_type_id,
+        LeaveBalance.year == payload.year
+    )))).scalar_one_or_none()
+    policy = (await db.execute(select(LeavePolicy).where(and_(
+        LeavePolicy.organization_id == org_id,
+        LeavePolicy.leave_type_id == payload.leave_type_id,
+        LeavePolicy.is_active.is_(True),
+        LeavePolicy.encashment_allowed.is_(True)
+    )).order_by(LeavePolicy.id.desc()).limit(1))).scalar_one_or_none()
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employee not found in this organization.")
+    if not leave_type or not leave_type.is_paid:
+        raise HTTPException(status_code=400, detail="Encashment requires an active paid leave type.")
+    if not balance:
+        raise HTTPException(status_code=400, detail="No leave balance exists for the selected employee, type and year.")
+    if not policy:
+        raise HTTPException(status_code=400, detail="No active encashment-enabled leave policy exists for the selected leave type.")
+    if employee.joining_date and (date.today() - employee.joining_date).days < policy.min_service_days_required:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Employee must complete {policy.min_service_days_required} service days before encashment."
+        )
+    if not policy.encashment_allowed:
+        raise HTTPException(status_code=400, detail="Encashment is not enabled for this leave policy.")
+
+    item = LeaveEncashment(
+        organization_id=org_id,
+        employee_id=employee.id,
+        leave_type_id=leave_type.id,
+        balance_id=balance.id,
+        year=payload.year,
+        days=payload.days,
+        reason=payload.reason,
+        status="DRAFT"
+    )
+    db.add(item)
+    await db.commit()
+    result = await db.execute(_encashment_query().where(LeaveEncashment.id == item.id))
+    return _leave_encashment_out(result.unique().scalar_one())
+
+
+@router.put("/leave-encashments/{encashment_id}", response_model=LeaveEncashmentOut)
+async def update_leave_encashment(
+    encashment_id: int,
+    payload: LeaveEncashmentUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    result = await db.execute(select(LeaveEncashment).where(and_(
+        LeaveEncashment.id == encashment_id, LeaveEncashment.organization_id == org_id
+    )).with_for_update())
+    item = result.scalar_one_or_none()
+    if not item:
+        raise HTTPException(status_code=404, detail="Leave encashment not found")
+    if item.status != "DRAFT":
+        raise HTTPException(status_code=409, detail="Only draft encashment requests can be edited.")
+    for key, value in payload.model_dump(exclude_unset=True, exclude_none=True).items():
+        setattr(item, key, value)
+    await db.commit()
+    result = await db.execute(_encashment_query().where(LeaveEncashment.id == item.id))
+    return _leave_encashment_out(result.unique().scalar_one())
+
+
+@router.post("/leave-encashments/{encashment_id}/approve", response_model=LeaveEncashmentOut)
+async def approve_leave_encashment(
+    encashment_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    item = (await db.execute(select(LeaveEncashment).where(and_(
+        LeaveEncashment.id == encashment_id, LeaveEncashment.organization_id == org_id
+    )).with_for_update())).scalar_one_or_none()
+    if not item:
+        raise HTTPException(status_code=404, detail="Leave encashment not found")
+    if item.status != "DRAFT":
+        raise HTTPException(status_code=409, detail="Only draft encashment requests can be approved.")
+    employee = (await db.execute(select(Employee).where(and_(
+        Employee.id == item.employee_id, Employee.organization_id == org_id
+    )))).scalar_one_or_none()
+    leave_type = (await db.execute(select(LeaveType).where(and_(
+        LeaveType.id == item.leave_type_id, LeaveType.organization_id == org_id
+    )))).scalar_one_or_none()
+    balance = (await db.execute(select(LeaveBalance).where(and_(
+        LeaveBalance.id == item.balance_id,
+        LeaveBalance.organization_id == org_id
+    )).with_for_update())).scalar_one_or_none()
+    policy = (await db.execute(select(LeavePolicy).where(and_(
+        LeavePolicy.organization_id == org_id,
+        LeavePolicy.leave_type_id == item.leave_type_id,
+        LeavePolicy.is_active.is_(True),
+        LeavePolicy.encashment_allowed.is_(True)
+    )).order_by(LeavePolicy.id.desc()).limit(1))).scalar_one_or_none()
+    if not employee or not leave_type or not leave_type.is_paid or not balance or not policy:
+        raise HTTPException(status_code=409, detail="The employee, paid leave type, entitlement or active policy is no longer valid.")
+    if (
+        balance.employee_id != item.employee_id
+        or balance.leave_type_id != item.leave_type_id
+        or balance.year != item.year
+    ):
+        raise HTTPException(status_code=409, detail="The encashment no longer matches its employee, leave type and year entitlement.")
+    if employee.joining_date and (date.today() - employee.joining_date).days < policy.min_service_days_required:
+        raise HTTPException(status_code=400, detail=f"Employee must complete {policy.min_service_days_required} service days before encashment.")
+    already = (await db.execute(select(func.coalesce(func.sum(LeaveEncashment.days), 0)).where(and_(
+        LeaveEncashment.organization_id == org_id,
+        LeaveEncashment.employee_id == item.employee_id,
+        LeaveEncashment.leave_type_id == item.leave_type_id,
+        LeaveEncashment.year == item.year,
+        LeaveEncashment.status == "APPROVED"
+    )))).scalar_one()
+    _validate_encashment_terms(policy, balance, Decimal(str(item.days)), Decimal(str(already)))
+    balance.available_days -= Decimal(str(item.days))
+    balance.encashed_days += Decimal(str(item.days))
+    item.status = "APPROVED"
+    item.approved_at = datetime.utcnow()
+    await db.commit()
+    result = await db.execute(_encashment_query().where(LeaveEncashment.id == item.id))
+    return _leave_encashment_out(result.unique().scalar_one())
+
+
+@router.post("/leave-encashments/{encashment_id}/archive", response_model=LeaveEncashmentOut)
+async def archive_leave_encashment(
+    encashment_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    item = (await db.execute(select(LeaveEncashment).where(and_(
+        LeaveEncashment.id == encashment_id, LeaveEncashment.organization_id == org_id
+    )).with_for_update())).scalar_one_or_none()
+    if not item:
+        raise HTTPException(status_code=404, detail="Leave encashment not found")
+    if item.status != "DRAFT":
+        raise HTTPException(status_code=409, detail="Only draft requests can be archived. Reverse approved settlements first.")
+    item.status = "ARCHIVED"
+    item.archived_at = datetime.utcnow()
+    await db.commit()
+    result = await db.execute(_encashment_query().where(LeaveEncashment.id == item.id))
+    return _leave_encashment_out(result.unique().scalar_one())
+
+
+@router.post("/leave-encashments/{encashment_id}/reverse", response_model=LeaveEncashmentOut)
+async def reverse_leave_encashment(
+    encashment_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    item = (await db.execute(select(LeaveEncashment).where(and_(
+        LeaveEncashment.id == encashment_id, LeaveEncashment.organization_id == org_id
+    )).with_for_update())).scalar_one_or_none()
+    if not item:
+        raise HTTPException(status_code=404, detail="Leave encashment not found")
+    if item.status != "APPROVED":
+        raise HTTPException(status_code=409, detail="Only approved encashments can be reversed.")
+    balance = (await db.execute(select(LeaveBalance).where(and_(
+        LeaveBalance.id == item.balance_id, LeaveBalance.organization_id == org_id
+    )).with_for_update())).scalar_one_or_none()
+    if not balance:
+        raise HTTPException(status_code=409, detail="The entitlement balance is unavailable; settlement cannot be reversed.")
+    amount = Decimal(str(item.days))
+    if balance.encashed_days < amount:
+        raise HTTPException(status_code=409, detail="The entitlement balance no longer contains this encashment total.")
+    balance.encashed_days -= amount
+    balance.available_days += amount
+    item.status = "REVERSED"
+    await db.commit()
+    result = await db.execute(_encashment_query().where(LeaveEncashment.id == item.id))
+    return _leave_encashment_out(result.unique().scalar_one())
+
+
+@router.delete("/leave-encashments/{encashment_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_leave_encashment(
+    encashment_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    item = (await db.execute(select(LeaveEncashment).where(and_(
+        LeaveEncashment.id == encashment_id,
+        LeaveEncashment.organization_id == get_org_id(current_user)
+    )).with_for_update())).scalar_one_or_none()
+    if not item:
+        raise HTTPException(status_code=404, detail="Leave encashment not found")
+    if item.status != "DRAFT":
+        raise HTTPException(status_code=409, detail="Only draft encashment requests can be deleted; settled records remain auditable.")
+    await db.delete(item)
+    await db.commit()
+    return None
 
 
 # --- 2.17, 2.18, 2.19 Overtime Request, Verification & Approval ---
@@ -7249,7 +9254,3 @@ async def validate_payroll_period(
         warning_count=warning_count,
         exceptions=exceptions
     )
-
-
-
-

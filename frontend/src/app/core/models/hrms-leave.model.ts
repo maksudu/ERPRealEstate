@@ -110,6 +110,8 @@ export interface LeaveApplication {
   start_date: string;
   end_date: string;
   total_days: number;
+  is_half_day?: boolean;
+  half_day_session?: string;
   reason?: string;
   emergency_contact?: string;
   document_url?: string;
@@ -131,6 +133,8 @@ export interface LeaveApplicationCreate {
   leave_type_id: number;
   start_date: string;
   end_date: string;
+  is_half_day?: boolean;
+  half_day_session?: string;
   reason?: string;
   emergency_contact?: string;
   document_url?: string;
@@ -139,6 +143,38 @@ export interface LeaveApplicationCreate {
 export interface LeaveApprovalAction {
   action: 'RECOMMEND' | 'APPROVE' | 'REJECT' | 'CANCEL';
   remarks?: string;
+}
+
+export interface LeaveCalendarEvent {
+  id: string;
+  title: string;
+  start: string;
+  end: string;
+  event_type: 'LEAVE' | 'HOLIDAY';
+  employee_id?: number;
+  employee_name?: string;
+  department_name?: string;
+  status?: string;
+  color?: string;
+  is_half_day?: boolean;
+}
+
+export interface TeamAvailabilityItem {
+  employee_id: number;
+  employee_name: string;
+  employee_code?: string;
+  department_name?: string;
+  status: 'AVAILABLE' | 'ON_LEAVE' | 'HALF_DAY_LEAVE' | 'WEEKLY_OFF';
+  leave_type?: string;
+  shift_name?: string;
+}
+
+export interface TeamAvailability {
+  date: string;
+  total_employees: number;
+  available_count: number;
+  on_leave_count: number;
+  items: TeamAvailabilityItem[];
 }
 
 // --- 2.17, 2.18, 2.19 Overtime Request, Verification & Approval ---

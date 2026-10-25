@@ -1,5 +1,5 @@
 // =====================================================================
-// --- Section 2: Enterprise Attendance & Shift Management Models ---
+// --- Section Enterprise Attendance & Shift Management Models ---
 // =====================================================================
 
 // --- 2.1 Shift Management ---
@@ -9,6 +9,7 @@ export interface Shift {
   shift_code: string;
   start_time: string; // HH:MM:SS
   end_time: string;   // HH:MM:SS
+  shift_type?: 'FIXED' | 'ROTATING' | 'FLEXIBLE' | 'DAY' | 'EVENING' | 'NIGHT';
   break_start_time?: string;
   break_end_time?: string;
   break_duration_minutes: number;
@@ -16,6 +17,8 @@ export interface Shift {
   half_day_minimum_minutes: number;
   full_day_minimum_minutes: number;
   is_night_shift: boolean;
+  is_overtime_eligible?: boolean;
+  weekly_off_days?: string;
   is_active: boolean;
   created_at?: string;
   updated_at?: string;
@@ -26,6 +29,7 @@ export interface ShiftCreatePayload {
   shift_code: string;
   start_time: string;
   end_time: string;
+  shift_type?: string;
   break_start_time?: string;
   break_end_time?: string;
   break_duration_minutes: number;
@@ -33,6 +37,8 @@ export interface ShiftCreatePayload {
   half_day_minimum_minutes: number;
   full_day_minimum_minutes: number;
   is_night_shift: boolean;
+  is_overtime_eligible?: boolean;
+  weekly_off_days?: string;
   is_active: boolean;
 }
 
@@ -55,6 +61,7 @@ export interface ShiftAssignment {
   project_id?: number;
   target_name?: string;
   target_code?: string;
+  target_photo_url?: string;
   effective_from: string;
   effective_to?: string;
   is_active: boolean;
@@ -66,6 +73,7 @@ export interface ShiftAssignmentCreatePayload {
   shift_id: number;
   assignment_type: 'EMPLOYEE' | 'DEPARTMENT' | 'PROJECT_SITE';
   employee_id?: number;
+  employee_ids?: number[];
   department_id?: number;
   project_id?: number;
   effective_from: string;
@@ -76,6 +84,50 @@ export interface ShiftAssignmentCreatePayload {
 
 export interface ShiftAssignmentPaginatedResponse {
   items: ShiftAssignment[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+// --- 2.2.1 Shift Swap Request ---
+export interface ShiftSwapRequest {
+  id: number;
+  requester_id: number;
+  requester_name?: string;
+  requester_code?: string;
+  target_employee_id: number;
+  target_employee_name?: string;
+  target_employee_code?: string;
+  swap_date: string;
+  requester_shift_id?: number;
+  requester_shift_name?: string;
+  target_shift_id?: number;
+  target_shift_name?: string;
+  reason?: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  reviewed_by_id?: number;
+  reviewed_by_name?: string;
+  review_notes?: string;
+  reviewed_at?: string;
+  created_at?: string;
+}
+
+export interface ShiftSwapRequestCreatePayload {
+  requester_id: number;
+  target_employee_id: number;
+  swap_date: string;
+  requester_shift_id?: number;
+  target_shift_id?: number;
+  reason: string;
+}
+
+export interface ShiftSwapRequestReviewPayload {
+  status: 'APPROVED' | 'REJECTED';
+  review_notes?: string;
+}
+
+export interface ShiftSwapRequestPaginatedResponse {
+  items: ShiftSwapRequest[];
   total: number;
   limit: number;
   offset: number;
@@ -256,9 +308,11 @@ export interface AttendanceRecord {
 
 export interface AttendancePunchPayload {
   employee_id: number;
-  punch_type: 'IN' | 'OUT' | 'PUNCH';
+  punch_type: 'IN' | 'OUT' | 'PUNCH' | 'IN_OUT' | 'BOTH';
   punch_date?: string;
   punch_time?: string;
+  in_time?: string;
+  out_time?: string;
   source: string;
   geofence_lat?: number;
   geofence_lng?: number;
@@ -290,3 +344,36 @@ export interface AttendanceDailySummary {
   missing_punches: number;
   attendance_rate: number;
 }
+
+export interface AttendanceMonthlyClosingEmployeeItem {
+  employee_id: number;
+  employee_name: string;
+  employee_code?: string;
+  department_name?: string;
+  designation_title?: string;
+  working_days: number;
+  present_days: number;
+  absent_days: number;
+  half_days: number;
+  late_count: number;
+  approved_ot_hours: number;
+  unpaid_leave_days: number;
+  payable_days: number;
+}
+
+export interface AttendanceMonthlyClosingSummary {
+  year: number;
+  month: number;
+  total_employees: number;
+  total_working_days: number;
+  total_present_man_days: number;
+  total_absent_days: number;
+  total_late_occurrences: number;
+  total_unpaid_leave_days: number;
+  total_approved_ot_hours: number;
+  is_locked: boolean;
+  locked_at?: string;
+  locked_by?: string;
+  items: AttendanceMonthlyClosingEmployeeItem[];
+}
+

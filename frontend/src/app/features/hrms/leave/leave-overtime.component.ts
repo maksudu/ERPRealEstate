@@ -384,11 +384,24 @@ export class LeaveOvertimeComponent implements OnInit {
 
   submitLeaveApplication(): void {
     const data = this.applyForm();
+    const reason = String(data.reason || '').trim();
     if (!data.employee_id || !data.leave_type_id || !data.start_date || !data.end_date) {
       this.showError('Please select employee, leave type, and valid start/end dates.');
       return;
     }
-    this.leaveService.createLeaveApplication(data).subscribe({
+    if (!reason) {
+      this.showError('Enter a brief reason for this leave request.');
+      return;
+    }
+    if (data.end_date < data.start_date) {
+      this.showError('End date must be on or after the start date.');
+      return;
+    }
+    if (data.start_date.slice(0, 4) !== data.end_date.slice(0, 4)) {
+      this.showError('Leave applications must be within a single leave year.');
+      return;
+    }
+    this.leaveService.createLeaveApplication({ ...data, reason }).subscribe({
       next: () => {
         this.showSuccess('Leave application submitted successfully for review.');
         this.isApplyModalOpen.set(false);
