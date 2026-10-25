@@ -148,12 +148,14 @@ import { SearchableSelectComponent, SelectOption } from '../../../../shared/comp
                   <app-searchable-select
                     label="Primary Security Role *"
                     placeholder="Select primary role..."
-                    [(ngModel)]="formData.primary_role"
+                    [ngModel]="formData.primary_role"
+                    (ngModelChange)="onPrimaryRoleChange($event)"
                     name="primary_role"
                     [options]="roleOptions"
                     [allowCreateNew]="false"
                     [required]="true"
                   />
+                  <p class="text-[10px] text-slate-400 mt-1">Main operational role governing default dashboard and approvals.</p>
                 </div>
 
                 <div>
@@ -165,6 +167,105 @@ import { SearchableSelectComponent, SelectOption } from '../../../../shared/comp
                     [options]="managerOptions"
                     [allowCreateNew]="true"
                   />
+                  <p class="text-[10px] text-slate-400 mt-1">Direct supervisor for workflow approval escalation.</p>
+                </div>
+
+                <!-- Multiple Role Access (Additional Security Roles) -->
+                <div class="col-span-1 sm:col-span-2 mt-2 pt-4 border-t border-slate-100 dark:border-slate-800">
+                  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                    <div>
+                      <label class="block font-semibold text-slate-800 dark:text-slate-200">
+                        Multiple Role Access (Additional Security Roles)
+                      </label>
+                      <p class="text-[11px] text-slate-400">
+                        Assign cross-functional security privileges (e.g. Project Manager with Procurement & Financial Approval).
+                      </p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <input
+                        type="text"
+                        [(ngModel)]="roleFilterQuery"
+                        [ngModelOptions]="{standalone: true}"
+                        placeholder="Search roles..."
+                        class="px-2.5 py-1 text-xs rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-rose-500"
+                      />
+                      @if (formData.assigned_roles && formData.assigned_roles.length > 0) {
+                        <button
+                          type="button"
+                          (click)="clearAdditionalRoles()"
+                          class="text-[11px] px-2 py-1 rounded text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition"
+                        >
+                          Clear Additional
+                        </button>
+                      }
+                    </div>
+                  </div>
+
+                  <!-- Role selection grid -->
+                  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 max-h-64 overflow-y-auto p-2 custom-scrollbar border border-slate-200 dark:border-slate-800 rounded-lg bg-slate-50/50 dark:bg-slate-900/40">
+                    @for (role of filteredRoles; track role.value) {
+                      <div
+                        (click)="toggleAssignedRole(role.value)"
+                        class="flex items-start gap-2.5 p-2.5 rounded-lg border transition-all cursor-pointer select-none"
+                        [ngClass]="getRoleCardClass(role.value)"
+                      >
+                        <input
+                          type="checkbox"
+                          [checked]="isRoleAssigned(role.value) || isPrimaryRole(role.value)"
+                          [disabled]="isPrimaryRole(role.value)"
+                          (click)="$event.stopPropagation(); toggleAssignedRole(role.value)"
+                          class="mt-0.5 rounded text-rose-600 focus:ring-rose-500 border-slate-300 dark:border-slate-700 cursor-pointer"
+                        />
+                        <div class="flex-1 min-w-0">
+                          <div class="flex items-center gap-1.5 flex-wrap">
+                            <span class="font-medium text-xs text-slate-800 dark:text-slate-200 truncate">
+                              {{ role.label }}
+                            </span>
+                            @if (isPrimaryRole(role.value)) {
+                              <span class="px-1.5 py-0.2 text-[8px] font-bold rounded bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300">
+                                PRIMARY
+                              </span>
+                            } @else if (isRoleAssigned(role.value)) {
+                              <span class="px-1.5 py-0.2 text-[8px] font-bold rounded bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+                                ASSIGNED
+                              </span>
+                            }
+                          </div>
+                          <p class="text-[10px] text-slate-400 dark:text-slate-500 truncate mt-0.5">
+                            {{ role.subLabel || role.value }}
+                          </p>
+                        </div>
+                      </div>
+                    }
+                  </div>
+
+                  <!-- Selected Roles Summary Footer -->
+                  <div class="mt-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px] text-slate-500 dark:text-slate-400">
+                    <div class="flex items-center gap-1.5">
+                      <span class="font-medium">Total Role Access:</span>
+                      <span class="font-bold text-rose-600 dark:text-rose-400">
+                        {{ totalRolesCount }}
+                      </span>
+                      <span>(1 Primary + {{ formData.assigned_roles?.length || 0 }} Additional)</span>
+                    </div>
+                    @if (formData.assigned_roles && formData.assigned_roles.length > 0) {
+                      <div class="flex items-center gap-1 flex-wrap">
+                        @for (code of formData.assigned_roles; track code) {
+                          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                            {{ getRoleLabel(code) }}
+                            <button
+                              type="button"
+                              (click)="removeAssignedRole(code)"
+                              class="text-slate-400 hover:text-rose-500 transition leading-none ml-0.5"
+                              title="Remove additional role"
+                            >
+                              &times;
+                            </button>
+                          </span>
+                        }
+                      </div>
+                    }
+                  </div>
                 </div>
               </div>
             </div>
@@ -276,12 +377,84 @@ export class UserFormComponent implements OnInit {
     department_name: 'Executive Management',
     designation: '',
     primary_role: 'PROJECT_MGR',
+    assigned_roles: [] as string[],
     reporting_manager: '',
     employee_id: '',
     phone_number: '',
     account_status: 'ACTIVE',
     is_mfa_enabled: false
   };
+
+  roleFilterQuery = '';
+
+  get filteredRoles(): SelectOption[] {
+    const q = this.roleFilterQuery.trim().toLowerCase();
+    if (!q) return this.roleOptions;
+    return this.roleOptions.filter(r =>
+      r.label.toLowerCase().includes(q) ||
+      r.value.toLowerCase().includes(q) ||
+      (r.subLabel && r.subLabel.toLowerCase().includes(q))
+    );
+  }
+
+  isPrimaryRole(roleCode: string): boolean {
+    return this.formData.primary_role === roleCode;
+  }
+
+  isRoleAssigned(roleCode: string): boolean {
+    return Array.isArray(this.formData.assigned_roles) && this.formData.assigned_roles.includes(roleCode);
+  }
+
+  getRoleCardClass(roleCode: string): string {
+    if (this.isPrimaryRole(roleCode)) {
+      return 'bg-rose-50 border-rose-300 dark:bg-rose-950/30 dark:border-rose-800';
+    }
+    if (this.isRoleAssigned(roleCode)) {
+      return 'bg-indigo-50 border-indigo-300 dark:bg-indigo-950/40 dark:border-indigo-800';
+    }
+    return 'bg-white border-slate-200 dark:bg-slate-900 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700';
+  }
+
+  toggleAssignedRole(roleCode: string): void {
+    if (this.isPrimaryRole(roleCode)) {
+      return;
+    }
+    if (!Array.isArray(this.formData.assigned_roles)) {
+      this.formData.assigned_roles = [];
+    }
+    const idx = this.formData.assigned_roles.indexOf(roleCode);
+    if (idx >= 0) {
+      this.formData.assigned_roles.splice(idx, 1);
+    } else {
+      this.formData.assigned_roles.push(roleCode);
+    }
+  }
+
+  removeAssignedRole(roleCode: string): void {
+    if (!Array.isArray(this.formData.assigned_roles)) return;
+    this.formData.assigned_roles = this.formData.assigned_roles.filter((r: string) => r !== roleCode);
+  }
+
+  clearAdditionalRoles(): void {
+    this.formData.assigned_roles = [];
+  }
+
+  getRoleLabel(roleCode: string): string {
+    const found = this.roleOptions.find(o => o.value === roleCode);
+    return found ? found.label : roleCode;
+  }
+
+  get totalRolesCount(): number {
+    const additional = Array.isArray(this.formData.assigned_roles) ? this.formData.assigned_roles.length : 0;
+    return this.formData.primary_role ? additional + 1 : additional;
+  }
+
+  onPrimaryRoleChange(newRole: string): void {
+    this.formData.primary_role = newRole;
+    if (Array.isArray(this.formData.assigned_roles)) {
+      this.formData.assigned_roles = this.formData.assigned_roles.filter((r: string) => r !== newRole);
+    }
+  }
 
   departmentOptions: SelectOption[] = [
     { value: 'Executive Management', label: 'Executive Management' },
@@ -346,6 +519,7 @@ export class UserFormComponent implements OnInit {
   ];
 
   ngOnInit(): void {
+    this.loadRoles();
     this.loadManagerOptions();
     if (this.route.snapshot.queryParamMap.get('returnTo') === '/security/privileged-accounts') {
       this.returnRoute = '/security/privileged-accounts';
@@ -356,6 +530,24 @@ export class UserFormComponent implements OnInit {
       this.isEditMode = true;
       this.loadUserData(this.userId);
     }
+  }
+
+  loadRoles(): void {
+    this.service.getRoles({ limit: 100 }).subscribe({
+      next: (res) => {
+        if (res.items && res.items.length > 0) {
+          const dynamicRoles: SelectOption[] = res.items.map(r => ({
+            value: r.role_code,
+            label: r.role_name,
+            subLabel: r.department ? `${r.department} • ${r.role_code}` : r.role_code
+          }));
+          const existingCodes = new Set(dynamicRoles.map(d => d.value));
+          const fallbackRoles = this.roleOptions.filter(r => !existingCodes.has(r.value));
+          this.roleOptions = [...dynamicRoles, ...fallbackRoles];
+        }
+      },
+      error: (err) => console.error('Failed to load dynamic roles', err)
+    });
   }
 
   loadManagerOptions(): void {
@@ -388,6 +580,7 @@ export class UserFormComponent implements OnInit {
           department_name: user.department_name || '',
           designation: user.designation || '',
           primary_role: user.primary_role || 'PROJECT_MGR',
+          assigned_roles: Array.isArray(user.assigned_roles) ? [...user.assigned_roles] : [],
           reporting_manager: user.reporting_manager || '',
           employee_id: user.employee_id || '',
           phone_number: user.phone_number || '',

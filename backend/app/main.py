@@ -22,6 +22,8 @@ import app.modules.accounts.models
 import app.modules.handover.models
 import app.modules.operations.models
 import app.modules.hrms.models
+import app.modules.hrms.workflow_models
+import app.modules.hrms.statutory_models
 import app.modules.tax.models
 import app.modules.governance.models
 import app.modules.legal.models

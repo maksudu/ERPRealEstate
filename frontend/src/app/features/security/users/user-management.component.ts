@@ -115,8 +115,17 @@ import { SearchableSelectComponent, SelectOption } from '../../../shared/compone
                       <div class="font-medium text-slate-800 dark:text-slate-200">{{ item.department_name }}</div>
                       <div class="text-[10px] text-slate-400">{{ item.designation }}</div>
                     </td>
-                    <td class="p-3 font-medium text-indigo-600 dark:text-indigo-400">
-                      {{ item.primary_role }}
+                    <td class="p-3">
+                      <div class="font-medium text-indigo-600 dark:text-indigo-400">{{ item.primary_role }}</div>
+                      @if (item.assigned_roles && item.assigned_roles.length > 0) {
+                        <div class="flex flex-wrap gap-1 mt-1">
+                          @for (r of item.assigned_roles; track r) {
+                            <span class="px-1.5 py-0.2 rounded text-[9px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 font-normal">
+                              +{{ r }}
+                            </span>
+                          }
+                        </div>
+                      }
                     </td>
                     <td class="p-3 text-center">
                       <span

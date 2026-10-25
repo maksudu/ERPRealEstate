@@ -2527,105 +2527,13 @@ export const routes: Routes = [
       // 12. Workflow & Approvals Routes
       {
         path: 'hrms/workflow',
-        redirectTo: 'hrms/workflow/matrix',
-        pathMatch: 'full'
-      },
-      {
-        path: 'hrms/workflow/matrix',
-        loadComponent: () => import('./features/hrms/workflow/workflow-approvals.component').then(m => m.WorkflowApprovalsComponent),
-        title: 'Approval Matrix '
-      },
-      {
-        path: 'hrms/workflow/leaves',
-        loadComponent: () => import('./features/hrms/workflow/workflow-approvals.component').then(m => m.WorkflowApprovalsComponent),
-        title: 'Leave Approval '
-      },
-      {
-        path: 'hrms/workflow/overtime',
-        loadComponent: () => import('./features/hrms/workflow/workflow-approvals.component').then(m => m.WorkflowApprovalsComponent),
-        title: 'Overtime Approval '
-      },
-      {
-        path: 'hrms/workflow/attendance',
-        loadComponent: () => import('./features/hrms/workflow/workflow-approvals.component').then(m => m.WorkflowApprovalsComponent),
-        title: 'Attendance Correction Approval '
-      },
-      {
-        path: 'hrms/workflow/recruitment',
-        loadComponent: () => import('./features/hrms/workflow/workflow-approvals.component').then(m => m.WorkflowApprovalsComponent),
-        title: 'Recruitment Approval '
-      },
-      {
-        path: 'hrms/workflow/salary-revisions',
-        loadComponent: () => import('./features/hrms/workflow/workflow-approvals.component').then(m => m.WorkflowApprovalsComponent),
-        title: 'Salary Revision Approval '
-      },
-      {
-        path: 'hrms/workflow/payroll',
-        loadComponent: () => import('./features/hrms/workflow/workflow-approvals.component').then(m => m.WorkflowApprovalsComponent),
-        title: 'Payroll Approval '
-      },
-      {
-        path: 'hrms/workflow/expenses',
-        loadComponent: () => import('./features/hrms/workflow/workflow-approvals.component').then(m => m.WorkflowApprovalsComponent),
-        title: 'Expense Approval '
-      },
-      {
-        path: 'hrms/workflow/delegation',
-        loadComponent: () => import('./features/hrms/workflow/workflow-approvals.component').then(m => m.WorkflowApprovalsComponent),
-        title: 'Delegation '
-      },
-      {
-        path: 'hrms/workflow/history',
-        loadComponent: () => import('./features/hrms/workflow/workflow-approvals.component').then(m => m.WorkflowApprovalsComponent),
-        title: 'Approval History '
+        loadChildren: () => import('./features/hrms/workflow/workflow.routes').then(m => m.WORKFLOW_ROUTES)
       },
 
-      // 13. Statutory, Tax & Compliance Routes
+      // 13. Statutory, Tax & Compliance Routes (Modular Subsystem)
       {
         path: 'hrms/statutory',
-        redirectTo: 'hrms/statutory/tax-config',
-        pathMatch: 'full'
-      },
-      {
-        path: 'hrms/statutory/tax-config',
-        loadComponent: () => import('./features/hrms/statutory/statutory-compliance.component').then(m => m.StatutoryComplianceComponent),
-        title: 'Tax Configuration '
-      },
-      {
-        path: 'hrms/statutory/tax-deductions',
-        loadComponent: () => import('./features/hrms/statutory/statutory-compliance.component').then(m => m.StatutoryComplianceComponent),
-        title: 'Tax Deduction Records '
-      },
-      {
-        path: 'hrms/statutory/tax-certificates',
-        loadComponent: () => import('./features/hrms/statutory/statutory-compliance.component').then(m => m.StatutoryComplianceComponent),
-        title: 'Tax Certificates '
-      },
-      {
-        path: 'hrms/statutory/registers',
-        loadComponent: () => import('./features/hrms/statutory/statutory-compliance.component').then(m => m.StatutoryComplianceComponent),
-        title: 'Statutory Registers '
-      },
-      {
-        path: 'hrms/statutory/contracts',
-        loadComponent: () => import('./features/hrms/statutory/statutory-compliance.component').then(m => m.StatutoryComplianceComponent),
-        title: 'Employment Contracts '
-      },
-      {
-        path: 'hrms/statutory/policies',
-        loadComponent: () => import('./features/hrms/statutory/statutory-compliance.component').then(m => m.StatutoryComplianceComponent),
-        title: 'Policy Acknowledgment '
-      },
-      {
-        path: 'hrms/statutory/calendar',
-        loadComponent: () => import('./features/hrms/statutory/statutory-compliance.component').then(m => m.StatutoryComplianceComponent),
-        title: 'Compliance Calendar '
-      },
-      {
-        path: 'hrms/statutory/audit-documents',
-        loadComponent: () => import('./features/hrms/statutory/statutory-compliance.component').then(m => m.StatutoryComplianceComponent),
-        title: 'Audit Documents '
+        loadChildren: () => import('./features/hrms/statutory/statutory.routes').then(m => m.STATUTORY_ROUTES)
       },
 
       // 14. Project-wise HR & Cost Allocation Routes

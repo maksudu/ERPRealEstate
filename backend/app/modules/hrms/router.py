@@ -9905,3 +9905,13 @@ router.include_router(reports_router)
 from app.modules.hrms.ess_api import router as ess_router
 
 router.include_router(ess_router)
+
+from app.modules.hrms.workflow_router import router as workflow_router
+
+router.include_router(workflow_router)
+
+from app.modules.hrms.statutory_router import router as statutory_router
+
+router.include_router(statutory_router)
+
+

@@ -69,6 +69,7 @@ export class SearchableSelectComponent implements OnInit, ControlValueAccessor {
   @Output() selectionChange = new EventEmitter<any>();
   @Output() valueChange = new EventEmitter<any>();
   @Output() createNew = new EventEmitter<void>();
+  @Output() itemCreated = new EventEmitter<string>();
 
   // State Signals
   items = signal<LookupItem[]>([]);
@@ -207,6 +208,14 @@ export class SearchableSelectComponent implements OnInit, ControlValueAccessor {
   openQuickCreateModal(event: MouseEvent): void {
     event.stopPropagation();
     this.isOpen.set(false);
+
+    if (this.itemCreated.observed) {
+      const val = prompt('Enter new item name:');
+      if (val && val.trim()) {
+        this.itemCreated.emit(val.trim());
+      }
+      return;
+    }
 
     if (this.createNew.observed) {
       this.createNew.emit();
