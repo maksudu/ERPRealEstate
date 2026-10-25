@@ -1,5 +1,5 @@
 from sqlalchemy import (
-    Column, BigInteger, String, Numeric, Boolean, Integer, Date, Time, ForeignKey, TIMESTAMP, Text, JSON, Index, func
+    Column, BigInteger, String, Numeric, Boolean, Integer, Date, Time, ForeignKey, TIMESTAMP, Text, JSON, Index, UniqueConstraint, func
 )
 from sqlalchemy.orm import relationship
 from app.core.database import Base
@@ -902,6 +902,9 @@ class OvertimeRequest(Base):
     organization_id = Column(BigInteger, ForeignKey("sys_organizations.id", ondelete="RESTRICT"), nullable=False, default=1, index=True)
     employee_id = Column(BigInteger, ForeignKey("hr_employees.id", ondelete="CASCADE"), nullable=False, index=True)
     project_id = Column(BigInteger, ForeignKey("prj_projects.id", ondelete="SET NULL"), nullable=True, index=True)
+    tower_id = Column(BigInteger, ForeignKey("prj_towers.id", ondelete="SET NULL"), nullable=True, index=True)
+    work_package = Column(String(100), nullable=True) # e.g. "Civil Works - Tower B Level 4"
+    cost_center = Column(String(64), nullable=True)
     
     ot_date = Column(Date, nullable=False, index=True)
     ot_type = Column(String(32), nullable=False, default="NORMAL_OT") # NORMAL_OT, WEEKEND_OT, HOLIDAY_OT
@@ -1200,7 +1203,12 @@ class PayrollPayslip(Base):
     house_rent = Column(Numeric(14, 2), nullable=False, default=0.00)
     medical_allowance = Column(Numeric(14, 2), nullable=False, default=0.00)
     conveyance_allowance = Column(Numeric(14, 2), nullable=False, default=0.00)
+    food_allowance = Column(Numeric(14, 2), nullable=False, default=0.00)
+    mobile_allowance = Column(Numeric(14, 2), nullable=False, default=0.00)
+    site_hazard_allowance = Column(Numeric(14, 2), nullable=False, default=0.00)
     other_allowances = Column(Numeric(14, 2), nullable=False, default=0.00)
+    payable_days = Column(Numeric(5, 2), nullable=False, default=30.00)
+    proration_factor = Column(Numeric(5, 4), nullable=False, default=1.0000)
     overtime_hours = Column(Numeric(6, 2), nullable=False, default=0.00)
     overtime_amount = Column(Numeric(14, 2), nullable=False, default=0.00)
     bonus_amount = Column(Numeric(14, 2), nullable=False, default=0.00)
@@ -1365,3 +1373,262 @@ class RecruitmentRecord(Base):
     details = Column(JSON, nullable=False, default=dict)
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
+
+
+class RecruitmentApplication(Base):
+    """Relational candidate journey linked to the compatibility recruitment register."""
+    __tablename__ = "hr_recruitment_applications"
+    __table_args__ = (
+        UniqueConstraint("organization_id", "requisition_id", "candidate_id", name="uq_hr_recruitment_application_candidate"),
+        UniqueConstraint("employee_id", name="uq_hr_recruitment_application_employee"),
+        UniqueConstraint("conversion_candidate_id", name="uq_hr_recruitment_conversion_candidate"),
+        Index("ix_hr_recruitment_application_org_stage", "organization_id", "stage"),
+    )
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    organization_id = Column(BigInteger, ForeignKey("sys_organizations.id", ondelete="RESTRICT"), nullable=False, index=True)
+    requisition_id = Column(BigInteger, ForeignKey("hr_recruitment_records.id", ondelete="RESTRICT"), nullable=False, index=True)
+    candidate_id = Column(BigInteger, ForeignKey("hr_recruitment_records.id", ondelete="RESTRICT"), nullable=False, index=True)
+    stage = Column(String(32), nullable=False, default="APPLIED", index=True)
+    source = Column(String(80), nullable=True)
+    assessment = Column(JSON, nullable=False, default=list)
+    offer_salary = Column(Numeric(12, 2), nullable=True)
+    offer_terms = Column(Text, nullable=True)
+    offer_approval_status = Column(String(24), nullable=False, default="NOT_SUBMITTED")
+    offer_approved_by_id = Column(BigInteger, ForeignKey("sys_users.id", ondelete="SET NULL"), nullable=True)
+    offer_approved_at = Column(TIMESTAMP, nullable=True)
+    hire_cost = Column(Numeric(12, 2), nullable=False, default=0)
+    employee_id = Column(BigInteger, ForeignKey("hr_employees.id", ondelete="RESTRICT"), nullable=True)
+    conversion_candidate_id = Column(BigInteger, ForeignKey("hr_recruitment_records.id", ondelete="RESTRICT"), nullable=True)
+    created_at = Column(TIMESTAMP, server_default=func.now())
+    updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
+
+
+class RecruitmentApplicationEvent(Base):
+    """Append-only audit trail for candidate stage and approval actions."""
+    __tablename__ = "hr_recruitment_application_events"
+    __table_args__ = (Index("ix_hr_recruitment_event_org_application", "organization_id", "application_id"),)
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    organization_id = Column(BigInteger, ForeignKey("sys_organizations.id", ondelete="RESTRICT"), nullable=False, index=True)
+    application_id = Column(BigInteger, ForeignKey("hr_recruitment_applications.id", ondelete="CASCADE"), nullable=False)
+    actor_id = Column(BigInteger, ForeignKey("sys_users.id", ondelete="SET NULL"), nullable=True)
+    action = Column(String(40), nullable=False)
+    from_stage = Column(String(32), nullable=True)
+    to_stage = Column(String(32), nullable=True)
+    details = Column(JSON, nullable=False, default=dict)
+    created_at = Column(TIMESTAMP, server_default=func.now())
+
+
+class RecruitmentOnboardingTask(Base):
+    __tablename__ = "hr_recruitment_onboarding_tasks"
+    __table_args__ = (Index("ix_hr_onboarding_task_org_status", "organization_id", "status"),)
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    organization_id = Column(BigInteger, ForeignKey("sys_organizations.id", ondelete="RESTRICT"), nullable=False, index=True)
+    application_id = Column(BigInteger, ForeignKey("hr_recruitment_applications.id", ondelete="CASCADE"), nullable=False, index=True)
+    title = Column(String(160), nullable=False)
+    status = Column(String(24), nullable=False, default="OPEN")
+    due_date = Column(Date, nullable=True)
+    completed_at = Column(TIMESTAMP, nullable=True)
+    owner_id = Column(BigInteger, ForeignKey("sys_users.id", ondelete="SET NULL"), nullable=True)
+    notes = Column(Text, nullable=True)
+    created_at = Column(TIMESTAMP, server_default=func.now())
+
+
+class PerformanceRecord(Base):
+    __tablename__ = "hr_performance_records"
+    __table_args__ = (
+        UniqueConstraint("organization_id", "record_type", "reference", name="uq_hr_performance_reference"),
+        Index("ix_hr_performance_org_type_status", "organization_id", "record_type", "status"),
+        Index("ix_hr_performance_org_employee", "organization_id", "employee_id"),
+        Index("ix_hr_performance_org_fy", "organization_id", "fiscal_year"),
+    )
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    organization_id = Column(BigInteger, ForeignKey("sys_organizations.id", ondelete="RESTRICT"), nullable=False, index=True)
+    record_type = Column(String(32), nullable=False)
+    reference = Column(String(40), nullable=False)
+    employee_id = Column(BigInteger, ForeignKey("hr_employees.id", ondelete="RESTRICT"), nullable=True, index=True)
+    title = Column(String(180), nullable=False)
+    status = Column(String(24), nullable=False, default="DRAFT", index=True)
+    fiscal_year = Column(String(9), nullable=True)
+    period_start = Column(Date, nullable=True)
+    period_end = Column(Date, nullable=True)
+    due_date = Column(Date, nullable=True)
+    score = Column(Numeric(5, 2), nullable=True)
+    details = Column(JSON, nullable=False, default=dict)
+    created_by_id = Column(BigInteger, ForeignKey("sys_users.id", ondelete="SET NULL"), nullable=True)
+    approved_by_id = Column(BigInteger, ForeignKey("sys_users.id", ondelete="SET NULL"), nullable=True)
+    reviewed_by_id = Column(BigInteger, ForeignKey("sys_users.id", ondelete="SET NULL"), nullable=True)
+    reviewed_at = Column(TIMESTAMP, nullable=True)
+    review_remarks = Column(Text, nullable=True)
+    approved_at = Column(TIMESTAMP, nullable=True)
+    created_at = Column(TIMESTAMP, server_default=func.now())
+    updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
+
+
+class ProjectSalaryCostAllocation(Base):
+    """
+    5.11 Project-wise Salary & Labour Cost Allocation
+    Allocates employee gross/net earnings across projects, towers, WBS activities, and cost centers.
+    """
+    __tablename__ = "hr_project_cost_allocations"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    organization_id = Column(BigInteger, ForeignKey("sys_organizations.id", ondelete="RESTRICT"), nullable=False, default=1, index=True)
+    payroll_period_id = Column(BigInteger, ForeignKey("hr_payroll_periods.id", ondelete="CASCADE"), nullable=False, index=True)
+    employee_id = Column(BigInteger, ForeignKey("hr_employees.id", ondelete="CASCADE"), nullable=False, index=True)
+    project_id = Column(BigInteger, ForeignKey("prj_projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    tower_id = Column(BigInteger, ForeignKey("prj_towers.id", ondelete="SET NULL"), nullable=True, index=True)
+    
+    cost_center = Column(String(64), nullable=False, default="CONSTRUCTION_LABOUR")
+    wbs_activity = Column(String(100), nullable=True) # e.g. "Civil Foundation", "Structural Casting"
+    allocation_method = Column(String(32), nullable=False, default="PERCENTAGE") # DIRECT, PERCENTAGE, TIMESHEET, ATTENDANCE, OVERHEAD
+    
+    allocation_percent = Column(Numeric(5, 2), nullable=False, default=100.00) # Must sum to 100% per employee/period
+    allocated_amount = Column(Numeric(14, 2), nullable=False, default=0.00)
+    hours_worked = Column(Numeric(6, 2), nullable=True, default=0.00)
+    
+    voucher_id = Column(BigInteger, nullable=True) # Integrated Accounting Journal Voucher ID
+    status = Column(String(20), nullable=False, default="POSTED")
+    remarks = Column(Text, nullable=True)
+
+    created_at = Column(TIMESTAMP, server_default=func.now())
+    updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
+
+    period = relationship("PayrollPeriod")
+    employee = relationship("Employee")
+    project = relationship("Project")
+    tower = relationship("Tower")
+
+
+class EmployeeSeparation(Base):
+    """
+    10.1 - 10.11 Employee Separation & Full & Final Settlement (FnF)
+    Covers resignations, notice periods, terminations, exit interviews, clearances,
+    loan/leave settlements, final salary computations, approvals, and experience certificates.
+    """
+    __tablename__ = "hr_employee_separations"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    organization_id = Column(BigInteger, ForeignKey("sys_organizations.id", ondelete="RESTRICT"), nullable=False, default=1, index=True)
+    employee_id = Column(BigInteger, ForeignKey("hr_employees.id", ondelete="CASCADE"), nullable=False, index=True)
+    separation_ref = Column(String(50), nullable=False, unique=True, index=True)
+    section_type = Column(String(50), nullable=False, index=True) # resignations, notice-periods, terminations, exit-interviews, asset-clearances, dept-clearances, loan-settlements, leave-settlements, final-salaries, settlement-approvals, experience-certificates
+    
+    # Dates & Notice compliance
+    submission_date = Column(Date, nullable=False, default=func.current_date())
+    notice_start_date = Column(Date, nullable=True)
+    notice_end_date = Column(Date, nullable=True)
+    notice_days = Column(Integer, nullable=False, default=30)
+    last_working_day = Column(Date, nullable=True)
+    
+    # Reasons & Categories
+    separation_type = Column(String(50), nullable=False, default="RESIGNATION") # RESIGNATION, TERMINATION, RETIREMENT, CONTRACT_END
+    reason = Column(Text, nullable=True)
+    exit_interview_notes = Column(Text, nullable=True)
+    
+    # Clearances & Department Signoffs
+    asset_clearance_status = Column(String(32), nullable=False, default="PENDING") # PENDING, CLEARED, DISPUTED
+    dept_clearance_status = Column(String(32), nullable=False, default="PENDING") # PENDING, CLEARED, DISPUTED
+    
+    # Financials (Full & Final - FnF)
+    final_salary_amount = Column(Numeric(14, 2), nullable=False, default=0.00)
+    leave_encashment_amount = Column(Numeric(14, 2), nullable=False, default=0.00)
+    gratuity_amount = Column(Numeric(14, 2), nullable=False, default=0.00)
+    provident_fund_settlement = Column(Numeric(14, 2), nullable=False, default=0.00)
+    loan_deduction = Column(Numeric(14, 2), nullable=False, default=0.00)
+    other_deductions = Column(Numeric(14, 2), nullable=False, default=0.00)
+    net_payable_amount = Column(Numeric(14, 2), nullable=False, default=0.00)
+    
+    # Approvals & Certificates
+    approval_status = Column(String(32), nullable=False, default="PENDING") # PENDING, APPROVED, REJECTED
+    approved_by_id = Column(BigInteger, ForeignKey("sys_users.id", ondelete="SET NULL"), nullable=True)
+    approved_at = Column(TIMESTAMP, nullable=True)
+    certificate_number = Column(String(100), nullable=True)
+    certificate_issued = Column(Boolean, nullable=False, default=False)
+    certificate_issue_date = Column(Date, nullable=True)
+    
+    status = Column(String(32), nullable=False, default="ACTIVE") # ACTIVE, IN_REVIEW, COMPLETED, CANCELLED
+    notes = Column(Text, nullable=True)
+
+    created_at = Column(TIMESTAMP, server_default=func.now())
+    updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
+
+    employee = relationship("Employee")
+    approved_by = relationship("User", foreign_keys=[approved_by_id])
+
+
+class EmployeeTransferHistory(Base):
+    __tablename__ = "hr_employee_transfer_history"
+    __table_args__ = (Index("ix_hr_transfer_org_employee_effective", "organization_id", "employee_id", "effective_date"),)
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    organization_id = Column(BigInteger, ForeignKey("sys_organizations.id", ondelete="RESTRICT"), nullable=False, index=True)
+    employee_id = Column(BigInteger, ForeignKey("hr_employees.id", ondelete="CASCADE"), nullable=False, index=True)
+    effective_date = Column(Date, nullable=False)
+    old_department_id = Column(BigInteger, nullable=True)
+    new_department_id = Column(BigInteger, nullable=True)
+    old_branch_id = Column(BigInteger, nullable=True)
+    new_branch_id = Column(BigInteger, nullable=True)
+    old_designation_id = Column(BigInteger, nullable=True)
+    new_designation_id = Column(BigInteger, nullable=True)
+    old_project_id = Column(BigInteger, nullable=True)
+    new_project_id = Column(BigInteger, nullable=True)
+    reason = Column(Text, nullable=True)
+    actor_id = Column(BigInteger, ForeignKey("sys_users.id", ondelete="SET NULL"), nullable=True)
+    created_at = Column(TIMESTAMP, server_default=func.now(), nullable=False)
+
+    employee = relationship("Employee")
+
+
+class HRReportExportAudit(Base):
+    __tablename__ = "hr_report_export_audits"
+    __table_args__ = (Index("ix_hr_report_export_org_created", "organization_id", "created_at"),)
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    organization_id = Column(BigInteger, ForeignKey("sys_organizations.id", ondelete="RESTRICT"), nullable=False, index=True)
+    user_id = Column(BigInteger, ForeignKey("sys_users.id", ondelete="SET NULL"), nullable=True, index=True)
+    report_type = Column(String(40), nullable=False)
+    filters = Column(JSON, nullable=False, default=dict)
+    export_format = Column(String(12), nullable=False)
+    row_count = Column(Integer, nullable=False, default=0)
+    allowed = Column(Boolean, nullable=False)
+    outcome = Column(String(20), nullable=False, default="SUCCESS", server_default="SUCCESS")
+    reason = Column(Text, nullable=True)
+    created_at = Column(TIMESTAMP, server_default=func.now(), nullable=False)
+
+
+class ESSRecord(Base):
+    __tablename__ = "hr_ess_records"
+    __table_args__ = (
+        UniqueConstraint("organization_id", "record_type", "reference", name="uq_hr_ess_reference"),
+        Index("ix_hr_ess_org_type_status", "organization_id", "record_type", "status"),
+        Index("ix_hr_ess_org_employee", "organization_id", "employee_id"),
+    )
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    organization_id = Column(BigInteger, ForeignKey("sys_organizations.id", ondelete="RESTRICT"), nullable=False, index=True)
+    employee_id = Column(BigInteger, ForeignKey("hr_employees.id", ondelete="SET NULL"), nullable=True, index=True)
+    record_type = Column(String(32), nullable=False)
+    reference = Column(String(40), nullable=False)
+    title = Column(String(255), nullable=False)
+    category = Column(String(64), nullable=False)
+    description = Column(Text, nullable=True)
+    amount = Column(Numeric(14, 2), nullable=False, default=0.00)
+    record_date = Column(Date, nullable=True)
+    status = Column(String(32), nullable=False, default="PENDING")
+    priority = Column(String(32), nullable=False, default="MEDIUM")
+    attachment_url = Column(String(255), nullable=True)
+    extra_info = Column(String(255), nullable=True)
+    created_by_id = Column(BigInteger, ForeignKey("sys_users.id", ondelete="SET NULL"), nullable=True)
+    approved_by_id = Column(BigInteger, ForeignKey("sys_users.id", ondelete="SET NULL"), nullable=True)
+    approval_remarks = Column(Text, nullable=True)
+    created_at = Column(TIMESTAMP, server_default=func.now())
+    updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
+
+    employee = relationship("Employee")
+    created_by = relationship("User", foreign_keys=[created_by_id])
+    approved_by = relationship("User", foreign_keys=[approved_by_id])
+

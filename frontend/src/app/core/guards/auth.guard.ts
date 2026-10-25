@@ -17,7 +17,7 @@ export const loginGuard: CanActivateFn = () => {
   const router = inject(Router);
 
   if (authService.isAuthenticated()) {
-    return router.createUrlTree(['/settings/lookups']);
+    return router.createUrlTree(['/dashboard']);
   }
   return true;
 };

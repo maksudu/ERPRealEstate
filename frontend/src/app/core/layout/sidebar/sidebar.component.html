@@ -123,19 +123,69 @@
                     @if (isSubGroupExpanded(subGroup.id)) {
                       <div class="px-2 py-1 space-y-0.5 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 animate-fadeIn">
                         @for (item of subGroup.items; track item.id) {
-                          <a
-                            [routerLink]="item.route"
-                            [queryParams]="item.queryParams || {}"
-                            routerLinkActive="bg-blue-50 text-blue-700 font-bold dark:bg-blue-950/40 dark:text-blue-300"
-                            class="flex items-center justify-between px-2 py-1.5 text-[11px] rounded-md text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200 transition-colors"
-                          >
-                            <span class="truncate">{{ item.label }}</span>
-                            @if (item.badge) {
-                              <span class="px-1.5 py-0.2 rounded text-[8px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 shrink-0">
-                                {{ item.badge }}
-                              </span>
-                            }
-                          </a>
+                          @if (item.children && item.children.length > 0) {
+                            <!-- Expandable Sub-Item (e.g., Report categories) -->
+                            <div class="border border-slate-100 dark:border-slate-800 rounded-md overflow-hidden bg-slate-50/50 dark:bg-slate-850/50 my-0.5">
+                              <button
+                                type="button"
+                                (click)="toggleSubItem(item.id)"
+                                class="w-full flex items-center justify-between px-2.5 py-1.5 text-[11px] font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-slate-800/70 transition-colors text-left cursor-pointer"
+                                [class.text-blue-700]="isSubItemExpanded(item.id)"
+                                [class.dark:text-blue-300]="isSubItemExpanded(item.id)"
+                              >
+                                <span class="truncate font-semibold text-blue-900 dark:text-blue-300">{{ item.label }}</span>
+                                <div class="flex items-center gap-1 shrink-0">
+                                  <span class="text-[9px] font-mono text-slate-400">
+                                    {{ item.children.length }}
+                                  </span>
+                                  <svg 
+                                    class="w-3 h-3 text-slate-400 transition-transform duration-200"
+                                    [class.rotate-90]="isSubItemExpanded(item.id)"
+                                    fill="none" 
+                                    stroke="currentColor" 
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                  </svg>
+                                </div>
+                              </button>
+
+                              @if (isSubItemExpanded(item.id)) {
+                                <div class="px-1.5 py-1 space-y-0.5 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 animate-fadeIn">
+                                  @for (child of item.children; track child.id) {
+                                    <a
+                                      [routerLink]="child.route"
+                                      [queryParams]="child.queryParams || {}"
+                                      [routerLinkActiveOptions]="child.exact !== undefined ? { exact: child.exact } : (child.queryParams ? { matrixParams: 'ignored', queryParams: 'exact', paths: 'exact', fragment: 'ignored' } : { exact: false })"
+                                      routerLinkActive="bg-blue-50 text-blue-700 font-bold dark:bg-blue-950/40 dark:text-blue-300"
+                                      class="flex items-center justify-between px-2 py-1 text-[10.5px] rounded-md text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200 transition-colors"
+                                    >
+                                      <span class="truncate">{{ child.label }}</span>
+                                      @if (child.badge) {
+                                        <span class="px-1.5 py-0.2 rounded text-[8px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300">
+                                          {{ child.badge }}
+                                        </span>
+                                      }
+                                    </a>
+                                  }
+                                </div>
+                              }
+                            </div>
+                          } @else {
+                            <a
+                              [routerLink]="item.route"
+                              [queryParams]="item.queryParams || {}"
+                              routerLinkActive="bg-blue-50 text-blue-700 font-bold dark:bg-blue-950/40 dark:text-blue-300"
+                              class="flex items-center justify-between px-2 py-1.5 text-[11px] rounded-md text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200 transition-colors"
+                            >
+                              <span class="truncate">{{ item.label }}</span>
+                              @if (item.badge) {
+                                <span class="px-1.5 py-0.2 rounded text-[8px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 shrink-0">
+                                  {{ item.badge }}
+                                </span>
+                              }
+                            </a>
+                          }
                         }
                       </div>
                     }

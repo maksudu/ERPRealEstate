@@ -15,7 +15,9 @@ import {
 } from '../../../shared/components';
 import { HrmsPayrollService } from '../../../core/services/hrms-payroll.service';
 import { HrmsEmployeeService } from '../../../core/services/hrms-employee.service';
+import { HrmsPositionService } from '../../../core/services/hrms-position.service';
 import { LookupService } from '../../../core/services/lookup.service';
+import { SalaryGrade, SalaryGradeCreatePayload } from '../../../core/models/hrms-position.model';
 import {
   SalaryComponent,
   SalaryComponentCreate,
@@ -59,6 +61,7 @@ export class PayrollManagementComponent implements OnInit {
   private route = inject(ActivatedRoute);
   payrollService = inject(HrmsPayrollService);
   employeeService = inject(HrmsEmployeeService);
+  posService = inject(HrmsPositionService);
   lookupService = inject(LookupService);
 
   // Expose String constructor for template binding
@@ -68,10 +71,11 @@ export class PayrollManagementComponent implements OnInit {
   activeTab = signal<string>('register');
   tabs: TabItem[] = [
     { id: 'register', label: 'Payroll Register & Workflow', icon: 'M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
-    { id: 'structures', label: 'Salary Components & Structures', icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10' },
+    { id: 'structures', label: 'Salary Grades & Structures', icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10' },
     { id: 'assignments', label: 'Employee Salaries & Increments', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z' },
     { id: 'loans_advances', label: 'Staff Loans & Advances', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
     { id: 'bonuses_tax', label: 'Bonuses & NBR Tax Slabs', icon: 'M13 10V3L4 14h7v7l9-11h-7z' },
+    { id: 'project_allocations', label: 'Project & Site Cost Allocation', icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4' },
     { id: 'settings', label: 'Dynamic Lookups & Codes', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z' }
   ];
 
@@ -170,6 +174,31 @@ export class PayrollManagementComponent implements OnInit {
     items: []
   });
 
+  // 4.1 Salary Grade / Pay Band Modal
+  isGradeModalOpen = signal<boolean>(false);
+  editingGradeId = signal<number | null>(null);
+  gradeForm = signal<SalaryGradeCreatePayload>({
+    grade_code: '',
+    grade_name: '',
+    employee_level: 'EXECUTIVE',
+    min_salary: 20000,
+    max_salary: 80000,
+    default_house_rent_pct: 50,
+    default_medical_allowance: 2500,
+    default_conveyance: 3000,
+    description: '',
+    is_active: true
+  });
+  employeeLevelOptions = [
+    { value: 'C_SUITE', label: 'Apex Leadership (C-Suite & Board)' },
+    { value: 'DIRECTOR', label: 'Executive Directors & Functional Chiefs' },
+    { value: 'SR_MANAGEMENT', label: 'Senior Management (GM / DGM)' },
+    { value: 'MID_MANAGEMENT', label: 'Mid Management (AGM / Project Managers)' },
+    { value: 'SITE_ENGINEER', label: 'Site Operations & Structural Engineers' },
+    { value: 'OFFICER', label: 'Officers & Technical Executives' },
+    { value: 'SUPPORT_STAFF', label: 'Operational & Support Crew' }
+  ];
+
   // 5. Assign Salary Modal
   isAssignModalOpen = signal<boolean>(false);
   assignForm = signal<EmployeeSalaryCreate>({
@@ -243,7 +272,7 @@ export class PayrollManagementComponent implements OnInit {
   ngOnInit(): void {
     this.route.url.subscribe(segments => {
       const last = segments[segments.length - 1]?.path;
-      if (last === 'structures' || last === 'components') {
+      if (last === 'structures' || last === 'components' || last === 'grades') {
         this.activeTab.set('structures');
       } else if (last === 'assignments' || last === 'increments' || last === 'arrears') {
         this.activeTab.set('assignments');
@@ -309,6 +338,7 @@ export class PayrollManagementComponent implements OnInit {
     } else if (tab === 'structures') {
       this.payrollService.loadSalaryComponents({ component_type: this.compTypeFilter() || undefined }).subscribe();
       this.payrollService.loadSalaryStructures().subscribe();
+      this.posService.loadSalaryGrades().subscribe();
     } else if (tab === 'assignments') {
       this.loadAssignments();
       this.loadRevisions();
@@ -318,9 +348,43 @@ export class PayrollManagementComponent implements OnInit {
     } else if (tab === 'bonuses_tax') {
       this.loadBonuses();
       this.payrollService.loadTaxSlabs().subscribe();
+    } else if (tab === 'project_allocations') {
+      this.loadCostAllocations();
     } else if (tab === 'settings') {
       this.loadLookupItems();
     }
+  }
+
+  // Cost Allocations State
+  costAllocations = signal<any[]>([]);
+  totalAllocatedCost = signal<number>(0);
+  loadingCostAllocations = signal<boolean>(false);
+
+  loadCostAllocations(): void {
+    const period = this.payrollService.activePeriod();
+    this.loadingCostAllocations.set(true);
+    this.payrollService.loadProjectCostAllocations({
+      payroll_period_id: period ? period.id : undefined
+    }).subscribe({
+      next: (res) => {
+        this.costAllocations.set(res.items);
+        this.totalAllocatedCost.set(res.total_allocated_amount);
+        this.loadingCostAllocations.set(false);
+      },
+      error: () => this.loadingCostAllocations.set(false)
+    });
+  }
+
+  triggerAutoCostAllocation(): void {
+    const period = this.payrollService.activePeriod();
+    if (!period) return;
+    this.payrollService.autoAllocatePeriodProjectCosts(period.id).subscribe({
+      next: (res) => {
+        this.showSuccess(res.message);
+        this.loadCostAllocations();
+      },
+      error: (err) => this.showError(err.error?.detail || 'Auto-allocation failed.')
+    });
   }
 
   // -------------------------------------------------------------
@@ -386,7 +450,7 @@ export class PayrollManagementComponent implements OnInit {
     });
   }
 
-  executeWorkflow(action: 'PROCESS' | 'SUBMIT' | 'VERIFY' | 'APPROVE' | 'LOCK' | 'UNLOCK'): void {
+  executeWorkflow(action: 'SIMULATE' | 'PROCESS' | 'SUBMIT' | 'VERIFY' | 'APPROVE' | 'LOCK' | 'UNLOCK'): void {
     const period = this.payrollService.activePeriod();
     if (!period) return;
     this.payrollService.executePayrollWorkflow(period.id, action).subscribe({
@@ -500,6 +564,72 @@ export class PayrollManagementComponent implements OnInit {
         this.loadDropdownData();
       },
       error: (err) => this.showError(err.error?.detail || 'Failed to create structure.')
+    });
+  }
+
+  // --- Salary Grade Methods ---
+  openGradeModal(grade?: SalaryGrade): void {
+    if (grade) {
+      this.editingGradeId.set(grade.id);
+      this.gradeForm.set({
+        grade_code: grade.grade_code,
+        grade_name: grade.grade_name,
+        employee_level: grade.employee_level,
+        min_salary: grade.min_salary,
+        max_salary: grade.max_salary,
+        default_house_rent_pct: grade.default_house_rent_pct,
+        default_medical_allowance: grade.default_medical_allowance,
+        default_conveyance: grade.default_conveyance,
+        description: grade.description || '',
+        is_active: grade.is_active
+      });
+    } else {
+      this.editingGradeId.set(null);
+      this.gradeForm.set({
+        grade_code: `GRADE-0${(this.posService.salaryGrades().length + 1)}`,
+        grade_name: '',
+        employee_level: 'EXECUTIVE',
+        min_salary: 25000,
+        max_salary: 75000,
+        default_house_rent_pct: 50,
+        default_medical_allowance: 2500,
+        default_conveyance: 3000,
+        description: '',
+        is_active: true
+      });
+    }
+    this.isGradeModalOpen.set(true);
+  }
+
+  submitGradeForm(): void {
+    const payload = this.gradeForm();
+    if (!payload.grade_name || !payload.grade_code) {
+      this.showError('Grade code and name are required.');
+      return;
+    }
+    const id = this.editingGradeId();
+    const req = id
+      ? this.posService.updateSalaryGrade(id, payload)
+      : this.posService.createSalaryGrade(payload);
+
+    req.subscribe({
+      next: () => {
+        this.showSuccess(id ? 'Salary Grade updated.' : 'Salary Grade created.');
+        this.isGradeModalOpen.set(false);
+        this.posService.loadSalaryGrades().subscribe();
+      },
+      error: (err) => this.showError(err.error?.detail || 'Failed to save salary grade.')
+    });
+  }
+
+  deleteSalaryGrade(id: number): void {
+    if (!confirm('Are you sure you want to delete this salary grade?')) return;
+    this.posService.deleteSalaryGrade(id).subscribe({
+      next: () => {
+        this.showSuccess('Salary Grade deleted.');
+        this.posService.loadSalaryGrades().subscribe();
+      },
+      error: (err) => this.showError(err.error?.detail || 'Failed to delete salary grade.')
     });
   }
 
@@ -781,6 +911,10 @@ export class PayrollManagementComponent implements OnInit {
 
   updateStructureField<K extends keyof SalaryStructureCreate>(field: K, value: SalaryStructureCreate[K]): void {
     this.structureForm.update(f => ({ ...f, [field]: value }));
+  }
+
+  updateGradeField<K extends keyof SalaryGradeCreatePayload>(field: K, value: SalaryGradeCreatePayload[K]): void {
+    this.gradeForm.update(f => ({ ...f, [field]: value }));
   }
 
   updateAssignField<K extends keyof EmployeeSalaryCreate>(field: K, value: EmployeeSalaryCreate[K]): void {

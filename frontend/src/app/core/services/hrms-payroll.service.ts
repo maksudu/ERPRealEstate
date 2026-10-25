@@ -249,7 +249,7 @@ export class HrmsPayrollService {
     );
   }
 
-  executePayrollWorkflow(periodId: number, action: 'PROCESS' | 'SUBMIT' | 'VERIFY' | 'APPROVE' | 'LOCK' | 'UNLOCK', remarks?: string): Observable<PayrollPeriod> {
+  executePayrollWorkflow(periodId: number, action: 'SIMULATE' | 'PROCESS' | 'SUBMIT' | 'VERIFY' | 'APPROVE' | 'LOCK' | 'UNLOCK', remarks?: string): Observable<PayrollPeriod> {
     return this.http.post<PayrollPeriod>(`${this.apiUrl}/payroll-periods/${periodId}/workflow`, { action, remarks }).pipe(
       tap((updatedPeriod) => {
         this.activePeriod.set(updatedPeriod);
@@ -454,6 +454,26 @@ export class HrmsPayrollService {
         error: () => this.loadingValidation.set(false)
       })
     );
+  }
+
+  // --- 5.11 Project-wise Salary & Labour Cost Allocation API ---
+  loadProjectCostAllocations(filters: { payroll_period_id?: number; project_id?: number; employee_id?: number; limit?: number; offset?: number } = {}): Observable<{ items: any[]; total: number; total_allocated_amount: number }> {
+    let params = new HttpParams();
+    if (filters.payroll_period_id) params = params.set('payroll_period_id', String(filters.payroll_period_id));
+    if (filters.project_id) params = params.set('project_id', String(filters.project_id));
+    if (filters.employee_id) params = params.set('employee_id', String(filters.employee_id));
+    if (filters.limit) params = params.set('limit', String(filters.limit));
+    if (filters.offset) params = params.set('offset', String(filters.offset));
+
+    return this.http.get<{ items: any[]; total: number; total_allocated_amount: number }>(`${this.apiUrl}/cost-allocations`, { params });
+  }
+
+  createProjectCostAllocation(payload: any): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/cost-allocations`, payload);
+  }
+
+  autoAllocatePeriodProjectCosts(periodId: number): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/payroll-periods/${periodId}/auto-allocate-cost`, {});
   }
 }
 

@@ -389,11 +389,11 @@ export class DesignationsComponent implements OnInit {
   }
 
   openCreateGradeModal(): void {
-    this.router.navigate(['/hrms/designations/grades/new']);
+    this.router.navigate(['/hrms/payroll/structures']);
   }
 
   openEditGradeModal(g: SalaryGrade): void {
-    this.router.navigate(['/hrms/designations/grades', g.id, 'edit']);
+    this.router.navigate(['/hrms/payroll/structures']);
   }
 
   saveSalaryGrade(): void {

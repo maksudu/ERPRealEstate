@@ -1,6 +1,20 @@
 import { Routes } from '@angular/router';
 import { authGuard, loginGuard } from './core/guards/auth.guard';
 
+function performanceRoutes(
+  type: string,
+  loadComponent: NonNullable<Routes[number]['loadComponent']>,
+  title: string
+): Routes {
+  const base = `hrms/performance/${type}`;
+  return [
+    { path: `${base}/new`, loadComponent, title: `New ${title}` },
+    { path: `${base}/:id/edit`, loadComponent, title: `Edit ${title}` },
+    { path: `${base}/:id`, loadComponent, title: `${title} Details` },
+    { path: base, loadComponent, pathMatch: 'full', title },
+  ];
+}
+
 export const routes: Routes = [
   {
     path: 'login',
@@ -1627,15 +1641,13 @@ export const routes: Routes = [
       },
       {
         path: 'hrms/designations/grades/new',
-        loadComponent: () => import('./features/hrms/hrms-master-form.component').then(m => m.HrmsMasterFormComponent),
-        data: { formKind: 'grade' },
-        title: 'Create Salary Grade'
+        redirectTo: 'hrms/payroll/structures',
+        pathMatch: 'full'
       },
       {
         path: 'hrms/designations/grades/:id/edit',
-        loadComponent: () => import('./features/hrms/hrms-master-form.component').then(m => m.HrmsMasterFormComponent),
-        data: { formKind: 'grade' },
-        title: 'Edit Salary Grade'
+        redirectTo: 'hrms/payroll/structures',
+        pathMatch: 'full'
       },
       {
         path: 'hrms/designations/new',
@@ -1666,8 +1678,8 @@ export const routes: Routes = [
       },
       {
         path: 'hrms/designations/grades',
-        loadComponent: () => import('./features/hrms/designations/designations.component').then(m => m.DesignationsComponent),
-        title: 'Job Grade '
+        redirectTo: 'hrms/payroll/structures',
+        pathMatch: 'full'
       },
       {
         path: 'hrms/positions',
@@ -2088,27 +2100,23 @@ export const routes: Routes = [
       },
       {
         path: 'hrms/leave/holidays',
-        loadComponent: () => import('./features/hrms/leave/leave-workflow-pages').then(m => m.LeaveHolidaysPageComponent),
-        data: { workflowMode: 'list' },
-        title: 'Holiday Calendar'
+        redirectTo: 'hrms/attendance/holiday-calendar',
+        pathMatch: 'full'
       },
       {
         path: 'hrms/leave/holidays/new',
-        loadComponent: () => import('./features/hrms/leave/leave-workflow-pages').then(m => m.LeaveHolidaysPageComponent),
-        data: { workflowMode: 'new' },
-        title: 'Create Holiday'
+        redirectTo: 'hrms/attendance/holiday-calendar',
+        pathMatch: 'full'
       },
       {
         path: 'hrms/leave/holidays/:id/edit',
-        loadComponent: () => import('./features/hrms/leave/leave-workflow-pages').then(m => m.LeaveHolidaysPageComponent),
-        data: { workflowMode: 'edit' },
-        title: 'Edit Holiday'
+        redirectTo: 'hrms/attendance/holiday-calendar',
+        pathMatch: 'full'
       },
       {
         path: 'hrms/leave/holidays/:id',
-        loadComponent: () => import('./features/hrms/leave/leave-workflow-pages').then(m => m.LeaveHolidaysPageComponent),
-        data: { workflowMode: 'detail' },
-        title: 'Holiday Details'
+        redirectTo: 'hrms/attendance/holiday-calendar',
+        pathMatch: 'full'
       },
 
       // 7. Payroll Management Routes
@@ -2271,56 +2279,16 @@ export const routes: Routes = [
         redirectTo: 'hrms/performance/reviews',
         pathMatch: 'full'
       },
-      {
-        path: 'hrms/performance/kpi-setup',
-        loadComponent: () => import('./features/hrms/performance/performance-development.component').then(m => m.PerformanceDevelopmentComponent),
-        title: 'KPI Setup '
-      },
-      {
-        path: 'hrms/performance/reviews',
-        loadComponent: () => import('./features/hrms/performance/performance-development.component').then(m => m.PerformanceDevelopmentComponent),
-        title: 'Performance Review '
-      },
-      {
-        path: 'hrms/performance/cycles',
-        loadComponent: () => import('./features/hrms/performance/performance-development.component').then(m => m.PerformanceDevelopmentComponent),
-        title: 'Appraisal Cycle '
-      },
-      {
-        path: 'hrms/performance/evaluations',
-        loadComponent: () => import('./features/hrms/performance/performance-development.component').then(m => m.PerformanceDevelopmentComponent),
-        title: 'Manager Evaluation '
-      },
-      {
-        path: 'hrms/performance/self-assessments',
-        loadComponent: () => import('./features/hrms/performance/performance-development.component').then(m => m.PerformanceDevelopmentComponent),
-        title: 'Employee Self-Assessment '
-      },
-      {
-        path: 'hrms/performance/training-plans',
-        loadComponent: () => import('./features/hrms/performance/performance-development.component').then(m => m.PerformanceDevelopmentComponent),
-        title: 'Training Plan '
-      },
-      {
-        path: 'hrms/performance/training-attendance',
-        loadComponent: () => import('./features/hrms/performance/performance-development.component').then(m => m.PerformanceDevelopmentComponent),
-        title: 'Training Attendance '
-      },
-      {
-        path: 'hrms/performance/skill-matrix',
-        loadComponent: () => import('./features/hrms/performance/performance-development.component').then(m => m.PerformanceDevelopmentComponent),
-        title: 'Skill Matrix '
-      },
-      {
-        path: 'hrms/performance/promotions',
-        loadComponent: () => import('./features/hrms/performance/performance-development.component').then(m => m.PerformanceDevelopmentComponent),
-        title: 'Promotion Recommendation '
-      },
-      {
-        path: 'hrms/performance/increments',
-        loadComponent: () => import('./features/hrms/performance/performance-development.component').then(m => m.PerformanceDevelopmentComponent),
-        title: 'Increment Recommendation '
-      },
+      ...performanceRoutes('kpi-setup', () => import('./features/hrms/performance/performance-pages.component').then(m => m.PerformanceKpiSetupPageComponent), 'KPI Setup'),
+      ...performanceRoutes('reviews', () => import('./features/hrms/performance/performance-pages.component').then(m => m.PerformanceReviewsPageComponent), 'Performance Review'),
+      ...performanceRoutes('cycles', () => import('./features/hrms/performance/performance-pages.component').then(m => m.PerformanceCyclesPageComponent), 'Appraisal Cycle'),
+      ...performanceRoutes('evaluations', () => import('./features/hrms/performance/performance-pages.component').then(m => m.PerformanceEvaluationsPageComponent), 'Manager Evaluation'),
+      ...performanceRoutes('self-assessments', () => import('./features/hrms/performance/performance-pages.component').then(m => m.PerformanceSelfAssessmentsPageComponent), 'Employee Self-Assessment'),
+      ...performanceRoutes('training-plans', () => import('./features/hrms/performance/performance-pages.component').then(m => m.PerformanceTrainingPlansPageComponent), 'Training Plan'),
+      ...performanceRoutes('training-attendance', () => import('./features/hrms/performance/performance-pages.component').then(m => m.PerformanceTrainingAttendancePageComponent), 'Training Attendance'),
+      ...performanceRoutes('skill-matrix', () => import('./features/hrms/performance/performance-pages.component').then(m => m.PerformanceSkillMatrixPageComponent), 'Skill Matrix'),
+      ...performanceRoutes('promotions', () => import('./features/hrms/performance/performance-pages.component').then(m => m.PerformancePromotionsPageComponent), 'Promotion Recommendation'),
+      ...performanceRoutes('increments', () => import('./features/hrms/performance/performance-pages.component').then(m => m.PerformanceIncrementsPageComponent), 'Increment Recommendation'),
 
       // 10. Employee Separation Routes
       {
@@ -2330,58 +2298,168 @@ export const routes: Routes = [
       },
       {
         path: 'hrms/separation/resignations',
-        loadComponent: () => import('./features/hrms/separation/employee-separation.component').then(m => m.EmployeeSeparationComponent),
+        loadComponent: () => import('./features/hrms/separation/separation-pages.component').then(m => m.SeparationResignationsComponent),
         title: 'Resignation Request '
       },
       {
+        path: 'hrms/separation/resignations/new',
+        loadComponent: () => import('./features/hrms/separation/separation-pages.component').then(m => m.SeparationResignationsComponent),
+        title: 'New Resignation Request'
+      },
+      {
+        path: 'hrms/separation/resignations/edit/:id',
+        loadComponent: () => import('./features/hrms/separation/separation-pages.component').then(m => m.SeparationResignationsComponent),
+        title: 'Edit Resignation Request'
+      },
+      {
         path: 'hrms/separation/notice-periods',
-        loadComponent: () => import('./features/hrms/separation/employee-separation.component').then(m => m.EmployeeSeparationComponent),
+        loadComponent: () => import('./features/hrms/separation/separation-pages.component').then(m => m.SeparationNoticePeriodsComponent),
         title: 'Notice Period '
       },
       {
+        path: 'hrms/separation/notice-periods/new',
+        loadComponent: () => import('./features/hrms/separation/separation-pages.component').then(m => m.SeparationNoticePeriodsComponent),
+        title: 'Log Notice Period'
+      },
+      {
+        path: 'hrms/separation/notice-periods/edit/:id',
+        loadComponent: () => import('./features/hrms/separation/separation-pages.component').then(m => m.SeparationNoticePeriodsComponent),
+        title: 'Edit Notice Period'
+      },
+      {
         path: 'hrms/separation/terminations',
-        loadComponent: () => import('./features/hrms/separation/employee-separation.component').then(m => m.EmployeeSeparationComponent),
+        loadComponent: () => import('./features/hrms/separation/separation-pages.component').then(m => m.SeparationTerminationsComponent),
         title: 'Termination '
       },
       {
+        path: 'hrms/separation/terminations/new',
+        loadComponent: () => import('./features/hrms/separation/separation-pages.component').then(m => m.SeparationTerminationsComponent),
+        title: 'Initiate Termination'
+      },
+      {
+        path: 'hrms/separation/terminations/edit/:id',
+        loadComponent: () => import('./features/hrms/separation/separation-pages.component').then(m => m.SeparationTerminationsComponent),
+        title: 'Edit Termination'
+      },
+      {
         path: 'hrms/separation/exit-interviews',
-        loadComponent: () => import('./features/hrms/separation/employee-separation.component').then(m => m.EmployeeSeparationComponent),
+        loadComponent: () => import('./features/hrms/separation/separation-pages.component').then(m => m.SeparationExitInterviewsComponent),
         title: 'Exit Interview '
       },
       {
+        path: 'hrms/separation/exit-interviews/new',
+        loadComponent: () => import('./features/hrms/separation/separation-pages.component').then(m => m.SeparationExitInterviewsComponent),
+        title: 'Record Exit Interview'
+      },
+      {
+        path: 'hrms/separation/exit-interviews/edit/:id',
+        loadComponent: () => import('./features/hrms/separation/separation-pages.component').then(m => m.SeparationExitInterviewsComponent),
+        title: 'Edit Exit Interview'
+      },
+      {
         path: 'hrms/separation/asset-clearances',
-        loadComponent: () => import('./features/hrms/separation/employee-separation.component').then(m => m.EmployeeSeparationComponent),
+        loadComponent: () => import('./features/hrms/separation/separation-pages.component').then(m => m.SeparationAssetClearancesComponent),
         title: 'Asset Clearance '
       },
       {
+        path: 'hrms/separation/asset-clearances/new',
+        loadComponent: () => import('./features/hrms/separation/separation-pages.component').then(m => m.SeparationAssetClearancesComponent),
+        title: 'Add Asset Clearance'
+      },
+      {
+        path: 'hrms/separation/asset-clearances/edit/:id',
+        loadComponent: () => import('./features/hrms/separation/separation-pages.component').then(m => m.SeparationAssetClearancesComponent),
+        title: 'Edit Asset Clearance'
+      },
+      {
         path: 'hrms/separation/dept-clearances',
-        loadComponent: () => import('./features/hrms/separation/employee-separation.component').then(m => m.EmployeeSeparationComponent),
+        loadComponent: () => import('./features/hrms/separation/separation-pages.component').then(m => m.SeparationDeptClearancesComponent),
         title: 'Department Clearance '
       },
       {
+        path: 'hrms/separation/dept-clearances/new',
+        loadComponent: () => import('./features/hrms/separation/separation-pages.component').then(m => m.SeparationDeptClearancesComponent),
+        title: 'Record Dept Clearance'
+      },
+      {
+        path: 'hrms/separation/dept-clearances/edit/:id',
+        loadComponent: () => import('./features/hrms/separation/separation-pages.component').then(m => m.SeparationDeptClearancesComponent),
+        title: 'Edit Dept Clearance'
+      },
+      {
         path: 'hrms/separation/loan-settlements',
-        loadComponent: () => import('./features/hrms/separation/employee-separation.component').then(m => m.EmployeeSeparationComponent),
+        loadComponent: () => import('./features/hrms/separation/separation-pages.component').then(m => m.SeparationLoanSettlementsComponent),
         title: 'Loan Settlement '
       },
       {
+        path: 'hrms/separation/loan-settlements/new',
+        loadComponent: () => import('./features/hrms/separation/separation-pages.component').then(m => m.SeparationLoanSettlementsComponent),
+        title: 'Log Loan Settlement'
+      },
+      {
+        path: 'hrms/separation/loan-settlements/edit/:id',
+        loadComponent: () => import('./features/hrms/separation/separation-pages.component').then(m => m.SeparationLoanSettlementsComponent),
+        title: 'Edit Loan Settlement'
+      },
+      {
         path: 'hrms/separation/leave-settlements',
-        loadComponent: () => import('./features/hrms/separation/employee-separation.component').then(m => m.EmployeeSeparationComponent),
+        loadComponent: () => import('./features/hrms/separation/separation-pages.component').then(m => m.SeparationLeaveSettlementsComponent),
         title: 'Leave Settlement '
       },
       {
+        path: 'hrms/separation/leave-settlements/new',
+        loadComponent: () => import('./features/hrms/separation/separation-pages.component').then(m => m.SeparationLeaveSettlementsComponent),
+        title: 'Compute Leave Encashment'
+      },
+      {
+        path: 'hrms/separation/leave-settlements/edit/:id',
+        loadComponent: () => import('./features/hrms/separation/separation-pages.component').then(m => m.SeparationLeaveSettlementsComponent),
+        title: 'Edit Leave Settlement'
+      },
+      {
         path: 'hrms/separation/final-salaries',
-        loadComponent: () => import('./features/hrms/separation/employee-separation.component').then(m => m.EmployeeSeparationComponent),
+        loadComponent: () => import('./features/hrms/separation/separation-pages.component').then(m => m.SeparationFinalSalariesComponent),
         title: 'Final Salary '
       },
       {
+        path: 'hrms/separation/final-salaries/new',
+        loadComponent: () => import('./features/hrms/separation/separation-pages.component').then(m => m.SeparationFinalSalariesComponent),
+        title: 'Calculate Final Salary'
+      },
+      {
+        path: 'hrms/separation/final-salaries/edit/:id',
+        loadComponent: () => import('./features/hrms/separation/separation-pages.component').then(m => m.SeparationFinalSalariesComponent),
+        title: 'Edit Final Salary'
+      },
+      {
         path: 'hrms/separation/settlement-approvals',
-        loadComponent: () => import('./features/hrms/separation/employee-separation.component').then(m => m.EmployeeSeparationComponent),
+        loadComponent: () => import('./features/hrms/separation/separation-pages.component').then(m => m.SeparationSettlementApprovalsComponent),
         title: 'Final Settlement Approval '
       },
       {
+        path: 'hrms/separation/settlement-approvals/new',
+        loadComponent: () => import('./features/hrms/separation/separation-pages.component').then(m => m.SeparationSettlementApprovalsComponent),
+        title: 'Submit Settlement Approval'
+      },
+      {
+        path: 'hrms/separation/settlement-approvals/edit/:id',
+        loadComponent: () => import('./features/hrms/separation/separation-pages.component').then(m => m.SeparationSettlementApprovalsComponent),
+        title: 'Edit Settlement Approval'
+      },
+      {
         path: 'hrms/separation/experience-certificates',
-        loadComponent: () => import('./features/hrms/separation/employee-separation.component').then(m => m.EmployeeSeparationComponent),
+        loadComponent: () => import('./features/hrms/separation/separation-pages.component').then(m => m.SeparationExperienceCertificatesComponent),
         title: 'Experience Certificate '
+      },
+      {
+        path: 'hrms/separation/experience-certificates/new',
+        loadComponent: () => import('./features/hrms/separation/separation-pages.component').then(m => m.SeparationExperienceCertificatesComponent),
+        title: 'Issue Certificate'
+      },
+      {
+        path: 'hrms/separation/experience-certificates/edit/:id',
+        loadComponent: () => import('./features/hrms/separation/separation-pages.component').then(m => m.SeparationExperienceCertificatesComponent),
+        title: 'Edit Certificate'
       },
 
       // 11. Employee Self-Service Routes
@@ -2600,78 +2678,123 @@ export const routes: Routes = [
       // 15. HR Reports & Analytics Routes
       {
         path: 'hrms/reports',
-        redirectTo: 'hrms/reports/employee-register',
+        redirectTo: 'hrms/reports/employee-master',
         pathMatch: 'full'
       },
       {
-        path: 'hrms/reports/employee-register',
+        path: 'hrms/reports/employee-master',
         loadComponent: () => import('./features/hrms/reports/hr-reports.component').then(m => m.HrReportsAnalyticsComponent),
-        title: 'Employee Register '
+        title: 'Employee Master Report'
+      },
+      {
+        path: 'hrms/reports/employee-directory',
+        loadComponent: () => import('./features/hrms/reports/hr-reports.component').then(m => m.HrReportsAnalyticsComponent),
+        title: 'Employee Directory'
+      },
+      {
+        path: 'hrms/reports/employee-headcount',
+        loadComponent: () => import('./features/hrms/reports/hr-reports.component').then(m => m.HrReportsAnalyticsComponent),
+        title: 'Employee Headcount'
+      },
+      {
+        path: 'hrms/reports/new-joining',
+        loadComponent: () => import('./features/hrms/reports/hr-reports.component').then(m => m.HrReportsAnalyticsComponent),
+        title: 'New Joining Report'
+      },
+      {
+        path: 'hrms/reports/resignation-separation',
+        loadComponent: () => import('./features/hrms/reports/hr-reports.component').then(m => m.HrReportsAnalyticsComponent),
+        title: 'Resignation & Separation'
+      },
+      {
+        path: 'hrms/reports/employee-transfer',
+        loadComponent: () => import('./features/hrms/reports/hr-reports.component').then(m => m.HrReportsAnalyticsComponent),
+        title: 'Employee Transfer Report'
+      },
+      {
+        path: 'hrms/reports/promotion-increment',
+        loadComponent: () => import('./features/hrms/reports/hr-reports.component').then(m => m.HrReportsAnalyticsComponent),
+        title: 'Promotion & Increment Report'
+      },
+      {
+        path: 'hrms/reports/document-expiry',
+        loadComponent: () => import('./features/hrms/reports/hr-reports.component').then(m => m.HrReportsAnalyticsComponent),
+        title: 'Employee Document Expiry'
+      },
+      {
+        path: 'hrms/reports/recruitment',
+        loadComponent: () => import('./features/hrms/reports/hr-reports.component').then(m => m.HrReportsAnalyticsComponent),
+        title: 'Recruitment Report'
+      },
+      {
+        path: 'hrms/reports/employee-turnover',
+        loadComponent: () => import('./features/hrms/reports/hr-reports.component').then(m => m.HrReportsAnalyticsComponent),
+        title: 'Employee Turnover Report'
+      },
+      {
+        path: 'hrms/reports/manpower-allocation',
+        loadComponent: () => import('./features/hrms/reports/hr-reports.component').then(m => m.HrReportsAnalyticsComponent),
+        title: 'Manpower Allocation Report'
+      },
+      {
+        path: 'hrms/reports/employee-loan-advance',
+        loadComponent: () => import('./features/hrms/reports/hr-reports.component').then(m => m.HrReportsAnalyticsComponent),
+        title: 'Employee Loan & Advance Report'
+      },
+      {
+        path: 'hrms/reports/employee-register',
+        redirectTo: 'hrms/reports/employee-master',
+        pathMatch: 'full'
       },
       {
         path: 'hrms/reports/headcount-by-dept',
-        loadComponent: () => import('./features/hrms/reports/hr-reports.component').then(m => m.HrReportsAnalyticsComponent),
-        title: 'Headcount by Department '
+        redirectTo: 'hrms/reports/employee-headcount',
+        pathMatch: 'full'
       },
       {
         path: 'hrms/reports/headcount-by-project',
-        loadComponent: () => import('./features/hrms/reports/hr-reports.component').then(m => m.HrReportsAnalyticsComponent),
-        title: 'Headcount by Project '
+        redirectTo: 'hrms/reports/employee-headcount',
+        pathMatch: 'full'
       },
       {
-        path: 'hrms/reports/attendance-register',
-        loadComponent: () => import('./features/hrms/reports/hr-reports.component').then(m => m.HrReportsAnalyticsComponent),
-        title: 'Attendance Register '
+        path: 'hrms/reports/recruitment-report',
+        redirectTo: 'hrms/reports/recruitment',
+        pathMatch: 'full'
       },
       {
-        path: 'hrms/reports/leave-report',
-        loadComponent: () => import('./features/hrms/reports/hr-reports.component').then(m => m.HrReportsAnalyticsComponent),
-        title: 'Leave Report '
+        path: 'hrms/reports/turnover-report',
+        redirectTo: 'hrms/reports/employee-turnover',
+        pathMatch: 'full'
       },
       {
-        path: 'hrms/reports/overtime-report',
-        loadComponent: () => import('./features/hrms/reports/hr-reports.component').then(m => m.HrReportsAnalyticsComponent),
-        title: 'Overtime Report '
+        path: 'hrms/reports/loan-balance',
+        redirectTo: 'hrms/reports/employee-loan-advance',
+        pathMatch: 'full'
+      },
+      {
+        path: 'hrms/reports/project-labour-cost',
+        redirectTo: 'hrms/reports/manpower-allocation',
+        pathMatch: 'full'
       },
       {
         path: 'hrms/reports/payroll-register',
         loadComponent: () => import('./features/hrms/reports/hr-reports.component').then(m => m.HrReportsAnalyticsComponent),
-        title: 'Payroll Register '
+        title: 'Payroll Register · Restricted'
       },
       {
         path: 'hrms/reports/salary-sheet',
         loadComponent: () => import('./features/hrms/reports/hr-reports.component').then(m => m.HrReportsAnalyticsComponent),
-        title: 'Salary Sheet '
+        title: 'Salary Sheet · Restricted'
       },
       {
         path: 'hrms/reports/bank-disbursement',
         loadComponent: () => import('./features/hrms/reports/hr-reports.component').then(m => m.HrReportsAnalyticsComponent),
-        title: 'Bank Disbursement Report '
+        title: 'Bank Disbursement · Restricted'
       },
       {
-        path: 'hrms/reports/loan-balance',
+        path: 'hrms/reports/:reportId',
         loadComponent: () => import('./features/hrms/reports/hr-reports.component').then(m => m.HrReportsAnalyticsComponent),
-        title: 'Loan Balance '
-      },
-      {
-        path: 'hrms/reports/recruitment-report',
-        loadComponent: () => import('./features/hrms/reports/hr-reports.component').then(m => m.HrReportsAnalyticsComponent),
-        title: 'Recruitment Report '
-      },
-      {
-        path: 'hrms/reports/turnover-report',
-        loadComponent: () => import('./features/hrms/reports/hr-reports.component').then(m => m.HrReportsAnalyticsComponent),
-        title: 'Turnover Report '
-      },
-      {
-        path: 'hrms/reports/training-report',
-        loadComponent: () => import('./features/hrms/reports/hr-reports.component').then(m => m.HrReportsAnalyticsComponent),
-        title: 'Training Report '
-      },
-      {
-        path: 'hrms/reports/project-labour-cost',
-        loadComponent: () => import('./features/hrms/reports/hr-reports.component').then(m => m.HrReportsAnalyticsComponent),
-        title: 'Project Labour Cost '
+        title: 'HRMS Reports & Analytics'
       },
 
       // 16. HR Configuration & Security Routes

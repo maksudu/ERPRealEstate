@@ -75,7 +75,7 @@ export class SidebarComponent implements OnInit {
         { id: 'org-dept-hierarchy', label: 'Department Hierarchy', route: '/hrms/departments/hierarchy' },
         { id: 'org-dept-head', label: 'Department Head', route: '/hrms/departments/heads' },
         { id: 'org-designation', label: 'Designation', route: '/hrms/designations' },
-        { id: 'org-job-grade', label: 'Job Grade', route: '/hrms/designations/grades' },
+        { id: 'org-job-grade', label: 'Salary Grades & Structures', route: '/hrms/payroll/structures' },
         { id: 'org-cost-center', label: 'Cost Center', route: '/hrms/org/cost-centers' }
       ]
     },
@@ -115,6 +115,26 @@ export class SidebarComponent implements OnInit {
         { id: 'att-mobile', label: 'Mobile Check-in', route: '/hrms/attendance/mobile-checkin' },
         { id: 'att-missing-punch', label: 'Missing Punch', route: '/hrms/attendance/missing-punches' },
         { id: 'att-calendar', label: 'Holiday Calendar', route: '/hrms/attendance/holiday-calendar' },
+        {
+          id: 'att-reports-sub',
+          label: 'Attendance Reports',
+          children: [
+            { id: 'att-rep-daily', label: 'Daily Attendance Report', route: '/hrms/reports/attendance-daily' },
+            { id: 'att-rep-monthly', label: 'Monthly Attendance Summary', route: '/hrms/reports/attendance-monthly-summary' },
+            { id: 'att-rep-history', label: 'Employee Attendance History', route: '/hrms/reports/attendance-history' },
+            { id: 'att-rep-late', label: 'Late Arrival Report', route: '/hrms/reports/attendance-late-arrival' },
+            { id: 'att-rep-early', label: 'Early Departure Report', route: '/hrms/reports/attendance-early-departure' },
+            { id: 'att-rep-absent', label: 'Absenteeism Report', route: '/hrms/reports/attendance-absenteeism' },
+            { id: 'att-rep-missing', label: 'Missing Punch Report', route: '/hrms/reports/attendance-missing-punch' },
+            { id: 'att-rep-ot', label: 'Overtime Report', route: '/hrms/reports/attendance-overtime' },
+            { id: 'att-rep-shift', label: 'Shift-wise Attendance', route: '/hrms/reports/attendance-shift-wise' },
+            { id: 'att-rep-bio', label: 'Biometric Attendance Report', route: '/hrms/reports/attendance-biometric' },
+            { id: 'att-rep-gps', label: 'Mobile/GPS Attendance Report', route: '/hrms/reports/attendance-mobile-gps' },
+            { id: 'att-rep-corr', label: 'Attendance Correction Report', route: '/hrms/reports/attendance-correction' },
+            { id: 'att-rep-site', label: 'Site-wise Attendance', route: '/hrms/reports/attendance-site-wise' },
+            { id: 'att-rep-exc', label: 'Attendance Exception Report', route: '/hrms/reports/attendance-exception' }
+          ]
+        }
       ]
     },
     {
@@ -131,7 +151,25 @@ export class SidebarComponent implements OnInit {
         { id: 'leave-encashment', label: 'Leave Encashment', route: '/hrms/leave/encashment' },
         { id: 'leave-calendar', label: 'Leave Calendar', route: '/hrms/leave/calendar' },
         { id: 'leave-history', label: 'Leave History', route: '/hrms/leave/history' },
-        { id: 'leave-holiday', label: 'Holiday Management', route: '/hrms/leave/holidays' }
+        { id: 'leave-holiday', label: 'Holiday Calendar', route: '/hrms/attendance/holiday-calendar' },
+        {
+          id: 'leave-reports-sub',
+          label: 'Leave Reports',
+          children: [
+            { id: 'leave-rep-reg', label: 'Leave Application Register', route: '/hrms/reports/leave-register' },
+            { id: 'leave-rep-app', label: 'Approved Leave Report', route: '/hrms/reports/leave-approved' },
+            { id: 'leave-rep-pen', label: 'Pending Leave Report', route: '/hrms/reports/leave-pending' },
+            { id: 'leave-rep-bal', label: 'Leave Balance Report', route: '/hrms/reports/leave-balance' },
+            { id: 'leave-rep-type', label: 'Leave Type Summary', route: '/hrms/reports/leave-type-summary' },
+            { id: 'leave-rep-hist', label: 'Employee Leave History', route: '/hrms/reports/leave-history' },
+            { id: 'leave-rep-dept', label: 'Department-wise Leave Report', route: '/hrms/reports/leave-department-wise' },
+            { id: 'leave-rep-proj', label: 'Project-wise Leave Report', route: '/hrms/reports/leave-project-wise' },
+            { id: 'leave-rep-unpaid', label: 'Unpaid Leave Report', route: '/hrms/reports/leave-unpaid' },
+            { id: 'leave-rep-encash', label: 'Leave Encashment Report', route: '/hrms/reports/leave-encashment' },
+            { id: 'leave-rep-cancel', label: 'Leave Cancellation Report', route: '/hrms/reports/leave-cancellation' },
+            { id: 'leave-rep-trend', label: 'Leave Trend Analysis', route: '/hrms/reports/leave-trend-analysis' }
+          ]
+        }
       ]
     },
     {
@@ -139,7 +177,7 @@ export class SidebarComponent implements OnInit {
       title: 'Payroll Management',
       iconSvg: 'M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z',
       items: [
-        { id: 'pay-structure', label: 'Salary Structure', route: '/hrms/payroll/structures' },
+        { id: 'pay-structure', label: 'Salary Structures & Grades', route: '/hrms/payroll/structures' },
         { id: 'pay-components', label: 'Salary Components', route: '/hrms/payroll/components' },
         { id: 'pay-assignment', label: 'Employee Salary Assignment', route: '/hrms/payroll/assignments' },
         { id: 'pay-period', label: 'Payroll Period', route: '/hrms/payroll/periods' },
@@ -155,7 +193,30 @@ export class SidebarComponent implements OnInit {
         { id: 'pay-payslip', label: 'Payslip', route: '/hrms/payroll/payslips' },
         { id: 'pay-bank-file', label: 'Bank Payment File', route: '/hrms/payroll/bank-payment-files' },
         { id: 'pay-posting', label: 'Payroll Posting', route: '/hrms/payroll/posting' },
-        { id: 'pay-reversal', label: 'Payroll Reversal', route: '/hrms/payroll/reversals' }
+        { id: 'pay-reversal', label: 'Payroll Reversal', route: '/hrms/payroll/reversals' },
+        {
+          id: 'payroll-reports-sub',
+          label: 'Payroll Reports',
+          children: [
+            { id: 'pay-rep-reg', label: 'Monthly Payroll Register', route: '/hrms/reports/payroll-register' },
+            { id: 'pay-rep-sheet', label: 'Salary Sheet', route: '/hrms/reports/salary-sheet' },
+            { id: 'pay-rep-slip', label: 'Payslip Register', route: '/hrms/reports/payslip-register' },
+            { id: 'pay-rep-bank', label: 'Bank Salary Transfer Report', route: '/hrms/reports/bank-disbursement' },
+            { id: 'pay-rep-sum', label: 'Payroll Summary', route: '/hrms/reports/payroll-summary' },
+            { id: 'pay-rep-dept', label: 'Department-wise Payroll', route: '/hrms/reports/payroll-department-wise' },
+            { id: 'pay-rep-proj', label: 'Project-wise Payroll Cost', route: '/hrms/reports/payroll-project-cost' },
+            { id: 'pay-rep-comp', label: 'Salary Component Report', route: '/hrms/reports/payroll-salary-component' },
+            { id: 'pay-rep-ot', label: 'Overtime Payment Report', route: '/hrms/reports/payroll-overtime-payment' },
+            { id: 'pay-rep-bonus', label: 'Bonus Report', route: '/hrms/reports/payroll-bonus' },
+            { id: 'pay-rep-arr', label: 'Arrears Report', route: '/hrms/reports/payroll-arrears' },
+            { id: 'pay-rep-ded', label: 'Deduction Report', route: '/hrms/reports/payroll-deduction' },
+            { id: 'pay-rep-rec', label: 'Employee Loan Recovery', route: '/hrms/reports/payroll-loan-recovery' },
+            { id: 'pay-rep-inc', label: 'Salary Increment Report', route: '/hrms/reports/payroll-salary-increment' },
+            { id: 'pay-rep-settle', label: 'Final Settlement Report', route: '/hrms/reports/payroll-final-settlement' },
+            { id: 'pay-rep-var', label: 'Payroll Variance Report', route: '/hrms/reports/payroll-variance' },
+            { id: 'pay-rep-recon', label: 'Payroll Reconciliation Report', route: '/hrms/reports/payroll-reconciliation' }
+          ]
+        }
       ]
     },
     {
@@ -256,7 +317,6 @@ export class SidebarComponent implements OnInit {
         { id: 'stat-registers', label: 'Statutory Registers', route: '/hrms/statutory/registers' },
         { id: 'stat-contracts', label: 'Employment Contracts', route: '/hrms/statutory/contracts' },
         { id: 'stat-policy-ack', label: 'Policy Acknowledgment', route: '/hrms/statutory/policies' },
-        { id: 'stat-calendar', label: 'Compliance Calendar', route: '/hrms/statutory/calendar' },
         { id: 'stat-audit-docs', label: 'Audit Documents', route: '/hrms/statutory/audit-documents' }
       ]
     },
@@ -272,49 +332,127 @@ export class SidebarComponent implements OnInit {
         { id: 'proj-overtime', label: 'Overtime', route: '/hrms/project-hr/overtime' },
         { id: 'proj-shared-alloc', label: 'Employee Allocation', route: '/hrms/project-hr/shared-allocation' },
         { id: 'proj-payroll-cost', label: 'Payroll Cost', route: '/hrms/project-hr/payroll-costs' },
-        { id: 'proj-dept-cost', label: 'Department Cost Allocation', route: '/hrms/project-hr/dept-costs' }
+        { id: 'proj-dept-cost', label: 'Department Cost Allocation', route: '/hrms/project-hr/dept-costs' },
+        {
+          id: 'labour-reports-sub',
+          label: 'Project Labour Cost Reports',
+          children: [
+            { id: 'lab-rep-sal', label: 'Project Salary Allocation', route: '/hrms/reports/labour-project-salary' },
+            { id: 'lab-rep-tower', label: 'Tower & Site Labour Cost', route: '/hrms/reports/labour-tower-site' },
+            { id: 'lab-rep-wbs', label: 'WBS/Activity Labour Expenses', route: '/hrms/reports/labour-wbs-activity' },
+            { id: 'lab-rep-dir', label: 'Direct vs Shared Staff Costs', route: '/hrms/reports/labour-direct-vs-shared' },
+            { id: 'lab-rep-time', label: 'Timesheet & Approved Hours', route: '/hrms/reports/labour-timesheet-hours' },
+            { id: 'lab-rep-ot', label: 'Overtime Expenditure', route: '/hrms/reports/labour-overtime-project' },
+            { id: 'lab-rep-bud', label: 'Budgeted vs Actual Cost', route: '/hrms/reports/labour-budget-vs-actual' },
+            { id: 'lab-rep-trend', label: 'Monthly Labour Cost Trend', route: '/hrms/reports/labour-monthly-trend' },
+            { id: 'lab-rep-exc', label: 'Cost Allocation Exceptions', route: '/hrms/reports/labour-cost-exceptions' },
+            { id: 'lab-rep-multi', label: 'Multi-Project Cost Distribution', route: '/hrms/reports/labour-multi-project-distribution' }
+          ]
+        }
       ]
     },
     {
       id: 'hr-reports',
-      title: 'HR Reports',
+      title: 'HR Reports & Analytics',
       iconSvg: 'M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
       items: [
-        { id: 'rpt-emp-register', label: 'Employee Register', route: '/hrms/reports/employee-register' },
-        { id: 'rpt-dept-headcount', label: 'Headcount by Department', route: '/hrms/reports/headcount-by-dept' },
-        { id: 'rpt-proj-headcount', label: 'Headcount by Project', route: '/hrms/reports/headcount-by-project' },
-        { id: 'rpt-att-register', label: 'Attendance Register', route: '/hrms/reports/attendance-register' },
-        { id: 'rpt-leave', label: 'Leave Report', route: '/hrms/reports/leave-report' },
-        { id: 'rpt-overtime', label: 'Overtime Report', route: '/hrms/reports/overtime-report' },
-        { id: 'rpt-payroll-register', label: 'Payroll Register', route: '/hrms/reports/payroll-register' },
-        { id: 'rpt-salary-sheet', label: 'Salary Sheet', route: '/hrms/reports/salary-sheet' },
-        { id: 'rpt-bank-disburse', label: 'Bank Disbursement Report', route: '/hrms/reports/bank-disbursement' },
-        { id: 'rpt-loan-bal', label: 'Loan Balance', route: '/hrms/reports/loan-balance' },
-        { id: 'rpt-recruitment', label: 'Recruitment Report', route: '/hrms/reports/recruitment-report' },
-        { id: 'rpt-turnover', label: 'Turnover Report', route: '/hrms/reports/turnover-report' },
-        { id: 'rpt-training', label: 'Training Report', route: '/hrms/reports/training-report' },
-        { id: 'rpt-labour-cost', label: 'Project Labour Cost', route: '/hrms/reports/project-labour-cost' }
+        {
+          id: 'hr-sub-hr-reports',
+          label: 'HR Reports',
+          children: [
+            { id: 'rpt-emp-master', label: 'Employee Master Report', route: '/hrms/reports/employee-master' },
+            { id: 'rpt-emp-directory', label: 'Employee Directory', route: '/hrms/reports/employee-directory' },
+            { id: 'rpt-emp-headcount', label: 'Employee Headcount', route: '/hrms/reports/employee-headcount' },
+            { id: 'rpt-new-joining', label: 'New Joining Report', route: '/hrms/reports/new-joining' },
+            { id: 'rpt-separation', label: 'Resignation & Separation', route: '/hrms/reports/resignation-separation' },
+            { id: 'rpt-transfer', label: 'Employee Transfer Report', route: '/hrms/reports/employee-transfer' },
+            { id: 'rpt-promotion-increment', label: 'Promotion & Increment Report', route: '/hrms/reports/promotion-increment' },
+            { id: 'rpt-document-expiry', label: 'Employee Document Expiry', route: '/hrms/reports/document-expiry' },
+            { id: 'rpt-recruitment', label: 'Recruitment Report', route: '/hrms/reports/recruitment' },
+            { id: 'rpt-turnover', label: 'Employee Turnover Report', route: '/hrms/reports/employee-turnover' },
+            { id: 'rpt-manpower', label: 'Manpower Allocation Report', route: '/hrms/reports/manpower-allocation' },
+            { id: 'rpt-loan-advance', label: 'Employee Loan & Advance Report', route: '/hrms/reports/employee-loan-advance' }
+          ]
+        },
+        {
+          id: 'hr-sub-att-reports',
+          label: 'Attendance Reports',
+          children: [
+            { id: 'rpt-att-daily', label: 'Daily Attendance Report', route: '/hrms/reports/attendance-daily' },
+            { id: 'rpt-att-monthly', label: 'Monthly Attendance Summary', route: '/hrms/reports/attendance-monthly-summary' },
+            { id: 'rpt-att-history', label: 'Employee Attendance History', route: '/hrms/reports/attendance-history' },
+            { id: 'rpt-att-late', label: 'Late Arrival Report', route: '/hrms/reports/attendance-late-arrival' },
+            { id: 'rpt-att-early', label: 'Early Departure Report', route: '/hrms/reports/attendance-early-departure' },
+            { id: 'rpt-att-absent', label: 'Absenteeism Report', route: '/hrms/reports/attendance-absenteeism' },
+            { id: 'rpt-att-missing', label: 'Missing Punch Report', route: '/hrms/reports/attendance-missing-punch' },
+            { id: 'rpt-att-ot', label: 'Overtime Report', route: '/hrms/reports/attendance-overtime' },
+            { id: 'rpt-att-shift', label: 'Shift-wise Attendance', route: '/hrms/reports/attendance-shift-wise' },
+            { id: 'rpt-att-bio', label: 'Biometric Attendance Report', route: '/hrms/reports/attendance-biometric' },
+            { id: 'rpt-att-gps', label: 'Mobile/GPS Attendance Report', route: '/hrms/reports/attendance-mobile-gps' },
+            { id: 'rpt-att-corr', label: 'Attendance Correction Report', route: '/hrms/reports/attendance-correction' },
+            { id: 'rpt-att-site', label: 'Site-wise Attendance', route: '/hrms/reports/attendance-site-wise' },
+            { id: 'rpt-att-exc', label: 'Attendance Exception Report', route: '/hrms/reports/attendance-exception' }
+          ]
+        },
+        {
+          id: 'hr-sub-leave-reports',
+          label: 'Leave Reports',
+          children: [
+            { id: 'rpt-leave-reg', label: 'Leave Application Register', route: '/hrms/reports/leave-register' },
+            { id: 'rpt-leave-app', label: 'Approved Leave Report', route: '/hrms/reports/leave-approved' },
+            { id: 'rpt-leave-pen', label: 'Pending Leave Report', route: '/hrms/reports/leave-pending' },
+            { id: 'rpt-leave-bal', label: 'Leave Balance Report', route: '/hrms/reports/leave-balance' },
+            { id: 'rpt-leave-type', label: 'Leave Type Summary', route: '/hrms/reports/leave-type-summary' },
+            { id: 'rpt-leave-hist', label: 'Employee Leave History', route: '/hrms/reports/leave-history' },
+            { id: 'rpt-leave-dept', label: 'Department-wise Leave Report', route: '/hrms/reports/leave-department-wise' },
+            { id: 'rpt-leave-proj', label: 'Project-wise Leave Report', route: '/hrms/reports/leave-project-wise' },
+            { id: 'rpt-leave-unpaid', label: 'Unpaid Leave Report', route: '/hrms/reports/leave-unpaid' },
+            { id: 'rpt-leave-encash', label: 'Leave Encashment Report', route: '/hrms/reports/leave-encashment' },
+            { id: 'rpt-leave-cancel', label: 'Leave Cancellation Report', route: '/hrms/reports/leave-cancellation' },
+            { id: 'rpt-leave-trend', label: 'Leave Trend Analysis', route: '/hrms/reports/leave-trend-analysis' }
+          ]
+        },
+        {
+          id: 'hr-sub-payroll-reports',
+          label: 'Payroll Reports',
+          children: [
+            { id: 'rpt-pay-reg', label: 'Monthly Payroll Register', route: '/hrms/reports/payroll-register' },
+            { id: 'rpt-pay-sheet', label: 'Salary Sheet', route: '/hrms/reports/salary-sheet' },
+            { id: 'rpt-pay-slip', label: 'Payslip Register', route: '/hrms/reports/payslip-register' },
+            { id: 'rpt-pay-bank', label: 'Bank Salary Transfer Report', route: '/hrms/reports/bank-disbursement' },
+            { id: 'rpt-pay-sum', label: 'Payroll Summary', route: '/hrms/reports/payroll-summary' },
+            { id: 'rpt-pay-dept', label: 'Department-wise Payroll', route: '/hrms/reports/payroll-department-wise' },
+            { id: 'rpt-pay-proj', label: 'Project-wise Payroll Cost', route: '/hrms/reports/payroll-project-cost' },
+            { id: 'rpt-pay-comp', label: 'Salary Component Report', route: '/hrms/reports/payroll-salary-component' },
+            { id: 'rpt-pay-ot', label: 'Overtime Payment Report', route: '/hrms/reports/payroll-overtime-payment' },
+            { id: 'rpt-pay-bonus', label: 'Bonus Report', route: '/hrms/reports/payroll-bonus' },
+            { id: 'rpt-pay-arr', label: 'Arrears Report', route: '/hrms/reports/payroll-arrears' },
+            { id: 'rpt-pay-ded', label: 'Deduction Report', route: '/hrms/reports/payroll-deduction' },
+            { id: 'rpt-pay-rec', label: 'Employee Loan Recovery', route: '/hrms/reports/payroll-loan-recovery' },
+            { id: 'rpt-pay-inc', label: 'Salary Increment Report', route: '/hrms/reports/payroll-salary-increment' },
+            { id: 'rpt-pay-settle', label: 'Final Settlement Report', route: '/hrms/reports/payroll-final-settlement' },
+            { id: 'rpt-pay-var', label: 'Payroll Variance Report', route: '/hrms/reports/payroll-variance' },
+            { id: 'rpt-pay-recon', label: 'Payroll Reconciliation Report', route: '/hrms/reports/payroll-reconciliation' }
+          ]
+        },
+        {
+          id: 'hr-sub-labour-reports',
+          label: 'Project Labour Cost',
+          children: [
+            { id: 'rpt-lab-sal', label: 'Project Salary Allocation', route: '/hrms/reports/labour-project-salary' },
+            { id: 'rpt-lab-tower', label: 'Tower & Site Labour Cost', route: '/hrms/reports/labour-tower-site' },
+            { id: 'rpt-lab-wbs', label: 'WBS/Activity Labour Expenses', route: '/hrms/reports/labour-wbs-activity' },
+            { id: 'rpt-lab-dir', label: 'Direct vs Shared Staff Costs', route: '/hrms/reports/labour-direct-vs-shared' },
+            { id: 'rpt-lab-time', label: 'Timesheet & Approved Hours', route: '/hrms/reports/labour-timesheet-hours' },
+            { id: 'rpt-lab-ot', label: 'Overtime Expenditure', route: '/hrms/reports/labour-overtime-project' },
+            { id: 'rpt-lab-bud', label: 'Budgeted vs Actual Cost', route: '/hrms/reports/labour-budget-vs-actual' },
+            { id: 'rpt-lab-trend', label: 'Monthly Labour Cost Trend', route: '/hrms/reports/labour-monthly-trend' },
+            { id: 'rpt-lab-exc', label: 'Cost Allocation Exceptions', route: '/hrms/reports/labour-cost-exceptions' },
+            { id: 'rpt-lab-multi', label: 'Multi-Project Cost Distribution', route: '/hrms/reports/labour-multi-project-distribution' }
+          ]
+        }
       ]
     },
-    {
-      id: 'hr-config-sec',
-      title: 'Configuration',
-      iconSvg: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z',
-      items: [
-        { id: 'cfg-settings', label: 'HR Settings', route: '/hrms/config/settings' },
-        { id: 'cfg-salary-rules', label: 'Salary Rules', route: '/hrms/config/salary-rules' },
-        { id: 'cfg-leave-rules', label: 'Leave Rules', route: '/hrms/config/leave-rules' },
-        { id: 'cfg-shift-rules', label: 'Shift Rules', route: '/hrms/config/shift-rules' },
-        { id: 'cfg-payroll-cal', label: 'Payroll Calendar', route: '/hrms/config/payroll-calendar' },
-        { id: 'cfg-notify-templates', label: 'Notification Templates', route: '/hrms/config/notification-templates' },
-        { id: 'cfg-comm-settings', label: 'Email Settings', route: '/hrms/config/communication-settings' },
-        { id: 'cfg-user-roles', label: 'User Roles', route: '/hrms/config/user-roles' },
-        { id: 'cfg-permissions', label: 'Permissions', route: '/hrms/config/permissions' },
-        { id: 'cfg-audit-logs', label: 'Audit Logs', route: '/hrms/config/audit-logs' },
-        { id: 'cfg-biometric-dev', label: 'Biometric Devices', route: '/hrms/config/biometric-devices' },
-        { id: 'cfg-api-settings', label: 'API Integration', route: '/hrms/config/api-integrations' }
-      ]
-    }
   ];
 
   // =========================================================================
@@ -655,9 +793,9 @@ export class SidebarComponent implements OnInit {
       title: 'Property Inventory',
       iconSvg: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10',
       items: [
-        { id: 'inv-search', label: 'Property Search', route: '/inventory', queryParams: { tab: 'search' } },
         { id: 'inv-dashboard', label: 'Inventory Dashboard', route: '/inventory', queryParams: { tab: 'dashboard' } },
-        { id: 'inv-matrix', label: 'Floor-wise Unit Matrix', route: '/inventory', queryParams: { tab: 'matrix' } },
+        { id: 'inv-search', label: 'Property Search', route: '/inventory', queryParams: { tab: 'search' } },
+        { id: 'inv-matrix', label: 'Floo-wise Unit Matrix', route: '/inventory', queryParams: { tab: 'matrix' } },
         { id: 'inv-units', label: 'Unit Directory & Configuration', route: '/inventory', queryParams: { tab: 'units' } },
         { id: 'inv-pricing', label: 'Area & Pricing Formula', route: '/inventory', queryParams: { tab: 'area_calc' } },
         { id: 'inv-parking', label: 'Basement Parking Bays', route: '/inventory', queryParams: { tab: 'parking' } },
@@ -889,7 +1027,8 @@ export class SidebarComponent implements OnInit {
             .map((sub): MenuGroup | null => {
               const subMatches = sub.title.toLowerCase().includes(q);
               const matchingItems = sub.items.filter(item =>
-                item.label.toLowerCase().includes(q)
+                item.label.toLowerCase().includes(q) ||
+                (item.children && item.children.some(c => c.label.toLowerCase().includes(q)))
               );
 
               if (subMatches || matchingItems.length > 0) {
@@ -968,9 +1107,13 @@ export class SidebarComponent implements OnInit {
       // Check nested subGroups (e.g. HRMS suite)
       if (group.subGroups && group.subGroups.length > 0) {
         for (const subGroup of group.subGroups) {
+          let matchedSubItemId: string | null = null;
           const matchSub = subGroup.items?.some(item => {
             if (item.route && (cleanUrl === item.route || cleanUrl.startsWith(item.route + '/'))) return true;
-            if (item.children?.some(c => c.route && (cleanUrl === c.route || cleanUrl.startsWith(c.route + '/')))) return true;
+            if (item.children?.some(c => c.route && (cleanUrl === c.route || cleanUrl.startsWith(c.route + '/')))) {
+              matchedSubItemId = item.id;
+              return true;
+            }
             return false;
           });
 
@@ -982,6 +1125,12 @@ export class SidebarComponent implements OnInit {
             const currentSubGroups = new Set(this.expandedSubGroupIds());
             currentSubGroups.add(subGroup.id);
             this.expandedSubGroupIds.set(currentSubGroups);
+
+            if (matchedSubItemId) {
+              const currentSubItems = new Set(this.expandedSubItemIds());
+              currentSubItems.add(matchedSubItemId);
+              this.expandedSubItemIds.set(currentSubItems);
+            }
             break;
           }
         }

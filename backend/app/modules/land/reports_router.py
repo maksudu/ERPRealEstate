@@ -951,7 +951,7 @@ async def _report_land_bank_register(db: AsyncSession, search: Optional[str], lo
     if location:
         stmt = stmt.where(LandBank.district.ilike(f"%{location}%"))
     if status_filter and status_filter != "ALL":
-        stmt = stmt.where(LandBank.acquisition_status == status_filter)
+        stmt = stmt.where(or_(LandBank.status == status_filter, LandBank.workflow_stage == status_filter))
 
     count_stmt = select(func.count()).select_from(stmt.subquery())
     total = (await db.execute(count_stmt)).scalar() or 0
@@ -972,7 +972,7 @@ async def _report_land_bank_register(db: AsyncSession, search: Optional[str], lo
             "area_katha": round(dec / 1.65, 2),
             "estimated_budget": float(b.indicative_cost_total or 0),
             "deal_type": b.deal_type or "OUTRIGHT_PURCHASE",
-            "acquisition_status": b.acquisition_status or "PROPOSED"
+            "acquisition_status": b.status or b.workflow_stage or "PROPOSED"
         })
 
     if not items:

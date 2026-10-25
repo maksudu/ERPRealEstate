@@ -270,44 +270,124 @@ async def post_overtime_apply(req: OvertimeApplyRequest, db: AsyncSession = Depe
 
 
 @router.get("/payroll/payslips")
-async def get_payroll_payslips(db: AsyncSession = Depends(get_db)):
-    """Employee monthly salary slips with earnings, deductions and net pay."""
-    return {
-        "success": True,
-        "payslips": [
+async def get_payroll_payslips(
+    employee_id: Optional[int] = None,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Employee Self-Service (ESS) Monthly Salary Slips:
+    Returns granular earnings, overtime, bonuses, deductions, employer PF, masked bank account, and payment status.
+    """
+    # Fetch payslips from database (or seed if empty)
+    q = select(PayrollPayslip).options(
+        joinedload(PayrollPayslip.employee),
+        joinedload(PayrollPayslip.period)
+    )
+    if employee_id:
+        q = q.where(PayrollPayslip.employee_id == employee_id)
+    
+    q = q.order_by(desc(PayrollPayslip.id)).limit(12)
+    res = await db.execute(q)
+    slips = res.scalars().all()
+
+    items = []
+    for s in slips:
+        emp = s.employee
+        period = s.period
+        
+        # Mask bank account info for privacy (e.g. ******4827)
+        acc_no = s.bank_account_no or (emp.bank_account_no if emp else None) or "Cash / Cheque"
+        masked_acc = f"******{acc_no[-4:]}" if len(acc_no) > 4 else acc_no
+
+        items.append({
+            "id": s.id,
+            "period_id": s.period_id,
+            "period_code": period.period_code if period else "2026-10",
+            "month_year": period.period_name if period else "October 2026",
+            "employee_id": s.employee_id,
+            "employee_name": f"{emp.first_name} {emp.last_name or ''}".strip() if emp else "Employee",
+            "employee_code": emp.employee_code if emp else "EMP-1001",
+            "department": emp.department.name_en if emp and emp.department else "Operations",
+            "designation": emp.designation.title_en if emp and emp.designation else "Staff",
+            
+            # Earnings Breakdown
+            "basic": float(s.basic_salary),
+            "house_rent": float(s.house_rent),
+            "medical": float(s.medical_allowance),
+            "conveyance": float(s.conveyance_allowance),
+            "food_allowance": float(getattr(s, "food_allowance", 0.0) or 0.0),
+            "mobile_allowance": float(getattr(s, "mobile_allowance", 0.0) or 0.0),
+            "site_hazard_allowance": float(getattr(s, "site_hazard_allowance", 0.0) or 0.0),
+            "other_allowances": float(s.other_allowances),
+            "overtime_hours": float(s.overtime_hours),
+            "overtime_pay": float(s.overtime_amount),
+            "bonus_amount": float(s.bonus_amount),
+            "arrears_amount": float(s.arrears_amount),
+            "gross_salary": float(s.total_earnings or s.gross_salary),
+            "payable_days": float(getattr(s, "payable_days", 30.0) or 30.0),
+
+            # Deductions Breakdown
+            "unpaid_leave_days": float(s.unpaid_leave_days),
+            "unpaid_leave_deduction": float(s.unpaid_leave_deduction),
+            "provident_fund": float(s.provident_fund_employee),
+            "tax_tds": float(s.income_tax_deduction),
+            "staff_loan_recovery": float(s.staff_loan_recovery),
+            "salary_advance_recovery": float(s.salary_advance_recovery),
+            "other_deductions": float(s.other_deductions),
+            "deductions": float(s.total_deductions),
+            
+            # Employer Statutory Contribution Disclosed
+            "employer_pf_contribution": float(s.provident_fund_employer),
+
+            # Net Payable & Bank Info
+            "net_salary": float(s.net_salary_payable),
+            "payment_method": s.payment_method,
+            "bank_name": s.bank_name or (emp.bank_name if emp else "Dutch-Bangla Bank"),
+            "masked_account_number": masked_acc,
+            "disbursed_date": str(s.disbursed_at.date()) if s.disbursed_at else None,
+            "status": s.status
+        })
+
+    # Fallback to default demo items if no period payslips found yet
+    if not items:
+        items = [
             {
                 "id": 101,
-                "month_year": "September 2026",
-                "gross_salary": 85000.0,
+                "month_year": "October 2026",
+                "employee_name": "Engr. Kamal Hossain",
+                "employee_code": "EMP-1042",
+                "department": "Engineering & Construction",
+                "designation": "Senior Project Manager",
                 "basic": 48000.0,
                 "house_rent": 24000.0,
                 "medical": 5000.0,
                 "conveyance": 4000.0,
-                "overtime_pay": 4000.0,
-                "deductions": 4500.0,
-                "tax_tds": 2500.0,
-                "provident_fund": 2000.0,
-                "net_salary": 84500.0,
-                "disbursed_date": "2026-10-05",
-                "status": "DISBURSED",
-            },
-            {
-                "id": 100,
-                "month_year": "August 2026",
+                "food_allowance": 1500.0,
+                "mobile_allowance": 1000.0,
+                "site_hazard_allowance": 5000.0,
+                "overtime_hours": 2.5,
+                "overtime_pay": 1500.0,
+                "bonus_amount": 0.0,
                 "gross_salary": 85000.0,
-                "basic": 48000.0,
-                "house_rent": 24000.0,
-                "medical": 5000.0,
-                "conveyance": 4000.0,
-                "overtime_pay": 0.0,
-                "deductions": 4500.0,
+                "payable_days": 30.0,
+                "provident_fund": 4800.0,
                 "tax_tds": 2500.0,
-                "provident_fund": 2000.0,
-                "net_salary": 80500.0,
-                "disbursed_date": "2026-09-05",
-                "status": "DISBURSED",
-            },
-        ],
+                "staff_loan_recovery": 0.0,
+                "deductions": 7300.0,
+                "employer_pf_contribution": 4800.0,
+                "net_salary": 77700.0,
+                "payment_method": "BANK_TRANSFER",
+                "bank_name": "Dutch-Bangla Bank Ltd",
+                "masked_account_number": "******9482",
+                "disbursed_date": "2026-10-25",
+                "status": "CALCULATED"
+            }
+        ]
+
+    return {
+        "success": True,
+        "total": len(items),
+        "payslips": items
     }
 
 

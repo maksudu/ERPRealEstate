@@ -301,7 +301,7 @@ export class LeaveWorkflowPageComponent implements OnInit, OnDestroy {
     { label: 'Approvals', path: '/hrms/leave/approvals' },
     { label: 'History', path: '/hrms/leave/history', page: 'history' },
     { label: 'Calendar', path: '/hrms/leave/calendar', page: 'calendar' },
-    { label: 'Holidays', path: '/hrms/leave/holidays', page: 'holidays' },
+    { label: 'Holidays', path: '/hrms/attendance/holiday-calendar', page: 'holidays' },
     { label: 'Encashment', path: '/hrms/leave/encashment', page: 'encashment' }
   ];
   weekDays = ['Fri', 'Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu'];

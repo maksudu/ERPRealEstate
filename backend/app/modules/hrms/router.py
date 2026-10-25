@@ -22,9 +22,13 @@ from app.modules.hrms.models import (
     Shift, ShiftAssignment, ShiftSwapRequest, BiometricDevice, SiteGeofence, HolidayCalendar, AttendanceCorrection,
     LeaveType, LeavePolicy, LeaveBalance, LeaveEncashment, OvertimeRequest, PayrollInput,
     SalaryComponent, SalaryStructure, SalaryStructureItem, EmployeeSalary, SalaryRevision, RecruitmentRecord,
-    PayrollPeriod, PayrollPayslip, StaffLoan, SalaryAdvance, BonusIncentive, TaxSlab, BenefitPolicy
+    RecruitmentApplication, RecruitmentApplicationEvent,
+    PayrollPeriod, PayrollPayslip, StaffLoan, SalaryAdvance, BonusIncentive, TaxSlab, BenefitPolicy,
+    ProjectSalaryCostAllocation, EmployeeSeparation
 )
 from app.modules.hrms.schemas import (
+    EmployeeSeparationCreate, EmployeeSeparationUpdate, EmployeeSeparationOut, EmployeeSeparationPaginatedOut,
+    ProjectCostAllocationCreate, ProjectCostAllocationOut, ProjectCostAllocationPaginatedOut,
     CompanyCreate, CompanyUpdate, CompanyOut,
     LegalEntityCreate, LegalEntityUpdate, LegalEntityOut,
     BranchCreate, BranchUpdate, BranchOut,
@@ -69,7 +73,10 @@ from app.modules.hrms.schemas import (
     TaxSlabCreate, TaxSlabOut, PayrollWorkflowActionPayload,
     BenefitPolicyCreate, BenefitPolicyUpdate, BenefitPolicyOut, BenefitPolicyPaginatedOut,
     PayrollValidationSummaryOut, PayrollValidationException,
-    HRCockpitStats, RecruitmentRecordCreate, RecruitmentRecordUpdate, RecruitmentRecordOut, RecruitmentRecordPaginatedOut
+    HRCockpitStats, RecruitmentRecordCreate, RecruitmentRecordUpdate, RecruitmentRecordOut, RecruitmentRecordPaginatedOut,
+    RecruitmentApplicationCreate, RecruitmentApplicationTransition, RecruitmentPanelAssessment, RecruitmentOfferCreate,
+    RecruitmentOfferDecision, RecruitmentOfferResponse, RecruitmentConversion, RecruitmentApplicationOut,
+    RecruitmentApplicationPage, RecruitmentSourceReport
 )
 from app.modules.hrms.services import HRMSService
 from app.modules.projects.models import Project
@@ -1290,6 +1297,39 @@ async def list_employees(
         limit=total if all else limit,
         offset=0 if all else offset
     )
+
+
+@router.get("/employees/me", response_model=EmployeeOut)
+async def get_my_employee_profile(
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    emp = None
+    if current_user:
+        if getattr(current_user, "id", None):
+            emp_q = select(Employee).where(
+                Employee.organization_id == org_id,
+                Employee.user_id == current_user.id
+            )
+            emp = (await db.execute(emp_q)).scalars().first()
+        if not emp and getattr(current_user, "email", None):
+            emp_q = select(Employee).where(
+                Employee.organization_id == org_id,
+                Employee.official_email == current_user.email
+            )
+            emp = (await db.execute(emp_q)).scalars().first()
+    
+    if not emp:
+        fallback_q = select(Employee).where(
+            Employee.organization_id == org_id,
+            Employee.status == "ACTIVE"
+        ).order_by(Employee.id)
+        emp = (await db.execute(fallback_q)).scalars().first()
+
+    if not emp:
+        raise HTTPException(status_code=404, detail="Employee profile not found")
+    return await _enrich_employee_out(db, emp)
 
 
 @router.get("/employees/{id}", response_model=EmployeeOut)
@@ -5870,6 +5910,9 @@ async def create_overtime_request(
         organization_id=org_id,
         employee_id=payload.employee_id,
         project_id=payload.project_id,
+        tower_id=payload.tower_id,
+        work_package=payload.work_package,
+        cost_center=payload.cost_center,
         ot_date=payload.ot_date,
         ot_type=payload.ot_type,
         start_time=payload.start_time,
@@ -5892,6 +5935,9 @@ async def create_overtime_request(
         employee_code=emp.employee_code if emp else None,
         department_name=emp.department.name_en if emp and emp.department else None,
         project_id=ot.project_id,
+        tower_id=ot.tower_id,
+        work_package=ot.work_package,
+        cost_center=ot.cost_center,
         ot_date=ot.ot_date,
         ot_type=ot.ot_type,
         start_time=ot.start_time,
@@ -8406,9 +8452,10 @@ async def execute_payroll_workflow(
 
     act = payload.action.upper()
 
-    if act == "PROCESS":
+    if act in ["PROCESS", "SIMULATE"]:
         # 3.7 - 3.10 Engine Calculation
-        period.status = "PROCESSING"
+        if act == "PROCESS":
+            period.status = "PROCESSING"
         
         # Load all active employees
         emps_q = select(Employee).where(Employee.organization_id == org_id)
@@ -8425,7 +8472,16 @@ async def execute_payroll_workflow(
             if emp.status in ["TERMINATED", "RESIGNED"]:
                 continue
 
-            # 1. Salary structure / base earnings
+            # Proration factor calculation (Mid-month Joining, Separation or Unpaid Leave)
+            cal_days = Decimal("30.00")
+            join_d = emp.joining_date
+            active_days = cal_days
+            if join_d and period.start_date and period.end_date:
+                if join_d > period.start_date and join_d <= period.end_date:
+                    days_active = (period.end_date - join_d).days + 1
+                    active_days = min(Decimal(str(days_active)), cal_days)
+
+            # 1. Salary structure / base earnings (Unified Grade & Structure Resolution)
             sal_q = select(EmployeeSalary).where(
                 EmployeeSalary.organization_id == org_id,
                 EmployeeSalary.employee_id == emp.id,
@@ -8434,14 +8490,40 @@ async def execute_payroll_workflow(
             sal_res = await db.execute(sal_q)
             sal = sal_res.scalar_one_or_none()
 
-            gross = sal.gross_salary if sal else Decimal(emp.basic_salary or 50000) * Decimal("1.6")
-            basic = sal.basic_salary if sal else Decimal(emp.basic_salary or 50000)
-            house_rent = basic * Decimal("0.50")
-            medical = basic * Decimal("0.20")
-            conveyance = basic * Decimal("0.10")
-            other_allow = gross - (basic + house_rent + medical + conveyance)
-            if other_allow < 0:
+            food_allow = Decimal("1500.00")
+            if sal:
+                gross = Decimal(str(sal.gross_salary))
+                basic = Decimal(str(sal.basic_salary))
+                house_rent = Decimal(str(emp.house_rent_allowance or (basic * Decimal("0.50"))))
+                medical = Decimal(str(emp.medical_allowance or 2500))
+                conveyance = Decimal(str(emp.conveyance_allowance or 3000))
+                site_hazard = Decimal(str(emp.site_hazard_allowance or 0))
+                mobile = Decimal(str(emp.mobile_allowance or 1000))
+                other_allow = gross - (basic + house_rent + medical + conveyance + food_allow + site_hazard + mobile)
+                if other_allow < 0:
+                    other_allow = Decimal("0.00")
+            else:
+                basic = Decimal(str(emp.basic_salary or 50000))
+                house_rent = Decimal(str(emp.house_rent_allowance or (basic * Decimal("0.50"))))
+                medical = Decimal(str(emp.medical_allowance or 2500))
+                conveyance = Decimal(str(emp.conveyance_allowance or 3000))
+                site_hazard = Decimal(str(emp.site_hazard_allowance or 0))
+                mobile = Decimal(str(emp.mobile_allowance or 1000))
                 other_allow = Decimal("0.00")
+                gross = basic + house_rent + medical + conveyance + food_allow + site_hazard + mobile + other_allow
+
+            # Apply mid-month proration factor if newly joined
+            proration_ratio = active_days / cal_days
+            if proration_ratio < Decimal("1.0000"):
+                gross = round(gross * proration_ratio, 2)
+                basic = round(basic * proration_ratio, 2)
+                house_rent = round(house_rent * proration_ratio, 2)
+                medical = round(medical * proration_ratio, 2)
+                conveyance = round(conveyance * proration_ratio, 2)
+                food_allow = round(food_allow * proration_ratio, 2)
+                mobile = round(mobile * proration_ratio, 2)
+                site_hazard = round(site_hazard * proration_ratio, 2)
+                other_allow = round(other_allow * proration_ratio, 2)
 
             # 2. Overtime & Unpaid Leave from hr_payroll_inputs
             pi_q = select(PayrollInput).where(
@@ -8456,7 +8538,8 @@ async def execute_payroll_workflow(
             ot_hours = pi.approved_overtime_hours if pi else Decimal("0.00")
             ot_amount = pi.overtime_amount if pi else Decimal("0.00")
             unpaid_days = pi.unpaid_leave_days if pi else Decimal("0.00")
-            unpaid_ded = (gross / Decimal("30.00")) * unpaid_days
+            unpaid_ded = round((gross / cal_days) * unpaid_days, 2)
+            payable_days = max(Decimal("0.00"), active_days - unpaid_days)
 
             # 3. Bonuses & Incentives
             bon_q = select(func.sum(BonusIncentive.bonus_amount)).where(
@@ -8472,12 +8555,12 @@ async def execute_payroll_workflow(
             earnings = gross + ot_amount + bonus_amt
 
             # 5. Deductions
-            # Provident Fund: 10% basic
-            pf_emp = basic * Decimal("0.10")
-            pf_comp = basic * Decimal("0.10")
+            # Provident Fund: 10% basic (if PF eligible)
+            pf_emp = round(basic * Decimal("0.10"), 2) if emp.is_pf_eligible else Decimal("0.00")
+            pf_comp = round(basic * Decimal("0.10"), 2) if emp.is_pf_eligible else Decimal("0.00")
 
-            # Income Tax TDS
-            tax_tds = gross * Decimal("0.05") if gross > Decimal("30000.00") else Decimal("0.00")
+            # Income Tax TDS (NBR Slabs or flat standard 5% above 30k)
+            tax_tds = round(gross * Decimal("0.05"), 2) if (emp.is_tax_eligible and gross > Decimal("30000.00")) else Decimal("0.00")
 
             # Staff Loan EMI
             loan_q = select(StaffLoan).where(
@@ -8533,7 +8616,12 @@ async def execute_payroll_workflow(
             ps.house_rent = house_rent
             ps.medical_allowance = medical
             ps.conveyance_allowance = conveyance
+            ps.food_allowance = food_allow
+            ps.mobile_allowance = mobile
+            ps.site_hazard_allowance = site_hazard
             ps.other_allowances = other_allow
+            ps.payable_days = payable_days
+            ps.proration_factor = proration_ratio
             ps.overtime_hours = ot_hours
             ps.overtime_amount = ot_amount
             ps.bonus_amount = bonus_amt
@@ -8563,7 +8651,10 @@ async def execute_payroll_workflow(
         period.total_deductions = tot_ded
         period.total_net_payable = tot_net
         period.total_employer_cost = tot_employer
-        period.status = "SUBMITTED"
+        if act == "PROCESS":
+            period.status = "SUBMITTED"
+        elif act == "SIMULATE":
+            period.status = "DRAFT"
 
     elif act == "SUBMIT":
         period.status = "SUBMITTED"
@@ -8645,7 +8736,12 @@ async def list_payroll_period_payslips(
             house_rent=ps.house_rent,
             medical_allowance=ps.medical_allowance,
             conveyance_allowance=ps.conveyance_allowance,
+            food_allowance=getattr(ps, "food_allowance", Decimal("0.00")),
+            mobile_allowance=getattr(ps, "mobile_allowance", Decimal("0.00")),
+            site_hazard_allowance=getattr(ps, "site_hazard_allowance", Decimal("0.00")),
             other_allowances=ps.other_allowances,
+            payable_days=getattr(ps, "payable_days", Decimal("30.00")),
+            proration_factor=getattr(ps, "proration_factor", Decimal("1.0000")),
             overtime_hours=ps.overtime_hours,
             overtime_amount=ps.overtime_amount,
             bonus_amount=ps.bonus_amount,
@@ -8709,35 +8805,53 @@ async def disburse_payroll_period(
 async def list_staff_loans(
     employee_id: Optional[int] = None,
     status: Optional[str] = None,
+    loan_type: Optional[str] = None,
+    search: Optional[str] = None,
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),
     current_user: Optional[User] = Depends(get_current_user_optional)
 ):
     org_id = get_org_id(current_user)
-    q = select(StaffLoan).where(StaffLoan.organization_id == org_id)
+    base_filter = [StaffLoan.organization_id == org_id]
     if employee_id:
-        q = q.where(StaffLoan.employee_id == employee_id)
-    if status:
-        q = q.where(StaffLoan.status == status)
+        base_filter.append(StaffLoan.employee_id == employee_id)
+    if status and status != 'ALL':
+        base_filter.append(StaffLoan.status == status)
+    if loan_type:
+        base_filter.append(StaffLoan.loan_type == loan_type)
+    if search:
+        base_filter.append(or_(
+            StaffLoan.loan_code.ilike(f"%{search}%"),
+            StaffLoan.loan_type.ilike(f"%{search}%")
+        ))
 
-    cnt_q = select(func.count()).select_from(q.subquery())
+    cnt_q = select(func.count(StaffLoan.id)).where(and_(*base_filter))
     total_res = await db.execute(cnt_q)
-    total = total_res.scalar_one() or 0
+    total = total_res.scalar() or 0
 
-    items_res = await db.execute(q.order_by(desc(StaffLoan.id)).limit(limit).offset(offset))
+    q = (
+        select(StaffLoan)
+        .options(selectinload(StaffLoan.employee).selectinload(Employee.department))
+        .where(and_(*base_filter))
+        .order_by(desc(StaffLoan.id))
+        .limit(limit)
+        .offset(offset)
+    )
+    items_res = await db.execute(q)
     loans = items_res.scalars().all()
 
     out_items = []
     for l in loans:
         emp = l.employee
+        dept_name = emp.department.name_en if emp and emp.department else None
         out_items.append(StaffLoanOut(
             id=l.id,
             organization_id=l.organization_id,
             employee_id=l.employee_id,
             employee_name=f"{emp.first_name} {emp.last_name or ''}".strip() if emp else None,
             employee_code=emp.employee_code if emp else None,
-            department_name=emp.department.name_en if emp and emp.department else None,
+            department_name=dept_name,
             loan_code=l.loan_code,
             loan_type=l.loan_type,
             principal_amount=l.principal_amount,
@@ -8764,6 +8878,10 @@ async def create_staff_loan(
 ):
     org_id = get_org_id(current_user)
     installment = payload.monthly_installment or (payload.principal_amount / Decimal(payload.tenure_months or 12))
+    st = payload.status or "ACTIVE"
+    disbursed = payload.disbursed_amount if payload.disbursed_amount is not None else (payload.principal_amount if st in ["ACTIVE", "DISBURSED"] else Decimal("0.00"))
+    recovered = payload.recovered_amount or Decimal("0.00")
+    remaining = payload.remaining_balance if payload.remaining_balance is not None else (disbursed - recovered)
     loan = StaffLoan(
         organization_id=org_id,
         employee_id=payload.employee_id,
@@ -8773,12 +8891,12 @@ async def create_staff_loan(
         interest_rate=payload.interest_rate,
         tenure_months=payload.tenure_months,
         monthly_installment=installment,
-        disbursed_amount=payload.principal_amount,
-        recovered_amount=Decimal("0.00"),
-        remaining_balance=payload.principal_amount,
+        disbursed_amount=disbursed,
+        recovered_amount=recovered,
+        remaining_balance=remaining,
         disbursement_date=payload.disbursement_date,
         start_recovery_period=payload.start_recovery_period,
-        status="ACTIVE"
+        status=st
     )
     db.add(loan)
     await db.commit()
@@ -8811,23 +8929,34 @@ async def create_staff_loan(
 async def list_salary_advances(
     employee_id: Optional[int] = None,
     recovery_period: Optional[str] = None,
+    status: Optional[str] = None,
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),
     current_user: Optional[User] = Depends(get_current_user_optional)
 ):
     org_id = get_org_id(current_user)
-    q = select(SalaryAdvance).where(SalaryAdvance.organization_id == org_id)
+    base_filter = [SalaryAdvance.organization_id == org_id]
     if employee_id:
-        q = q.where(SalaryAdvance.employee_id == employee_id)
+        base_filter.append(SalaryAdvance.employee_id == employee_id)
     if recovery_period:
-        q = q.where(SalaryAdvance.recovery_period == recovery_period)
+        base_filter.append(SalaryAdvance.recovery_period == recovery_period)
+    if status and status != 'ALL':
+        base_filter.append(SalaryAdvance.status == status)
 
-    cnt_q = select(func.count()).select_from(q.subquery())
+    cnt_q = select(func.count(SalaryAdvance.id)).where(and_(*base_filter))
     total_res = await db.execute(cnt_q)
-    total = total_res.scalar_one() or 0
+    total = total_res.scalar() or 0
 
-    items_res = await db.execute(q.order_by(desc(SalaryAdvance.id)).limit(limit).offset(offset))
+    q = (
+        select(SalaryAdvance)
+        .options(selectinload(SalaryAdvance.employee))
+        .where(and_(*base_filter))
+        .order_by(desc(SalaryAdvance.id))
+        .limit(limit)
+        .offset(offset)
+    )
+    items_res = await db.execute(q)
     advs = items_res.scalars().all()
 
     out_items = []
@@ -8865,7 +8994,7 @@ async def create_salary_advance(
         requested_date=payload.requested_date,
         recovery_period=payload.recovery_period,
         recovered_amount=Decimal("0.00"),
-        status="APPROVED",
+        status=payload.status or "APPROVED",
         reason=payload.reason
     )
     db.add(adv)
@@ -9040,7 +9169,18 @@ async def update_staff_loan(
     loan.tenure_months = payload.tenure_months
     if payload.monthly_installment:
         loan.monthly_installment = payload.monthly_installment
-    loan.start_recovery_period = payload.start_recovery_period
+    if payload.disbursement_date:
+        loan.disbursement_date = payload.disbursement_date
+    if payload.start_recovery_period:
+        loan.start_recovery_period = payload.start_recovery_period
+    if payload.status:
+        loan.status = payload.status
+    if payload.disbursed_amount is not None:
+        loan.disbursed_amount = payload.disbursed_amount
+    if payload.recovered_amount is not None:
+        loan.recovered_amount = payload.recovered_amount
+    if payload.remaining_balance is not None:
+        loan.remaining_balance = payload.remaining_balance
     await db.commit()
     await db.refresh(loan)
     emp = await db.get(Employee, loan.employee_id)
@@ -9066,6 +9206,16 @@ async def update_staff_loan(
     )
 
 
+@router.delete("/staff-loans/{loan_id}")
+async def delete_staff_loan(loan_id: int, db: AsyncSession = Depends(get_db)):
+    loan = await db.get(StaffLoan, loan_id)
+    if not loan:
+        raise HTTPException(status_code=404, detail="Staff loan not found")
+    await db.delete(loan)
+    await db.commit()
+    return {"message": "Staff loan deleted successfully", "id": loan_id}
+
+
 # --- 3.15 Salary Advance Update ---
 @router.put("/salary-advances/{advance_id}", response_model=SalaryAdvanceOut)
 async def update_salary_advance(
@@ -9079,6 +9229,8 @@ async def update_salary_advance(
     adv.advance_amount = payload.advance_amount
     adv.recovery_period = payload.recovery_period
     adv.reason = payload.reason
+    if payload.status:
+        adv.status = payload.status
     await db.commit()
     await db.refresh(adv)
     emp = await db.get(Employee, adv.employee_id)
@@ -9096,6 +9248,16 @@ async def update_salary_advance(
         reason=adv.reason,
         created_at=adv.created_at
     )
+
+
+@router.delete("/salary-advances/{advance_id}")
+async def delete_salary_advance(advance_id: int, db: AsyncSession = Depends(get_db)):
+    adv = await db.get(SalaryAdvance, advance_id)
+    if not adv:
+        raise HTTPException(status_code=404, detail="Salary advance not found")
+    await db.delete(adv)
+    await db.commit()
+    return {"message": "Salary advance deleted successfully", "id": advance_id}
 
 
 # --- 3.12 & 3.13 Benefit & Gratuity Policies ---
@@ -9183,6 +9345,16 @@ async def update_benefit_policy(
     return policy
 
 
+@router.delete("/benefit-policies/{policy_id}")
+async def delete_benefit_policy(policy_id: int, db: AsyncSession = Depends(get_db)):
+    policy = await db.get(BenefitPolicy, policy_id)
+    if not policy:
+        raise HTTPException(status_code=404, detail="Benefit policy not found")
+    await db.delete(policy)
+    await db.commit()
+    return {"message": "Benefit policy deleted successfully", "id": policy_id}
+
+
 # --- 3.17 Payroll Deep Validation ---
 @router.get("/payroll-periods/{period_id}/validation", response_model=PayrollValidationSummaryOut)
 async def validate_payroll_period(
@@ -9254,3 +9426,482 @@ async def validate_payroll_period(
         warning_count=warning_count,
         exceptions=exceptions
     )
+
+
+# =====================================================================
+# --- 5.11 Project-wise Salary & Labour Cost Allocation Endpoints ---
+# =====================================================================
+
+@router.get("/cost-allocations", response_model=ProjectCostAllocationPaginatedOut)
+async def list_project_cost_allocations(
+    payroll_period_id: Optional[int] = None,
+    project_id: Optional[int] = None,
+    employee_id: Optional[int] = None,
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    q = select(ProjectSalaryCostAllocation).where(ProjectSalaryCostAllocation.organization_id == org_id)
+
+    if payroll_period_id:
+        q = q.where(ProjectSalaryCostAllocation.payroll_period_id == payroll_period_id)
+    if project_id:
+        q = q.where(ProjectSalaryCostAllocation.project_id == project_id)
+    if employee_id:
+        q = q.where(ProjectSalaryCostAllocation.employee_id == employee_id)
+
+    cnt_q = select(func.count()).select_from(q.subquery())
+    total_res = await db.execute(cnt_q)
+    total = total_res.scalar_one() or 0
+
+    sum_q = select(func.sum(ProjectSalaryCostAllocation.allocated_amount)).select_from(q.subquery())
+    sum_res = await db.execute(sum_q)
+    tot_amt = sum_res.scalar_one() or Decimal("0.00")
+
+    items_res = await db.execute(
+        q.options(
+            joinedload(ProjectSalaryCostAllocation.employee),
+            joinedload(ProjectSalaryCostAllocation.project),
+            joinedload(ProjectSalaryCostAllocation.tower)
+        ).order_by(desc(ProjectSalaryCostAllocation.id)).limit(limit).offset(offset)
+    )
+    records = items_res.scalars().all()
+
+    out_items = []
+    for r in records:
+        emp = r.employee
+        prj = r.project
+        twr = r.tower
+        out_items.append(ProjectCostAllocationOut(
+            id=r.id,
+            organization_id=r.organization_id,
+            payroll_period_id=r.payroll_period_id,
+            employee_id=r.employee_id,
+            employee_name=f"{emp.first_name} {emp.last_name or ''}".strip() if emp else None,
+            employee_code=emp.employee_code if emp else None,
+            project_id=r.project_id,
+            project_name=prj.name if prj else None,
+            tower_id=r.tower_id,
+            tower_name=twr.name if twr else None,
+            cost_center=r.cost_center,
+            wbs_activity=r.wbs_activity,
+            allocation_method=r.allocation_method,
+            allocation_percent=r.allocation_percent,
+            allocated_amount=r.allocated_amount,
+            hours_worked=r.hours_worked or Decimal("0.00"),
+            voucher_id=r.voucher_id,
+            status=r.status,
+            remarks=r.remarks,
+            created_at=r.created_at
+        ))
+
+    return ProjectCostAllocationPaginatedOut(
+        items=out_items,
+        total=total,
+        limit=limit,
+        offset=offset,
+        total_allocated_amount=tot_amt
+    )
+
+
+@router.post("/cost-allocations", response_model=ProjectCostAllocationOut, status_code=status.HTTP_201_CREATED)
+async def create_project_cost_allocation(
+    payload: ProjectCostAllocationCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+
+    # Validate total allocation percentage <= 100%
+    existing_alloc_q = select(func.sum(ProjectSalaryCostAllocation.allocation_percent)).where(
+        ProjectSalaryCostAllocation.organization_id == org_id,
+        ProjectSalaryCostAllocation.payroll_period_id == payload.payroll_period_id,
+        ProjectSalaryCostAllocation.employee_id == payload.employee_id
+    )
+    existing_sum = (await db.execute(existing_alloc_q)).scalar() or Decimal("0.00")
+    if (existing_sum + payload.allocation_percent) > Decimal("100.00"):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Total allocation cannot exceed 100%. Currently allocated: {existing_sum}%, attempting to add: {payload.allocation_percent}%."
+        )
+
+    alloc = ProjectSalaryCostAllocation(
+        organization_id=org_id,
+        payroll_period_id=payload.payroll_period_id,
+        employee_id=payload.employee_id,
+        project_id=payload.project_id,
+        tower_id=payload.tower_id,
+        cost_center=payload.cost_center,
+        wbs_activity=payload.wbs_activity,
+        allocation_method=payload.allocation_method,
+        allocation_percent=payload.allocation_percent,
+        allocated_amount=payload.allocated_amount,
+        hours_worked=payload.hours_worked or Decimal("0.00"),
+        status="POSTED",
+        remarks=payload.remarks
+    )
+    db.add(alloc)
+    await db.commit()
+    await db.refresh(alloc)
+
+    emp = await db.get(Employee, alloc.employee_id)
+    return ProjectCostAllocationOut(
+        id=alloc.id,
+        organization_id=alloc.organization_id,
+        payroll_period_id=alloc.payroll_period_id,
+        employee_id=alloc.employee_id,
+        employee_name=f"{emp.first_name} {emp.last_name or ''}".strip() if emp else None,
+        employee_code=emp.employee_code if emp else None,
+        project_id=alloc.project_id,
+        tower_id=alloc.tower_id,
+        cost_center=alloc.cost_center,
+        wbs_activity=alloc.wbs_activity,
+        allocation_method=alloc.allocation_method,
+        allocation_percent=alloc.allocation_percent,
+        allocated_amount=alloc.allocated_amount,
+        hours_worked=alloc.hours_worked,
+        voucher_id=alloc.voucher_id,
+        status=alloc.status,
+        remarks=alloc.remarks,
+        created_at=alloc.created_at
+    )
+
+
+@router.post("/payroll-periods/{period_id}/auto-allocate-cost")
+async def auto_allocate_period_project_costs(
+    period_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    """
+    Auto-distributes period salary costs to employees' assigned project sites and corporate cost centers.
+    Ensures 100% of gross earnings are accounted for across project profitability reporting.
+    """
+    org_id = get_org_id(current_user)
+    period = await db.get(PayrollPeriod, period_id)
+    if not period or period.organization_id != org_id:
+        raise HTTPException(status_code=404, detail="Payroll period not found.")
+
+    slips_res = await db.execute(
+        select(PayrollPayslip).options(joinedload(PayrollPayslip.employee)).where(
+            PayrollPayslip.period_id == period_id
+        )
+    )
+    slips = slips_res.scalars().all()
+
+    # Clear existing allocations for this period
+    await db.execute(
+        select(ProjectSalaryCostAllocation).where(
+            ProjectSalaryCostAllocation.payroll_period_id == period_id
+        )
+    )
+
+    allocated_count = 0
+    total_allocated = Decimal("0.00")
+
+    for ps in slips:
+        emp = ps.employee
+        if not emp:
+            continue
+
+        target_proj_id = emp.assigned_project_id or 1 # Fallback to Corporate Headquarters project 1
+        
+        # Check if already allocated
+        chk = await db.execute(select(ProjectSalaryCostAllocation).where(
+            ProjectSalaryCostAllocation.payroll_period_id == period_id,
+            ProjectSalaryCostAllocation.employee_id == emp.id
+        ))
+        if chk.scalar_one_or_none():
+            continue
+
+        cost_center = emp.cost_center or ("SITE_CONSTRUCTION_LABOUR" if emp.workforce_category != "CORPORATE" else "CORP_OVERHEAD")
+
+        rec = ProjectSalaryCostAllocation(
+            organization_id=org_id,
+            payroll_period_id=period_id,
+            employee_id=emp.id,
+            project_id=target_proj_id,
+            cost_center=cost_center,
+            wbs_activity="Direct Labor & Site Supervision",
+            allocation_method="DIRECT",
+            allocation_percent=Decimal("100.00"),
+            allocated_amount=ps.total_earnings,
+            hours_worked=Decimal("208.00"),
+            status="POSTED",
+            remarks=f"Direct payroll allocation for {period.period_code}"
+        )
+        db.add(rec)
+        allocated_count += 1
+        total_allocated += ps.total_earnings
+
+    await db.commit()
+    return {
+        "success": True,
+        "period_code": period.period_code,
+        "employees_allocated": allocated_count,
+        "total_amount_allocated": total_allocated,
+        "message": f"Successfully allocated {allocated_count} employee salary costs totaling BDT {total_allocated:,.2f} across project cost centres."
+    }
+
+
+# =====================================================================
+# --- 10.1 - 10.11 Employee Separation & FnF Endpoints ---
+# =====================================================================
+
+@router.get("/separations", response_model=EmployeeSeparationPaginatedOut)
+async def list_employee_separations(
+    section_type: Optional[str] = None,
+    employee_id: Optional[int] = None,
+    status: Optional[str] = None,
+    search: Optional[str] = None,
+    limit: int = Query(15, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    q = select(EmployeeSeparation).options(
+        joinedload(EmployeeSeparation.employee).joinedload(Employee.department),
+        joinedload(EmployeeSeparation.employee).joinedload(Employee.designation)
+    ).where(EmployeeSeparation.organization_id == org_id)
+
+    if section_type:
+        q = q.where(EmployeeSeparation.section_type == section_type)
+    if employee_id:
+        q = q.where(EmployeeSeparation.employee_id == employee_id)
+    if status:
+        q = q.where(EmployeeSeparation.status == status)
+    if search:
+        search_filter = f"%{search}%"
+        q = q.join(Employee, EmployeeSeparation.employee_id == Employee.id).where(
+            or_(
+                EmployeeSeparation.separation_ref.ilike(search_filter),
+                Employee.first_name.ilike(search_filter),
+                Employee.last_name.ilike(search_filter),
+                Employee.employee_code.ilike(search_filter)
+            )
+        )
+
+    cnt_q = select(func.count()).select_from(q.subquery())
+    total_res = await db.execute(cnt_q)
+    total = total_res.scalar_one() or 0
+
+    items_res = await db.execute(q.order_by(desc(EmployeeSeparation.id)).limit(limit).offset(offset))
+    records = items_res.scalars().all()
+
+    items = []
+    for r in records:
+        emp = r.employee
+        items.append(EmployeeSeparationOut(
+            id=r.id,
+            organization_id=r.organization_id,
+            employee_id=r.employee_id,
+            employee_name=f"{emp.first_name} {emp.last_name or ''}".strip() if emp else None,
+            employee_code=emp.employee_code if emp else None,
+            department_name=emp.department.name_en if emp and emp.department else None,
+            designation_title=emp.designation.title_en if emp and emp.designation else None,
+            separation_ref=r.separation_ref,
+            section_type=r.section_type,
+            submission_date=r.submission_date,
+            notice_start_date=r.notice_start_date,
+            notice_end_date=r.notice_end_date,
+            notice_days=r.notice_days,
+            last_working_day=r.last_working_day,
+            separation_type=r.separation_type,
+            reason=r.reason,
+            exit_interview_notes=r.exit_interview_notes,
+            asset_clearance_status=r.asset_clearance_status,
+            dept_clearance_status=r.dept_clearance_status,
+            final_salary_amount=r.final_salary_amount,
+            leave_encashment_amount=r.leave_encashment_amount,
+            gratuity_amount=r.gratuity_amount,
+            provident_fund_settlement=r.provident_fund_settlement,
+            loan_deduction=r.loan_deduction,
+            other_deductions=r.other_deductions,
+            net_payable_amount=r.net_payable_amount,
+            approval_status=r.approval_status,
+            certificate_number=r.certificate_number,
+            certificate_issued=r.certificate_issued,
+            certificate_issue_date=r.certificate_issue_date,
+            status=r.status,
+            notes=r.notes,
+            created_at=r.created_at
+        ))
+
+    return EmployeeSeparationPaginatedOut(
+        items=items,
+        total=total,
+        limit=limit,
+        offset=offset
+    )
+
+
+@router.get("/separations/{id}", response_model=EmployeeSeparationOut)
+async def get_employee_separation(
+    id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    res = await db.execute(
+        select(EmployeeSeparation).options(
+            joinedload(EmployeeSeparation.employee).joinedload(Employee.department),
+            joinedload(EmployeeSeparation.employee).joinedload(Employee.designation)
+        ).where(EmployeeSeparation.id == id, EmployeeSeparation.organization_id == org_id)
+    )
+    r = res.scalar_one_or_none()
+    if not r:
+        raise HTTPException(status_code=404, detail="Separation record not found")
+
+    emp = r.employee
+    return EmployeeSeparationOut(
+        id=r.id,
+        organization_id=r.organization_id,
+        employee_id=r.employee_id,
+        employee_name=f"{emp.first_name} {emp.last_name or ''}".strip() if emp else None,
+        employee_code=emp.employee_code if emp else None,
+        department_name=emp.department.name_en if emp and emp.department else None,
+        designation_title=emp.designation.title_en if emp and emp.designation else None,
+        separation_ref=r.separation_ref,
+        section_type=r.section_type,
+        submission_date=r.submission_date,
+        notice_start_date=r.notice_start_date,
+        notice_end_date=r.notice_end_date,
+        notice_days=r.notice_days,
+        last_working_day=r.last_working_day,
+        separation_type=r.separation_type,
+        reason=r.reason,
+        exit_interview_notes=r.exit_interview_notes,
+        asset_clearance_status=r.asset_clearance_status,
+        dept_clearance_status=r.dept_clearance_status,
+        final_salary_amount=r.final_salary_amount,
+        leave_encashment_amount=r.leave_encashment_amount,
+        gratuity_amount=r.gratuity_amount,
+        provident_fund_settlement=r.provident_fund_settlement,
+        loan_deduction=r.loan_deduction,
+        other_deductions=r.other_deductions,
+        net_payable_amount=r.net_payable_amount,
+        approval_status=r.approval_status,
+        certificate_number=r.certificate_number,
+        certificate_issued=r.certificate_issued,
+        certificate_issue_date=r.certificate_issue_date,
+        status=r.status,
+        notes=r.notes,
+        created_at=r.created_at
+    )
+
+
+@router.post("/separations", response_model=EmployeeSeparationOut, status_code=status.HTTP_201_CREATED)
+async def create_employee_separation(
+    payload: EmployeeSeparationCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    ref = payload.separation_ref or f"SEP-{datetime.utcnow().year}-{uuid.uuid4().hex[:6].upper()}"
+
+    # Calculate net payable amount: salary + leave + gratuity + PF - loan - other
+    net = (
+        payload.final_salary_amount +
+        payload.leave_encashment_amount +
+        payload.gratuity_amount +
+        payload.provident_fund_settlement -
+        payload.loan_deduction -
+        payload.other_deductions
+    )
+
+    sep = EmployeeSeparation(
+        organization_id=org_id,
+        employee_id=payload.employee_id,
+        separation_ref=ref,
+        section_type=payload.section_type,
+        submission_date=payload.submission_date,
+        notice_start_date=payload.notice_start_date,
+        notice_end_date=payload.notice_end_date,
+        notice_days=payload.notice_days,
+        last_working_day=payload.last_working_day,
+        separation_type=payload.separation_type,
+        reason=payload.reason,
+        exit_interview_notes=payload.exit_interview_notes,
+        asset_clearance_status=payload.asset_clearance_status,
+        dept_clearance_status=payload.dept_clearance_status,
+        final_salary_amount=payload.final_salary_amount,
+        leave_encashment_amount=payload.leave_encashment_amount,
+        gratuity_amount=payload.gratuity_amount,
+        provident_fund_settlement=payload.provident_fund_settlement,
+        loan_deduction=payload.loan_deduction,
+        other_deductions=payload.other_deductions,
+        net_payable_amount=net,
+        approval_status=payload.approval_status,
+        certificate_number=payload.certificate_number,
+        certificate_issued=payload.certificate_issued,
+        certificate_issue_date=payload.certificate_issue_date,
+        status=payload.status,
+        notes=payload.notes
+    )
+    db.add(sep)
+    await db.commit()
+    await db.refresh(sep)
+
+    return await get_employee_separation(sep.id, db, current_user)
+
+
+@router.put("/separations/{id}", response_model=EmployeeSeparationOut)
+async def update_employee_separation(
+    id: int,
+    payload: EmployeeSeparationUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    sep = await db.get(EmployeeSeparation, id)
+    if not sep or sep.organization_id != org_id:
+        raise HTTPException(status_code=404, detail="Separation record not found")
+
+    update_data = payload.model_dump(exclude_unset=True)
+    for field, val in update_data.items():
+        setattr(sep, field, val)
+
+    # Recalculate net payable
+    sep.net_payable_amount = (
+        sep.final_salary_amount +
+        sep.leave_encashment_amount +
+        sep.gratuity_amount +
+        sep.provident_fund_settlement -
+        sep.loan_deduction -
+        sep.other_deductions
+    )
+
+    await db.commit()
+    await db.refresh(sep)
+    return await get_employee_separation(sep.id, db, current_user)
+
+
+@router.delete("/separations/{id}")
+async def delete_employee_separation(
+    id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    org_id = get_org_id(current_user)
+    sep = await db.get(EmployeeSeparation, id)
+    if not sep or sep.organization_id != org_id:
+        raise HTTPException(status_code=404, detail="Separation record not found")
+
+    await db.delete(sep)
+    await db.commit()
+    return {"message": "Separation record deleted successfully."}
+
+
+from app.modules.hrms.performance_api import router as performance_router
+
+router.include_router(performance_router)
+from app.modules.hrms.reports_router import router as reports_router
+
+router.include_router(reports_router)
+
+from app.modules.hrms.ess_api import router as ess_router
+
+router.include_router(ess_router)

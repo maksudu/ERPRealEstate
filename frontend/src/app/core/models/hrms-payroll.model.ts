@@ -172,7 +172,12 @@ export interface PayrollPayslipDetail {
   house_rent: number;
   medical_allowance: number;
   conveyance_allowance: number;
+  food_allowance?: number;
+  mobile_allowance?: number;
+  site_hazard_allowance?: number;
   other_allowances: number;
+  payable_days?: number;
+  proration_factor?: number;
   overtime_hours: number;
   overtime_amount: number;
   bonus_amount: number;

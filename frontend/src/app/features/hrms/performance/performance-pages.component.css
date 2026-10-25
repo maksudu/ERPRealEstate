@@ -1,0 +1,5 @@
+/* Performance & Development Workspace CSS - Clean Global Design System */
+:host {
+  display: block;
+  width: 100%;
+}

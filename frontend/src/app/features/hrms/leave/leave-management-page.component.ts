@@ -51,7 +51,7 @@ interface LeavePageNavItem {
           </a>
           <a routerLink="/hrms/leave/history" class="shrink-0 border-b-2 border-transparent px-4 py-3 text-sm font-semibold text-slate-500 transition hover:text-teal-900">History</a>
           <a routerLink="/hrms/leave/calendar" class="shrink-0 border-b-2 border-transparent px-4 py-3 text-sm font-semibold text-slate-500 transition hover:text-teal-900">Calendar</a>
-          <a routerLink="/hrms/leave/holidays" class="shrink-0 border-b-2 border-transparent px-4 py-3 text-sm font-semibold text-slate-500 transition hover:text-teal-900">Holidays</a>
+          <a routerLink="/hrms/attendance/holiday-calendar" class="shrink-0 border-b-2 border-transparent px-4 py-3 text-sm font-semibold text-slate-500 transition hover:text-teal-900">Holiday Calendar</a>
           <a routerLink="/hrms/leave/encashment" class="shrink-0 border-b-2 border-transparent px-4 py-3 text-sm font-semibold text-slate-500 transition hover:text-teal-900">Encashment</a>
           <a routerLink="/hrms/leave-overtime" class="ml-auto hidden shrink-0 border-b-2 border-transparent px-4 py-3 text-xs font-semibold text-slate-500 transition hover:text-teal-900 sm:block">Legacy leave & overtime</a>
         </nav>

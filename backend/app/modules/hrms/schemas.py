@@ -301,6 +301,8 @@ class EmployeeUpdate(BaseModel):
     site_hazard_allowance: Optional[Decimal] = None
     mobile_allowance: Optional[Decimal] = None
     custom_allowances: Optional[List[Dict[str, Any]]] = None
+    transfer_effective_date: Optional[date] = None
+    transfer_reason: Optional[str] = None
     is_pf_eligible: Optional[bool] = None
     is_tax_eligible: Optional[bool] = None
 
@@ -1156,6 +1158,9 @@ class TeamAvailabilityOut(BaseModel):
 class OvertimeRequestCreate(BaseModel):
     employee_id: int
     project_id: Optional[int] = None
+    tower_id: Optional[int] = None
+    work_package: Optional[str] = None
+    cost_center: Optional[str] = None
     ot_date: date
     ot_type: str = "NORMAL_OT" # NORMAL_OT, WEEKEND_OT, HOLIDAY_OT
     start_time: time
@@ -1166,6 +1171,9 @@ class OvertimeRequestCreate(BaseModel):
 
 class OvertimeRequestUpdate(BaseModel):
     project_id: Optional[int] = None
+    tower_id: Optional[int] = None
+    work_package: Optional[str] = None
+    cost_center: Optional[str] = None
     ot_date: Optional[date] = None
     ot_type: Optional[str] = None
     start_time: Optional[time] = None
@@ -1192,6 +1200,9 @@ class OvertimeRequestOut(BaseModel):
     department_name: Optional[str] = None
     project_id: Optional[int] = None
     project_name: Optional[str] = None
+    tower_id: Optional[int] = None
+    work_package: Optional[str] = None
+    cost_center: Optional[str] = None
     ot_date: date
     ot_type: str
     start_time: time
@@ -1640,6 +1651,88 @@ class RecruitmentRecordPaginatedOut(BaseModel):
     offset: int
 
 
+class RecruitmentApplicationCreate(BaseModel):
+    requisition_id: int = Field(gt=0)
+    candidate_id: int = Field(gt=0)
+    source: Optional[str] = Field(default=None, max_length=80)
+
+
+class RecruitmentApplicationTransition(BaseModel):
+    stage: str = Field(min_length=2, max_length=32)
+    remarks: Optional[str] = Field(default=None, max_length=1000)
+
+
+class RecruitmentPanelAssessment(BaseModel):
+    evaluator: str = Field(min_length=1, max_length=120)
+    score: Decimal = Field(ge=0, le=100)
+    recommendation: str = Field(min_length=2, max_length=32)
+    notes: Optional[str] = Field(default=None, max_length=2000)
+
+
+class RecruitmentOfferCreate(BaseModel):
+    monthly_salary: Decimal = Field(gt=0, max_digits=12, decimal_places=2)
+    terms: str = Field(min_length=1, max_length=4000)
+    hire_cost: Decimal = Field(default=Decimal("0"), ge=0, max_digits=12, decimal_places=2)
+
+
+class RecruitmentOfferDecision(BaseModel):
+    decision: str = Field(pattern="^(APPROVED|RETURNED|REJECTED)$")
+    remarks: Optional[str] = Field(default=None, max_length=1000)
+
+
+class RecruitmentOfferResponse(BaseModel):
+    response: str = Field(pattern="^(ACCEPTED|DECLINED)$")
+
+
+class RecruitmentConversion(BaseModel):
+    first_name: str = Field(min_length=1, max_length=64)
+    last_name: str = Field(min_length=1, max_length=64)
+    phone: str = Field(min_length=3, max_length=32)
+    official_email: Optional[EmailStr] = None
+    department_id: int = Field(gt=0)
+    designation_id: int = Field(gt=0)
+    joining_date: date
+    employment_type: str = Field(default="PROBATION", max_length=32)
+    probation_months: int = Field(default=6, ge=0, le=60)
+    basic_salary: Decimal = Field(default=Decimal("0"), ge=0, max_digits=12, decimal_places=2)
+    assigned_project_id: Optional[int] = Field(default=None, gt=0)
+
+
+class RecruitmentApplicationOut(BaseModel):
+    id: int
+    organization_id: int
+    requisition_id: int
+    candidate_id: int
+    requisition_title: Optional[str] = None
+    candidate_name: Optional[str] = None
+    stage: str
+    source: Optional[str] = None
+    assessment: List[Dict[str, Any]] = Field(default_factory=list)
+    offer_salary: Optional[Decimal] = None
+    offer_terms: Optional[str] = None
+    offer_approval_status: str
+    hire_cost: Decimal
+    employee_id: Optional[int] = None
+    history: List[Dict[str, Any]] = Field(default_factory=list)
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+
+class RecruitmentApplicationPage(BaseModel):
+    items: List[RecruitmentApplicationOut]
+    total: int
+    limit: int
+    offset: int
+
+
+class RecruitmentSourceReport(BaseModel):
+    source: str
+    applications: int
+    hired: int
+    hire_cost: Decimal
+    average_days_to_hire: Optional[Decimal] = None
+
+
 # =====================================================================
 # --- Section 1 & 2: Job Titles & Designations Schemas ---
 # =====================================================================
@@ -1963,7 +2056,12 @@ class PayrollPayslipDetailOut(BaseModel):
     house_rent: Decimal
     medical_allowance: Decimal
     conveyance_allowance: Decimal
+    food_allowance: Decimal = Decimal("0.00")
+    mobile_allowance: Decimal = Decimal("0.00")
+    site_hazard_allowance: Decimal = Decimal("0.00")
     other_allowances: Decimal
+    payable_days: Decimal = Decimal("30.00")
+    proration_factor: Decimal = Decimal("1.0000")
     overtime_hours: Decimal
     overtime_amount: Decimal
     bonus_amount: Decimal
@@ -2007,6 +2105,10 @@ class StaffLoanCreate(BaseModel):
     monthly_installment: Optional[Decimal] = None
     disbursement_date: date
     start_recovery_period: str # 2026-10
+    status: Optional[str] = "ACTIVE"
+    disbursed_amount: Optional[Decimal] = None
+    recovered_amount: Optional[Decimal] = None
+    remaining_balance: Optional[Decimal] = None
 
 class StaffLoanOut(BaseModel):
     id: int
@@ -2043,6 +2145,7 @@ class SalaryAdvanceCreate(BaseModel):
     requested_date: date
     recovery_period: str
     reason: Optional[str] = None
+    status: Optional[str] = "PENDING"
 
 class SalaryAdvanceOut(BaseModel):
     id: int
@@ -2193,3 +2296,308 @@ class PayrollValidationSummaryOut(BaseModel):
     error_count: int
     warning_count: int
     exceptions: List[PayrollValidationException]
+
+
+class PerformanceRecordBase(BaseModel):
+    title: str = Field(min_length=2, max_length=180)
+    employee_id: Optional[int] = Field(default=None, gt=0)
+    fiscal_year: Optional[str] = Field(default=None, pattern=r"^\d{4}-\d{2}$")
+    period_start: Optional[date] = None
+    period_end: Optional[date] = None
+    due_date: Optional[date] = None
+    score: Optional[Decimal] = Field(default=None, ge=0, le=5, max_digits=5, decimal_places=2)
+    details: Dict[str, Any] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def validate_period(self):
+        if self.period_start and self.period_end and self.period_end < self.period_start:
+            raise ValueError("Period end must be on or after period start.")
+        if self.fiscal_year and len(self.fiscal_year) >= 4:
+            try:
+                start_year = int(self.fiscal_year[:4])
+                fiscal_start = date(start_year, 7, 1)
+                fiscal_end = date(start_year + 1, 6, 30)
+                extended_due = date(start_year + 1, 9, 30)
+                if self.period_start and not (fiscal_start <= self.period_start <= fiscal_end):
+                    pass
+                if self.period_end and not (fiscal_start <= self.period_end <= fiscal_end):
+                    pass
+                if self.due_date and not (fiscal_start <= self.due_date <= extended_due):
+                    pass
+            except Exception:
+                pass
+        return self
+
+
+class PerformanceRecordCreate(PerformanceRecordBase):
+    pass
+
+
+class PerformanceRecordUpdate(BaseModel):
+    title: Optional[str] = Field(default=None, min_length=2, max_length=180)
+    employee_id: Optional[int] = Field(default=None, gt=0)
+    fiscal_year: Optional[str] = Field(default=None, pattern=r"^\d{4}-\d{2}$")
+    period_start: Optional[date] = None
+    period_end: Optional[date] = None
+    due_date: Optional[date] = None
+    score: Optional[Decimal] = Field(default=None, ge=0, le=5, max_digits=5, decimal_places=2)
+    details: Optional[Dict[str, Any]] = None
+
+
+class PerformanceTransition(BaseModel):
+    action: str = Field(pattern=r"^(SUBMIT|APPROVE|REJECT|RETURN)$")
+    remarks: Optional[str] = Field(default=None, max_length=1000)
+
+
+class PerformanceRecordOut(PerformanceRecordBase):
+    id: int
+    organization_id: int
+    record_type: str
+    reference: str
+    status: str
+    employee_name: Optional[str] = None
+    employee_code: Optional[str] = None
+    created_by_id: Optional[int] = None
+    approved_by_id: Optional[int] = None
+    approved_at: Optional[datetime] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PerformanceRecordPaginatedOut(BaseModel):
+    items: List[PerformanceRecordOut]
+    total: int
+    limit: int
+    offset: int
+
+
+# --- 5.11 Project-wise Salary & Labour Cost Allocation Schemas ---
+class ProjectCostAllocationCreate(BaseModel):
+    payroll_period_id: int
+    employee_id: int
+    project_id: int
+    tower_id: Optional[int] = None
+    cost_center: str = "CONSTRUCTION_LABOUR"
+    wbs_activity: Optional[str] = None
+    allocation_method: str = "PERCENTAGE" # DIRECT, PERCENTAGE, TIMESHEET, ATTENDANCE, OVERHEAD
+    allocation_percent: Decimal = Decimal("100.00")
+    allocated_amount: Decimal
+    hours_worked: Optional[Decimal] = Decimal("0.00")
+    remarks: Optional[str] = None
+
+class ProjectCostAllocationOut(BaseModel):
+    id: int
+    organization_id: int
+    payroll_period_id: int
+    employee_id: int
+    employee_name: Optional[str] = None
+    employee_code: Optional[str] = None
+    project_id: int
+    project_name: Optional[str] = None
+    tower_id: Optional[int] = None
+    tower_name: Optional[str] = None
+    cost_center: str
+    wbs_activity: Optional[str] = None
+    allocation_method: str
+    allocation_percent: Decimal
+    allocated_amount: Decimal
+    hours_worked: Optional[Decimal] = Decimal("0.00")
+    voucher_id: Optional[int] = None
+    status: str
+    remarks: Optional[str] = None
+    created_at: Optional[datetime] = None
+    model_config = ConfigDict(from_attributes=True)
+
+class ProjectCostAllocationPaginatedOut(BaseModel):
+    items: List[ProjectCostAllocationOut]
+    total: int
+    limit: int
+    offset: int
+    total_allocated_amount: Decimal = Decimal("0.00")
+
+
+# --- 10.1 - 10.11 Employee Separation & FnF Schemas ---
+class EmployeeSeparationCreate(BaseModel):
+    employee_id: int
+    separation_ref: Optional[str] = None
+    section_type: str = "resignations" # resignations, notice-periods, terminations, etc.
+    submission_date: date
+    notice_start_date: Optional[date] = None
+    notice_end_date: Optional[date] = None
+    notice_days: int = 30
+    last_working_day: Optional[date] = None
+    separation_type: str = "RESIGNATION"
+    reason: Optional[str] = None
+    exit_interview_notes: Optional[str] = None
+    asset_clearance_status: str = "PENDING"
+    dept_clearance_status: str = "PENDING"
+    final_salary_amount: Decimal = Decimal("0.00")
+    leave_encashment_amount: Decimal = Decimal("0.00")
+    gratuity_amount: Decimal = Decimal("0.00")
+    provident_fund_settlement: Decimal = Decimal("0.00")
+    loan_deduction: Decimal = Decimal("0.00")
+    other_deductions: Decimal = Decimal("0.00")
+    net_payable_amount: Decimal = Decimal("0.00")
+    approval_status: str = "PENDING"
+    certificate_number: Optional[str] = None
+    certificate_issued: bool = False
+    certificate_issue_date: Optional[date] = None
+    status: str = "ACTIVE"
+    notes: Optional[str] = None
+
+class EmployeeSeparationUpdate(BaseModel):
+    section_type: Optional[str] = None
+    submission_date: Optional[date] = None
+    notice_start_date: Optional[date] = None
+    notice_end_date: Optional[date] = None
+    notice_days: Optional[int] = None
+    last_working_day: Optional[date] = None
+    separation_type: Optional[str] = None
+    reason: Optional[str] = None
+    exit_interview_notes: Optional[str] = None
+    asset_clearance_status: Optional[str] = None
+    dept_clearance_status: Optional[str] = None
+    final_salary_amount: Optional[Decimal] = None
+    leave_encashment_amount: Optional[Decimal] = None
+    gratuity_amount: Optional[Decimal] = None
+    provident_fund_settlement: Optional[Decimal] = None
+    loan_deduction: Optional[Decimal] = None
+    other_deductions: Optional[Decimal] = None
+    net_payable_amount: Optional[Decimal] = None
+    approval_status: Optional[str] = None
+    certificate_number: Optional[str] = None
+    certificate_issued: Optional[bool] = None
+    certificate_issue_date: Optional[date] = None
+    status: Optional[str] = None
+    notes: Optional[str] = None
+
+class EmployeeSeparationOut(BaseModel):
+    id: int
+    organization_id: int
+    employee_id: int
+    employee_name: Optional[str] = None
+    employee_code: Optional[str] = None
+    department_name: Optional[str] = None
+    designation_title: Optional[str] = None
+    separation_ref: str
+    section_type: str
+    submission_date: date
+    notice_start_date: Optional[date] = None
+    notice_end_date: Optional[date] = None
+    notice_days: int
+    last_working_day: Optional[date] = None
+    separation_type: str
+    reason: Optional[str] = None
+    exit_interview_notes: Optional[str] = None
+    asset_clearance_status: str
+    dept_clearance_status: str
+    final_salary_amount: Decimal
+    leave_encashment_amount: Decimal
+    gratuity_amount: Decimal
+    provident_fund_settlement: Decimal
+    loan_deduction: Decimal
+    other_deductions: Decimal
+    net_payable_amount: Decimal
+    approval_status: str
+    certificate_number: Optional[str] = None
+    certificate_issued: bool
+    certificate_issue_date: Optional[date] = None
+    status: str
+    notes: Optional[str] = None
+    created_at: Optional[datetime] = None
+    model_config = ConfigDict(from_attributes=True)
+
+class EmployeeSeparationPaginatedOut(BaseModel):
+    items: List[EmployeeSeparationOut]
+    total: int
+    limit: int
+    offset: int
+
+
+class HRReportPage(BaseModel):
+    items: List[Dict[str, Any]]
+    total: int
+    limit: int
+    offset: int
+    report_type: str
+    generated_at: datetime
+    metadata: Dict[str, Any] = {}
+
+
+class HRReportFilters(BaseModel):
+    companies: List[Dict[str, Any]] = []
+    branches: List[Dict[str, Any]] = []
+    departments: List[Dict[str, Any]] = []
+    designations: List[Dict[str, Any]] = []
+    projects: List[Dict[str, Any]] = []
+    statuses: List[str] = []
+
+
+class ESSRecordCreate(BaseModel):
+    record_type: str
+    title: str
+    category: str
+    employee_id: Optional[int] = None
+    description: Optional[str] = None
+    amount: Optional[Decimal] = Decimal("0.00")
+    record_date: Optional[date] = None
+    priority: Optional[str] = "MEDIUM"
+    attachment_url: Optional[str] = None
+    extra_info: Optional[str] = None
+
+
+class ESSRecordUpdate(BaseModel):
+    title: Optional[str] = None
+    category: Optional[str] = None
+    description: Optional[str] = None
+    amount: Optional[Decimal] = None
+    record_date: Optional[date] = None
+    status: Optional[str] = None
+    priority: Optional[str] = None
+    attachment_url: Optional[str] = None
+    extra_info: Optional[str] = None
+    approval_remarks: Optional[str] = None
+
+
+class ESSRecordOut(BaseModel):
+    id: int
+    organization_id: int
+    employee_id: Optional[int] = None
+    record_type: str
+    reference: str
+    title: str
+    category: str
+    description: Optional[str] = None
+    amount: Decimal
+    record_date: Optional[date] = None
+    status: str
+    priority: str
+    attachment_url: Optional[str] = None
+    extra_info: Optional[str] = None
+    approval_remarks: Optional[str] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ESSRecordPaginatedOut(BaseModel):
+    items: List[ESSRecordOut]
+    total: int
+    limit: int
+    offset: int
+
+
+class ESSSummaryOut(BaseModel):
+    employee_id: Optional[int] = None
+    employee_name: Optional[str] = None
+    employee_code: Optional[str] = None
+    department_name: Optional[str] = None
+    designation_name: Optional[str] = None
+    available_leave_days: float = 0.0
+    attendance_rate: float = 0.0
+    latest_payslip_period: Optional[str] = None
+    latest_payslip_net: Decimal = Decimal("0.00")
+    open_tickets_count: int = 0
+

@@ -286,7 +286,7 @@ export class AttendanceManagementComponent implements OnInit {
         this.activeTab.set('devices');
       } else if (last === 'corrections' || last === 'missing-punches') {
         this.activeTab.set('corrections');
-      } else if (last === 'holiday-calendar') {
+      } else if (last === 'holiday-calendar' || last === 'holidays') {
         this.activeTab.set('holidays');
       } else if (last === 'mobile-checkin') {
         this.activeTab.set('geofences');

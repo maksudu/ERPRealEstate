@@ -48,6 +48,19 @@
 
       @if (payrollService.activePeriod()) {
         <app-custom-button
+          label="Simulate Run"
+          variant="secondary"
+          size="sm"
+          [disabled]="!!payrollService.activePeriod()?.is_locked"
+          (btnClick)="executeWorkflow('SIMULATE')"
+        >
+          <svg class="w-4 h-4 mr-1 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+          </svg>
+        </app-custom-button>
+
+        <app-custom-button
           label="Process Calculations"
           variant="luxury"
           size="sm"
@@ -367,6 +380,87 @@
     <!-- TAB 2: SALARY COMPONENTS & STRUCTURES -->
     @if (activeTab() === 'structures') {
       <div class="p-6 space-y-8">
+
+        <!-- 3.0 Salary Grades & Job Pay Bands (Merged from Designations/Grades) -->
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                3.0 Salary Grades & Job Pay Bands (Job Scales)
+              </h3>
+              <p class="text-xs text-slate-500 mt-0.5">Pay band boundaries, statutory allowances, and compensation scales.</p>
+            </div>
+            <app-custom-button
+              label="+ Add Salary Grade"
+              variant="luxury"
+              size="sm"
+              (btnClick)="openGradeModal()"
+            ></app-custom-button>
+          </div>
+
+          <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-2xs">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs border-collapse">
+                <thead class="bg-slate-100/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-800 uppercase tracking-wider text-[11px]">
+                  <tr>
+                    <th class="py-3 px-4">Grade Code</th>
+                    <th class="py-3 px-4">Grade Name & Description</th>
+                    <th class="py-3 px-4">Level</th>
+                    <th class="py-3 px-4 text-right">Min Salary (৳)</th>
+                    <th class="py-3 px-4 text-right">Max Salary (৳)</th>
+                    <th class="py-3 px-4">Default Allowances</th>
+                    <th class="py-3 px-4 text-center">Status</th>
+                    <th class="py-3 px-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                  @for (g of posService.salaryGrades(); track g.id) {
+                    <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                      <td class="py-3.5 px-4 font-mono font-bold text-indigo-700 dark:text-indigo-400">{{ g.grade_code }}</td>
+                      <td class="py-3.5 px-4">
+                        <div class="font-bold text-slate-900 dark:text-white">{{ g.grade_name }}</div>
+                        @if (g.description) {
+                          <div class="text-[10px] text-slate-400 max-w-xs truncate">{{ g.description }}</div>
+                        }
+                      </td>
+                      <td class="py-3.5 px-4">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-800 border border-slate-300 dark:bg-slate-800 dark:text-slate-300">
+                          {{ g.employee_level }}
+                        </span>
+                      </td>
+                      <td class="py-3.5 px-4 text-right font-mono font-semibold text-slate-800 dark:text-slate-200">
+                        ৳{{ g.min_salary | number:'1.0-0' }}
+                      </td>
+                      <td class="py-3.5 px-4 text-right font-mono font-bold text-slate-900 dark:text-white">
+                        ৳{{ g.max_salary | number:'1.0-0' }}
+                      </td>
+                      <td class="py-3.5 px-4 text-[11px] text-slate-600 dark:text-slate-400">
+                        House Rent: {{ g.default_house_rent_pct }}% · Med: ৳{{ g.default_medical_allowance }} · Conv: ৳{{ g.default_conveyance }}
+                      </td>
+                      <td class="py-3.5 px-4 text-center">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold"
+                          [class.bg-emerald-50]="g.is_active" [class.text-emerald-700]="g.is_active"
+                          [class.bg-slate-100]="!g.is_active" [class.text-slate-600]="!g.is_active">
+                          {{ g.is_active ? 'Active' : 'Inactive' }}
+                        </span>
+                      </td>
+                      <td class="py-3.5 px-4 text-right space-x-2">
+                        <button (click)="openGradeModal(g)" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400">Edit</button>
+                        <button (click)="deleteSalaryGrade(g.id)" class="text-xs font-semibold text-rose-600 hover:text-rose-800 dark:text-rose-400">Delete</button>
+                      </td>
+                    </tr>
+                  }
+                  @if (posService.salaryGrades().length === 0) {
+                    <tr>
+                      <td colspan="8" class="py-6 text-center text-slate-400">No salary grades configured yet. Click "+ Add Salary Grade" to create one.</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
 
         <!-- 3.1 Salary Components Master -->
         <div class="space-y-4">
@@ -875,6 +969,116 @@
       </div>
     }
 
+    <!-- TAB 5.11: PROJECT & SITE COST ALLOCATION -->
+    @if (activeTab() === 'project_allocations') {
+      <div class="p-6 space-y-6">
+        <div class="p-4 rounded-xl bg-gradient-to-r from-indigo-500/10 via-sky-500/5 to-indigo-500/10 border border-indigo-200 dark:border-indigo-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-base font-bold text-slate-900 dark:text-white font-display">Project-wise Salary & Labour Cost Allocation</span>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-100 text-indigo-700 dark:bg-indigo-900/60 dark:text-indigo-300">Section 5.11</span>
+            </div>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              Direct, percentage, and timesheet-based salary cost distribution across construction projects, towers, and cost centers.
+            </p>
+          </div>
+          <div class="flex items-center gap-2">
+            <app-custom-button
+              label="Auto-Allocate Active Period"
+              variant="luxury"
+              size="sm"
+              [disabled]="!payrollService.activePeriod()"
+              (btnClick)="triggerAutoCostAllocation()"
+            >
+              <svg class="w-4 h-4 mr-1 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+              </svg>
+            </app-custom-button>
+          </div>
+        </div>
+
+        <!-- Allocation Summary Metrics -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800">
+            <span class="text-xs text-slate-500 block">Total Allocated Payroll Cost</span>
+            <span class="text-xl font-bold font-mono text-indigo-600 dark:text-indigo-400">BDT {{ totalAllocatedCost() | number:'1.2-2' }}</span>
+          </div>
+          <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800">
+            <span class="text-xs text-slate-500 block">Total Allocation Entries</span>
+            <span class="text-xl font-bold font-mono text-slate-900 dark:text-white">{{ costAllocations().length }} records</span>
+          </div>
+          <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800">
+            <span class="text-xs text-slate-500 block">Allocation Integrity Rule</span>
+            <span class="text-sm font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 mt-1">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              Sum(Allocation) = 100% Validated
+            </span>
+          </div>
+        </div>
+
+        <!-- Cost Allocation Data Table -->
+        <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-2xs">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 dark:bg-slate-800/60 uppercase font-semibold text-[11px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
+                <tr>
+                  <th class="px-4 py-3">Employee</th>
+                  <th class="px-4 py-3">Target Project</th>
+                  <th class="px-4 py-3">Tower / Zone</th>
+                  <th class="px-4 py-3">Cost Center</th>
+                  <th class="px-4 py-3">WBS Activity</th>
+                  <th class="px-4 py-3 text-center">Method</th>
+                  <th class="px-4 py-3 text-right">Allocation %</th>
+                  <th class="px-4 py-3 text-right">Allocated BDT</th>
+                  <th class="px-4 py-3 text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                @if (loadingCostAllocations()) {
+                  <tr><td colspan="9" class="p-8 text-center text-slate-400">Loading cost allocations...</td></tr>
+                } @else if (costAllocations().length === 0) {
+                  <tr>
+                    <td colspan="9" class="p-8 text-center text-slate-400">
+                      No cost allocations found for this period. Click "Auto-Allocate Active Period" to distribute salary costs across project sites.
+                    </td>
+                  </tr>
+                } @else {
+                  @for (ca of costAllocations(); track ca.id) {
+                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                      <td class="px-4 py-3 font-semibold text-slate-900 dark:text-white">
+                        {{ ca.employee_name }}
+                        <span class="block text-[10px] text-slate-400 font-mono">{{ ca.employee_code }}</span>
+                      </td>
+                      <td class="px-4 py-3 font-medium text-slate-800 dark:text-slate-200">{{ ca.project_name || 'Corporate HQ' }}</td>
+                      <td class="px-4 py-3 text-slate-500">{{ ca.tower_name || 'All Towers' }}</td>
+                      <td class="px-4 py-3">
+                        <span class="px-2 py-0.5 rounded font-mono text-[10px] bg-slate-100 dark:bg-slate-800">{{ ca.cost_center }}</span>
+                      </td>
+                      <td class="px-4 py-3 text-slate-600 dark:text-slate-300">{{ ca.wbs_activity || 'Site Operations' }}</td>
+                      <td class="px-4 py-3 text-center">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300">
+                          {{ ca.allocation_method }}
+                        </span>
+                      </td>
+                      <td class="px-4 py-3 text-right font-mono font-bold text-slate-900 dark:text-white">{{ ca.allocation_percent }}%</td>
+                      <td class="px-4 py-3 text-right font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                        BDT {{ ca.allocated_amount | number:'1.2-2' }}
+                      </td>
+                      <td class="px-4 py-3 text-center">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
+                          {{ ca.status }}
+                        </span>
+                      </td>
+                    </tr>
+                  }
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    }
+
     <!-- TAB 6: SETTINGS DYNAMIC LOOKUPS -->
     @if (activeTab() === 'settings') {
       <div class="p-6 space-y-6">
@@ -1050,6 +1254,10 @@
             <span class="text-slate-400 block text-[10px]">Bank A/C / ব্যাংক হিসাব:</span>
             <span class="font-mono font-semibold text-slate-800 dark:text-slate-200">{{ ps.bank_account_no || 'Cash / Cheque' }}</span>
           </div>
+          <div>
+            <span class="text-slate-400 block text-[10px]">Payable Days (কার্যদিবস):</span>
+            <span class="font-mono font-bold text-emerald-600 dark:text-emerald-400">{{ ps.payable_days || 30 }} days @if ((ps.proration_factor || 1) < 1) { <span class="text-[10px] text-amber-500 font-normal">({{ ((ps.proration_factor || 1) * 100) | number:'1.0-0' }}% Prorated)</span> }</span>
+          </div>
         </div>
 
         <!-- Earnings vs Deductions Matrix -->
@@ -1076,6 +1284,24 @@
                 <span class="text-slate-600 dark:text-slate-400">Conveyance (যাতায়াত):</span>
                 <span class="font-mono font-semibold">BDT {{ ps.conveyance_allowance | number:'1.2-2' }}</span>
               </div>
+              @if ((ps.food_allowance || 0) > 0) {
+                <div class="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
+                  <span class="text-slate-600 dark:text-slate-400">Food Allowance (খাবার ভাতা):</span>
+                  <span class="font-mono font-semibold">BDT {{ ps.food_allowance | number:'1.2-2' }}</span>
+                </div>
+              }
+              @if ((ps.mobile_allowance || 0) > 0) {
+                <div class="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
+                  <span class="text-slate-600 dark:text-slate-400">Mobile / Comm. (মোবাইল ভাতা):</span>
+                  <span class="font-mono font-semibold">BDT {{ ps.mobile_allowance | number:'1.2-2' }}</span>
+                </div>
+              }
+              @if ((ps.site_hazard_allowance || 0) > 0) {
+                <div class="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800 text-emerald-700 dark:text-emerald-300">
+                  <span class="font-semibold">Site Hazard Allowance (সাইট ঝুঁকি ভাতা):</span>
+                  <span class="font-mono font-semibold">+BDT {{ ps.site_hazard_allowance | number:'1.2-2' }}</span>
+                </div>
+              }
               @if (ps.other_allowances > 0) {
                 <div class="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
                   <span class="text-slate-600 dark:text-slate-400">Other Allowances (অন্যান্য):</span>
@@ -1336,6 +1562,122 @@
         variant="luxury"
         size="sm"
         (btnClick)="submitStructureForm()"
+      ></app-custom-button>
+    </div>
+  </app-modal>
+
+  <!-- 4.1 Salary Grade / Pay Band Modal (Merged from Designations/Grades) -->
+  <app-modal
+    [isOpen]="isGradeModalOpen()"
+    [title]="editingGradeId() ? 'Edit Salary Grade & Scale' : 'Create Salary Grade & Scale'"
+    subtitle="3.0 Define compensation boundaries, job band, and statutory allowances"
+    badge="3.0 Pay Band"
+    size="md"
+    (closed)="isGradeModalOpen.set(false)"
+  >
+    <div class="space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <app-custom-input
+          label="Grade Code *"
+          placeholder="e.g. GRADE-01"
+          [ngModel]="gradeForm().grade_code"
+          (ngModelChange)="updateGradeField('grade_code', $event)"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Grade Title / Scale Name *"
+          placeholder="e.g. Senior Project Manager Scale"
+          [ngModel]="gradeForm().grade_name"
+          (ngModelChange)="updateGradeField('grade_name', $event)"
+        ></app-custom-input>
+      </div>
+
+      <div>
+        <app-searchable-select
+          label="Corporate Job Level / Band *"
+          [options]="employeeLevelOptions"
+          [value]="gradeForm().employee_level"
+          (selectionChange)="updateGradeField('employee_level', $event)"
+          [allowCreateNew]="false"
+        ></app-searchable-select>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <app-custom-input
+          label="Minimum Scale Salary (BDT) *"
+          type="number"
+          placeholder="20000"
+          [ngModel]="gradeForm().min_salary"
+          (ngModelChange)="updateGradeField('min_salary', +$event)"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Maximum Scale Salary (BDT) *"
+          type="number"
+          placeholder="80000"
+          [ngModel]="gradeForm().max_salary"
+          (ngModelChange)="updateGradeField('max_salary', +$event)"
+        ></app-custom-input>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-800">
+        <app-custom-input
+          label="House Rent (% of Basic)"
+          type="number"
+          placeholder="50"
+          [ngModel]="gradeForm().default_house_rent_pct"
+          (ngModelChange)="updateGradeField('default_house_rent_pct', +$event)"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Medical Allowance (BDT)"
+          type="number"
+          placeholder="2500"
+          [ngModel]="gradeForm().default_medical_allowance"
+          (ngModelChange)="updateGradeField('default_medical_allowance', +$event)"
+        ></app-custom-input>
+
+        <app-custom-input
+          label="Conveyance (BDT)"
+          type="number"
+          placeholder="3000"
+          [ngModel]="gradeForm().default_conveyance"
+          (ngModelChange)="updateGradeField('default_conveyance', +$event)"
+        ></app-custom-input>
+      </div>
+
+      <app-custom-textarea
+        label="Description / Scope"
+        placeholder="Compensation policy remarks..."
+        [rows]="2"
+        [ngModel]="gradeForm().description || ''"
+        (ngModelChange)="updateGradeField('description', $event)"
+      ></app-custom-textarea>
+
+      <div class="flex items-center gap-2 pt-2">
+        <input
+          type="checkbox"
+          id="grade_active_cb"
+          class="rounded text-indigo-600 focus:ring-indigo-500 border-slate-300 w-4 h-4"
+          [checked]="gradeForm().is_active"
+          (change)="updateGradeField('is_active', $any($event.target).checked)"
+        />
+        <label for="grade_active_cb" class="text-xs font-semibold text-slate-700 dark:text-slate-300">Active Salary Grade Band</label>
+      </div>
+    </div>
+
+    <div modal-footer class="flex items-center justify-end gap-2">
+      <app-custom-button
+        label="Cancel"
+        variant="secondary"
+        size="sm"
+        (btnClick)="isGradeModalOpen.set(false)"
+      ></app-custom-button>
+      <app-custom-button
+        [label]="editingGradeId() ? 'Update Grade' : 'Save Grade'"
+        variant="luxury"
+        size="sm"
+        (btnClick)="submitGradeForm()"
       ></app-custom-button>
     </div>
   </app-modal>

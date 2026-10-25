@@ -475,11 +475,15 @@ export class EmployeeFormComponent implements OnInit {
       })));
     } else {
       // Default to statutory grade defaults
-      this.allowanceItems.set([
+      const defaultItems: StatutoryAllowanceItem[] = [
         { name: 'House Rent', amount: Number(grade.default_house_rent_pct) || 50, calculation_type: 'PERCENT' },
         { name: 'Medical Allowance', amount: Number(grade.default_medical_allowance) || 2500, calculation_type: 'FIXED' },
         { name: 'Conveyance', amount: Number(grade.default_conveyance) || 3000, calculation_type: 'FIXED' }
-      ]);
+      ];
+      if (this.formData().assigned_project_id || this.formData().workforce_category === 'SITE') {
+        defaultItems.push({ name: 'Site Hazard Allowance', amount: 5000, calculation_type: 'FIXED' });
+      }
+      this.allowanceItems.set(defaultItems);
     }
   }
 

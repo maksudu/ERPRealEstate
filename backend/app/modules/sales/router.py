@@ -1,3 +1,4 @@
+from datetime import datetime
 import logging
 from typing import List, Optional
 from datetime import date
@@ -2003,6 +2004,99 @@ async def list_booking_payment_collections_paged(
     return PaginatedBookingPaymentsResponse(items=items, total=total, limit=limit, offset=offset)
 
 
+@router.get("/collections/outstanding-notices", response_model=List[OutstandingPaymentNoticeResponse])
+async def list_outstanding_down_payment_notices(db: AsyncSession = Depends(get_db)):
+    """
+    Identifies bookings with outstanding Booking Money or Down Payment balances (Spec 5.5).
+    Enables notifications to buyers with overdue balances.
+    """
+    stmt = (
+        select(Booking)
+        .options(selectinload(Booking.project), selectinload(Booking.unit), selectinload(Booking.customer))
+        .where(
+            Booking.status != "CANCELLED",
+            Booking.down_payment_status.in_(["PENDING", "PARTIAL"])
+        )
+    )
+    result = await db.execute(stmt)
+    bookings = result.scalars().all()
+
+    notices = []
+    from datetime import date as dt_date
+    today = dt_date.today()
+
+    for b in bookings:
+        price = float(b.final_contract_value or 0.0)
+        bm_tgt = float(b.booking_money_target or (price * 0.05))
+        dp_tgt = float(b.down_payment_target or (price * 0.15)) # 15% inclusive of BM
+        bm_rec = float(b.earnest_money_received or 0.0)
+        dp_rec = float(b.down_payment_received or 0.0)
+        total_rec = bm_rec + dp_rec
+
+        net_dp_due = max(0.0, dp_tgt - total_rec)
+        rem_balance = max(0.0, price - dp_tgt)
+
+        days_overdue = 0
+        if b.down_payment_due_date and b.down_payment_due_date < today:
+            days_overdue = (today - b.down_payment_due_date).days
+
+        notices.append(
+            OutstandingPaymentNoticeResponse(
+                booking_id=b.id,
+                booking_reference_no=b.booking_reference_no,
+                project_name=b.project.project_name if b.project else "Project",
+                unit_number=b.unit.unit_number if b.unit else "Unit",
+                customer_id=b.primary_customer_id,
+                customer_name=b.customer.full_name_en if b.customer else "Buyer",
+                customer_phone=b.customer.primary_phone if b.customer else "",
+                customer_email=b.customer.email if b.customer else None,
+                final_contract_value=price,
+                booking_money_target=bm_tgt,
+                booking_money_received=bm_rec,
+                down_payment_target=dp_tgt,
+                down_payment_received=total_rec,
+                net_down_payment_due=net_dp_due,
+                remaining_balance=rem_balance,
+                due_date=b.down_payment_due_date,
+                days_overdue=days_overdue,
+                status="OVERDUE" if days_overdue > 0 else ("PARTIAL" if total_rec > 0 else "PENDING")
+            )
+        )
+
+    return notices
+
+
+@router.post("/collections/outstanding-notices/{booking_id}/send-alert")
+async def send_outstanding_payment_alert(booking_id: int, db: AsyncSession = Depends(get_db)):
+    """
+    Sends SMS alert to buyer for outstanding down payment balance (Spec 5.5).
+    """
+    stmt = (
+        select(Booking)
+        .options(selectinload(Booking.customer), selectinload(Booking.unit))
+        .where(Booking.id == booking_id)
+    )
+    b = (await db.execute(stmt)).scalars().first()
+    if not b:
+        raise HTTPException(status_code=404, detail="Booking not found")
+
+    cust = b.customer
+    if not cust or not cust.primary_phone:
+        raise HTTPException(status_code=400, detail="Customer phone not available for alert")
+
+    price = float(b.final_contract_value or 0.0)
+    dp_tgt = float(b.down_payment_target or (price * 0.15))
+    total_rec = float(b.earnest_money_received or 0.0) + float(b.down_payment_received or 0.0)
+    net_due = max(0.0, dp_tgt - total_rec)
+
+    return {
+        "success": True,
+        "recipient": cust.primary_phone,
+        "customer_name": cust.full_name_en,
+        "message": f"Payment reminder dispatched for BDT {net_due:,.2f} against Booking {b.booking_reference_no}."
+    }
+
+
 @router.get("/collections/{collection_id}", response_model=BookingPaymentResponse)
 async def get_booking_payment_collection(collection_id: int, db: AsyncSession = Depends(get_db)):
     """
@@ -2271,100 +2365,8 @@ async def reconcile_collection_with_bank(
         col.gl_voucher_reference = payload.gl_voucher_reference
 
     await db.commit()
-    return _format_collection_response(col)
 
 
-@router.get("/collections/outstanding-notices", response_model=List[OutstandingPaymentNoticeResponse])
-async def list_outstanding_down_payment_notices(db: AsyncSession = Depends(get_db)):
-    """
-    Identifies bookings with outstanding Booking Money or Down Payment balances (Spec 5.5).
-    Enables notifications to buyers with overdue balances.
-    """
-    stmt = (
-        select(Booking)
-        .options(selectinload(Booking.project), selectinload(Booking.unit), selectinload(Booking.customer))
-        .where(
-            Booking.status != "CANCELLED",
-            Booking.down_payment_status.in_(["PENDING", "PARTIAL"])
-        )
-    )
-    result = await db.execute(stmt)
-    bookings = result.scalars().all()
-
-    notices = []
-    from datetime import date as dt_date
-    today = dt_date.today()
-
-    for b in bookings:
-        price = float(b.final_contract_value or 0.0)
-        bm_tgt = float(b.booking_money_target or (price * 0.05))
-        dp_tgt = float(b.down_payment_target or (price * 0.15)) # 15% inclusive of BM
-        bm_rec = float(b.earnest_money_received or 0.0)
-        dp_rec = float(b.down_payment_received or 0.0)
-        total_rec = bm_rec + dp_rec
-
-        net_dp_due = max(0.0, dp_tgt - total_rec)
-        rem_balance = max(0.0, price - dp_tgt)
-
-        days_overdue = 0
-        if b.down_payment_due_date and b.down_payment_due_date < today:
-            days_overdue = (today - b.down_payment_due_date).days
-
-        notices.append(
-            OutstandingPaymentNoticeResponse(
-                booking_id=b.id,
-                booking_reference_no=b.booking_reference_no,
-                project_name=b.project.project_name if b.project else "Project",
-                unit_number=b.unit.unit_number if b.unit else "Unit",
-                customer_id=b.primary_customer_id,
-                customer_name=b.customer.full_name_en if b.customer else "Buyer",
-                customer_phone=b.customer.primary_phone if b.customer else "",
-                customer_email=b.customer.email if b.customer else None,
-                final_contract_value=price,
-                booking_money_target=bm_tgt,
-                booking_money_received=bm_rec,
-                down_payment_target=dp_tgt,
-                down_payment_received=total_rec,
-                net_down_payment_due=net_dp_due,
-                remaining_balance=rem_balance,
-                due_date=b.down_payment_due_date,
-                days_overdue=days_overdue,
-                status="OVERDUE" if days_overdue > 0 else ("PARTIAL" if total_rec > 0 else "PENDING")
-            )
-        )
-
-    return notices
-
-
-@router.post("/collections/outstanding-notices/{booking_id}/send-alert")
-async def send_outstanding_payment_alert(booking_id: int, db: AsyncSession = Depends(get_db)):
-    """
-    Sends SMS alert to buyer for outstanding down payment balance (Spec 5.5).
-    """
-    stmt = (
-        select(Booking)
-        .options(selectinload(Booking.customer), selectinload(Booking.unit))
-        .where(Booking.id == booking_id)
-    )
-    b = (await db.execute(stmt)).scalars().first()
-    if not b:
-        raise HTTPException(status_code=404, detail="Booking not found")
-
-    cust = b.customer
-    if not cust or not cust.primary_phone:
-        raise HTTPException(status_code=400, detail="Customer phone not available for alert")
-
-    price = float(b.final_contract_value or 0.0)
-    dp_tgt = float(b.down_payment_target or (price * 0.15))
-    total_rec = float(b.earnest_money_received or 0.0) + float(b.down_payment_received or 0.0)
-    net_due = max(0.0, dp_tgt - total_rec)
-
-    return {
-        "success": True,
-        "recipient": cust.primary_phone,
-        "customer_name": cust.full_name_en,
-        "message": f"Payment reminder dispatched for BDT {net_due:,.2f} against Booking {b.booking_reference_no}."
-    }
 
 
 # ==========================================================================

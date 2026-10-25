@@ -324,4 +324,141 @@ export class HrmsService {
   disbursePayroll(runId: number): Observable<PayrollRun> {
     return this.http.post<PayrollRun>(`${this.apiUrl}/payroll/runs/${runId}/disburse`, {});
   }
+
+  // --- Employee Self-Service (ESS) Methods ---
+  getMyEmployeeProfile(): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/employees/me`);
+  }
+
+  getEssSummary(employeeId?: number): Observable<any> {
+    let params = new HttpParams();
+    if (employeeId) params = params.set('employee_id', employeeId.toString());
+    return this.http.get<any>(`${this.apiUrl}/ess/summary`, { params });
+  }
+
+  getEssRecords(recordType: string, options?: { search?: string; status?: string; category?: string; employee_id?: number; limit?: number; offset?: number }): Observable<any> {
+    let params = new HttpParams();
+    if (options?.search) params = params.set('search', options.search);
+    if (options?.status) params = params.set('status', options.status);
+    if (options?.category) params = params.set('category', options.category);
+    if (options?.employee_id) params = params.set('employee_id', options.employee_id.toString());
+    if (options?.limit) params = params.set('limit', options.limit.toString());
+    if (options?.offset !== undefined) params = params.set('offset', options.offset.toString());
+    return this.http.get<any>(`${this.apiUrl}/ess/records/${recordType}`, { params });
+  }
+
+  createEssRecord(recordType: string, payload: any): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/ess/records/${recordType}`, payload);
+  }
+
+  updateEssRecord(recordType: string, id: number, payload: any): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/ess/records/${recordType}/${id}`, payload);
+  }
+
+  deleteEssRecord(recordType: string, id: number): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/ess/records/${recordType}/${id}`);
+  }
+
+  getMyAttendanceList(employeeId?: number, options?: { punch_date?: string; limit?: number; offset?: number }): Observable<any> {
+    let params = new HttpParams();
+    if (employeeId) params = params.set('employee_id', employeeId.toString());
+    if (options?.punch_date) params = params.set('punch_date', options.punch_date);
+    if (options?.limit) params = params.set('limit', options.limit.toString());
+    if (options?.offset !== undefined) params = params.set('offset', options.offset.toString());
+    return this.http.get<any>(`${this.apiUrl}/attendance`, { params });
+  }
+
+  getMyLeaveApplications(employeeId?: number, options?: { status?: string; limit?: number; offset?: number }): Observable<any> {
+    let params = new HttpParams();
+    if (employeeId) params = params.set('employee_id', employeeId.toString());
+    if (options?.status) params = params.set('status', options.status);
+    if (options?.limit) params = params.set('limit', options.limit.toString());
+    if (options?.offset !== undefined) params = params.set('offset', options.offset.toString());
+    return this.http.get<any>(`${this.apiUrl}/leave-applications`, { params });
+  }
+
+  submitLeaveApplication(payload: any): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/leave-applications`, payload);
+  }
+
+  getMyLeaveBalances(employeeId?: number): Observable<any> {
+    let params = new HttpParams();
+    if (employeeId) params = params.set('employee_id', employeeId.toString());
+    return this.http.get<any>(`${this.apiUrl}/leave-balances`, { params });
+  }
+
+  getStaffLoans(options?: { search?: string; status?: string; loan_type?: string; employee_id?: number; limit?: number; offset?: number }): Observable<any> {
+    let params = new HttpParams();
+    if (options?.employee_id) params = params.set('employee_id', options.employee_id.toString());
+    if (options?.status) params = params.set('status', options.status);
+    if (options?.loan_type) params = params.set('loan_type', options.loan_type);
+    if (options?.search) params = params.set('search', options.search);
+    if (options?.limit) params = params.set('limit', options.limit.toString());
+    if (options?.offset !== undefined) params = params.set('offset', options.offset.toString());
+    return this.http.get<any>(`${this.apiUrl}/staff-loans`, { params });
+  }
+
+  getMyStaffLoans(employeeId?: number, options?: { limit?: number; offset?: number }): Observable<any> {
+    return this.getStaffLoans({ employee_id: employeeId, ...options });
+  }
+
+  submitStaffLoan(payload: any): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/staff-loans`, payload);
+  }
+
+  updateStaffLoan(id: number, payload: any): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/staff-loans/${id}`, payload);
+  }
+
+  deleteStaffLoan(id: number): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/staff-loans/${id}`);
+  }
+
+  getSalaryAdvances(options?: { status?: string; employee_id?: number; limit?: number; offset?: number }): Observable<any> {
+    let params = new HttpParams();
+    if (options?.employee_id) params = params.set('employee_id', options.employee_id.toString());
+    if (options?.status) params = params.set('status', options.status);
+    if (options?.limit) params = params.set('limit', options.limit.toString());
+    if (options?.offset !== undefined) params = params.set('offset', options.offset.toString());
+    return this.http.get<any>(`${this.apiUrl}/salary-advances`, { params });
+  }
+
+  submitSalaryAdvance(payload: any): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/salary-advances`, payload);
+  }
+
+  updateSalaryAdvance(id: number, payload: any): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/salary-advances/${id}`, payload);
+  }
+
+  deleteSalaryAdvance(id: number): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/salary-advances/${id}`);
+  }
+
+  getBenefitPolicies(options?: { policy_type?: string; is_active?: boolean; limit?: number; offset?: number }): Observable<any> {
+    let params = new HttpParams();
+    if (options?.policy_type) params = params.set('policy_type', options.policy_type);
+    if (options?.is_active !== undefined) params = params.set('is_active', options.is_active.toString());
+    if (options?.limit) params = params.set('limit', options.limit.toString());
+    if (options?.offset !== undefined) params = params.set('offset', options.offset.toString());
+    return this.http.get<any>(`${this.apiUrl}/benefit-policies`, { params });
+  }
+
+  submitBenefitPolicy(payload: any): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/benefit-policies`, payload);
+  }
+
+  updateBenefitPolicy(id: number, payload: any): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/benefit-policies/${id}`, payload);
+  }
+
+  deleteBenefitPolicy(id: number): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/benefit-policies/${id}`);
+  }
+
+  getMySalaryRevisions(employeeId?: number): Observable<any> {
+    let params = new HttpParams();
+    if (employeeId) params = params.set('employee_id', employeeId.toString());
+    return this.http.get<any>(`${this.apiUrl}/salary-revisions`, { params });
+  }
 }

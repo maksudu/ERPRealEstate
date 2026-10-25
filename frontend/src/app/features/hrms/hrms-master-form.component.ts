@@ -108,7 +108,7 @@ export class HrmsMasterFormComponent implements OnInit {
   grade: SalaryGradeCreatePayload = { grade_code: '', grade_name: '', employee_level: 'EXECUTIVE', min_salary: 30000, max_salary: 180000, default_house_rent_pct: 50, default_medical_allowance: 4000, default_conveyance: 5000, allowance_package: [], description: '', is_active: true };
   allowanceCalculationOptions = [{ value: 'FIXED', label: 'Fixed amount (BDT)' }, { value: 'PERCENT', label: 'Percentage (%)' }];
   get title(): string { return ({ head: 'Assign Department Head', hierarchy: 'Change Department Reporting Line', designation: 'Designation', grade: 'Salary Grade' } as const)[this.kind]; }
-  get backLink(): string { return this.kind === 'head' ? '/hrms/departments/heads' : this.kind === 'hierarchy' ? '/hrms/departments/hierarchy' : this.kind === 'grade' ? '/hrms/designations/grades' : '/hrms/designations'; }
+  get backLink(): string { return this.kind === 'head' ? '/hrms/departments/heads' : this.kind === 'hierarchy' ? '/hrms/departments/hierarchy' : this.kind === 'grade' ? '/hrms/payroll/structures' : '/hrms/designations'; }
   get departmentOptions() { return this.departments().map(d => ({ value: d.id, label: `${d.department_code} - ${d.name_en}` })); }
   get parentOptions() { return this.departments().filter(d => d.id !== this.id).map(d => ({ value: d.id, label: `${d.department_code} - ${d.name_en}` })); }
   get employeeOptions() { return this.employees().map(e => ({ value: e.id, label: `${e.employee_code} - ${e.first_name} ${e.last_name}` })); }
